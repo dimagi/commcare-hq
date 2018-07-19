@@ -415,6 +415,15 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
+def _log_failed_periodic_data(email, message):
+    soft_assert(to='{}@{}'.format('bbuczyk', 'dimagi.com'))(
+        False, "ANALYTICS - Failed to sync periodic data", {
+            'user_email': email,
+            'message': message,
+        }
+    )
+
+
 @periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
@@ -449,63 +458,69 @@ def track_periodic_data():
     for users in chunked(users_to_domains, 100):
         submit = []
         for user in users:
-            email = user.get('email')
-            if not _email_is_valid(email):
-                continue
+            try:
+                email = user.get('email')
+                if not _email_is_valid(email):
+                    continue
 
-            number_of_users += 1
-            date_created = user.get('date_joined')
-            max_forms = 0
-            max_workers = 0
-            max_export = 0
-            max_report = 0
+                number_of_users += 1
+                date_created = user.get('date_joined')
+                max_forms = 0
+                max_workers = 0
+                max_export = 0
+                max_report = 0
 
-            for domain in user['domains']:
-                if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
-                    max_forms = domains_to_forms[domain]
-                if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
-                    max_workers = domains_to_mobile_users[domain]
-                if _get_export_count(domain) > max_export:
-                    max_export = _get_export_count(domain)
-                if _get_report_count(domain) > max_report:
-                    max_report = _get_report_count(domain)
+                for domain in user['domains']:
+                    if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
+                        max_forms = domains_to_forms[domain]
+                    if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
+                        max_workers = domains_to_mobile_users[domain]
+                    if _get_export_count(domain) > max_export:
+                        max_export = _get_export_count(domain)
+                    if _get_report_count(domain) > max_report:
+                        max_report = _get_report_count(domain)
 
-            project_spaces_created = ", ".join(get_domains_created_by_user(email))
+                project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
-            user_json = {
-                'email': email,
-                'properties': [
-                    {
-                        'property': '{}max_form_submissions_in_a_domain'.format(env),
-                        'value': max_forms
-                    },
-                    {
-                        'property': '{}max_mobile_workers_in_a_domain'.format(env),
-                        'value': max_workers
-                    },
-                    {
-                        'property': '{}project_spaces_created_by_user'.format(env),
-                        'value': project_spaces_created,
-                    },
-                    {
-                        'property': '{}over_300_form_submissions'.format(env),
-                        'value': max_forms > HUBSPOT_THRESHOLD
-                    },
-                    {
-                        'property': '{}date_created'.format(env),
-                        'value': date_created
-                    },
-                    {
-                        'property': '{}max_exports_in_a_domain'.format(env),
-                        'value': max_export
-                    },
-                    {
-                        'property': '{}max_custom_reports_in_a_domain'.format(env),
-                        'value': max_report
-                    }
-                ]
-            }
-            submit.append(user_json)
+                user_json = {
+                    'email': email,
+                    'properties': [
+                        {
+                            'property': '{}max_form_submissions_in_a_domain'.format(env),
+                            'value': max_forms
+                        },
+                        {
+                            'property': '{}max_mobile_workers_in_a_domain'.format(env),
+                            'value': max_workers
+                        },
+                        {
+                            'property': '{}project_spaces_created_by_user'.format(env),
+                            'value': project_spaces_created,
+                        },
+                        {
+                            'property': '{}over_300_form_submissions'.format(env),
+                            'value': max_forms > HUBSPOT_THRESHOLD
+                        },
+                        {
+                            'property': '{}date_created'.format(env),
+                            'value': date_created
+                        },
+                        {
+                            'property': '{}max_exports_in_a_domain'.format(env),
+                            'value': max_export
+                        },
+                        {
+                            'property': '{}max_custom_reports_in_a_domain'.format(env),
+                            'value': max_report
+                        }
+                    ]
+                }
+                submit.append(user_json)
+            except Exception as e:
+                _log_failed_periodic_data(
+                    user.get('email', 'email unknown'),
+                    e.message
+                )
 
         submit_json = json.dumps(submit)
 
