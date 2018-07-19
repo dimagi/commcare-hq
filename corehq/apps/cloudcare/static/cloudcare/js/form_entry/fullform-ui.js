@@ -609,7 +609,7 @@ Formplayer.Const = {
     CONTROL_VIDEO_CAPTURE: 13,
 
     //knockout timeouts
-    KO_ENTRY_TIMEOUT: 200,
+    KO_ENTRY_TIMEOUT: 500,
 
 };
 
