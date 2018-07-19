@@ -178,6 +178,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
             res = group(*stage_1_tasks).apply_async()
+            res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
             res.get()
 
             res_child = chain(
@@ -188,7 +189,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
                 icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
             ).apply_async()
-            res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
             res_daily.get()
             res_ccs.get()
             res_child.get()

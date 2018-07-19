@@ -170,20 +170,6 @@ class AggregationScriptTest(AggregationScriptTestBase):
             sort_key=['awc_id', 'case_id']
         )
 
-    def test_daily_attendance_2017_04_01(self):
-        self._load_and_compare_data(
-            'daily_attendance_2017-04-01',
-            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'doc_id']
-        )
-
-    def test_daily_attendance_2017_05_01(self):
-        self._load_and_compare_data(
-            'daily_attendance_2017-05-01',
-            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'doc_id']
-        )
-
     def test_agg_child_health_2017_04_01_1(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_1',
@@ -411,4 +397,20 @@ class ChildHealthMonthlyAggregationTest(AggregationScriptTestBase):
             'child_health_monthly_2017-05-01',
             os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-05-01_sorted.csv'),
             sort_key=['awc_id', 'case_id']
+        )
+
+
+class DailyAttendanceAggregationTest(AggregationScriptTestBase):
+    def test_daily_attendance_2017_04_01(self):
+        self._load_and_compare_data(
+            'daily_attendance_2017-04-01',
+            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-04-01_sorted.csv'),
+            sort_key=['awc_id', 'pse_date']
+        )
+
+    def test_daily_attendance_2017_05_01(self):
+        self._load_and_compare_data(
+            'daily_attendance_2017-05-01',
+            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
+            sort_key=['awc_id', 'pse_date']
         )
