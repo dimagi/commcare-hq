@@ -2358,9 +2358,11 @@ class EnterpriseSettingsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain', None)
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = reverse("edit_enterprise_settings", args=[self.domain])
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper[0] = PrependedText('restrict_domain_creation', '')
@@ -2376,6 +2378,6 @@ class EnterpriseSettingsForm(forms.Form):
         )
 
     def save(self, account):
-        account.restrict_domain_creation = self.cleaned_data.get('restrict_superusers', False)
+        account.restrict_domain_creation = self.cleaned_data.get('restrict_domain_creation', False)
         account.save()
         return True
