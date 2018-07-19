@@ -1112,8 +1112,8 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('has_aadhar_id', "SUM(chm.has_aadhar_id)"),
             ('aggregation_level', '5'),
             ('pnc_eligible', 'SUM(chm.pnc_eligible)'),
-            # height_eligible calculation weirdness is to keep consistent with usage of
-            # age_in_months_start & age_in_months_start in UCR
+            # height_eligible calculation is to keep consistent with usage of
+            # age_in_months_start & age_in_months_end in UCR
             ('height_eligible',
                 "SUM(CASE WHEN chm.age_in_months >= 6 AND chm.age_tranche NOT IN ('72') AND "
                 "chm.valid_in_month = 1 THEN 1 ELSE 0 END)"),
