@@ -17,6 +17,10 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'static_reports')
     root = os.path.dirname(__file__)
 
+    def setUp(self):
+        super(TestStaticReportConfig, self).setUp()
+        StaticReportConfiguration.by_id_mapping.reset_cache(StaticReportConfiguration.__class__)
+
     def test_wrap(self):
         wrapped = StaticReportConfiguration.wrap(self.get_json('static_report_config'))
         self.assertEqual(["example", "dimagi"], wrapped.domains)
@@ -42,12 +46,12 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
                 self.assertEqual('Custom Title', config.title)
 
     def test_production_config(self):
-        for report_config in StaticReportConfiguration.all(ignore_server_environment=True):
+        for report_config in StaticReportConfiguration.all():
             report_config.validate()
 
     def test_for_report_id_conflicts(self):
         counts = Counter(rc.get_id for rc in
-                         StaticReportConfiguration.all(ignore_server_environment=True))
+                         StaticReportConfiguration.all())
         duplicates = [k for k, v in counts.items() if v > 1]
         msg = "The following report configs have duplicate generated report_ids:\n{}".format(
             "\n".join("report_id: {}".format(report_id) for report_id in duplicates)
@@ -59,14 +63,14 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
     def test_data_sources_actually_exist(self):
 
         data_sources_on_domain = defaultdict(set)
-        for data_source in StaticDataSourceConfiguration.all(use_server_filter=False):
+        for data_source in StaticDataSourceConfiguration.all():
             data_sources_on_domain[data_source.domain].add(data_source.get_id)
 
         def has_no_data_source(report_config):
             available_data_sources = data_sources_on_domain[report_config.domain]
             return report_config.config_id not in available_data_sources
 
-        all_configs = StaticReportConfiguration.all(ignore_server_environment=True)
+        all_configs = StaticReportConfiguration.all()
         configs_missing_data_source = list(filter(has_no_data_source, all_configs))
 
         msg = ("There are {} report configs which reference data sources that "

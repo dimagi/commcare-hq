@@ -62,7 +62,7 @@ BEGIN
   _ccs_record_tablename := 'agg_ccs_record';
   _ccs_record_monthly_tablename := 'ccs_record_monthly' || '_' || _start_date;
   _child_health_monthly_tablename := 'child_health_monthly' || '_' || _start_date;
-  EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('daily_feeding') INTO _daily_attendance_tablename;
+  _daily_attendance_tablename := 'daily_attendance' || '_' || _start_date;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_location') INTO _awc_location_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('usage') INTO _usage_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('infrastructure') INTO _infra_tablename;
@@ -91,7 +91,7 @@ BEGIN
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx5') || ' ON ' || quote_ident(_tablename5) || '(awc_id)';
 
-  -- Aggregate daily attendance table.  Not using monthly table as it doesn't have all indicators
+  -- Aggregate daily attendance table.
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'awc_days_open = ut.awc_days_open, ' ||
     'awc_num_open = ut.awc_num_open, ' ||

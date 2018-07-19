@@ -49,7 +49,6 @@
 trunk: master
 name: autostaging
 branches:
-  - jls/requirejs-locations  # Jenny June 22
   - nh/omrs/levenshtein # Norman June 29
   - es/location-upload  # Ethan July 6
   - jls/unify-tab-history  # Jenny July 10
@@ -57,6 +56,7 @@ branches:
   - je/upgrade-gunicorn # 7/17
   - jls/requirejs-case-importer  # Jenny July 17
   - np/domain-blob  # NP July 17
+  - revert-21236-fr/add-secure-urllib3  # Danny July 18
 submodules:
   submodules/django-digest-src:
     branches: []

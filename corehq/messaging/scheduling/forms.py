@@ -2657,6 +2657,19 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
     )
 
+    stop_date_case_property_enabled = ChoiceField(
+        required=True,
+        choices=(
+            (ScheduleForm.NO, ugettext_lazy("No")),
+            (ScheduleForm.YES, ugettext_lazy("Yes")),
+        ),
+    )
+
+    stop_date_case_property_name = TrimmedCharField(
+        label='',
+        required=False,
+    )
+
     allow_custom_immediate_schedule = True
 
     def __init__(self, domain, schedule, can_use_sms_surveys, rule, criteria_form, *args, **kwargs):
@@ -2851,6 +2864,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 if schedule.start_day_of_week >= 0:
                     result['start_day_of_week'] = six.text_type(schedule.start_day_of_week)
 
+            if schedule.stop_date_case_property_name:
+                result['stop_date_case_property_enabled'] = self.YES
+                result['stop_date_case_property_name'] = schedule.stop_date_case_property_name
+
             self.add_initial_for_custom_metadata(result)
 
         return result
@@ -2963,6 +2980,24 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     ),
                     data_bind="visible: reset_case_property_enabled() === '%s'" % self.YES,
                     css_class='col-sm-4',
+                ),
+            ),
+            hqcrispy.B3MultiField(
+                _("Use case property stop date"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'stop_date_case_property_enabled',
+                        data_bind='value: stop_date_case_property_enabled',
+                    ),
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'stop_date_case_property_name',
+                        placeholder=_("case property"),
+                    ),
+                    data_bind="visible: stop_date_case_property_enabled() === '%s'" % self.YES,
+                    css_class='col-sm-8',
                 ),
             ),
         ])
@@ -3092,6 +3127,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return validate_case_property_name(
             self.cleaned_data.get('reset_case_property_name'),
+            allow_parent_case_references=False,
+        )
+
+    def clean_stop_date_case_property_name(self):
+        if self.cleaned_data.get('stop_date_case_property_enabled') != self.YES:
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('stop_date_case_property_name'),
             allow_parent_case_references=False,
         )
 
@@ -3293,6 +3337,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             }
         else:
             extra_options['custom_metadata'] = {}
+
+        extra_options['stop_date_case_property_name'] = self.cleaned_data['stop_date_case_property_name']
 
         return extra_options
 

@@ -85,6 +85,15 @@ class Schedule(models.Model):
     # type is android and whose nickname is either bob or jim.
     user_data_filter = jsonfield.JSONField(default=dict)
 
+    #   Only applies when this Schedule is used with CaseAlertScheduleInstances or
+    # CaseTimedScheduleInstances.
+    #   If null, this is ignored. Otherwise, it's the name of a case property which
+    # can be used to set a stop date for the schedule. If the case property doesn't
+    # reference a date (e.g., it's blank), then there's no effect. But if it references
+    # a date then the corresponding schedule instance will be deactivated once the
+    # framework realizes that date has passed.
+    stop_date_case_property_name = models.CharField(max_length=126, null=True)
+
     class Meta(object):
         abstract = True
 
