@@ -1,7 +1,6 @@
 {% extends "hqwebapp/base_section.html" %}
-{% load hq_shared_tags %}
-{% load i18n %}
+{% load crispy_forms_tags %}
 
 {% block page_content %}
-    look some settings
+    {% crispy settings_form %}
 {% endblock %}
