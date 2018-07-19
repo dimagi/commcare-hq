@@ -20,7 +20,12 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
-from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchQueryAddition, FuzzyProperties
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    CaseSearchQueryAddition,
+    FuzzyProperties,
+    IgnorePatterns,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import make_location, LocationType, SQLLocation
@@ -261,6 +266,7 @@ class TestDeleteDomain(TestCase):
             CaseSearchConfig.objects.filter(domain=domain_name),
             CaseSearchQueryAddition.objects.filter(domain=domain_name),
             FuzzyProperties.objects.filter(domain=domain_name),
+            IgnorePatterns.objects.filter(domain=domain_name),
         ], count)
 
     def test_case_search(self):
@@ -268,6 +274,7 @@ class TestDeleteDomain(TestCase):
             CaseSearchConfig.objects.create(domain=domain_name)
             CaseSearchQueryAddition.objects.create(domain=domain_name)
             FuzzyProperties.objects.create(domain=domain_name)
+            IgnorePatterns.objects.create(domain=domain_name)
             self._assert_case_search_counts(domain_name, 1)
 
         self.domain.delete()
