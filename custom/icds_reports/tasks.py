@@ -40,6 +40,7 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import (
+    AggChildHealth,
     AggChildHealthMonthly,
     AggregateComplementaryFeedingForms,
     AggregateGrowthMonitoringForms,
@@ -101,7 +102,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_ccs_record_monthly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_child_health.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_ccs_record.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
@@ -387,10 +387,11 @@ def _daily_attendance_table(day):
 
 @track_time
 def _agg_child_health_table(day):
-    _run_custom_sql_script([
-        "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
-        "SELECT aggregate_child_health(%s)"
-    ], day)
+    with transaction.atomic():
+        _run_custom_sql_script([
+            "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
+        ], day)
+        AggChildHealth.aggregate(force_to_date(day))
 
 
 @track_time
