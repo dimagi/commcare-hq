@@ -27,7 +27,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function() {
             }
             if (!case_type) {
                 return gettext("Case Type required");
-            } else if (!case_tag || self.warn_blank_case_tag) {
+            } else if (!case_tag || self.warn_blank_case_tag()) {
                 return gettext("Case Tag required");
             }
             if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
@@ -53,6 +53,26 @@ hqDefine('app_manager/js/forms/advanced/actions', function() {
                     self.caseConfig.saveButton.fire('change');
                 },
             };
+        },
+        case_tag: function(self) {
+            self.case_tag.extend({
+                withPrevious: 1,
+            });
+
+            self.case_tag.subscribe(function(tag) {
+                if (!self.auto_select && !tag) {
+                    // Don't allow user to blank out case tag
+                    self.warn_blank_case_tag(true);
+                    self.case_tag(self.case_tag.previous());
+                    return;
+                }
+                if (self.case_tag.previous()) {
+                    self.warn_blank_case_tag(false);
+                }
+                self.caseConfig.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
+            });
+
+            return self.case_tag;
         },
         propertyCounts: function(self) {
             return function() {
@@ -176,6 +196,8 @@ hqDefine('app_manager/js/forms/advanced/actions', function() {
                 },
             };
 
+            self.warn_blank_case_tag = ko.observable(false);
+
             self.available_modules = ko.computed(function() {
                 return caseConfig.getModulesForCaseType(self.case_type(), self.show_product_stock());
             });
@@ -229,17 +251,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function() {
                 },
             });
 
-            self.case_tag.extend({
-                withPrevious: 1,
-            });
-            self.case_tag.subscribe(function(tag) {
-                if (!tag) {
-                    // Don't allow user to blank out case tag, and let them know
-                    self.warn_blank_case_tag = true;
-                    self.case_tag(self.case_tag.previous());
-                }
-                self.caseConfig.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
-            });
+            self.case_tag = ActionBase.case_tag(self);
 
             self.close_case = ko.computed(ActionBase.close_case(self));
 
@@ -437,6 +449,8 @@ hqDefine('app_manager/js/forms/advanced/actions', function() {
                 },
             };
 
+            self.warn_blank_case_tag = ko.observable(false);
+
             self.disable_tag = ko.computed(function() {
                 return false;
             });
@@ -496,18 +510,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function() {
                 self.case_indices.remove(viewModel);
             };
 
-            self.case_tag.extend({
-                withPrevious: 1,
-            });
-            self.case_tag.subscribe(function(tag) {
-                if (!tag) {
-                    // Don't allow user to blank out case tag, and let them know
-                    self.warn_blank_case_tag = true;
-                    self.case_tag(self.case_tag.previous());
-                }
-                self.warn_blank_case_tag = false;
-                self.caseConfig.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
-            });
+            self.case_tag = ActionBase.case_tag(self);
 
             self.close_case = ko.computed(ActionBase.close_case(self));
 
