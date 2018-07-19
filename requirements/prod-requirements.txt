@@ -126,7 +126,7 @@ py-kissmetrics==1.0.1
 pyasn1==0.4.3
 pycco==0.5.1
 pycparser==2.18
-pycrypto==2.6.1
+pycryptodome==3.6.4
 pygithub==1.35
 pygments==2.0.2
 pygooglechart==0.4.0
