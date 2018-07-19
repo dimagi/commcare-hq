@@ -35,8 +35,10 @@ from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (SMS, SQLLastReadMessage, ExpectedCallback,
     PhoneNumber, MessagingEvent, MessagingSubEvent, SelfRegistrationInvitation,
     SQLMobileBackend, SQLMobileBackendMapping, MobileBackendInvitation)
+from corehq.apps.userreports.models import AsyncIndicator
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import create_form_for_test
+from dimagi.utils.make_uuid import random_hex
 from six.moves import range
 
 
@@ -345,6 +347,26 @@ class TestDeleteDomain(TestCase):
 
         self._assert_reports_counts(self.domain.name, 0)
         self._assert_reports_counts(self.domain2.name, 1)
+
+    def _assert_userreports_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            AsyncIndicator.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_userreports_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            AsyncIndicator.objects.create(
+                domain=domain_name,
+                doc_id=random_hex(),
+                doc_type='doc_type',
+                indicator_config_ids=[],
+            )
+            self._assert_userreports_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_userreports_counts(self.domain.name, 0)
+        self._assert_userreports_counts(self.domain2.name, 1)
 
     def tearDown(self):
         self.domain2.delete()
