@@ -215,6 +215,7 @@ class TestDomainMigrations(BaseMigrationTest):
 
         domain = Domain.get(domain._id)
         self.assertEqual(domain.get_custom_logo()[0], domain_logo)
+        self.assertIsNone(domain._attachments)
 
     def test_migrate_with_concurrent_modification(self):
         domain = Domain(name='test_logo_attachment')
