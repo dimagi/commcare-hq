@@ -24,7 +24,7 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
 
     def test_get_all(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
-            all = list(StaticDataSourceConfiguration.all(use_server_filter=False))
+            all = list(StaticDataSourceConfiguration.all())
             self.assertEqual(2 + 3, len(all))
             example, dimagi = all[:2]
             self.assertEqual('example', example.domain)
@@ -37,12 +37,12 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
 
     def test_is_static_positive_json(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
-            example = list(StaticDataSourceConfiguration.all(use_server_filter=False))[0]
+            example = list(StaticDataSourceConfiguration.all())[0]
             self.assertTrue(example.is_static)
 
     def test_is_static_positive_yaml(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'yaml')]):
-            example = list(StaticDataSourceConfiguration.all(use_server_filter=False))[0]
+            example = list(StaticDataSourceConfiguration.all())[0]
             self.assertTrue(example.is_static)
 
     def test_is_static_negative(self):
@@ -51,17 +51,17 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
 
     def test_deactivate_noop(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
-            example = list(StaticDataSourceConfiguration.all(use_server_filter=False))[0]
+            example = list(StaticDataSourceConfiguration.all())[0]
             # since this is a SimpleTest, this should fail if the call actually hits the DB
             example.deactivate()
 
     def test_production_config(self):
-        for data_source in StaticDataSourceConfiguration.all(use_server_filter=False):
+        for data_source in StaticDataSourceConfiguration.all():
             data_source.validate()
 
     def test_for_table_id_conflicts(self):
         counts = Counter((ds.table_id, ds.domain) for ds in
-                         StaticDataSourceConfiguration.all(use_server_filter=False))
+                         StaticDataSourceConfiguration.all())
         duplicates = [k for k, v in counts.items() if v > 1]
         msg = "The following data source configs have duplicate table_ids on the same domains:\n{}".format(
             "\n".join("table_id: {}, domain: {}".format(table_id, domain) for table_id, domain in duplicates)
