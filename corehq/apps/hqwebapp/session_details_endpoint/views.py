@@ -5,13 +5,14 @@ from django.http import HttpResponseBadRequest, Http404, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+
+from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.hqadmin.utils import get_django_user_from_session_key
 from corehq.apps.users.models import CouchUser
-from corehq.util.hmac_request import validate_request_hmac
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-@method_decorator(validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True), name='dispatch')
+@method_decorator(formplayer_auth, name='dispatch')
 class SessionDetailsView(View):
     """
     Internal API to allow formplayer to get the Django user ID

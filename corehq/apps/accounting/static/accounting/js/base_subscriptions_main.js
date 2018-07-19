@@ -57,9 +57,6 @@ hqDefine('accounting/js/base_subscriptions_main', [
         $("#id_end_date").datepicker({
             dateFormat: "yy-mm-dd",
         });
-        $("#id_delay_invoice_until").datepicker({
-            dateFormat: "yy-mm-dd",
-        });
 
         var subscriptionInfoHandler = subscriptionInfoHandlerModel();
         subscriptionInfoHandler.init();

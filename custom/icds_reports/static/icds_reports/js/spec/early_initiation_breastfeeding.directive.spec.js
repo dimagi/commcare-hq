@@ -188,9 +188,9 @@ describe('Early Initiation Breastfeeding Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of children who were put to the breast within one hour of birth. \n' +
+            'Of the children born in the last month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery. \n' +
             '\n' +
-            'Early initiation of breastfeeding ensure the newborn recieves the ""first milk"" rich in nutrients and encourages exclusive breastfeeding practice'
+            'Early initiation of breastfeeding ensure the newborn recieves the "first milk" rich in nutrients and encourages exclusive breastfeeding practice'
         );
     });
 

@@ -77,20 +77,7 @@ class RegisterWebUserForm(forms.Form):
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
-        self.show_phone_number = kwargs.pop('show_number', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
-        if not self.show_phone_number:
-            del self.fields['phone_number']
-            phone_number_fields = []
-        else:
-            phone_number_fields = [
-                hqcrispy.InlineField(
-                    'phone_number',
-                    css_class="input-lg",
-                    data_bind="value: phoneNumber, "
-                              "valueUpdate: 'keyup'"
-                ),
-            ]
 
         persona_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
@@ -163,7 +150,12 @@ class RegisterWebUserForm(forms.Form):
                                   "}",
                     ),
                     hqcrispy.ValidationMessage('passwordDelayed'),
-                    crispy.Div(*phone_number_fields),
+                    hqcrispy.InlineField(
+                        'phone_number',
+                        css_class="input-lg",
+                        data_bind="value: phoneNumber, "
+                                  "valueUpdate: 'keyup'"
+                    ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
                         ugettext("Next"),
@@ -263,7 +255,7 @@ class RegisterWebUserForm(forms.Form):
 
     def clean_persona_other(self):
         data = self.cleaned_data['persona_other'].strip().lower()
-        persona = self.data['persona'].strip()
+        persona = self.cleaned_data['persona'].strip()
         if persona == 'Other' and not data and settings.IS_SAAS_ENVIRONMENT:
             raise forms.ValidationError(ugettext(
                 "Please specify how you plan to use CommCare so we know how to "

@@ -44,6 +44,7 @@ from custom.icds_reports.models import (
     AggChildHealthMonthly,
     AggregateComplementaryFeedingForms,
     AggregateGrowthMonitoringForms,
+    AggregateChildHealthDailyFeedingForms,
     AggregateChildHealthPostnatalCareForms,
     AggregateChildHealthTHRForms,
     ChildHealthMonthly,
@@ -78,7 +79,6 @@ if settings.SERVER_ENVIRONMENT == 'softlayer':
 
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
-    {'type': 'awc_mgmt', 'name': 'static-awc_mgt_forms'},
     {'type': 'ccs_record_monthly', 'name': CCS_RECORD_MONTHLY_UCR},
     {'type': 'child_health_monthly', 'name': CHILD_HEALTH_MONTHLY_UCR},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
@@ -100,7 +100,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'insert_into_child_health_monthly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_ccs_record_monthly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_ccs_record.sql'),
@@ -150,7 +149,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             _create_views(cursor)
             _update_aggregate_locations_tables(cursor)
 
-        tasks = []
         state_ids = (SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
@@ -161,6 +159,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_gm_forms)
                 for state_id in state_ids
             ]
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_df_forms)
+                for state_id in state_ids
+            ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_cf_forms)
                 for state_id in state_ids
@@ -175,32 +177,29 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 ) for state_id in state_ids
             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
-            tasks.extend([
-                group(*stage_1_tasks),
-                group(
-                    icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
-                    icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
-                    icds_aggregation_task.si(date=calculation_date, func=_daily_attendance_table),
-                ),
-                group(
-                    icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
-                    icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
-                ),
-                group(
-                    icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
-                    no_op_task_for_celery_bug.si(),
-                )
-            ])
+            res = group(*stage_1_tasks).apply_async()
+            res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
+            res.get()
 
-        tasks.append(group(
+            res_child = chain(
+                icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
+                icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
+            ).apply_async()
+            res_ccs = chain(
+                icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
+                icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
+            ).apply_async()
+            res_daily.get()
+            res_ccs.get()
+            res_child.get()
+
+            res_awc = icds_aggregation_task.delay(date=calculation_date, func=_agg_awc_table)
+            res_awc.get()
+
+        chain(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
-            no_op_task_for_celery_bug.si(),
-        ))
-        tasks.append(group(
-            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')),
-            no_op_task_for_celery_bug.si(),
-        ))
-        chain(*tasks).delay()
+            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
+        ).delay()
 
 
 def _create_views(cursor):
@@ -218,16 +217,6 @@ def _create_views(cursor):
         # and look for recent changes in this folder.
         _dashboard_team_soft_assert(False, "Unexpected occurred while creating views in dashboard aggregation")
         raise
-
-        
-@task(queue="icds_aggregation_queue")
-def no_op_task_for_celery_bug():
-    # Under celery 3.1.18, we've noticed that tasks need to be grouped when using canvas
-    # If the tasks are not grouped, then once celery gets to that task, no future tasks will be queued.
-    # Grouping one task by itself does not appear to work.
-    # If there's only one task for a group, we can add this to get around this issue.
-    # Once we upgrade celery we can experiment with getting rid of this.
-    pass
 
 
 def _create_aggregate_functions(cursor):
@@ -329,6 +318,11 @@ def _aggregate_cf_forms(state_id, day):
 @track_time
 def _aggregate_gm_forms(state_id, day):
     AggregateGrowthMonitoringForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_df_forms(state_id, day):
+    AggregateChildHealthDailyFeedingForms.aggregate(state_id, day)
 
 
 @track_time
@@ -622,6 +616,13 @@ def _update_ucr_table_mapping():
     celery_task_logger.info("Ended updating ucr_table_name_mapping table")
 
 
+def _get_value(data, field):
+    default = 'N/A'
+    if field == 'days_inactive':
+        default = 0
+    return getattr(data, field) or default
+
+
 @periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
 def collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
@@ -647,7 +648,7 @@ def collect_inactive_awws():
     rows = [columns]
     for data in excel_data:
         rows.append(
-            [getattr(data, field) or 'N/A' for field in columns]
+            [_get_value(data, field) for field in columns]
         )
 
     celery_task_logger.info("Creating csv file")

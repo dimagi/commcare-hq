@@ -2,9 +2,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import calendar
+from datetime import datetime
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import get_location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
+from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.util.translation import localize
 from custom.intrahealth.sqldata import NombreData, TauxConsommationData
@@ -20,6 +22,22 @@ def get_localized_months():
     #Returns chronological list of months in french language
     with localize('fr'):
         return [(_(calendar.month_name[i])).title() for i in range(1, 13)]
+
+
+class YeksiNaaMonthYearMixin(MonthYearMixin):
+    @property
+    def month(self):
+        if 'month' in self.request.GET:
+            return int(self.request.GET['month'])
+        else:
+            return datetime.utcnow().month
+
+    @property
+    def year(self):
+        if 'year' in self.request.GET:
+            return int(self.request.GET['year'])
+        else:
+            return datetime.utcnow().year
 
 
 class IntraHealthLocationMixin(object):

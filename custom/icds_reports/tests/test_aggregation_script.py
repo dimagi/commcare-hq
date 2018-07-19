@@ -102,7 +102,7 @@ class AggregationScriptTestBase(TestCase):
             for key in dict1.keys():
                 if key != 'id':
                     value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
-                    value2 = dict2[key].replace('\r\n', '\n')
+                    value2 = dict2.get(key, '').replace('\r\n', '\n')
                     if value1 != value2:
                         differences.add(key)
 
@@ -119,7 +119,7 @@ class AggregationScriptTestBase(TestCase):
                         difference, dict1[difference].decode('utf-8')) for difference in differences]
                     ),
                     ', '.join(['{}: {}'.format(
-                        difference, dict2[difference]) for difference in differences]
+                        difference, dict2.get(difference, '')) for difference in differences]
                     )
                 ))
 
@@ -168,20 +168,6 @@ class AggregationScriptTest(AggregationScriptTestBase):
             'ccs_record_monthly_2017-05-01',
             os.path.join(OUTPUT_PATH, 'ccs_record_monthly_2017-05-01_sorted.csv'),
             sort_key=['awc_id', 'case_id']
-        )
-
-    def test_daily_attendance_2017_04_01(self):
-        self._load_and_compare_data(
-            'daily_attendance_2017-04-01',
-            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'doc_id']
-        )
-
-    def test_daily_attendance_2017_05_01(self):
-        self._load_and_compare_data(
-            'daily_attendance_2017-05-01',
-            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'doc_id']
         )
 
     def test_agg_ccs_record_2017_04_01_1(self):
@@ -423,4 +409,20 @@ class ChildHealthMonthlyAggregationTest(AggregationScriptTestBase):
             'child_health_monthly_2017-05-01',
             os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-05-01_sorted.csv'),
             sort_key=['awc_id', 'case_id']
+        )
+
+
+class DailyAttendanceAggregationTest(AggregationScriptTestBase):
+    def test_daily_attendance_2017_04_01(self):
+        self._load_and_compare_data(
+            'daily_attendance_2017-04-01',
+            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-04-01_sorted.csv'),
+            sort_key=['awc_id', 'pse_date']
+        )
+
+    def test_daily_attendance_2017_05_01(self):
+        self._load_and_compare_data(
+            'daily_attendance_2017-05-01',
+            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
+            sort_key=['awc_id', 'pse_date']
         )

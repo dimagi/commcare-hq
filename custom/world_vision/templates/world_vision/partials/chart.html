@@ -1,7 +1,0 @@
-{% if chart.title %}<h4 style="text-align: center; font-size: smaller">{{ chart.title }}</h4>{% endif %}
-<div id='chart_{{ report.slug }}_{{ counter }}' class="chart">
-    <svg style='height: {{ chart.height }}px; width: 100%'> </svg>
-</div>
-{% with id1=counter|stringformat:"s" slug=report.slug %}
-    {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id1 %}
-{% endwith %}

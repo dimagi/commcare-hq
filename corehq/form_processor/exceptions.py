@@ -14,6 +14,10 @@ class XFormNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
 
 
+class XFormQuestionValueNotFound(Exception):
+    pass
+
+
 class LedgerValueNotFound(Exception):
     pass
 

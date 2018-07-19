@@ -49,16 +49,15 @@
 trunk: master
 name: autostaging
 branches:
-  - jls/requirejs-locations  # Jenny June 22
   - nh/omrs/levenshtein # Norman June 29
-  - mk-strict-version-check # MK Jul 2
-  - mk-277767 # MK Jul 3
-  - sk/caching-user-id # SK Jul 4
+  - es/location-upload  # Ethan July 6
+  - jls/unify-tab-history  # Jenny July 10
+  - jls/appcues-template-apps  # Jenny July 16
+  - je/upgrade-gunicorn # 7/17
+  - jls/requirejs-case-importer  # Jenny July 17
+  - np/domain-blob  # NP July 17
+  - revert-21236-fr/add-secure-urllib3  # Danny July 18
 submodules:
-  submodules/touchforms-src:
-    # let's leave this here even when empty
-    # just so we always get latest master
-    branches: []
   submodules/django-digest-src:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:

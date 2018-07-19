@@ -22,12 +22,7 @@
     {% block patient_content %}
         <div class="col-sm-11">
             <div class="row">
-                {% if not request|toggle_enabled:"CASE_DATA_FORMPLAYER_EXCLUDE" %}
-                    {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
-                    {# import error on the case details page: http://manage.dimagi.com/default.asp?223100 #}
-                    {% include 'cloudcare/includes/formplayer-inline.html' %}
-                    {% include "case/partials/case_hierarchy.html" %}
-                {% endif %}
+                {% include "case/partials/case_hierarchy.html" %}
             </div>
         </div>
     {% endblock patient_content %}

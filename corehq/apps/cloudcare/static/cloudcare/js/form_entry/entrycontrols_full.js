@@ -97,7 +97,7 @@ EntrySingleAnswer = function(question, options) {
 
     if (options.enableAutoUpdate) {
         self.valueUpdate = 'keyup';
-        self.answer.extend({
+        self.rawAnswer.extend({
             rateLimit: {
                 timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
                 method: "notifyWhenChangesStop",
@@ -194,7 +194,7 @@ function IntEntry(question, options) {
     var self = this;
     FreeTextEntry.call(self, question, options);
     self.templateType = 'str';
-    self.lengthLimit = options.lengthLimit || 10;
+    self.lengthLimit = options.lengthLimit || 9;
 
     self.getErrorMessage = function(rawAnswer) {
         return (isNaN(+rawAnswer) || +rawAnswer != Math.floor(+rawAnswer) ? "Not a valid whole number" : null);

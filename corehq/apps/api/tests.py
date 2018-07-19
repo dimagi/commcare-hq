@@ -26,6 +26,7 @@ from corehq.apps.userreports.models import ReportConfiguration, \
     DataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.pillows.case import transform_case_for_elasticsearch
+from corehq.util.test_utils import flag_enabled, PatchMeta
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 
@@ -98,13 +99,15 @@ class FakeXFormES(object):
         return doc
 
 
-class APIResourceTest(TestCase):
+class APIResourceTest(six.with_metaclass(PatchMeta, TestCase)):
     """
     Base class for shared API tests. Sets up a domain and user and provides
     some helper methods and properties for accessing the API
     """
-    resource = None # must be set by subclasses
-    api_name = 'v0.4' # can be overridden by subclasses
+    patch = flag_enabled('API_THROTTLE_WHITELIST')
+
+    resource = None  # must be set by subclasses
+    api_name = 'v0.4'  # can be overridden by subclasses
     maxDiff = None
 
     @classmethod

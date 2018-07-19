@@ -321,7 +321,6 @@ HQ_APPS = (
     'fluff.fluff_filter',
     'soil',
     'toggle',
-    'touchforms.formplayer',
     'phonelog',
     'pillowtop',
     'pillow_retry',
@@ -351,7 +350,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
-    'custom.logistics',
     'custom.ilsgateway',
     'custom.zipline',
     'custom.ewsghana',
@@ -360,7 +358,6 @@ HQ_APPS = (
     'custom.ucla',
 
     'custom.intrahealth',
-    'custom.world_vision',
     'custom.up_nrhm',
 
     'custom.care_pathways',
@@ -905,6 +902,8 @@ ENIKSHAY_PRIVATE_API_PASSWORD = None
 ASYNC_INDICATORS_TO_QUEUE = 10000
 ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
+
+UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 # Example:
@@ -1634,6 +1633,12 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
          "ICDS: Supervisor Location from AWC Owner"],
+    'HOST_CASE_OWNER_LOCATION':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
+    'HOST_CASE_OWNER_LOCATION_PARENT':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location_parent',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
     'CASE_OWNER_LOCATION_PARENT':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
          "Abt: The case owner's location's parent location"],
@@ -1786,9 +1791,6 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
-        'custom.world_vision.models.WorldVisionMotherFluffPillow',
-        'custom.world_vision.models.WorldVisionChildFluffPillow',
-        'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
@@ -1964,6 +1966,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
@@ -2191,7 +2194,6 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
-    'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',

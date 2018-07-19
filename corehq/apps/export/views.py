@@ -93,7 +93,6 @@ from corehq.apps.export.dbaccessors import (
     get_form_exports_by_domain,
 )
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.dbaccessors import touch_exports, stale_get_export_count
 from corehq.apps.reports.export import CustomBulkExportHelper
 from corehq.apps.reports.exportfilters import default_form_filter
 from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
@@ -343,7 +342,6 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
             raise ExportNotFound()
         self.export_type = saved_export.type
         saved_export.delete()
-        touch_exports(self.domain)
         messages.success(
             request,
             mark_safe(
@@ -356,7 +354,6 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
 class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
-    show_sync_to_dropbox = False  # remove when DBox issue is resolved.
     show_date_range = False
     check_for_multimedia = False
     filter_form_class = None
@@ -396,7 +393,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             'export_list': self.export_list,
             'export_list_url': self.export_list_url,
             'max_column_size': self.max_column_size,
-            'show_sync_to_dropbox': self.show_sync_to_dropbox,
             'show_date_range': self.show_date_range,
             'check_for_multimedia': self.check_for_multimedia,
             'is_sms_export': self.sms_export,
@@ -1475,18 +1471,6 @@ class DashboardFeedPaywall(BaseProjectDataView):
     template_name = 'export/paywall.html'
 
 
-def use_new_daily_saved_exports_ui(domain):
-    """
-    Return True if this domain should use the new daily saved exports UI
-    The new daily saved exports UI puts Daily Saved Exports and Dashboard Feeds on their own pages.
-    It also allows for the filtering of both of these types of exports.
-    """
-    def _has_no_old_exports(domain_):
-        return not bool(stale_get_export_count(domain_))
-
-    return _has_no_old_exports(domain)
-
-
 @location_safe
 class FormExportListView(BaseExportListView):
     urlname = 'list_form_exports'
@@ -1504,10 +1488,8 @@ class FormExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
-        if use_new_daily_saved_exports_ui(self.domain):
-            # New exports display daily saved exports in their own view
-            exports = [x for x in exports if not x.is_daily_saved_export]
-        return exports
+        # New exports display daily saved exports in their own view
+        return [x for x in exports if not x.is_daily_saved_export]
 
     @property
     @memoized
@@ -1669,9 +1651,7 @@ class CaseExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
-        if use_new_daily_saved_exports_ui(self.domain):
-            exports = [x for x in exports if not x.is_daily_saved_export]
-        return exports
+        return [x for x in exports if not x.is_daily_saved_export]
 
     @property
     def create_export_form_title(self):
@@ -1692,7 +1672,7 @@ class CaseExportListView(BaseExportListView):
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
-            can_edit = export.can_edit(self.request.couch_user.user_id)
+            can_edit = export.can_edit(self.request.couch_user)
             description = export.description
             my_export = export.owner_id == self.request.couch_user.user_id
             sharing = export.sharing
@@ -1789,7 +1769,7 @@ class BaseNewExportView(BaseExportView):
             'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
-            'can_edit': self.export_instance.can_edit(self.request.couch_user.user_id),
+            'can_edit': self.export_instance.can_edit(self.request.couch_user),
         }
 
     def commit(self, request):
@@ -1838,7 +1818,10 @@ class BaseModifyNewCustomView(BaseNewExportView):
     def page_context(self):
         result = super(BaseModifyNewCustomView, self).page_context
         result['format_options'] = ["xls", "xlsx", "csv"]
-        result['sharing_options'] = SharingOption.CHOICES
+        if self.export_instance.owner_id:
+            result['sharing_options'] = SharingOption.CHOICES
+        else:
+            result['sharing_options'] = [SharingOption.EDIT_AND_EXPORT]
         schema = self.get_export_schema(
             self.domain,
             self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
@@ -2008,8 +1991,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
             new_export_instance = None
         if (
             new_export_instance
-            and new_export_instance.sharing in [SharingOption.EXPORT_ONLY, SharingOption.PRIVATE]
-            and new_export_instance.owner_id != request.couch_user.user_id
+            and not new_export_instance.can_edit(request.couch_user)
         ):
             raise Http404
         return super(BaseEditNewCustomExportView, self).post(request, *args, **kwargs)
@@ -2080,7 +2062,7 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
     @memoized
     def report_class(self):
         # The user will be redirected to the view class returned by this function after a successful deletion
-        if self.export_instance.is_daily_saved_export and use_new_daily_saved_exports_ui(self.domain):
+        if self.export_instance.is_daily_saved_export:
             if self.export_instance.export_format == "html":
                 return DashboardFeedListView
             return DailySavedExportListView

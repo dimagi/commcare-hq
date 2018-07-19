@@ -121,7 +121,7 @@ from couchexport.shortcuts import export_response
 
 
 @location_safe
-@method_decorator([toggles.ICDS_REPORTS.required_decorator(), login_and_domain_required], name='dispatch')
+@method_decorator([login_and_domain_required], name='dispatch')
 class TableauView(RedirectView):
 
     permanent = True
@@ -432,6 +432,7 @@ class LocationView(View):
             ]
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LocationAncestorsView(View):
@@ -622,6 +623,7 @@ class AwcReportsView(BaseReportView):
             data = get_beneficiary_details(
                 self.request.GET.get('case_id'),
                 config['awc_id'],
+                tuple(current_month.timetuple())[:3]
             )
         return JsonResponse(data=data)
 

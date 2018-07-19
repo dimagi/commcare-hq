@@ -917,13 +917,6 @@ CUSTOM_MENU_BAR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ICDS_REPORTS = StaticToggle(
-    'icds_reports',
-    'Enable access to the Tableau dashboard for ICDS',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
 DASHBOARD_ICDS_REPORT = StaticToggle(
     'dashboard_icds_reports',
     'ICDS: Enable access to the dashboard reports for ICDS',
@@ -1034,13 +1027,6 @@ BASIC_CHILD_MODULE = StaticToggle(
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
-SMS_USE_FORMPLAYER = StaticToggle(
-    'sms_use_formplayer',
-    'Use Formplayer for SMS',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
 )
@@ -1605,11 +1591,4 @@ AGGREGATE_UCRS = StaticToggle(
     'Enable experimental aggregate UCR support',
     TAG_INTERNAL,  # this might change in the future
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-CASE_DATA_FORMPLAYER_EXCLUDE = StaticToggle(
-    'case_data_formplayer_exclude',
-    'Do not include formplayer on case data page or custom reports',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )

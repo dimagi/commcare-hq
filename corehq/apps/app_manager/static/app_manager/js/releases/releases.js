@@ -267,10 +267,11 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
             return hqImport("hqwebapp/js/initial_page_data").reverse.apply(null, arguments);
         };
-        self.webAppsUrl = function(idObservable) {
+        self.webAppsUrl = function(idObservable, copyOf) {
             var url = hqImport("hqwebapp/js/initial_page_data").reverse("formplayer_main"),
                 data = {
                     appId: ko.utils.unwrapObservable(idObservable),
+                    copyOf: copyOf,
                 };
 
             return url + '#' + encodeURI(JSON.stringify(data));

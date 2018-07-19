@@ -85,7 +85,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     LocationXpath,
 )
-from corehq.apps.builds import get_default_build_spec
+from corehq.apps.builds.utils import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from memoized import memoized
@@ -3128,9 +3128,14 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             ))
 
         if self.form_filter:
+            # Replace any dots with #case, which doesn't make for valid xpath
+            # but will trigger any appropriate validation errors
+            interpolated_form_filter = interpolate_xpath(self.form_filter, case_xpath="#case",
+                    module=self.get_module(), form=self)
+
             form_filter_references_case = (
-                xpath_references_case(self.form_filter) or
-                xpath_references_user_case(self.form_filter)
+                xpath_references_case(interpolated_form_filter) or
+                xpath_references_user_case(interpolated_form_filter)
             )
 
             if form_filter_references_case:

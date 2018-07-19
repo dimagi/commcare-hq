@@ -17,6 +17,7 @@
         "vectorlink-ethiopia",
         "vectorlink-uganda"
     ],
+    "server_environment": ["production"],
     "report_id": "supervisory_report",
     "data_source_table": "supervisory-006",
     "config": {

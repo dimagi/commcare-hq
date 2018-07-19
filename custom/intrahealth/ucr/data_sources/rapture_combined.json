@@ -5,6 +5,7 @@
     "testing-ipm-senegal",
     "ct-apr"
   ],
+  "server_environment": ["production", "pna"],
   "config": {
     "table_id": "rapture_combined",
     "display_name": "Rapture Combined",
