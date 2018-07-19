@@ -47,6 +47,7 @@ from corehq.apps.accounting.forms import (
     ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm, TriggerCustomerInvoiceForm,
     TestReminderEmailFrom,
     CreateAdminForm,
+    EnterpriseSettingsForm,
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
 )
@@ -1199,12 +1200,17 @@ def enterprise_dashboard_email(request, domain, slug):
 
 def enterprise_settings(request, domain):
     account = _get_account_or_404(request, domain)
+
+    form = EnterpriseSettingsForm({
+        "restrict_domain_creation": account.restrict_domain_creation,
+    })
+
     context = {
-        'account': account,
         'domain': domain,
         'current_page': {
             'title': _('Enterprise Settings'),
             'page_name': _('Enterprise Settings'),
-        }
+        },
+        'settings_form': form,
     }
     return render(request, "accounting/enterprise_settings.html", context)

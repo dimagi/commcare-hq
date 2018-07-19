@@ -20,7 +20,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.bootstrap import InlineField, PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from django_countries.data import COUNTRIES
@@ -2348,3 +2348,34 @@ class CreateAdminForm(forms.Form):
         if not user_role.role.has_privilege(ops_role):
             Grant.objects.create(from_role=user_role.role, to_role=ops_role)
         return user
+
+
+class EnterpriseSettingsForm(forms.Form):
+    restrict_domain_creation = forms.BooleanField(
+        label=ugettext_lazy("Restrict Project Space Creation"),
+        required=False,
+        help_text=ugettext_lazy("Do not allow non-admins to create new project spaces")
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper[0] = PrependedText('restrict_domain_creation', '')
+        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Enterprise Settings')
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Enterprise Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def save(self, account):
+        account.restrict_domain_creation = self.cleaned_data.get('restrict_superusers', False)
+        account.save()
+        return True
