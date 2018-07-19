@@ -756,6 +756,9 @@ class Command(BaseCommand):
             RECIPIENT_USER_GROUP,
             RECIPIENT_OWNER,
             RECIPIENT_USER,
+            'CASE_OWNER_LOCATION_PARENT',
+            'HOST_CASE_OWNER_LOCATION',
+            'HOST_CASE_OWNER_LOCATION_PARENT',
         ):
             return None
 
