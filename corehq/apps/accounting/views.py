@@ -21,6 +21,7 @@ from django.http import (
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 from couchexport.export import Format
@@ -1201,7 +1202,7 @@ def enterprise_dashboard_email(request, domain, slug):
 def enterprise_settings(request, domain):
     account = _get_account_or_404(request, domain)
 
-    form = EnterpriseSettingsForm({
+    form = EnterpriseSettingsForm(domain=domain, initial={
         "restrict_domain_creation": account.restrict_domain_creation,
     })
 
@@ -1214,3 +1215,20 @@ def enterprise_settings(request, domain):
         'settings_form': form,
     }
     return render(request, "accounting/enterprise_settings.html", context)
+
+
+@require_POST
+def edit_enterprise_settings(request, domain):
+    account = _get_account_or_404(request, domain)
+
+    form = EnterpriseSettingsForm(request.POST, domain=domain, initial={
+        "restrict_domain_creation": account.restrict_domain_creation,
+    })
+
+    if form.is_valid():
+        form.save(account)
+        messages.success(request, "Account successfully updated.")
+    else:
+        messages.error(request, "Error updating account.")
+
+    return HttpResponseRedirect(reverse('enterprise_settings', args=[domain]))
