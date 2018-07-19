@@ -181,6 +181,10 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('accounting', _terminate_subscriptions),
     CustomDeletion('form_processor', _delete_all_cases),
     CustomDeletion('form_processor', _delete_all_forms),
+    ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
+    ModelDeletion('case_search', 'CaseSearchQueryAddition', 'domain'),
+    ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
+    ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
 ]
 
 

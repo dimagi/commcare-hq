@@ -20,6 +20,12 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    CaseSearchQueryAddition,
+    FuzzyProperties,
+    IgnorePatterns,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import make_location, LocationType, SQLLocation
@@ -250,6 +256,31 @@ class TestDeleteDomain(TestCase):
 
         self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
         self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
+
+    def _assert_queryset_count(self, queryset_list, count):
+        for queryset in queryset_list:
+            self.assertEqual(queryset.count(), count)
+
+    def _assert_case_search_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            CaseSearchConfig.objects.filter(domain=domain_name),
+            CaseSearchQueryAddition.objects.filter(domain=domain_name),
+            FuzzyProperties.objects.filter(domain=domain_name),
+            IgnorePatterns.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_case_search(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            CaseSearchConfig.objects.create(domain=domain_name)
+            CaseSearchQueryAddition.objects.create(domain=domain_name)
+            FuzzyProperties.objects.create(domain=domain_name)
+            IgnorePatterns.objects.create(domain=domain_name)
+            self._assert_case_search_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_case_search_counts(self.domain.name, 0)
+        self._assert_case_search_counts(self.domain2.name, 1)
 
     def tearDown(self):
         self.domain2.delete()
