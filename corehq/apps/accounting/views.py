@@ -1156,6 +1156,7 @@ def enterprise_dashboard(request, domain):
         )],
         'current_page': {
             'page_name': _('Enterprise Dashboard'),
+            'title': _('Enterprise Dashboard'),
         }
     }
     return render(request, "accounting/enterprise_dashboard.html", context)
@@ -1194,3 +1195,16 @@ def enterprise_dashboard_email(request, domain, slug):
         'email': request.couch_user.username,
     })
     return JsonResponse({'message': message})
+
+
+def enterprise_settings(request, domain):
+    account = _get_account_or_404(request, domain)
+    context = {
+        'account': account,
+        'domain': domain,
+        'current_page': {
+            'title': _('Enterprise Settings'),
+            'page_name': _('Enterprise Settings'),
+        }
+    }
+    return render(request, "accounting/enterprise_settings.html", context)
