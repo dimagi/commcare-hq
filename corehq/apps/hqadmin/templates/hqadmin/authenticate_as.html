@@ -1,9 +1,9 @@
-{% extends "hqadmin/user_administration.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block reportcontent %}
+{% block page_content %}
 {% initial_page_data "url" root_page_url %}
 <div class="row">
     <div class="col-xs-12">
