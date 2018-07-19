@@ -97,7 +97,7 @@ EntrySingleAnswer = function(question, options) {
 
     if (options.enableAutoUpdate) {
         self.valueUpdate = 'keyup';
-        self.rawAnswer.extend({
+        self.answer.extend({
             rateLimit: {
                 timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
                 method: "notifyWhenChangesStop",
