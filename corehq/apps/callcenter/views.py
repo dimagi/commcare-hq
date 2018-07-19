@@ -6,6 +6,7 @@ from django.utils.translation import ugettext
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.es import UserES
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.apps.reports.util import _report_user_dict
 from corehq.apps.users.cases import get_wrapped_owner
@@ -69,8 +70,13 @@ class CallCenterOwnerOptionsView(EmwfOptionsView):
         ]
 
     def user_es_query(self, query):
-        q = super(CallCenterOwnerOptionsView, self).user_es_query(query)
-        return q.mobile_users()
+        # Do not include inactive users in this query.
+        search_fields = ["first_name", "last_name", "base_username"]
+        query = (UserES()
+                 .domain(self.domain)
+                 .search_string_query(query, default_fields=search_fields))
+
+        return query.mobile_users()
 
     @staticmethod
     def convert_owner_id_to_select_choice(owner_id, domain):
