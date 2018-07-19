@@ -22,7 +22,7 @@ djangorestframework==3.5.4
 elasticsearch==1.9.0
 eulxml==1.1.3
 ghdiff==0.4
-gunicorn==19.4
+gunicorn==19.9.0
 lxml==3.4.4
 kafka-python==0.9.5
 mock==2.0.0
