@@ -932,9 +932,9 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
                 LAST_VALUE(form_date) OVER forms as last_submission
             FROM "{ucr_tablename}"
             WHERE awc_id IN (
-              SELECT DISTINCT awc_id 
-              from "{ucr_tablename}"
-              where inserted_at >= %(last_sync)s AND form_date <= %(now)s
+                SELECT DISTINCT awc_id
+                FROM "{ucr_tablename}"
+                WHERE inserted_at >= %(last_sync)s AND form_date <= %(now)s
             )
             WINDOW forms AS (
               PARTITION BY awc_id
