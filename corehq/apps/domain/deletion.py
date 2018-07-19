@@ -195,6 +195,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
+    ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
 ]
 
 

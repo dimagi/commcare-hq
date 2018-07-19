@@ -51,6 +51,8 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest
+from corehq.apps.zapier.consts import EventTypes
+from corehq.apps.zapier.models import ZapierSubscription
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import create_form_for_test
 from dimagi.utils.make_uuid import random_hex
@@ -460,6 +462,27 @@ class TestDeleteDomain(TestCase):
 
         self._assert_users_counts(self.domain.name, 0)
         self._assert_users_counts(self.domain2.name, 1)
+
+    def _assert_zapier_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            ZapierSubscription.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_zapier_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            ZapierSubscription.objects.create(
+                domain=domain_name,
+                case_type='case_type',
+                event_name=EventTypes.NEW_CASE,
+                url='http://%s.com' % domain_name,
+                user_id='user_id',
+            )
+            self._assert_zapier_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_zapier_counts(self.domain.name, 0)
+        self._assert_zapier_counts(self.domain2.name, 1)
 
     def tearDown(self):
         self.domain2.delete()
