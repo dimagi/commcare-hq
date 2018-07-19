@@ -25,6 +25,7 @@ from corehq.apps.accounting.views import (
     enterprise_dashboard_download,
     enterprise_dashboard_email,
     enterprise_dashboard_total,
+    enterprise_settings,
     CustomerInvoicePdfView
 )
 
@@ -70,4 +71,5 @@ domain_specific = [
         name='enterprise_dashboard_email'),
     url(r'^dashboard/(?P<slug>[^/]*)/total/$', enterprise_dashboard_total,
         name='enterprise_dashboard_total'),
+    url(r'^settings/$', enterprise_settings, name='enterprise_settings'),
 ]

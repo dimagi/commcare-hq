@@ -1401,10 +1401,16 @@ class EnterpriseSettingsTab(UITab):
     @property
     def sidebar_items(self):
         items = super(EnterpriseSettingsTab, self).sidebar_items
-        items.append((_('Manage Enterprise'), [{
-            'title': _('Enterprise Dashboard'),
-            'url': reverse('enterprise_dashboard', args=[self.domain]),
-        }]))
+        items.append((_('Manage Enterprise'), [
+            {
+                'title': _('Enterprise Dashboard'),
+                'url': reverse('enterprise_dashboard', args=[self.domain]),
+            },
+            {
+                'title': _('Enterprise Settings'),
+                'url': reverse('enterprise_settings', args=[self.domain]),
+            },
+        ]))
         return items
 
 
