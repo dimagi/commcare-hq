@@ -422,9 +422,9 @@ def track_periodic_data():
     :return:
     """
     # Start by getting a list of web users mapped to their domains
-    six_months_ago = date.today() - timedelta(days=180)
+    two_days_ago = date.today() - timedelta(days=2)
     users_to_domains = (UserES().web_users()
-                        .last_logged_in(gte=six_months_ago).source(['domains', 'email', 'date_joined'])
+                        .last_logged_in(gte=two_days_ago).source(['domains', 'email', 'date_joined'])
                         .analytics_enabled()
                         .run().hits)
     # users_to_domains is a list of dicts
