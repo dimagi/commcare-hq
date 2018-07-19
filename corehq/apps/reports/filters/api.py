@@ -159,6 +159,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     def user_es_query(self, query):
         search_fields = ["first_name", "last_name", "base_username"]
         return (UserES()
+                .show_inactive()
                 .domain(self.domain)
                 .search_string_query(query, default_fields=search_fields))
 
