@@ -1,9 +1,10 @@
-{% extends "hqadmin/user_administration.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
-{% block reportcontent %}
+
+{% block page_content %}
     <p>{% trans "See a user's projects by entering their email address below." %}</p>
-    <form class="form-horizontal" method="GET" action="">
-        <input name="q" type="text" style="width: 30em" placeholder="somebody@example.com"/>
+    <form class="form-inline" method="GET" action="">
+        <input name="q" type="text" class="form-control" placeholder="you@example.com"/>
         <input class="btn btn-primary" type="submit"/>
     </form>
     {% if web_user %}
