@@ -337,7 +337,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
 
-        q = user_es.UserES().domain(domain)
+        q = user_es.UserES().show_inactive().domain(domain)
         if not request_user.has_permission(domain, 'access_all_locations'):
             cls._verify_users_are_accessible(domain, request_user, user_ids)
             return q.OR(

@@ -159,6 +159,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     def user_es_query(self, query):
         search_fields = ["first_name", "last_name", "base_username"]
         return (UserES()
+                .show_inactive()
                 .domain(self.domain)
                 .search_string_query(query, default_fields=search_fields))
 
@@ -258,7 +259,12 @@ class MobileWorkersOptionsView(EmwfOptionsView):
         ]
 
     def user_es_query(self, query):
-        query = super(MobileWorkersOptionsView, self).user_es_query(query)
+        # Do not include inactive users in this query.
+        search_fields = ["first_name", "last_name", "base_username"]
+        query = (UserES()
+                 .domain(self.domain)
+                 .search_string_query(query, default_fields=search_fields))
+
         return query.mobile_users()
 
 
