@@ -2,11 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'domain/js/case_search.js' %}"></script>
-    <script src="{% static 'domain/js/case_search_main.js' %}"></script>
-{% endblock %}
-
+{% requirejs_main 'domain/js/case_search_main' %}
 
 {% block page_content %}
     {% include 'domain/admin/partials/case_search_templates.html' %}
