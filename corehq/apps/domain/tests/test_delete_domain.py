@@ -111,10 +111,6 @@ class TestDeleteDomain(TestCase):
         )
         MobileBackendInvitation.objects.create(domain=domain_name, backend=backend)
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestDeleteDomain, cls).setUpClass()
-
     def setUp(self):
         super(TestDeleteDomain, self).setUp()
         self.domain = Domain(name="test", is_active=True)
