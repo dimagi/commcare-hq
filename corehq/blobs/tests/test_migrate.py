@@ -469,8 +469,9 @@ class TestCommCareBuildMigrations(BaseMigrationTest):
         new_payload = b'new payload \xe4\x94'
         payload_name = 'payload.jar'
         super(BlobMixin, commcare_build).put_attachment(old_payload, payload_name)
+        super(BlobMixin, commcare_build).put_attachment(old_payload, 'payload.jad')
         commcare_build.save()
-        self.assertEqual(len(commcare_build._attachments), 1)
+        self.assertEqual(len(commcare_build._attachments), 2)
 
         def modify(doc):
             doc = CommCareBuild.get(doc._id)
@@ -481,7 +482,7 @@ class TestCommCareBuildMigrations(BaseMigrationTest):
 
         commcare_build = CommCareBuild.get(commcare_build._id)
         self.assertEqual(commcare_build.fetch_file(payload_name), new_payload)
-        self.assertIsNone(commcare_build._attachments)
+        self.assertEqual(commcare_build.fetch_file('payload.jad'), old_payload)
 
 
 class TestMigrateBackend(TestCase):
