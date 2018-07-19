@@ -28,7 +28,7 @@ from corehq.apps.case_search.models import (
     FuzzyProperties,
     IgnorePatterns,
 )
-from corehq.apps.data_analytics.models import GIRRow
+from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.ivr.models import Call
@@ -346,6 +346,7 @@ class TestDeleteDomain(TestCase):
     def _assert_data_analytics_counts(self, domain_name, count):
         self._assert_queryset_count([
             GIRRow.objects.filter(domain_name=domain_name),
+            MALTRow.objects.filter(domain_name=domain_name),
         ], count)
 
     def test_data_analytics(self):
@@ -368,6 +369,11 @@ class TestDeleteDomain(TestCase):
                 exp_and_active_ever=1,
                 active_in_span=1,
                 eligible_forms=1,
+            )
+            MALTRow.objects.create(
+                domain_name=domain_name,
+                month=date.today(),
+                num_of_forms=1,
             )
             self._assert_data_analytics_counts(domain_name, 1)
 

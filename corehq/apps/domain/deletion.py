@@ -190,6 +190,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
+    ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain'),
     ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
