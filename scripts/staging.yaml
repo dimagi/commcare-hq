@@ -58,6 +58,7 @@ branches:
   - jls/requirejs-domain-billing  # Jenny July 19
   - nh/lw/dhis  # Norman July 20
 #  - np/attachments-soft_assert  # NP July 20
+  - np/resourceerror  # NP July 20
 submodules:
   submodules/django-digest-src:
     branches: []
