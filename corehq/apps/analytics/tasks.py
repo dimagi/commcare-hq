@@ -451,7 +451,6 @@ def track_periodic_data():
     hubspot_number_of_domains_with_forms_gt_threshold = 0
 
     for chunk in range(num_chunks):
-        print("chunk {}".format(chunk))
         users_to_domains = (user_query
                             .size(chunk_size)
                             .start(chunk * chunk_size)
