@@ -53,7 +53,6 @@ branches:
   - es/location-upload  # Ethan July 6
   - jls/unify-tab-history  # Jenny July 10
   - jls/appcues-template-apps  # Jenny July 16
-  - je/upgrade-gunicorn # 7/17
   - jls/requirejs-case-importer  # Jenny July 17
   - revert-21236-fr/add-secure-urllib3  # Danny July 18
   - jls/requirejs-domain-billing  # Jenny July 19
