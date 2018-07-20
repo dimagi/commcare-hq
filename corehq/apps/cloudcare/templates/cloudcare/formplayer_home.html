@@ -84,6 +84,7 @@
 {% block content %}
 
     {% initial_page_data 'apps' apps %}
+    {% initial_page_data 'appcues_test' appcues_test %}
     {% initial_page_data 'debugger_enabled' request.couch_user.can_edit_data %}
     {% initial_page_data 'domain' domain %}
     {% initial_page_data 'environment' environment %}
@@ -94,6 +95,10 @@
     {% initial_page_data 'single_app_mode' single_app_mode %}
     {% initial_page_data 'username' username %}
     {% initial_page_data 'use_live_query' use_live_query %}
+    {% registerurl 'list_case_exports' request.domain %}
+    {% registerurl 'list_form_exports' request.domain %}
+    {% registerurl 'case_data' request.domain '---' %}
+    {% registerurl 'render_form_data' request.domain '---' %}
 
     <!-- For now we won't touch this since the form entry code is coupled with it  -->
 
