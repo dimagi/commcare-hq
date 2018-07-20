@@ -2,8 +2,11 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "domain/js/info_base.js" %}"></script>
+{% block js %}
+    {% if not requirejs_main %}
+        {{ block.super }}
+        <script src="{% static "domain/js/info_base.js" %}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
