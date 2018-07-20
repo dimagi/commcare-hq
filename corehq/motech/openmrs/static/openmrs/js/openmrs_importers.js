@@ -80,27 +80,7 @@ hqDefine('openmrs/js/openmrs_importers', function () {
 
         self.initOpenmrsImporterTemplate = function(elements) {
             _.each(elements, function(element) {
-                _.each($(element).find('.jsonwidget'), function(widget) {
-                    var $element = $(widget),
-                        editorElement = $element.after('<pre />').next()[0];
-                    $element.hide();
-                    var editor = ace.edit(
-                        editorElement,
-                        {
-                            showPrintMargin: false,
-                            maxLines: 40,
-                            minLines: 3,
-                            fontSize: 14,
-                            wrap: true,
-                            useWorker: true,
-                        }
-                    );
-                    editor.session.setMode('ace/mode/json');
-                    editor.getSession().setValue($element.val());
-                    editor.getSession().on('change', function(){
-                        $element.val(editor.getSession().getValue());
-                    });
-                });
+                _.each($(element).find('.jsonwidget'), hqImport("userreports/js/base").initJsonWidget);
             });
         };
 
