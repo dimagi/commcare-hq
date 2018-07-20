@@ -2,12 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}
-    {% if not requirejs_main %}
-        {{ block.super }}
-        <script src="{% static "domain/js/info_base.js" %}"></script>
-    {% endif %}
-{% endblock %}
+{% requirejs_main 'domain/js/info_base' %}
 
 {% block content %}
     {% initial_page_data "autocomplete_fields" autocomplete_fields %}
