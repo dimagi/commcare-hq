@@ -191,18 +191,6 @@ class ExportsPermissionsMixin(object):
         return user_can_view_deid_exports(self.domain, self.request.couch_user)
 
 
-class EditCustomFormExportView(BaseEditCustomExportView):
-    urlname = 'edit_custom_export_form'
-    page_title = ugettext_noop("Edit Form Export")
-    export_type = 'form'
-
-
-class EditCustomCaseExportView(BaseEditCustomExportView):
-    urlname = 'edit_custom_export_case'
-    page_title = ugettext_noop("Edit Case Export")
-    export_type = 'case'
-
-
 class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']

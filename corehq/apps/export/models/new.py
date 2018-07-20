@@ -2615,19 +2615,6 @@ class ExportMigrationMeta(Document):
     class Meta(object):
         app_label = 'export'
 
-    @property
-    def old_export_url(self):
-        from corehq.apps.export.views import EditCustomCaseExportView, EditCustomFormExportView
-        if self.export_type == FORM_EXPORT:
-            view_cls = EditCustomFormExportView
-        else:
-            view_cls = EditCustomCaseExportView
-
-        return '{}{}'.format(get_url_base(), reverse(
-            view_cls.urlname,
-            args=[self.domain, self.saved_export_id],
-        ))
-
 
 class DailySavedExportNotification(models.Model):
     user_id = models.CharField(max_length=255, db_index=True)
