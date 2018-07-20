@@ -16,11 +16,9 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
-    <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
-    <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
-    <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
-    <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
+    <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
+    <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
+    <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
 
     <script src="{% static 'userreports/js/base.js' %}"></script>
     <script src="{% static 'openmrs/js/openmrs_importers.js' %}"></script>
@@ -41,7 +39,8 @@
     <div data-bind="template: {
                         name: 'importer_template',
                         foreach: openmrsImporters,
-                        as: 'openmrsImporter'
+                        as: 'openmrsImporter',
+                        afterRender: initOpenmrsImporterTemplate
                     }"></div>
 
     <p>
