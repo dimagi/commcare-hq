@@ -3,6 +3,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import csv342 as csv
 import os
+
+import math
 from celery.schedules import crontab
 from celery.task import periodic_task
 import tinys3
@@ -431,103 +433,121 @@ def track_periodic_data():
     :return:
     """
     # Start by getting a list of web users mapped to their domains
-    two_days_ago = date.today() - timedelta(days=2)
-    users_to_domains = (UserES().web_users()
-                        .last_logged_in(gte=two_days_ago).source(['domains', 'email', 'date_joined'])
-                        .analytics_enabled()
-                        .run().hits)
-    # users_to_domains is a list of dicts
-    domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
-        .aggregations.domain.counts_by_bucket()
-    domains_to_mobile_users = UserES().mobile_users().terms_aggregation('domain', 'domain').size(0).run()\
-                                      .aggregations.domain.counts_by_bucket()
+    three_months_ago = date.today() - timedelta(days=90)
 
-    # Keep track of india and www data seperately
-    env = get_instance_string()
+    user_query = (UserES()
+                  .web_users()
+                  .last_logged_in(gte=three_months_ago)
+                  .sort('date_joined', desc=True)
+                  .source(['domains', 'email', 'date_joined'])
+                  .analytics_enabled())
+
+    total_users = user_query.count()
+    chunk_size = 100
+    num_chunks = int(math.ceil(float(total_users)/float(chunk_size)))
 
     # Track no of users and domains with max_forms greater than HUBSPOT_THRESHOLD
-    number_of_users = 0
-    number_of_domains_with_forms_gt_threshold = 0
+    hubspot_number_of_users = 0
+    hubspot_number_of_domains_with_forms_gt_threshold = 0
 
-    for num_forms in domains_to_forms.values():
-        if num_forms > HUBSPOT_THRESHOLD:
-            number_of_domains_with_forms_gt_threshold += 1
+    for chunk in range(num_chunks):
+        print("chunk {}".format(chunk))
+        users_to_domains = (user_query
+                            .size(chunk_size)
+                            .start(chunk * chunk_size)
+                            .run()
+                            .hits)
 
-    # For each web user, iterate through their domains and select the max number of form submissions and
-    # max number of mobile workers
-    for users in chunked(users_to_domains, 100):
+        # users_to_domains is a list of dicts
+        domains_to_forms = (FormES()
+                            .terms_aggregation('domain', 'domain')
+                            .size(0)
+                            .run()
+                            .aggregations.domain.counts_by_bucket())
+        domains_to_mobile_users = (UserES()
+                                   .mobile_users()
+                                   .terms_aggregation('domain', 'domain')
+                                   .size(0)
+                                   .run()
+                                   .aggregations
+                                   .domain
+                                   .counts_by_bucket())
+
+        # Keep track of india and www data seperately
+        env = get_instance_string()
+
+        for num_forms in domains_to_forms.values():
+            if num_forms > HUBSPOT_THRESHOLD:
+                hubspot_number_of_domains_with_forms_gt_threshold += 1
+
+        # For each web user, iterate through their domains and select the max number of form submissions and
+        # max number of mobile workers
         submit = []
-        for user in users:
-            try:
-                email = user.get('email')
-                if not _email_is_valid(email):
-                    continue
+        for user in users_to_domains:
+            email = user.get('email')
+            if not _email_is_valid(email):
+                continue
 
-                number_of_users += 1
-                date_created = user.get('date_joined')
-                max_forms = 0
-                max_workers = 0
-                max_export = 0
-                max_report = 0
+            hubspot_number_of_users += 1
+            date_created = user.get('date_joined')
+            max_forms = 0
+            max_workers = 0
+            max_export = 0
+            max_report = 0
 
-                for domain in user['domains']:
-                    if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
-                        max_forms = domains_to_forms[domain]
-                    if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
-                        max_workers = domains_to_mobile_users[domain]
-                    if _get_export_count(domain) > max_export:
-                        max_export = _get_export_count(domain)
-                    if _get_report_count(domain) > max_report:
-                        max_report = _get_report_count(domain)
+            for domain in user['domains']:
+                if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
+                    max_forms = domains_to_forms[domain]
+                if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
+                    max_workers = domains_to_mobile_users[domain]
+                if _get_export_count(domain) > max_export:
+                    max_export = _get_export_count(domain)
+                if _get_report_count(domain) > max_report:
+                    max_report = _get_report_count(domain)
 
-                project_spaces_created = ", ".join(get_domains_created_by_user(email))
+            project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
-                user_json = {
-                    'email': email,
-                    'properties': [
-                        {
-                            'property': '{}max_form_submissions_in_a_domain'.format(env),
-                            'value': max_forms
-                        },
-                        {
-                            'property': '{}max_mobile_workers_in_a_domain'.format(env),
-                            'value': max_workers
-                        },
-                        {
-                            'property': '{}project_spaces_created_by_user'.format(env),
-                            'value': project_spaces_created,
-                        },
-                        {
-                            'property': '{}over_300_form_submissions'.format(env),
-                            'value': max_forms > HUBSPOT_THRESHOLD
-                        },
-                        {
-                            'property': '{}date_created'.format(env),
-                            'value': date_created
-                        },
-                        {
-                            'property': '{}max_exports_in_a_domain'.format(env),
-                            'value': max_export
-                        },
-                        {
-                            'property': '{}max_custom_reports_in_a_domain'.format(env),
-                            'value': max_report
-                        }
-                    ]
-                }
-                submit.append(user_json)
-            except Exception as e:
-                _log_failed_periodic_data(
-                    user.get('email', 'email unknown'),
-                    e.message
-                )
+            user_json = {
+                'email': email,
+                'properties': [
+                    {
+                        'property': '{}max_form_submissions_in_a_domain'.format(env),
+                        'value': max_forms
+                    },
+                    {
+                        'property': '{}max_mobile_workers_in_a_domain'.format(env),
+                        'value': max_workers
+                    },
+                    {
+                        'property': '{}project_spaces_created_by_user'.format(env),
+                        'value': project_spaces_created,
+                    },
+                    {
+                        'property': '{}over_300_form_submissions'.format(env),
+                        'value': max_forms > HUBSPOT_THRESHOLD
+                    },
+                    {
+                        'property': '{}date_created'.format(env),
+                        'value': date_created
+                    },
+                    {
+                        'property': '{}max_exports_in_a_domain'.format(env),
+                        'value': max_export
+                    },
+                    {
+                        'property': '{}max_custom_reports_in_a_domain'.format(env),
+                        'value': max_report
+                    }
+                ]
+            }
+            submit.append(user_json)
 
         submit_json = json.dumps(submit)
-
         submit_data_to_hub_and_kiss(submit_json)
+
     update_datadog_metrics({
-        DATADOG_WEB_USERS_GAUGE: number_of_users,
-        DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: number_of_domains_with_forms_gt_threshold
+        DATADOG_WEB_USERS_GAUGE: hubspot_number_of_users,
+        DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: hubspot_number_of_domains_with_forms_gt_threshold
     })
 
 
