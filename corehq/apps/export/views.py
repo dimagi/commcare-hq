@@ -330,27 +330,6 @@ class EditCustomCaseExportView(BaseEditCustomExportView):
     export_type = 'case'
 
 
-class DeleteCustomExportView(BaseModifyCustomExportView):
-    urlname = 'delete_custom_export'
-    http_method_names = ['post']
-    is_async = False
-
-    def commit(self, request):
-        try:
-            saved_export = SavedExportSchema.get(self.export_id)
-        except ResourceNotFound:
-            raise ExportNotFound()
-        self.export_type = saved_export.type
-        saved_export.delete()
-        messages.success(
-            request,
-            mark_safe(
-                _("Export <strong>{}</strong> "
-                  "was deleted.").format(saved_export.name)
-            )
-        )
-
-
 class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']

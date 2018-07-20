@@ -8,7 +8,6 @@ from corehq.apps.export.views import (
     EditCustomCaseExportView,
     EditNewCustomFormExportView,
     EditNewCustomCaseExportView,
-    DeleteCustomExportView,
     DeleteNewCustomExportView,
     DownloadFormExportView,
     DownloadCaseExportView,
@@ -151,9 +150,6 @@ urlpatterns = [
         name='add_export_email_request'),
 
     # Delete export views
-    url(r"^custom/delete/(?P<export_id>[\w\-]+)/$",
-        DeleteCustomExportView.as_view(),
-        name=DeleteCustomExportView.urlname),
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
         DeleteNewCustomExportView.as_view(),
         name=DeleteNewCustomExportView.urlname),
