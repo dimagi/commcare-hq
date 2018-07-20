@@ -39,7 +39,10 @@
         "slug": "awc_id",
         "field": "awc_id",
         "choice_provider": {
-          "type": "location"
+          "type": "location",
+          "include_descendants": true,
+          "order_by_hierarchy": true,
+          "show_full_path": true
         },
         "display": "Filter by AWW"
       },
@@ -52,7 +55,10 @@
         "slug": "supervisor_id",
         "field": "supervisor_id",
         "choice_provider": {
-          "type": "location"
+          "type": "location",
+          "include_descendants": true,
+          "order_by_hierarchy": true,
+          "show_full_path": true
         },
         "display": "Filter by Supervisor"
       },
@@ -65,7 +71,10 @@
         "slug": "block_id",
         "field": "block_id",
         "choice_provider": {
-          "type": "location"
+          "type": "location",
+          "include_descendants": true,
+          "order_by_hierarchy": true,
+          "show_full_path": true
         },
         "display": "Filter by Block"
       },
@@ -78,7 +87,10 @@
         "slug": "district_id",
         "field": "district_id",
         "choice_provider": {
-          "type": "location"
+          "type": "location",
+          "include_descendants": true,
+          "order_by_hierarchy": true,
+          "show_full_path": true
         },
         "display": "Filter by District"
       },
@@ -91,7 +103,10 @@
         "slug": "state_id",
         "field": "state_id",
         "choice_provider": {
-          "type": "location"
+          "type": "location",
+          "include_descendants": true,
+          "order_by_hierarchy": true,
+          "show_full_path": true
         },
         "display": "Filter by State"
       }
