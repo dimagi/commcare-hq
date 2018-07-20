@@ -1,6 +1,7 @@
 {
   "domains": [
-    "fmoh-echis-staging"
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
   ],
   "server_environment": [
     "production",
