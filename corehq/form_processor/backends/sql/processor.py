@@ -147,12 +147,12 @@ class FormProcessorSQL(object):
 
         if publish_to_kafka:
             try:
-                cls._publish_changes(processed_forms, cases, stock_result)
+                cls.publish_changes_to_kafka(processed_forms, cases, stock_result)
             except Exception as e:
                 raise KafkaPublishingError(e)
 
     @staticmethod
-    def _publish_changes(processed_forms, cases, stock_result):
+    def publish_changes_to_kafka(processed_forms, cases, stock_result):
         # todo: form deprecations?
         publish_form_saved(processed_forms.submitted)
         if processed_forms.submitted.is_duplicate:

@@ -210,7 +210,7 @@ class SubmissionErrorTestSQL(SubmissionErrorTest):
 
     def test_error_publishing_to_kafka(self):
         sql_patch = patch(
-            'corehq.form_processor.backends.sql.processor.FormProcessorSQL._publish_changes',
+            'corehq.form_processor.backends.sql.processor.FormProcessorSQL.publish_changes_to_kafka',
             side_effect=ValueError
         )
         with sql_patch:
