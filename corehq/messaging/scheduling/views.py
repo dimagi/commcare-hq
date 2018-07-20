@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from functools import wraps
 from datetime import datetime, timedelta
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.http import (
@@ -565,12 +566,29 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
     ACTION_DELETE = 'delete'
+    ACTION_RESTART = 'restart'
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
+
+    @cached_property
+    def limit_rule_restarts(self):
+        # If the user is a superuser, don't limit the number of times they
+        # can restart a rule run. Also don't limit it if it's an environment
+        # that is a standalone environment.
+        return not (
+            self.request.couch_user.is_superuser or
+            settings.SERVER_ENVIRONMENT in ('echis', 'pna', 'swiss')
+        )
+
+    @property
+    def page_context(self):
+        context = super(ConditionalAlertListView, self).page_context
+        context['limit_rule_restarts'] = self.limit_rule_restarts
+        return context
 
     def get_conditional_alerts_queryset(self):
         return (
@@ -644,11 +662,20 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             schedule.save()
             initiate_messaging_rule_run(self.domain, rule.pk)
 
-        return HttpResponse()
+        return JsonResponse({'status': 'success'})
 
     def get_delete_ajax_response(self, rule):
         rule.soft_delete()
-        return HttpResponse()
+        return JsonResponse({'status': 'success'})
+
+    def get_restart_ajax_response(self, rule):
+        helper = MessagingRuleProgressHelper(rule.pk)
+        if self.limit_rule_restarts and helper.rule_initiation_key_is_set():
+            minutes_remaining = helper.rule_initiation_key_minutes_remaining()
+            return JsonResponse({'status': 'error', 'minutes_remaining': minutes_remaining})
+
+        initiate_messaging_rule_run(rule.domain, rule.pk)
+        return JsonResponse({'status': 'success'})
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
@@ -656,7 +683,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
 
         with get_conditional_alert_edit_critical_section(rule_id):
             rule = self.get_rule(rule_id)
-            if rule.locked_for_editing:
+            if rule.locked_for_editing and action != self.ACTION_RESTART:
                 return HttpResponseBadRequest()
 
             if action == self.ACTION_ACTIVATE:
@@ -665,6 +692,8 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
                 return self.get_activate_ajax_response(False, rule)
             elif action == self.ACTION_DELETE:
                 return self.get_delete_ajax_response(rule)
+            elif action == self.ACTION_RESTART:
+                return self.get_restart_ajax_response(rule)
             else:
                 return HttpResponseBadRequest()
 
