@@ -62,7 +62,8 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
                  always_disabled=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None, relevant_environments=None):
+                 enabled_for_new_users_after=None, relevant_environments=None,
+                 notification_emails=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -82,6 +83,7 @@ class StaticToggle(object):
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
+        self.notification_emails = notification_emails
 
     def enabled(self, item, namespace=Ellipsis):
         if self.relevant_environments and not (

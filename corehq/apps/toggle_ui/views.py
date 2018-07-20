@@ -18,8 +18,11 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.decorators import use_datatables
-from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN, \
-    DynamicallyPredictablyRandomToggle, PredictablyRandomToggle, ALL_NAMESPACES
+from corehq.toggles import (
+    ALL_NAMESPACES, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN, TAG_DEPRECATED,
+    DynamicallyPredictablyRandomToggle, PredictablyRandomToggle, all_toggles,
+)
+from corehq.util.soft_assert import soft_assert
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache, parse_toggle
 import six
@@ -194,6 +197,26 @@ class ToggleEditView(ToggleBaseView):
         toggle.save()
 
         changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
+
+        added_entries = currently_enabled - previously_enabled
+        is_deprecated_toggle = (self.static_toggle.tag == TAG_DEPRECATED)
+        if added_entries and (self.static_toggle.notification_emails or is_deprecated_toggle):
+            subject = "User {} added {} on {} in environment {}".format(
+                self.request.user.username, self.static_toggle.slug,
+                added_entries, settings.SERVER_ENVIRONMENT
+            )
+
+            if self.static_toggle.notification_emails:
+                emails = [
+                    "{}@{}.com".format(email, "dimagi")
+                    for email in self.static_toggle.notification_emails
+                ]
+                _assert = soft_assert(to=emails, send_to_ops=is_deprecated_toggle)
+            else:
+                _assert = soft_assert(send_to_ops=is_deprecated_toggle)
+
+            _assert(False, subject)
+
         _call_save_fn_and_clear_cache(toggle.slug, changed_entries, currently_enabled, self.static_toggle)
 
         data = {
