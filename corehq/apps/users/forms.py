@@ -773,10 +773,10 @@ class AngularLocationSelectWidget(forms.Widget):
         """.format(validator='validate-location=""' if self.require else '')
 
 
-class SupplyPointSelectWidget(forms.Widget):
+class LocationSelectWidget(forms.Widget):
 
     def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
-        super(SupplyPointSelectWidget, self).__init__(attrs)
+        super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
@@ -804,7 +804,7 @@ class SupplyPointSelectWidget(forms.Widget):
 class PrimaryLocationWidget(forms.Widget):
     """
     Options for this field are dynamically set in JS depending on what options are selected
-    for 'assigned_locations'. This works in conjunction with SupplyPointSelectWidget.
+    for 'assigned_locations'. This works in conjunction with LocationSelectWidget.
     """
     def __init__(self, css_id, source_css_id, attrs=None):
         """
@@ -844,7 +844,7 @@ class CommtrackUserForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        self.fields['assigned_locations'].widget = SupplyPointSelectWidget(
+        self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations'
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(

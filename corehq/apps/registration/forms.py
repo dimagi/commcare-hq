@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _, ugettext
 
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
+from corehq.apps.users.forms import RoleForm, LocationSelectWidget
 from corehq.apps.domain.forms import clean_password, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
 from corehq.apps.analytics.tasks import track_workflow
@@ -422,7 +422,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain and domain.commtrack_enabled:
             self.fields['supply_point'] = forms.CharField(label='Supply Point', required=False,
-                                                          widget=SupplyPointSelectWidget(domain.name),
+                                                          widget=LocationSelectWidget(domain.name),
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
             programs = Program.by_domain(domain.name, wrap=False)
