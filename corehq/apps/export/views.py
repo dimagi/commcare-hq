@@ -191,45 +191,6 @@ class ExportsPermissionsMixin(object):
         return user_can_view_deid_exports(self.domain, self.request.couch_user)
 
 
-class BaseModifyCustomExportView(BaseExportView):
-
-    @method_decorator(require_can_edit_data)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseModifyCustomExportView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.export_id])
-
-    @property
-    def export_id(self):
-        return self.kwargs.get('export_id')
-
-    @property
-    @memoized
-    def export_helper(self):
-        try:
-            return make_custom_export_helper(self.request, self.export_type, self.domain, self.export_id)
-        except ResourceNotFound:
-            raise Http404()
-
-
-class BaseEditCustomExportView(BaseModifyCustomExportView):
-
-    def commit(self, request):
-        export_id = self.export_helper.update_custom_export()
-        messages.success(
-            request,
-            mark_safe(
-                _(
-                    "Export <strong>%(export_name)s</strong> "
-                    "was saved."
-                ) % {'export_name': self.export_helper.custom_export.name}
-            )
-        )
-        return export_id
-
-
 class EditCustomFormExportView(BaseEditCustomExportView):
     urlname = 'edit_custom_export_form'
     page_title = ugettext_noop("Edit Form Export")
