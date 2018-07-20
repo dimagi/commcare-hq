@@ -96,6 +96,8 @@ class DailyAttendanceView(models.Model):
 
 
 class ChildHealthMonthlyView(models.Model):
+    """Contains one row for the status of every child_health case at the end of each month
+    """
     case_id = models.TextField(primary_key=True)
     awc_id = models.TextField(blank=True, null=True)
     awc_name = models.TextField(blank=True, null=True)
@@ -111,18 +113,62 @@ class ChildHealthMonthlyView(models.Model):
     dob = models.DateField(blank=True, null=True)
     sex = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
-    age_in_months = models.IntegerField(blank=True, null=True)
-    open_in_month = models.IntegerField(blank=True, null=True)
-    valid_in_month = models.IntegerField(blank=True, null=True)
-    nutrition_status_last_recorded = models.TextField(blank=True, null=True)
-    current_month_nutrition_status = models.TextField(blank=True, null=True)
-    pse_days_attended = models.IntegerField(blank=True, null=True)
-    recorded_weight = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
-    recorded_height = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
-    thr_eligible = models.IntegerField(blank=True, null=True)
-    current_month_stunting = models.TextField(blank=True, null=True)
-    current_month_wasting = models.TextField(blank=True, null=True)
-    fully_immunized = models.IntegerField(blank=True, null=True)
+    age_in_months = models.IntegerField(
+        blank=True, null=True, help_text="age in months at the end of the month"
+    )
+    open_in_month = models.IntegerField(
+        blank=True, null=True, help_text="Open at the end of the month"
+    )
+    valid_in_month = models.IntegerField(
+        blank=True, null=True,
+        help_text="Open, alive, registered_status != 'not_registered', "
+        "migration_status != 'migrated', age at start of month < 73 months"
+    )
+    nutrition_status_last_recorded = models.TextField(
+        blank=True, null=True,
+        help_text="based on zscore_grading_wfa, "
+        "Either 'severely_underweight', 'moderately_underweight', or 'normal' "
+        "when age at start of month < 61 months and valid_in_month "
+        "or NULL otherwise"
+    )
+    current_month_nutrition_status = models.TextField(
+        blank=True, null=True,
+        help_text="nutrition_status_last_recorded if recorded in the month"
+    )
+    pse_days_attended = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of days a Daily Feeing Form has been submitted against this child case"
+        "when valid_in_month and age in months between 36 and 72 months"
+    )
+    recorded_weight = models.DecimalField(
+        max_digits=65535, decimal_places=65535, blank=True, null=True,
+        help_text="weight_child if it has been recorded in the month"
+    )
+    recorded_height = models.DecimalField(
+        max_digits=65535, decimal_places=65535, blank=True, null=True,
+        help_text="height_child if it has been recorded in the month"
+    )
+    thr_eligible = models.IntegerField(
+        blank=True, null=True,
+        help_text="valid_in_month and age between 6 and 36 months"
+    )
+    current_month_stunting = models.TextField(
+        blank=True, null=True,
+        help_text="based on zscore_grading_hfa, "
+        "Either 'severe', 'moderate', or 'normal' "
+        "when valid_in_monthand zscore_grading_hfa changed in month"
+        "or 'unmeasured' otherwise"
+    )
+    current_month_wasting = models.TextField(
+        blank=True, null=True,
+        help_text="based on zscore_grading_wfh, "
+        "Either 'severe', 'moderate', or 'normal' "
+        "when valid_in_monthand zscore_grading_wfh changed in month"
+        "or 'unmeasured' otherwise"
+    )
+    fully_immunized = models.IntegerField(
+        blank=True, null=True, help_text="Child has been immunized"
+    )
     current_month_nutrition_status_sort = models.IntegerField(blank=True, null=True)
     current_month_stunting_sort = models.IntegerField(blank=True, null=True)
     current_month_wasting_sort = models.IntegerField(blank=True, null=True)
