@@ -548,6 +548,7 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
     help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
+    notification_emails=['jemord']
 )
 
 EXPORT_NO_SORT = StaticToggle(
