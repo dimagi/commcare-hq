@@ -36,6 +36,34 @@ from .permissions import user_can_access_location_id
 from .signals import location_edited
 
 
+class LocationSelectWidget(forms.Widget):
+
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
+        super(LocationSelectWidget, self).__init__(attrs)
+        self.domain = domain
+        self.id = id
+        self.multiselect = multiselect
+        if query_url:
+            self.query_url = query_url
+        else:
+            self.query_url = reverse('child_locations_for_select2', args=[self.domain])
+
+    def render(self, name, value, attrs=None):
+        location_ids = value.split(',') if value else []
+        locations = list(SQLLocation.active_objects
+                         .filter(domain=self.domain, location_id__in=location_ids))
+        initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
+
+        return get_template('locations/manage/partials/autocomplete_select_widget.html').render({
+            'id': self.id,
+            'name': name,
+            'value': ','.join(loc.location_id for loc in locations),
+            'query_url': self.query_url,
+            'multiselect': self.multiselect,
+            'initial_data': initial_data,
+        })
+
+
 class ParentLocWidget(forms.Widget):
 
     def render(self, name, value, attrs=None):

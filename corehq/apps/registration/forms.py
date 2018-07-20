@@ -8,13 +8,14 @@ from django.core.validators import validate_email
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ugettext
 
-from corehq.apps.programs.models import Program
-from corehq.apps.users.models import CouchUser
-from corehq.apps.users.forms import RoleForm, LocationSelectWidget
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.forms import clean_password, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
-from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.hqwebapp.utils import decode_password
+from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.apps.programs.models import Program
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.forms import RoleForm
 
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 from django.utils.functional import lazy

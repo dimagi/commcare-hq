@@ -4,7 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.users.forms import LocationSelectWidget
+from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es

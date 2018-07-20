@@ -28,7 +28,7 @@ from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.models import Keyword
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.users.forms import LocationSelectWidget
+from corehq.apps.locations.forms import LocationSelectWidget
 from corehq import toggles
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs

@@ -5,7 +5,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
-from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
+from crispy_forms.layout import Fieldset, Layout, Submit
 import datetime
 
 from corehq.apps.hqwebapp.widgets import Select2Ajax
@@ -39,7 +39,6 @@ from crispy_forms import helper as cb3_helper
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
-from corehq.util.soft_assert import soft_assert
 from memoized import memoized
 
 import re
@@ -773,34 +772,6 @@ class AngularLocationSelectWidget(forms.Widget):
         """.format(validator='validate-location=""' if self.require else '')
 
 
-class LocationSelectWidget(forms.Widget):
-
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
-        super(LocationSelectWidget, self).__init__(attrs)
-        self.domain = domain
-        self.id = id
-        self.multiselect = multiselect
-        if query_url:
-            self.query_url = query_url
-        else:
-            self.query_url = reverse('child_locations_for_select2', args=[self.domain])
-
-    def render(self, name, value, attrs=None):
-        location_ids = value.split(',') if value else []
-        locations = list(SQLLocation.active_objects
-                         .filter(domain=self.domain, location_id__in=location_ids))
-        initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
-
-        return get_template('locations/manage/partials/autocomplete_select_widget.html').render({
-            'id': self.id,
-            'name': name,
-            'value': ','.join(loc.location_id for loc in locations),
-            'query_url': self.query_url,
-            'multiselect': self.multiselect,
-            'initial_data': initial_data,
-        })
-
-
 class PrimaryLocationWidget(forms.Widget):
     """
     Options for this field are dynamically set in JS depending on what options are selected
@@ -842,6 +813,7 @@ class CommtrackUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        from corehq.apps.locations.forms import LocationSelectWidget
         self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['assigned_locations'].widget = LocationSelectWidget(

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.urls import reverse
 from corehq.apps.reminders.forms import BroadcastForm
 from corehq.apps.reminders.models import (RECIPIENT_USER_GROUP, RECIPIENT_LOCATION)
-from corehq.apps.users.forms import LocationSelectWidget
+from corehq.apps.locations.forms import LocationSelectWidget
 from crispy_forms import layout as crispy
 from django import forms
 from django.core.exceptions import ValidationError
