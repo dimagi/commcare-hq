@@ -34,8 +34,6 @@ def _assert_fresh_install(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    replaces = [('blobs', '0001_initial'), ('blobs', '0002_auto_20151221_1623'), ('blobs', '0003_auto_20161012_1358'), ('blobs', '0004_auto_20170321_1956'), ('blobs', '0005_blobexpiration'), ('blobs', '0006_auto_20170821_1826'), ('blobs', '0007_invoicepdf'), ('blobs', '0008_commcare_builds'), ('blobs', '0009_domains')]
-
     initial = True
 
     dependencies = [
