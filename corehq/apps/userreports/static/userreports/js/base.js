@@ -1,5 +1,10 @@
-/* globals ace */
-hqDefine('userreports/js/base', function() {
+hqDefine('userreports/js/base', [
+    'jquery',
+    'ace-builds/src-min-noconflict/ace',
+], function(
+    $,
+    ace,
+) {
     $(function () {
         $('.jsonwidget').each(function () {
             var $element = $(this),
