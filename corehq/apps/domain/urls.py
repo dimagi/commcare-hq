@@ -83,6 +83,7 @@ from corehq.motech.repeaters.views import (
     resume_repeater,
     test_repeater,
 )
+from corehq.motech.repeaters.views.repeaters import EditDhis2RepeaterView
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
@@ -185,6 +186,8 @@ domain_settings = [
         {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
     url(r'^forwarding/OpenmrsRepeater/edit/(?P<repeater_id>\w+)/$', EditOpenmrsRepeaterView.as_view(),
         {'repeater_type': 'OpenmrsRepeater'}, name=EditOpenmrsRepeaterView.urlname),
+    url(r'^forwarding/Dhis2Repeater/edit/(?P<repeater_id>\w+)/$', EditDhis2RepeaterView.as_view(),
+        {'repeater_type': 'Dhis2Repeater'}, name=EditDhis2RepeaterView.urlname),
     url(r'^forwarding/(?P<repeater_type>\w+)/edit/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
         name=EditRepeaterView.urlname),
 
