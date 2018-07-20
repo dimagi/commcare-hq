@@ -3,9 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'dhis2/js/dhis2_map_settings.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'dhis2/js/dhis2_map_settings' %}
 
 {% block page_content %}
 
