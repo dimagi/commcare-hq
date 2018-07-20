@@ -3,7 +3,7 @@ hqDefine('userreports/js/base', [
     'ace-builds/src-min-noconflict/ace',
 ], function(
     $,
-    ace,
+    ace
 ) {
     $(function () {
         $('.jsonwidget').each(function () {
