@@ -88,11 +88,6 @@ class MigrationTestCase(BaseMigrationTestCase):
             self._do_migration(self.domain_name)
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
 
-    @patch("corehq.apps.couch_sql_migration.couchsqlmigration.stale_get_export_count", MagicMock(return_value=100))
-    def test_migration_old_exports(self):
-        with self.assertRaises(AssertionError):
-            self._do_migration(self.domain_name)
-
     def test_migration_custom_report(self):
         with self.assertRaises(AssertionError):
             self._do_migration("up-nrhm")

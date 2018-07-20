@@ -1,4 +1,12 @@
-hqDefine("commtrack/js/stock_levels", function() {
+hqDefine("commtrack/js/stock_levels", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+], function(
+    $,
+    ko,
+    initialPageData
+) {
     var rowModel = function(data, keys) {
         var self = {};
         self.errors = ('form_errors' in data) ? data.form_errors : {};
@@ -47,8 +55,7 @@ hqDefine("commtrack/js/stock_levels", function() {
     };
 
     $(function() {
-        var formContext = hqImport("hqwebapp/js/initial_page_data").get("form_context");
-        ko.applyBindings(tableModel(formContext.row_spec, formContext.rows), $('#table-form').get(0));
+        var formContext = initialPageData.get("form_context");
+        $('#table-form').koApplyBindings(tableModel(formContext.row_spec, formContext.rows));
     });
-
 });

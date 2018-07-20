@@ -4,6 +4,7 @@
     "ipm-senegal",
     "testing-ipm-senegal"
   ],
+  "server_environment": ["production", "pna"],
   "config": {
     "table_id": "yeksi_naa_reports_visite_de_l_operateur",
     "display_name": "Yeksi Naa Reports Visite de l'operateur",

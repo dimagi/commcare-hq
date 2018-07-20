@@ -58,7 +58,7 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
             else:
                 qs = qs.values_list(*values)
 
-        for result in qs:
+        for result in qs.iterator():
             yield result
 
 

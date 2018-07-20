@@ -9,6 +9,8 @@ from io import BytesIO
 from os.path import join
 
 import corehq.blobs.migrate as mod
+from corehq.apps.builds.models import CommCareBuild
+from corehq.apps.domain.models import Domain, LOGO_ATTACHMENT
 from corehq.blobs import get_blob_db
 from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.s3db import maybe_not_found
@@ -17,11 +19,8 @@ from corehq.blobs.tests.util import (
     TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB
 )
 from corehq.blobs.util import random_url_id
-from corehq.sql_db.models import PartitionedModel
-from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
-from corehq.util.test_utils import trap_extra_setup
+from corehq.util.doc_processor.couch import doc_type_tuples_to_dict
 
-from django.conf import settings
 from django.test import TestCase
 from testil import replattr, tempdir
 
@@ -199,6 +198,45 @@ class TestSavedExportsMigrations(BaseMigrationTest):
         exp = SavedBasicExport.get(saved._id)
         self.assertEqual(exp.get_payload(), new_payload)
         self.assertEqual(exp.fetch_attachment("other"), old_payload)
+
+
+class TestDomainMigrations(BaseMigrationTest):
+
+    slug = "domains"
+
+    def test_migrate_happy_path(self):
+        domain = Domain(name='test_logo_attachment')
+        domain.save()
+        domain_logo = b'logo: binary data not valid utf-8 \xe4\x94'
+        super(BlobMixin, domain).put_attachment(domain_logo, LOGO_ATTACHMENT)
+        domain.save()
+
+        self.do_migration([domain])
+
+        domain = Domain.get(domain._id)
+        self.assertEqual(domain.get_custom_logo()[0], domain_logo)
+        self.assertIsNone(domain._attachments)
+
+    def test_migrate_with_concurrent_modification(self):
+        domain = Domain(name='test_logo_attachment')
+        domain.save()
+        new_logo = b'something new'
+        old_logo = b'something old'
+        super(BlobMixin, domain).put_attachment(old_logo, LOGO_ATTACHMENT)
+        super(BlobMixin, domain).put_attachment(old_logo, 'other')
+        domain.save()
+        self.assertEqual(len(domain._attachments), 2)
+
+        def modify(domain_doc):
+            domain_doc = Domain.get(domain_doc._id)
+            domain_doc.put_attachment(new_logo, LOGO_ATTACHMENT)
+            domain_doc.save()
+
+        self.do_failed_migration({domain: (1, 1)}, modify)
+
+        domain = Domain.get(domain._id)
+        self.assertEqual(domain.get_custom_logo()[0], new_logo)
+        self.assertEqual(domain.fetch_attachment('other'), old_logo)
 
 
 class TestApplicationMigrations(BaseMigrationTest):
@@ -440,6 +478,48 @@ class TestCommCareCaseMigrations(BaseMigrationTest):
             exp = type(item).get(item._id)
             self.assertEqual(exp.fetch_attachment(name), new_data)
             self.assertEqual(exp.fetch_attachment("other.png"), old_data)
+
+
+class TestCommCareBuildMigrations(BaseMigrationTest):
+
+    slug = 'commcare_builds'
+
+    def test_migrate_happy_path(self):
+        commcare_build = CommCareBuild()
+        commcare_build.save()
+        payload = b'binary payload \xe4\x94'
+        payload_name = 'payload.jar'
+        super(BlobMixin, commcare_build).put_attachment(payload, payload_name)
+        commcare_build.save()
+        self.assertEqual(len(commcare_build._attachments), 1)
+
+        self.do_migration([commcare_build])
+
+        commcare_build = CommCareBuild.get(commcare_build._id)
+        self.assertEqual(commcare_build.fetch_file(payload_name), payload)
+        self.assertIsNone(commcare_build._attachments)
+
+    def test_migrate_with_concurrent_modification(self):
+        commcare_build = CommCareBuild()
+        commcare_build.save()
+        old_payload = b'old payload \xe4\x94'
+        new_payload = b'new payload \xe4\x94'
+        payload_name = 'payload.jar'
+        super(BlobMixin, commcare_build).put_attachment(old_payload, payload_name)
+        super(BlobMixin, commcare_build).put_attachment(old_payload, 'payload.jad')
+        commcare_build.save()
+        self.assertEqual(len(commcare_build._attachments), 2)
+
+        def modify(doc):
+            doc = CommCareBuild.get(doc._id)
+            doc.put_attachment(new_payload, payload_name)
+            doc.save()
+
+        self.do_failed_migration({commcare_build: (1, 1)}, modify)
+
+        commcare_build = CommCareBuild.get(commcare_build._id)
+        self.assertEqual(commcare_build.fetch_file(payload_name), new_payload)
+        self.assertEqual(commcare_build.fetch_file('payload.jad'), old_payload)
 
 
 class TestMigrateBackend(TestCase):

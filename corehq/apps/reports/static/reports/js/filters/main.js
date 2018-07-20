@@ -150,7 +150,8 @@ hqDefine("reports/js/filters/main", [
             $el.koApplyBindings(model);
         });
 
-        var $casePropertyColumns = $(".report-filter-case-property-columns");
+        var $casePropertyColumns = $(".report-filter-case-property-columns"),
+            $fieldsetExplorerColumns = $("#fieldset_explorer_columns");
         $casePropertyColumns.each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
@@ -158,7 +159,19 @@ hqDefine("reports/js/filters/main", [
             $el.koApplyBindings(model);
         });
         $casePropertyColumns.on('keyup', function(){
-            $('#fieldset_explorer_columns').trigger('change');
+            $fieldsetExplorerColumns.trigger('change');
+        });
+        $fieldsetExplorerColumns.on('hidden.bs.collapse', function(e){
+            $fieldsetExplorerColumns.find("#panel-chevron i").removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            // this is a nested panel, so we stop propagation of this event to
+            // prevent the text from changing on the outside panel
+            e.stopPropagation();
+        });
+        $fieldsetExplorerColumns.on('show.bs.collapse', function(e){
+            $fieldsetExplorerColumns.find("#panel-chevron i").removeClass('fa-chevron-down').addClass('fa-chevron-up');
+            // this is a nested panel, so we stop propagation of this event to
+            // prevent the text from changing on the outside panel
+            e.stopPropagation();
         });
 
         var $xpathTextarea = $(".report-filter-xpath-textarea");
@@ -167,9 +180,6 @@ hqDefine("reports/js/filters/main", [
                 data = $el.data();
             var model = caseListExplorer.caseSearchXpath(data.suggestions);
             $el.koApplyBindings(model);
-        });
-        $xpathTextarea.on('keyup', function(){
-            $('#fieldset_search_xpath').trigger('change');
         });
 
         $('[name=selected_group]').each(function(i, el) {

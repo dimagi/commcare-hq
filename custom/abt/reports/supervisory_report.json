@@ -17,6 +17,7 @@
         "vectorlink-ethiopia",
         "vectorlink-uganda"
     ],
+    "server_environment": ["production"],
     "report_id": "supervisory_report",
     "data_source_table": "supervisory-006",
     "config": {
@@ -27,7 +28,7 @@
         "title": "Supervisory Report",
         "sort_expression": [
             {
-                "field": "timeEnd",
+                "field": "received_on",
                 "order": "DESC"
             },
             {
@@ -44,8 +45,8 @@
                 "compare_as_string": false,
                 "datatype": "string",
                 "required": false,
-                "slug": "timeEnd",
-                "field": "timeEnd",
+                "slug": "received_on",
+                "field": "received_on",
                 "type": "date",
                 "display": {
                     "fra": "Date soumis",
@@ -141,13 +142,13 @@
         "columns": [
             {
                 "description": null,
-                "field": "timeEnd",
+                "field": "received_on",
                 "format": "default",
                 "transform": {
                     "type": "date_format",
                     "format": "%Y-%m-%d %H:%M"
                 },
-                "column_id": "timeEnd",
+                "column_id": "received_on",
                 "alias": null,
                 "calculate_total": false,
                 "type": "field",

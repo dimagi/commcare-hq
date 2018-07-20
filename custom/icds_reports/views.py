@@ -121,7 +121,7 @@ from couchexport.shortcuts import export_response
 
 
 @location_safe
-@method_decorator([toggles.ICDS_REPORTS.required_decorator(), login_and_domain_required], name='dispatch')
+@method_decorator([login_and_domain_required], name='dispatch')
 class TableauView(RedirectView):
 
     permanent = True
@@ -432,6 +432,7 @@ class LocationView(View):
             ]
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LocationAncestorsView(View):
@@ -620,7 +621,9 @@ class AwcReportsView(BaseReportView):
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
-                self.request.GET.get('case_id')
+                self.request.GET.get('case_id'),
+                config['awc_id'],
+                tuple(current_month.timetuple())[:3]
             )
         return JsonResponse(data=data)
 
@@ -1554,13 +1557,13 @@ class DownloadPDFReport(View):
     def get(self, request, *args, **kwargs):
         uuid = self.request.GET.get('uuid', None)
         format = self.request.GET.get('format', None)
-        client = get_redis_client()
+        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type='issnip_monthly')
         if format == 'one':
-            response = HttpResponse(client.get(uuid), content_type='application/pdf')
+            response = HttpResponse(icds_file.get_file_from_blobdb().read(), content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register_cumulative.pdf"'
             return response
         else:
-            response = HttpResponse(client.get(uuid), content_type='application/zip')
+            response = HttpResponse(icds_file.get_file_from_blobdb().read(), content_type='application/zip')
             response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register.zip"'
             return response
 
@@ -1588,8 +1591,8 @@ class CheckPDFReportStatus(View):
 @location_safe
 class ICDSImagesAccessorAPI(View):
     @method_decorator(api_auth)
-    @require_permission(Permissions.view_report,
-                        'custom.icds_reports.reports.reports.DashboardReport')
+    @method_decorator(require_permission(
+        Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport'))
     def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not attachment_id:
             raise Http404

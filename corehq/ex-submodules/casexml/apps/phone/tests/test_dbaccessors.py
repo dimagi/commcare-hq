@@ -5,11 +5,14 @@ import datetime
 from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_sync_logs
-from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user, get_synclogs_for_user
-from casexml.apps.phone.models import SyncLog, SyncLogSQL, SimplifiedSyncLog, delete_synclog, properly_wrap_sync_log
-from casexml.apps.phone.exceptions import MissingSyncLog
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import (
+    get_last_synclog_for_user, get_synclogs_for_user
+)
+from casexml.apps.phone.models import (
+    SyncLog, SyncLogSQL, SimplifiedSyncLog, delete_synclog, properly_wrap_sync_log
+)
 from corehq.util.test_utils import DocTestMixin
-from casexml.apps.phone.tasks import prune_synclogs
+from casexml.apps.phone.tasks import prune_synclogs, SYNCLOG_RETENTION_DAYS
 
 
 class DBAccessorsTest(TestCase, DocTestMixin):
@@ -62,11 +65,11 @@ class SyncLogPruneTest(TestCase, DocTestMixin):
         super(SyncLogPruneTest, cls).tearDownClass()
 
     def test_count_delete_queries(self):
+        today = datetime.datetime.today()
         self.docs = [
-            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=125)),
-            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=95)),
-            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=85)),
-            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=70))
+            SyncLog(date=today - datetime.timedelta(days=SYNCLOG_RETENTION_DAYS + 7)),
+            SyncLog(date=today - datetime.timedelta(days=SYNCLOG_RETENTION_DAYS + 1)),
+            SyncLog(date=today - datetime.timedelta(days=SYNCLOG_RETENTION_DAYS - 7)),
         ]
         for doc in self.docs:
             doc.domain = self.domain

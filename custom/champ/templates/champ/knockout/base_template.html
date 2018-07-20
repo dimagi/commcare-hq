@@ -4,23 +4,19 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-    <script type="text/javascript" src="{% static 'nvd3/nv.d3.js' %}"></script>
-    <script type="text/javascript" src="{% static 'champ/js/knockout/select2-binding.js' %}"></script>
-    <script type="text/javascript" src="{% static 'champ/js/knockout/prevision_vs_achievement_graph.js' %}"></script>
-    <script type="text/javascript" src="{% static 'champ/js/knockout/prevision_vs_achievement_table.js' %}"></script>
-    <script type="text/javascript" src="{% static 'champ/js/knockout/service_uptake.js' %}"></script>
-    <script>
-        $(document).ready(function () {
-            $('#reportFiltersAccordion').css('display', 'none');
-        });
-    </script>
+    <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
+    <script src="{% static 'nvd3/nv.d3.js' %}"></script>
+    <script src="{% static 'champ/js/knockout/select2-binding.js' %}"></script>
+    <script src="{% static 'champ/js/knockout/prevision_vs_achievement_graph.js' %}"></script>
+    <script src="{% static 'champ/js/knockout/prevision_vs_achievement_table.js' %}"></script>
+    <script src="{% static 'champ/js/knockout/service_uptake.js' %}"></script>
+    <script src="{% static 'champ/js/base.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}
     {{ block.super }}
 
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}">
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}">
     <style>
         .bubble {
             border: 1px solid;

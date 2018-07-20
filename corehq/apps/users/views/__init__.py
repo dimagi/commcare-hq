@@ -49,7 +49,8 @@ from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin, logout
-from corehq.apps.locations.permissions import location_safe, user_can_access_other_user
+from corehq.apps.locations.permissions import (location_safe, user_can_access_other_user,
+                                               conditionally_location_safe)
 from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
@@ -81,6 +82,13 @@ from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 from corehq import toggles
 from django.views.decorators.csrf import csrf_exempt
+
+
+def _is_exempt_from_location_safety(view_fn, *args, **kwargs):
+    return toggles.LOCATION_SAFETY_EXEMPTION.enabled(kwargs.get("domain", None))
+
+
+location_safe_for_ews_ils = conditionally_location_safe(_is_exempt_from_location_safety)
 
 
 def _users_context(request, domain):
@@ -279,6 +287,7 @@ class BaseEditUserView(BaseUserSettingsView):
             return self.get(request, *args, **kwargs)
 
 
+@location_safe_for_ews_ils
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
@@ -373,6 +382,7 @@ def get_domain_languages(domain):
     return sorted(domain_languages) or langcodes.get_all_langs_for_select()
 
 
+@location_safe_for_ews_ils
 class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users & Roles")
@@ -554,6 +564,7 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
 
 @require_can_edit_web_users
 @require_POST
+@location_safe_for_ews_ils
 def remove_web_user(request, domain, couch_user_id):
     user = WebUser.get_by_user_id(couch_user_id, domain)
     # if no user, very likely they just pressed delete twice in rapid succession so
@@ -577,6 +588,7 @@ def remove_web_user(request, domain, couch_user_id):
 
 
 @require_can_edit_web_users
+@location_safe_for_ews_ils
 def undo_remove_web_user(request, domain, record_id):
     record = DomainRemovalRecord.get(record_id)
     record.undo()
@@ -796,6 +808,7 @@ def accept_invitation(request, domain, invitation_id):
 
 @require_POST
 @require_can_edit_web_users
+@location_safe_for_ews_ils
 def reinvite_web_user(request, domain):
     invitation_id = request.POST['invite']
     try:
@@ -810,6 +823,7 @@ def reinvite_web_user(request, domain):
 
 @require_POST
 @require_can_edit_web_users
+@location_safe_for_ews_ils
 def delete_invitation(request, domain):
     invitation_id = request.POST['id']
     invitation = Invitation.get(invitation_id)
@@ -819,6 +833,7 @@ def delete_invitation(request, domain):
 
 @require_POST
 @require_can_edit_web_users
+@location_safe_for_ews_ils
 def delete_request(request, domain):
     DomainRequest.objects.get(id=request.POST['id']).delete()
     return json_response({'status': 'ok'})
@@ -838,6 +853,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
         }]
 
 
+@location_safe_for_ews_ils
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
@@ -972,6 +988,7 @@ class DomainRequestView(BasePageView):
 
 @require_POST
 @require_permission_to_edit_user
+@location_safe_for_ews_ils
 def make_phone_number_default(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
     if not user.is_current_web_user(request) and not user.is_commcare_user():
@@ -989,6 +1006,7 @@ def make_phone_number_default(request, domain, couch_user_id):
 
 @require_POST
 @require_permission_to_edit_user
+@location_safe_for_ews_ils
 def delete_phone_number(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
     if not user.is_current_web_user(request) and not user.is_commcare_user():
@@ -1005,6 +1023,7 @@ def delete_phone_number(request, domain, couch_user_id):
 
 
 @require_permission_to_edit_user
+@location_safe_for_ews_ils
 def verify_phone_number(request, domain, couch_user_id):
     """
     phone_number cannot be passed in the url due to special characters

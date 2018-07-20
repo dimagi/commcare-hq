@@ -222,9 +222,10 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
         if webuser:
-            data.update({'firstname': webuser.first_name,
-                         'lastname': webuser.last_name,
-                         })
+            data.update({
+                'firstname': webuser.first_name,
+                'lastname': webuser.last_name,
+            })
         if extra_fields:
             data.update(extra_fields)
 
@@ -245,8 +246,7 @@ def update_hubspot_properties(webuser, properties):
         _track_on_hubspot(webuser, properties)
 
 
-@analytics_task()
-def track_web_user_registration_hubspot(web_user, properties):
+def track_web_user_registration_hubspot(request, web_user, properties):
     if not settings.ANALYTICS_IDS.get('HUBSPOT_API_ID'):
         return
 
@@ -255,6 +255,8 @@ def track_web_user_registration_hubspot(web_user, properties):
         'is_a_commcare_user': True,
         'lifecyclestage': 'lead',
     }
+    env = get_instance_string()
+    tracking_info['{}date_created'.format(env)] = web_user.date_joined.isoformat()
 
     if (hasattr(web_user, 'phone_numbers') and len(web_user.phone_numbers) > 0):
         tracking_info.update({
@@ -268,16 +270,15 @@ def track_web_user_registration_hubspot(web_user, properties):
 
     tracking_info.update(get_ab_test_properties(web_user))
     tracking_info.update(properties)
-    _track_on_hubspot(web_user, tracking_info)
+
+    send_hubspot_form(
+        HUBSPOT_SIGNUP_FORM_ID, request,
+        user=web_user, extra_fields=tracking_info
+    )
 
 
 @analytics_task()
 def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
-    from corehq.apps.registration.views import ProcessRegistrationView
-    if path.startswith(reverse(ProcessRegistrationView.urlname)):
-        # registration view - only track the form itself here.
-        # use track_web_user_registration_hubspot to track properties on signup
-        _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, hubspot_cookie, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
@@ -305,7 +306,7 @@ def track_confirmed_account_on_hubspot(webuser):
         })
 
 
-def send_hubspot_form(form_id, request, user=None):
+def send_hubspot_form(form_id, request, user=None, extra_fields=None):
     """
     pulls out relevant info from request object before sending to celery since
     requests cannot be pickled
@@ -314,12 +315,17 @@ def send_hubspot_form(form_id, request, user=None):
         user = getattr(request, 'couch_user', None)
     if request and user and user.is_web_user():
         meta = get_meta(request)
-        send_hubspot_form_task.delay(form_id, user, request.COOKIES.get(HUBSPOT_COOKIE), meta)
+        send_hubspot_form_task.delay(
+            form_id, user, request.COOKIES.get(HUBSPOT_COOKIE),
+            meta, extra_fields=extra_fields
+        )
 
 
 @analytics_task()
-def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta):
-    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta)
+def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta,
+                           extra_fields=None):
+    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
+                          extra_fields=extra_fields)
 
 @analytics_task()
 def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):

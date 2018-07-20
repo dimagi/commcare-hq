@@ -68,6 +68,7 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
+from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
@@ -84,7 +85,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     LocationXpath,
 )
-from corehq.apps.builds import get_default_build_spec
+from corehq.apps.builds.utils import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from memoized import memoized
@@ -92,7 +93,6 @@ from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
 from corehq.util import bitly
 from corehq.util import view_utils
-from corehq.util.string_utils import random_string
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -1585,14 +1585,18 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
         media_dict = getattr(self, media_attr) or {}
         old_value = media_dict.get(lang)
+        media_dict[lang] = media_path or ''
+        setattr(self, media_attr, media_dict)
         # remove the entry from app multimedia mappings if media is being removed now
         # This does not remove the multimedia but just it's reference in mapping
         # Added it here to ensure it's always set instead of getting it only when needed
         app = self.get_app()
         if old_value and not media_path:
-            app.multimedia_map.pop(old_value, None)
-        media_dict[lang] = media_path or ''
-        setattr(self, media_attr, media_dict)
+            # expire all_media_paths before checking for media path used in Application
+            app.all_media.reset_cache(app)
+            app.all_media_paths.reset_cache(app)
+            if old_value not in app.all_media_paths():
+                app.multimedia_map.pop(old_value, None)
 
     def set_icon(self, lang, icon_path):
         self._set_media('media_image', lang, icon_path)
@@ -3124,9 +3128,14 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             ))
 
         if self.form_filter:
+            # Replace any dots with #case, which doesn't make for valid xpath
+            # but will trigger any appropriate validation errors
+            interpolated_form_filter = interpolate_xpath(self.form_filter, case_xpath="#case",
+                    module=self.get_module(), form=self)
+
             form_filter_references_case = (
-                xpath_references_case(self.form_filter) or
-                xpath_references_user_case(self.form_filter)
+                xpath_references_case(interpolated_form_filter) or
+                xpath_references_user_case(interpolated_form_filter)
             )
 
             if form_filter_references_case:
@@ -4773,6 +4782,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     build_comment = StringProperty()
     comment_from = StringProperty()
     build_broken = BooleanProperty(default=False)
+    is_auto_generated = BooleanProperty(default=False)
     # not used yet, but nice for tagging/debugging
     # currently only canonical value is 'incomplete-build',
     # for when build resources aren't found where they should be
@@ -5327,6 +5337,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if not copy.is_remote_app():
             copy.update_mm_map()
 
+        prune_auto_generated_builds.delay(self.domain, self._id)
+
         return copy
 
     def delete_app(self):
@@ -5426,7 +5438,6 @@ def validate_detail_screen_field(field):
 
 
 class SavedAppBuild(ApplicationBase):
-
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
         for key in ('modules', 'user_registration', 'external_blobs',
@@ -5465,9 +5476,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
 
-    anonymous_cloudcare_enabled = BooleanProperty(default=False)
-    anonymous_cloudcare_hash = StringProperty(default=random_string)
-
     translation_strategy = StringProperty(default='select-known',
                                           choices=list(app_strings.CHOICES.keys()))
     auto_gps_capture = BooleanProperty(default=False)
@@ -5481,15 +5489,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
-
-    @property
-    def anonymous_cloudcare_url(self):
-        from corehq.apps.cloudcare.views import SingleAppLandingPageView
-
-        return view_utils.absolute_reverse(SingleAppLandingPageView.urlname, args=[
-            self.domain,
-            self.anonymous_cloudcare_hash
-        ])
 
     @property
     @memoized

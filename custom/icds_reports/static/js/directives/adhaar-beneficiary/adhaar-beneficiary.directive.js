@@ -16,7 +16,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     };
     vm.filters = ['age', 'gender'];
     vm.rightLegend = {
-        info: 'Percentage of individuals registered using CAS whose Aadhaar identification has been captured',
+        info: 'Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been captured. ',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -49,7 +49,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage number of ICDS beneficiaries whose Aadhaar identification has been captured',
+        'captionContent': ' Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been captured. ',
     };
     vm.chartOptions = vm.getChartOptions(options);
 

@@ -66,7 +66,6 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.world_vision import WORLD_VISION_DOMAINS
 from memoized import memoized
 from django_prbac.utils import has_privilege
 from six.moves import map
@@ -84,8 +83,6 @@ class ProjectReportsTab(UITab):
 
     @property
     def view(self):
-        if self.domain in WORLD_VISION_DOMAINS:
-            return "reports_home"
         from corehq.apps.reports.views import MySavedReportsView
         return MySavedReportsView.urlname
 
@@ -463,16 +460,9 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
-    def use_new_daily_saved_exports_ui(self):
-        from corehq.apps.export.views import use_new_daily_saved_exports_ui
-        return use_new_daily_saved_exports_ui(self.domain)
-
-    @property
-    @memoized
     def should_see_daily_saved_export_list_view(self):
         return (
             self.can_view_form_or_case_exports
-            and self.use_new_daily_saved_exports_ui
             and domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
         )
 
@@ -481,7 +471,6 @@ class ProjectDataTab(UITab):
     def should_see_daily_saved_export_paywall(self):
         return (
             self.can_view_form_or_case_exports
-            and self.use_new_daily_saved_exports_ui
             and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
         )
 
@@ -490,7 +479,6 @@ class ProjectDataTab(UITab):
     def should_see_dashboard_feed_list_view(self):
         return (
             self.can_view_form_or_case_exports
-            and self.use_new_daily_saved_exports_ui  # dashboard feeds are a special kind of daily saved export
             and domain_has_privilege(self.domain, EXCEL_DASHBOARD)
         )
 
@@ -499,7 +487,6 @@ class ProjectDataTab(UITab):
     def should_see_dashboard_feed_paywall(self):
         return (
             self.can_view_form_or_case_exports
-            and self.use_new_daily_saved_exports_ui  # dashboard feeds are a special kind of daily saved export
             and not domain_has_privilege(self.domain, EXCEL_DASHBOARD)
         )
 
@@ -1402,6 +1389,25 @@ class ProjectUsersTab(UITab):
         return items
 
 
+class EnterpriseSettingsTab(UITab):
+    title = ugettext_noop("Enterprise Settings")
+
+    url_prefix_formats = (
+        '/a/{domain}/enterprise/',
+    )
+
+    _is_viewable = False
+
+    @property
+    def sidebar_items(self):
+        items = super(EnterpriseSettingsTab, self).sidebar_items
+        items.append((_('Manage Enterprise'), [{
+            'title': _('Enterprise Dashboard'),
+            'url': reverse('enterprise_dashboard', args=[self.domain]),
+        }]))
+        return items
+
+
 class ProjectSettingsTab(UITab):
     title = ugettext_noop("Project Settings")
     view = 'domain_settings_default'
@@ -1743,12 +1749,16 @@ class AccountingTab(UITab):
 
         from corehq.apps.accounting.views import (
             TriggerInvoiceView, TriggerBookkeeperEmailView,
-            TestRenewalEmailView,
+            TestRenewalEmailView, TriggerCustomerInvoiceView
         )
         items.append(('Other Actions', (
             {
                 'title': _(TriggerInvoiceView.page_title),
                 'url': reverse(TriggerInvoiceView.urlname),
+            },
+            {
+                'title': _(TriggerCustomerInvoiceView.page_title),
+                'url': reverse(TriggerCustomerInvoiceView.urlname),
             },
             {
                 'title': _(TriggerBookkeeperEmailView.page_title),
@@ -1892,6 +1902,8 @@ class AdminTab(UITab):
                  'url': reverse(ManageNotificationView.urlname)},
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
+                {'title': _('Maintenance Alerts'),
+                 'url': reverse('alerts')},
             ]
         sections = [
             (_('Administrative Reports'), [

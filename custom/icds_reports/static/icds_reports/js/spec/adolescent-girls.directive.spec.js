@@ -182,7 +182,7 @@ describe('Adolescent Girls Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of adolescent girls who are enrolled for Anganwadi Services'
+            'Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services'
         );
     });
 

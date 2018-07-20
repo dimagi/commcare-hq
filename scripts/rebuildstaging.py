@@ -101,7 +101,7 @@ def fetch_remote(base_config, name="origin"):
 
         for pr in config.pull_requests:
             print("  [{path}] fetching pull request {pr}".format(**locals()))
-            pr = 'pull/{pr}/head:enterprise/{pr}'.format(pr=pr)
+            pr = 'pull/{pr}/head:enterprise-{pr}'.format(pr=pr)
             jobs.append(gevent.spawn(git.fetch, 'origin', pr))
 
     gevent.joinall(jobs)
@@ -228,7 +228,7 @@ def rebuild_staging(config, print_details=True, push=True):
                 else:
                     print("ok")
             for pr in config.pull_requests:
-                branch = "enterprise/{pr}".format(pr=pr)
+                branch = "enterprise-{pr}".format(pr=pr)
                 print("  [{cwd}] Merging {pr} into {name}".format(
                     cwd=path,
                     pr=pr,

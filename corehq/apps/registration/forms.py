@@ -77,20 +77,7 @@ class RegisterWebUserForm(forms.Form):
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
-        self.show_phone_number = kwargs.pop('show_number', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
-        if not self.show_phone_number:
-            del self.fields['phone_number']
-            phone_number_fields = []
-        else:
-            phone_number_fields = [
-                hqcrispy.InlineField(
-                    'phone_number',
-                    css_class="input-lg",
-                    data_bind="value: phoneNumber, "
-                              "valueUpdate: 'keyup'"
-                ),
-            ]
 
         persona_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
@@ -163,7 +150,12 @@ class RegisterWebUserForm(forms.Form):
                                   "}",
                     ),
                     hqcrispy.ValidationMessage('passwordDelayed'),
-                    crispy.Div(*phone_number_fields),
+                    hqcrispy.InlineField(
+                        'phone_number',
+                        css_class="input-lg",
+                        data_bind="value: phoneNumber, "
+                                  "valueUpdate: 'keyup'"
+                    ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
                         ugettext("Next"),
@@ -173,7 +165,7 @@ class RegisterWebUserForm(forms.Form):
                     hqcrispy.InlineField('is_mobile'),
                     css_class="check-password",
                 ),
-                css_class="form-step step-1",
+                css_class="form-bubble form-step step-1",
                 style="display: none;"
             ),
             crispy.Div(
@@ -207,7 +199,7 @@ class RegisterWebUserForm(forms.Form):
                                   "disable: disableNextStepTwo"
                     )
                 ),
-                css_class="form-step step-2",
+                css_class="form-bubble form-step step-2",
                 style="display: none;"
             ),
         )
@@ -235,7 +227,9 @@ class RegisterWebUserForm(forms.Form):
             # sync django user
             duplicate.save()
         if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
-            raise forms.ValidationError('Username already taken; please try another')
+            raise forms.ValidationError(
+                ugettext("Username already taken. Please try another.")
+            )
         return data
 
     def clean_password(self):
@@ -244,10 +238,29 @@ class RegisterWebUserForm(forms.Form):
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
         if data is not True:
-            raise forms.ValidationError(
-                "You must agree to our Terms of Service and Business Agreement in order "
-                "to register an account."
-            )
+            raise forms.ValidationError(ugettext(
+                "You must agree to our Terms of Service and Business Agreement "
+                "in order to register an account."
+            ))
+        return data
+
+    def clean_persona(self):
+        data = self.cleaned_data['persona'].strip()
+        if not data and settings.IS_SAAS_ENVIRONMENT:
+            raise forms.ValidationError(ugettext(
+                "Please specify how you plan to use CommCare so we know how to "
+                "best help you."
+            ))
+        return data
+
+    def clean_persona_other(self):
+        data = self.cleaned_data['persona_other'].strip().lower()
+        persona = self.cleaned_data['persona'].strip()
+        if persona == 'Other' and not data and settings.IS_SAAS_ENVIRONMENT:
+            raise forms.ValidationError(ugettext(
+                "Please specify how you plan to use CommCare so we know how to "
+                "best help you."
+            ))
         return data
 
     def clean(self):

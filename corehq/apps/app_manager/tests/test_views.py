@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 import os
 import re
+from contextlib import contextmanager
 
 from django.urls import reverse
 from django.test import TestCase
@@ -223,32 +224,55 @@ class TestViews(TestCase):
         self.addCleanup(lambda: Application.get_db().delete_doc(app_id))
 
     def test_get_apps_modules(self, mock):
-        self.app.add_module(Module.new_module("Module0", "en"))
-        self.app.save()
+        with apps_modules_setup(self):
+            apps_modules = get_apps_modules(self.project.name)
 
-        other_app = Application.new_app(self.project.name, "OtherApp")
-        other_app.add_module(Module.new_module("Module0", "en"))
-        other_app.save()
-        self.addCleanup(lambda: Application.get_db().delete_doc(other_app.id))
+            names = sorted([a['name'] for a in apps_modules])
+            self.assertEqual(
+                names, ['OtherApp', 'TestApp'],
+                'get_apps_modules should only return normal Applications'
+            )
+            self.assertTrue(
+                all(len(app['modules']) == 1 for app in apps_modules),
+                'Each app should only have one module'
+            )
+            self.assertEqual(
+                apps_modules[0]['modules'][0]['name'], 'Module0',
+                'Module name should be translated'
+            )
 
-        linked_app = create_linked_app(self.project.name, self.app.id, self.project.name, 'LinkedApp')
-        self.addCleanup(lambda: Application.get_db().delete_doc(linked_app.id))
+    def test_get_apps_modules_doc_types(self, mock):
+        with apps_modules_setup(self):
+            apps_modules = get_apps_modules(
+                self.project.name, app_doc_types=('Application', 'LinkedApplication')
+            )
+            names = sorted([a['name'] for a in apps_modules])
+            self.assertEqual(names, ['LinkedApp', 'OtherApp', 'TestApp'])
 
-        deleted_app = Application.new_app(self.project.name, "DeletedApp")
-        deleted_app.add_module(Module.new_module("Module0", "en"))
-        deleted_app.save()
-        deleted_app.delete_app()
-        deleted_app.save()
-        self.addCleanup(lambda: Application.get_db().delete_doc(deleted_app.id))
 
-        apps_modules = get_apps_modules(self.project.name)
+@contextmanager
+def apps_modules_setup(test_case):
+    """
+    Additional setUp and tearDown for get_apps_modules tests
+    """
+    test_case.app.add_module(Module.new_module("Module0", "en"))
+    test_case.app.save()
 
-        self.assertEqual(len(apps_modules), 2, 'get_apps_modules should only return normal Applications')
-        self.assertTrue(
-            all(len(app['modules']) == 1 for app in apps_modules),
-            'Each app should only have one module'
-        )
-        self.assertEqual(
-            apps_modules[0]['modules'][0]['name'], 'Module0',
-            'Module name should be translated'
-        )
+    test_case.other_app = Application.new_app(test_case.project.name, "OtherApp")
+    test_case.other_app.add_module(Module.new_module("Module0", "en"))
+    test_case.other_app.save()
+
+    test_case.deleted_app = Application.new_app(test_case.project.name, "DeletedApp")
+    test_case.deleted_app.add_module(Module.new_module("Module0", "en"))
+    test_case.deleted_app.save()
+    test_case.deleted_app.delete_app()
+    test_case.deleted_app.save()  # delete_app() changes doc_type. This save() saves that.
+
+    test_case.linked_app = create_linked_app(test_case.project.name, test_case.app.id,
+                                             test_case.project.name, 'LinkedApp')
+    try:
+        yield
+    finally:
+        Application.get_db().delete_doc(test_case.linked_app.id)
+        Application.get_db().delete_doc(test_case.deleted_app.id)
+        Application.get_db().delete_doc(test_case.other_app.id)
