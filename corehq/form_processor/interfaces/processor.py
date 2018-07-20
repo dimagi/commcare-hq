@@ -10,7 +10,7 @@ from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.form_processor.exceptions import XFormQuestionValueNotFound
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound, KafkaPublishingError, PostSaveError
 from corehq.form_processor.models import Attachment
 from couchforms.const import ATTACHMENT_NAME
 from memoized import memoized
@@ -185,6 +185,10 @@ class FormProcessorInterface(object):
         except BulkSaveError as e:
             logging.exception('BulkSaveError saving forms', extra={'details': {'errors': e.errors}})
             raise
+        except KafkaPublishingError as e:
+            from corehq.form_processor.submission_post import notify_submission_error
+            notify_submission_error(forms.submitted, e, 'Error publishing to kafak')
+            raise PostSaveError(e)
         except Exception as e:
             from corehq.form_processor.submission_post import handle_unexpected_error
             instance = forms.submitted
