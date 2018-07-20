@@ -529,14 +529,9 @@ class UsersAtLocationForm(forms.Form):
     def __init__(self, domain_object, location, *args, **kwargs):
         self.domain_object = domain_object
         self.location = location
-        fieldset_title = kwargs.pop('fieldset_title',
-                                    ugettext_lazy("Edit Group Membership"))
-        submit_label = kwargs.pop('submit_label',
-                                  ugettext_lazy("Update Membership"))
-
         super(UsersAtLocationForm, self).__init__(
             initial={'selected_ids': self.get_users_at_location()},
-            *args, **kwargs
+            prefix="users", *args, **kwargs
         )
 
         from corehq.apps.reports.filters.api import MobileWorkersOptionsView
@@ -551,12 +546,12 @@ class UsersAtLocationForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                fieldset_title,
+                _("Specify Workers at this Location"),
                 crispy.Field('selected_ids'),
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    Submit('submit', submit_label)
+                    Submit('submit', ugettext_lazy("Update Location Membership"))
                 )
             )
         )
