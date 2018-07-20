@@ -1719,12 +1719,18 @@ class CaseExportListView(BaseExportListView):
         ))
 
 
-class BaseNewExportView(BaseExportView):
+class BaseNewExportView(BaseProjectDataView):
     template_name = 'export/customize_export_new.html'
+    export_type = None
+    is_async = True
 
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def export_helper(self):
+        raise NotImplementedError("You must implement export_helper!")
 
     @property
     def export_instance_cls(self):
@@ -1741,6 +1747,22 @@ class BaseNewExportView(BaseExportView):
         }[self.export_type]
 
     @property
+    def export_home_url(self):
+        return reverse(self.report_class.urlname, args=(self.domain,))
+
+    @property
+    @memoized
+    def report_class(self):
+        try:
+            base_views = {
+                'form': FormExportListView,
+                'case': CaseExportListView,
+            }
+            return base_views[self.export_type]
+        except KeyError:
+            raise SuspiciousOperation('Attempted to access list view {}'.format(self.export_type))
+
+    @property
     def page_context(self):
         return {
             'export_instance': self.export_instance,
@@ -1750,6 +1772,13 @@ class BaseNewExportView(BaseExportView):
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
         }
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': self.report_class.page_title,
+            'url': self.export_home_url,
+        }]
 
     def commit(self, request):
         export = self.export_instance_cls.wrap(json.loads(request.body))
@@ -1775,6 +1804,41 @@ class BaseNewExportView(BaseExportView):
             )
         )
         return export._id
+
+    def post(self, request, *args, **kwargs):
+        try:
+            export_id = self.commit(request)
+        except Exception as e:
+            if self.is_async:
+                # todo: this can probably be removed as soon as
+                # http://manage.dimagi.com/default.asp?157713 is resolved
+                notify_exception(request, 'problem saving an export! {}'.format(str(e)))
+                response = json_response({
+                    'error': str(e) or type(e).__name__
+                })
+                response.status_code = 500
+                return response
+            elif isinstance(e, ExportAppException):
+                return HttpResponseRedirect(request.META['HTTP_REFERER'])
+            else:
+                raise
+        else:
+            try:
+                post_data = json.loads(self.request.body)
+                url = self.export_home_url
+                # short circuit to check if the submit is from a create or edit feed
+                # to redirect it to the list view
+                if isinstance(self, DashboardFeedMixin):
+                    url = reverse(DashboardFeedListView.urlname, args=[self.domain])
+                elif post_data['is_daily_saved_export']:
+                    url = reverse(DailySavedExportListView.urlname, args=[self.domain])
+            except ValueError:
+                url = self.export_home_url
+            if self.is_async:
+                return json_response({
+                    'redirect': url,
+                })
+            return HttpResponseRedirect(url)
 
 
 class BaseModifyNewCustomView(BaseNewExportView):
