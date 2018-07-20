@@ -13,6 +13,8 @@ from casexml.apps.case.xml.parser import CaseGenerationException, case_update_fr
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
+from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -24,7 +26,7 @@ from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
 from dimagi.utils.parsing import string_to_utc_datetime
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
@@ -154,6 +156,51 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
         change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
         ),
+    )
+
+
+def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
+                         include_ucrs=None, exclude_ucrs=None,
+                         num_processes=1, process_num=0, **kwargs):
+    change_feed = KafkaChangeFeed(
+        topics.FORM_TOPICS, group_id=pillow_id, num_processes=num_processes, process_num=process_num
+    )
+    checkpoint = KafkaPillowCheckpoint(pillow_id, topics.FORM_TOPICS)
+    ucr_processor = ConfigurableReportPillowProcessor(
+        data_source_provider=DynamicDataSourceProvider(),
+        auto_repopulate_tables=False,
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+    )
+    ucr_static_processor = ConfigurableReportPillowProcessor(
+        data_source_provider=StaticDataSourceProvider(),
+        auto_repopulate_tables=False,
+        ucr_division=ucr_division,
+        include_ucrs=include_ucrs,
+        exclude_ucrs=exclude_ucrs,
+    )
+    xform_to_es_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=XFORM_INDEX_INFO,
+        doc_prep_fn=transform_xform_for_elasticsearch,
+        doc_filter_fn=xform_pillow_filter,
+    )
+    event_handler = KafkaCheckpointEventHandler(
+        checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
+        # Todo; to change this to checkpoint_callbacks to include static UCR
+        checkpoint_callback=ucr_processor
+    )
+    # Todo; to include ConfigurableReportKafkaPillow features
+    return ConstructedPillow(
+        name=pillow_id,
+        topics=topics.FORM_TOPICS,
+        num_processes=num_processes,
+        process_num=process_num,
+        change_feed=change_feed,
+        checkpoint=checkpoint,
+        change_processed_event_handler=event_handler,
+        processor=[ucr_processor, ucr_static_processor, xform_to_es_processor]
     )
 
 
