@@ -493,7 +493,7 @@ def _transform_instance_to_error(interface, exception, instance):
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 
-def handle_unexpected_error(interface, instance, exception, message=None):
+def handle_unexpected_error(interface, instance, exception):
     instance = _transform_instance_to_error(interface, exception, instance)
     notify_submission_error(instance, exception, instance.problem)
     FormAccessors(interface.domain).save_new_form(instance)
