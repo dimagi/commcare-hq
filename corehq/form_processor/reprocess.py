@@ -58,9 +58,10 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
     if stub.saved:
         complete_ = (form.is_normal, form.initial_processing_complete)
         assert all(complete_), complete_
-        return _perfom_post_save_actions(form, save)
+        result = _perfom_post_save_actions(form, save)
+    else:
+        result = reprocess_form(form, save, lock_form=lock)
 
-    result = reprocess_form(form, save, lock_form=lock)
     save and stub.delete()
     return result
 
