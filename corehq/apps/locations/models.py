@@ -800,3 +800,16 @@ def _unassign_users_from_location(domain, location_id):
             user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():
             user.unset_location_by_id(location_id, fall_back_to_next=True)
+
+
+class LocationGroup(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    location_a = models.ForeignKey(
+        SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
+    location_b = models.ForeignKey(
+        SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
+
+    class Meta(object):
+        unique_together = [
+            ('location_a', 'location_b')
+        ]
