@@ -15,10 +15,10 @@
   "data_source_table": "static-person_cases_v2",
   "config": {
     "title": "MPR 2a - Deaths by Month  (Static)",
-    "description": "",
+    "description": "Details of Deaths during the month.  Displays person cases grouped by month of death and owner ID.",
     "visible": false,
     "aggregation_columns": [
-      "owner_id"
+      "owner_id", "month"
     ],
     "filters": [
       {
@@ -129,6 +129,14 @@
           "hin": "Owner"
         },
         "aggregation": "simple"
+      },
+      {
+        "display": "Month",
+        "column_id": "month",
+        "sortable": false,
+        "type": "aggregate_date",
+        "field": "date_death",
+        "format": "%Y-%m"
       },
       {
         "sortable": false,
