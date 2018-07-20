@@ -16,9 +16,7 @@
 
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'domain/js/create_snapshot.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'domain/js/create_snapshot' %}
 
 {% block page_content %}
     {% initial_page_data 'app_ids' app_ids %}
