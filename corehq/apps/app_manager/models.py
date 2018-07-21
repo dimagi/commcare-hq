@@ -61,7 +61,6 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 from django.template.loader import render_to_string
-from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.blobs.mixin import BlobMixin
@@ -5169,7 +5168,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     self.lazy_fetch_attachment('CommCare.jad'),
                     self.lazy_fetch_attachment('CommCare.jar'),
                 )
-            except (ResourceError, KeyError):
+            except (ResourceNotFound, KeyError):
                 all_files = {
                     filename[len('files/'):]: self.lazy_fetch_attachment(filename)
                     for filename in self.blobs if filename.startswith('files/')
