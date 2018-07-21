@@ -60,6 +60,7 @@ branches:
   - np/assert-blob-migration-complete  # NP July 20
   - np/attachments-soft_assert  # NP July 20
   - np/resourceerror  # NP July 20
+  - dmr/fix-package-security-vulnerabilities  # Danny July 21
 submodules:
   submodules/django-digest-src:
     branches: []
