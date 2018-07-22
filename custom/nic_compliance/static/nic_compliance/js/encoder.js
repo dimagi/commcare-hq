@@ -1,4 +1,10 @@
-hqDefine('nic_compliance/js/encoder', function () {
+hqDefine('nic_compliance/js/encoder', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+], function (
+    $,
+    initialPageData
+) {
     function HexParser() {
         var self = {};
 
@@ -22,7 +28,7 @@ hqDefine('nic_compliance/js/encoder', function () {
         };
 
         self.encode = function(password) {
-            if(password) {
+            if (password) {
                 var secretPassword = self.addPadding(window.btoa(b64EncodeUnicode(password)));
                 return self.addPadding(window.btoa(secretPassword));
             }
@@ -33,7 +39,7 @@ hqDefine('nic_compliance/js/encoder', function () {
     }
 
     $(function(){
-        if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
+        if (initialPageData.get("implement_password_obfuscation")) {
             var passwordField = $("#id_auth-password, #id_password");
             if (passwordField.length) {
                 passwordField.parents("form")[0].onsubmit = function() {
