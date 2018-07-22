@@ -1,11 +1,13 @@
 hqDefine("registration/js/password", [
     'jquery',
     'knockout',
+    'hqwebapp/js/initial_page_data',
     'zxcvbn/dist/zxcvbn',
     'nic_compliance/js/encoder',
 ], function (
     $,
     ko,
+    initialPageData,
     zxcvbn
 ) {
     var passwordModel = function () {
@@ -44,5 +46,9 @@ hqDefine("registration/js/password", [
         return self;
     };
 
-    $('.check-password').koApplyBindings(passwordModel());
+    $(function() {
+        if (!(initialPageData.get("hide_password_feedback"))) {
+            $('.check-password').koApplyBindings(passwordModel());
+        }
+    });
 });
