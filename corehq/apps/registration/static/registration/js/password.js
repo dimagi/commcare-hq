@@ -1,4 +1,13 @@
-(function () {
+hqDefine("registration/js/password", [
+    'jquery',
+    'knockout',
+    'zxcvbn/dist/zxcvbn',
+    'nic_compliance/js/encoder',
+], function (
+    $,
+    ko,
+    zxcvbn
+) {
     var passwordModel = function () {
         var self = {};
         self.penalizedWords = ['dimagi', 'commcare', 'hq', 'commcarehq'];
@@ -36,4 +45,4 @@
     };
 
     $('.check-password').koApplyBindings(passwordModel());
-})();
+});
