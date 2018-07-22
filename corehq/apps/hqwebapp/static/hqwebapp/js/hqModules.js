@@ -60,6 +60,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     'underscore': '_',
                     'clipboard/dist/clipboard': 'Clipboard',
                     'ace-builds/src-min-noconflict/ace': 'ace',
+                    'zxcvbn/dist/zxcvbn': 'zxcvbn',
                 },
                 thirdPartyPlugins = [
                     'jquery-form/dist/jquery.form.min',
