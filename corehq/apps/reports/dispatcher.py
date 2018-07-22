@@ -52,12 +52,8 @@ class ReportDispatcher(View):
     map_name = None
 
     def __init__(self, **kwargs):
-        print kwargs
-        print ">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
         if not self.map_name or not isinstance(self.map_name, six.string_types):
             raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
-        print self.map_name
-        print ">>>>>>>>>>>>>>>>>>>>>>>>>>"
         super(ReportDispatcher, self).__init__(**kwargs)
 
     @property

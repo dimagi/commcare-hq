@@ -10,7 +10,7 @@ from celery.task import task
 
 from corehq.util.download import get_download_response
 from dimagi.utils.couch import CriticalSection
-from corehq.apps.reports.tasks import export_all_rows_task
+from corehq.apps.reports.tasks import send_email_report
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.domain.views import BaseDomainView
@@ -849,45 +849,16 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     )[0]
 
 
-    recipient_emails = list()
+    recipient_emails = set(form.cleaned_data['recipient_emails'])
 
     if form.cleaned_data['send_to_owner']:
-        recipient_emails.append(request.couch_user.get_email())
-    if form.cleaned_data['recipient_emails']:
-        recipient_emails.extend(form.cleaned_data['recipient_emails'])
+        recipient_emails.add(request.couch_user.get_email())
 
     for recipient in recipient_emails:
-        send_email_report.delay(recipient, form,request,content, subject, config)
+        send_email_report.delay(recipient, request, content, subject, config)
 
     return HttpResponse()
 
-
-@task(queue="email_queue",
-      bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_email_report(self,recipient, form, request, content, subject, config):
-
-    from corehq.apps.hqwebapp.tasks import send_html_email_async
-
-    size_too_large = False
-    body = render_full_report_notification(request, content).content
-
-    try:
-        send_html_email_async(subject, recipient,
-                          body, email_from=settings.DEFAULT_FROM_EMAIL)
-    except Exception as er:
-        if getattr(er,'smtp_code', None) == 522 or True:
-            size_too_large = True
-        else:
-            self.retry(exc=er)
-
-    if size_too_large:
-        report = config.report(request, domain=config.domain, **{})
-        report.rendered_as = 'export'
-        report.decorator_dispatcher(request, domain=config.domain, 
-                                    report_slug=config.report_slug,
-                                    *(), **{})
-        export_all_rows_task.delay(report.__class__, report.__getstate__(), recipient=recipient)
-                     
 
 @login_and_domain_required
 @require_http_methods(['DELETE'])
