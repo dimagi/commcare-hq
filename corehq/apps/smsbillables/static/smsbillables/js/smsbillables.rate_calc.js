@@ -8,15 +8,15 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
     $,
     ko,
     _,
-    select2Handler,
+    select2Handler
 ) {
-    var SMSRateCalculator = function (form_data) {
+    var SMSRateCalculator = function (formData) {
         'use strict';
         var self = {};
 
         self.gateway = ko.observable();
         self.direction = ko.observable();
-        self.select2CountryCode = select2SmsRateHandler(form_data.country_code);
+        self.select2CountryCode = select2SmsRateHandler(formData.country_code);
         self.rate = ko.observable();
         self.hasError = ko.observable(false);
         self.noError = ko.computed(function () {
