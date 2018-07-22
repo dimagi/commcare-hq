@@ -59,8 +59,11 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
         "rightLegend": {
             "average": average,
             "info": _((
-                "Percentage of children between 6 - 8 months given timely introduction to solid, "
-                "semi-solid or soft food."
+                "Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, "
+                "the percentage that was given a timely introduction to solid, semi-solid or soft food."
+                "<br/><br/>"
+                "Timely intiation of complementary feeding in addition to breastmilk at 6 months of age "
+                "is a key feeding practice to reduce malnutrition"
             )),
             "extended_info": [
                 {
@@ -229,8 +232,11 @@ def get_children_initiated_sector_data(domain, config, loc_level, location_id, s
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of children between 6 - 8 months given timely introduction to solid, "
-            "semi-solid or soft food."
+            "Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, "
+            "the percentage that was given a timely introduction to solid, semi-solid or soft food."
+            "<br/><br/>"
+            "Timely intiation of complementary feeding in addition to breastmilk at 6 months of age "
+            "is a key feeding practice to reduce malnutrition"
         )),
         "chart_data": [
             {

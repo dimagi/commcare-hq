@@ -181,7 +181,7 @@ describe('Medicine Kit Directive', function () {
             'width': '900px',
         });
         assert.equal(controller.chartOptions.caption.html,
-            '<i class="fa fa-info-circle"></i> Percentage of AWCs that reported having a Medicine Kit'
+            '<i class="fa fa-info-circle"></i> Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a Medicine Kit'
         );
     });
 

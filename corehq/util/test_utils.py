@@ -561,7 +561,7 @@ class PatchMeta(type):
     """A metaclass to patch all inherited classes.
 
     Usage:
-    class BaseTest(TestCase):
+    class BaseTest(six.with_metaclass(PatchMeta, TestCase)):
         patch = mock.patch('something.do.patch', .....)
     """
 
