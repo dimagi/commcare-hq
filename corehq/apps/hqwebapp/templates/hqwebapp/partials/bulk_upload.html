@@ -18,8 +18,7 @@
                     Download your current {{ adjective }} Excel file.
                 {% endblocktrans %}
             </p>
-            {% block extra_option %}
-            {% endblock %}
+            {% block download_file %}
             <p>
                 <a id="download_link" href="{{ bulk_upload.download_url }}" data-bind="attr: {href: url}">
                     <button class="btn btn-success">
@@ -30,6 +29,7 @@
                     </button>
                 </a>
             </p>
+            {% endblock %}
         </li>
         <li>
             <p>
