@@ -1,8 +1,10 @@
+/* This is used as the main module for a couple of different password-centric pages */
 hqDefine("registration/js/password", [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
     'zxcvbn/dist/zxcvbn',
+    'registration/js/login',
     'nic_compliance/js/encoder',
 ], function (
     $,
@@ -47,8 +49,27 @@ hqDefine("registration/js/password", [
     };
 
     $(function() {
+        // Password feedback
         if (!(initialPageData.get("hide_password_feedback"))) {
-            $('.check-password').koApplyBindings(passwordModel());
+            var $checkPassword = $('.check-password');
+            if ($checkPassword.length) {
+                $checkPassword.koApplyBindings(passwordModel());
+            }
         }
+
+        // Captcha, if present
+        // http://stackoverflow.com/a/20371801
+        $('img.captcha').after(
+            $('<span> <button class="captcha-refresh">' +
+              '<i class="fa fa-refresh icon icon-refresh"></i></button></span>')
+        );
+        $('.captcha-refresh').click(function(){
+            var $form = $(this).parent().closest('form');
+            $.getJSON("/captcha/refresh/", {}, function(json) {
+                $form.find('input[name$="captcha_0"]').val(json.key);
+                $form.find('img.captcha').attr('src', json.image_url);
+            });
+            return false;
+        });
     });
 });
