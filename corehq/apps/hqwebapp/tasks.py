@@ -47,7 +47,6 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
             }
         )
         self.retry(exc=e)
-        
 
 @task(queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
@@ -60,14 +59,13 @@ def send_html_email_async(self, subject, recipient, html_content,
     - if sending fails, retry in 15 min
     - retry a maximum of 10 times
     """
-   
     try:
         send_HTML_email(subject, recipient, html_content,
                         text_content=text_content, cc=cc, email_from=email_from,
-                        file_attachments=file_attachments, bcc=bcc, 
+                        file_attachments=file_attachments, bcc=bcc,
                         smtp_exception_skip_list=smtp_exception_skip_list)
     except Exception as e:
-        if getattr(e,'smtp_code', None) in smtp_exception_skip_list :
+        if getattr(e, 'smtp_code', None) in smtp_exception_skip_list:
             raise e
         else:
             recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
@@ -81,7 +79,6 @@ def send_html_email_async(self, subject, recipient, html_content,
                 }
             )
             self.retry(exc=e)
-
 
 
 @task(queue="email_queue",

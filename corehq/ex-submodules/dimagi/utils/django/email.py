@@ -83,4 +83,3 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                 bcc=bcc,
             )
             error_msg.send()
-

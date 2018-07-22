@@ -6,7 +6,6 @@ from functools import partial
 import itertools
 import json
 from wsgiref.util import FileWrapper
-from celery.task import task
 
 from corehq.util.download import get_download_response
 from dimagi.utils.couch import CriticalSection
@@ -808,7 +807,6 @@ class AddSavedReportConfigView(View):
 @login_and_domain_required
 @datespan_default
 def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix, once=False):
-    
     from .forms import EmailReportForm
     user_id = request.couch_user._id
 
@@ -848,9 +846,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
         notes=form.cleaned_data['notes'], once=once
     )[0]
 
-
     recipient_emails = set(form.cleaned_data['recipient_emails'])
-
     if form.cleaned_data['send_to_owner']:
         recipient_emails.add(request.couch_user.get_email())
 

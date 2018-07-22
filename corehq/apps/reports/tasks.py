@@ -208,38 +208,30 @@ def apps_update_calculated_properties():
 def send_email_report(self, recipient, request, content, subject, config):
     '''
     Function invokes send_html_email_async to email the html text report.
-    If the report is too large to fit into email then a download link is 
+    If the report is too large to fit into email then a download link is
     sent via email to download report
-
     :Parameter recipient:
             recipient to whom email is to be sent
-
     :Parameter request:
             request object which contains request details
-    
     :Parameter content:
             content of the email
-    
     :Parameter subject:
             subject of the email
-    
     :Parameter config:
-            object of ReportConfig. Contains the report configuration 
+            object of ReportConfig. Contains the report configuration
             like reportslug, report_type etc
-    
-
     '''
     from corehq.apps.reports.views import render_full_report_notification
 
     size_too_large = False
     body = render_full_report_notification(request, content).content
-
     try:
         send_html_email_async(subject, recipient,
-                              body, email_from=settings.DEFAULT_FROM_EMAIL, 
-                              smtp_exception_skip_list= [522])
+                              body, email_from=settings.DEFAULT_FROM_EMAIL,
+                              smtp_exception_skip_list=[522])
     except Exception as er:
-        if getattr(er,'smtp_code', None) == 522:
+        if getattr(er, 'smtp_code', None) == 522:
             size_too_large = True
         else:
             self.retry(exc=er)
@@ -249,11 +241,11 @@ def send_email_report(self, recipient, request, content, subject, config):
     if size_too_large:
         report = config.report(request, domain=config.domain, **{})
         report.rendered_as = 'export'
-        report.decorator_dispatcher(request, domain=config.domain, 
+        report.decorator_dispatcher(request, domain=config.domain,
                                     report_slug=config.report_slug,
                                     *(), **{})
-        export_all_rows_task.delay(report.__class__, report.__getstate__(), recipient=recipient)
-                    
+        export_all_rows_task.delay(report.__class__, report.__getstate__(),
+                                   recipient=recipient)
 
 
 @task(ignore_result=True)
@@ -270,7 +262,6 @@ def export_all_rows_task(ReportClass, report_state, recipient=None):
 
     if not recipient:
         recipient = report.request.couch_user.get_email()
-        
     _send_email(report.request.couch_user, report, hash_id, recipient=recipient)
 
 
