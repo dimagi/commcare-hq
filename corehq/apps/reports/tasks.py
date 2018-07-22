@@ -203,7 +203,7 @@ def apps_update_calculated_properties():
 
 
 @task(ignore_result=True)
-def export_all_rows_task(ReportClass, report_state):
+def export_all_rows_task(ReportClass, report_state,recipient=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
 
@@ -213,6 +213,10 @@ def export_all_rows_task(ReportClass, report_state):
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
     hash_id = _store_excel_in_redis(report_class, file)
+    
+    if not recipient:
+        recipient = report.request.couch_user
+        
     _send_email(report.request.couch_user, report, hash_id)
 
 

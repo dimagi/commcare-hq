@@ -48,13 +48,12 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
         )
         self.retry(exc=e)
 
-
 @task(queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_html_email_async(self, subject, recipient, html_content,
+def send_html_email_async(subject, recipient, html_content,
                           text_content=None, cc=None,
                           email_from=settings.DEFAULT_FROM_EMAIL,
-                          file_attachments=None, bcc=None):
+                          file_attachments=None, bcc=None, handle_exception=False):
     """ Call with send_HTML_email_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -63,19 +62,21 @@ def send_html_email_async(self, subject, recipient, html_content,
     try:
         send_HTML_email(subject, recipient, html_content,
                         text_content=text_content, cc=cc, email_from=email_from,
-                        file_attachments=file_attachments, bcc=bcc)
+                        file_attachments=file_attachments, bcc=bcc, handle_exception=handle_exception)
     except Exception as e:
-        recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
-        notify_exception(
-            None,
-            message="Encountered error while sending email",
-            details={
-                'subject': subject,
-                'recipients': ', '.join(recipient),
-                'error': e,
-            }
-        )
-        self.retry(exc=e)
+        if handle_exception:
+            recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
+            notify_exception(
+                None,
+                message="Encountered error while sending email",
+                details={
+                    'subject': subject,
+                    'recipients': ', '.join(recipient),
+                    'error': e,
+                }
+            )
+        else:
+            raise e
 
 
 @task(queue="email_queue",
