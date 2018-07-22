@@ -1581,7 +1581,7 @@ class CaseExportListView(BaseExportListView):
 
 
 class BaseNewExportView(BaseProjectDataView):
-    template_name = 'export/customize_export_new.html'
+    template_name = 'export/customize_export.html'
     export_type = None
     is_async = True
 
