@@ -20,6 +20,7 @@ requirejs.config({
             deps: ['jquery', 'knockout', 'underscore'],
             exports: 'RMI',
         },
+        "ace-builds/src-min-noconflict/ace": { exports: "ace" },
     },
     map: {
         "datatables.fixedColumns": {
