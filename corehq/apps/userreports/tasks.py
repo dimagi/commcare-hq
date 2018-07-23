@@ -449,6 +449,9 @@ def build_async_indicators(indicator_doc_ids):
         )
 
 
+save_document = build_async_indicators
+
+
 @periodic_task(
     run_every=crontab(minute="*/5"),
     queue=settings.CELERY_PERIODIC_QUEUE,
