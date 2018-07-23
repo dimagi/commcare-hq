@@ -171,6 +171,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
+    // Loosely based on https://jsfiddle.net/hQnWG/614/
     ko.bindingHandlers.multirow_sortable = {
         updateSortableList: function(itemList) {
             _(itemList()).each(function(item, index) {
@@ -202,7 +203,22 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             };
             list.subscribe(forceUpdate);
 
-            // based on https://jsfiddle.net/hQnWG/614/
+            $(element).on('click', '.send-to-top', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+                moveRowToIndex(row, 0);
+            });
+
+            $(element).on('click', '.send-to-bottom', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+                moveRowToIndex(row, list().length - 1);
+            });
+
+            $(element).on('click', '.export-table-checkbox', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+            });
 
             $(element).on('click', 'tr', function (e) {
                 if ($(this).hasClass('ignore-click')) {
@@ -236,46 +252,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     }
                     getExportColumnByRow($(this)).selectedForSort(true);
                 }
-            });
-
-            var getIndexFromRow = function (row) {
-                return parseInt(row[0].attributes['data-order'].value);
-            };
-
-            var getExportColumnByRow = function(row) {
-                return list()[getIndexFromRow(row)];
-            };
-
-            var setIgnoreClick = function(row) {
-                row.addClass('ignore-click').siblings().removeClass('ignore-click');
-            };
-
-            var getRowFromClickedElement = function(element) {
-                return element.closest('tr');
-            };
-
-            var moveRowToIndex = function (row, newIndex) {
-                var oldIndex = getIndexFromRow(row);
-                row.remove();
-                var currentListItem = list.splice(oldIndex, 1)[0];
-                list.splice(newIndex, 0, currentListItem);
-            };
-
-            $(element).on('click', '.send-to-top', function () {
-                var row = getRowFromClickedElement($(this));
-                setIgnoreClick(row);
-                moveRowToIndex(row, 0);
-            });
-
-            $(element).on('click', '.send-to-bottom', function () {
-                var row = getRowFromClickedElement($(this));
-                setIgnoreClick(row);
-                moveRowToIndex(row, list().length - 1);
-            });
-
-            $(element).on('click', '.export-table-checkbox', function () {
-                var row = getRowFromClickedElement($(this));
-                setIgnoreClick(row);
             });
 
             $(element).sortable({
@@ -327,6 +303,32 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     });
                 },
             });
+
+            // Helper functions
+
+            var getIndexFromRow = function (row) {
+                return parseInt(row[0].attributes['data-order'].value);
+            };
+
+            var getExportColumnByRow = function(row) {
+                return list()[getIndexFromRow(row)];
+            };
+
+            var setIgnoreClick = function(row) {
+                row.addClass('ignore-click').siblings().removeClass('ignore-click');
+            };
+
+            var getRowFromClickedElement = function(element) {
+                return element.closest('tr');
+            };
+
+            var moveRowToIndex = function (row, newIndex) {
+                var oldIndex = getIndexFromRow(row);
+                row.remove();
+                var currentListItem = list.splice(oldIndex, 1)[0];
+                list.splice(newIndex, 0, currentListItem);
+            };
+
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
         update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
