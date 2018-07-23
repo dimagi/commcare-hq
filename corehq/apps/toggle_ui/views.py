@@ -9,7 +9,6 @@ from django.contrib import messages
 from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy as _
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, \
     toggle_js_user_cachebuster
 from couchforms.analytics import get_last_form_submission_received
@@ -19,8 +18,16 @@ from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.toggles import (
-    ALL_NAMESPACES, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN, TAG_DEPRECATED,
-    DynamicallyPredictablyRandomToggle, PredictablyRandomToggle, all_toggles,
+    ALL_NAMESPACES,
+    ALL_TAGS,
+    NAMESPACE_USER,
+    NAMESPACE_DOMAIN,
+    TAG_CUSTOM,
+    TAG_DEPRECATED,
+    TAG_INTERNAL,
+    DynamicallyPredictablyRandomToggle,
+    PredictablyRandomToggle,
+    all_toggles,
 )
 from corehq.util.soft_assert import soft_assert
 from toggle.models import Toggle
@@ -208,7 +215,7 @@ class ToggleEditView(ToggleBaseView):
         return HttpResponse(json.dumps(data), content_type="application/json")
 
     def _notify_on_change(self, added_entries):
-        is_deprecated_toggle = (self.static_toggle.tag == TAG_DEPRECATED)
+        is_deprecated_toggle = (self.static_toggle.tag in (TAG_DEPRECATED, TAG_CUSTOM, TAG_INTERNAL))
         if added_entries and (self.static_toggle.notification_emails or is_deprecated_toggle):
             subject = "User {} added {} on {} in environment {}".format(
                 self.request.user.username, self.static_toggle.slug,
