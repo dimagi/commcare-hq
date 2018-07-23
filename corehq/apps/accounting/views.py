@@ -1200,10 +1200,12 @@ def enterprise_dashboard_email(request, domain, slug):
 
 
 def enterprise_settings(request, domain):
+    request.use_select2 = True
     account = _get_account_or_404(request, domain)
 
     form = EnterpriseSettingsForm(domain=domain, initial={
         "restrict_domain_creation": account.restrict_domain_creation,
+        "enterprise_admin_emails": ','.join(account.enterprise_admin_emails),
     })
 
     context = {
@@ -1223,6 +1225,7 @@ def edit_enterprise_settings(request, domain):
 
     form = EnterpriseSettingsForm(request.POST, domain=domain, initial={
         "restrict_domain_creation": account.restrict_domain_creation,
+        "enterprise_admin_emails": ','.join(account.enterprise_admin_emails),
     })
 
     if form.is_valid():
