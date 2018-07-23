@@ -304,12 +304,6 @@ def _queue_indicators(indicators):
         _queue_chunk(to_queue)
 
 
-@quickcache(['config_id'])
-def _get_config(config_id):
-    # performance optimization for save_document. don't use elsewhere
-    return _get_config_by_id(config_id)
-
-
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def save_document(doc_ids):
     lock_keys = []
@@ -379,7 +373,7 @@ def _save_document_helper(indicator, doc):
     configs = dict()
     for config_id in indicator.indicator_config_ids:
         try:
-            configs[config_id] = _get_config(config_id)
+            configs[config_id] = _get_config_by_id(config_id)
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
             configs_to_remove.append(config_id)
