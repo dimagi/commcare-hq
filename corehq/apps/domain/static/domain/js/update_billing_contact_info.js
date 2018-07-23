@@ -3,7 +3,7 @@ hqDefine('domain/js/update_billing_contact_info', [
     'hqwebapp/js/initial_page_data',
     'accounting/js/stripe_card_manager',
     'stripe',
-    'accounting/js/widgets'
+    'accounting/js/widgets',
 ], function (
     $,
     initialPageData,

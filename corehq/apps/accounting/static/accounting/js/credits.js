@@ -2,14 +2,14 @@ hqDefine('accounting/js/credits', [
     'jquery',
     'knockout',
     'underscore',
-    'accounting/js/payment_method_handler'
+    'accounting/js/payment_method_handler',
 ], function (
     $,
     ko,
     _,
     paymentMethodHandler
 ) {
-    var creditsManager = function (products, features, paymentHandler, can_purchase_credits) {
+    var creditsManager = function (products, features, paymentHandler, canPurchaseCredits) {
         var self = {};
 
         self.paymentHandler = paymentHandler;
@@ -19,10 +19,10 @@ hqDefine('accounting/js/credits', [
 
         self.init = function () {
             _.each(products, function (product) {
-                self.products.push(creditItem('product', product, paymentHandler, can_purchase_credits));
+                self.products.push(creditItem('product', product, paymentHandler, canPurchaseCredits));
             });
             _.each(features, function (feature) {
-                self.features.push(creditItem('feature', feature, paymentHandler, can_purchase_credits));
+                self.features.push(creditItem('feature', feature, paymentHandler, canPurchaseCredits));
             });
             self.prepayments(prepaymentsModel(self.products, self.features, paymentHandler));
         };
@@ -63,7 +63,7 @@ hqDefine('accounting/js/credits', [
         return self;
     };
 
-    var creditItem = function (category, data, paymentHandler, can_purchase_credits) {
+    var creditItem = function (category, data, paymentHandler, canPurchaseCredits) {
         var self = {};
         var CreditCostItem = paymentMethodHandler.CreditCostItem;
         self.category = ko.observable(category);
@@ -78,7 +78,7 @@ hqDefine('accounting/js/credits', [
         self.accountAmount = ko.observable((data.account_credit) ? data.account_credit.amount : 0);
         self.hasAmount = ko.observable(data.subscription_credit && data.subscription_credit.is_visible);
         self.hasAccountAmount = ko.observable(data.account_credit && data.account_credit.is_visible);
-        self.canPurchaseCredits = ko.observable(can_purchase_credits);
+        self.canPurchaseCredits = ko.observable(canPurchaseCredits);
         self.paymentHandler = paymentHandler;
         self.addAmount = ko.observable(0);
 
