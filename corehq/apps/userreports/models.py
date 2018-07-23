@@ -810,7 +810,7 @@ class StaticReportConfiguration(JsonObject):
                 ReportConfiguration.__class__.__name__,
                 domain,
             ))
-        return cls._get_report_config(wrapped, domain)
+        return cls._get_report_config(wrapped, report_domain)
 
     @classmethod
     def by_ids(cls, config_ids):
