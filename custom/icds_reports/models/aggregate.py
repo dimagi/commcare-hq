@@ -27,6 +27,7 @@ from custom.icds_reports.utils.aggregation import (
     THRFormsChildHealthAggregationHelper,
     InactiveAwwsAggregationHelper,
 )
+from six.moves import range
 
 
 class CcsRecordMonthly(models.Model):

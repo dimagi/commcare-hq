@@ -3,11 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/select2_handler.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
-    <script src="{% static 'smsbillables/js/smsbillables.rate_calc.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'smsbillables/js/smsbillables.rate_calc' %}
 
 {% block title %}{% trans "SMS Pricing" %}{% endblock %}
 

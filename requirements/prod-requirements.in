@@ -1,5 +1,7 @@
 -r requirements.txt
 
+pip>=10.0.0
+
 flower==0.9.2
 tornado<5.0
 newrelic

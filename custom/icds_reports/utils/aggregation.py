@@ -22,6 +22,7 @@ from custom.icds_reports.const import (
     DASHBOARD_DOMAIN,
 )
 from six.moves import range
+from six.moves import map
 
 
 def transform_day_to_month(day):
@@ -976,7 +977,7 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
         ucr_query, params = self.data_from_ucr_query()
         return """
             UPDATE "{table_name}" AS agg_table SET
-                first_submission = ut.first_submission,
+                first_submission = LEAST(ut.first_submission, ut.first_submission)
                 last_submission = ut.last_submission
             FROM (
               SELECT
@@ -1178,7 +1179,8 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             {calculations}
             FROM "{ucr_child_monthly_table}" ucr
             LEFT OUTER JOIN "{child_health_monthly_table}" chm ON ucr.doc_id = chm.case_id AND ucr.month = chm.month AND ucr.awc_id = chm.awc_id
-            WHERE ucr.month = %(start_date)s AND chm.month = %(start_date)s
+            WHERE ucr.month = %(start_date)s AND chm.month = %(start_date)s AND
+                  ucr.state_id != '' AND ucr.state_id IS NOT NULL
             GROUP BY ucr.state_id, ucr.district_id, ucr.block_id, ucr.supervisor_id, chm.awc_id,
                      chm.month, chm.sex, chm.age_tranche, chm.caste,
                      coalesce_disabled, coalesce_minority, coalesce_resident

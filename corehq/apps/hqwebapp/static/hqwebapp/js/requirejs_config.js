@@ -21,9 +21,8 @@ requirejs.config({
             deps: ['jquery', 'knockout', 'underscore'],
             exports: 'RMI',
         },
-        "stripe": {
-            exports: 'Stripe',
-        },
+        "stripe": { exports: 'Stripe' },
+        "ace-builds/src-min-noconflict/ace": { exports: "ace" },
     },
     map: {
         "datatables.fixedColumns": {
