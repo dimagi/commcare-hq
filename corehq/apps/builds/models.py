@@ -42,8 +42,6 @@ class CommCareBuild(BlobMixin, Document):
     time = DateTimeProperty()
     j2me_enabled = BooleanProperty(default=True)
 
-    _migrating_blobs_from_couch = True
-
     def put_file(self, payload, path, filename=None):
         """
         Add an attachment to the build (useful for constructing the build)
