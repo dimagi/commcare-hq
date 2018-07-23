@@ -58,6 +58,7 @@ from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import create_form_for_test
+from couchforms.models import UnfinishedSubmissionStub
 from dimagi.utils.make_uuid import random_hex
 from six.moves import range
 
@@ -561,6 +562,25 @@ class TestDeleteDomain(TestCase):
 
         self._assert_zapier_counts(self.domain.name, 0)
         self._assert_zapier_counts(self.domain2.name, 1)
+
+    def _assert_couchforms_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            UnfinishedSubmissionStub.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_couchforms_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            UnfinishedSubmissionStub.objects.create(
+                domain=domain_name,
+                timestamp=datetime.utcnow(),
+                xform_id='xform_id',
+            )
+            self._assert_couchforms_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_couchforms_counts(self.domain.name, 0)
+        self._assert_couchforms_counts(self.domain2.name, 1)
 
     def tearDown(self):
         self.domain2.delete()
