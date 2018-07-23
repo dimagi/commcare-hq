@@ -222,12 +222,16 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
             $(element).on('click', 'tr', function (e) {
                 if ($(this).hasClass('ignore-click')) {
+                    // Don't do anything if send-to-top, send-to-bottom, or select-for-export was clicked.
                     $(this).removeClass('ignore-click');
                 } else if (e.ctrlKey || e.metaKey) {
+                    // CTRL-clicking (CMD on OSX) toggles whether a row is highlighted for sorting.
                     var exportColumn = getExportColumnByRow($(this));
                     exportColumn.selectedForSort(!exportColumn.selectedForSort());
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
+                    // Clicking the shift key highlights all rows between the shift-clicked row
+                    // and the previously clicked row.
                     var shiftSelectedIndex = getIndexFromRow($(this)),
                         lastClickedIndex = 0,
                         start = null,
@@ -246,6 +250,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                         list()[i].selectedForSort(true);
                     }
                 } else {
+                    // Clicking a row selects it for sorting and unselects all other rows.
                     $(this).addClass('last-clicked').siblings().removeClass('last-clicked');
                     for (var i = 0; i < list().length; i++) {
                         list()[i].selectedForSort(false);
@@ -257,6 +262,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             $(element).sortable({
                 delay: 150,
                 helper: function (e, item) {
+                    // If the dragged row isn't selected for sorting, select it and unselect all other rows.
                     var exportColumn = getExportColumnByRow(item);
                     if (!exportColumn.selectedForSort()) {
                         for (var i = 0; i < list().length; i++) {
@@ -264,9 +270,12 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                         }
                         exportColumn.selectedForSort(true);
                     }
+                    // Only show the row that is clicked and dragged.
                     item.siblings('.selected-for-sort').hide();
                     return item;
                 },
+                // Drop the rows in the chosen location.
+                // Maintain the original order of the selected rows.
                 stop: function (e, ui) {
                     ui.item.after($('.selected-for-sort'));
 
@@ -290,13 +299,16 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                         });
                     };
 
+                    // Insert rows at top of list.
                     if (previousIndex === null) {
                         insertDraggedElements();
                     }
                     originalList.forEach(function(originalListElement, originalListIndex) {
+                        // Other rows stay in their original order.
                         if (!movedIndices.includes(originalListIndex)) {
                             list.push(originalListElement);
                         }
+                        // Insert rows in the middle of the list.
                         if (originalListIndex === previousIndex) {
                             insertDraggedElements();
                         }
