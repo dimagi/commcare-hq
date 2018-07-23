@@ -12,7 +12,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
-from corehq.pillows.case import get_case_to_elasticsearch_pillow
+from corehq.pillows.case import get_ucr_es_case_pillow
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.test_utils import trap_extra_setup
 from corehq.util.elastic import ensure_index_deleted
@@ -95,12 +95,18 @@ class ChangeFeedPillowTest(SimpleTestCase):
 
 class TestElasticProcessorPillows(TestCase):
 
+    _call_center_domain_mock = patch(
+        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+    )
+
     def setUp(self):
+        self._call_center_domain_mock.start()
         with patch('pillowtop.checkpoints.manager.get_or_create_checkpoint'):
-            self.pillow = get_case_to_elasticsearch_pillow()
+            self.pillow = get_ucr_es_case_pillow()
 
     def tearDown(self):
         ensure_index_deleted(CASE_INDEX_INFO.index)
+        self._call_center_domain_mock.stop()
 
     def test_mismatched_rev(self):
         """

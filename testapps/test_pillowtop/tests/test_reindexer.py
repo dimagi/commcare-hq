@@ -134,12 +134,24 @@ class PillowtopReindexerTest(TestCase):
 
 class CheckpointCreationTest(TestCase):
     # this class is only here so you can run these explicitly
-    pass
+    _call_center_domain_mock = mock.patch(
+        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        super(CheckpointCreationTest, cls).setUpClass()
+        cls._call_center_domain_mock.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._call_center_domain_mock.start()
+        super(CheckpointCreationTest, cls).tearDownClass()
 
 
 @generate_cases([
     ('app', 'ApplicationToElasticsearchPillow'),
-    ('case', 'CaseToElasticsearchPillow'),
+    ('case', 'kafka-case-ucr-es'),
     ('form', 'XFormToElasticsearchPillow'),
     ('domain', 'KafkaDomainPillow'),
     ('user', 'UserPillow'),
@@ -175,7 +187,7 @@ def test_checkpoint_creation(self, reindex_id, pillow_name):
 
 
 @generate_cases([
-    ('sql-case', 'CaseToElasticsearchPillow'),
+    ('sql-case', 'kafka-case-ucr-es'),
     ('sql-form', 'XFormToElasticsearchPillow'),
     ('ledger-v2', 'LedgerToElasticsearchPillow'),
     ('groups-to-user', 'UserPillow'),

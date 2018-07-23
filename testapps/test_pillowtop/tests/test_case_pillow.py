@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import mock
 import uuid
 
 from django.test import TestCase
@@ -20,8 +21,13 @@ class CasePillowTest(TestCase):
 
     domain = 'case-pillowtest-domain'
 
+    _call_center_domain_mock = mock.patch(
+        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+    )
+
     def setUp(self):
         super(CasePillowTest, self).setUp()
+        self._call_center_domain_mock.start()
         FormProcessorTestUtils.delete_all_cases()
         with trap_extra_setup(ConnectionError):
             self.elasticsearch = get_es_new()
@@ -30,6 +36,7 @@ class CasePillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(CASE_INDEX_INFO.index)
+        self._call_center_domain_mock.stop()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super(CasePillowTest, self).tearDown()
 
@@ -54,7 +61,7 @@ class CasePillowTest(TestCase):
         self.assertEqual(1, results.total)
 
         # soft delete the case
-        with process_pillow_changes('CaseToElasticsearchPillow'):
+        with process_pillow_changes('kafka-case-ucr-es'):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 CaseAccessors(self.domain).soft_delete_cases([case_id])
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
@@ -66,7 +73,7 @@ class CasePillowTest(TestCase):
     def _create_case_and_sync_to_es(self):
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        with process_pillow_changes('CaseToElasticsearchPillow'):
+        with process_pillow_changes('kafka-case-ucr-es'):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 create_and_save_a_case(self.domain, case_id, case_name)
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
