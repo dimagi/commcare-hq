@@ -219,6 +219,17 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
         return ['location_id'] + fields
 
 
+class Dhis2RepeaterForm(FormRepeaterForm):
+
+    def __init__(self, *args, **kwargs):
+        super(Dhis2RepeaterForm, self).__init__(*args, **kwargs)
+        # self.fields['location_id'].widget = SupplyPointSelectWidget(self.domain, id='id_location_id')
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super(Dhis2RepeaterForm, self).get_ordered_crispy_form_fields()
+        return fields
+
+
 class SOAPCaseRepeaterForm(CaseRepeaterForm):
     operation = forms.CharField(
         required=False,
