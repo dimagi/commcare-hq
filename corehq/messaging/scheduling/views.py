@@ -581,7 +581,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         # that is a standalone environment.
         return not (
             self.request.couch_user.is_superuser or
-            settings.SERVER_ENVIRONMENT in ('echis', 'pna', 'swiss')
+            settings.SERVER_ENVIRONMENT in settings.UNLIMITED_RULE_RESTART_ENVS
         )
 
     @property
