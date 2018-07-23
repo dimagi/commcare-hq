@@ -195,10 +195,19 @@ class ToggleEditView(ToggleBaseView):
             messages.error(request, _("The randomness value {} must be between 0 and 1".format(randomness)))
 
         toggle.save()
-
+        self._notify_on_change(currently_enabled - previously_enabled)
         changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
 
-        added_entries = currently_enabled - previously_enabled
+        _call_save_fn_and_clear_cache(toggle.slug, changed_entries, currently_enabled, self.static_toggle)
+
+        data = {
+            'items': item_list
+        }
+        if self.usage_info:
+            data['last_used'] = _get_usage_info(toggle)
+        return HttpResponse(json.dumps(data), content_type="application/json")
+
+    def _notify_on_change(self, added_entries):
         is_deprecated_toggle = (self.static_toggle.tag == TAG_DEPRECATED)
         if added_entries and (self.static_toggle.notification_emails or is_deprecated_toggle):
             subject = "User {} added {} on {} in environment {}".format(
@@ -216,15 +225,6 @@ class ToggleEditView(ToggleBaseView):
                 _assert = soft_assert(send_to_ops=is_deprecated_toggle)
 
             _assert(False, subject)
-
-        _call_save_fn_and_clear_cache(toggle.slug, changed_entries, currently_enabled, self.static_toggle)
-
-        data = {
-            'items': item_list
-        }
-        if self.usage_info:
-            data['last_used'] = _get_usage_info(toggle)
-        return HttpResponse(json.dumps(data), content_type="application/json")
 
 
 def toggle_app_manager_v2(request):
