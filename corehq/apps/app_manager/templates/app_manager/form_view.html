@@ -174,7 +174,7 @@
             {% endif %}
 
             <li {% if not form.uses_cases %}class="active"{% endif %}>
-                <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
+                <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
             </li>
 
             {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
