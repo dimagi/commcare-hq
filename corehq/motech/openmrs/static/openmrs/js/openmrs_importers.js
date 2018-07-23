@@ -78,6 +78,12 @@ hqDefine('openmrs/js/openmrs_importers', function () {
             self.openmrsImporters.push(openmrsImporter({}));
         };
 
+        self.initOpenmrsImporterTemplate = function(elements) {
+            _.each(elements, function(element) {
+                _.each($(element).find('.jsonwidget'), hqImport("userreports/js/base").initJsonWidget);
+            });
+        };
+
         self.removeOpenmrsImporter = function (openmrsImporter) {
             self.openmrsImporters.remove(openmrsImporter);
         };
