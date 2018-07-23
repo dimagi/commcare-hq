@@ -152,17 +152,19 @@ class BaseDataDump(BaseCommand):
         return zip_temp_path
 
     def save_dump_to_blob(self, temp_path):
+        expiry_mins = 60 * 48
         with open(temp_path, 'rb') as file_:
             blob_db = get_blob_db()
             blob_db.put(
                 file_,
                 self.result_file_name,
-                timeout=60 * 48)  # 48 hours
+                timeout=expiry_mins)
         file_format = Format.from_format(Format.CSV)
         file_name_header = safe_filename_header(
             self.result_file_name, file_format.extension)
         blob_dl_object = expose_blob_download(
             self.result_file_name,
+            expiry=expiry_mins * 60,
             mimetype=file_format.mimetype,
             content_disposition=file_name_header
         )
