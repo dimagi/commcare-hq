@@ -1,9 +1,17 @@
-hqDefine("scheduling/js/broadcasts_list", function() {
-
+hqDefine("scheduling/js/broadcasts_list", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'datatables',
+    'datatables.fixedColumns',
+    'datatables.bootstrap',
+], function(
+    $,
+    initialPageData
+) {
     var scheduledTable = null;
 
     $(function() {
-        var list_broadcasts_url = hqImport("hqwebapp/js/initial_page_data").reverse("new_list_broadcasts");
+        var list_broadcasts_url = initialPageData.reverse("new_list_broadcasts");
 
         scheduledTable = $("#scheduled-table").dataTable({
             "lengthChange": false,
@@ -36,17 +44,14 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                     "targets": [0],
                     "className": "text-center",
                     "render": function(data, type, row) {
-                        var button_id = 'delete-button-for-scheduled-broadcast-' + row.id;
-                        return '<button id="' + button_id + '" \
-                                        class="btn btn-danger" \
-                                        onclick="hqImport(\'scheduling/js/broadcasts_list\').deleteScheduledBroadcast(' + row.id + ')"> \
-                                <i class="fa fa-remove"></i></button>';
+                        return '<button data-id="' + row.id + '" class="btn btn-danger broadcast-delete">'
+                                + '<i class="fa fa-remove"></i></button>';
                     },
                 },
                 {
                     "targets": [1],
                     "render": function(data, type, row) {
-                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_schedule', 'scheduled', row.id);
+                        var url = initialPageData.reverse('edit_schedule', 'scheduled', row.id);
                         return "<a href='" + url + "'>" + row.name + "</a>";
                     },
                 },
@@ -64,17 +69,12 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                     "targets": [4],
                     "render": function(data, type, row) {
                         var disabled = row.editable ? '' : ' disabled ';
-                        var button_id = 'activate-button-for-scheduled-broadcast-' + row.id;
-                        if(row.active) {
-                            return '<button id="' + button_id + '"' + disabled + '\
-                                            class="btn btn-default" \
-                                            onclick="hqImport(\'scheduling/js/broadcasts_list\').deactivateScheduledBroadcast(' + row.id + ')"> \
-                                   ' + gettext("Deactivate") + '</button>';
+                        if (row.active) {
+                            return '<button data-id="' + row.id + '"' + disabled + 'class="btn btn-default broadcast-deactivate">'
+                                   + gettext("Deactivate") + '</button>';
                         } else {
-                            return '<button id="' + button_id + '"' + disabled + '\
-                                            class="btn btn-default" + \
-                                            onclick="hqImport(\'scheduling/js/broadcasts_list\').activateScheduledBroadcast(' + row.id + ')"> \
-                                   ' + gettext("Activate") + '</button>';
+                            return '<button data-id="' + row.id + '"' + disabled + 'class="btn btn-default broadcast-activate">'
+                                   + gettext("Activate") + '</button>';
                         }
                     },
                 },
@@ -108,18 +108,23 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                 {
                     "targets": [0],
                     "render": function(data, type, row) {
-                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_schedule', 'immediate', row.id);
+                        var url = initialPageData.reverse('edit_schedule', 'immediate', row.id);
                         return "<a href='" + url + "'>" + row.name + "</a>";
                     },
                 },
             ],
         });
+
+        $(document).on('click', '.broadcast-activate', activateScheduledBroadcast);
+        $(document).on('click', '.broadcast-deactivate', deactivateScheduledBroadcast);
+        $(document).on('click', '.broadcast-delete', deleteScheduledBroadcast);
     });
 
-    function broadcastAction(action, broadcast_id) {
+    function broadcastAction(action, element) {
+        var broadcast_id = $(element).data("id");
         var activateButton = $('#activate-button-for-scheduled-broadcast-' + broadcast_id);
         var deleteButton = $('#delete-button-for-scheduled-broadcast-' + broadcast_id);
-        if(action === 'delete_scheduled_broadcast') {
+        if (action === 'delete_scheduled_broadcast') {
             deleteButton.disableButton();
             activateButton.prop('disabled', true);
         } else {
@@ -141,23 +146,17 @@ hqDefine("scheduling/js/broadcasts_list", function() {
             });
     }
 
-    function activateScheduledBroadcast(broadcast_id) {
-        broadcastAction('activate_scheduled_broadcast', broadcast_id);
+    function activateScheduledBroadcast() {
+        broadcastAction('activate_scheduled_broadcast', this);
     }
 
-    function deactivateScheduledBroadcast(broadcast_id) {
-        broadcastAction('deactivate_scheduled_broadcast', broadcast_id);
+    function deactivateScheduledBroadcast() {
+        broadcastAction('deactivate_scheduled_broadcast', this);
     }
 
-    function deleteScheduledBroadcast(broadcast_id) {
+    function deleteScheduledBroadcast() {
         if(confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
-            broadcastAction('delete_scheduled_broadcast', broadcast_id);
+            broadcastAction('delete_scheduled_broadcast', this);
         }
     }
-
-    return {
-        activateScheduledBroadcast: activateScheduledBroadcast,
-        deactivateScheduledBroadcast: deactivateScheduledBroadcast,
-        deleteScheduledBroadcast: deleteScheduledBroadcast,
-    };
 });
