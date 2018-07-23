@@ -9,6 +9,7 @@ hqDefine("reports/js/case_details", [
     'reports/js/data_corrections',
     'reports/js/single_form',
     'case/js/case_hierarchy',
+    'case/js/repeat_records',
     'reports/js/readable_form',
     'bootstrap',    // needed for $.tab
     'jquery-memoized-ajax/jquery.memoized.ajax.min',

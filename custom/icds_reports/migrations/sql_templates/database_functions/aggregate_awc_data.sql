@@ -62,7 +62,7 @@ BEGIN
   _ccs_record_tablename := 'agg_ccs_record';
   _ccs_record_monthly_tablename := 'ccs_record_monthly' || '_' || _start_date;
   _child_health_monthly_tablename := 'child_health_monthly' || '_' || _start_date;
-  EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('daily_feeding') INTO _daily_attendance_tablename;
+  _daily_attendance_tablename := 'daily_attendance' || '_' || _start_date;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_location') INTO _awc_location_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('usage') INTO _usage_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('infrastructure') INTO _infra_tablename;
@@ -91,7 +91,7 @@ BEGIN
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx5') || ' ON ' || quote_ident(_tablename5) || '(awc_id)';
 
-  -- Aggregate daily attendance table.  Not using monthly table as it doesn't have all indicators
+  -- Aggregate daily attendance table.
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'awc_days_open = ut.awc_days_open, ' ||
     'awc_num_open = ut.awc_num_open, ' ||
@@ -111,7 +111,8 @@ BEGIN
     'cases_child_health = ut.cases_child_health, ' ||
     'cases_child_health_all = ut.cases_child_health_all, ' ||
     'wer_weighed = ut.wer_weighed, ' ||
-    'wer_eligible = ut.wer_eligible ' ||
+    'wer_eligible = ut.wer_eligible, ' ||
+    'cases_person_beneficiary_v2 = ut.cases_child_health ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
@@ -128,7 +129,8 @@ BEGIN
     'cases_ccs_pregnant = ut.cases_ccs_pregnant, ' ||
     'cases_ccs_lactating = ut.cases_ccs_lactating, ' ||
     'cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all, ' ||
-    'cases_ccs_lactating_all = ut.cases_ccs_lactating_all ' ||
+    'cases_ccs_lactating_all = ut.cases_ccs_lactating_all, ' ||
+    'cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
@@ -173,32 +175,27 @@ BEGIN
     'GROUP BY awc_id) ut ' ||
   'WHERE ut.awc_id = agg_awc.awc_id';
 
-  -- Update child_health cases_person_has_aadhaar and cases_person_beneficiary
+  -- Update number of children immunized
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'cases_person_has_aadhaar_v2 = ut.child_has_aadhar, ' ||
-    'cases_person_beneficiary_v2 = ut.child_beneficiary, ' ||
     'num_children_immunized = ut.num_children_immunized ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'sum(has_aadhar_id) as child_has_aadhar, ' ||
-    'count(*) as child_beneficiary, ' ||
     'sum(immunization_in_month) AS num_children_immunized ' ||
     'FROM ' || quote_ident(_child_health_monthly_tablename) || ' ' ||
     'WHERE valid_in_month = 1' ||
     'GROUP BY awc_id) ut ' ||
   'WHERE ut.awc_id = agg_awc.awc_id';
 
-  -- Update ccs_record cases_person_has_aadhaar and cases_person_beneficiary
-  -- pregnant and lactating both imply that the case is open, alive and seeking services in the month
+  -- Update number anc visits
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'cases_person_has_aadhaar_v2 = COALESCE(cases_person_has_aadhaar_v2, 0) + ut.ccs_has_aadhar, ' ||
-    'cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.ccs_beneficiary, ' ||
-    'num_anc_visits = ut.num_anc_visits ' ||
+    'num_anc_visits = ut.num_anc_visits, ' ||
+    'cases_person_has_aadhaar_v2 = COALESCE(cases_person_has_aadhaar_v2, 0) + ut.ccs_has_aadhar ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
-    'sum(has_aadhar_id) as ccs_has_aadhar, ' ||
-    'count(*) as ccs_beneficiary, ' ||
-    'sum(anc_in_month) AS num_anc_visits ' ||
+    'sum(anc_in_month) AS num_anc_visits, ' ||
+    'sum(has_aadhar_id) AS ccs_has_aadhar ' ||
     'FROM ' || quote_ident(_ccs_record_monthly_tablename) || ' ' ||
     'WHERE pregnant = 1 OR lactating = 1 ' ||
     'GROUP BY awc_id) ut ' ||

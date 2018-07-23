@@ -37,7 +37,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     }
 
     vm.rightLegend = {
-        info: 'Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
+        info: 'Of the total number of children between 0-6 years, the percentage of children who are enrolled for Anganwadi Services',
     };
     vm.hideRanking = true;
 
@@ -80,7 +80,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     var options = {
         'xAxisTickFormat': '%m/%d/%y',
         'yAxisTickFormat': ",",
-        'captionContent': ' Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
+        'captionContent': ' Of the total number of children between 0-6 years, the percentage of children who are enrolled for Anganwadi Services',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.type = 'multiBarChart';
