@@ -70,7 +70,7 @@
         <script src="{% static 'js/angular-services/icds-cas-reach.service.js' %}"></script>
         <script src="{% static 'js/angular-services/demographics.service.js' %}"></script>
         <script src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/issnip.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/download.service.js' %}"></script>
         <script src="{% static 'js/angular-services/baseControllers.service.js' %}"></script>
 
         <script src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
@@ -254,7 +254,7 @@
                     {% registerurl 'infants_weight_scale' domain '---' %}
                     {% registerurl 'adult_weight_scale' domain '---' %}
                     {% registerurl 'awc_locations' domain %}
-                    {% registerurl 'issnip_pdf_status' domain %}
+                    {% registerurl 'export_status' domain %}
                     {% registerurl 'icds_export_indicator' domain %}
                     {% registerurl 'have_access_to_location' domain %}
                     <div class="ng-view"></div>

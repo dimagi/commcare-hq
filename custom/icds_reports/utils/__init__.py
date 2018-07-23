@@ -32,6 +32,7 @@ from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
+from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
 import six
@@ -490,6 +491,17 @@ def zip_folder(pdf_files):
     icds_file.store_file_in_blobdb(in_memory, expired=60 * 60 * 24)
     icds_file.save()
     return zip_hash
+
+
+def create_excel_file(excel_data, data_type, file_format):
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    export_from_tables(excel_data, export_file, file_format)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.save()
+    return file_hash
 
 
 def create_pdf_file(pdf_context):
