@@ -465,8 +465,8 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
 
     def test_int_datatype(self):
         data = [
-            NewLocRow('S1', 1, 'state', '', external_id='12'),
-            NewLocRow('S2', 2, 'state', '', external_id='12'),
+            NewLocRow('S1', 1, 'state', '', external_id=11),
+            NewLocRow('S2', 2, 'state', '', external_id=12),
         ]
 
         result = self.bulk_update_locations(

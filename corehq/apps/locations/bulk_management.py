@@ -52,7 +52,7 @@ def to_boolean(val):
 
 
 def strip(val):
-    return val.strip()
+    return six.text_type(val).strip()
 
 
 @attrs(frozen=True)
