@@ -61,6 +61,7 @@ branches:
   - np/attachments-soft_assert  # NP July 20
   - dmr/fix-package-security-vulnerabilities  # Danny July 21
   - jls/requirejs-login  # Jenny July 22
+  - jls/enterprise-settings  # Jenny July 23
 submodules:
   submodules/django-digest-src:
     branches: []
