@@ -127,6 +127,13 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.guided_tour %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% static 'bootstrap-tour/build/css/bootstrap-tour.min.css' %}" />
+        {% endif %}
+
         {% if not requirejs_main %}
             {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
         {% endif %}
@@ -455,6 +462,13 @@
         {% if request.use_timepicker and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.guided_tour and not requirejs_main %}
+        {% compress js %}
+        <script src="{% static 'tour/js/tour.utils.js' %}"></script>
+        <script src="{% static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 

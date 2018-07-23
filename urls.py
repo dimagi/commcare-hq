@@ -108,6 +108,7 @@ urlpatterns = [
     url(r'^hq/reports/', include(report_urls)),
     url(r'^hq/flags/', include('corehq.apps.toggle_ui.urls')),
     url(r'^hq/pillow_errors/', include('corehq.apps.hqpillow_retry.urls')),
+    url(r'^hq/tour/', include('corehq.apps.tour.urls')),
     url(r'^hq/notifications/', include('corehq.apps.notifications.urls')),
     url(r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
