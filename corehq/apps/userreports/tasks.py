@@ -16,7 +16,6 @@ from django.db import transaction
 from django.db.models import Count, Min
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
-from restkit import RequestError
 
 from couchexport.models import Format
 from soil.util import get_download_file_path, expose_download
@@ -398,9 +397,6 @@ def _save_document_helper(indicator, doc):
             eval_context.reset_iteration()
         except (ProtocolError, ReadTimeout):
             celery_task_logger.info("Riak error when saving config: {}".format(config_id))
-            something_failed = True
-        except RequestError:
-            celery_task_logger.info("Couch error when saving config: {}".format(config_id))
             something_failed = True
         except (ESError, ConnectionTimeout):
             # a database had an issue so log it and go on to the next document
