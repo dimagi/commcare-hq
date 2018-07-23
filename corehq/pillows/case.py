@@ -66,9 +66,9 @@ def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None,
                          num_processes=1, process_num=0, **kwargs):
     change_feed = KafkaChangeFeed(
-        topics.FORM_TOPICS, group_id=pillow_id, num_processes=num_processes, process_num=process_num
+        topics.CASE_TOPICS, group_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
-    checkpoint = KafkaPillowCheckpoint(pillow_id, topics.FORM_TOPICS)
+    checkpoint = KafkaPillowCheckpoint(pillow_id, topics.CASE_TOPICS)
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_provider=DynamicDataSourceProvider(),
         auto_repopulate_tables=False,
@@ -83,7 +83,7 @@ def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
     )
-    xform_to_es_processor = ElasticProcessor(
+    case_to_es_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
@@ -96,13 +96,10 @@ def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
     # Todo; to include ConfigurableReportKafkaPillow features
     return ConstructedPillow(
         name=pillow_id,
-        topics=topics.FORM_TOPICS,
-        num_processes=num_processes,
-        process_num=process_num,
         change_feed=change_feed,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
-        processor=[ucr_processor, ucr_static_processor, xform_to_es_processor]
+        processor=[ucr_processor, ucr_static_processor, case_to_es_processor]
     )
 
 
@@ -124,7 +121,7 @@ class CouchCaseReindexerFactory(ReindexerFactory):
             elasticsearch=get_es_new(),
             index_info=CASE_INDEX_INFO,
             doc_transform=transform_case_for_elasticsearch,
-            pillow=get_case_to_elasticsearch_pillow(),
+            pillow=get_ucr_es_case_pillow(),
             **self.options
         )
 

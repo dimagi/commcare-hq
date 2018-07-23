@@ -194,9 +194,6 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
     # Todo; to include ConfigurableReportKafkaPillow features
     return ConstructedPillow(
         name=pillow_id,
-        topics=topics.FORM_TOPICS,
-        num_processes=num_processes,
-        process_num=process_num,
         change_feed=change_feed,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,

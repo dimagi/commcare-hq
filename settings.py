@@ -1663,9 +1663,9 @@ CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 PILLOWTOPS = {
     'core': [
         {
-            'name': 'CaseToElasticsearchPillow',
+            'name': 'kafka-case-ucr-es',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_case_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.case.get_ucr_es_case_pillow',
         },
         {
             'name': 'XFormToElasticsearchPillow',
