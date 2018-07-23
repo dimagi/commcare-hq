@@ -22,6 +22,7 @@ from corehq.motech.openmrs.finders_utils import (
     le_levenshtein_percent,
 )
 from corehq.motech.openmrs.jsonpath import Cmp
+from corehq.motech.value_source import recurse_subclasses
 from dimagi.ext.couchdbkit import (
     DecimalProperty,
     DocumentSchema,
@@ -55,7 +56,6 @@ class PatientFinder(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
-        from corehq.motech.openmrs.openmrs_config import recurse_subclasses
 
         if cls is PatientFinder:
             return {
