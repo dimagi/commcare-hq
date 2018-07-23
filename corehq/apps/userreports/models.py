@@ -791,12 +791,8 @@ class StaticReportConfiguration(JsonObject):
         ]
 
     @classmethod
-    def by_id(cls, config_id, domain=None):
-        """
-        Returns a ReportConfiguration object, NOT StaticReportConfigurations.
-
-        :param domain: Optionally specify domain name to validate access.
-                       Raises ``DocumentNotFound`` if domains don't match.
+    def by_id(cls, config_id, domain):
+        """Returns a ReportConfiguration object, NOT StaticReportConfigurations.
         """
         try:
             report_domain, wrapped = cls.by_id_mapping()[config_id]
