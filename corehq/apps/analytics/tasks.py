@@ -444,7 +444,7 @@ def track_periodic_data():
 
     total_users = user_query.count()
     chunk_size = 100
-    num_chunks = int(math.ceil(float(total_users)/float(chunk_size)))
+    num_chunks = int(math.ceil(float(total_users) / float(chunk_size)))
 
     # Track no of users and domains with max_forms greater than HUBSPOT_THRESHOLD
     hubspot_number_of_users = 0
