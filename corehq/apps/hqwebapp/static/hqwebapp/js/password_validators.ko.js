@@ -1,6 +1,7 @@
 hqDefine("hqwebapp/js/password_validators.ko", [
     'knockout',
     'zxcvbn/dist/zxcvbn',
+    'knockout-validation/dist/knockout.validation.min',
 ], function(
     ko,
     zxcvbn,
