@@ -1,7 +1,7 @@
 {
   "domains": [
+    "fmoh-echis",
     "fmoh-echis-staging",
-    "fmoh-echis-link-test",
     "fmoh-echis-link-test"
   ],
   "server_environment": [

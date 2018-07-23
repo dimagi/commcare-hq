@@ -1,5 +1,6 @@
 {
   "domains": [
+    "fmoh-echis",
     "fmoh-echis-staging",
     "fmoh-echis-link-test"
   ],
