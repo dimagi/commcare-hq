@@ -131,6 +131,19 @@ def setup_locations_and_types(domain, location_types, stock_tracking_types, loca
     return (location_types_dict, locations_dict)
 
 
+def restrict_user_by_location(domain, user):
+    role = UserRole(
+        domain=domain,
+        name='Regional Supervisor',
+        permissions=Permissions(edit_commcare_users=True,
+                                edit_locations=True,
+                                access_all_locations=False),
+    )
+    role.save()
+    user.set_role(domain, role.get_qualified_id())
+    user.save()
+
+
 class LocationHierarchyTestCase(TestCase):
     """
     Sets up and tears down a hierarchy for you based on the class attrs
@@ -158,16 +171,7 @@ class LocationHierarchyTestCase(TestCase):
 
     @classmethod
     def restrict_user_to_assigned_locations(cls, user):
-        role = UserRole(
-            domain=cls.domain,
-            name='Regional Supervisor',
-            permissions=Permissions(edit_commcare_users=True,
-                                    edit_locations=True,
-                                    access_all_locations=False),
-        )
-        role.save()
-        user.set_role(cls.domain, role.get_qualified_id())
-        user.save()
+        restrict_user_by_location(cls.domain, user)
 
 
 class LocationHierarchyPerTest(TestCase):
@@ -191,3 +195,12 @@ class LocationHierarchyPerTest(TestCase):
 
     def tearDown(self):
         self.domain_obj.delete()
+
+
+class MockExportWriter(object):
+    def __init__(self):
+        self.data = {}
+
+    def write(self, document_table):
+        for table_index, table in document_table:
+            self.data[table_index] = list(table)
