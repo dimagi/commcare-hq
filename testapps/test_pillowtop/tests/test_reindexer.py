@@ -152,7 +152,7 @@ class CheckpointCreationTest(TestCase):
 @generate_cases([
     ('app', 'ApplicationToElasticsearchPillow'),
     ('case', 'kafka-case-ucr-es'),
-    ('form', 'XFormToElasticsearchPillow'),
+    ('form', 'kafka-xform-ucr-es'),
     ('domain', 'KafkaDomainPillow'),
     ('user', 'UserPillow'),
     ('group', 'GroupPillow'),
@@ -188,7 +188,7 @@ def test_checkpoint_creation(self, reindex_id, pillow_name):
 
 @generate_cases([
     ('sql-case', 'kafka-case-ucr-es'),
-    ('sql-form', 'XFormToElasticsearchPillow'),
+    ('sql-form', 'kafka-xform-ucr-es'),
     ('ledger-v2', 'LedgerToElasticsearchPillow'),
     ('groups-to-user', 'UserPillow'),
 ], CheckpointCreationTest)

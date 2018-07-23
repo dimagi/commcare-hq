@@ -126,16 +126,20 @@ TEST_ES_META = {
 
 class CouchformsESAnalyticsTest(TestCase):
     domain = 'hqadmin-es-accessor'
+    _call_center_domain_mock = patch(
+        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+    )
 
     @classmethod
     def setUpClass(cls):
         super(CouchformsESAnalyticsTest, cls).setUpClass()
+        cls._call_center_domain_mock.start()
 
         @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
         @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
         @patch('corehq.elastic.ES_META', TEST_ES_META)
         def create_form_and_sync_to_es(received_on):
-            with process_pillow_changes('XFormToElasticsearchPillow'):
+            with process_pillow_changes('kafka-xform-ucr-es'):
                 with process_pillow_changes('DefaultChangeFeedPillow'):
                     metadata = TestFormMetadata(domain=cls.domain, app_id=cls.app_id,
                                                 xmlns=cls.xmlns, received_on=received_on)
@@ -162,6 +166,7 @@ class CouchformsESAnalyticsTest(TestCase):
     def tearDownClass(cls):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
+        cls._call_center_domain_mock.stop()
         super(CouchformsESAnalyticsTest, cls).tearDownClass()
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)

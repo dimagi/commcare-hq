@@ -1668,9 +1668,9 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.case.get_ucr_es_case_pillow',
         },
         {
-            'name': 'XFormToElasticsearchPillow',
+            'name': 'kafka-xform-ucr-es',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.xform.get_ucr_es_form_pillow',
         },
         {
             'name': 'UserPillow',

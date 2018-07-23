@@ -226,7 +226,7 @@ class CouchFormReindexerFactory(ReindexerFactory):
             index_info=XFORM_INDEX_INFO,
             doc_filter=xform_pillow_filter,
             doc_transform=transform_xform_for_elasticsearch,
-            pillow=get_xform_to_elasticsearch_pillow(),
+            pillow=get_ucr_es_form_pillow(),
             **self.options
         )
 

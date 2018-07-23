@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import mock
+
 from decimal import Decimal
 
 from django.test import TestCase
@@ -24,8 +26,13 @@ from testapps.test_pillowtop.utils import process_pillow_changes
 class XFormPillowTest(TestCase):
     domain = 'xform-pillowtest-domain'
 
+    _call_center_domain_mock = mock.patch(
+        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+    )
+
     def setUp(self):
         super(XFormPillowTest, self).setUp()
+        self._call_center_domain_mock.start()
         FormProcessorTestUtils.delete_all_xforms()
         with trap_extra_setup(ConnectionError):
             self.elasticsearch = get_es_new()
@@ -34,6 +41,7 @@ class XFormPillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
+        self._call_center_domain_mock.stop()
         super(XFormPillowTest, self).tearDown()
 
     @run_with_all_backends
@@ -58,7 +66,7 @@ class XFormPillowTest(TestCase):
         self.assertEqual(1, results.total)
 
         # soft delete the form
-        with process_pillow_changes('XFormToElasticsearchPillow'):
+        with process_pillow_changes('kafka-xform-ucr-es'):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 FormAccessors(self.domain).soft_delete_forms([form.form_id])
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
@@ -68,7 +76,7 @@ class XFormPillowTest(TestCase):
         self.assertEqual(0, results.total)
 
     def _create_form_and_sync_to_es(self):
-        with process_pillow_changes('XFormToElasticsearchPillow'):
+        with process_pillow_changes('kafka-xform-ucr-es'):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 metadata = TestFormMetadata(domain=self.domain)
                 form = get_form_ready_to_save(metadata, is_db_test=True)
