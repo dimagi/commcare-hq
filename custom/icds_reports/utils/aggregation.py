@@ -931,11 +931,7 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
                 FIRST_VALUE(form_date) OVER forms as first_submission,
                 LAST_VALUE(form_date) OVER forms as last_submission
             FROM "{ucr_tablename}"
-            WHERE awc_id IN (
-                SELECT DISTINCT awc_id
-                FROM "{ucr_tablename}"
-                WHERE inserted_at >= %(last_sync)s AND form_date <= %(now)s
-            )
+            WHERE inserted_at >= %(last_sync)s AND form_date <= %(now)s
             WINDOW forms AS (
               PARTITION BY awc_id
               ORDER BY form_date ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
@@ -979,7 +975,7 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
         ucr_query, params = self.data_from_ucr_query()
         return """
             UPDATE "{table_name}" AS agg_table SET
-                first_submission = ut.first_submission,
+                first_submission = LEAST(ut.first_submission, ut.first_submission)
                 last_submission = ut.last_submission
             FROM (
               SELECT
