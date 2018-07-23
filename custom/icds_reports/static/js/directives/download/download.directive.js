@@ -1,7 +1,7 @@
 /* global moment */
 
 function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
-                            downloadService) {
+    downloadService) {
     var vm = this;
 
     vm.months = [];
@@ -369,11 +369,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    vm.submitForm = function(csrf_token) {
+    vm.submitForm = function(csrfToken) {
         $rootScope.report_link = '';
         var awcs = vm.selectedPDFFormat === 'one' ? ['all'] : vm.selectedAWCs;
         var taskConfig = {
-            'csrfmiddlewaretoken': csrf_token,
+            'csrfmiddlewaretoken': csrfToken,
             'location': vm.selectedLocationId,
             'aggregation_level': vm.selectedLevel,
             'month': vm.selectedMonth,
@@ -387,7 +387,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         if (vm.isChildBeneficiaryListSelected()) {
             taskConfig['filter[]'] = [];
             for (var i=0, len=selectedFilters.length; i < len; i++) {
-                taskConfig['filter[]'].push(selectedFilters[i].id)
+                taskConfig['filter[]'].push(selectedFilters[i].id);
             }
         }
 
