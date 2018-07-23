@@ -192,7 +192,7 @@ class ToggleEditView(ToggleBaseView):
                 _clear_caches_for_dynamic_toggle(self.toggle_meta())
 
         elif save_randomness:
-            messages.error(request, _("The randomness value {} must be between 0 and 1".format(randomness)))
+            messages.error(request, "The randomness value {} must be between 0 and 1".format(randomness))
 
         toggle.save()
         self._notify_on_change(currently_enabled - previously_enabled)
