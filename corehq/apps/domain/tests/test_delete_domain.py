@@ -20,6 +20,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
+from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     CaseSearchQueryAddition,
@@ -260,6 +261,21 @@ class TestDeleteDomain(TestCase):
     def _assert_queryset_count(self, queryset_list, count):
         for queryset in queryset_list:
             self.assertEqual(queryset.count(), count)
+
+    def _assert_calendar_fixture_count(self, domain_name, count):
+        self._assert_queryset_count([
+            CalendarFixtureSettings.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_calendar_fixture_counts(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            CalendarFixtureSettings.objects.create(domain=domain_name, days_before=3, days_after=4)
+            self._assert_calendar_fixture_count(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_calendar_fixture_count(self.domain.name, 0)
+        self._assert_calendar_fixture_count(self.domain2.name, 1)
 
     def _assert_case_search_counts(self, domain_name, count):
         self._assert_queryset_count([
