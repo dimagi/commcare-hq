@@ -20,7 +20,7 @@ from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.const import SAVED_EXPORTS_QUEUE
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.util.log import send_HTML_email
 from corehq.apps.reports.util import send_report_download_email
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
@@ -203,11 +203,10 @@ def apps_update_calculated_properties():
         es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": props})
 
 
-@task(queue="email_queue",
-      bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+@task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_email_report(self, recipient, request, content, subject, config):
     '''
-    Function invokes send_html_email_async to email the html text report.
+    Function invokes send_HTML_email to email the html text report.
     If the report is too large to fit into email then a download link is
     sent via email to download report
     :Parameter recipient:
@@ -224,28 +223,42 @@ def send_email_report(self, recipient, request, content, subject, config):
     '''
     from corehq.apps.reports.views import render_full_report_notification
 
-    size_too_large = False
     body = render_full_report_notification(request, content).content
     try:
-        send_html_email_async(subject, recipient,
-                              body, email_from=settings.DEFAULT_FROM_EMAIL,
-                              smtp_exception_skip_list=[522])
+
+        send_HTML_email(subject, recipient,
+                        body, email_from=settings.DEFAULT_FROM_EMAIL,
+                        smtp_exception_skip_list=[522])
+
     except Exception as er:
         if getattr(er, 'smtp_code', None) == 522:
-            size_too_large = True
+            # If the smtp server rejects the email because of its large size.
+            # Then sends the report download link in the email.
+            email_large_report(request, config, recipient)
         else:
             self.retry(exc=er)
 
-    # If the smtp server rejects the email because of its large size.
-    # Then sends the report download link in the email.
-    if size_too_large:
-        report = config.report(request, domain=config.domain, **{})
-        report.rendered_as = 'export'
-        report.decorator_dispatcher(request, domain=config.domain,
-                                    report_slug=config.report_slug,
-                                    *(), **{})
-        export_all_rows_task.delay(report.__class__, report.__getstate__(),
-                                   recipient=recipient)
+
+def email_large_report(request, config, recipient):
+    """
+    Function sends the requested report download link in the email.
+    This function is invoked when user tries to email very large report.
+
+    :Parameter request:
+        request object which contains request details
+    :Parameter config:
+            object of ReportConfig. Contains the report configuration
+            like reportslug, report_type etc
+    :Parameter recipient:
+            recipient to whom email is to be sent
+    """
+    report = config.report(request, domain=config.domain, **{})
+    report.rendered_as = 'export'
+    report.decorator_dispatcher(request, domain=config.domain,
+                                report_slug=config.report_slug,
+                                *(), **{})
+    export_all_rows_task(report.__class__, report.__getstate__(),
+                                recipient=recipient)
 
 
 @task(ignore_result=True)

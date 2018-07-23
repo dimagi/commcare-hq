@@ -25,7 +25,7 @@ in HTML, or use an email client that supports HTML emails.
 
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=None, bcc=None, smtp_exception_skip_list=[]):
+                    file_attachments=None, bcc=None, smtp_exception_skip_list=None):
 
     recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
 
@@ -54,7 +54,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
         msg.send()
     except SMTPSenderRefused as e:
 
-        if e.smtp_code in smtp_exception_skip_list:
+        if smtp_exception_skip_list and e.smtp_code in smtp_exception_skip_list:
             raise e
         else:
             error_subject = _('ERROR: Could not send "%(subject)s"') % {
