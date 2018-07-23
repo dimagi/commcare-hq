@@ -449,7 +449,9 @@ def build_async_indicators(indicator_doc_ids):
         )
 
 
-save_document = build_async_indicators
+@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+def save_document(doc_ids):
+    build_async_indicators(doc_ids)
 
 
 @periodic_task(
