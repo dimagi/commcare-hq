@@ -22,6 +22,7 @@ from custom.icds_reports.const import (
     DASHBOARD_DOMAIN,
 )
 from six.moves import range
+from six.moves import map
 
 
 def transform_day_to_month(day):
