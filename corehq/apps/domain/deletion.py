@@ -192,6 +192,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_dictionary', 'CaseType', 'domain'),
     ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
+    ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
+    ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
