@@ -10,6 +10,7 @@ from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 from corehq.blobs.util import ClosingContextProxy, set_blob_expire_object
 from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
+from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.chunked import chunked
 
@@ -40,11 +41,21 @@ class S3BlobDB(AbstractBlobDB):
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
-    def report_timing(self, action):
+    def report_timing(self, action, identifier, bucket):
+        def record_long_request(duration):
+            if duration > 100:
+                notify_exception(None, "S3BlobDB request took a long time.", details={
+                    'duration': duration,
+                    's3_bucket_name': self.s3_bucket_name,
+                    'action': action,
+                    'identifier': identifier,
+                    'blobdb_bucket': bucket,
+                })
+
         return datadog_bucket_timer('commcare.blobs.requests.timing', tags=[
             'action:{}'.format(action),
             's3_bucket_name:{}'.format(self.s3_bucket_name)
-        ], timing_buckets=(.001, .01, .1, 1, 10, 100))
+        ], timing_buckets=(.03, .1, .3, 1, 3, 10, 30, 100), callback=record_long_request)
 
     def put(self, content, identifier, bucket=DEFAULT_BUCKET, timeout=None):
         path = self.get_path(identifier, bucket)
@@ -58,7 +69,7 @@ class S3BlobDB(AbstractBlobDB):
         content.seek(0)
         content_md5 = get_content_md5(content)
         content_length = get_file_size(content)
-        with self.report_timing('put'):
+        with self.report_timing('put', identifier, bucket):
             s3_bucket.upload_fileobj(content, path)
         if timeout is not None:
             set_blob_expire_object(bucket, identifier, content_length, timeout)
@@ -69,21 +80,21 @@ class S3BlobDB(AbstractBlobDB):
     def get(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
         with maybe_not_found(throw=NotFound(identifier, bucket)), \
-                self.report_timing('get'):
+                self.report_timing('get', identifier, bucket):
             resp = self._s3_bucket().Object(path).get()
         return BlobStream(resp["Body"], self, path)
 
     def size(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
         with maybe_not_found(throw=NotFound(identifier, bucket)), \
-                self.report_timing('size'):
+                self.report_timing('size', identifier, bucket):
             return self._s3_bucket().Object(path).content_length
 
     def exists(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
         try:
             with maybe_not_found(throw=NotFound(identifier, bucket)), \
-                    self.report_timing('exists'):
+                    self.report_timing('exists', identifier, bucket):
                 self._s3_bucket().Object(path).load()
             return True
         except NotFound:
@@ -137,7 +148,7 @@ class S3BlobDB(AbstractBlobDB):
     def copy_blob(self, content, info, bucket):
         self._s3_bucket(create=True)
         path = self.get_path(info.identifier, bucket)
-        with self.report_timing('copy_blobdb'):
+        with self.report_timing('copy_blobdb', info.identifier, bucket):
             self._s3_bucket().upload_fileobj(content, path)
 
     def _s3_bucket(self, create=False):

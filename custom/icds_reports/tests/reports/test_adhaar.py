@@ -9,7 +9,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestAdhaar(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_adhaar_data_map(
@@ -78,8 +77,8 @@ class TestAdhaar(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of individuals registered using CAS "
-            "whose Aadhaar identification has been captured"
+            "Of the total number of ICDS beneficiaries, "
+            "the percentage whose Adhaar identification has been captured. "
         )
         self.assertEqual(data['rightLegend']['info'], expected)
 
@@ -284,8 +283,8 @@ class TestAdhaar(TestCase):
                 location_id='b1'
             ),
             {
-                "info": "Percentage of individuals registered using "
-                        "CAS whose Aadhaar identification has been captured",
+                "info": "Of the total number of ICDS beneficiaries, "
+                        "the percentage whose Adhaar identification has been captured. ",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 51,

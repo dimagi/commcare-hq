@@ -42,7 +42,9 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     };
 
     vm.rightLegend = {
-        info: 'Percentage of children' + vm.chosenFilters() + 'enrolled for Anganwadi Services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median.',
+        info: 'Of the children enrolled for Anganwadi services, whose height was measured, the percentage of children between ' + vm.chosenFilters() + ' who were moderately/severely stunted in the current month. \n' +
+        '\n' +
+        'Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -95,7 +97,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of children ' + vm.chosenFilters() + ' enrolled for Anganwadi Services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. \n' +
+        'captionContent': ' Of the children enrolled for Anganwadi services, whose height was measured, the percentage of children between ' + vm.chosenFilters() + ' who were moderately/severely stunted in the current month. \n' +
         '\n' +
         'Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child',
     };

@@ -59,7 +59,7 @@ def _datadog_record(fn, name, value, enforce_prefix='commcare', tags=None):
         datadog_logger.exception('Unable to record Datadog stats')
 
 
-def datadog_bucket_timer(metric, tags, timing_buckets):
+def datadog_bucket_timer(metric, tags, timing_buckets, callback=None):
     """
     create a context manager that times and reports to datadog using timing buckets
 
@@ -89,6 +89,8 @@ def datadog_bucket_timer(metric, tags, timing_buckets):
 
     def new_stop(name=None):
         original_stop(name)
+        if callback:
+            callback(timer.duration)
         datadog_counter(
             metric,
             tags=list(tags) + ['duration:%s' % bucket_value(timer.duration, timing_buckets, 's')]

@@ -202,10 +202,10 @@ describe('Prevalence Of Severe Directive feature flag disable', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of children between (6 - 60 months) enrolled for Anganwadi Services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. \n' +
+            'Of the children enrolled for Anganwadi services, whose weight and height was measured, the percentage of children between (6 - 60 months) who were moderately/severely wasted in the current month. \n' +
             '\n' +
-            'Wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
-            'of insufficient food intake or a high incidence of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional status for a child who has severe wasting (weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child that has moderate wasting (weight-for-height) below -2Z.'
+            'Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
+            'of insufficient food intake or a high incidence of infectious diseases.'
         );
     });
 
@@ -470,10 +470,10 @@ describe('Prevalence Of Severe Directive feature flag enable', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of children between (0 - 5 years) enrolled for Anganwadi Services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. \n' +
+            'Of the children enrolled for Anganwadi services, whose weight and height was measured, the percentage of children between (0 - 5 years) who were moderately/severely wasted in the current month. \n' +
             '\n' +
-            'Wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
-            'of insufficient food intake or a high incidence of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional status for a child who has severe wasting (weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child that has moderate wasting (weight-for-height) below -2Z.'
+            'Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
+            'of insufficient food intake or a high incidence of infectious diseases.'
         );
     });
 

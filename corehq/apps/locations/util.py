@@ -297,11 +297,13 @@ def dump_locations(domain, download_id, include_consumption, headers_only, task=
 
     with open(path, 'rb') as file_:
         db = get_blob_db()
-        db.put(file_, download_id, timeout=60 * 60)
+        expiry_mins = 60
+        db.put(file_, download_id, timeout=expiry_mins)
 
         file_format = Format.from_format(Excel2007ExportWriter.format)
         expose_blob_download(
             download_id,
+            expiry=expiry_mins * 60,
             mimetype=file_format.mimetype,
             content_disposition=safe_filename_header('{}_locations'.format(domain), file_format.extension),
             download_id=download_id,

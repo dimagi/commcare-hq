@@ -104,7 +104,10 @@ def request_new_domain(request, form, is_new_user=True):
         # domains with no subscription are equivalent to be on free Community plan
         create_30_day_advanced_trial(new_domain, current_user.username)
     else:
-        ensure_explicit_community_subscription(new_domain.name, date.today())
+        ensure_explicit_community_subscription(
+            new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
+            web_user=current_user.username,
+        )
 
     UserRole.init_domain_with_presets(new_domain.name)
 

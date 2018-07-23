@@ -10,6 +10,16 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
 
+    var locationParams = $location.search();
+    var newKey;
+    for (var key in locationParams) {
+        newKey = key;
+        if (newKey.startsWith('amp;')) {
+            newKey = newKey.slice(4);
+            $location.search(newKey, locationParams[key]).search(key, null);
+        }
+    }
+
     $scope.showInfoMessage = function() {
         var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
         var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
