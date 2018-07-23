@@ -109,18 +109,18 @@
     ],
     "columns": [
       {
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "owner_id",
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "owner_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
         "display": "Month",
@@ -130,164 +130,164 @@
         "format": "%Y-%m"
       },
       {
-        "aggregation": "sum",
+        "display": "dead_F_resident_neo_count",
         "column_id": "dead_F_resident_neo_count",
+        "type": "field",
         "field": "dead_F_resident_neo_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_F_resident_neo_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_M_resident_neo_count",
         "column_id": "dead_M_resident_neo_count",
+        "type": "field",
         "field": "dead_M_resident_neo_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_M_resident_neo_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_F_migrant_neo_count",
         "column_id": "dead_F_migrant_neo_count",
+        "type": "field",
         "field": "dead_F_migrant_neo_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_F_migrant_neo_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_M_migrant_neo_count",
         "column_id": "dead_M_migrant_neo_count",
+        "type": "field",
         "field": "dead_M_migrant_neo_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_M_migrant_neo_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_F_resident_postneo_count",
         "column_id": "dead_F_resident_postneo_count",
+        "type": "field",
         "field": "dead_F_resident_postneo_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_F_resident_postneo_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_M_resident_postneo_count",
         "column_id": "dead_M_resident_postneo_count",
+        "type": "field",
         "field": "dead_M_resident_postneo_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_M_resident_postneo_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_F_migrant_postneo_count",
         "column_id": "dead_F_migrant_postneo_count",
+        "type": "field",
         "field": "dead_F_migrant_postneo_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_F_migrant_postneo_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_M_migrant_postneo_count",
         "column_id": "dead_M_migrant_postneo_count",
+        "type": "field",
         "field": "dead_M_migrant_postneo_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_M_migrant_postneo_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_F_resident_child_count",
         "column_id": "dead_F_resident_child_count",
+        "type": "field",
         "field": "dead_F_resident_child_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_F_resident_child_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_M_resident_child_count",
         "column_id": "dead_M_resident_child_count",
+        "type": "field",
         "field": "dead_M_resident_child_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_M_resident_child_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_F_migrant_child_count",
         "column_id": "dead_F_migrant_child_count",
+        "type": "field",
         "field": "dead_F_migrant_child_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_F_migrant_child_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_M_migrant_child_count",
         "column_id": "dead_M_migrant_child_count",
+        "type": "field",
         "field": "dead_M_migrant_child_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_M_migrant_child_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_F_migrant_adult_count",
         "column_id": "dead_F_migrant_adult_count",
+        "type": "field",
         "field": "dead_F_migrant_adult_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_F_migrant_adult_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_F_resident_adult_count",
         "column_id": "dead_F_resident_adult_count",
+        "type": "field",
         "field": "dead_F_resident_adult_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_F_resident_adult_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_preg_resident_count",
         "column_id": "dead_preg_resident_count",
+        "type": "field",
         "field": "dead_preg_resident_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_preg_resident_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_preg_migrant_count",
         "column_id": "dead_preg_migrant_count",
+        "type": "field",
         "field": "dead_preg_migrant_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_preg_migrant_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_del_resident_count",
         "column_id": "dead_del_resident_count",
+        "type": "field",
         "field": "dead_del_resident_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_del_resident_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_del_migrant_count",
         "column_id": "dead_del_migrant_count",
+        "type": "field",
         "field": "dead_del_migrant_count",
-        "calculate_total": true,
-        "type": "field",
-        "display": "dead_del_migrant_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_pnc_resident_count",
         "column_id": "dead_pnc_resident_count",
-        "field": "dead_pnc_resident_count",
-        "calculate_total": true,
         "type": "field",
-        "display": "dead_pnc_resident_count"
+        "field": "dead_pnc_resident_count",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "aggregation": "sum",
+        "display": "dead_pnc_migrant_count",
         "column_id": "dead_pnc_migrant_count",
-        "field": "dead_pnc_migrant_count",
-        "calculate_total": true,
         "type": "field",
-        "display": "dead_pnc_migrant_count"
+        "field": "dead_pnc_migrant_count",
+        "aggregation": "sum",
+        "calculate_total": true
       }
     ],
     "sort_expression": [],
