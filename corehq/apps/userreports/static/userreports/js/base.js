@@ -1,5 +1,10 @@
-/* globals ace */
-hqDefine('userreports/js/base', function() {
+hqDefine('userreports/js/base', [
+    'jquery',
+    'ace-builds/src-min-noconflict/ace',
+], function(
+    $,
+    ace
+) {
     function initJsonWidget(element) {
         var $element = $(element),
             editorElement = $element.after('<pre />').next()[0];
@@ -17,7 +22,7 @@ hqDefine('userreports/js/base', function() {
         );
         editor.session.setMode('ace/mode/json');
         editor.getSession().setValue($element.val());
-        editor.getSession().on('change', function(){
+        editor.getSession().on('change', function() {
             $element.val(editor.getSession().getValue());
         });
     }
