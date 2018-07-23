@@ -185,7 +185,7 @@ class BillingAccountBasicForm(forms.Form):
                 crispy.Div(
                     crispy.HTML('{} <a href="{}" target="_blank">[edit]</a>'.format(
                             ", ".join(account.enterprise_admin_emails),
-                            reverse("enterprise_settings", args=['jennytraining']),  # TODO
+                            reverse("enterprise_settings_by_account", args=[account.id]),
                         )),
                     css_class='col-sm-9 col-md-8 col-lg-6',
                 ),

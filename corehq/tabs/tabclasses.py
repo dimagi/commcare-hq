@@ -1408,7 +1408,7 @@ class EnterpriseSettingsTab(UITab):
             },
             {
                 'title': _('Enterprise Settings'),
-                'url': reverse('enterprise_settings', args=[self.domain]),
+                'url': reverse('enterprise_settings_by_domain', args=[self.domain]),
             },
         ]))
         return items

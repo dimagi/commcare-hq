@@ -25,7 +25,8 @@ from corehq.apps.accounting.views import (
     enterprise_dashboard_download,
     enterprise_dashboard_email,
     enterprise_dashboard_total,
-    enterprise_settings,
+    enterprise_settings_by_account,
+    enterprise_settings_by_domain,
     edit_enterprise_settings,
     CustomerInvoicePdfView
 )
@@ -45,6 +46,8 @@ urlpatterns = [
         name=TestRenewalEmailView.urlname),
     url(r'^manage_admins/$', ManageAccountingAdminsView.as_view(),
         name=ManageAccountingAdminsView.urlname),
+    url(r'^acounts/settings/(?P<account_id>\d+)/$', enterprise_settings_by_account,
+        name='enterprise_settings_by_account'),
     url(r'^accounts/(\d+)/$', ManageBillingAccountView.as_view(), name=ManageBillingAccountView.urlname),
     url(r'^accounts/new/$', NewBillingAccountView.as_view(), name=NewBillingAccountView.urlname),
     url(r'^subscriptions/(\d+)/$', EditSubscriptionView.as_view(), name=EditSubscriptionView.urlname),
@@ -72,6 +75,6 @@ domain_specific = [
         name='enterprise_dashboard_email'),
     url(r'^dashboard/(?P<slug>[^/]*)/total/$', enterprise_dashboard_total,
         name='enterprise_dashboard_total'),
-    url(r'^settings/$', enterprise_settings, name='enterprise_settings'),
+    url(r'^settings/$', enterprise_settings_by_domain, name='enterprise_settings_by_domain'),
     url(r'^settings/edit/$', edit_enterprise_settings, name='edit_enterprise_settings'),
 ]
