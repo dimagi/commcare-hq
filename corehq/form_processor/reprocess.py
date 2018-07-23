@@ -62,7 +62,7 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
     else:
         result = reprocess_form(form, save, lock_form=lock)
 
-    save and stub.delete()
+    save and not result.error and stub.delete()
     return result
 
 
