@@ -15,7 +15,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
-from restkit.errors import Unauthorized
+from requests.exceptions import HTTPError
 
 from corehq.apps.domain.decorators import (
     require_superuser, require_superuser_or_contractor)
@@ -92,8 +92,11 @@ def system_ajax(request):
     if type == "_active_tasks":
         try:
             tasks = [x for x in db.server.active_tasks() if x['type'] == "indexer"]
-        except Unauthorized:
-            return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
+        except HTTPError as e:
+            if e.response.status_code == 403:
+                return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
+            else:
+                return json_response({'error': "Unable to access CouchDB Tasks."}, status_code=500)
 
         if not is_bigcouch():
             return json_response(tasks)
