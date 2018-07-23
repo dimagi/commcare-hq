@@ -21,6 +21,7 @@ from corehq.apps.accounting.models import (
     Subscription,
 )
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
+from corehq.apps.case_importer.tracking.models import CaseUploadFormRecord, CaseUploadRecord
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     CaseSearchQueryAddition,
@@ -281,6 +282,36 @@ class TestDeleteDomain(TestCase):
 
         self._assert_calendar_fixture_count(self.domain.name, 0)
         self._assert_calendar_fixture_count(self.domain2.name, 1)
+
+    def _assert_case_importer_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            CaseUploadFormRecord.objects.filter(case_upload_record__domain=domain_name),
+            CaseUploadRecord.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_case_importer(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            case_upload_record = CaseUploadRecord.objects.create(
+                domain=domain_name,
+                task_id=uuid.uuid4().hex,
+                upload_id=uuid.uuid4().hex,
+            )
+            CaseUploadFormRecord.objects.create(
+                case_upload_record=case_upload_record,
+                form_id=random_hex(),
+            )
+            self._assert_case_importer_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_case_importer_counts(self.domain.name, 0)
+        self._assert_case_importer_counts(self.domain2.name, 1)
+
+        self.assertEqual(CaseUploadFormRecord.objects.count(), 1)
+        self.assertEqual(
+            CaseUploadFormRecord.objects.filter(case_upload_record__domain=self.domain2.name).count(),
+            1
+        )
 
     def _assert_case_search_counts(self, domain_name, count):
         self._assert_queryset_count([
