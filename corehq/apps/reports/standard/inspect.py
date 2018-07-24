@@ -154,6 +154,7 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
                 prop_name=self.time_field
             ),
             DataTablesColumn(_("Form"), prop_name='form.@name'),
+            DataTablesColumn(_("(PV) is_active"), prop_name='is_active'),
         ]
         if self.show_extra_columns:
             h.append(DataTablesColumn(_("Sync Log")))
@@ -169,6 +170,7 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
                 display.username,
                 display.submission_or_completion_time,
                 display.readable_form_name,
+                display.pv_is_active,
             ]
 
             if self.show_extra_columns:

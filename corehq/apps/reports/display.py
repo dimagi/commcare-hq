@@ -38,6 +38,27 @@ class FormDisplay(object):
         }
 
     @property
+    def pv_is_active(self):
+        username = self.form["form"]["meta"].get("username")
+        # web workers
+        user = CouchUser.get_by_username(username)
+        # mobile workers
+        if not user:
+            user = CouchUser.get_by_username(
+                '{}@{}.commcarehq.org'.format(
+                    username,
+                    self.report.domain,
+                )
+            )
+        user_status_string = "Couldn't find this user"
+        if user:
+            if user.is_active:
+                user_status_string = "Active"
+            else:
+                user_status_string = "Inactive"
+        return user_status_string
+
+    @property
     def username(self):
         uid = self.form["form"]["meta"]["userID"]
         username = self.form["form"]["meta"].get("username")
