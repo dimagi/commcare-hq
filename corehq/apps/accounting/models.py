@@ -371,6 +371,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
         choices=PreOrPostPay.CHOICES,
     )
 
+    # Settings visible to external users
+    restrict_domain_creation = models.BooleanField(default=False)
+
     class Meta(object):
         app_label = 'accounting'
 
