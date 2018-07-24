@@ -50,11 +50,11 @@ class TestDhisConfigValidation(SimpleTestCase):
         data = form.cleaned_data
         repeater = Dhis2Repeater()
         repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
-        with self.assertRaises(KeyError) as e:
+        with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
             e.exception.message,
-            'ValueSource'
+            'Property event_date is required.'
         )
 
     def test_minimal_config(self):
