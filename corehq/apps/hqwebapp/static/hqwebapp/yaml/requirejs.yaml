@@ -1,3 +1,4 @@
+optimize: none
 mainConfigFile: ../corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js
 bundlesConfigOutFile: hqwebapp/js/requirejs_config.js
 baseUrl: ./
