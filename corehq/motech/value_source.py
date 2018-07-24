@@ -19,11 +19,12 @@ class ValueSource(DocumentSchema):
     @classmethod
     def wrap(cls, data):
         if cls is ValueSource:
-            return {
+            subclass = {
                 sub._doc_type: sub for sub in recurse_subclasses(cls)
-            }[data['doc_type']].wrap(data)
-        else:
-            return super(ValueSource, cls).wrap(data)
+            }.get(data['doc_type'])
+            if subclass:
+                return subclass.wrap(data)
+        return super(ValueSource, cls).wrap(data)
 
     def get_value(self, case_trigger_info):
         raise NotImplementedError()
