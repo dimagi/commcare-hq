@@ -20,7 +20,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.bootstrap import InlineField, PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from django_countries.data import COUNTRIES
@@ -101,10 +101,6 @@ class BillingAccountBasicForm(forms.Form):
         required=False,
         initial=False
     )
-    enterprise_admin_emails = forms.CharField(
-        label="Enterprise Admin Emails",
-        required=False
-    )
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscriptions To"),
         help_text=ugettext_lazy(
@@ -143,7 +139,6 @@ class BillingAccountBasicForm(forms.Form):
                 'email_list': ','.join(contact_info.email_list),
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
-                'enterprise_admin_emails': ','.join(account.enterprise_admin_emails),
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
@@ -181,15 +176,21 @@ class BillingAccountBasicForm(forms.Form):
                     data_bind="checked: is_customer_billing_account",
                 ),
             ))
-            additional_fields.append(
+            additional_fields.append(crispy.Div(
+                crispy.HTML('''
+                    <label class='col-sm-3 col-md-2 control-label'>
+                        Enterprise Admin Emails
+                    </label>
+                '''),
                 crispy.Div(
-                    crispy.Field(
-                        'enterprise_admin_emails',
-                        css_class='input-xxlarge accounting-email-select2'
-                    ),
-                    data_bind='visible: is_customer_billing_account'
-                )
-            )
+                    crispy.HTML('{} <a href="{}" target="_blank">[edit]</a>'.format(
+                            ", ".join(account.enterprise_admin_emails),
+                            reverse("enterprise_settings_by_account", args=[account.id]),
+                        )),
+                    css_class='col-sm-9 col-md-8 col-lg-6',
+                ),
+                data_bind='visible: is_customer_billing_account',
+            ))
             if account.subscription_set.count() > 0:
                 additional_fields.append(crispy.Div(
                     crispy.Field(
@@ -263,13 +264,6 @@ class BillingAccountBasicForm(forms.Form):
     def clean_email_list(self):
         return self.cleaned_data['email_list'].split(',')
 
-    def clean_enterprise_admin_emails(self):
-        # Do not return a list with an empty string
-        if self.cleaned_data['enterprise_admin_emails']:
-            return self.cleaned_data['enterprise_admin_emails'].split(',')
-        else:
-            return []
-
     def clean_active_accounts(self):
         transfer_subs = self.cleaned_data['active_accounts']
         if (
@@ -318,7 +312,6 @@ class BillingAccountBasicForm(forms.Form):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
         account.is_customer_billing_account = self.cleaned_data['is_customer_billing_account']
-        account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
@@ -2348,3 +2341,58 @@ class CreateAdminForm(forms.Form):
         if not user_role.role.has_privilege(ops_role):
             Grant.objects.create(from_role=user_role.role, to_role=ops_role)
         return user
+
+
+class EnterpriseSettingsForm(forms.Form):
+    enterprise_admin_emails = forms.CharField(
+        label="Enterprise Admin Emails",
+        required=False
+    )
+    restrict_domain_creation = forms.BooleanField(
+        label=ugettext_lazy("Restrict Project Space Creation"),
+        required=False,
+        help_text=ugettext_lazy("Do not allow non-admins to create new project spaces")
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain', None)
+        super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = reverse("edit_enterprise_settings", args=[self.domain])
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Edit Enterprise Settings'),
+                PrependedText('restrict_domain_creation', ''),
+                crispy.Div(
+                    crispy.Field(
+                        'enterprise_admin_emails',
+                        css_class='input-xxlarge accounting-email-select2'
+                    ),
+                ),
+            )
+        )
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Enterprise Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def clean_enterprise_admin_emails(self):
+        # Do not return a list with an empty string
+        if self.cleaned_data['enterprise_admin_emails']:
+            return self.cleaned_data['enterprise_admin_emails'].split(',')
+        else:
+            return []
+
+    def save(self, account):
+        account.restrict_domain_creation = self.cleaned_data.get('restrict_domain_creation', False)
+        account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
+        account.save()
+        return True
