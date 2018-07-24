@@ -1741,12 +1741,9 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
-            'name': 'kafka-ucr-main',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
-            'params': {
-                'ucr_division': '0f'
-            }
+            'name': 'location-pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.userreports.pillow.get_location_pillow',
         },
         {
             'name': 'ReportCaseToElasticsearchPillow',

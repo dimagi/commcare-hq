@@ -10,7 +10,7 @@ from corehq.util.test_utils import trap_extra_setup
 
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
+from corehq.apps.userreports.pillow import get_location_pillow
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
 
@@ -44,8 +44,7 @@ class TestLocationDataSource(TestCase):
         self.data_source_config.validate()
         self.data_source_config.save()
 
-        self.pillow = get_kafka_ucr_pillow()
-        self.pillow.bootstrap(configs=[self.data_source_config])
+        self.pillow = get_location_pillow(configs=[self.data_source_config])
         with trap_extra_setup(KafkaUnavailableError):
             self.pillow.get_change_feed().get_latest_offsets()
 

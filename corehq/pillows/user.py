@@ -6,6 +6,8 @@ from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
+from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import (
     doc_exists_in_es,
     send_to_elasticsearch, get_es_new, ES_META
@@ -114,6 +116,7 @@ def add_demo_user_to_user_index():
 
 
 def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kwargs):
+    # Pillow that sends users to ES and UCR
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
     user_processor = ElasticProcessor(
@@ -121,14 +124,17 @@ def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kw
         index_info=USER_INDEX_INFO,
         doc_prep_fn=transform_user_for_elasticsearch,
     )
+    ucr_processor = ConfigurableReportPillowProcessor(
+        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+    )
     change_feed = KafkaChangeFeed(
-        topics=topics.USER_TOPICS, group_id='users-to-es', num_processes=num_processes, process_num=process_num
+        topics=topics.USER_TOPICS, group_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=change_feed,
-        processor=user_processor,
+        processor=[ucr_processor, user_processor],
         change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),

@@ -1,12 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
-from django.test import TestCase
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.topics import get_topic_offset, get_multi_topic_offset
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
@@ -29,7 +28,7 @@ from pillowtop.es_utils import initialize_index
 TEST_DOMAIN = 'user-pillow-test'
 
 
-class UserPillowTestBase(TestCase):
+class UserPillowTestBase(CallCenterDomainMockTest):
     def setUp(self):
         super(UserPillowTestBase, self).setUp()
         self.index_info = USER_INDEX_INFO

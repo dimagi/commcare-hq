@@ -11,6 +11,7 @@ from alembic.autogenerate.api import compare_metadata
 from kafka.util import kafka_bytestring
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
 from corehq.apps.userreports.const import KAFKA_TOPICS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import (
@@ -274,10 +275,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
-    # the only reason this is a class is to avoid exposing processors
-    # for tests to be able to call bootstrap on it.
-    # we could easily remove the class and push all the stuff in __init__ to
-    # get_kafka_ucr_pillow below if we wanted.
+    # Todo; to remove
 
     def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False):
         change_feed = KafkaChangeFeed(
@@ -312,20 +310,26 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         self._processor.rebuild_table(sql_adapter)
 
 
-def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
-                         include_ucrs=None, exclude_ucrs=None, topics=None,
-                         num_processes=1, process_num=0, **kwargs):
-    topics = topics or KAFKA_TOPICS
-    topics = [kafka_bytestring(t) for t in topics]
-    return ConfigurableReportKafkaPillow(
-        processor=ConfigurableReportPillowProcessor(
-            data_source_providers=[DynamicDataSourceProvider()],
-            ucr_division=ucr_division,
-            include_ucrs=include_ucrs,
-            exclude_ucrs=exclude_ucrs,
-        ),
-        pillow_name=pillow_id,
-        topics=topics,
-        num_processes=num_processes,
-        process_num=process_num,
+def get_location_pillow(pillow_id='location-pillow', include_ucrs=None,
+                        configs=None, num_processes=1, process_num=0, **kwargs):
+    # Todo; is ucr_division needed?
+    change_feed = KafkaChangeFeed(
+        [LOCATION_TOPIC], group_id=pillow_id, num_processes=num_processes, process_num=process_num
+    )
+    ucr_processor = ConfigurableReportPillowProcessor(
+        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+        include_ucrs=include_ucrs,
+    )
+    ucr_processor.bootstrap(configs)
+    checkpoint = KafkaPillowCheckpoint(pillow_id, [LOCATION_TOPIC])
+    event_handler = KafkaCheckpointEventHandler(
+        checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
+        checkpoint_callback=ucr_processor
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        change_feed=change_feed,
+        checkpoint=checkpoint,
+        change_processed_event_handler=event_handler,
+        processor=[ucr_processor]
     )
