@@ -1,17 +1,23 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import namedtuple, OrderedDict
-from copy import deepcopy, copy
-from couchdbkit import ResourceNotFound
+
 import json
 import os
 import uuid
 import re
 import logging
-
 import yaml
-from django.urls import reverse
+import six
+from collections import namedtuple, OrderedDict
+from copy import deepcopy, copy
+from io import open
+
+
+from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
+from memoized import memoized
+
+from django.urls import reverse
 from django.core.cache import cache
 from django.http import Http404
 from django.utils.translation import ugettext as _
@@ -35,10 +41,7 @@ from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
-import six
-from io import open
 
 
 logger = logging.getLogger(__name__)
