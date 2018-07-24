@@ -325,25 +325,3 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
         num_processes=num_processes,
         process_num=process_num,
     )
-
-
-def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
-                                include_ucrs=None, exclude_ucrs=None, topics=None,
-                                num_processes=1, process_num=0, **kwargs):
-    topics = topics or KAFKA_TOPICS
-    topics = [kafka_bytestring(t) for t in topics]
-    return ConfigurableReportKafkaPillow(
-        processor=ConfigurableReportPillowProcessor(
-            data_source_provider=StaticDataSourceProvider(),
-            auto_repopulate_tables=True,
-            ucr_division=ucr_division,
-            include_ucrs=include_ucrs,
-            exclude_ucrs=exclude_ucrs,
-            bootstrap_interval=7 * 24 * 60 * 60  # 1 week
-        ),
-        pillow_name=pillow_id,
-        topics=topics,
-        num_processes=num_processes,
-        process_num=process_num,
-        retry_errors=True
-    )

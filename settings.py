@@ -1743,14 +1743,6 @@ PILLOWTOPS = {
             }
         },
         {
-            'name': 'kafka-ucr-static',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
-            'params': {
-                'ucr_division': '0f'
-            }
-        },
-        {
             'name': 'ReportCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',

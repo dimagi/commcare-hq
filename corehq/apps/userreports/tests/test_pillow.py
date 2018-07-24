@@ -484,27 +484,6 @@ class AsyncIndicatorTest(CallCenterDomainMockTest):
         self.assertEqual(indicators.count(), 1)
 
 
-class StaticKafkaIndicatorPillowTest(TestCase):
-
-    def setUp(self):
-        self.pillow = get_kafka_ucr_static_pillow()
-
-    def tearDown(self):
-        for adapter in self.pillow._processor.table_adapters_by_domain.values():
-            adapter.drop_table()
-
-    @patch(
-        'corehq.apps.userreports.pillow.'
-        'ConfigurableReportTableManagerMixin.get_all_configs',
-        MagicMock(return_value=[]))
-    @patch(
-        'corehq.apps.userreports.pillow.'
-        'ConfigurableReportTableManagerMixin.rebuild_tables_if_necessary',
-        MagicMock(return_value=None))
-    def test_bootstrap_can_be_called(self):
-        self.pillow.bootstrap()
-
-
 class IndicatorConfigFilterTest(SimpleTestCase):
 
     def setUp(self):
