@@ -1,3 +1,4 @@
+optimize: none
 mainConfigFile: ../corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js
 bundlesConfigOutFile: hqwebapp/js/requirejs_config.js
 baseUrl: ./
@@ -56,6 +57,15 @@ modules:
       - jquery-ui/ui/resizable
       - jquery-ui/ui/droppable
       - jquery-ui/ui/sortable
+
+  # Bundle of the jQuery UI effects we actually use.
+  - name: hqwebapp/js/jquery-ui-effect
+    exclude:
+      - hqwebapp/js/common
+    include:
+      - jquery
+      - jquery-ui/ui/effect
+      - jquery-ui/ui/effect-slide
 
   # App manager bundle, which currently contains nothing because form_designer.js contains
   # the RequireJS config for vellum, which doesn't play well with HQ's RequireJS. This
