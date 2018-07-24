@@ -14,6 +14,7 @@
                         <orx:userID />
                         <orx:instanceID />
                         <cc:appVersion />
+                        <orx:drift/>
                     </orx:meta>
                 </data>
             </instance>
@@ -35,6 +36,7 @@
             <setvalue event="xforms-ready" ref="/data/meta/userID" value="instance('commcaresession')/session/context/userid" />
             <setvalue event="xforms-ready" ref="/data/meta/instanceID" value="uuid()" />
             <setvalue event="xforms-ready" ref="/data/meta/appVersion" value="instance('commcaresession')/session/context/appversion" />
+            <setvalue event="xforms-revalidate" ref="/data/meta/drift" value="if(count(instance('commcaresession')/session/context/drift) = 1, instance('commcaresession')/session/context/drift, '')"/>
             <orx:pollsensor event="xforms-ready"/>
         </model>
     </h:head>

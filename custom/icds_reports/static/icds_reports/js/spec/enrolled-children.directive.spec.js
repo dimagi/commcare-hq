@@ -199,7 +199,7 @@ describe('Enrolled Children Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services'
+            'Of the total number of children between 0-6 years, the percentage of children who are enrolled for Anganwadi Services'
         );
     });
 

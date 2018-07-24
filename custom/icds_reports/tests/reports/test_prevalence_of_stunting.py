@@ -10,7 +10,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestPrevalenceOfStunting(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_prevalence_of_stunting_data_map(
@@ -85,11 +84,11 @@ class TestPrevalenceOfStunting(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of children (6 - 60 months) enrolled for Anganwadi Services with "
-            "height-for-age below -2Z standard deviations of "
-            "the WHO Child Growth Standards median.<br/><br/>Stunting "
-            "is a sign of chronic undernutrition and has long "
-            "lasting harmful consequences on the growth of a child"
+            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
+            "children between 6 - 60 months who were moderately/severely stunted in the current month. "
+            "<br/><br/>"
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
+            "on the growth of a child"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -473,10 +472,11 @@ class TestPrevalenceOfStunting(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Percentage of children (6 - 60 months) enrolled for Anganwadi Services with height-for-age below"
-            " -2Z standard deviations of the WHO Child Growth Standards median."
-            "<br/><br/>Stunting is a sign of chronic undernutrition "
-            "and has long lasting harmful consequences on the growth of a child"
+            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
+            "children between  (6 - 60 months) who were moderately/severely stunted in the current month. "
+            "<br/><br/>"
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful "
+            "consequences on the growth of a child"
         )
 
     def test_sector_data_tooltips_data(self):
@@ -599,11 +599,11 @@ class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
             icds_feature_flag=True
         )
         expected = (
-            "Percentage of children (0 - 5 years) enrolled for Anganwadi Services with "
-            "height-for-age below -2Z standard deviations of "
-            "the WHO Child Growth Standards median.<br/><br/>Stunting "
-            "is a sign of chronic undernutrition and has long "
-            "lasting harmful consequences on the growth of a child"
+            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
+            "children between 0 - 5 years who were moderately/severely stunted in the current month. "
+            "<br/><br/>"
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
+            "on the growth of a child"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -933,10 +933,11 @@ class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Percentage of children (0 - 5 years) enrolled for Anganwadi Services with height-for-age below"
-            " -2Z standard deviations of the WHO Child Growth Standards median."
-            "<br/><br/>Stunting is a sign of chronic undernutrition "
-            "and has long lasting harmful consequences on the growth of a child"
+            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
+            "children between  (0 - 5 years) who were moderately/severely stunted in the current month. "
+            "<br/><br/>"
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
+            "on the growth of a child"
         )
 
     def test_sector_data_tooltips_data_icds_feature_flag_enabled(self):

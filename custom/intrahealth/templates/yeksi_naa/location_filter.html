@@ -17,8 +17,6 @@
 <input name="location_id" type="hidden" data-bind="value: selected_locid"/>
 
 <script>
-    var REQUIRED = 0;
-
     $.when(
         $.getScript("{% static 'locations/js/location_drilldown.js' %}")
     ).done(function () {
@@ -34,6 +32,7 @@
             "loc_filter": false,
             "loc_url": location_url,
             "func": hqImport('locations/js/location_drilldown').locationModel,
+            "required": 0,
         });
 
         $('#group_{{ control_slug }}').koApplyBindings(model);

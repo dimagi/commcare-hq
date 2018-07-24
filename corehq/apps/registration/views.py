@@ -60,59 +60,7 @@ def registration_default(request):
     return redirect(UserRegistrationView.urlname)
 
 
-class NewUserNumberAbTestMixin__Enabled(object):
-    @property
-    @memoized
-    def _ab_show_number(self):
-        return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
-
-    @property
-    def ab_show_number(self):
-        return self._ab_show_number.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM
-
-    @property
-    def ab_show_number_context(self):
-        return self._ab_show_number.context
-
-    def ab_show_number_update_response(self, response):
-        self._ab_show_number.update_response(response)
-
-
-class NewUserNumberAbTestMixin__NoAbEnabled(object):
-    @property
-    @memoized
-    def _ab_show_number(self):
-        return None
-
-    @property
-    def ab_show_number(self):
-        return True
-
-    @property
-    def ab_show_number_context(self):
-        return None
-
-    def ab_show_number_update_response(self, response):
-        pass
-
-
-class NewUserNumberAbTestMixin__Disabled(object):
-    @property
-    def ab_show_number(self):
-        return False
-
-    @property
-    def ab_show_number_context(self):
-        return None
-
-    def ab_show_number_update_response(self, response):
-        pass
-
-
-NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__Enabled
-
-
-class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):
+class ProcessRegistrationView(JSONResponseMixin, View):
     urlname = 'process_registration'
 
     def get(self, request, *args, **kwargs):
@@ -171,10 +119,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
 
     @allow_remote_invocation
     def register_new_user(self, data):
-        reg_form = RegisterWebUserForm(
-            data['data'],
-            show_number=self.ab_show_number,
-        )
+        reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
             self._create_new_account(reg_form)
             try:
@@ -218,7 +163,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         }
 
 
-class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
+class UserRegistrationView(BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
@@ -233,9 +178,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")
-        response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
-        self.ab_show_number_update_response(response)
-        return response
+        return super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
@@ -258,15 +201,10 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             'atypical_user': True if self.atypical_user else False
         }
         return {
-            'reg_form': RegisterWebUserForm(
-                initial=prefills,
-                show_number=self.ab_show_number,
-            ),
+            'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
-            'show_number': self.ab_show_number,
-            'ab_show_number': self.ab_show_number_context,
         }
 
     @property

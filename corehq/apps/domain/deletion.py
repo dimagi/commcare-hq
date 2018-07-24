@@ -1,13 +1,24 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import logging
+import os
+import sys
 from datetime import date
+from io import open
 
 from django.apps import apps
+from django.conf import settings
 from django.db import connection, transaction
 from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.util.log import with_progress_bar
+from dimagi.utils.chunked import chunked
+
+logger = logging.getLogger(__name__)
 
 
 class BaseDeletion(object):
@@ -112,6 +123,31 @@ def _terminate_subscriptions(domain_name):
         ).update(is_hidden_to_ops=True)
 
 
+def silence_during_tests():
+    if settings.UNIT_TESTING:
+        return open(os.devnull, 'w')
+    else:
+        return sys.stdout
+
+
+def _delete_all_cases(domain_name):
+    logger.info('Deleting cases...')
+    case_accessor = CaseAccessors(domain_name)
+    case_ids = case_accessor.get_case_ids_in_domain()
+    for case_id_chunk in chunked(with_progress_bar(case_ids, stream=silence_during_tests()), 500):
+        case_accessor.soft_delete_cases(list(case_id_chunk))
+    logger.info('Deleting cases complete.')
+
+
+def _delete_all_forms(domain_name):
+    logger.info('Deleting forms...')
+    form_accessor = FormAccessors(domain_name)
+    form_ids = form_accessor.get_all_form_ids_in_domain()
+    for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
+        form_accessor.soft_delete_forms(list(form_id_chunk))
+    logger.info('Deleting forms complete.')
+
+
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
@@ -143,6 +179,18 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('sms', _delete_domain_backends),
     CustomDeletion('users', _delete_web_user_membership),
     CustomDeletion('accounting', _terminate_subscriptions),
+    CustomDeletion('form_processor', _delete_all_cases),
+    CustomDeletion('form_processor', _delete_all_forms),
+    ModelDeletion('calendar_fixture', 'CalendarFixtureSettings', 'domain'),
+    ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
+    ModelDeletion('case_search', 'CaseSearchQueryAddition', 'domain'),
+    ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
+    ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
+    ModelDeletion('data_dictionary', 'CaseType', 'domain'),
+    ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
+    ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
+    ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
+    ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
 ]
 
 

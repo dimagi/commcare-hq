@@ -1032,8 +1032,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     attachment.save()
 
                 CaseAttachmentSQL.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
-                for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
-                    attachment.delete_content()
 
                 case.clear_tracked_models()
         except InternalError as e:

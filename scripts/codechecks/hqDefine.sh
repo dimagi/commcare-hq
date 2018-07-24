@@ -84,6 +84,9 @@ case $command in
     unmigratedCount=$(echo $(list-js-without-requirejs | wc -l))
     echo "$(percent $unmigratedCount $jsTotalCount) of JS files specify their dependencies"
 
+    unmigratedCount=$(echo $(list-html-with-external-scripts | wc -l))
+    echo "$(percent $unmigratedCount $htmlTotalCount) of HTML files are free of script tags"
+
     echo
     echo $help
     ;;
