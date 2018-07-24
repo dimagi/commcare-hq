@@ -8,13 +8,6 @@ from corehq.motech.dhis2.const import DHIS2_EVENT_STATUSES, DHIS2_EVENT_STATUS_C
 from corehq.motech.value_source import ValueSource
 
 
-class FormQuestion(ValueSource):
-    form_question = StringProperty()  # e.g. '/data/foo/bar'
-
-    def get_value(self, form_data):
-        return form_data.get(self.form_question)
-
-
 class FormDataValueMap(DocumentSchema):
     value = SchemaProperty(ValueSource)
     data_element_id = StringProperty(required=True)
