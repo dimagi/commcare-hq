@@ -242,8 +242,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
        domain-level, including user membership, permission to
        see data, reports, charts, etc."""
 
-    _migrating_blobs_from_couch = True
-
     name = StringProperty()
     is_active = BooleanProperty()
     date_created = DateTimeProperty()
