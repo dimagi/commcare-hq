@@ -4,8 +4,7 @@ import uuid
 import mock
 import os
 from xml.etree import cElementTree as ElementTree
-from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
-from corehq.apps.custom_data_fields.models import CustomDataField
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.locations.views import LocationFieldsView
 
 from corehq.util.test_utils import flag_enabled
@@ -438,6 +437,7 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
 class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
+    domain = 'location_fixtures'
     location_type_names = ['state', 'county', 'city']
     location_structure = [
         ('Massachusetts', [
