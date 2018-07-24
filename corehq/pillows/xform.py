@@ -17,6 +17,8 @@ from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvi
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
+from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
 from corehq.util.doc_processor.couch import CouchDocumentProvider
@@ -182,9 +184,14 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
     )
+    xform_to_report_es_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=REPORT_XFORM_INDEX_INFO,
+        doc_prep_fn=transform_xform_for_report_forms_index,
+        doc_filter_fn=report_xform_filter
+    )
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
-        # Todo; to change this to checkpoint_callbacks to include static UCR
         checkpoint_callback=ucr_processor
     )
     ucr_processor.bootstrap(configs)
@@ -193,7 +200,7 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         change_feed=change_feed,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
-        processor=[ucr_processor, xform_to_es_processor]
+        processor=[ucr_processor, xform_to_es_processor, xform_to_report_es_processor]
     )
 
 

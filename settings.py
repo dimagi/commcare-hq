@@ -1751,11 +1751,6 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
         },
         {
-            'name': 'ReportXFormToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.reportxform.get_report_xform_to_elasticsearch_pillow',
-        },
-        {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
