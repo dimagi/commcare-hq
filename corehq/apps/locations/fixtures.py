@@ -1,15 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from itertools import groupby
 from collections import defaultdict
+from itertools import groupby
 from xml.etree.cElementTree import Element
 
-import six
-from django.conf import settings
 from django.db.models import IntegerField
 from django.contrib.postgres.fields.array import ArrayField
 from django_cte import With
 from django_cte.raw import raw_cte_sql
+import six
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
