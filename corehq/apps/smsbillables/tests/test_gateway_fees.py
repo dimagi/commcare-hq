@@ -232,8 +232,7 @@ class TestGatewayFee(TestCase):
                 billable = SmsBillable.create(msg_log)
                 self.assertIsNotNone(billable)
                 self.assertIsNone(billable.gateway_fee)
-
-
+                
     def test_fee_for_non_global_backend(self):
         self.create_least_specific_gateway_fees()
 
