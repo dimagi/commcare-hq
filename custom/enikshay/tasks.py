@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+import csv342 as csv
 import datetime
 import io
-from dimagi.utils.csv import UnicodeWriter
 from collections import defaultdict, namedtuple
 import pytz
 import sys
@@ -71,6 +71,22 @@ BatchStatus = namedtuple('BatchStatus',
 
 CACHE_KEY = "reconciliation-task-{}"
 cache = get_redis_client()
+
+
+class UnicodeWriter(object):
+    """
+    A CSV writer which will write rows to CSV file "f" using utf-8.
+    """
+    def __init__(self, f, dialect=csv.excel, **kwds):
+        # Redirect output to a queue
+        self.writer = csv.writer(f, dialect=dialect, **kwds)
+
+    def writerow(self, row):
+        self.writer.writerow([six.text_type(s).encode("utf-8") for s in row])
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)
 
 
 def enikshay_task(self):

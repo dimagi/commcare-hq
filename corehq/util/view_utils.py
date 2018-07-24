@@ -8,6 +8,7 @@ from functools import wraps
 from django import http
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.urls import reverse as _reverse
 from django.utils.encoding import smart_bytes
 from django.utils.http import urlencode
@@ -129,3 +130,27 @@ def reverse(viewname, params=None, absolute=False, **kwargs):
 
 def absolute_reverse(*args, **kwargs):
     return reverse(*args, absolute=True, **kwargs)
+
+
+def get_case_or_404(domain, case_id):
+    from corehq.form_processor.exceptions import CaseNotFound
+    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+        if case.domain != domain or case.is_deleted:
+            raise Http404()
+        return case
+    except CaseNotFound:
+        raise Http404()
+
+
+def get_form_or_404(domain, id):
+    from corehq.form_processor.exceptions import XFormNotFound
+    from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+    try:
+        form = FormAccessors(domain).get_form(id)
+        if form.domain != domain or form.is_deleted:
+            raise Http404()
+        return form
+    except XFormNotFound:
+        raise Http404()

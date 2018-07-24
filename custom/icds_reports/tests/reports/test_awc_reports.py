@@ -9,19 +9,27 @@ from django.test import TestCase
 
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
-    get_awc_report_infrastructure, get_awc_report_beneficiary
+    get_awc_report_beneficiary
 
 
 class TestAWCReport(TestCase):
     def test_beneficiary_details_recorded_weight_none(self):
-        data = get_beneficiary_details(case_id='6b234c5b-883c-4849-9dfd-b1571af8717b')
+        data = get_beneficiary_details(
+            case_id='6b234c5b-883c-4849-9dfd-b1571af8717b',
+            awc_id='a50',
+            selected_month=(2017, 6, 1)
+        )
         self.assertEqual(data['age_in_months'], 69)
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3342')
         self.assertEqual(data['mother_name'], 'संगीता')
 
     def test_beneficiary_details_recorded_weight_is_not_none(self):
-        data = get_beneficiary_details(case_id='8e226cc6-740f-4146-b017-69d9f6e9651b')
+        data = get_beneficiary_details(
+            case_id='8e226cc6-740f-4146-b017-69d9f6e9651b',
+            awc_id='a21',
+            selected_month=(2017, 6, 1)
+        )
         self.assertEqual(data['age_in_months'], 54)
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3141')
@@ -31,7 +39,11 @@ class TestAWCReport(TestCase):
         self.assertEqual(filter(lambda r: r['x'] == 96.0, data['wfl'])[0]['y'], 12.6)
 
     def test_beneficiary_details_have_age_in_month_not_have_recorded_height(self):
-        data = get_beneficiary_details(case_id='411c4234-8475-415a-9c28-911b85868aa5')
+        data = get_beneficiary_details(
+            case_id='411c4234-8475-415a-9c28-911b85868aa5',
+            awc_id='a15',
+            selected_month=(2017, 6, 1)
+        )
         self.assertEqual(data['age_in_months'], 37)
         self.assertEqual(data['sex'], 'F')
         self.assertEqual(data['person_name'], 'Name 3483')
@@ -1039,9 +1051,9 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Underweight (Weight-for-Age)",
                 "help_text": (
-                    "Percentage of children between 0 - 5 years enrolled for Anganwadi Services with "
-                    "weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median. "
-                    "Children who are moderately or severely underweight have a higher risk of mortality. "
+                    "Of the total children weighed, the percentage of children between 0-5 years who were "
+                    "moderately/severely underweight in the current month. Children who are moderately or "
+                    "severely underweight have a higher risk of mortality. "
                 )
             }
         )
@@ -1070,12 +1082,13 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Wasting (Weight-for-Height)",
                 "help_text": (
-                    "Percentage of children between 6 - 60 months enrolled for Anganwadi Services with "
-                    "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median. "
+                    "Of the children enrolled for Anganwadi services, whose weight and height was measured, "
+                    "the percentage of children between 6 - 60 months enrolled who were moderately/severely "
+                    "wasted in the current month. "
                     "<br/><br/>"
-                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
-                    "undernutrition usually as a consequence of insufficient food intake or a high "
-                    "incidence of infectious diseases."
+                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
+                    "usually as a consequence of insufficient food intake or a high incidence of infectious "
+                    "diseases."
                 )
             }
         )
@@ -1104,11 +1117,11 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Stunting (Height-for-Age)",
                 "help_text": (
-                    "Percentage of children between 6 - 60 months with height-for-age below -2Z "
-                    "standard deviations of the WHO Child Growth Standards median. "
+                    "Of the children whose height was measured, the percentage of children between "
+                    "6 - 60 months who were moderately/severely stunted in the current month."
                     "<br/><br/>"
-                    "Stunting is a sign of chronic undernutrition "
-                    "and has long lasting harmful consequences on the growth of a child"
+                    "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
+                    "on the growth of a child"
                 )
             }
         )
@@ -1138,12 +1151,13 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Wasting (Weight-for-Height)",
                 "help_text": (
-                    "Percentage of children between 0 - 5 years enrolled for Anganwadi Services with "
-                    "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "
+                    "Of the children enrolled for Anganwadi services, whose weight and height was measured, "
+                    "the percentage of children between 0 - 5 years enrolled who were moderately/severely wasted "
+                    "in the current month. "
                     "<br/><br/>"
-                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
-                    "undernutrition usually as a consequence of insufficient food intake or a high "
-                    "incidence of infectious diseases."
+                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
+                    "usually as a consequence of insufficient food intake or a high incidence of infectious "
+                    "diseases."
                 )
             }
         )
@@ -1173,8 +1187,8 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Stunting (Height-for-Age)",
                 "help_text": (
-                    "Percentage of children between 0 - 5 years enrolled for Anganwadi Services  with "
-                    "height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. "
+                    "Of the children whose height was measured, the percentage of children between "
+                    "0 - 5 years who were moderately/severely stunted in the current month."
                     "<br/><br/>"
                     "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
                     "on the growth of a child"
@@ -1205,8 +1219,8 @@ class TestAWCReport(TestCase):
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
                 "label": "Weighing Efficiency",
-                'help_text': "Percentage of children (0 - 5 years) who have been "
-                             "weighed of total children enrolled for Anganwadi Services",
+                'help_text': "Of the children between the ages of 0-5 years who are enrolled for Anganwadi "
+                             "Services, the percentage who were weighed in the given month. ",
             }
         )
 
@@ -1234,10 +1248,10 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Newborns with Low Birth Weight",
                 'help_text': (
-                    "Percentage of newborns born with birth weight less than 2500 grams. "
-                    "Newborns with Low Birth Weight are closely associated with foetal and "
-                    "neonatal mortality and morbidity, inhibited growth and cognitive development, "
-                    "and chronic diseases later in life"
+                    "Of all the children born in the current month, the percentage that had a birth weight "
+                    "less than 2500 grams. Newborns with Low Birth Weight are closely associated wtih foetal "
+                    "and neonatal mortality and morbidity, inhibited growth and cognitive development, "
+                    "and chronic diseases later in life."
                 ),
             }
         )
@@ -1266,9 +1280,9 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Early Initiation of Breastfeeding",
                 'help_text': (
-                    "Percentage of children who were put to the breast within one hour of birth. "
-                    "Early initiation of breastfeeding ensure the newborn receives the 'first milk' "
-                    "rich in nutrients and encourages exclusive breastfeeding practice"
+                    "Of the children born in the last month, the percentage whose breastfeeding was initiated "
+                    "within 1 hour of delivery. Early initiation of breastfeeding ensure the newborn recieves "
+                    "the \"first milk\" rich in nutrients and encourages exclusive breastfeeding practice"
                 ),
             }
         )
@@ -1297,10 +1311,10 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Exclusive breastfeeding",
                 'help_text': (
-                    "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-                    "An infant is exclusively breastfed if they receive only breastmilk "
-                    "with no additional food, liquids (even water) ensuring "
-                    "optimal nutrition and growth between 0 - 6 months"
+                    "Of the total children between the ages of 0 to 6 months, the percentage that was "
+                    "exclusively fed with breast milk. An infant is exclusively breastfed if they receive "
+                    "only breastmilk with no additional food or liquids (even water), ensuring optimal nutrition "
+                    "and growth between 0 - 6 months"
                 ),
             }
         )
@@ -1329,10 +1343,10 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Children initiated appropriate Complementary Feeding",
                 'help_text': (
-                    "Percentage of children between 6 - 8 months given timely introduction to solid, "
-                    "semi-solid or soft food. "
-                    "Timely initiation of complementary feeding in addition to breastmilk "
-                    "at 6 months of age is a key feeding practice to reduce malnutrition"
+                    "Of the total children between the ages of 6 to 8 months, the percentage that was given a "
+                    "timely introduction to solid, semi-solid or soft food. Timely intiation of complementary "
+                    "feeding in addition to breastmilk at 6 months of age is a key feeding practice to reduce "
+                    "malnutrition"
                 ),
             }
         )
@@ -1361,12 +1375,13 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Immunization Coverage (at age 1 year)",
                 'help_text': (
-                    "Percentage of children 1 year+ who have received complete immunization as per "
-                    "National Immunization Schedule of India required by age 1. "
-                    "<br/><br/> "
-                    "This includes the following immunizations:<br/> "
-                    "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> "
-                    "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+                    "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
+                    "the percentage of children who have received the complete immunization as per the National "
+                    "Immunization Schedule of India that is required by age 1."
+                    "<br/><br/>"
+                    " This includes the following immunizations:<br/>"
+                    " If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                    " If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
                 ),
             }
         )
@@ -1395,9 +1410,9 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Institutional Deliveries",
                 'help_text': (
-                    "Percentage of pregnant women who delivered in a public or private medical "
-                    "facility in the last month. "
-                    "Delivery in medical institutions is associated with a decrease maternal mortality rate"
+                    "Of the total number of women who gave birth in the last month, the percentage who delivered "
+                    "in a public or private medical facility. Delivery in medical instituitions is associated "
+                    "with a decrease in maternal mortality rate"
                 ),
             }
         )
@@ -1504,15 +1519,15 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 0,
-                'color': 'green',
+                "all": 5,
+                'color': 'red',
                 "format": "percent_and_div",
-                "percent": "Data in the previous reporting period was 0",
-                "value": 0,
+                "percent": -39.99999999999999,
+                "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "month",
-                "help_text": "Percentage of ICDS beneficiaries whose Aadhaar"
-                             " identification has been captured"
+                "help_text": "Of the total number of ICDS beneficiaries, "
+                             "the percentage whose Adhaar identification has been captured. "
             }
         )
 
@@ -1538,8 +1553,8 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
                 "frequency": "month",
-                "help_text": "Percentage of children registered between 0-6 years old "
-                             "who are enrolled for Anganwadi Services"
+                "help_text": "Of the total number of children between 0-6 years, "
+                             "the percentage of children who are enrolled for Anganwadi Services"
             }
         )
 
@@ -1565,8 +1580,8 @@ class TestAWCReport(TestCase):
                 "value": 2,
                 "label": "Percent pregnant women enrolled for Anganwadi Services",
                 "frequency": "month",
-                "help_text": "Percentage of pregnant women registered "
-                             "who are enrolled for Anganwadi Services"
+                "help_text": "Of the total number of pregnant women, "
+                             "the percentage of pregnant women enrolled for Anganwadi Services"
             }
         )
 
@@ -1592,8 +1607,8 @@ class TestAWCReport(TestCase):
                 "value": 3,
                 "label": "Percent lactating women enrolled for Anganwadi Services",
                 "frequency": "month",
-                "help_text": "Percentage of lactating women registered "
-                             "who are enrolled for Anganwadi Services"
+                "help_text": "Of the total number of lactating women, "
+                             "the percentage of lactating women enrolled for Anganwadi Services"
             }
         )
 
@@ -1619,8 +1634,8 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
                 "frequency": "month",
-                "help_text": "Percentage of adolescent girls registered between"
-                             " 11-14 years old who are enrolled for Anganwadi Services"
+                "help_text": "Of the total number of adolescent girls (aged 11-14 years), "
+                             "the percentage of girls enrolled for Anganwadi Services"
             }
         )
 
@@ -1762,15 +1777,16 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 0,
+                "all": 5,
                 'color': 'green',
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
-                "value": 0,
+                "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
                 "help_text": (
-                    "Percentage of ICDS beneficiaries whose Aadhaar identification has been captured"
+                    "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification "
+                    "has been captured. "
                 )
             }
         )
@@ -1798,8 +1814,8 @@ class TestAWCReport(TestCase):
                 "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": (
-                    "Percentage of children registered between 0-6 years old "
-                    "who are enrolled for Anganwadi Services"
+                    "Of the total number of children between 0-6 years, "
+                    "the percentage of children who are enrolled for Anganwadi Services"
                 )
             }
         )
@@ -1827,7 +1843,8 @@ class TestAWCReport(TestCase):
                 "label": "Percent pregnant women enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": (
-                    "Percentage of pregnant women registered who are enrolled for Anganwadi Services"
+                    "Of the total number of pregnant women, "
+                    "the percentage of pregnant women enrolled for Anganwadi Services"
                 )
             }
         )
@@ -1855,7 +1872,8 @@ class TestAWCReport(TestCase):
                 "label": "Percent lactating women enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": (
-                    "Percentage of lactating women registered who are enrolled for Anganwadi Services"
+                    "Of the total number of lactating women, "
+                    "the percentage of lactating women enrolled for Anganwadi Services"
                 )
             }
         )
@@ -1885,8 +1903,8 @@ class TestAWCReport(TestCase):
                 ),
                 "frequency": "day",
                 "help_text": (
-                    "Percentage of adolescent girls registered between 11-14 years old who "
-                    "are enrolled for Anganwadi Services"
+                    "Of the total number of adolescent girls (aged 11-14 years), "
+                    "the percentage of girls enrolled for Anganwadi Services"
                 )
             }
         )
@@ -2012,15 +2030,16 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 0,
+                "all": 5,
                 'color': 'green',
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
-                "value": 0,
+                "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
                 "help_text": (
-                    "Percentage of ICDS beneficiaries whose Aadhaar identification has been captured"
+                    "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification "
+                    "has been captured. "
                 )
             }
         )
@@ -2048,8 +2067,8 @@ class TestAWCReport(TestCase):
                 "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": (
-                    "Percentage of children registered between 0-6 years old "
-                    "who are enrolled for Anganwadi Services"
+                    "Of the total number of children between 0-6 years, "
+                    "the percentage of children who are enrolled for Anganwadi Services"
                 )
             }
         )
@@ -2077,7 +2096,8 @@ class TestAWCReport(TestCase):
                 "label": "Percent pregnant women enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": (
-                    "Percentage of pregnant women registered who are enrolled for Anganwadi Services"
+                    "Of the total number of pregnant women, "
+                    "the percentage of pregnant women enrolled for Anganwadi Services"
                 )
             }
         )
@@ -2105,7 +2125,8 @@ class TestAWCReport(TestCase):
                 "label": "Percent lactating women enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": (
-                    "Percentage of lactating women registered who are enrolled for Anganwadi Services"
+                    "Of the total number of lactating women, "
+                    "the percentage of lactating women enrolled for Anganwadi Services"
                 )
             }
         )
@@ -2135,8 +2156,8 @@ class TestAWCReport(TestCase):
                 ),
                 "frequency": "day",
                 "help_text": (
-                    "Percentage of adolescent girls registered between 11-14 years old who "
-                    "are enrolled for Anganwadi Services"
+                    "Of the total number of adolescent girls (aged 11-14 years), "
+                    "the percentage of girls enrolled for Anganwadi Services"
                 )
             }
         )
@@ -2221,10 +2242,16 @@ class TestAWCReport(TestCase):
             ['kpi', 'chart']
         )
 
+    def _get_beneficiary(self, case_id):
+        return [
+            row
+            for row in get_awc_report_beneficiary(
+                0, 100, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False)['data']
+            if row['case_id'] == case_id
+        ][0]
+
     def test_awc_report_beneficiary_645fd452_3732_44fb_a2d3_46162304807e(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][0]
+        data = self._get_beneficiary('645fd452-3732-44fb-a2d3-46162304807e')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2247,9 +2274,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_9ca36787_bed9_4af0_a13e_fca1c9cad360(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][1]
+        data = self._get_beneficiary('9ca36787-bed9-4af0-a13e-fca1c9cad360')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2272,9 +2297,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_7673a69c_29af_478c_85c6_9c3b22f6b2e4(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][2]
+        data = self._get_beneficiary('7673a69c-29af-478c-85c6-9c3b22f6b2e4')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2297,9 +2320,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_d5d3fbeb_8b6a_486b_a853_30be35589200(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][3]
+        data = self._get_beneficiary('d5d3fbeb-8b6a-486b-a853-30be35589200')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2322,9 +2343,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_b954eb28_75de_43c8_9ec0_d38b7d246ead(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][4]
+        data = self._get_beneficiary('b954eb28-75de-43c8-9ec0-d38b7d246ead')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2347,9 +2366,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_532f3754_e231_40ec_a861_abbb2a06dff5(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][5]
+        data = self._get_beneficiary('6faecfe6-cc88-4ff0-9b3d-d8ca069dd06f')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2372,9 +2389,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_3b242a3b_693e_44dd_ad4a_b713efdb0fdb(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][6]
+        data = self._get_beneficiary('3b242a3b-693e-44dd-ad4a-b713efdb0fdb')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2396,9 +2411,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_4cd07ebf_abce_4345_a930_f6db7ede8996(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][7]
+        data = self._get_beneficiary('4cd07ebf-abce-4345-a930-f6db7ede8996')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2421,9 +2434,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_0198ec4a_f5ed_4452_863c_a400f43d238a(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][8]
+        data = self._get_beneficiary('0198ec4a-f5ed-4452-863c-a400f43d238a')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2446,9 +2457,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_a9dc5cac_6820_45cf_b8c9_16f2cfb0ae02(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][9]
+        data = self._get_beneficiary('a9dc5cac-6820-45cf-b8c9-16f2cfb0ae02')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(

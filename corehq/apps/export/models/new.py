@@ -89,7 +89,9 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
-    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM)
+    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM,
+    SharingOption,
+)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -658,6 +660,9 @@ class ExportInstance(BlobMixin, Document):
 
     description = StringProperty(default='')
 
+    sharing = StringProperty(default=SharingOption.EDIT_AND_EXPORT, choices=SharingOption.CHOICES)
+    owner_id = StringProperty(default=None)
+
     class Meta(object):
         app_label = 'export'
 
@@ -766,6 +771,15 @@ class ExportInstance(BlobMixin, Document):
                 instance.tables.append(table)
 
         return instance
+
+    def can_view(self, user_id):
+        return self.owner_id is None or self.sharing != SharingOption.PRIVATE or self.owner_id == user_id
+
+    def can_edit(self, user):
+        return self.owner_id is None or self.owner_id == user.get_id or (
+            self.sharing == SharingOption.EDIT_AND_EXPORT
+            and user.can_edit_shared_exports(self.domain)
+        )
 
     @classmethod
     def _move_selected_columns_to_top(cls, columns):
@@ -2601,19 +2615,6 @@ class ExportMigrationMeta(Document):
     class Meta(object):
         app_label = 'export'
 
-    @property
-    def old_export_url(self):
-        from corehq.apps.export.views import EditCustomCaseExportView, EditCustomFormExportView
-        if self.export_type == FORM_EXPORT:
-            view_cls = EditCustomFormExportView
-        else:
-            view_cls = EditCustomCaseExportView
-
-        return '{}{}'.format(get_url_base(), reverse(
-            view_cls.urlname,
-            args=[self.domain, self.saved_export_id],
-        ))
-
 
 class DailySavedExportNotification(models.Model):
     user_id = models.CharField(max_length=255, db_index=True)
@@ -2633,10 +2634,7 @@ class DailySavedExportNotification(models.Model):
 
     @classmethod
     def user_to_be_notified(cls, domain, user):
-        from corehq.apps.export.views import use_new_daily_saved_exports_ui
-
         return (
-            use_new_daily_saved_exports_ui(domain) and
             cls.user_added_before_feature_release(user.created_on) and
             not DailySavedExportNotification.notified(user.user_id, domain) and
             (

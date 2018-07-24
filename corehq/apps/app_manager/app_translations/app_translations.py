@@ -4,12 +4,14 @@ from __future__ import unicode_literals
 from collections import defaultdict, OrderedDict
 
 import itertools
+from django.template.defaultfilters import linebreaksbr
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from lxml import etree
 import copy
 import re
 from lxml.etree import XMLSyntaxError, Element
+from celery.task import task
 
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
@@ -27,6 +29,7 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 import six
 from six.moves import zip
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 def get_unicode_dicts(iterable):
@@ -49,7 +52,27 @@ def get_unicode_dicts(iterable):
     return rows
 
 
-def process_bulk_app_translation_upload(app, f):
+def read_uploaded_app_translation_file(f):
+    msgs = []
+    try:
+        workbook = WorkbookJSONReader(f)
+    # todo: HeaderValueError does not belong here
+    except (HeaderValueError, InvalidExcelFileException) as e:
+        msgs.append(
+            (messages.error, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
+        )
+        return False, msgs
+    except JSONReaderError as e:
+        msgs.append(
+            (messages.error, _(
+                "App Translation Failed! There is an issue with excel columns. Error details: {}."
+            ).format(e))
+        )
+        return False, msgs
+    return workbook, msgs
+
+
+def process_bulk_app_translation_upload(app, workbook):
     """
     Process the bulk upload file for the given app.
     We return these message tuples instead of calling them now to allow this
@@ -65,22 +88,6 @@ def process_bulk_app_translation_upload(app, f):
     headers = expected_bulk_app_sheet_headers(app)
     expected_sheets = {h[0]: h[1] for h in headers}
     processed_sheets = set()
-
-    try:
-        workbook = WorkbookJSONReader(f)
-    # todo: HeaderValueError does not belong here
-    except (HeaderValueError, InvalidExcelFileException) as e:
-        msgs.append(
-            (messages.error, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
-        )
-        return msgs
-    except JSONReaderError as e:
-        msgs.append(
-            (messages.error, _(
-                "App Translation Failed! There is an issue with excel columns. Error details: {}."
-            ).format(e))
-        )
-        return msgs
 
     for sheet in workbook.worksheets:
         # sheet.__iter__ can only be called once, so cache the result
@@ -181,6 +188,32 @@ def process_bulk_app_translation_upload(app, f):
         (messages.success, _("App Translations Updated!"))
     )
     return msgs
+
+
+def validate_bulk_app_translation_upload(app, workbook, email):
+    from corehq.apps.app_manager.app_translations.validator import UploadedTranslationsValidator
+    msgs = UploadedTranslationsValidator(app, workbook).compare()
+    if msgs:
+        _email_app_translations_discrepancies(msgs, email, app.name)
+        return [(messages.error, _("Issues found. You should receive an email shortly."))]
+    else:
+        return [(messages.success, "No issues found.")]
+
+
+def _email_app_translations_discrepancies(msgs, email, app_name):
+    message = '\n\n'.join([
+        """Sheet {}:
+           {}""".format(sheet_name, '\n '.join(msgs[sheet_name]))
+        for sheet_name in msgs
+        if msgs.get(sheet_name)])
+
+    subject = "App Translations Discrepancies for {}".format(app_name)
+    body = """Hi,
+    Following discrepancies were found for app translations.
+
+    {}""".format(message)
+
+    send_html_email_async.delay(subject, email, linebreaksbr(body))
 
 
 def _make_modules_and_forms_row(row_type, sheet_name, languages,
@@ -625,6 +658,12 @@ def update_form_translations(sheet, rows, missing_cols, app):
         old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
         return _looks_like_markdown(old_trans) and not had_markdown(text_node_)
 
+    def has_translation(row_, langs):
+        for lang_ in langs:
+            for trans_type_ in ['default', 'audio', 'image', 'video']:
+                if row_.get(_get_col_key(trans_type_, lang_)):
+                    return True
+
     # Aggregate Markdown vetoes, and translations that currently have Markdown
     vetoes = defaultdict(lambda: False)  # By default, Markdown is not vetoed for a label
     markdowns = defaultdict(lambda: False)  # By default, Markdown is not in use
@@ -637,7 +676,18 @@ def update_form_translations(sheet, rows, missing_cols, app):
             text_node = itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s']" % (lang, label_id))
             vetoes[label_id] = vetoes[label_id] or is_markdown_vetoed(text_node)
             markdowns[label_id] = markdowns[label_id] or had_markdown(text_node)
-
+    # skip labels that have no translation provided
+    skip_label = set()
+    if form.is_registration_form():
+        for row in rows:
+            if not has_translation(row, app.langs):
+                skip_label.add(row['label'])
+        for label in skip_label:
+            msgs.append((
+                messages.error,
+                "You must provide at least one translation" +
+                " for the label '%s' in sheet '%s'" % (label, sheet.worksheet.title)
+            ))
     # Update the translations
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
@@ -645,6 +695,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
         for row in rows:
             label_id = row['label']
+            if label_id in skip_label:
+                continue
             text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
             if not text_node.exists():
                 msgs.append((

@@ -16,7 +16,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     };
     vm.filters = ['month', 'age', 'gender'];
     vm.rightLegend = {
-        info: 'Percentage of Angwanwadi Centers that were open yesterday',
+        info: 'Of the total number of AWCs, the percentage of AWCs that were open yesterday.',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -54,7 +54,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     var options = {
         'xAxisTickFormat': '%m/%d/%y',
         'yAxisTickFormat': ",",
-        'captionContent': ' Total Number of Angwanwadi Centers that were open yesterday',
+        'captionContent': ' Of the total number of AWCs, the percentage of AWCs that were open yesterday.',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();

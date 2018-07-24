@@ -28,11 +28,13 @@ hqDefine("reports/js/data_corrections", [
     "knockout",
     "underscore",
     "hqwebapp/js/assert_properties",
+    "analytix/js/kissmetrix",
 ], function(
     $,
     ko,
     _,
-    assertProperties
+    assertProperties,
+    kissAnalytics
 ) {
     // Represents a single property/value pair, e.g., a form question and its response
     var PropertyModel = function(options) {
@@ -56,7 +58,7 @@ hqDefine("reports/js/data_corrections", [
     // Controls the full modal UI
     var DataCorrectionsModel = function(options) {
         assertProperties.assert(options, ['saveUrl', 'properties'],
-            ['propertyNames', 'propertyNamesUrl', 'displayProperties', 'propertyPrefix', 'propertySuffix']);
+            ['propertyNames', 'propertyNamesUrl', 'displayProperties', 'propertyPrefix', 'propertySuffix', 'analyticsDescriptor']);
         var self = {};
 
         // Core data, and the order in which it should be displayed
@@ -201,9 +203,11 @@ hqDefine("reports/js/data_corrections", [
             $button.disableButton();
             $.post({
                 url: options.saveUrl,
-                data: _.mapObject(self.properties, function(model) {
-                    return model.value();
-                }),
+                data: {
+                    properties: JSON.stringify(_.mapObject(self.properties, function(model) {
+                        return model.value();
+                    })),
+                },
                 success: function() {
                     window.location.reload();
                 },
@@ -213,6 +217,19 @@ hqDefine("reports/js/data_corrections", [
                 },
             });
             return true;
+        };
+
+        // Analytics
+        self.analyticsDescriptor = options.analyticsDescriptor;
+        self.trackOpen = function() {
+            if (self.analyticsDescriptor) {
+                kissAnalytics.track.event("Clicked " + self.analyticsDescriptor + " Button");
+            }
+        };
+        self.trackSave = function() {
+            if (self.analyticsDescriptor) {
+                kissAnalytics.track.event("Clicked Save on " + self.analyticsDescriptor + " Modal");
+            }
         };
 
         // Control visibility around loading (spinner is shown if names are fetched via ajax) and error handling.

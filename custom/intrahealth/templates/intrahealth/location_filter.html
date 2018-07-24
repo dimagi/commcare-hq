@@ -10,9 +10,7 @@
 </div>
 <input name="location_id" type="hidden" data-bind="value: selected_locid" />
 
-<script type="text/javascript">
-
-    var REQUIRED = {{ required }}
+<script>
 
     $.when(
         $.getScript("{% static 'locations/js/location_drilldown.js' %}"),
@@ -29,7 +27,8 @@
             "auto_drill": null,
             "loc_filter": false,
             "loc_url": location_url,
-            "func": IntrahealthLocModel
+            "func": IntrahealthLocModel,
+            "required": {{ required }},
         });
 
         $('#group_{{ control_slug }}').koApplyBindings(model);

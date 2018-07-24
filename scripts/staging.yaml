@@ -49,19 +49,20 @@
 trunk: master
 name: autostaging
 branches:
-  - jls/prune-auto-builds  # Jenny June 5
-  - bmb/improve-mobile-signup # biyeun june 6
-  - jls/reduce-maps-code  # Jenny June 11
-  - jls/kill-mm-case-properties  # Jenny June 13
-  - es/progress-bar  # ES June 18
-  - nh/copy_form_to_app  # Norman June 19
-  - fr/case-list-explorer-uat-feedback # Farid June 19
-#  - np/export-sharing  # NP June 19
+  - nh/omrs/levenshtein # Norman June 29
+  - es/location-upload  # Ethan July 6
+  - jls/unify-tab-history  # Jenny July 10
+  - jls/appcues-template-apps  # Jenny July 16
+  - jls/requirejs-case-importer  # Jenny July 17
+  - revert-21236-fr/add-secure-urllib3  # Danny July 18
+  - jls/requirejs-domain-billing  # Jenny July 19
+  - nh/lw/dhis  # Norman July 20
+  - np/assert-blob-migration-complete  # NP July 20
+  - np/attachments-soft_assert  # NP July 20
+  - dmr/fix-package-security-vulnerabilities  # Danny July 21
+  - jls/requirejs-login  # Jenny July 22
+  - jls/enterprise-settings  # Jenny July 23
 submodules:
-  submodules/touchforms-src:
-    # let's leave this here even when empty
-    # just so we always get latest master
-    branches: []
   submodules/django-digest-src:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:

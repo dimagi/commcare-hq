@@ -94,7 +94,7 @@ class AppManagerDataSourceConfigTest(TestCase):
             datetime_columns +
             [
                 "doc_id", "case_type", "last_modified_by_user_id", "opened_by_user_id",
-                "closed", "closed_by_user_id", "owner_id", "name", "state", "external_id",
+                "closed", "closed_by_user_id", "owner_id", "name", "state", "external_id", "count",
             ] +
             list(self.case_properties.keys())
             + [index_column_id]
@@ -139,7 +139,6 @@ class AppManagerDataSourceConfigTest(TestCase):
         for result in row:
             if result.column.id in datetime_columns:
                 self.assertEqual(result.column.datatype, 'datetime')
-
             if result.column.id == "inserted_at":
                 self.assertEqual(fake_time_now, result.value)
             if result.column.id == index_column_id:
@@ -148,6 +147,8 @@ class AppManagerDataSourceConfigTest(TestCase):
                 self.assertEqual(modified_on, result.value)
             elif result.column.id == "opened_date":
                 self.assertEqual(opened_on, result.value)
+            elif result.column.id == "count":
+                self.assertEqual(1, result.value)
             elif result.column.id not in ["repeat_iteration", "inserted_at", 'closed']:
                 self.assertEqual(sample_doc[_get_column_property(result.column)], result.value)
                 if result.column.id in default_case_property_datatypes:

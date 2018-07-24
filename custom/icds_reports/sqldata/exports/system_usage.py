@@ -33,8 +33,8 @@ class SystemUsageExport(ExportableMixin, SqlData):
         agg_columns = [
             DatabaseColumn(
                 'Number of days AWC was open in the given month',
-                SumColumn('awc_num_open'),
-                format_fn=lambda x: (x or 0),
+                SumColumn('awc_days_open'),
+                format_fn=lambda x: (x or 0) if self.loc_level > 4 else "Not Applicable",
                 slug='num_awc_open'
             ),
             DatabaseColumn(

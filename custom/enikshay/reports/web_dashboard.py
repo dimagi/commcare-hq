@@ -67,7 +67,8 @@ class WebDashboardReport(EnikshayReport):
     def charts(self):
         case_finding_sql_data = self.case_finding_sql_data[0]
         sputum_conversion_report = ConfigurableReportDataSource.from_spec(
-            StaticReportConfiguration.by_id('static-%s-sputum_conversion' % self.domain), include_prefilters=True
+            StaticReportConfiguration.by_id('static-%s-sputum_conversion' % self.domain, self.domain),
+            include_prefilters=True
         )
 
         filter_values = {'date': self.datespan}

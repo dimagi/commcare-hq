@@ -2,20 +2,19 @@
 #for more information see: http://code.google.com/p/django-axes/
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import csv342 as csv
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from auditcare.utils import login_template
-from dimagi.utils import csv 
 from auditcare.decorators.login import lockout_response
 from auditcare.decorators.login import log_request
 from auditcare.inspect import history_for_doc
 
 from django.conf import settings
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render
 from auditcare import models
 from auditcare.models import AccessAudit
 
@@ -30,8 +29,8 @@ VERBOSE = getattr(settings, 'AXES_VERBOSE', True)
 def export_all(request):
     auditEvents = AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
     response = HttpResponse()
-    response['Content-Disposition'] = 'attachment; filename="AuditAll.xls"'
-    writer = csv.UnicodeWriter(response)
+    response['Content-Disposition'] = 'attachment; filename="AuditAll.csv"'
+    writer = csv.writer(response)
     writer.writerow(['User', 'Access Type', 'Date'])
     for a in auditEvents:
         writer.writerow([a.user, a.access_type, a.event_date])
@@ -67,11 +66,11 @@ def audited_views(request, *args, **kwargs):
     db = AccessAudit.get_db()
     views = db.view('auditcare/urlpath_by_user_date', reduce=False).all()
     template = "auditcare/audit_views.html"
-    return render_to_response(template,
-            {"audit_views": views},
-        context_instance=RequestContext(request))
+    context = {"audit_views": views}
+    return render(request, template, context)
 
-def audited_logout (request, *args, **kwargs):
+
+def audited_logout(request, *args, **kwargs):
     # share some useful information
     func = auth_views.logout
     logging.info("Function: %s" %(func.__name__))
@@ -98,11 +97,12 @@ def audited_logout (request, *args, **kwargs):
     response = func(request, *args, **kwargs)
     return response
 
+
 @login_required()
 @user_passes_test(lambda u: u.is_superuser)
 def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
     # it's for a particular model
-    context=RequestContext(request)
+    context = {}
     db = AccessAudit.get_db()
 
     if ContentType.objects.filter(name=model_name).count() == 0:
@@ -114,19 +114,20 @@ def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
     context['change_history'] = history_for_doc(obj)
     context['model'] = model_name
     context['model_uuid'] = model_uuid
-    return render_to_response('auditcare/model_instance_history.html', context)
+    return render(request, 'auditcare/model_instance_history.html', context)
 
 @login_required()
 @user_passes_test(lambda u: u.is_superuser)
 def single_model_history(request, model_name, *args, **kwargs):
     # it's for a particular model
-    context=RequestContext(request)
+    context = {}
     db = AccessAudit.get_db()
     vals = db.view('auditcare/model_actions_by_id', group=True, startkey=[model_name, ''], endkey=[model_name, 'z']).all()
     model_dict= dict((x['key'][1], x['value']) for x in vals)
     context['instances_dict']=model_dict
     context['model'] = model_name
-    return render_to_response('auditcare/single_model_changes.html', context)
+    return render(request, 'auditcare/single_model_changes.html', context)
+
 
 @login_required()
 @user_passes_test(lambda u: u.is_superuser)
@@ -134,11 +135,10 @@ def model_histories(request, *args, **kwargs):
     """
     Looks at all the audit model histories and shows for a given model
     """
-    context=RequestContext(request)
     db = AccessAudit.get_db()
     vals = db.view('auditcare/model_actions_by_id', group=True, group_level=1).all()
     # do a dict comprehension here because we know all the keys in this reduce are unique
-    model_dict= dict((x['value'][0], x['value']) for x in vals)
-    context['model_dict']=model_dict
-    return render_to_response('auditcare/model_changes.html', context)
+    model_dict = dict((x['value'][0], x['value']) for x in vals)
+    context = {'model_dict': model_dict}
+    return render(request, 'auditcare/model_changes.html', context)
 

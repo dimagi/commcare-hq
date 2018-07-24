@@ -33,6 +33,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.session_helper = connection_manager.get_session_helper(self.engine_id)
         self.engine = self.session_helper.engine
 
+    @property
+    def table_id(self):
+        return self.config.table_id
+
+    @property
+    def display_name(self):
+        return self.config.display_name
+
     @memoized
     def get_table(self):
         return get_indicator_table(self.config)

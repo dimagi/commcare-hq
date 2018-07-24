@@ -7,7 +7,8 @@
 
 <!-- class='hide' keeps modal from showing until knockout initializes & removes the class -->
 <div class="hide modal fade data-corrections-modal" tabindex="-1"
-     data-bind="css: { 'full-screen-modal': isFullScreenModal(), 'hide': false }, event: { 'hidden.bs.modal': init }">
+     data-bind="css: { 'full-screen-modal': isFullScreenModal(), 'hide': false },
+                event: { 'hidden.bs.modal': function() { $root.init(); }, 'shown.bs.modal': function() { $root.trackOpen(); } }">
     <div class="modal-dialog" data-bind="css: { 'modal-lg': isLargeModal() }">
         <div class="modal-content">
             <div class="modal-header with-controls">
@@ -57,8 +58,9 @@
 
                         <i class="fa fa-exclamation-triangle"></i>
                         {% blocktrans %}
-                            This feature will only update individual question responses.
-                            It will <strong>not</strong> affect cases.
+                            This feature will only update the specified questions.
+                            It will <strong>not</strong> run any calculations or affect cases.
+                            <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Data+Cleaning%3A+Clean+Form+Submission">Read more</a>.
                         {% endblocktrans %}
                     </div>
                 {% endif %}
@@ -111,7 +113,7 @@
                 </ul>
                 <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
                 <button type="submit" class="btn btn-primary" data-bind="click: submitForm, attr: { disabled: disallowSave }">
-                    <span data-bind="visible: !showRetry()">
+                    <span data-bind="visible: !showRetry(), click: trackSave">
                         {% trans "Save" %}
                     </span>
                     <span data-bind="visible: showRetry()">

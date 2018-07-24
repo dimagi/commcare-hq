@@ -12,15 +12,8 @@ from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element, mget_query_fake
 
-XMNLS_BP_FORM = 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB'
-XMLNS_THR_FORM = 'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A'
 XMLNS_DELIVERY_FORM = 'http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2'
-XMLNS_PNC_FORM = 'http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE'
-XMLNS_EBF_FORM = 'http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D'
 XMLNS_GMP_FORM = 'http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75'
-XMLNS_DAILYFEEDING_FORM = 'http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62'
-XMLNS_HH_REG_FORM = 'http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335'
-XMLNS_ADD_MEMBER_FORM = 'http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731'
 
 NUTRITION_STATUS_NORMAL = "green"
 NUTRITION_STATUS_MODERATE = "yellow"
@@ -176,65 +169,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
 
         self._submit_form(form)
 
-    def _submit_dailyfeeding_form(
-            self, form_date, case_id):
-
-        form = ElementTree.Element('data')
-        form.attrib['xmlns'] = XMLNS_DAILYFEEDING_FORM
-        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
-
-        meta = ElementTree.Element('meta')
-        add_element(meta, 'timeEnd', form_date.isoformat())
-        form.append(meta)
-
-        case = ElementTree.Element('case')
-        case.attrib['date_modified'] = form_date.isoformat()
-        case.attrib['case_id'] = case_id
-        case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
-        form.append(case)
-
-        self._submit_form(form)
-
-    def _submit_thr_rations_form(
-            self, form_date, case_id, rations_distributed=0, case_id_2=None):
-
-        form = ElementTree.Element('data')
-        form.attrib['xmlns'] = XMLNS_THR_FORM
-        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
-
-        meta = ElementTree.Element('meta')
-        add_element(meta, 'timeEnd', form_date.isoformat())
-        form.append(meta)
-
-        case = ElementTree.Element('case')
-        case.attrib['date_modified'] = form_date.isoformat()
-        case.attrib['case_id'] = case_id
-        case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
-        form.append(case)
-
-        add_element(form, 'thr_given_child', '1')
-
-        child_thr = ElementTree.Element('child_thr')
-        child_thr_persons = ElementTree.Element('child_persons')
-        child_thr_repeat1 = ElementTree.Element('item')
-        add_element(child_thr_repeat1, 'child_health_case_id', case_id)
-        if rations_distributed > 0:
-            add_element(child_thr_repeat1, 'days_ration_given_child', rations_distributed)
-            add_element(child_thr_repeat1, 'distribute_ration_child', 'yes')
-        else:
-            add_element(child_thr_repeat1, 'distribute_ration_child', 'no')
-        child_thr_persons.append(child_thr_repeat1)
-        if case_id_2 is not None:
-            child_thr_repeat2 = ElementTree.Element('item')
-            add_element(child_thr_repeat2, 'child_health_case_id', case_id_2)
-            add_element(child_thr_repeat2, 'days_ration_given_child', 25)
-            add_element(child_thr_repeat2, 'distribute_ration_child', 'yes')
-            child_thr_persons.append(child_thr_repeat2)
-        child_thr.append(child_thr_persons)
-        form.append(child_thr)
-
-        self._submit_form(form)
-
     def _submit_delivery_form(
             self, form_date, case_id, nutrition_status=None, case_id_2=None):
 
@@ -276,7 +210,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             add_element(child_repeat2, 'zscore_grading_wfa', NUTRITION_STATUS_SEVERE)
             form.append(child_repeat2)
 
-        ElementTree.dump(form)
         self._submit_form(form)
 
     def test_demographic_data(self):
@@ -772,82 +705,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
                  ('nutrition_status_weighed', 0),
                  ('nutrition_status_unweighed', 1)],
              ),
-        ]
-        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
-
-    def test_thr_rations(self):
-        case_id = uuid.uuid4().hex
-        case_id_2 = uuid.uuid4().hex
-        self._create_case(
-            case_id=case_id,
-            dob=date(2015, 1, 12),
-            date_opened=datetime(2015, 2, 1),
-            date_modified=datetime(2016, 3, 12),
-        )
-        self._create_case(
-            case_id=case_id_2,
-            dob=date(2015, 1, 12),
-            date_opened=datetime(2015, 2, 1),
-            date_modified=datetime(2016, 3, 12),
-        )
-
-        self._submit_thr_rations_form(
-            form_date=datetime(2016, 2, 2),
-            case_id=case_id,
-            rations_distributed=5,
-            case_id_2=case_id_2,
-        )
-        self._submit_thr_rations_form(
-            form_date=datetime(2016, 2, 6),
-            case_id=case_id,
-            rations_distributed=6,
-            case_id_2=case_id_2,
-        )
-        self._submit_thr_rations_form(
-            form_date=datetime(2016, 3, 10),
-            case_id=case_id,
-            rations_distributed=21,
-            case_id_2=case_id_2,
-        )
-
-        cases = [
-            (0, [('num_rations_distributed', 11), ('rations_21_plus_distributed', 0)]),
-            (1, [('num_rations_distributed', 21), ('rations_21_plus_distributed', 1)]),
-            (2, [('num_rations_distributed', 0), ('rations_21_plus_distributed', 0)]),
-        ]
-        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
-
-    def test_pse(self):
-        case_id = uuid.uuid4().hex
-        self._create_case(
-            case_id=case_id,
-            dob=date(2012, 1, 12),
-            date_opened=datetime(2014, 2, 1),
-            date_modified=datetime(2016, 3, 12),
-        )
-
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 2), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 3), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 4), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 5), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 6), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 7), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 8), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 9), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 10), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 11), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 12), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 13), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 14), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 15), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 16), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 17), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 3, 3), case_id=case_id)
-
-        cases = [
-            (0, [('pse_days_attended', 16), ('pse_attended_16_days', 1)]),
-            (1, [('pse_days_attended', 1), ('pse_attended_16_days', 0)]),
-            (2, [('pse_days_attended', 0), ('pse_attended_16_days', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 

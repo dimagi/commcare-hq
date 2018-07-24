@@ -178,6 +178,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.case_group_recipients.init();
 
         self.reset_case_property_enabled = ko.observable(initial_values.reset_case_property_enabled);
+        self.stop_date_case_property_enabled = ko.observable(initial_values.stop_date_case_property_enabled);
         self.submit_partially_completed_forms = ko.observable(initial_values.submit_partially_completed_forms);
 
         self.is_trial_project = initial_values.is_trial_project;
@@ -189,6 +190,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             'schedule-visit_scheduler_app_and_form_unique_id', self.timestamp);
         self.visit_scheduler_app_and_form_unique_id.init();
 
+        self.use_user_data_filter = ko.observable(initial_values.use_user_data_filter);
         self.capture_custom_metadata_item = ko.observable(initial_values.capture_custom_metadata_item);
         self.editing_custom_immediate_schedule = ko.observable(initial_values.editing_custom_immediate_schedule);
 

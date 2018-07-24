@@ -18,5 +18,6 @@ transifex-client==0.12.4
 modernize==0.6
 Fabric==1.14.0
 readline==6.2.4.1
+pip-tools==2.0.2
 
 --requirement=test-requirements.txt

@@ -3,12 +3,13 @@ from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import send_sms, incoming
 from corehq.apps.sms.models import SMS, QueuedSMS
-from corehq.apps.sms.tasks import process_sms
+from corehq.apps.sms.tasks import process_sms, MAX_TRIAL_SMS, passes_trial_check
 from corehq.apps.sms.tests.util import (BaseSMSTest, setup_default_sms_test_backend,
     delete_domain_phone_numbers)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 from datetime import datetime, timedelta
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.conf import settings
 from django.test.utils import override_settings
 from mock import Mock, patch
@@ -322,6 +323,36 @@ class QueueingTestCase(BaseSMSTest):
 
         self.assertEqual(process_sms_delay_mock.call_count, 0)
         self.assertBillableDoesNotExist(couch_id)
+
+    @patch.object(QueuedSMS, 'set_system_error')
+    @patch('corehq.apps.sms.tasks.domain_is_on_trial')
+    def test_passes_trial_check(self, domain_is_on_trial_patch, set_system_error_patch, delay_patch,
+            enqueue_patch):
+
+        client = get_redis_client()
+        sms = QueuedSMS(domain='trial-project')
+        domain_is_on_trial_patch.return_value = True
+        key = 'sms-sent-on-trial-for-trial-project'
+
+        # Test when key doesn't exist yet
+        self.assertIsNone(client.get(key))
+        self.assertTrue(passes_trial_check(sms))
+        self.assertEqual(client.get(key), 1)
+        self.assertGreater(client.ttl(key), 89 * 24 * 60 * 60)
+
+        # Test with existing key
+        self.assertTrue(passes_trial_check(sms))
+        self.assertEqual(client.get(key), 2)
+        self.assertGreater(client.ttl(key), 89 * 24 * 60 * 60)
+
+        # Test when limit is exceeded
+        client.set(key, MAX_TRIAL_SMS)
+        self.assertFalse(passes_trial_check(sms))
+        set_system_error_patch.assert_called_once()
+
+        # Test when not on trial
+        domain_is_on_trial_patch.return_value = False
+        self.assertTrue(passes_trial_check(sms))
 
     def test_incoming(self, process_sms_delay_mock, enqueue_directly_mock):
         incoming('999123', 'inbound test', self.backend.get_api_id())

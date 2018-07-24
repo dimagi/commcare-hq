@@ -187,7 +187,7 @@ describe('AWC Daily Status Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total Number of Angwanwadi Centers that were open yesterday'
+            'Of the total number of AWCs, the percentage of AWCs that were open yesterday.'
         );
     });
 

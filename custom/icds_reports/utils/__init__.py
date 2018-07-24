@@ -14,7 +14,7 @@ import operator
 import pytz
 import qrcode
 from base64 import b64encode
-from six.moves import cStringIO
+from io import BytesIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
 from xhtml2pdf import pisa
@@ -30,8 +30,8 @@ from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSo
 from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
+from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
-from dimagi.utils.couch import get_redis_client
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
 import six
@@ -59,6 +59,7 @@ GREY = '#9D9D9D'
 DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
+DATA_NOT_VALID = "Data Not Valid"
 
 india_timezone = pytz.timezone('Asia/Kolkata')
 
@@ -75,13 +76,13 @@ class ICDSData(object):
 
     def __init__(self, domain, filters, report_id):
         report_config = ConfigurableReportDataSource.from_spec(
-            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain))
+            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain), domain)
         )
         report_config.set_filter_values(filters)
         self.report_config = report_config
 
-    def _get_static_report_configuration_without_owner_transform(self, report_id):
-        static_report_configuration = StaticReportConfiguration.by_id(report_id)
+    def _get_static_report_configuration_without_owner_transform(self, report_id, domain):
+        static_report_configuration = StaticReportConfiguration.by_id(report_id, domain)
         for report_column in static_report_configuration.report_columns:
             transform = report_column.transform
             if transform.get('type') == 'custom' and transform.get('custom_type') == 'owner_display':
@@ -335,10 +336,10 @@ def get_latest_issue_tracker_build_id():
     return get_latest_released_build_id('icds-cas', ISSUE_TRACKER_APP_ID)
 
 
-def get_status(value, second_part='', normal_value='', exportable=False):
-    status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+def get_status(value, second_part='', normal_value='', exportable=False, data_entered=False):
+    status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     if not value or value in ['unweighed', 'unmeasured', 'unknown']:
-        status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+        status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     elif value in ['severely_underweight', 'severe']:
         status = {'value': 'Severely ' + second_part, 'color': 'red'}
     elif value in ['moderately_underweight', 'moderate']:
@@ -471,23 +472,31 @@ def chosen_filters_to_labels(config, default_interval=''):
 
 def zip_folder(pdf_files):
     zip_hash = uuid.uuid4().hex
-    client = get_redis_client()
-    in_memory = cStringIO()
+    icds_file = IcdsFile(blob_id=zip_hash, data_type='issnip_monthly')
+    in_memory = BytesIO()
     zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
-    for pdf_file in pdf_files:
-        file = client.get(pdf_file['uuid'])
-        zip_file.writestr('ICDS_CAS_monthly_register_{}.pdf'.format(pdf_file['location_name']), file)
+    files_to_zip = IcdsFile.objects.filter(blob_id__in=list(pdf_files.keys()), data_type='issnip_monthly')
+
+    for pdf_file in files_to_zip:
+        zip_file.writestr(
+            'ICDS_CAS_monthly_register_{}.pdf'.format(pdf_files[pdf_file.blob_id]),
+            pdf_file.get_file_from_blobdb().read()
+        )
     zip_file.close()
-    client.set(zip_hash, in_memory.getvalue())
-    client.expire(zip_hash, 24 * 60 * 60)
+
+    # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
+    # we read this to save file in blobdb
+    in_memory.seek(0)
+    icds_file.store_file_in_blobdb(in_memory, expired=60 * 60 * 24)
+    icds_file.save()
     return zip_hash
 
 
 def create_pdf_file(pdf_context):
     pdf_hash = uuid.uuid4().hex
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
-    resultFile = cStringIO()
-    client = get_redis_client()
+    resultFile = BytesIO()
+    icds_file = IcdsFile(blob_id=pdf_hash, data_type='issnip_monthly')
     try:
         pdf_page = template.render(pdf_context)
     except Exception as ex:
@@ -496,9 +505,12 @@ def create_pdf_file(pdf_context):
         pdf_page,
         dest=resultFile,
         show_error_as_pdf=True)
-    client.set(pdf_hash, resultFile.getvalue())
-    client.expire(pdf_hash, 24 * 60 * 60)
-    resultFile.close()
+    # we need to reset buffer position to the beginning after creating pdf, if not read() will return empty string
+    # we read this to save file in blobdb
+    resultFile.seek(0)
+
+    icds_file.store_file_in_blobdb(resultFile, expired=60 * 60 * 24)
+    icds_file.save()
     return pdf_hash
 
 
@@ -512,7 +524,7 @@ def generate_qrcode(data):
     qr.add_data(data)
     qr.make(fit=True)
     image = qr.make_image()
-    output = cStringIO()
+    output = BytesIO()
     image.save(output, "PNG")
     qr_content = b64encode(output.getvalue())
     return qr_content

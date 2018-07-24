@@ -3,6 +3,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import csv342 as csv
 import os
+
+import math
 from celery.schedules import crontab
 from celery.task import periodic_task
 import tinys3
@@ -222,9 +224,10 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
         if webuser:
-            data.update({'firstname': webuser.first_name,
-                         'lastname': webuser.last_name,
-                         })
+            data.update({
+                'firstname': webuser.first_name,
+                'lastname': webuser.last_name,
+            })
         if extra_fields:
             data.update(extra_fields)
 
@@ -245,8 +248,7 @@ def update_hubspot_properties(webuser, properties):
         _track_on_hubspot(webuser, properties)
 
 
-@analytics_task()
-def track_web_user_registration_hubspot(web_user, properties):
+def track_web_user_registration_hubspot(request, web_user, properties):
     if not settings.ANALYTICS_IDS.get('HUBSPOT_API_ID'):
         return
 
@@ -255,6 +257,8 @@ def track_web_user_registration_hubspot(web_user, properties):
         'is_a_commcare_user': True,
         'lifecyclestage': 'lead',
     }
+    env = get_instance_string()
+    tracking_info['{}date_created'.format(env)] = web_user.date_joined.isoformat()
 
     if (hasattr(web_user, 'phone_numbers') and len(web_user.phone_numbers) > 0):
         tracking_info.update({
@@ -268,16 +272,15 @@ def track_web_user_registration_hubspot(web_user, properties):
 
     tracking_info.update(get_ab_test_properties(web_user))
     tracking_info.update(properties)
-    _track_on_hubspot(web_user, tracking_info)
+
+    send_hubspot_form(
+        HUBSPOT_SIGNUP_FORM_ID, request,
+        user=web_user, extra_fields=tracking_info
+    )
 
 
 @analytics_task()
 def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
-    from corehq.apps.registration.views import ProcessRegistrationView
-    if path.startswith(reverse(ProcessRegistrationView.urlname)):
-        # registration view - only track the form itself here.
-        # use track_web_user_registration_hubspot to track properties on signup
-        _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, hubspot_cookie, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
@@ -305,7 +308,7 @@ def track_confirmed_account_on_hubspot(webuser):
         })
 
 
-def send_hubspot_form(form_id, request, user=None):
+def send_hubspot_form(form_id, request, user=None, extra_fields=None):
     """
     pulls out relevant info from request object before sending to celery since
     requests cannot be pickled
@@ -314,12 +317,17 @@ def send_hubspot_form(form_id, request, user=None):
         user = getattr(request, 'couch_user', None)
     if request and user and user.is_web_user():
         meta = get_meta(request)
-        send_hubspot_form_task.delay(form_id, user, request.COOKIES.get(HUBSPOT_COOKIE), meta)
+        send_hubspot_form_task.delay(
+            form_id, user, request.COOKIES.get(HUBSPOT_COOKIE),
+            meta, extra_fields=extra_fields
+        )
 
 
 @analytics_task()
-def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta):
-    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta)
+def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta,
+                           extra_fields=None):
+    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
+                          extra_fields=extra_fields)
 
 @analytics_task()
 def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
@@ -409,6 +417,15 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
+def _log_failed_periodic_data(email, message):
+    soft_assert(to='{}@{}'.format('bbuczyk', 'dimagi.com'))(
+        False, "ANALYTICS - Failed to sync periodic data", {
+            'user_email': email,
+            'message': message,
+        }
+    )
+
+
 @periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
@@ -416,38 +433,61 @@ def track_periodic_data():
     :return:
     """
     # Start by getting a list of web users mapped to their domains
-    six_months_ago = date.today() - timedelta(days=180)
-    users_to_domains = (UserES().web_users()
-                        .last_logged_in(gte=six_months_ago).source(['domains', 'email', 'date_joined'])
-                        .analytics_enabled()
-                        .run().hits)
-    # users_to_domains is a list of dicts
-    domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
-        .aggregations.domain.counts_by_bucket()
-    domains_to_mobile_users = UserES().mobile_users().terms_aggregation('domain', 'domain').size(0).run()\
-                                      .aggregations.domain.counts_by_bucket()
+    three_months_ago = date.today() - timedelta(days=90)
 
-    # Keep track of india and www data seperately
-    env = get_instance_string()
+    user_query = (UserES()
+                  .web_users()
+                  .last_logged_in(gte=three_months_ago)
+                  .sort('date_joined', desc=True)
+                  .source(['domains', 'email', 'date_joined'])
+                  .analytics_enabled())
+
+    total_users = user_query.count()
+    chunk_size = 100
+    num_chunks = int(math.ceil(float(total_users) / float(chunk_size)))
 
     # Track no of users and domains with max_forms greater than HUBSPOT_THRESHOLD
-    number_of_users = 0
-    number_of_domains_with_forms_gt_threshold = 0
+    hubspot_number_of_users = 0
+    hubspot_number_of_domains_with_forms_gt_threshold = 0
 
-    for num_forms in domains_to_forms.values():
-        if num_forms > HUBSPOT_THRESHOLD:
-            number_of_domains_with_forms_gt_threshold += 1
+    for chunk in range(num_chunks):
+        users_to_domains = (user_query
+                            .size(chunk_size)
+                            .start(chunk * chunk_size)
+                            .run()
+                            .hits)
 
-    # For each web user, iterate through their domains and select the max number of form submissions and
-    # max number of mobile workers
-    for users in chunked(users_to_domains, 500):
+        # users_to_domains is a list of dicts
+        domains_to_forms = (FormES()
+                            .terms_aggregation('domain', 'domain')
+                            .size(0)
+                            .run()
+                            .aggregations.domain.counts_by_bucket())
+        domains_to_mobile_users = (UserES()
+                                   .mobile_users()
+                                   .terms_aggregation('domain', 'domain')
+                                   .size(0)
+                                   .run()
+                                   .aggregations
+                                   .domain
+                                   .counts_by_bucket())
+
+        # Keep track of india and www data seperately
+        env = get_instance_string()
+
+        for num_forms in domains_to_forms.values():
+            if num_forms > HUBSPOT_THRESHOLD:
+                hubspot_number_of_domains_with_forms_gt_threshold += 1
+
+        # For each web user, iterate through their domains and select the max number of form submissions and
+        # max number of mobile workers
         submit = []
-        for user in users:
+        for user in users_to_domains:
             email = user.get('email')
             if not _email_is_valid(email):
                 continue
 
-            number_of_users += 1
+            hubspot_number_of_users += 1
             date_created = user.get('date_joined')
             max_forms = 0
             max_workers = 0
@@ -502,11 +542,11 @@ def track_periodic_data():
             submit.append(user_json)
 
         submit_json = json.dumps(submit)
-
         submit_data_to_hub_and_kiss(submit_json)
+
     update_datadog_metrics({
-        DATADOG_WEB_USERS_GAUGE: number_of_users,
-        DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: number_of_domains_with_forms_gt_threshold
+        DATADOG_WEB_USERS_GAUGE: hubspot_number_of_users,
+        DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: hubspot_number_of_domains_with_forms_gt_threshold
     })
 
 

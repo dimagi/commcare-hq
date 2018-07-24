@@ -618,8 +618,27 @@
               }
             },
             "expression_if_false": {
-              "type": "named",
-              "name": "has_aadhar_id_from_forms"
+            "type": "conditional",
+              "test": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "named",
+                    "name": "aadhar_number_from_forms"
+                  },
+                  "property_value": ["", null]
+                }
+              },
+              "expression_if_true": {
+                "type": "constant",
+                "constant": "yes"
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": "no"
+              }
             }
           }
         },
@@ -1179,41 +1198,16 @@
         "transform": {},
         "display_name": null,
         "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "named",
-            "name": "thr_eligible"
-          },
-          "expression_if_true": {
-            "type": "named",
-            "name": "rations_distributed"
-          },
-          "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
-          }
+          "type": "constant",
+          "constant": 0
         }
       },
       {
         "column_id": "rations_21_plus_distributed",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "name": "thr_eligible",
-              "type": "named"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "gte",
-              "property_value": 21,
-              "expression": {
-                "type": "named",
-                "name": "rations_distributed"
-              }
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1235,41 +1229,16 @@
         "transform": {},
         "display_name": null,
         "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "named",
-            "name": "pse_eligible"
-          },
-          "expression_if_true": {
-            "type": "named",
-            "name": "pse_days"
-          },
-          "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
-          }
+          "type": "constant",
+          "constant": 0
         }
       },
       {
         "column_id": "pse_attended_16_days",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "name": "pse_eligible",
-              "type": "named"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "gte",
-              "property_value": 16,
-              "expression": {
-                "type": "named",
-                "name": "pse_days"
-              }
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1869,67 +1838,6 @@
           }
         }
       },
-      "rations_distributed": {
-        "type": "reduce_items",
-        "aggregation_fn": "sum",
-        "items_expression": {
-          "type": "map_items",
-          "items_expression": {
-            "type": "icds_get_all_forms_repeats",
-            "forms_expression": {
-              "type": "icds_get_case_forms_by_date",
-              "xmlns": [
-                "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
-              ],
-              "start_date": {
-                "type": "named",
-                "name": "month_start"
-              },
-              "end_date": {
-                "type": "named",
-                "name": "month_end"
-              },
-              "form_filter": {
-                "operator": "eq",
-                "type": "boolean_expression",
-                "expression": {
-                  "datatype": null,
-                  "type": "property_path",
-                  "property_path": [
-                    "form",
-                    "thr_given_child"
-                  ]
-                },
-                "property_value": "1"
-              }
-            },
-            "repeat_path": [
-              "form",
-              "child_thr",
-              "child_persons",
-              "item"
-            ],
-            "case_id_path": [
-              "child_health_case_id"
-            ],
-            "repeat_filter": {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "expression": {
-                "datatype": "string",
-                "type": "property_name",
-                "property_name": "distribute_ration_child"
-              },
-              "property_value": "yes"
-            }
-          },
-          "map_expression": {
-            "datatype": "integer",
-            "type": "property_name",
-            "property_name": "days_ration_given_child"
-          }
-        }
-      },
       "caste": {
         "value_expression": {
           "datatype": null,
@@ -2057,28 +1965,6 @@
           "type": "constant",
           "constant": "unweighed"
         }
-      },
-      "pse_days": {
-        "type": "icds_get_case_forms_in_date",
-        "case_id_expression": {
-          "expression": {
-            "type": "property_name",
-            "property_name": "_id"
-          },
-          "type": "root_doc"
-        },
-        "from_date_expression": {
-          "type": "named",
-          "name": "month_start"
-        },
-        "to_date_expression": {
-          "type": "named",
-          "name": "month_end"
-        },
-        "xmlns": [
-          "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
-        ],
-        "count": true
       },
       "task_case_id": {
         "type": "nested",
@@ -2741,12 +2627,12 @@
           "constant": "no"
         }
       },
-      "has_aadhar_id_from_forms": {
+      "aadhar_number_from_forms": {
         "type": "icds_get_last_case_property_update",
         "case_id_expression": {
           "type": "icds_parent_id"
         },
-        "case_property": "has_aadhar",
+        "case_property": "aadhar_number",
         "end_date": {
           "type": "named",
           "name": "month_end"
