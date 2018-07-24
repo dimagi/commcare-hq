@@ -76,13 +76,13 @@ class ICDSData(object):
 
     def __init__(self, domain, filters, report_id):
         report_config = ConfigurableReportDataSource.from_spec(
-            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain))
+            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain), domain)
         )
         report_config.set_filter_values(filters)
         self.report_config = report_config
 
-    def _get_static_report_configuration_without_owner_transform(self, report_id):
-        static_report_configuration = StaticReportConfiguration.by_id(report_id)
+    def _get_static_report_configuration_without_owner_transform(self, report_id, domain):
+        static_report_configuration = StaticReportConfiguration.by_id(report_id, domain)
         for report_column in static_report_configuration.report_columns:
             transform = report_column.transform
             if transform.get('type') == 'custom' and transform.get('custom_type') == 'owner_display':

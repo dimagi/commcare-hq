@@ -82,7 +82,7 @@ class DownloadBase(object):
         else:
             return cache.cache.get(download_id, None)
 
-    def save(self, expiry=None):
+    def save(self, expiry=24 * 60 * 60):
         self.get_cache().set(self.download_id, self, expiry)
 
     def clean_content_disposition(self, content_disposition):

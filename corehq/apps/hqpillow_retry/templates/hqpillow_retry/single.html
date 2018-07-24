@@ -3,9 +3,7 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "hqpillow_retry/js/single.js" %}"></script>
-{% endblock %}
+{% requirejs_main 'hqpillow_retry/js/single' %}
 
 {% block page_content %}
     <div class="row">

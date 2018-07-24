@@ -10,7 +10,7 @@ from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.form_processor.exceptions import XFormQuestionValueNotFound
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound, KafkaPublishingError, PostSaveError
 from corehq.form_processor.models import Attachment
 from couchforms.const import ATTACHMENT_NAME
 from memoized import memoized
@@ -29,6 +29,7 @@ class FormProcessorInterface(object):
 
     def __init__(self, domain=None):
         self.domain = domain
+        self.use_sql_domain = should_use_sql_backend(self.domain)
 
     @property
     @memoized
@@ -36,7 +37,7 @@ class FormProcessorInterface(object):
         from couchforms.models import XFormInstance
         from corehq.form_processor.models import XFormInstanceSQL
 
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return XFormInstanceSQL
         else:
             return XFormInstance
@@ -46,7 +47,7 @@ class FormProcessorInterface(object):
     def sync_log_model(self):
         from casexml.apps.phone.models import SyncLog
 
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return SyncLog
         else:
             return SyncLog
@@ -57,7 +58,7 @@ class FormProcessorInterface(object):
         from corehq.form_processor.backends.couch.processor import FormProcessorCouch
         from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return FormProcessorSQL
         else:
             return FormProcessorCouch
@@ -68,7 +69,7 @@ class FormProcessorInterface(object):
         from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
         from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
 
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return CaseDbCacheSQL
         else:
             return CaseDbCacheCouch
@@ -78,7 +79,7 @@ class FormProcessorInterface(object):
     def ledger_processor(self):
         from corehq.form_processor.backends.couch.ledger import LedgerProcessorCouch
         from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return LedgerProcessorSQL(domain=self.domain)
         else:
             return LedgerProcessorCouch(domain=self.domain)
@@ -88,7 +89,7 @@ class FormProcessorInterface(object):
     def ledger_db(self):
         from corehq.form_processor.backends.couch.ledger import LedgerDBCouch
         from corehq.form_processor.backends.sql.ledger import LedgerDBSQL
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return LedgerDBSQL()
         else:
             return LedgerDBCouch()
@@ -185,6 +186,10 @@ class FormProcessorInterface(object):
         except BulkSaveError as e:
             logging.exception('BulkSaveError saving forms', extra={'details': {'errors': e.errors}})
             raise
+        except KafkaPublishingError as e:
+            from corehq.form_processor.submission_post import notify_submission_error
+            notify_submission_error(forms.submitted, e, 'Error publishing to kafak')
+            raise PostSaveError(e)
         except Exception as e:
             from corehq.form_processor.submission_post import handle_unexpected_error
             instance = forms.submitted
