@@ -30,7 +30,7 @@ from corehq.apps.case_search.models import (
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.ivr.models import Call
-from corehq.apps.locations.models import make_location, LocationType, SQLLocation
+from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.models import (SMS, SQLLastReadMessage, ExpectedCallback,
     PhoneNumber, MessagingEvent, MessagingSubEvent, SelfRegistrationInvitation,
@@ -330,6 +330,21 @@ class TestDeleteDomain(TestCase):
 
         self._assert_domain_counts(self.domain.name, 0)
         self._assert_domain_counts(self.domain2.name, 1)
+
+    def _assert_location_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            LocationFixtureConfiguration.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_location_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            LocationFixtureConfiguration.objects.create(domain=domain_name)
+            self._assert_location_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_location_counts(self.domain.name, 0)
+        self._assert_location_counts(self.domain2.name, 1)
 
     def tearDown(self):
         self.domain2.delete()
