@@ -28,7 +28,7 @@ from corehq.motech.repeaters.forms import (
     OpenmrsRepeaterForm,
     SOAPCaseRepeaterForm,
     SOAPLocationRepeaterForm,
-)
+    Dhis2RepeaterForm)
 from corehq.motech.repeaters.models import Repeater, RepeatRecord, BASIC_AUTH, DIGEST_AUTH
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.repeaters.utils import get_all_repeater_types
@@ -213,6 +213,18 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
         return repeater
 
 
+class AddDhis2RepeaterView(AddFormRepeaterView):
+    urlname = 'new_dhis2_repeater$'
+    repeater_form_class = Dhis2RepeaterForm
+    page_title = ugettext_lazy("Forward to DHIS2")
+    page_name = ugettext_lazy("Forward to DHIS2")
+
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super(AddDhis2RepeaterView, self).set_repeater_attr(repeater, cleaned_data)
+        repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
+        return repeater
+
+
 class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):
     repeater_form_class = SOAPCaseRepeaterForm
 
@@ -309,6 +321,11 @@ class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
 
 class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
     urlname = 'edit_openmrs_repeater'
+    page_title = ugettext_lazy("Edit OpenMRS Repeater")
+
+
+class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
+    urlname = 'edit_dhis2_repeater'
     page_title = ugettext_lazy("Edit OpenMRS Repeater")
 
 
