@@ -650,6 +650,42 @@ class SqlModelMigrator(Migrator):
 
 
 MIGRATIONS = {m.slug: m for m in [
+    MultiDbMigrator("migrate_backend",
+        couch_types=[
+            apps.Application,
+            apps.LinkedApplication,
+            apps.RemoteApp,
+            #SavedAppBuild, # do we need to migrate these? (none in couch on prod)
+            ("Application-Deleted", apps.Application),
+            ("RemoteApp-Deleted", apps.RemoteApp),
+            SavedBasicExport,
+            hqmedia.CommCareAudio,
+            hqmedia.CommCareImage,
+            hqmedia.CommCareVideo,
+            hqmedia.CommCareMultimedia,
+            xform.XFormInstance,
+            ("XFormInstance-Deleted", xform.XFormInstance),
+            xform.XFormArchived,
+            xform.XFormDeprecated,
+            xform.XFormDuplicate,
+            xform.XFormError,
+            xform.SubmissionErrorLog,
+            ("HQSubmission", xform.XFormInstance),
+            cases.CommCareCase,
+            ('CommCareCase-deleted', cases.CommCareCase),
+            ('CommCareCase-Deleted', cases.CommCareCase),
+            ('CommCareCase-Deleted-Deleted', cases.CommCareCase),
+            exports.CaseExportInstance,
+            exports.FormExportInstance,
+        ],
+        sql_reindexers=[
+            CaseUploadFileMetaReindexAccessor,
+            CaseAttachmentSQLReindexAccessor,
+            XFormAttachmentSQLReindexAccessor,
+            DemoUserRestoreReindexAccessor,
+        ],
+        doc_migrator_class=BlobDbBackendMigrator,
+    ),
 ]}
 
 EXPORTERS = {m.slug: m for m in [
