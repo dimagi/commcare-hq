@@ -13,6 +13,7 @@ import yaml
 from django.urls import reverse
 from couchdbkit.exceptions import DocTypeError
 from django.core.cache import cache
+from django.http import Http404
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
@@ -663,7 +664,10 @@ def get_form_source_download_url(xform):
     if not xform.build_id:
         return None
 
-    app = get_app(xform.domain, xform.build_id)
+    try:
+        app = get_app(xform.domain, xform.build_id)
+    except Http404:
+        return None
     if app.is_remote_app():
         return None
 
