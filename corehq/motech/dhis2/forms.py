@@ -7,9 +7,11 @@ import bz2
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
+from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.dhis2.dbaccessors import get_dhis2_connection
 from corehq.motech.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY
 from corehq.motech.dhis2.models import Dhis2Connection
@@ -67,3 +69,12 @@ class Dhis2ConnectionForm(forms.Form):
         except Exception as err:
             logging.error('Unable to save DHIS2 connection: %s' % err)
             return False
+
+
+class Dhis2ConfigForm(forms.Form):
+    form_configs = JsonField(expected_type=list)
+
+    def __init__(self, *args, **kwargs):
+        super(Dhis2ConfigForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.add_input(Submit('submit', _('Save Changes')))
