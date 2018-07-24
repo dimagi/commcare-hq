@@ -163,18 +163,18 @@
     {% registerurl "get_form_datums" domain app.id %}
 
     <div class="tabbable appmanager-tabs-container">
-        <ul class="nav nav-tabs">
+        <ul class="nav nav-tabs sticky-tabs">
 
             {% if form.uses_cases %}
-            <li class="active">
+            <li>
                 <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
                     {% trans "Case Management" %}
                 </a>
             </li>
             {% endif %}
 
-            <li {% if not form.uses_cases %}class="active"{% endif %}>
-                <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
+            <li>
+                <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
             </li>
 
             {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
@@ -207,7 +207,7 @@
         <div class="tab-content appmanager-tab-content">
 
             {% if form.uses_cases %}
-              <div class="tab-pane active" id="case-configuration">
+              <div class="tab-pane" id="case-configuration">
                   {% if xform_validation_missing %}
                       <p class="alert alert-warning">
                           {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
