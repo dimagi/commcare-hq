@@ -1666,11 +1666,17 @@ PILLOWTOPS = {
             'name': 'kafka-case-ucr-es',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_ucr_es_case_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
         },
         {
             'name': 'kafka-xform-ucr-es',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.xform.get_ucr_es_form_pillow',
+            'params': {
+                'ucr_division': '0f'
+            }
         },
         {
             'name': 'UserPillow',
