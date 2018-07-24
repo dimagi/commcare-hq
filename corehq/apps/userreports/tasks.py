@@ -46,6 +46,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
 from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
 from pillowtop.dao.couch import ID_CHUNK_SIZE
@@ -263,7 +264,11 @@ def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
     assert len(indicator_doc_ids) <= ASYNC_INDICATOR_CHUNK_SIZE
+    for ids in chunked(indicator_doc_ids, 10):
+        _build_async_indicators(ids)
 
+
+def _build_async_indicators(indicator_doc_ids):
     def handle_exception(exception, config_id, doc, adapter):
         metric = None
         if isinstance(exception, (ProtocolError, ReadTimeout)):
