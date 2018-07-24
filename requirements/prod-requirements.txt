@@ -94,7 +94,7 @@ jinja2==2.8
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.1
+jsonobject-couchdbkit==0.9.2
 jsonobject==0.9.1
 jsonpath-rw==1.4.0
 kafka-python==0.9.5
@@ -106,7 +106,7 @@ markdown==2.2.1
 markupsafe==1.0
 mock==2.0.0
 msgpack-python==0.5.6
-ndg-httpsclient==0.5.0
+ndg-httpsclient==0.5.1
 newrelic==3.4.0.95
 numpy==1.7.1
 openpyxl==2.5.3
