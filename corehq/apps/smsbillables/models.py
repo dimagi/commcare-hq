@@ -368,7 +368,7 @@ class SmsBillable(models.Model):
         country_code, national_number = get_country_code_and_national_number(phone_number)
         is_gateway_billable = backend_instance is None\
                               or _sms_backend_is_global(backend_instance)\
-                              or toggles.ENABLE_COMBINED_CHARGING.enabled(domain)
+                              or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
 
 
         if is_gateway_billable:

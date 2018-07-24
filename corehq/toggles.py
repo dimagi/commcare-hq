@@ -79,6 +79,7 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
+
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -1056,9 +1057,9 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ENABLE_COMBINED_CHARGING = StaticToggle(
-    'enable_comdined_charging',
-    'Enable Combined Charging',
+ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
+    'enable_include_sms_gateway_charging',
+    'Enable include SMS gateway charging',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
