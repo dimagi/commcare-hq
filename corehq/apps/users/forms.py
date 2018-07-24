@@ -22,7 +22,7 @@ from django_countries.data import COUNTRIES
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
-from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation

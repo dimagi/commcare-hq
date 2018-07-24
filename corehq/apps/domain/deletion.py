@@ -14,6 +14,10 @@ from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
+from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
+from corehq.apps.locations.views import LocationFieldsView
+from corehq.apps.products.views import ProductFieldsView
+from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
@@ -148,6 +152,15 @@ def _delete_all_forms(domain_name):
     logger.info('Deleting forms complete.')
 
 
+def _delete_custom_data_fields(domain_name):
+    # The CustomDataFieldsDefinition instances are cleaned up as part of the
+    # bulk couch delete, but we also need to clear the cache
+    logger.info('Deleting custom data fields...')
+    for field_view in [LocationFieldsView, ProductFieldsView, UserFieldsView]:
+        get_by_domain_and_type.clear(domain_name, field_view.field_type)
+    logger.info('Deleting custom data fields complete.')
+
+
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
@@ -193,6 +206,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
+    CustomDeletion('custom_data_fields', _delete_custom_data_fields),
 ]
 
 
