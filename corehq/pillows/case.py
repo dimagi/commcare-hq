@@ -5,7 +5,7 @@ import datetime
 import logging
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
@@ -42,14 +42,14 @@ def transform_case_for_elasticsearch(doc_dict):
 def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_processes=1,
                                      process_num=0, **kwargs):
     assert pillow_id == 'CaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO, topics.CASE_TOPICS)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO, CASE_TOPICS)
     case_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
     kafka_change_feed = KafkaChangeFeed(
-        topics=topics.CASE_TOPICS, group_id='cases-to-es', num_processes=num_processes, process_num=process_num
+        topics=CASE_TOPICS, group_id='cases-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,
@@ -64,11 +64,15 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
 
 def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None,
-                         num_processes=1, process_num=0, **kwargs):
+                         num_processes=1, process_num=0, configs=None, static_configs=None,
+                         topics=None, **kwargs):
+    if topics:
+        assert set(topics).issubset(CASE_TOPICS), "This is a pillow to process cases only"
+    topics = topics or CASE_TOPICS
     change_feed = KafkaChangeFeed(
-        topics.CASE_TOPICS, group_id=pillow_id, num_processes=num_processes, process_num=process_num
+        topics, group_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
-    checkpoint = KafkaPillowCheckpoint(pillow_id, topics.CASE_TOPICS)
+    checkpoint = KafkaPillowCheckpoint(pillow_id, topics)
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_provider=DynamicDataSourceProvider(),
         ucr_division=ucr_division,
@@ -91,7 +95,8 @@ def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
         # Todo; to change this to checkpoint_callbacks to include static UCR
         checkpoint_callback=ucr_processor
     )
-    # Todo; to include ConfigurableReportKafkaPillow features
+    ucr_processor.bootstrap(configs)
+    ucr_static_processor.bootstrap(static_configs)
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,

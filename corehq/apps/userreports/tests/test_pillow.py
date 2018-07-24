@@ -15,18 +15,19 @@ from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
 
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator
-from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
-    ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow
+from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, ConfigurableReportTableManagerMixin
 from corehq.apps.userreports.tasks import rebuild_indicators, queue_async_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     doc_to_change, get_data_source_with_related_doc_type
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.pillows.case import get_ucr_es_case_pillow
 from corehq.util.test_utils import softer_assert, trap_extra_setup
 from corehq.util.context_managers import drop_connected_signals
 from pillow_retry.models import PillowError
@@ -58,7 +59,7 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertTrue(table_manager.needs_bootstrap())
 
 
-class IndicatorPillowTest(TestCase):
+class IndicatorPillowTest(CallCenterDomainMockTest):
 
     @classmethod
     def setUpClass(cls):
@@ -68,7 +69,7 @@ class IndicatorPillowTest(TestCase):
         cls.adapter = get_indicator_adapter(cls.config)
         cls.adapter.build_table()
         cls.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
-        cls.pillow = get_kafka_ucr_pillow()
+        cls.pillow = get_ucr_es_case_pillow()
 
     @classmethod
     def tearDownClass(cls):
@@ -103,7 +104,7 @@ class IndicatorPillowTest(TestCase):
         later_config.save()
         self.assertNotEqual(self.config._rev, later_config._rev)
         with self.assertRaises(StaleRebuildError):
-            self.pillow.rebuild_table(get_indicator_adapter(self.config))
+            self.pillow.processors[0].rebuild_table(get_indicator_adapter(self.config))
 
     @patch('corehq.apps.userreports.specs.datetime')
     def test_change_transport(self, datetime_mock):
@@ -241,17 +242,16 @@ class IndicatorPillowTest(TestCase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class ProcessRelatedDocTypePillowTest(TestCase):
+class ProcessRelatedDocTypePillowTest(CallCenterDomainMockTest):
     domain = 'bug-domain'
 
     @softer_assert()
     def setUp(self):
-        self.pillow = get_kafka_ucr_pillow(topics=['case-sql'])
         self.config = get_data_source_with_related_doc_type()
         self.config.save()
+        self.pillow = get_ucr_es_case_pillow(topics=['case-sql'], configs=[self.config])
         self.adapter = get_indicator_adapter(self.config)
 
-        self.pillow.bootstrap(configs=[self.config])
         with trap_extra_setup(KafkaUnavailableError):
             self.pillow.get_change_feed().get_latest_offsets()
 
@@ -304,7 +304,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class ReuseEvaluationContextTest(TestCase):
+class ReuseEvaluationContextTest(CallCenterDomainMockTest, TestCase):
     domain = 'bug-domain'
 
     @softer_assert()
@@ -318,10 +318,8 @@ class ReuseEvaluationContextTest(TestCase):
         self.adapters = [get_indicator_adapter(c) for c in self.configs]
 
         # one pillow that has one config, the other has both configs
-        self.pillow1 = get_kafka_ucr_pillow(topics=['case-sql'])
-        self.pillow2 = get_kafka_ucr_pillow(topics=['case-sql'])
-        self.pillow1.bootstrap(configs=[config1])
-        self.pillow2.bootstrap(configs=self.configs)
+        self.pillow1 = get_ucr_es_case_pillow(topics=['case-sql'], configs=[config1])
+        self.pillow2 = get_ucr_es_case_pillow(topics=['case-sql'], configs=self.configs)
         with trap_extra_setup(KafkaUnavailableError):
             self.pillow1.get_change_feed().get_latest_offsets()
 
@@ -374,20 +372,18 @@ class ReuseEvaluationContextTest(TestCase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class AsyncIndicatorTest(TestCase):
+class AsyncIndicatorTest(CallCenterDomainMockTest):
     domain = 'bug-domain'
 
     @classmethod
     @softer_assert()
     def setUpClass(cls):
         super(AsyncIndicatorTest, cls).setUpClass()
-        cls.pillow = get_kafka_ucr_pillow()
         cls.config = get_data_source_with_related_doc_type()
         cls.config.asynchronous = True
         cls.config.save()
         cls.adapter = get_indicator_adapter(cls.config)
-
-        cls.pillow.bootstrap(configs=[cls.config])
+        cls.pillow = get_ucr_es_case_pillow(configs=[cls.config])
         with trap_extra_setup(KafkaUnavailableError):
             cls.pillow.get_change_feed().get_latest_offsets()
 
@@ -563,7 +559,7 @@ def _save_sql_case(doc):
     return cases[0]
 
 
-class RebuildTableTest(TestCase):
+class RebuildTableTest(CallCenterDomainMockTest):
     """This test is pretty fragile because in UCRs we have a global metadata
     object that sqlalchemy uses to keep track of tables and indexes. I've attempted
     to work around it here, but it feels a little nasty
@@ -581,8 +577,7 @@ class RebuildTableTest(TestCase):
     def _setup_data_source(self, extra_id):
         self.config = self._get_config(extra_id)
         self.config.save()
-        pillow = get_kafka_ucr_pillow()
-        pillow.bootstrap([self.config])
+        get_ucr_es_case_pillow(configs=[self.config])
         self.adapter = get_indicator_adapter(self.config)
         self.engine = self.adapter.engine
 
@@ -602,9 +597,8 @@ class RebuildTableTest(TestCase):
         adapter = get_indicator_adapter(config)
 
         # mock rebuild table to ensure the table isn't rebuilt when adding index
-        pillow = get_kafka_ucr_pillow()
+        pillow = get_ucr_es_case_pillow(configs=[config])
         pillow.processors[0].rebuild_table = MagicMock()
-        pillow.bootstrap([config])
         self.assertFalse(pillow.processors[0].rebuild_table.called)
         engine = adapter.engine
         insp = reflection.Inspector.from_engine(engine)
@@ -636,10 +630,9 @@ class RebuildTableTest(TestCase):
         engine = adapter.engine
 
         # mock rebuild table to ensure the table is rebuilt
-        pillow = get_kafka_ucr_pillow()
-        pillow.processors[0].rebuild_table = MagicMock()
-        pillow.bootstrap([config])
-        self.assertTrue(pillow.processors[0].rebuild_table.called)
+        with patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.rebuild_table'):
+            pillow = get_ucr_es_case_pillow(configs=[config])
+            self.assertTrue(pillow.processors[0].rebuild_table.called)
         # column doesn't exist because rebuild table was mocked
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(
@@ -647,8 +640,7 @@ class RebuildTableTest(TestCase):
         )
 
         # Another time without the mock to ensure the column is there
-        pillow = get_kafka_ucr_pillow()
-        pillow.bootstrap([config])
+        pillow = get_ucr_es_case_pillow(configs=[config])
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1
@@ -680,9 +672,8 @@ class RebuildTableTest(TestCase):
         engine = adapter.engine
 
         # mock rebuild table to ensure the column is added without rebuild table
-        pillow = get_kafka_ucr_pillow()
+        pillow = get_ucr_es_case_pillow(configs=[config])
         pillow.processors[0].rebuild_table = MagicMock()
-        pillow.bootstrap([config])
         self.assertFalse(pillow.processors[0].rebuild_table.called)
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(

@@ -3,22 +3,21 @@ from __future__ import unicode_literals
 
 from datetime import datetime
 
-from django.test import TestCase
-
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.userreports.models import SQLPartition
-from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.tests.utils import (
     doc_to_change,
     get_sample_data_source,
     get_sample_doc_and_indicators,
 )
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.pillows.case import get_ucr_es_case_pillow
 
 
 EXPECTED_UCR_CHILD_TABLE_PREFIX = 'tbl_80f005a0bdc2f0d0ff6f8293daee8f33_'
 
 
-class DataSourceConfigurationPartitionTest(TestCase):
+class DataSourceConfigurationPartitionTest(CallCenterDomainMockTest):
     column = None
     subtype = None
     constraint = None
@@ -42,8 +41,7 @@ class DataSourceConfigurationPartitionTest(TestCase):
         super(DataSourceConfigurationPartitionTest, self).tearDown()
 
     def _process_docs(self, docs):
-        pillow = get_kafka_ucr_pillow()
-        pillow.bootstrap(configs=[self.data_source])
+        pillow = get_ucr_es_case_pillow(configs=[self.data_source])
 
         for doc in docs:
             pillow.process_change(doc_to_change(doc))

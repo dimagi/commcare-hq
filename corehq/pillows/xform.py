@@ -10,7 +10,7 @@ from jsonobject.exceptions import BadValueError
 from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
-from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
@@ -138,7 +138,7 @@ def transform_xform_for_elasticsearch(doc_dict):
 def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', num_processes=1,
                                       process_num=0, **kwargs):
     assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, topics.FORM_TOPICS)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, FORM_TOPICS)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
@@ -146,7 +146,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
         doc_filter_fn=xform_pillow_filter,
     )
     kafka_change_feed = KafkaChangeFeed(
-        topics=topics.FORM_TOPICS, group_id='forms-to-es', num_processes=num_processes, process_num=process_num
+        topics=FORM_TOPICS, group_id='forms-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,
@@ -161,11 +161,15 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
 
 def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None,
-                         num_processes=1, process_num=0, **kwargs):
+                         num_processes=1, process_num=0, configs=None, static_configs=None,
+                         topics=None, **kwargs):
+    if topics:
+        assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
+    topics = topics or FORM_TOPICS
     change_feed = KafkaChangeFeed(
-        topics.FORM_TOPICS, group_id=pillow_id, num_processes=num_processes, process_num=process_num
+        topics, group_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
-    checkpoint = KafkaPillowCheckpoint(pillow_id, topics.FORM_TOPICS)
+    checkpoint = KafkaPillowCheckpoint(pillow_id, topics)
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_provider=DynamicDataSourceProvider(),
         ucr_division=ucr_division,
@@ -189,7 +193,8 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         # Todo; to change this to checkpoint_callbacks to include static UCR
         checkpoint_callback=ucr_processor
     )
-    # Todo; to include ConfigurableReportKafkaPillow features
+    ucr_processor.bootstrap(configs)
+    ucr_static_processor.bootstrap(static_configs)
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,

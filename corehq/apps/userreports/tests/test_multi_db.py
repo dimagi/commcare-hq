@@ -1,20 +1,21 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
-from django.test import TestCase
+
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     get_sample_report_config, doc_to_change
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.pillows.case import get_ucr_es_case_pillow
 from corehq.sql_db import connections
 from corehq.sql_db.tests.utils import temporary_database
 from six.moves import range
 
 
-class UCRMultiDBTest(TestCase):
+class UCRMultiDBTest(CallCenterDomainMockTest):
 
     @classmethod
     def setUpClass(cls):
@@ -86,8 +87,7 @@ class UCRMultiDBTest(TestCase):
 
     def test_pillow_save_to_multiple_databases(self):
         self.assertNotEqual(self.ds1_adapter.engine.url, self.ds2_adapter.engine.url)
-        pillow = get_kafka_ucr_pillow()
-        pillow.bootstrap(configs=[self.ds_1, self.ds_2])
+        pillow = get_ucr_es_case_pillow(configs=[self.ds_1, self.ds_2])
         self.assertNotEqual(self.ds1_adapter.engine.url, self.ds2_adapter.engine.url)
         sample_doc, _ = get_sample_doc_and_indicators()
         pillow.process_change(doc_to_change(sample_doc))
@@ -96,8 +96,7 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(1, self.ds2_adapter.get_query_object().count())
 
     def test_pillow_save_to_one_database_at_a_time(self):
-        pillow = get_kafka_ucr_pillow()
-        pillow.bootstrap(configs=[self.ds_1])
+        pillow = get_ucr_es_case_pillow(configs=[self.ds_1])
 
         sample_doc, _ = get_sample_doc_and_indicators()
         pillow.process_change(doc_to_change(sample_doc))
@@ -106,7 +105,7 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(0, self.ds2_adapter.get_query_object().count())
 
         # save to the other
-        pillow.bootstrap(configs=[self.ds_2])
+        pillow = get_ucr_es_case_pillow(configs=[self.ds_2])
         orig_id = sample_doc['_id']
         sample_doc['_id'] = uuid.uuid4().hex
         pillow.process_change(doc_to_change(sample_doc))

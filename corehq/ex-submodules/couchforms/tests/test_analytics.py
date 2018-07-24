@@ -22,6 +22,7 @@ from couchforms.models import XFormInstance, XFormError
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.elastic import get_es_new, EsMeta, send_to_elasticsearch
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -124,16 +125,12 @@ TEST_ES_META = {
 }
 
 
-class CouchformsESAnalyticsTest(TestCase):
+class CouchformsESAnalyticsTest(CallCenterDomainMockTest):
     domain = 'hqadmin-es-accessor'
-    _call_center_domain_mock = patch(
-        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-    )
 
     @classmethod
     def setUpClass(cls):
         super(CouchformsESAnalyticsTest, cls).setUpClass()
-        cls._call_center_domain_mock.start()
 
         @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
         @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
@@ -166,7 +163,6 @@ class CouchformsESAnalyticsTest(TestCase):
     def tearDownClass(cls):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
-        cls._call_center_domain_mock.stop()
         super(CouchformsESAnalyticsTest, cls).tearDownClass()
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
