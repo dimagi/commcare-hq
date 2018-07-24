@@ -107,11 +107,11 @@ markupsafe==1.0
 mock==2.0.0
 msgpack-python==0.5.6
 ndg-httpsclient==0.5.1
-newrelic==3.4.0.95
+newrelic==4.0.0.99
 numpy==1.7.1
 openpyxl==2.5.3
 pathlib2==2.3.2           # via ipython, pickleshare
-pbr==4.1.1
+pbr==4.2.0
 pexpect==4.6.0            # via ipython
 phonenumberslite==8.8.9
 pickleshare==0.7.4        # via ipython
