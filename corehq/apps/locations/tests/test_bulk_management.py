@@ -727,7 +727,6 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         self.user = WebUser.create(self.domain, 'username', 'password')
 
     def tearDown(self):
-        get_by_domain_and_type.clear(self.domain, 'LocationFields')
         super(TestBulkManagementWithInitialLocs, self).tearDown()
         self.user.delete()
 
