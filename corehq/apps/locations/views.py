@@ -707,11 +707,7 @@ class EditLocationView(NewLocationView):
             domain_object=self.domain_object,
             location=self.location,
             data=self.request.POST if self.request.method == "POST" else None,
-            submit_label=_("Update Location Membership"),
-            fieldset_title=_("Specify Workers at this Location"),
-            prefix="users",
         )
-        form.fields['selected_ids'].label = _("Workers at Location")
         return form
 
     @property

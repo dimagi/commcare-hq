@@ -36,7 +36,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.rate_limit import rate_limit
 
 
-MAX_TRIAL_SMS = 50
+MAX_TRIAL_SMS = 0
 
 
 def remove_from_queue(queued_sms):

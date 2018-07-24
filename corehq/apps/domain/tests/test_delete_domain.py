@@ -28,15 +28,19 @@ from corehq.apps.case_search.models import (
     IgnorePatterns,
 )
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.ivr.models import Call
-from corehq.apps.locations.models import make_location, LocationType, SQLLocation
+from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
 from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (SMS, SQLLastReadMessage, ExpectedCallback,
     PhoneNumber, MessagingEvent, MessagingSubEvent, SelfRegistrationInvitation,
     SQLMobileBackend, SQLMobileBackendMapping, MobileBackendInvitation)
+from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.users.models import DomainRequest
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import create_form_for_test
+from dimagi.utils.make_uuid import random_hex
 from six.moves import range
 
 
@@ -315,6 +319,86 @@ class TestDeleteDomain(TestCase):
 
         self._assert_data_dictionary_counts(self.domain.name, 0)
         self._assert_data_dictionary_counts(self.domain2.name, 1)
+
+    def _assert_domain_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            TransferDomainRequest.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_delete_domain(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            TransferDomainRequest.objects.create(domain=domain_name, to_username='to', from_username='from')
+            self._assert_domain_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_domain_counts(self.domain.name, 0)
+        self._assert_domain_counts(self.domain2.name, 1)
+
+    def _assert_location_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            LocationFixtureConfiguration.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_location_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            LocationFixtureConfiguration.objects.create(domain=domain_name)
+            self._assert_location_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_location_counts(self.domain.name, 0)
+        self._assert_location_counts(self.domain2.name, 1)
+
+    def _assert_reports_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            ReportsSidebarOrdering.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_reports_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            ReportsSidebarOrdering.objects.create(domain=domain_name)
+            self._assert_reports_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_reports_counts(self.domain.name, 0)
+        self._assert_reports_counts(self.domain2.name, 1)
+
+    def _assert_userreports_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            AsyncIndicator.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_userreports_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            AsyncIndicator.objects.create(
+                domain=domain_name,
+                doc_id=random_hex(),
+                doc_type='doc_type',
+                indicator_config_ids=[],
+            )
+            self._assert_userreports_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_userreports_counts(self.domain.name, 0)
+        self._assert_userreports_counts(self.domain2.name, 1)
+
+    def _assert_users_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            DomainRequest.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_users_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            DomainRequest.objects.create(domain=domain_name, email='user@test.com', full_name='User')
+            self._assert_users_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_users_counts(self.domain.name, 0)
+        self._assert_users_counts(self.domain2.name, 1)
 
     def tearDown(self):
         self.domain2.delete()
