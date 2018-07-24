@@ -36,6 +36,7 @@ from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.files import safe_filename_header
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds.tasks import (
     push_translation_files_to_transifex,
@@ -112,6 +113,7 @@ from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
 from couchexport.shortcuts import export_response
+from couchexport.export import Format
 
 
 @location_safe
@@ -1527,7 +1529,6 @@ class DownloadExportReport(View):
     def get(self, request, *args, **kwargs):
         uuid = self.request.GET.get('uuid', None)
         file_format = self.request.GET.get('file_format', 'xlsx')
-        from couchexport.export import Format
         content_type = Format.from_format(file_format)
         data_type = self.request.GET.get('data_type', 'beneficiary_list')
         icds_file = IcdsFile.objects.get(blob_id=uuid, data_type=data_type)
@@ -1535,7 +1536,6 @@ class DownloadExportReport(View):
             icds_file.get_file_from_blobdb().read(),
             content_type=content_type.mimetype
         )
-        from corehq.util.files import safe_filename_header
         response['Content-Disposition'] = safe_filename_header(data_type, content_type.extension)
         return response
 
@@ -1560,21 +1560,14 @@ class DownloadPDFReport(View):
 class CheckExportReportStatus(View):
     def get(self, request, *args, **kwargs):
         task_id = self.request.GET.get('task_id', None)
-        is_issnip_monthly_register = self.request.GET.get('is_issnip_monthly_register', None)
-
         res = AsyncResult(task_id)
         status = res.ready()
 
         if status:
-            if is_issnip_monthly_register:
-                task_result = prepare_issnip_monthly_register_reports.AsyncResult(task_id)
-            else:
-                task_result = prepare_excel_reports.AsyncResult(task_id)
-            result = task_result.get()
             return JsonResponse(
                 {
                     'task_ready': status,
-                    'task_result': result
+                    'task_result': res.result
                 }
             )
         return JsonResponse({'task_ready': status})
