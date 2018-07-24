@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
+from datetime import datetime
 from django.test import TestCase
 from kafka.common import KafkaUnavailableError
 
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.util.test_utils import trap_extra_setup
@@ -20,7 +22,13 @@ class TestLocationDataSource(TestCase):
 
     def setUp(self):
         self.domain_obj = create_domain(self.domain)
-
+        # creating the user somehow sets up users ES index which is needed for this test
+        CommCareUser.create(
+            domain=self.domain,
+            username='cc1',
+            password='***',
+            last_login=datetime.now()
+        )
         self.region = LocationType.objects.create(domain=self.domain, name="region")
         self.town = LocationType.objects.create(domain=self.domain, name="town", parent_type=self.region)
 
