@@ -254,9 +254,6 @@ def email_large_report(request, config, recipient):
     """
     report = config.report(request, domain=config.domain, **{})
     report.rendered_as = 'export'
-    report.decorator_dispatcher(request, domain=config.domain,
-                                report_slug=config.report_slug,
-                                *(), **{})
     export_all_rows_task(report.__class__, report.__getstate__(), recipient=recipient)
 
 
