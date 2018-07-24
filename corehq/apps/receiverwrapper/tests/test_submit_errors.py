@@ -207,7 +207,22 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
 @use_sql_backend
 class SubmissionErrorTestSQL(SubmissionErrorTest):
-    pass
+
+    def test_error_publishing_to_kafka(self):
+        sql_patch = patch(
+            'corehq.form_processor.backends.sql.processor.FormProcessorSQL.publish_changes_to_kafka',
+            side_effect=ValueError
+        )
+        with sql_patch:
+            _, res = self._submit('form_with_case.xml')
+
+        self.assertEqual(res.status_code, 201)
+        stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=True).all()
+        self.assertEqual(1, len(stubs))
+
+        form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
+        self.assertFalse(form.is_error)
+        self.assertTrue(form.initial_processing_complete)
 
 
 @contextlib.contextmanager
