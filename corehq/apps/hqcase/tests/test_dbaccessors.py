@@ -13,6 +13,7 @@ from couchforms.models import XFormInstance
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.hqcase.analytics import (
     get_number_of_cases_in_domain_of_type,
     get_number_of_cases_in_domain,
@@ -178,16 +179,11 @@ TEST_ES_META = {
 }
 
 
-class ESAccessorsTest(TestCase):
+class ESAccessorsTest(CallCenterDomainMockTest):
     domain = 'hqadmin-es-accessor'
-
-    _call_center_domain_mock = patch(
-        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-    )
 
     def setUp(self):
         super(ESAccessorsTest, self).setUp()
-        self._call_center_domain_mock.start()
         with trap_extra_setup(ConnectionError):
             self.elasticsearch = get_es_new()
             initialize_index_and_mapping(self.elasticsearch, CASE_INDEX_INFO)
@@ -197,7 +193,6 @@ class ESAccessorsTest(TestCase):
         ensure_index_deleted(CASE_INDEX_INFO.index)
         ensure_index_deleted(DOMAIN_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
-        self._call_center_domain_mock.stop()
         super(ESAccessorsTest, self).tearDown()
 
     @patch('corehq.apps.hqcase.analytics.CaseES.index', CASE_INDEX_INFO.index)

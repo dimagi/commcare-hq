@@ -1,13 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import mock
 
 from decimal import Decimal
 
-from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from elasticsearch.exceptions import ConnectionError
 
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.es import FormES
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -23,16 +22,11 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-class XFormPillowTest(TestCase):
+class XFormPillowTest(CallCenterDomainMockTest):
     domain = 'xform-pillowtest-domain'
-
-    _call_center_domain_mock = mock.patch(
-        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-    )
 
     def setUp(self):
         super(XFormPillowTest, self).setUp()
-        self._call_center_domain_mock.start()
         FormProcessorTestUtils.delete_all_xforms()
         with trap_extra_setup(ConnectionError):
             self.elasticsearch = get_es_new()
@@ -41,7 +35,6 @@ class XFormPillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
-        self._call_center_domain_mock.stop()
         super(XFormPillowTest, self).tearDown()
 
     @run_with_all_backends

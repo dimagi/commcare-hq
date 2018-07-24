@@ -7,6 +7,7 @@ from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 import mock
 
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
@@ -132,22 +133,9 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual(0, results.total)
 
 
-class CheckpointCreationTest(TestCase):
+class CheckpointCreationTest(CallCenterDomainMockTest):
     # this class is only here so you can run these explicitly
-    _call_center_domain_mock = mock.patch(
-        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-    )
-
-    @classmethod
-    def setUpClass(cls):
-        super(CheckpointCreationTest, cls).setUpClass()
-        cls._call_center_domain_mock.start()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls._call_center_domain_mock.start()
-        super(CheckpointCreationTest, cls).tearDownClass()
-
+    pass
 
 @generate_cases([
     ('app', 'ApplicationToElasticsearchPillow'),

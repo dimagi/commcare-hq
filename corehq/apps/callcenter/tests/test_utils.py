@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import mock
 import uuid
 from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseFactory, CaseStructure
@@ -440,3 +441,20 @@ def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type, cc_case_owne
             'domains',
             doc=domain.to_json(),
         )
+
+
+class CallCenterDomainMockTest(TestCase):
+
+    _call_center_domain_mock = mock.patch(
+        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        super(CallCenterDomainMockTest, cls).setUpClass()
+        cls._call_center_domain_mock.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(CallCenterDomainMockTest, cls).tearDownClass()
+        cls._call_center_domain_mock.stop()

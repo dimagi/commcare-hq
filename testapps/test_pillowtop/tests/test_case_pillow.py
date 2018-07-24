@@ -1,11 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import mock
 import uuid
 
-from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.es import CaseES
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -17,17 +16,12 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-class CasePillowTest(TestCase):
+class CasePillowTest(CallCenterDomainMockTest):
 
     domain = 'case-pillowtest-domain'
 
-    _call_center_domain_mock = mock.patch(
-        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-    )
-
     def setUp(self):
         super(CasePillowTest, self).setUp()
-        self._call_center_domain_mock.start()
         FormProcessorTestUtils.delete_all_cases()
         with trap_extra_setup(ConnectionError):
             self.elasticsearch = get_es_new()
@@ -36,7 +30,6 @@ class CasePillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(CASE_INDEX_INFO.index)
-        self._call_center_domain_mock.stop()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super(CasePillowTest, self).tearDown()
 
