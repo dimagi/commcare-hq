@@ -17,7 +17,7 @@ class Dhis2FormConfig(DocumentSchema):
     xmlns = StringProperty()
     program_id = StringProperty(required=True)
     org_unit_id = StringProperty(required=False)
-    event_date = SchemaProperty(ValueSource)
+    event_date = SchemaProperty(ValueSource, required=True)
     event_status = StringProperty(
         choices=DHIS2_EVENT_STATUSES,
         default=DHIS2_EVENT_STATUS_COMPLETED,
