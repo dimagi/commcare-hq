@@ -1,4 +1,4 @@
-/* globals hex_parser, zxcvbn */
+/* globals zxcvbn */
 (function (angular) {
     'use strict';
 
@@ -260,8 +260,8 @@
         self.stageNewMobileWorker = function (newWorker) {
             newWorker.creationStatus = STATUS.PENDING;
             var deferred = $q.defer();
-            if(typeof(hex_parser) !== 'undefined') {
-                newWorker.password = (new hex_parser()).encode(newWorker.password);
+            if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
+                newWorker.password = (hqImport("nic_compliance/js/encoder")()).encode(newWorker.password);
             }
             djangoRMI.create_mobile_worker({
                 mobileWorker: newWorker, 
