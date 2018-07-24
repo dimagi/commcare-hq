@@ -1056,6 +1056,13 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ENABLE_COMBINED_CHARGING = StaticToggle(
+    'enable_comdined_charging',
+    'Enable Combined Charging',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 BROADCAST_TO_LOCATIONS = StaticToggle(
     'broadcast_to_locations',
     'Send broadcasts to locations',
