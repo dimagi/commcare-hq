@@ -9,7 +9,7 @@ from django.core.validators import RegexValidator
 from django.utils.translation import ugettext as _
 from memoized import memoized
 from corehq import toggles
-from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
 from corehq.apps.locations.models import LocationType
 from corehq.apps.users.forms import clean_mobile_worker_username
