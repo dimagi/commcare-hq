@@ -21,6 +21,7 @@ from django.http import (
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 from couchexport.export import Format
@@ -47,6 +48,7 @@ from corehq.apps.accounting.forms import (
     ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm, TriggerCustomerInvoiceForm,
     TestReminderEmailFrom,
     CreateAdminForm,
+    EnterpriseSettingsForm,
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
 )
@@ -1130,8 +1132,12 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         return HttpResponseBadRequest("Please check your query.")
 
 
-def _get_account_or_404(request, domain):
-    account = BillingAccount.get_account_by_domain(domain)
+def _get_account_or_404(request, domain=None, account_id=None):
+    if domain:
+        account = BillingAccount.get_account_by_domain(domain)
+
+    if account_id:
+        account = BillingAccount.objects.get(id=account_id)
 
     if account is None:
         raise Http404()
@@ -1144,7 +1150,7 @@ def _get_account_or_404(request, domain):
 
 
 def enterprise_dashboard(request, domain):
-    account = _get_account_or_404(request, domain)
+    account = _get_account_or_404(request, domain=domain)
     context = {
         'account': account,
         'domain': domain,
@@ -1156,19 +1162,20 @@ def enterprise_dashboard(request, domain):
         )],
         'current_page': {
             'page_name': _('Enterprise Dashboard'),
+            'title': _('Enterprise Dashboard'),
         }
     }
     return render(request, "accounting/enterprise_dashboard.html", context)
 
 
 def enterprise_dashboard_total(request, domain, slug):
-    account = _get_account_or_404(request, domain)
+    account = _get_account_or_404(request, domain=domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
     return JsonResponse({'total': report.total})
 
 
 def enterprise_dashboard_download(request, domain, slug, export_hash):
-    account = _get_account_or_404(request, domain)
+    account = _get_account_or_404(request, domain=domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
 
     redis = get_redis_client()
@@ -1186,7 +1193,7 @@ def enterprise_dashboard_download(request, domain, slug, export_hash):
 
 
 def enterprise_dashboard_email(request, domain, slug):
-    account = _get_account_or_404(request, domain)
+    account = _get_account_or_404(request, domain=domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
     email_enterprise_report.delay(domain, slug, request.couch_user)
     message = _("Generating {title} report, will email to {email} when complete.").format(**{
@@ -1194,3 +1201,50 @@ def enterprise_dashboard_email(request, domain, slug):
         'email': request.couch_user.username,
     })
     return JsonResponse({'message': message})
+
+
+def enterprise_settings_by_account(request, account_id):
+    account = _get_account_or_404(request, account_id=account_id)
+    subscription = Subscription.visible_objects.filter(account_id=account.id, is_active=True).first()
+    if not subscription:
+        raise Http404()
+    return _enterprise_settings(request, account, subscription.subscriber.domain)
+
+def enterprise_settings_by_domain(request, domain):
+    account = _get_account_or_404(request, domain=domain)
+    return _enterprise_settings(request, account, domain)
+
+def _enterprise_settings(request, account, domain):
+    request.use_select2 = True
+    form = EnterpriseSettingsForm(domain=domain, initial={
+        "restrict_domain_creation": account.restrict_domain_creation,
+        "enterprise_admin_emails": ','.join(account.enterprise_admin_emails),
+    })
+
+    context = {
+        'domain': domain,
+        'current_page': {
+            'title': _('Enterprise Settings'),
+            'page_name': _('Enterprise Settings'),
+        },
+        'settings_form': form,
+    }
+    return render(request, "accounting/enterprise_settings.html", context)
+
+
+@require_POST
+def edit_enterprise_settings(request, domain):
+    account = _get_account_or_404(request, domain=domain)
+
+    form = EnterpriseSettingsForm(request.POST, domain=domain, initial={
+        "restrict_domain_creation": account.restrict_domain_creation,
+        "enterprise_admin_emails": ','.join(account.enterprise_admin_emails),
+    })
+
+    if form.is_valid():
+        form.save(account)
+        messages.success(request, "Account successfully updated.")
+    else:
+        messages.error(request, "Error updating account.")
+
+    return HttpResponseRedirect(reverse('enterprise_settings_by_domain', args=[domain]))
