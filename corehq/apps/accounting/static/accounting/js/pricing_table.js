@@ -1,4 +1,14 @@
-hqDefine('accounting/js/pricing_table', function () {
+hqDefine('accounting/js/pricing_table', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData
+) {
     var pricingTableModel = function (editions, current_edition, isRenewal) {
         'use strict';
         var self = {};
@@ -43,7 +53,7 @@ hqDefine('accounting/js/pricing_table', function () {
             $button.disableButton();
             $.ajax({
                 method: "POST",
-                url: hqImport('hqwebapp/js/initial_page_data').reverse('email_on_downgrade'),
+                url: initialPageData.reverse('email_on_downgrade'),
                 data: {
                     old_plan: self.currentEdition,
                     new_plan: self.selected_edition(),
@@ -97,12 +107,11 @@ hqDefine('accounting/js/pricing_table', function () {
     };
 
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            pricingTable = pricingTableModel(
-                initial_page_data('editions'),
-                initial_page_data('current_edition'),
-                initial_page_data('is_renewal')
-            );
+        var pricingTable = pricingTableModel(
+            initialPageData.get('editions'),
+            initialPageData.get('current_edition'),
+            initialPageData.get('is_renewal')
+        );
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
@@ -110,5 +119,5 @@ hqDefine('accounting/js/pricing_table', function () {
         $('#modal-downgrade').koApplyBindings(pricingTable);
 
         pricingTable.init();
-    }());
+    });
 });
