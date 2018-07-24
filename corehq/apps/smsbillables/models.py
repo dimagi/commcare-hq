@@ -366,10 +366,8 @@ class SmsBillable(models.Model):
     def _get_gateway_fee(cls, backend_api_id, backend_instance,
                          phone_number, direction, couch_id, backend_message_id, domain):
         country_code, national_number = get_country_code_and_national_number(phone_number)
-        is_gateway_billable = backend_instance is None\
-                              or _sms_backend_is_global(backend_instance)\
-                              or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
-
+        is_gateway_billable = backend_instance is None or _sms_backend_is_global(
+            backend_instance) or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
 
         if is_gateway_billable:
             is_twilio_message = backend_api_id == SQLTwilioBackend.get_api_id()
