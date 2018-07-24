@@ -76,7 +76,7 @@ def _filter_by_hash(configs, ucr_division):
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_provider, auto_repopulate_tables=False, ucr_division=None,
+    def __init__(self, data_source_provider, ucr_division=None,
                  include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL):
         """Initializes the processor for UCRs
 
@@ -91,7 +91,6 @@ class ConfigurableReportTableManagerMixin(object):
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
         self.data_source_provider = data_source_provider
-        self.auto_repopulate_tables = auto_repopulate_tables
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
@@ -191,7 +190,10 @@ class ConfigurableReportTableManagerMixin(object):
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
         adapter.rebuild_table()
-        if self.auto_repopulate_tables:
+        if config.is_static:
+            # Todo; rebuild_indicators itself calls adapter.rebuild_table, so why is this needed
+            #       to discuss on PR.
+            # Add a comment on why
             rebuild_indicators.delay(adapter.config.get_id)
 
 
@@ -314,7 +316,6 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
-            auto_repopulate_tables=False,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,

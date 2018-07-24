@@ -168,14 +168,12 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
     checkpoint = KafkaPillowCheckpoint(pillow_id, topics.FORM_TOPICS)
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_provider=DynamicDataSourceProvider(),
-        auto_repopulate_tables=False,
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
     )
     ucr_static_processor = ConfigurableReportPillowProcessor(
         data_source_provider=StaticDataSourceProvider(),
-        auto_repopulate_tables=False,
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
