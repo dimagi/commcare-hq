@@ -27,40 +27,33 @@ class FixtureGenerator(object):
     """
     The generator object, which gets fixtures from your config file that should
     be included when OTA restoring.
-    
+
     See: https://bitbucket.org/javarosa/javarosa/wiki/externalinstances
-    
+
     To use, add the following to your settings.py
-    
-    FIXTURE_GENERATORS = {
-        'group1': [
-           "myapp.fixturegenerators.gen1",
-           "myapp.fixturegenerators.gen2",
-            ...
-        ],
+
+    FIXTURE_GENERATORS = [
+       "myapp.fixturegenerators.gen1",
+       "myapp.fixturegenerators.gen2",
         ...
-    }
-    
+    ]
+
     The values in the file should be paths to objects that
     implement the following API:
-    
+
     provider(user, version, last_sync) --> [list of fixture objects]
     provider.id --> the ID of the fixture
 
     If the provider generates multiple fixtures it should use an ID format as follows:
         "prefix:dynamic"
     In this case 'provider.id' should just be the ID prefix.
-    
+
     The function should return an empty list if there are no fixtures
     """
 
     def __init__(self):
-        self._generator_providers = {}
-        if hasattr(settings, "FIXTURE_GENERATORS"):
-            for group, func_paths in settings.FIXTURE_GENERATORS.items():
-                self._generator_providers[group] = [_f for _f in [
-                    to_function(func_path, failhard=True) for func_path in func_paths
-                ] if _f]
+        functions = [to_function(func_path, failhard=True) for func_path in settings.FIXTURE_GENERATORS]
+        self._generator_providers = [f for f in functions if f]
 
     def get_providers(self, user, fixture_id=None, version=V2):
         if version == V1:
@@ -68,8 +61,6 @@ class FixtureGenerator(object):
 
         if not isinstance(user, OTARestoreUser):
             return []
-
-        providers = list(itertools.chain(*list(self._generator_providers.values())))
 
         if fixture_id:
             full_id = fixture_id
@@ -80,7 +71,9 @@ class FixtureGenerator(object):
                 # in which case provider.id is just the prefix.
                 return provider.id == full_id or provider.id == prefix
 
-            providers = [provider for provider in providers if provider_matches(provider)]
+            providers = [provider for provider in self._generator_providers if provider_matches(provider)]
+        else:
+            providers = self._generator_providers
 
         return providers
 
