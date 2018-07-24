@@ -161,7 +161,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
 
 def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None,
-                         num_processes=1, process_num=0, configs=None, static_configs=None,
+                         num_processes=1, process_num=0, configs=None,
                          topics=None, **kwargs):
     if topics:
         assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
@@ -171,13 +171,7 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
     )
     checkpoint = KafkaPillowCheckpoint(pillow_id, topics)
     ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_provider=DynamicDataSourceProvider(),
-        ucr_division=ucr_division,
-        include_ucrs=include_ucrs,
-        exclude_ucrs=exclude_ucrs,
-    )
-    ucr_static_processor = ConfigurableReportPillowProcessor(
-        data_source_provider=StaticDataSourceProvider(),
+        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
@@ -194,13 +188,12 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         checkpoint_callback=ucr_processor
     )
     ucr_processor.bootstrap(configs)
-    ucr_static_processor.bootstrap(static_configs)
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
-        processor=[ucr_processor, ucr_static_processor, xform_to_es_processor]
+        processor=[ucr_processor, xform_to_es_processor]
     )
 
 

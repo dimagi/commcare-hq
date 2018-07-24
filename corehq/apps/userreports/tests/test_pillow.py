@@ -36,12 +36,12 @@ from pillow_retry.models import PillowError
 class ConfigurableReportTableManagerTest(SimpleTestCase):
 
     def test_needs_bootstrap_on_initialization(self):
-        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider())
+        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider()])
         self.assertTrue(table_manager.needs_bootstrap())
 
     def test_bootstrap_sets_time(self):
         before_now = datetime.utcnow() - timedelta(microseconds=1)
-        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider())
+        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider()])
         table_manager.bootstrap([])
         after_now = datetime.utcnow() + timedelta(microseconds=1)
         self.assertTrue(table_manager.bootstrapped)
@@ -51,7 +51,7 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
 
     def test_needs_bootstrap_window(self):
         before_now = datetime.utcnow() - timedelta(microseconds=1)
-        table_manager = ConfigurableReportTableManagerMixin(MockDataSourceProvider())
+        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider()])
         table_manager.bootstrap([])
         table_manager.last_bootstrapped = before_now - timedelta(seconds=REBUILD_CHECK_INTERVAL - 5)
         self.assertFalse(table_manager.needs_bootstrap())

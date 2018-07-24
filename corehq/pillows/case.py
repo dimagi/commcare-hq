@@ -64,7 +64,7 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
 
 def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None,
-                         num_processes=1, process_num=0, configs=None, static_configs=None,
+                         num_processes=1, process_num=0, configs=None,
                          topics=None, **kwargs):
     if topics:
         assert set(topics).issubset(CASE_TOPICS), "This is a pillow to process cases only"
@@ -74,17 +74,12 @@ def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
     )
     checkpoint = KafkaPillowCheckpoint(pillow_id, topics)
     ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_provider=DynamicDataSourceProvider(),
+        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
     )
-    ucr_static_processor = ConfigurableReportPillowProcessor(
-        data_source_provider=StaticDataSourceProvider(),
-        ucr_division=ucr_division,
-        include_ucrs=include_ucrs,
-        exclude_ucrs=exclude_ucrs,
-    )
+    ucr_processor.bootstrap(configs)
     case_to_es_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
@@ -92,17 +87,14 @@ def get_ucr_es_case_pillow(pillow_id='kafka-case-ucr-es', ucr_division=None,
     )
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
-        # Todo; to change this to checkpoint_callbacks to include static UCR
         checkpoint_callback=ucr_processor
     )
-    ucr_processor.bootstrap(configs)
-    ucr_static_processor.bootstrap(static_configs)
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
-        processor=[ucr_processor, ucr_static_processor, case_to_es_processor]
+        processor=[ucr_processor, case_to_es_processor]
     )
 
 

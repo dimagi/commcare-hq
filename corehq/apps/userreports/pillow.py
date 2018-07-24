@@ -76,7 +76,7 @@ def _filter_by_hash(configs, ucr_division):
 
 class ConfigurableReportTableManagerMixin(object):
 
-    def __init__(self, data_source_provider, ucr_division=None,
+    def __init__(self, data_source_providers, ucr_division=None,
                  include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL):
         """Initializes the processor for UCRs
 
@@ -90,7 +90,7 @@ class ConfigurableReportTableManagerMixin(object):
         """
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
-        self.data_source_provider = data_source_provider
+        self.data_source_providers = data_source_providers
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
@@ -99,7 +99,11 @@ class ConfigurableReportTableManagerMixin(object):
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
     def get_all_configs(self):
-        return self.data_source_provider.get_data_sources()
+        return [
+            source
+            for provider in self.data_source_providers
+            for source in provider.get_data_sources()
+        ]
 
     def get_filtered_configs(self, configs=None):
         configs = configs or self.get_all_configs()
@@ -315,7 +319,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
     topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
-            data_source_provider=DynamicDataSourceProvider(),
+            data_source_providers=[DynamicDataSourceProvider()],
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
