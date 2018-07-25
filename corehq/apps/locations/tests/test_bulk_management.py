@@ -8,7 +8,6 @@ from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
 from mock import patch, Mock
 
-from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
