@@ -77,6 +77,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         for trans in case.get_tracked_models_to_create(CaseTransaction):
             if transaction == trans:
                 trans.type |= transaction.type
+                trans.client_date = case_update.guess_modified_on()
                 break
         else:
             case.track_create(transaction)
