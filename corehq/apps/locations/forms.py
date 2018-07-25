@@ -19,8 +19,8 @@ from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
 
 from corehq.apps.commtrack.util import generate_code
-from corehq.apps.custom_data_fields import CustomDataEditor
-from corehq.apps.custom_data_fields.edit_entity import get_prefixed, CUSTOM_DATA_FIELD_PREFIX
+from corehq.apps.custom_data_fields.edit_entity import (
+    CustomDataEditor, get_prefixed, CUSTOM_DATA_FIELD_PREFIX)
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
