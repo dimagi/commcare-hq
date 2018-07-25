@@ -4,7 +4,6 @@ import collections
 import copy
 import datetime
 
-from django.conf import settings
 from dateutil import parser
 from jsonobject.exceptions import BadValueError
 
@@ -18,7 +17,7 @@ from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvi
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
-from corehq.pillows.base import convert_property_dict
+from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
@@ -28,13 +27,11 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
+from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
-from pillowtop.reindexer.change_providers.form import get_domain_form_change_provider
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory, \
-    ElasticPillowReindexer, ReindexerFactory
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 
 def is_valid_date(txt):
@@ -164,28 +161,6 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     )
 
 
-def report_xform_filter(doc_dict):
-    """
-    :return: True to filter out doc
-    """
-    domain = doc_dict.get('domain', None)
-    # full indexing is only enabled for select domains on an opt-in basis
-    return xform_pillow_filter(doc_dict) or domain not in getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
-
-
-def transform_xform_for_report_forms_index(doc_dict):
-    doc_ret = transform_xform_for_elasticsearch(doc_dict)
-    convert_property_dict(
-        doc_ret['form'],
-        REPORT_XFORM_INDEX_INFO.mapping['properties']['form'],
-        override_root_keys=['case']
-    )
-    if 'computed_' in doc_ret:
-        convert_property_dict(doc_ret['computed_'], {})
-
-    return doc_ret
-
-
 def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None,
                          num_processes=1, process_num=0, configs=None,
@@ -287,26 +262,5 @@ class SqlFormReindexerFactory(ReindexerFactory):
             index_info=XFORM_INDEX_INFO,
             doc_filter=xform_pillow_filter,
             doc_transform=transform_xform_for_elasticsearch,
-            **self.options
-        )
-
-
-class ReportFormReindexerFactory(ReindexerFactory):
-    slug = 'report-xform'
-    arg_contributors = [
-        ReindexerFactory.elastic_reindexer_args,
-    ]
-
-    def build(self):
-        """Returns a reindexer that will only reindex data from enabled domains
-        """
-        domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
-        change_provider = get_domain_form_change_provider(domains=domains)
-        return ElasticPillowReindexer(
-            # Todo; shouldn't invoke other processors while reindexing
-            pillow=get_ucr_es_form_pillow(),
-            change_provider=change_provider,
-            elasticsearch=get_es_new(),
-            index_info=REPORT_XFORM_INDEX_INFO,
             **self.options
         )
