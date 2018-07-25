@@ -1593,5 +1593,6 @@ AGGREGATE_UCRS = StaticToggle(
     'aggregate_ucrs',
     'Enable experimental aggregate UCR support',
     TAG_INTERNAL,  # this might change in the future
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    notification_emails=['czue'],
 )
