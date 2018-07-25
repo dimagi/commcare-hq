@@ -214,6 +214,26 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
+class LocationGroupFixtureProvider(FixtureProvider):
+    id = 'location_groups'
+    serializer = FlatLocationSerializer()
+
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
+        primary_location = restore_user.get_commtrack_location_id()
+        related_location_ids = SQLLocation.objects.get(location_id=primary_location).related_location_ids
+        related_location_pks = (
+            SQLLocation.objects.filter(location_id__in=related_location_ids)
+            .values_list('pk', flat=True)
+        )
+        locations_queryset = _location_queryset_helper(restore_user.domain, related_location_pks)
+        data_fields = _get_location_data_fields(restore_user.domain)
+        return self.serializer.get_xml_nodes(self.id, restore_user, locations_queryset, data_fields)
+
+
+location_group_fixture_generator = LocationGroupFixtureProvider()
+
+
 int_field = IntegerField()
 int_array = ArrayField(int_field)
 
@@ -227,24 +247,26 @@ def get_location_fixture_queryset(user):
     if user_locations.query.is_empty():
         return user_locations
 
+    return _location_queryset_helper(user.domain, list(user_locations.order_by().values_list("id", flat=True)))
+
+
+def _location_queryset_helper(domain, location_ids):
     fixture_ids = With(raw_cte_sql(
         """
         SELECT "id", "path", "depth"
         FROM get_location_fixture_ids(%s::TEXT, %s)
         """,
-        [user.domain, list(user_locations.order_by().values_list("id", flat=True))],
+        [domain, location_ids],
         {"id": int_field, "path": int_array, "depth": int_field},
     ))
 
-    result = fixture_ids.join(
+    return fixture_ids.join(
         SQLLocation.objects.all(),
         id=fixture_ids.col.id,
     ).annotate(
         path=fixture_ids.col.path,
         depth=fixture_ids.col.depth,
     ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
-
-    return result
 
 
 def _append_children(node, location_db, locations, data_fields):
