@@ -179,6 +179,12 @@ def location_fixture_instances(domain, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
+@register_factory('location_groups')
+def location_groups_fixture_instances(domain, instance_name):
+    if instance_name == 'location_groups' and toggles.LOCATION_GROUPS.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
 def get_all_instances_referenced_in_xpaths(domain, xpaths):
     instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
     instances = set()
