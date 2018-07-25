@@ -126,7 +126,7 @@ class EmwfUtils(object):
         if user['is_active']:
             name = "%s [user]" % user['username_in_report']
         else:
-            name = "%s [user (deactivated)]" % user['username_in_report']
+            name = "%s [deactivated user]" % user['username_in_report']
         return (uid, name)
 
     def reporting_group_tuple(self, g):
