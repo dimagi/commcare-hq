@@ -324,7 +324,7 @@ def update_linked_app(app, user_id):
             report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
         except (BadSpecError, DocumentNotFound) as e:
             raise AppLinkError(_('This linked application uses mobile UCRs '
-                                 'which are available in this domain: %(message)s') % {'message': e})
+                                 'which are not available in this domain: %(message)s') % {'message': e})
 
         try:
             app = overwrite_app(app, latest_master_build, report_map)
