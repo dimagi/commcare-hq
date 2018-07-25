@@ -15,35 +15,9 @@ from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProces
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.feed.interface import Change
-from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
-
-
-def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor',
-                                                num_processes=1, process_num=0, **kwargs):
-    """
-    This gets a pillow which iterates through all forms and marks the corresponding app
-    as having submissions. This could be expanded to be more generic and include
-    other processing that needs to happen on each form
-    """
-    change_feed = KafkaChangeFeed(
-        topics=topics.FORM_TOPICS, group_id='form-processsor',
-        num_processes=num_processes, process_num=process_num
-    )
-    checkpoint = KafkaPillowCheckpoint('form-submission-metadata-tracker', topics.FORM_TOPICS)
-    form_processor = FormSubmissionMetadataTrackerProcessor()
-    return ConstructedPillow(
-        name=pillow_id,
-        checkpoint=checkpoint,
-        change_feed=change_feed,
-        processor=form_processor,
-        change_processed_event_handler=KafkaCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
-        ),
-    )
 
 
 class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):

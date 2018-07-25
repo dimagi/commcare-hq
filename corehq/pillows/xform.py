@@ -215,6 +215,7 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         doc_prep_fn=transform_xform_for_report_forms_index,
         doc_filter_fn=report_xform_filter
     )
+    form_meta_processor = FormSubmissionMetadataTrackerProcessor()
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
@@ -225,7 +226,8 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         change_feed=change_feed,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
-        processor=[ucr_processor, xform_to_es_processor, xform_to_report_es_processor]
+        processor=[ucr_processor, xform_to_es_processor, xform_to_report_es_processor,
+                   form_meta_processor]
     )
 
 

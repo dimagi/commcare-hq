@@ -1714,11 +1714,6 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
         },
         {
-            'name': 'FormSubmissionMetadataTrackerPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.app_submission_tracker.get_form_submission_metadata_tracker_pillow',
-        },
-        {
             'name': 'UpdateUserSyncHistoryPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
