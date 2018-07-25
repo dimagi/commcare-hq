@@ -34,9 +34,21 @@ from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.models import ReportsSidebarOrdering
-from corehq.apps.sms.models import (SMS, SQLLastReadMessage, ExpectedCallback,
-    PhoneNumber, MessagingEvent, MessagingSubEvent, SelfRegistrationInvitation,
-    SQLMobileBackend, SQLMobileBackendMapping, MobileBackendInvitation)
+from corehq.apps.sms.models import (
+    ExpectedCallback,
+    Keyword,
+    KeywordAction,
+    MessagingEvent,
+    MessagingSubEvent,
+    MobileBackendInvitation,
+    PhoneNumber,
+    QueuedSMS,
+    SelfRegistrationInvitation,
+    SMS,
+    SQLLastReadMessage,
+    SQLMobileBackend,
+    SQLMobileBackendMapping,
+)
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -110,10 +122,6 @@ class TestDeleteDomain(TestCase):
             backend=backend
         )
         MobileBackendInvitation.objects.create(domain=domain_name, backend=backend)
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestDeleteDomain, cls).setUpClass()
 
     def setUp(self):
         super(TestDeleteDomain, self).setUp()
@@ -395,6 +403,28 @@ class TestDeleteDomain(TestCase):
 
         self._assert_reports_counts(self.domain.name, 0)
         self._assert_reports_counts(self.domain2.name, 1)
+
+    def _assert_sms_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            Keyword.objects.filter(domain=domain_name),
+            KeywordAction.objects.filter(keyword__domain=domain_name),
+            QueuedSMS.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_sms_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            keyword = Keyword.objects.create(domain=domain_name)
+            KeywordAction.objects.create(keyword=keyword)
+            QueuedSMS.objects.create(domain=domain_name)
+            self._assert_sms_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_sms_counts(self.domain.name, 0)
+        self._assert_sms_counts(self.domain2.name, 1)
+
+        self.assertEqual(KeywordAction.objects.count(), 1)
+        self.assertEqual(KeywordAction.objects.filter(keyword__domain=self.domain2.name).count(), 1)
 
     def _assert_userreports_counts(self, domain_name, count):
         self._assert_queryset_count([
