@@ -103,7 +103,12 @@ class BillingAccountBasicForm(forms.Form):
     )
     enterprise_admin_emails = forms.CharField(
         label="Enterprise Admin Emails",
-        required=False
+        required=False,
+    )
+    enterprise_restricted_signup_domains = forms.CharField(
+        label="Enterprise Domains for Restricting Signups",
+        required=False,
+        help_text='ex: dimagi.com, commcarehq.org',
     )
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscriptions To"),
@@ -144,6 +149,7 @@ class BillingAccountBasicForm(forms.Form):
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
                 'enterprise_admin_emails': ','.join(account.enterprise_admin_emails),
+                'enterprise_restricted_signup_domains': ','.join(account.enterprise_restricted_signup_domains),
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
@@ -189,6 +195,14 @@ class BillingAccountBasicForm(forms.Form):
                     ),
                     data_bind='visible: is_customer_billing_account'
                 )
+            )
+            additional_fields.append(
+                crispy.Div(
+                    crispy.Field(
+                        'enterprise_restricted_signup_domains',
+                        css_class='input-xxlarge',
+                    ),
+                ),
             )
             if account.subscription_set.count() > 0:
                 additional_fields.append(crispy.Div(
@@ -266,7 +280,14 @@ class BillingAccountBasicForm(forms.Form):
     def clean_enterprise_admin_emails(self):
         # Do not return a list with an empty string
         if self.cleaned_data['enterprise_admin_emails']:
-            return self.cleaned_data['enterprise_admin_emails'].split(',')
+            return [e.strip() for e in self.cleaned_data['enterprise_admin_emails'].split(r',')]
+        else:
+            return []
+
+    def clean_enterprise_restricted_signup_domains(self):
+        # Do not return a list with an empty string
+        if self.cleaned_data['enterprise_restricted_signup_domains']:
+            return [e.strip() for e in self.cleaned_data['enterprise_restricted_signup_domains'].split(r',')]
         else:
             return []
 
@@ -319,6 +340,7 @@ class BillingAccountBasicForm(forms.Form):
         account.is_active = self.cleaned_data['is_active']
         account.is_customer_billing_account = self.cleaned_data['is_customer_billing_account']
         account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
+        account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
