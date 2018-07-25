@@ -221,8 +221,6 @@ def send_email_report(self, recipient_list, request, body, subject, config):
             object of ReportConfig. Contains the report configuration
             like reportslug, report_type etc
     '''
-
-
     try:
         for recipient in recipient_list:
             send_HTML_email(subject, recipient,
