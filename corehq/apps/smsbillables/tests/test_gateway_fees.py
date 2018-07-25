@@ -250,7 +250,8 @@ class TestGatewayFee(TestCase):
         self.assertIsNotNone(billable)
         self.assertIsNotNone(billable.gateway_fee)
         self.assertEqual(billable.gateway_charge,
-                         self.least_specific_fees[billable.direction][billable.gateway_fee.criteria.backend_api_id])
+                         self.least_specific_fees[billable.direction]
+                         [billable.gateway_fee.criteria.backend_api_id])
 
 
     @patch(
