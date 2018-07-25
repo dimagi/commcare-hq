@@ -123,7 +123,10 @@ class EmwfUtils(object):
     def user_tuple(self, u):
         user = util._report_user_dict(u)
         uid = "u__%s" % user['user_id']
-        name = "%s [user]" % user['username_in_report']
+        if user['is_active']:
+            name = "%s [user]" % user['username_in_report']
+        else:
+            name = "%s [deactivated user]" % user['username_in_report']
         return (uid, name)
 
     def reporting_group_tuple(self, g):
@@ -334,7 +337,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
 
-        q = user_es.UserES().domain(domain)
+        q = user_es.UserES().show_inactive().domain(domain)
         if not request_user.has_permission(domain, 'access_all_locations'):
             cls._verify_users_are_accessible(domain, request_user, user_ids)
             return q.OR(
