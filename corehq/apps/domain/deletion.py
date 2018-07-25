@@ -212,6 +212,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
+    ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),
+    ModelDeletion('phone', 'SyncLogSQL', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
