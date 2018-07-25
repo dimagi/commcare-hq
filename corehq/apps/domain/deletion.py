@@ -215,6 +215,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
+    ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),

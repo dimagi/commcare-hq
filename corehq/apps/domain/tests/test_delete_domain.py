@@ -54,6 +54,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackend,
     SQLMobileBackendMapping,
 )
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest
 from corehq.apps.zapier.consts import EventTypes
@@ -524,6 +525,27 @@ class TestDeleteDomain(TestCase):
 
         self.assertEqual(KeywordAction.objects.count(), 1)
         self.assertEqual(KeywordAction.objects.filter(keyword__domain=self.domain2.name).count(), 1)
+
+    def _assert_smsforms_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            SQLXFormsSession.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_smsforms_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            SQLXFormsSession.objects.create(
+                domain=domain_name,
+                start_time=datetime.utcnow(),
+                modified_time=datetime.utcnow(),
+                current_action_due=datetime.utcnow(),
+                expire_after=3,
+            )
+            self._assert_smsforms_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_smsforms_counts(self.domain.name, 0)
+        self._assert_smsforms_counts(self.domain2.name, 1)
 
     def _assert_userreports_counts(self, domain_name, count):
         self._assert_queryset_count([
