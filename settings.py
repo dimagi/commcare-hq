@@ -512,30 +512,21 @@ PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
 # OTA restore fixture generators
-FIXTURE_GENERATORS = {
-    # fixtures that may be sent to the phone independent of cases
-    'standalone': [
-        # core
-        "corehq.apps.users.fixturegenerators.user_groups",
-        "corehq.apps.fixtures.fixturegenerators.item_lists",
-        "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
-        "corehq.apps.products.fixtures.product_fixture_generator",
-        "corehq.apps.programs.fixtures.program_fixture_generator",
-        "corehq.apps.app_manager.fixtures.report_fixture_generator",
-        "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
-        "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
-        # custom
-        "custom.bihar.reports.indicators.fixtures.generator",
-        "custom.m4change.fixtures.report_fixtures.generator",
-        "custom.m4change.fixtures.location_fixtures.generator",
-
-    ],
-    # fixtures that must be sent along with the phones cases
-    'case': [
-        "corehq.apps.locations.fixtures.location_fixture_generator",
-        "corehq.apps.locations.fixtures.flat_location_fixture_generator",
-    ]
-}
+FIXTURE_GENERATORS = [
+    "corehq.apps.users.fixturegenerators.user_groups",
+    "corehq.apps.fixtures.fixturegenerators.item_lists",
+    "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
+    "corehq.apps.products.fixtures.product_fixture_generator",
+    "corehq.apps.programs.fixtures.program_fixture_generator",
+    "corehq.apps.app_manager.fixtures.report_fixture_generator",
+    "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
+    "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
+    "corehq.apps.locations.fixtures.location_fixture_generator",
+    "corehq.apps.locations.fixtures.flat_location_fixture_generator",
+    "custom.bihar.reports.indicators.fixtures.generator",
+    "custom.m4change.fixtures.report_fixtures.generator",
+    "custom.m4change.fixtures.location_fixtures.generator",
+]
 
 ### Shared drive settings ###
 # Also see section after localsettings import
