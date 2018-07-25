@@ -28,10 +28,13 @@ from corehq.apps.case_search.models import (
     FuzzyProperties,
     IgnorePatterns,
 )
+from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.domain.models import Domain, TransferDomainRequest
+from corehq.apps.export.models.new import DailySavedExportNotification, DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
+from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (
@@ -344,6 +347,45 @@ class TestDeleteDomain(TestCase):
         self._assert_case_search_counts(self.domain.name, 0)
         self._assert_case_search_counts(self.domain2.name, 1)
 
+    def _assert_data_analytics_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            GIRRow.objects.filter(domain_name=domain_name),
+            MALTRow.objects.filter(domain_name=domain_name),
+        ], count)
+
+    def test_data_analytics(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            GIRRow.objects.create(
+                domain_name=domain_name,
+                month=date.today(),
+                start_date=date.today(),
+                wams_current=1,
+                active_users=1,
+                using_and_performing=1,
+                not_performing=1,
+                inactive_experienced=1,
+                inactive_not_experienced=1,
+                not_experienced=1,
+                not_performing_not_experienced=1,
+                active_ever=1,
+                possibly_exp=1,
+                ever_exp=1,
+                exp_and_active_ever=1,
+                active_in_span=1,
+                eligible_forms=1,
+            )
+            MALTRow.objects.create(
+                domain_name=domain_name,
+                month=date.today(),
+                num_of_forms=1,
+            )
+            self._assert_data_analytics_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_data_analytics_counts(self.domain.name, 0)
+        self._assert_data_analytics_counts(self.domain2.name, 1)
+
     def _assert_data_dictionary_counts(self, domain_name, count):
         self._assert_queryset_count([
             CaseType.objects.filter(domain=domain_name),
@@ -376,6 +418,25 @@ class TestDeleteDomain(TestCase):
         self._assert_domain_counts(self.domain.name, 0)
         self._assert_domain_counts(self.domain2.name, 1)
 
+    def _assert_export_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            DailySavedExportNotification.objects.filter(domain=domain_name),
+            DataFile.objects.filter(domain=domain_name),
+            EmailExportWhenDoneRequest.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_export_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            DailySavedExportNotification.objects.create(domain=domain_name)
+            DataFile.objects.create(domain=domain_name)
+            EmailExportWhenDoneRequest.objects.create(domain=domain_name)
+            self._assert_export_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_export_counts(self.domain.name, 0)
+        self._assert_export_counts(self.domain2.name, 1)
+
     def _assert_location_counts(self, domain_name, count):
         self._assert_queryset_count([
             LocationFixtureConfiguration.objects.filter(domain=domain_name)
@@ -390,6 +451,23 @@ class TestDeleteDomain(TestCase):
 
         self._assert_location_counts(self.domain.name, 0)
         self._assert_location_counts(self.domain2.name, 1)
+
+    def _assert_ota_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            MobileRecoveryMeasure.objects.filter(domain=domain_name),
+            SerialIdBucket.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_ota_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            MobileRecoveryMeasure.objects.create(domain=domain_name)
+            SerialIdBucket.objects.create(domain=domain_name)
+            self._assert_ota_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_ota_counts(self.domain.name, 0)
+        self._assert_ota_counts(self.domain2.name, 1)
 
     def _assert_reports_counts(self, domain_name, count):
         self._assert_queryset_count([

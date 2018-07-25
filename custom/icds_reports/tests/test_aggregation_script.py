@@ -16,6 +16,8 @@ from six.moves import zip
 from six.moves import range
 from io import open
 
+from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
+from custom.icds_reports.utils.aggregation import InactiveAwwsAggregationHelper
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
@@ -426,3 +428,42 @@ class DailyAttendanceAggregationTest(AggregationScriptTestBase):
             os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
             sort_key=['awc_id', 'pse_date']
         )
+
+
+@override_settings(SERVER_ENVIRONMENT='icds-new')
+class InactiveAWWsTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        last_sync = date(2017, 4, 1)
+        cls.helper = InactiveAwwsAggregationHelper(last_sync)
+        super(InactiveAWWsTest, cls).setUpClass()
+
+    def tearDown(self):
+        AggregateInactiveAWW.objects.all().delete()
+
+    def test_missing_locations_query(self):
+        missing_location_query = self.helper.missing_location_query()
+        with get_cursor(AggregateInactiveAWW) as cursor:
+            cursor.execute(missing_location_query)
+        records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
+        self.assertEquals(records.count(), 0)
+
+    def test_aggregate_query(self):
+        missing_location_query = self.helper.missing_location_query()
+        aggregation_query, agg_params = self.helper.aggregate_query()
+        with get_cursor(AggregateInactiveAWW) as cursor:
+            cursor.execute(missing_location_query)
+            cursor.execute(aggregation_query, agg_params)
+        records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
+        self.assertEquals(records.count(), 46)
+
+    def test_submission_dates(self):
+        missing_location_query = self.helper.missing_location_query()
+        aggregation_query, agg_params = self.helper.aggregate_query()
+        with get_cursor(AggregateInactiveAWW) as cursor:
+            cursor.execute(missing_location_query)
+            cursor.execute(aggregation_query, agg_params)
+        record = AggregateInactiveAWW.objects.filter(awc_id='a10').first()
+        self.assertEquals(date(2017, 4, 5), record.first_submission)
+        self.assertEquals(date(2017, 5, 5), record.last_submission)
