@@ -28,7 +28,7 @@ from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
@@ -1145,6 +1145,7 @@ def _get_account_or_404(request, domain):
     return account
 
 
+@login_and_domain_required
 def enterprise_dashboard(request, domain):
     account = _get_account_or_404(request, domain)
     context = {
@@ -1164,12 +1165,14 @@ def enterprise_dashboard(request, domain):
     return render(request, "accounting/enterprise_dashboard.html", context)
 
 
+@login_and_domain_required
 def enterprise_dashboard_total(request, domain, slug):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
     return JsonResponse({'total': report.total})
 
 
+@login_and_domain_required
 def enterprise_dashboard_download(request, domain, slug, export_hash):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
@@ -1188,6 +1191,7 @@ def enterprise_dashboard_download(request, domain, slug, export_hash):
                                   "download links expire after 24 hours."))
 
 
+@login_and_domain_required
 def enterprise_dashboard_email(request, domain, slug):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
@@ -1199,6 +1203,7 @@ def enterprise_dashboard_email(request, domain, slug):
     return JsonResponse({'message': message})
 
 
+@login_and_domain_required
 def enterprise_settings(request, domain):
     account = _get_account_or_404(request, domain)
 
@@ -1217,6 +1222,7 @@ def enterprise_settings(request, domain):
     return render(request, "accounting/enterprise_settings.html", context)
 
 
+@login_and_domain_required
 @require_POST
 def edit_enterprise_settings(request, domain):
     account = _get_account_or_404(request, domain)
