@@ -17,7 +17,6 @@ from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvi
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
-from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
@@ -30,6 +29,7 @@ from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDep
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
@@ -184,6 +184,8 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
     )
+    # avoid circular dependency
+    from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
     xform_to_report_es_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=REPORT_XFORM_INDEX_INFO,

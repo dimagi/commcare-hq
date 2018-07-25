@@ -147,7 +147,7 @@ class CheckpointCreationTest(CallCenterDomainMockTest):
     ('ledger-v1', 'LedgerToElasticsearchPillow'),
     ('sms', 'SqlSMSPillow'),
     ('report-case', 'ReportCaseToElasticsearchPillow'),
-    ('report-xform', 'ReportXFormToElasticsearchPillow'),
+    ('report-xform', 'kafka-xform-ucr-es'),
 ], CheckpointCreationTest)
 def test_checkpoint_creation(self, reindex_id, pillow_name):
     # checks that checkpoipnts are set to the latest checkpoints after reindexing

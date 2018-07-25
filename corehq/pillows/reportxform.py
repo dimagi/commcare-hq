@@ -2,15 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
 
-from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
-from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import ElasticProcessor
+from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter, get_ucr_es_form_pillow
 from pillowtop.reindexer.change_providers.form import get_domain_form_change_provider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
 
@@ -49,7 +44,7 @@ class ReportFormReindexerFactory(ReindexerFactory):
         domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
         change_provider = get_domain_form_change_provider(domains=domains)
         return ElasticPillowReindexer(
-            pillow=get_report_xform_to_elasticsearch_pillow(),
+            pillow=get_ucr_es_form_pillow(),
             change_provider=change_provider,
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,
