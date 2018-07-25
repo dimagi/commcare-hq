@@ -713,6 +713,9 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def group_form(self):
+        if not toggles.LOCATION_GROUPS.enabled(self.request.domain):
+            return None
+
         return LocationGroupForm(
             self.domain, self.location,
             data=self.request.POST if self.request.method == "POST" else None,
@@ -778,7 +781,8 @@ class EditLocationView(NewLocationView):
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
-        elif (self.request.POST['form_type'] == "location-groups"):
+        elif (self.request.POST['form_type'] == "location-groups"
+              and toggles.LOCATION_GROUPS.enabled(request.domain)):
             return self.group_form_post(request, *args, **kwargs)
         else:
             raise Http404()

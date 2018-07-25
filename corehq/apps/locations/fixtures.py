@@ -219,6 +219,9 @@ class LocationGroupFixtureProvider(FixtureProvider):
     serializer = FlatLocationSerializer()
 
     def __call__(self, restore_state):
+        if not toggles.LOCATION_GROUPS.enabled(restore_state.domain):
+            return []
+
         restore_user = restore_state.restore_user
         primary_location = restore_user.get_commtrack_location_id()
         related_location_ids = SQLLocation.objects.get(location_id=primary_location).related_location_ids
