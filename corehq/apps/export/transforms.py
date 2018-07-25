@@ -67,5 +67,5 @@ def _cached_case_id_to_case_name(case_id):
     if ret != NULL_CACHE_VALUE:
         return ret
     case_name = get_case_name(case_id)
-    cache.set(key, case_name)
+    cache.set(key, case_name, 2 * 60 * 60)
     return case_name

@@ -16,7 +16,6 @@ from django.db import transaction
 from django.db.models import Count, Min
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
-from restkit import RequestError
 
 from couchexport.models import Format
 from soil.util import get_download_file_path, expose_download
@@ -48,6 +47,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
 from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
 from pillowtop.dao.couch import ID_CHUNK_SIZE
@@ -317,13 +317,15 @@ def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
     assert len(indicator_doc_ids) <= ASYNC_INDICATOR_CHUNK_SIZE
+    for ids in chunked(indicator_doc_ids, 10):
+        _build_async_indicators(ids)
 
+
+def _build_async_indicators(indicator_doc_ids):
     def handle_exception(exception, config_id, doc, adapter):
         metric = None
         if isinstance(exception, (ProtocolError, ReadTimeout)):
             metric = 'commcare.async_indicator.riak_error'
-        elif isinstance(exception, RequestError):
-            metric = 'commcare.async_indicator.couch_error'
         elif isinstance(exception, (ESError, ConnectionTimeout)):
             # a database had an issue so log it and go on to the next document
             metric = 'commcare.async_indicator.es_error'

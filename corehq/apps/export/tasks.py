@@ -38,7 +38,10 @@ logger = logging.getLogger('export_migration')
 
 
 @task(queue=EXPORT_DOWNLOAD_QUEUE)
-def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
+def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60):
+    """
+    :param expiry:  Time period for the export to be available for download in minutes
+    """
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
@@ -58,6 +61,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
 
             expose_blob_download(
                 download_id,
+                expiry=expiry * 60,
                 mimetype=file_format.mimetype,
                 content_disposition=safe_filename_header(filename, file_format.extension),
                 download_id=download_id,

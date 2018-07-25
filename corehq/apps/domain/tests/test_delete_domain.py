@@ -26,6 +26,7 @@ from corehq.apps.case_search.models import (
     FuzzyProperties,
     IgnorePatterns,
 )
+from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import make_location, LocationType, SQLLocation
@@ -281,6 +282,23 @@ class TestDeleteDomain(TestCase):
 
         self._assert_case_search_counts(self.domain.name, 0)
         self._assert_case_search_counts(self.domain2.name, 1)
+
+    def _assert_data_dictionary_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            CaseType.objects.filter(domain=domain_name),
+            CaseProperty.objects.filter(case_type__domain=domain_name),
+        ], count)
+
+    def test_data_dictionary(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            case_type = CaseType.objects.create(domain=domain_name, name='case_type')
+            CaseProperty.objects.create(case_type=case_type, name='case_property')
+            self._assert_data_dictionary_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_data_dictionary_counts(self.domain.name, 0)
+        self._assert_data_dictionary_counts(self.domain2.name, 1)
 
     def tearDown(self):
         self.domain2.delete()
