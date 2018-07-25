@@ -4,9 +4,9 @@
 hqDefine("ilsgateway/js/main", function() {
     var _post = function (elem, url, options) {
         var options = options || {};
-        var success = options.success || "{% trans "Sync Successful" %}";
-        var error = options.error || "{% trans "Error!" %}";
-        $(elem).prop('disabled', true).html("{% trans "Syncing..." %}");
+        var success = options.success || gettext("Sync Successful");
+        var error = options.error || gettext("Error!");
+        $(elem).prop('disabled', true).html(gettext("Syncing..."));
 
         $.ajax({
             type: 'POST',
@@ -23,8 +23,8 @@ hqDefine("ilsgateway/js/main", function() {
     $(function() {
         // Config page
         $("#run_reports").click(function() {
-            var url = '{% url 'run_reports' domain %}';
-            var successMessage = "{% trans "Sync started" %}";
+            var url = hqImport("hqwebapp/js/initial_page_data").reverse("run_reports");
+            var successMessage = gettext("Sync started");
             _post(this, url, {success: successMessage});
         });
 
