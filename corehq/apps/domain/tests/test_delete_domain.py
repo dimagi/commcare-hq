@@ -20,15 +20,17 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
+from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     CaseSearchQueryAddition,
     FuzzyProperties,
     IgnorePatterns,
 )
-from corehq.apps.domain.models import Domain
+from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.ivr.models import Call
-from corehq.apps.locations.models import make_location, LocationType, SQLLocation
+from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.models import (SMS, SQLLastReadMessage, ExpectedCallback,
     PhoneNumber, MessagingEvent, MessagingSubEvent, SelfRegistrationInvitation,
@@ -261,6 +263,21 @@ class TestDeleteDomain(TestCase):
         for queryset in queryset_list:
             self.assertEqual(queryset.count(), count)
 
+    def _assert_calendar_fixture_count(self, domain_name, count):
+        self._assert_queryset_count([
+            CalendarFixtureSettings.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_calendar_fixture_counts(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            CalendarFixtureSettings.objects.create(domain=domain_name, days_before=3, days_after=4)
+            self._assert_calendar_fixture_count(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_calendar_fixture_count(self.domain.name, 0)
+        self._assert_calendar_fixture_count(self.domain2.name, 1)
+
     def _assert_case_search_counts(self, domain_name, count):
         self._assert_queryset_count([
             CaseSearchConfig.objects.filter(domain=domain_name),
@@ -281,6 +298,53 @@ class TestDeleteDomain(TestCase):
 
         self._assert_case_search_counts(self.domain.name, 0)
         self._assert_case_search_counts(self.domain2.name, 1)
+
+    def _assert_data_dictionary_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            CaseType.objects.filter(domain=domain_name),
+            CaseProperty.objects.filter(case_type__domain=domain_name),
+        ], count)
+
+    def test_data_dictionary(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            case_type = CaseType.objects.create(domain=domain_name, name='case_type')
+            CaseProperty.objects.create(case_type=case_type, name='case_property')
+            self._assert_data_dictionary_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_data_dictionary_counts(self.domain.name, 0)
+        self._assert_data_dictionary_counts(self.domain2.name, 1)
+
+    def _assert_domain_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            TransferDomainRequest.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_delete_domain(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            TransferDomainRequest.objects.create(domain=domain_name, to_username='to', from_username='from')
+            self._assert_domain_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_domain_counts(self.domain.name, 0)
+        self._assert_domain_counts(self.domain2.name, 1)
+
+    def _assert_location_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            LocationFixtureConfiguration.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_location_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            LocationFixtureConfiguration.objects.create(domain=domain_name)
+            self._assert_location_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_location_counts(self.domain.name, 0)
+        self._assert_location_counts(self.domain2.name, 1)
 
     def tearDown(self):
         self.domain2.delete()

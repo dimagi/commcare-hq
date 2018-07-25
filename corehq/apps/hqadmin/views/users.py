@@ -294,13 +294,25 @@ class DomainAdminRestoreView(AdminRestoreView):
 def web_user_lookup(request):
     template = "hqadmin/web_user_lookup.html"
     web_user_email = request.GET.get("q")
+
+    context = {
+        'current_page': {
+            'title': "Look up user by email",
+            'page_name': "Look up user by email",
+        },
+        'section': {
+            'page_name': UserAdministration.section_name,
+            'url': reverse("default_admin_report"),
+        },
+    }
+
     if not web_user_email:
-        return render(request, template, {})
+        return render(request, template, context)
 
     web_user = WebUser.get_by_username(web_user_email)
-    context = {
-        'audit_report_url': reverse('admin_report_dispatcher', args=('user_audit_report',))
-    }
+    context.update({
+        'audit_report_url': reverse('admin_report_dispatcher', args=('user_audit_report',)),
+    })
     if web_user is None:
         messages.error(
             request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)

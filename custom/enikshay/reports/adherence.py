@@ -66,7 +66,7 @@ class AdherenceReport(EnikshayReport):
 
     @property
     def ucr_report(self):
-        spec = StaticReportConfiguration.by_id('static-%s-adherence' % self.domain)
+        spec = StaticReportConfiguration.by_id('static-%s-adherence' % self.domain, self.domain)
         report = ConfigurableReportDataSource.from_spec(
             spec, include_prefilters=True
         )

@@ -1,4 +1,4 @@
-hqDefine("appstore/js/facet_sidebar", function() {
+hqDefine("appstore/js/facet_sidebar", ['jquery'], function($) {
     var escapeRegExp = function(str) {
         return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     };
@@ -9,15 +9,12 @@ hqDefine("appstore/js/facet_sidebar", function() {
     };
 
     var chevron_toggle = function(show, $toggling, $chevron, $holds_toggle_state, after_fn) {
-        var chev = "icon-double-angle-",
-            chevB3 = "fa-angle-double-";
+        var chev = "fa-double-angle-";
         if (show) {
             $toggling.hide();
             $chevron
                 .removeClass(chev + "down")
                 .addClass(chev + "right")
-                .removeClass(chevB3 + "down")
-                .addClass(chevB3 + "right");
             $holds_toggle_state.data("show", false);
         } else {
             $toggling.show();
@@ -25,8 +22,6 @@ hqDefine("appstore/js/facet_sidebar", function() {
             $chevron
                 .removeClass(chev + "right")
                 .addClass(chev + "down")
-                .removeClass(chevB3 + "right")
-                .addClass(chevB3 + "down");
             $holds_toggle_state.data("show", true);
         }
         if (after_fn) {

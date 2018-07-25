@@ -70,21 +70,29 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 {
                     "targets": [4],
                     "render": function(data, type, row) {
+                        var html = null;
                         var button_id = 'activate-button-for-' + row.id;
                         var disabled = (row.locked_for_editing || !row.editable) ? 'disabled' : '';
                         if(row.active) {
-                            return '<button id="' + button_id + '" \
+                            html = '<button id="' + button_id + '" \
                                             class="btn btn-default" \
                                             onclick="hqImport(\'scheduling/js/conditional_alert_list\').deactivateAlert(' + row.id + ')" \
                                             ' + disabled + '> \
                                    ' + gettext("Deactivate") + '</button>';
                         } else {
-                            return '<button id="' + button_id + '" + \
+                            html = '<button id="' + button_id + '" + \
                                             class="btn btn-default" + \
                                             onclick="hqImport(\'scheduling/js/conditional_alert_list\').activateAlert(' + row.id + ')" \
                                             ' + disabled + '> \
                                    ' + gettext("Activate") + '</button>';
                         }
+
+                        if(row.locked_for_editing) {
+                            html += ' <button class="btn btn-default" onclick="hqImport(\'scheduling/js/conditional_alert_list\').restartRule(' + row.id + ')">';
+                            html += '<i class="fa fa-refresh"></i> ' + gettext("Restart Rule") + '</button>';
+                        }
+
+                        return html;
                     },
                 },
             ],
@@ -105,7 +113,7 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
         if(action === 'delete') {
             deleteButton.disableButton();
             activateButton.prop('disabled', true);
-        } else {
+        } else if (action === 'activate' || action === 'deactivate') {
             activateButton.disableButton();
             deleteButton.prop('disabled', true);
         }
@@ -119,6 +127,20 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 rule_id: rule_id,
             },
         })
+            .done(function(result) {
+                if(action === 'restart') {
+                    if(result.status === 'success') {
+                        alert(gettext("This rule has been restarted."));
+                    } else if(result.status === 'error') {
+                        var text = gettext(
+                            "Unable to restart rule. Rules can only be started every two hours and there are " +
+                            "%s minute(s) remaining before this rule can be started again."
+                        );
+                        text = interpolate(text, [result.minutes_remaining]);
+                        alert(text);
+                    }
+                }
+            })
             .always(function() {
                 table.fnDraw(false);
             });
@@ -138,9 +160,29 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
         }
     }
 
+    function restartRule(rule_id) {
+        var prompt = null;
+        if(hqImport("hqwebapp/js/initial_page_data").get("limit_rule_restarts")) {
+            prompt = gettext(
+                "A rule should only be restarted when you believe it is stuck and is not progressing. " +
+                "You will only be able to restart this rule once every two hours. Restart this rule?"
+            );
+        } else {
+            prompt = gettext(
+                "A rule should only be restarted when you believe it is stuck and is not progressing. " +
+                "Your user is able to restart as many times as you like, but restarting too many times without " +
+                "finishing can place a burden on the system. Restart this rule?"
+            );
+        }
+        if(confirm(prompt)) {
+            alertAction('restart', rule_id);
+        }
+    }
+
     return {
         activateAlert: activateAlert,
         deactivateAlert: deactivateAlert,
         deleteAlert: deleteAlert,
+        restartRule: restartRule,
     };
 });
