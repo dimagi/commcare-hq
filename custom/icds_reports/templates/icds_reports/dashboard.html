@@ -72,6 +72,7 @@
         <script src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
         <script src="{% static 'js/angular-services/download.service.js' %}"></script>
         <script src="{% static 'js/angular-services/baseControllers.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/ga.service.js' %}"></script>
 
         <script src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
         <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
@@ -285,6 +286,14 @@
 <div class="commcarehq-urls" class="hide">
 {% block registered_urls %}
     {# do not override this block, use registerurl template tag to populate #}
+{% endblock %}
+</div>
+
+{% include 'analytics/initial/global.html' %}
+{% include 'analytics/initial/google.html' %}
+<div class="initial-analytics-data hide">
+{% block initial_analytics_data %}
+     do not override this block, use initial_analytics_data template tag to populate
 {% endblock %}
 </div>
 
