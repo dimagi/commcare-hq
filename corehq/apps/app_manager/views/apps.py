@@ -367,6 +367,7 @@ def copy_app(request, domain):
                 try:
                     update_linked_app(linked_app, request.couch_user.get_id)
                 except AppLinkError as e:
+                    linked_app.delete()
                     messages.error(request, str(e))
                     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
