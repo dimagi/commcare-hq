@@ -709,6 +709,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             new_domain.creating_user = user.username if user else None
             new_domain.date_created = datetime.utcnow()
             new_domain.use_sql_backend = True
+            new_domain.granted_messaging_access = False
 
             for field in self._dirty_fields:
                 if hasattr(new_domain, field):
