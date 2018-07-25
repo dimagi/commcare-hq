@@ -199,7 +199,7 @@ def get_static_report_mapping(from_domain, to_domain, report_map):
             to_domain, report_id, is_custom_report
         )
         # check that new report is in new domain's list of static reports
-        StaticReportConfiguration.by_id(new_id)
+        StaticReportConfiguration.by_id(new_id, to_domain)
         report_map[static_report.get_id] = new_id
     return report_map
 

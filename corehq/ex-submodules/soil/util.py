@@ -41,17 +41,18 @@ def expose_cached_download(payload, expiry, file_extension, mimetype=None,
     return ref
 
 
-def expose_file_download(path, **kwargs):
+def expose_file_download(path, expiry, **kwargs):
     """
     Expose a file download object that potentially uses the external drive
     """
     ref = FileDownload.create(path, **kwargs)
-    ref.save()
+    ref.save(expiry)
     return ref
 
 
 def expose_blob_download(
         identifier,
+        expiry,
         mimetype='text/plain',
         content_disposition=None,
         download_id=None):
@@ -64,7 +65,7 @@ def expose_blob_download(
         content_disposition=content_disposition,
         download_id=download_id,
     )
-    ref.save()
+    ref.save(expiry)
     return ref
 
 
@@ -135,7 +136,7 @@ def expose_download(use_transfer, file_path, filename, download_id, file_type):
     common_kwargs = dict(
         mimetype=Format.from_format(file_type).mimetype,
         content_disposition='attachment; filename="{fname}"'.format(fname=filename),
-        download_id=download_id,
+        download_id=download_id, expiry=(1 * 60 * 60),
     )
     if use_transfer:
         expose_file_download(
@@ -146,7 +147,6 @@ def expose_download(use_transfer, file_path, filename, download_id, file_type):
     else:
         expose_cached_download(
             FileWrapper(open(file_path, 'rb')),
-            expiry=(1 * 60 * 60),
             file_extension=file_type,
             **common_kwargs
         )
@@ -166,17 +166,19 @@ class ExposeBlobDownload:
 
     @staticmethod
     def save_dump_to_blob(data_file_path, data_file_name, result_file_format):
+        expiry_mins = 60 * 24
         with open(data_file_path, 'rb') as file_:
             blob_db = get_blob_db()
             blob_db.put(
                 file_,
                 data_file_name,
-                timeout=60 * 24)  # 24 hours
+                timeout=expiry_mins)
         file_format = Format.from_format(result_file_format)
         file_name_header = safe_filename_header(
             data_file_name, file_format.extension)
         blob_dl_object = expose_blob_download(
             data_file_name,
+            expiry=expiry_mins * 60,
             mimetype=file_format.mimetype,
             content_disposition=file_name_header
         )

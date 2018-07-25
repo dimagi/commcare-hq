@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    Document, DateTimeProperty, ListProperty, StringProperty
+)
 
 
 TOGGLE_ID_PREFIX = 'hqFeatureToggle'
