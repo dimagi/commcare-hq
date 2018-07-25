@@ -654,9 +654,15 @@ class LocationGroupForm(forms.Form):
         selected_location_ids = set(self.cleaned_data['related_locations'].split(','))
         previous_locations = self.location.related_location_ids
         locations_to_add = selected_location_ids - previous_locations
+        locations_to_remove = previous_locations - selected_location_ids
 
         for location_id in locations_to_add:
             LocationGroup.objects.get_or_create(
                 location_a=self.location,
                 location_b=SQLLocation.objects.get(location_id=location_id)
             )
+
+        LocationGroup.objects.filter(
+            location_a=self.location, location_b__location_id__in=locations_to_remove).delete()
+        LocationGroup.objects.filter(
+            location_b=self.location, location_a__location_id__in=locations_to_remove).delete()
