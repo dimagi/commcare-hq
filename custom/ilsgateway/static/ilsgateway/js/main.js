@@ -2,7 +2,32 @@
  * Main module for non-report ilsgateway pages
  */
 hqDefine("ilsgateway/js/main", function() {
+    var _post = function (elem, url, options) {
+        var options = options || {};
+        var success = options.success || "{% trans "Sync Successful" %}";
+        var error = options.error || "{% trans "Error!" %}";
+        $(elem).prop('disabled', true).html("{% trans "Syncing..." %}");
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            success: function() {
+                $(elem).html(success);
+            },
+            error: function() {
+                $(elem).html(error).addClass("btn-danger");
+            }
+        });
+    };
+
     $(function() {
+        // Config page
+        $("#run_reports").click(function() {
+            var url = '{% url 'run_reports' domain %}';
+            var successMessage = "{% trans "Sync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
         // Supervision Docs page
         $('.delete').click(function() {
             $(this).parent().find('.modal').modal();
