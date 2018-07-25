@@ -204,42 +204,41 @@ def apps_update_calculated_properties():
 
 
 @task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_email_report(self, recipient, request, content, subject, config):
+def send_email_report(self, recipient_list, request, body, subject, config):
     '''
     Function invokes send_HTML_email to email the html text report.
     If the report is too large to fit into email then a download link is
     sent via email to download report
-    :Parameter recipient:
-            recipient to whom email is to be sent
+    :Parameter recipient_list:
+            list of recipient to whom email is to be sent
     :Parameter request:
             request object which contains request details
-    :Parameter content:
-            content of the email
+    :Parameter body:
+            body content of the email
     :Parameter subject:
             subject of the email
     :Parameter config:
             object of ReportConfig. Contains the report configuration
             like reportslug, report_type etc
     '''
-    from corehq.apps.reports.views import render_full_report_notification
 
-    body = render_full_report_notification(request, content).content
+
     try:
-
-        send_HTML_email(subject, recipient,
-                        body, email_from=settings.DEFAULT_FROM_EMAIL,
-                        smtp_exception_skip_list=[522])
+        for recipient in recipient_list:
+            send_HTML_email(subject, recipient,
+                            body, email_from=settings.DEFAULT_FROM_EMAIL,
+                            smtp_exception_skip_list=[522])
 
     except Exception as er:
         if getattr(er, 'smtp_code', None) == 522:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
-            email_large_report(request, config, recipient)
+            email_large_report(request, config, recipient_list)
         else:
             self.retry(exc=er)
 
 
-def email_large_report(request, config, recipient):
+def email_large_report(request, config, recipient_list):
     """
     Function sends the requested report download link in the email.
     This function is invoked when user tries to email very large report.
@@ -252,13 +251,13 @@ def email_large_report(request, config, recipient):
     :Parameter recipient:
             recipient to whom email is to be sent
     """
-    report = config.report(request, domain=config.domain, **{})
+    report = config.report(request, domain=config.domain)
     report.rendered_as = 'export'
-    export_all_rows_task(report.__class__, report.__getstate__(), recipient=recipient)
+    export_all_rows_task(report.__class__, report.__getstate__(), recipient_list=recipient_list)
 
 
 @task(ignore_result=True)
-def export_all_rows_task(ReportClass, report_state, recipient=None):
+def export_all_rows_task(ReportClass, report_state, recipient_list=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
 
@@ -269,9 +268,11 @@ def export_all_rows_task(ReportClass, report_state, recipient=None):
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
     hash_id = _store_excel_in_redis(report_class, file)
 
-    if not recipient:
-        recipient = report.request.couch_user.get_email()
-    _send_email(report.request.couch_user, report, hash_id, recipient=recipient)
+    if not recipient_list:
+        recipient_list = [report.request.couch_user.get_email()]
+
+    for recipient in recipient_list:
+        _send_email(report.request.couch_user, report, hash_id, recipient=recipient)
 
 
 def _send_email(user, report, hash_id, recipient):

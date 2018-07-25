@@ -850,8 +850,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     if form.cleaned_data['send_to_owner']:
         recipient_emails.add(request.couch_user.get_email())
 
-    for recipient in recipient_emails:
-        send_email_report.delay(recipient, request, content, subject, config)
+    body = render_full_report_notification(request, content).content
+    send_email_report.delay(recipient_emails, request, body, subject, config)
 
     return HttpResponse()
 
