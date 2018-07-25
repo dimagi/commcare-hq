@@ -36,6 +36,7 @@ from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (
     DailyOutboundSMSLimitReached,
@@ -484,6 +485,21 @@ class TestDeleteDomain(TestCase):
 
         self._assert_reports_counts(self.domain.name, 0)
         self._assert_reports_counts(self.domain2.name, 1)
+
+    def _assert_reminders_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            EmailUsage.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_reminders_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            EmailUsage.objects.create(domain=domain_name, month=7, year=2018)
+            self._assert_reminders_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_reminders_counts(self.domain.name, 0)
+        self._assert_reminders_counts(self.domain2.name, 1)
 
     def _assert_sms_counts(self, domain_name, count):
         self._assert_queryset_count([
