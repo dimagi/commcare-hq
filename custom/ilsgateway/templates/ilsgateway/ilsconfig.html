@@ -1,5 +1,11 @@
 {% extends 'hqwebapp/base_section.html' %}
+{% load hq_shared_tags %}
 {% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'ilsgateway/js/main.js' %}"></script>
+{% endblock %}
+
 {% block page_content %}
     {% if is_commtrack_enabled %}
         {{ block.super }}

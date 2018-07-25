@@ -5,6 +5,7 @@
 
 {% block js %}{{ block.super }}
     {% include 'hqwebapp/includes/ui_element_js.html' %}
+    <script src="{% static 'ilsgateway/js/main.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
