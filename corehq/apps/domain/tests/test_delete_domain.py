@@ -38,6 +38,7 @@ from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (
+    DailyOutboundSMSLimitReached,
     ExpectedCallback,
     Keyword,
     KeywordAction,
@@ -486,6 +487,7 @@ class TestDeleteDomain(TestCase):
 
     def _assert_sms_counts(self, domain_name, count):
         self._assert_queryset_count([
+            DailyOutboundSMSLimitReached.objects.filter(domain=domain_name),
             Keyword.objects.filter(domain=domain_name),
             KeywordAction.objects.filter(keyword__domain=domain_name),
             QueuedSMS.objects.filter(domain=domain_name)
@@ -493,6 +495,7 @@ class TestDeleteDomain(TestCase):
 
     def test_sms_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
+            DailyOutboundSMSLimitReached.objects.create(domain=domain_name, date=date.today())
             keyword = Keyword.objects.create(domain=domain_name)
             KeywordAction.objects.create(keyword=keyword)
             QueuedSMS.objects.create(domain=domain_name)

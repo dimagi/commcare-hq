@@ -179,6 +179,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('locations', 'LocationType', 'domain'),
     ModelDeletion('stock', 'DocDomainMapping', 'domain_name'),
     ModelDeletion('domain_migration_flags', 'DomainMigrationProgress', 'domain'),
+    ModelDeletion('sms', 'DailyOutboundSMSLimitReached', 'domain'),
     ModelDeletion('sms', 'SMS', 'domain'),
     ModelDeletion('sms', 'SQLLastReadMessage', 'domain'),
     ModelDeletion('sms', 'ExpectedCallback', 'domain'),
