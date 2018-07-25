@@ -18,7 +18,7 @@ def get_toggles_previews(domain_link):
 
 
 def get_custom_data_models(domain_link, limit_types=None):
-    url = reverse('linked_domain:custom_data_models', args=[domain_link.linked_domain])
+    url = reverse('linked_domain:custom_data_models', args=[domain_link.master_domain])
     params = None
     if limit_types:
         params = [('type', type_) for type_ in limit_types]
