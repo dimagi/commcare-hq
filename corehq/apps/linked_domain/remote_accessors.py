@@ -22,8 +22,7 @@ def get_custom_data_models(domain_link, limit_types=None):
     params = None
     if limit_types:
         params = [('type', type_) for type_ in limit_types]
-    _do_request_to_remote_hq(url, domain_link.remote_details, domain_link.linked_domain, params)
-    return _do_simple_request('linked_domain:custom_data_models', domain_link)
+    return _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain, params)
 
 
 def get_user_roles(domain_link):
