@@ -30,6 +30,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.domain.models import Domain, TransferDomainRequest
+from corehq.apps.export.models.new import DailySavedExportNotification, DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
 from corehq.apps.products.models import Product, SQLProduct
@@ -373,6 +374,25 @@ class TestDeleteDomain(TestCase):
 
         self._assert_domain_counts(self.domain.name, 0)
         self._assert_domain_counts(self.domain2.name, 1)
+
+    def _assert_export_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            DailySavedExportNotification.objects.filter(domain=domain_name),
+            DataFile.objects.filter(domain=domain_name),
+            EmailExportWhenDoneRequest.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_export_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            DailySavedExportNotification.objects.create(domain=domain_name)
+            DataFile.objects.create(domain=domain_name)
+            EmailExportWhenDoneRequest.objects.create(domain=domain_name)
+            self._assert_export_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_export_counts(self.domain.name, 0)
+        self._assert_export_counts(self.domain2.name, 1)
 
     def _assert_location_counts(self, domain_name, count):
         self._assert_queryset_count([
