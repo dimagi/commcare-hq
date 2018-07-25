@@ -9,10 +9,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.years = [];
     vm.task_id = $location.search()['task_id'] || '';
     $rootScope.report_link = '';
-    vm.exportingIssnipMonthlyRegister = false;
 
     var getTaskStatus = function () {
-        downloadService.getStatus(vm.task_id, vm.exportingIssnipMonthlyRegister).then(function (resp) {
+        downloadService.getStatus(vm.task_id).then(function (resp) {
             if (resp.task_ready) {
                 clearInterval(vm.statusCheck);
                 $rootScope.task_id = '';
@@ -26,7 +25,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         $rootScope.task_id = vm.task_id;
         $location.search('task_id', null);
         vm.statusCheck = setInterval(getTaskStatus, 5 * 1000);
-        vm.exportingIssnipMonthlyRegister = vm.isISSNIPMonthlyRegisterSelected();
     }
 
     vm.filterOptions = [
