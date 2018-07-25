@@ -1,6 +1,6 @@
 hqDefine("icds_reports/js/base", function() {
     $(function() {
-        $('#fieldset_location_async').on('change', 'select', function(e) {
+        $(document).on('change', '#fieldset_location_async select', function(e) {
             e.stopPropagation();
             var state = $('select.form-control')[0].selectedIndex;
             var applyBtn = $('#apply-filters');
@@ -9,6 +9,6 @@ hqDefine("icds_reports/js/base", function() {
             } else {
                 applyBtn.enableButton();
             }
-        })
-    })
+        });
+    });
 });
