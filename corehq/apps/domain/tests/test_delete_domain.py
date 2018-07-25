@@ -31,9 +31,14 @@ from corehq.apps.case_search.models import (
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateAction,
+    AutomaticUpdateRule,
+    AutomaticUpdateRuleCriteria,
+    CaseRuleAction,
+    CaseRuleCriteria,
+    CaseRuleSubmission,
     DomainCaseRuleRun,
-    AutomaticUpdateRule, AutomaticUpdateAction, AutomaticUpdateRuleCriteria, CaseRuleAction, CaseRuleCriteria,
-    CaseRuleSubmission)
+)
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.export.models.new import DailySavedExportNotification, DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
