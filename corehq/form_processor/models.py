@@ -1133,9 +1133,20 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     form_id = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
     sync_log_id = models.CharField(max_length=255, null=True)
     server_date = models.DateTimeField(null=False)
+    _client_date = models.DateTimeField(null=True, db_column='client_date')
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     revoked = models.BooleanField(default=False, null=False)
     details = JSONField(default=dict)
+
+    @property
+    def client_date(self):
+        if self._client_date:
+            return self._client_date
+        return self.server_date
+
+    @client_date.setter
+    def client_date(self, value):
+        self._client_date = value
 
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
