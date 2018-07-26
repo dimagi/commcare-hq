@@ -66,10 +66,10 @@ class CallCenterOwnerOptionsView(EmwfOptionsView):
             (self.get_static_options_size, self.get_static_options),
             (self.get_groups_size, self.get_groups),
             (self.get_locations_size, self.get_locations),
-            (self.get_users_size, self.get_users),
+            (self.get_users_size, self.get_all_users),
         ]
 
-    def user_es_query(self, query):
+    def all_users_es_query(self, query):
         # Do not include inactive users in this query.
         search_fields = ["first_name", "last_name", "base_username"]
         query = (UserES()

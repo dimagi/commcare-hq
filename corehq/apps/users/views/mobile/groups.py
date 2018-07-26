@@ -78,7 +78,7 @@ class BulkSMSVerificationView(BaseDomainView):
         }
         users_with_error = []
 
-        for user in group.get_users(is_active=True, only_commcare=True):
+        for user in group.get_all_users(is_active=True, only_commcare=True):
             counts['users'] += 1
             for phone_number in user.phone_numbers:
                 counts['phone_numbers'] += 1

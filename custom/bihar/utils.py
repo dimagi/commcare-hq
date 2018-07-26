@@ -32,7 +32,7 @@ def get_team_members(group, roles=FLW_ROLES):
     """
     Get any commcare users that are either "asha" or "aww".
     """
-    users = group.get_users(only_commcare=True)
+    users = group.get_all_users(only_commcare=True)
     return sorted([u for u in users if get_role(u) in roles],
                   key=lambda u: u.user_data['role'].upper())
 
