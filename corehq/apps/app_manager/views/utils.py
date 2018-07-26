@@ -329,7 +329,7 @@ def update_linked_app(app, user_id):
                 _(
                     'This application uses mobile UCRs '
                     'which are not available in the linked domain: {ucr_id}'
-                ).format(e.message)
+                ).format(str(e))
             )
 
     if app.master_is_remote:

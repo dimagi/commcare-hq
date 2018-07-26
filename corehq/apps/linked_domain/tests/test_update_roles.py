@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 from mock import patch
 
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
