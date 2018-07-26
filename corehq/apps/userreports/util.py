@@ -181,9 +181,11 @@ def get_async_indicator_modify_lock_key(doc_id):
     return 'async_indicator_save-{}'.format(doc_id)
 
 
-def get_static_report_mapping(from_domain, to_domain, report_map):
+def get_static_report_mapping(from_domain, to_domain):
     from corehq.apps.userreports.models import StaticReportConfiguration, STATIC_PREFIX, \
         CUSTOM_REPORT_PREFIX
+
+    report_map = {}
 
     for static_report in StaticReportConfiguration.by_domain(from_domain):
         if static_report.get_id.startswith(STATIC_PREFIX):

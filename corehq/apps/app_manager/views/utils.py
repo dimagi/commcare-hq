@@ -320,7 +320,7 @@ def update_linked_app(app, user_id):
                 'Unable to pull latest master from remote CommCare HQ. Please try again later.'
             ))
 
-        report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
+        report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
 
         try:
             app = overwrite_app(app, latest_master_build, report_map)

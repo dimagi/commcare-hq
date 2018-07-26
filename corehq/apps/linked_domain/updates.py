@@ -123,7 +123,7 @@ def _convert_web_apps_permissions(domain_link, master_results):
 
 
 def _convert_reports_permissions(domain_link, master_results):
-    report_map = get_static_report_mapping(domain_link.master_domain, domain_link.linked_domain, {})
+    report_map = get_static_report_mapping(domain_link.master_domain, domain_link.linked_domain)
     for role_def in master_results:
         new_report_perms = [
             perm for perm in role_def['permissions']['view_report_list']
