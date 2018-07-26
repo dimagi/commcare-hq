@@ -20,6 +20,12 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
+from corehq.apps.aggregate_ucrs.models import (
+    AggregateTableDefinition,
+    PrimaryColumn,
+    SecondaryTableDefinition,
+    SecondaryColumn,
+)
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_importer.tracking.models import CaseUploadFormRecord, CaseUploadRecord
 from corehq.apps.case_search.models import (
@@ -284,6 +290,47 @@ class TestDeleteDomain(TestCase):
     def _assert_queryset_count(self, queryset_list, count):
         for queryset in queryset_list:
             self.assertEqual(queryset.count(), count)
+
+    def _assert_aggregate_ucr_count(self, domain_name, count):
+        self._assert_queryset_count([
+            AggregateTableDefinition.objects.filter(domain=domain_name),
+            PrimaryColumn.objects.filter(table_definition__domain=domain_name),
+            SecondaryTableDefinition.objects.filter(table_definition__domain=domain_name),
+            SecondaryColumn.objects.filter(table_definition__table_definition__domain=domain_name),
+        ], count)
+
+    def test_aggregate_ucr_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            aggregate_table_definition = AggregateTableDefinition.objects.create(
+                domain=domain_name,
+                primary_data_source_id=uuid.uuid4(),
+                table_id=random_hex(),
+            )
+            secondary_table_definition = SecondaryTableDefinition.objects.create(
+                table_definition=aggregate_table_definition,
+                data_source_id=uuid.uuid4(),
+            )
+            PrimaryColumn.objects.create(table_definition=aggregate_table_definition)
+            SecondaryColumn.objects.create(table_definition=secondary_table_definition)
+            self._assert_aggregate_ucr_count(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_aggregate_ucr_count(self.domain.name, 0)
+        self._assert_aggregate_ucr_count(self.domain2.name, 1)
+
+        self.assertEqual(SecondaryTableDefinition.objects.count(), 1)
+        self.assertEqual(
+            SecondaryTableDefinition.objects.filter(table_definition__domain=self.domain2.name).count(),
+            1
+        )
+        self.assertEqual(PrimaryColumn.objects.count(), 1)
+        self.assertEqual(PrimaryColumn.objects.filter(table_definition__domain=self.domain2.name).count(), 1)
+        self.assertEqual(SecondaryColumn.objects.count(), 1)
+        self.assertEqual(
+            SecondaryColumn.objects.filter(table_definition__table_definition__domain=self.domain2.name).count(),
+            1
+        )
 
     def _assert_calendar_fixture_count(self, domain_name, count):
         self._assert_queryset_count([
