@@ -10,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 from django.test import TestCase, override_settings
 
 from casexml.apps.case.mock import CaseFactory
+from casexml.apps.phone.models import OwnershipCleanlinessFlag, SyncLogSQL
 from casexml.apps.stock.models import DocDomainMapping, StockReport, StockTransaction
 
 from corehq.apps.accounting.models import (
@@ -585,6 +586,28 @@ class TestDeleteDomain(TestCase):
 
         self._assert_reports_counts(self.domain.name, 0)
         self._assert_reports_counts(self.domain2.name, 1)
+
+    def _assert_phone_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            OwnershipCleanlinessFlag.objects.filter(domain=domain_name),
+            SyncLogSQL.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_phone_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            OwnershipCleanlinessFlag.objects.create(domain=domain_name)
+            SyncLogSQL.objects.create(
+                domain=domain_name,
+                doc={},
+                synclog_id=uuid.uuid4(),
+                user_id=uuid.uuid4(),
+            )
+            self._assert_phone_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_phone_counts(self.domain.name, 0)
+        self._assert_phone_counts(self.domain2.name, 1)
 
     def _assert_reminders_counts(self, domain_name, count):
         self._assert_queryset_count([
