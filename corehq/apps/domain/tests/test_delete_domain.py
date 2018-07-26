@@ -7,6 +7,7 @@ from decimal import Decimal
 from mock import patch
 
 from dateutil.relativedelta import relativedelta
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 
 from casexml.apps.case.mock import CaseFactory
@@ -74,6 +75,7 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
@@ -739,3 +741,105 @@ class TestDeleteDomain(TestCase):
     def tearDown(self):
         self.domain2.delete()
         super(TestDeleteDomain, self).tearDown()
+
+
+class TestHardDeleteSQLFormsAndCases(TestCase):
+
+    def setUp(self):
+        super(TestHardDeleteSQLFormsAndCases, self).setUp()
+        self.domain = Domain(name='test')
+        self.domain.save()
+        self.domain2 = Domain(name='test2')
+        self.domain2.save()
+
+    def tearDown(self):
+        self.domain2.delete()
+        super(TestHardDeleteSQLFormsAndCases, self).tearDown()
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_hard_delete_forms(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            create_form_for_test(domain_name)
+            self.assertEqual(len(FormAccessors(domain_name).get_all_form_ids_in_domain()), 1)
+
+        self.domain.delete()
+
+        self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
+        self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
+
+        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 1)
+        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
+
+        call_command('hard_delete_forms_and_cases_in_domain', self.domain.name)
+
+        self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
+        self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
+
+        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_hard_delete_forms_none_to_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            create_form_for_test(domain_name)
+            self.assertEqual(len(FormAccessors(domain_name).get_all_form_ids_in_domain()), 1)
+
+        self.domain.delete()
+
+        self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
+        self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
+
+        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 1)
+        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
+
+        call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name)
+
+        self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
+        self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
+
+        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 1)
+        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_hard_delete_cases(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            CaseFactory(domain_name).create_case()
+            self.assertEqual(len(CaseAccessors(domain_name).get_case_ids_in_domain()), 1)
+
+        self.domain.delete()
+
+        self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
+        self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
+
+        self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
+        self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
+
+        call_command('hard_delete_forms_and_cases_in_domain', self.domain.name)
+
+        self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
+        self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
+
+        self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_hard_delete_cases_none_to_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            CaseFactory(domain_name).create_case()
+            self.assertEqual(len(CaseAccessors(domain_name).get_case_ids_in_domain()), 1)
+
+        self.domain.delete()
+
+        self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
+        self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
+
+        self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
+        self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
+
+        call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name)
+
+        self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
+        self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
+
+        self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
+        self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
