@@ -13,7 +13,7 @@ hqDefine("domain/js/confirm_billing_info", function() {
     });
 
     Stripe.setPublishableKey(initialPageData.get("stripe_public_key"));
-    var cardManager = new stripeCardManager.stripeCardManager({
+    var cardManager = stripeCardManager.stripeCardManager({
         cards: initialPageData.get("cards"),
         url: initialPageData.reverse("cards_view"),
     });
