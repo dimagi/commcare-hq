@@ -3,7 +3,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from functools import partial
 
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.linked_domain.const import (
     MODEL_FLAGS, MODELS_ROLES, MODEL_LOCATION_DATA, MODEL_PRODUCT_DATA,
     MODEL_USER_DATA
@@ -78,6 +81,8 @@ def update_user_roles(domain_link):
     else:
         master_results = local_get_user_roles(domain_link.master_domain)
 
+    _convert_web_apps_permissions(domain_link, master_results)
+
     local_roles = UserRole.view(
         'users/roles_by_domain',
         startkey=[domain_link.linked_domain],
@@ -95,3 +100,21 @@ def update_user_roles(domain_link):
 
         role_json.update(role_def)
         UserRole.wrap(role_json).save()
+
+
+def _convert_web_apps_permissions(domain_link, master_results):
+    linked_apps_by_master = {
+        app.master: app._id
+        for app in get_docs_in_domain_by_class(domain_link.linked_domain, LinkedApplication)
+    }
+    for role_def in master_results:
+        view_web_apps_list = []
+        for app_id in role_def['permissions']['view_web_apps_list']:
+            master_app_id = get_app(domain_link.master_domain, app_id).master_id
+            try:
+                linked_app_id = linked_apps_by_master[master_app_id]
+            except KeyError:
+                continue
+            view_web_apps_list.append(linked_app_id)
+
+        role_def['permissions']['view_web_apps_list'] = view_web_apps_list

@@ -29,20 +29,22 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(BaseLinkedAppsTest, cls).setUpClass()
-        cls.master_app_with_report_modules = Application.new_app('domain', "Master Application")
+        cls.domain = 'domain'
+        cls.master_app_with_report_modules = Application.new_app(cls.domain, "Master Application")
         module = cls.master_app_with_report_modules.add_module(ReportModule.new_module('Reports', None))
         module.report_configs = [
             ReportAppConfig(report_id='id', header={'en': 'CommBugz'}),
         ]
 
-        cls.plain_master_app = Application.new_app('domain', "Master Application")
-        cls.plain_master_app.linked_whitelist = ['domain-2']
+        cls.plain_master_app = Application.new_app(cls.domain, "Master Application")
+        cls.linked_domain = 'domain-2'
+        cls.plain_master_app.linked_whitelist = [cls.linked_domain]
         cls.plain_master_app.save()
 
-        cls.linked_app = LinkedApplication.new_app('domain-2', "Linked Application")
+        cls.linked_app = LinkedApplication.new_app(cls.linked_domain, "Linked Application")
         cls.linked_app.save()
 
-        cls.domain_link = DomainLink.link_domains('domain-2', 'domain')
+        cls.domain_link = DomainLink.link_domains(cls.linked_domain, cls.domain)
 
     @classmethod
     def tearDownClass(cls):
