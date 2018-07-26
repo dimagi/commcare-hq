@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.core.management import BaseCommand
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
+from corehq.form_processor.utils import should_use_sql_backend
 
 
 class Command(BaseCommand):
@@ -12,6 +13,8 @@ class Command(BaseCommand):
         parser.add_argument('domain')
 
     def handle(self, domain, **options):
+        assert should_use_sql_backend(domain)
+
         deleted_sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(domain)
         FormAccessorSQL.hard_delete_forms(domain, deleted_sql_form_ids, delete_attachments=True)
 
