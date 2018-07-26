@@ -436,6 +436,7 @@ class DomainMembership(Membership):
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     override_global_tz = BooleanProperty(default=False)
     role_id = StringProperty()
+    # This should not be set directly but using set_location method only
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
     program_id = StringProperty()
@@ -573,7 +574,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         if project.commtrack_enabled:
             self.get_domain_membership(domain).program_id = program_id
         if project.uses_locations:
-            self.get_domain_membership(domain).location_id = location_id
+            self.set_location(domain, location_id)
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
@@ -958,6 +959,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
     user_data = DictProperty()
+    # This should not be set directly but using set_location method only
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
     has_built_app = BooleanProperty(default=False)
