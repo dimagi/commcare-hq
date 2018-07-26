@@ -211,19 +211,3 @@ class RecouvrementFluff(fluff.IndicatorDocument):
 
 
 RecouvrementFluffPillow = RecouvrementFluff.pillow()
-
-
-def IntraHealthFormFluffPillow(delete_filtered=False):
-    return get_multi_fluff_pillow(
-        indicator_classes=[
-            TauxDeSatisfactionFluff,
-            CouvertureFluff,
-            RecapPassageFluff,
-            IntraHealthFluff,
-            TauxDeRuptureFluff,
-            LivraisonFluff,
-        ],
-        name='IntraHealthFormFluff',
-        kafka_topic=FORM_SQL if settings.SERVER_ENVIRONMENT == 'pna' else FORM,
-        delete_filtered=delete_filtered
-    )
