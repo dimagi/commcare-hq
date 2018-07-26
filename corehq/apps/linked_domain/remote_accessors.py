@@ -18,26 +18,25 @@ def get_toggles_previews(domain_link):
 
 
 def get_custom_data_models(domain_link, limit_types=None):
-    url = reverse('linked_domain:custom_data_models', args=[domain_link.linked_domain])
+    url = reverse('linked_domain:custom_data_models', args=[domain_link.master_domain])
     params = None
     if limit_types:
         params = [('type', type_) for type_ in limit_types]
-    _do_request_to_remote_hq(url, domain_link.remote_details, domain_link.linked_domain, params)
-    return _do_simple_request('linked_domain:custom_data_models', domain_link)
+    return _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain, params)
 
 
 def get_user_roles(domain_link):
     return _do_simple_request('linked_domain:user_roles', domain_link)['user_roles']
 
 
-def get_released_app_version(domain, app_id, remote_details):
-    url = reverse('current_app_version', args=[domain, app_id])
+def get_released_app_version(master_domain, app_id, remote_details):
+    url = reverse('current_app_version', args=[master_domain, app_id])
     response = _do_request_to_remote_hq_json(url, remote_details, None)
     return response.get('latestReleasedBuild')
 
 
-def get_released_app(domain, app_id, linked_domain, remote_details):
-    url = reverse('linked_domain:latest_released_app_source', args=[domain, app_id])
+def get_released_app(master_domain, app_id, linked_domain, remote_details):
+    url = reverse('linked_domain:latest_released_app_source', args=[master_domain, app_id])
     response = _do_request_to_remote_hq_json(url, remote_details, linked_domain)
     return _convert_app_from_remote_linking_source(response)
 
