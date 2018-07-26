@@ -3481,9 +3481,9 @@ class DomainUserHistory(models.Model):
     num_users = models.IntegerField(default=0, null=True)
 
     @classmethod
-    def create(cls, domain, num_users):
+    def create(cls, domain, num_users, record_date):
         return cls(
             domain=domain,
             num_users=num_users,
-            record_date=datetime.date.today()
+            record_date=record_date
         )

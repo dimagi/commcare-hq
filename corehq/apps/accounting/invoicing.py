@@ -27,7 +27,7 @@ from corehq.apps.accounting.models import (
     CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
-    SubscriptionType, InvoicingPlan
+    SubscriptionType, InvoicingPlan, DomainUserHistory
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
@@ -670,7 +670,15 @@ class UserLineItemFactory(FeatureLineItemFactory):
     def num_users(self):
         total_users = 0
         for domain in self.subscribed_domains:
-            total_users += CommCareUser.total_by_domain(domain, is_active=True)
+            if self.invoice.is_customer_invoice and self.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY:
+                try:
+                    domain_user_history = DomainUserHistory.objects.get(domain=domain,
+                                                                        record_date=self.invoice.date_end)
+                    total_users += domain_user_history.num_users
+                except DomainUserHistory.DoesNotExist:
+                    total_users += 0
+            else:
+                total_users += CommCareUser.total_by_domain(domain, is_active=True)
         return total_users
 
     @property
