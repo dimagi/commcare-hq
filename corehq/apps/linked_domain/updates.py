@@ -23,6 +23,7 @@ from corehq.apps.linked_domain.remote_accessors import (
 )
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
+from corehq.apps.userreports.util import get_static_report_mapping, get_ucr_class_name
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
@@ -82,6 +83,7 @@ def update_user_roles(domain_link):
         master_results = local_get_user_roles(domain_link.master_domain)
 
     _convert_web_apps_permissions(domain_link, master_results)
+    _convert_reports_permissions(domain_link, master_results)
 
     local_roles = UserRole.view(
         'users/roles_by_domain',
@@ -118,3 +120,19 @@ def _convert_web_apps_permissions(domain_link, master_results):
             view_web_apps_list.append(linked_app_id)
 
         role_def['permissions']['view_web_apps_list'] = view_web_apps_list
+
+
+def _convert_reports_permissions(domain_link, master_results):
+    report_map = get_static_report_mapping(domain_link.master_domain, domain_link.linked_domain, {})
+    for role_def in master_results:
+        new_report_perms = [
+            perm for perm in role_def['permissions']['view_report_list']
+            if 'DynamicReport' not in perm
+        ]
+
+        for master_id, linked_id in report_map.items():
+            master_report_perm = get_ucr_class_name(master_id)
+            if master_report_perm in role_def['permissions']['view_report_list']:
+                new_report_perms.append(get_ucr_class_name(linked_id))
+
+        role_def['permissions']['view_report_list'] = new_report_perms

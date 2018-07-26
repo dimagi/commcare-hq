@@ -33,7 +33,7 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
         cls.master_app_with_report_modules = Application.new_app(cls.domain, "Master Application")
         module = cls.master_app_with_report_modules.add_module(ReportModule.new_module('Reports', None))
         module.report_configs = [
-            ReportAppConfig(report_id='id', header={'en': 'CommBugz'}),
+            ReportAppConfig(report_id='master_report_id', header={'en': 'CommBugz'}),
         ]
 
         cls.plain_master_app = Application.new_app(cls.domain, "Master Application")
@@ -64,7 +64,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
             overwrite_app(self.linked_app, self.master_app_with_report_modules, {})
 
     def test_report_mapping(self):
-        report_map = {'id': 'mapped_id'}
+        report_map = {'master_report_id': 'mapped_id'}
         overwrite_app(self.linked_app, self.master_app_with_report_modules, report_map)
         linked_app = Application.get(self.linked_app._id)
         self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
@@ -176,7 +176,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         module.new_form('f1', None, self.get_xml('very_simple_form'))
 
         linked_app = _mock_pull_remote_master(
-            self.master_app_with_report_modules, self.linked_app, {'id': 'mapped_id'}
+            self.master_app_with_report_modules, self.linked_app, {'master_report_id': 'mapped_id'}
         )
         master_id_map = _get_form_id_map(self.master_app_with_report_modules)
         linked_id_map = _get_form_id_map(linked_app)

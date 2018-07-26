@@ -8,6 +8,9 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from django_prbac.utils import has_privilege
 
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.util.couch import DocumentNotFound
+
 
 def localize(value, lang):
     """
@@ -199,8 +202,12 @@ def get_static_report_mapping(from_domain, to_domain, report_map):
             to_domain, report_id, is_custom_report
         )
         # check that new report is in new domain's list of static reports
-        StaticReportConfiguration.by_id(new_id, to_domain)
-        report_map[static_report.get_id] = new_id
+        try:
+            StaticReportConfiguration.by_id(new_id, to_domain)
+        except (BadSpecError, DocumentNotFound):
+            pass
+        else:
+            report_map[static_report.get_id] = new_id
     return report_map
 
 
