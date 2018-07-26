@@ -2321,7 +2321,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
         if should_update_export(export_instance.last_accessed):
             try:
-                rebuild_saved_export(export_instance_id, manual=False)
+                rebuild_saved_export(export_instance_id, manual=True)
             except Exception:
                 notify_exception(
                     req,
