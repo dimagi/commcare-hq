@@ -16,8 +16,8 @@ from soil import MultipleTaskDownload
 from .exceptions import EnikshayTaskException
 from .tasks import EpisodeAdherenceUpdate, CACHE_KEY
 
-from custom.enikshay.tasks import run_model_reconciliation, run_custom_export_tasks
-from custom.enikshay.forms import ReconciliationTaskForm, DataDumpTaskForm
+from custom.enikshay.tasks import run_model_reconciliation
+from custom.enikshay.forms import ReconciliationTaskForm
 
 
 class EpisodeTaskDebugView(View):
@@ -109,33 +109,3 @@ class ReconciliationTaskView(TemplateView):
         elif task_requested in ReconciliationTaskForm.permitted_tasks:
             run_task(task_requested)
         return JsonResponse({'message': 'Task queued. You would get an email shortly.'})
-
-
-@method_decorator(require_superuser, name="dispatch")
-class DataDumpTaskView(TemplateView):
-    template_name = "enikshay/data_dumps_task.html"
-
-    def get(self, request, *args, **kwargs):
-        return super(DataDumpTaskView, self).get(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        kwargs['data_dump_task_form'] = DataDumpTaskForm()
-        return super(DataDumpTaskView, self).get_context_data(**kwargs)
-
-    def post(self, request, *args, **kwargs):
-        def run_task(task_name):
-            run_custom_export_tasks.delay(
-                task_name,
-                request.POST.get('email'),
-                request.POST.get('full')
-            )
-        task_requested = request.POST.get('task')
-        message = 'Invalid task. How did you manage that?'  # should never stay in this state
-        if task_requested == 'all':
-            for task_to_run in DataDumpTaskForm.permitted_tasks:
-                run_task(task_to_run)
-            message = 'Tasks queued. You will get some emails shortly.'
-        elif task_requested in DataDumpTaskForm.permitted_tasks:
-            run_task(task_requested)
-            message = 'Task queued. You will get an email shortly.'
-        return JsonResponse({'message': message})

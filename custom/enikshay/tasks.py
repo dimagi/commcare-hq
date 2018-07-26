@@ -909,14 +909,6 @@ def run_model_reconciliation(command_name, email, person_case_ids=None, commit=F
                      commit=commit)
 
 
-@task(queue='background_queue', ignore_result=True)
-def run_custom_export_tasks(command_name, email, full):
-    if settings.SERVER_ENVIRONMENT == "enikshay":
-        call_command(command_name,
-                     recipient=email,
-                     full=full)
-
-
 @task
 def update_single_episode(domain, episode_case):
     updater = EpisodeAdherenceUpdate(domain, episode_case)
