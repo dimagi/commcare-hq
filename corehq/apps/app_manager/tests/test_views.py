@@ -219,7 +219,7 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 302)
         redirect_location = response['Location']
         [app_id] = re.compile(r'[a-fA-F0-9]{32}').findall(redirect_location)
-        expected = '/apps/view/{}/?appcues=1'.format(app_id)    # Remove get param when APPCUES_AB_TEST is over
+        expected = '/apps/view/{}/'.format(app_id)
         self.assertTrue(redirect_location.endswith(expected))
         self.addCleanup(lambda: Application.get_db().delete_doc(app_id))
 
