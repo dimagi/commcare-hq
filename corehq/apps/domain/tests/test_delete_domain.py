@@ -36,6 +36,15 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateAction,
+    AutomaticUpdateRule,
+    AutomaticUpdateRuleCriteria,
+    CaseRuleAction,
+    CaseRuleCriteria,
+    CaseRuleSubmission,
+    DomainCaseRuleRun,
+)
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.export.models.new import DailySavedExportNotification, DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
@@ -454,6 +463,47 @@ class TestDeleteDomain(TestCase):
 
         self._assert_data_dictionary_counts(self.domain.name, 0)
         self._assert_data_dictionary_counts(self.domain2.name, 1)
+
+    def _assert_data_interfaces(self, domain_name, count):
+        self._assert_queryset_count([
+            AutomaticUpdateAction.objects.filter(rule__domain=domain_name),
+            AutomaticUpdateRule.objects.filter(domain=domain_name),
+            AutomaticUpdateRuleCriteria.objects.filter(rule__domain=domain_name),
+            CaseRuleAction.objects.filter(rule__domain=domain_name),
+            CaseRuleCriteria.objects.filter(rule__domain=domain_name),
+            CaseRuleSubmission.objects.filter(domain=domain_name),
+            DomainCaseRuleRun.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_data_interfaces(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            automatic_update_rule = AutomaticUpdateRule.objects.create(domain=domain_name)
+            AutomaticUpdateAction.objects.create(rule=automatic_update_rule)
+            AutomaticUpdateRuleCriteria.objects.create(rule=automatic_update_rule)
+            CaseRuleAction.objects.create(rule=automatic_update_rule)
+            CaseRuleCriteria.objects.create(rule=automatic_update_rule)
+            CaseRuleSubmission.objects.create(
+                created_on=datetime.utcnow(),
+                domain=domain_name,
+                form_id=random_hex(),
+                rule=automatic_update_rule,
+            )
+            DomainCaseRuleRun.objects.create(domain=domain_name, started_on=datetime.utcnow())
+            self._assert_data_interfaces(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_data_interfaces(self.domain.name, 0)
+        self._assert_data_interfaces(self.domain2.name, 1)
+
+        self.assertEqual(AutomaticUpdateAction.objects.count(), 1)
+        self.assertEqual(AutomaticUpdateAction.objects.filter(rule__domain=self.domain2.name).count(), 1)
+        self.assertEqual(AutomaticUpdateRuleCriteria.objects.count(), 1)
+        self.assertEqual(AutomaticUpdateRuleCriteria.objects.filter(rule__domain=self.domain2.name).count(), 1)
+        self.assertEqual(CaseRuleAction.objects.count(), 1)
+        self.assertEqual(CaseRuleAction.objects.filter(rule__domain=self.domain2.name).count(), 1)
+        self.assertEqual(CaseRuleCriteria.objects.count(), 1)
+        self.assertEqual(CaseRuleCriteria.objects.filter(rule__domain=self.domain2.name).count(), 1)
 
     def _assert_domain_counts(self, domain_name, count):
         self._assert_queryset_count([
