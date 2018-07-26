@@ -1460,13 +1460,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def save_docs(cls, docs, **kwargs):
-        # this won't clear the caches, lets check if it's used anywhere before disallowing it's use
-        _assert = soft_assert('@'.join(['skelly', 'dimagi.com']), exponential_backoff=False)
-        _assert(False, "bulk save called on user class")
         utcnow = datetime.utcnow()
         for doc in docs:
             doc['last_modified'] = utcnow
         super(CouchUser, cls).save_docs(docs, **kwargs)
+        for user in docs:
+            user.clear_quickcache_for_user()
 
     bulk_save = save_docs
 
