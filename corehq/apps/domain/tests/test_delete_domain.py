@@ -36,8 +36,10 @@ from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (
+    DailyOutboundSMSLimitReached,
     ExpectedCallback,
     Keyword,
     KeywordAction,
@@ -52,6 +54,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackend,
     SQLMobileBackendMapping,
 )
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest
 from corehq.apps.zapier.consts import EventTypes
@@ -484,8 +487,24 @@ class TestDeleteDomain(TestCase):
         self._assert_reports_counts(self.domain.name, 0)
         self._assert_reports_counts(self.domain2.name, 1)
 
+    def _assert_reminders_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            EmailUsage.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_reminders_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            EmailUsage.objects.create(domain=domain_name, month=7, year=2018)
+            self._assert_reminders_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_reminders_counts(self.domain.name, 0)
+        self._assert_reminders_counts(self.domain2.name, 1)
+
     def _assert_sms_counts(self, domain_name, count):
         self._assert_queryset_count([
+            DailyOutboundSMSLimitReached.objects.filter(domain=domain_name),
             Keyword.objects.filter(domain=domain_name),
             KeywordAction.objects.filter(keyword__domain=domain_name),
             QueuedSMS.objects.filter(domain=domain_name)
@@ -493,6 +512,7 @@ class TestDeleteDomain(TestCase):
 
     def test_sms_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
+            DailyOutboundSMSLimitReached.objects.create(domain=domain_name, date=date.today())
             keyword = Keyword.objects.create(domain=domain_name)
             KeywordAction.objects.create(keyword=keyword)
             QueuedSMS.objects.create(domain=domain_name)
@@ -505,6 +525,27 @@ class TestDeleteDomain(TestCase):
 
         self.assertEqual(KeywordAction.objects.count(), 1)
         self.assertEqual(KeywordAction.objects.filter(keyword__domain=self.domain2.name).count(), 1)
+
+    def _assert_smsforms_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            SQLXFormsSession.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_smsforms_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            SQLXFormsSession.objects.create(
+                domain=domain_name,
+                start_time=datetime.utcnow(),
+                modified_time=datetime.utcnow(),
+                current_action_due=datetime.utcnow(),
+                expire_after=3,
+            )
+            self._assert_smsforms_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_smsforms_counts(self.domain.name, 0)
+        self._assert_smsforms_counts(self.domain2.name, 1)
 
     def _assert_userreports_counts(self, domain_name, count):
         self._assert_queryset_count([
