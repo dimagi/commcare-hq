@@ -39,12 +39,16 @@ class MobileRecoveryMeasureForm(forms.ModelForm):
         commcare_measures = ['cc_reinstall', 'cc_update']
         if data['measure'] in application_measures:
             if data['app_all_versions']:
-                raise ValidationError('App related measures must specify an app version range')
+                raise ValidationError("App related measures must specify an app version range")
         elif data['measure'] in commcare_measures:
             if data['cc_all_versions']:
-                raise ValidationError('Commcare related measures must specify a commcare version range')
+                raise ValidationError("Commcare related measures must specify a commcare version range")
         else:
-            raise ValidationError("I don't recognize this measure so I can't validate it.")
+            raise AssertionError(
+                "This measure doesn't have any specific validation defined, you must code in "
+                "validation for all possible measures (even if it's just to explicitly mark that "
+                "no further validation is necessary)."
+            )
 
         return self.cleaned_data
 
