@@ -58,7 +58,7 @@ branches:
   - jls/requirejs-domain-billing  # Jenny July 19
   - nh/lw/dhis  # Norman July 20
   - dmr/fix-package-security-vulnerabilities  # Danny July 21
-  #- jls/requirejs-login  # Jenny July 22
+  - jls/requirejs-login  # Jenny July 22
   - jls/enterprise-settings  # Jenny July 23
   - nh/fix_staging/why  # Norman July 24
 submodules:
