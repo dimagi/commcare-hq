@@ -770,7 +770,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
-        call_command('hard_delete_forms_and_cases_in_domain', self.domain.name)
+        call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
 
         self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
         self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
@@ -792,7 +792,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
-        call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name)
+        call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name, noinput=True)
 
         self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
         self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
@@ -814,7 +814,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
 
-        call_command('hard_delete_forms_and_cases_in_domain', self.domain.name)
+        call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
 
         self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
         self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
@@ -836,7 +836,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain.name)), 1)
         self.assertEqual(len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
 
-        call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name)
+        call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name, noinput=True)
 
         self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
         self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
@@ -847,4 +847,4 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
     def test_assert_sql_domain(self):
         self.domain.delete()
         with self.assertRaises(AssertionError):
-            call_command('hard_delete_forms_and_cases_in_domain', self.domain.name)
+            call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
