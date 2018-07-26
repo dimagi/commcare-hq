@@ -1779,7 +1779,6 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.m4change.models.M4ChangeFormFluffPillow',
-        'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',

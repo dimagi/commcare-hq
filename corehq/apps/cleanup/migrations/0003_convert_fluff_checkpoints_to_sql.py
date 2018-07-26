@@ -24,7 +24,6 @@ def migrate_fluff_pillows(apps, schema_editor):
         "RecapPassageFluffPillow",
         "TauxDeRuptureFluffPillow",
         "LivraisonFluffPillow",
-        "RecouvrementFluffPillow",
         "GeographyFluffPillow",
         "FarmerRecordFluffPillow",
         "UCLAPatientFluffPillow",

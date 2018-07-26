@@ -208,6 +208,3 @@ class RecouvrementFluff(fluff.IndicatorDocument):
     district_name = flat_field(lambda c: c['district_name'])
 
     payments = report_calcs.Recouvrement()
-
-
-RecouvrementFluffPillow = RecouvrementFluff.pillow()
