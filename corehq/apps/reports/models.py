@@ -99,7 +99,7 @@ class HQUserType(object):
 
     @classmethod
     def commtrack_defaults(cls):
-        # this is just a convenience method for clairty on commtrack projects
+        # this is just a convenience method for clarity on commtrack projects
         return cls.all()
 
     @classmethod
