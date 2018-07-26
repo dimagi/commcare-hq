@@ -6,7 +6,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.dates import force_to_datetime
 import fluff
 from corehq.fluff.calculators.case import CasePropertyFilter
-from custom.world_vision import WORLD_VISION_DOMAINS
 from corehq.apps.users.models import CommCareUser
 from custom.utils.utils import flat_field
 from custom.world_vision import user_calcs
@@ -16,6 +15,7 @@ from django.utils.dateformat import format
 
 
 WV_DELETED_TYPES = ('CommCareCase-Deleted', )
+WORLD_VISION_DOMAINS = ('wvindia2', )
 
 
 class WorldVisionMotherFluff(fluff.IndicatorDocument):
