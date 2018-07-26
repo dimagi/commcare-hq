@@ -54,7 +54,6 @@ hqDefine("app_manager/js/app_view", function() {
                             self.multimedia_page_html(content);
                         },
                         error: function(data) {
-                            var errorMessage;
                             if (data.hasOwnProperty('responseJSON')){
                                 alert(data.responseJSON.message);
                             }
