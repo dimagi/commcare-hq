@@ -21,6 +21,7 @@ requirejs.config({
             exports: 'RMI',
         },
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "blazy/blazy": { exports: "Blazy" },
     },
     map: {
         "datatables.fixedColumns": {
