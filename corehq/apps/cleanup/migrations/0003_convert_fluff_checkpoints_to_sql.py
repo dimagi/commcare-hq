@@ -27,6 +27,9 @@ def migrate_fluff_pillows(apps, schema_editor):
         "RecouvrementFluffPillow",
         "GeographyFluffPillow",
         "FarmerRecordFluffPillow",
+        "WorldVisionMotherFluffPillow",
+        "WorldVisionChildFluffPillow",
+        "WorldVisionHierarchyFluffPillow",
         "UCLAPatientFluffPillow",
     ]
     migrate_legacy_pillows(apps, fluff_pillow_names)
