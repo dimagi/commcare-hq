@@ -370,20 +370,23 @@
                 });
                 requirejs([
                     'hqwebapp/js/common',
-                    'jquery.cookie/jquery.cookie',
-                    'hqwebapp/js/layout',
-                    'hqwebapp/js/hq-bug-report',
-                    'hqwebapp/js/main',
-                    'hqwebapp/js/hq.helpers',
-                    'notifications/js/notifications_service_main',
-                    'analytix/js/appcues',
-                    'analytix/js/drift',
-                    'analytix/js/google',
-                    'analytix/js/hubspot',
-                    'analytix/js/kissmetrix',
-                    'hqwebapp/js/mobile_experience_warning',
                 ], function () {
-                    requirejs(['{{ requirejs_main }}']);
+                    requirejs([
+                        'jquery.cookie/jquery.cookie',
+                        'hqwebapp/js/layout',
+                        'hqwebapp/js/hq-bug-report',
+                        'hqwebapp/js/main',
+                        'hqwebapp/js/hq.helpers',
+                        'notifications/js/notifications_service_main',
+                        'analytix/js/appcues',
+                        'analytix/js/drift',
+                        'analytix/js/google',
+                        'analytix/js/hubspot',
+                        'analytix/js/kissmetrix',
+                        'hqwebapp/js/mobile_experience_warning',
+                    ], function () {
+                        requirejs(['{{ requirejs_main }}']);
+                    });
                 });
             </script>
         {% endif %}
