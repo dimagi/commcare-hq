@@ -92,6 +92,7 @@ _ADD_ONS = {
         name=feature_previews.CALC_XPATHS.label,
         description=feature_previews.CALC_XPATHS.description,
         used_in_module=_uses_calculated_property,
+        help_link=feature_previews.CALC_XPATHS.help_link,
     ),
     "case_detail_overwrite": AddOn(
         name=_("Case Detail Overwrite"),
