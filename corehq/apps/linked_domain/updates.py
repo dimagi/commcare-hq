@@ -105,6 +105,8 @@ def update_user_roles(domain_link):
 
 
 def _convert_web_apps_permissions(domain_link, master_results):
+    """Mutates the master result docs to convert web app permissions.
+    """
     linked_apps_by_master = {
         app.master: app._id
         for app in get_docs_in_domain_by_class(domain_link.linked_domain, LinkedApplication)
@@ -123,6 +125,8 @@ def _convert_web_apps_permissions(domain_link, master_results):
 
 
 def _convert_reports_permissions(domain_link, master_results):
+    """Mutates the master result docs to convert dynamic report permissions.
+    """
     report_map = get_static_report_mapping(domain_link.master_domain, domain_link.linked_domain)
     for role_def in master_results:
         new_report_perms = [
