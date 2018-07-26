@@ -900,15 +900,6 @@ def get_updated_fields(existing_properties, new_properties):
     return updated_fields
 
 
-@task(queue='background_queue', ignore_result=True)
-def run_model_reconciliation(command_name, email, person_case_ids=None, commit=False):
-    if settings.SERVER_ENVIRONMENT == "enikshay":
-        call_command(command_name,
-                     recipient=email,
-                     person_case_ids=person_case_ids,
-                     commit=commit)
-
-
 @task
 def update_single_episode(domain, episode_case):
     updater = EpisodeAdherenceUpdate(domain, episode_case)

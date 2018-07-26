@@ -5,7 +5,6 @@ from django.conf.urls import include, url
 from custom.enikshay.views import (
     EpisodeTaskDebugView,
     EpisodeTaskStatusView,
-    ReconciliationTaskView,
 )
 from custom.enikshay.reports.views import LocationsView, DistrictLocationsView
 
@@ -19,5 +18,4 @@ urlpatterns = [
         name=EpisodeTaskDebugView.urlname),
     url(r'^episode_task_status/$', EpisodeTaskStatusView.as_view(),
         name=EpisodeTaskStatusView.urlname),
-    url(r'^reconciliation_tasks/$', ReconciliationTaskView.as_view()),
 ]
