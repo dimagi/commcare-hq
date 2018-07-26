@@ -20,6 +20,7 @@ from django.views.generic.base import TemplateView
 from couchdbkit import ResourceConflict
 
 from casexml.apps.phone.fixtures import generator
+from corehq.apps.analytics.ab_tests import appcues_template_app_test
 from corehq.apps.users.util import format_username
 from custom.enikshay.login_as_context import get_enikshay_login_as_context
 from dimagi.utils.parsing import string_to_boolean
@@ -170,6 +171,7 @@ class FormplayerMain(View):
             "domain": domain,
             "language": language,
             "apps": apps,
+            "appcues_test": appcues_template_app_test(request),
             "maps_api_key": settings.GMAPS_API_KEY,
             "username": request.couch_user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
