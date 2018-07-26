@@ -20,6 +20,8 @@ from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from six.moves import range
 
+from corehq.apps.domain.models import Domain
+
 
 class TestCreditLines(BaseInvoiceTestCase):
     min_subscription_length = 5
@@ -33,12 +35,12 @@ class TestCreditLines(BaseInvoiceTestCase):
     def setUp(self):
         super(TestCreditLines, self).setUp()
         num_active = random.randint(self.user_rate.monthly_limit + 1, self.user_rate.monthly_limit + 2)
-        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
+        generator.arbitrary_commcare_users_for_domain(self.domain, num_active)
         num_excess = num_active - self.user_rate.monthly_limit
         self.monthly_user_fee = num_excess * self.user_rate.per_excess_fee
 
     def tearDown(self):
-        for user in self.domain.all_users():
+        for user in Domain(name=self.domain).all_users():
             user.delete()
         super(TestCreditLines, self).tearDown()
 
@@ -117,7 +119,7 @@ class TestCreditLines(BaseInvoiceTestCase):
     def _generate_users_fee_to_credit_against(self):
         user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
         num_active = random.randint(user_rate.monthly_limit + 1, user_rate.monthly_limit + 2)
-        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
+        generator.arbitrary_commcare_users_for_domain(self.domain, num_active)
         num_excess = num_active - user_rate.monthly_limit
         per_month_fee = num_excess * user_rate.per_excess_fee
         return user_rate, per_month_fee
@@ -156,13 +158,13 @@ class TestCreditLines(BaseInvoiceTestCase):
         )
 
         # other subscription credit that shouldn't count toward this invoice
-        other_domain = generator.arbitrary_domain()
+        other_domain_name = generator.get_arbitrary_domain_name()
         # so that the other subscription doesn't draw from the same account credits, have it start 4 months later
         new_subscription_start = utils.months_from_date(self.subscription.date_start, 4)
 
         other_subscription = generator.generate_domain_subscription(
             self.account,
-            other_domain,
+            other_domain_name,
             date_start=new_subscription_start,
             date_end=add_months_to_date(new_subscription_start, self.min_subscription_length),
         )
@@ -285,7 +287,7 @@ class TestCreditTransfers(BaseAccountingTest):
         cls.product_credit_amt = Decimal('500.00')
         cls.feature_credit_amt = Decimal('200.00')
         cls.subscription_credit_amt = Decimal('600.00')
-        cls.domain = generator.arbitrary_domain()
+        cls.domain = generator.get_arbitrary_domain_name()
         cls.account = BillingAccount.get_or_create_account_by_domain(
             cls.domain, created_by="biyeun@dimagi.com",
         )[0]
@@ -326,7 +328,7 @@ class TestCreditTransfers(BaseAccountingTest):
             edition=SoftwarePlanEdition.STANDARD
         )
         first_sub = Subscription.new_domain_subscription(
-            self.account, self.domain.name, advanced_plan,
+            self.account, self.domain, advanced_plan,
             date_start=datetime.date.today() - relativedelta(days=1),
         )
 

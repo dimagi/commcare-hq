@@ -32,5 +32,5 @@ class TestWireInvoice(BaseInvoiceTestCase):
         wi = factory.create_wire_invoice(balance)
 
         self.assertEqual(wi.balance, balance)
-        self.assertEqual(wi.domain, self.domain.name)
+        self.assertEqual(wi.domain, self.domain)
         self.assertEqual(len(mail.outbox), 1)
