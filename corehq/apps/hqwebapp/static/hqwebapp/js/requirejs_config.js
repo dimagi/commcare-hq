@@ -33,7 +33,7 @@ requirejs.config({
         'jquery-treetable/jquery.treetable': { deps: ['jquery'] },
         'jquery-ui/ui/datepicker': { deps: ['jquery'] },
         'jquery-ui/ui/effect': { deps: ['jquery'] },
-        'jquery-ui/ui/effect-slide': { deps: ['jquery'] },
+        'jquery-ui/ui/effect-slide': { deps: ['jquery', 'jquery-ui/ui/effect'] },
         'ko.mapping': { deps: ['knockout'] },
         'knockout-validation/dist/knockout.validation.min': { deps: ['knockout'] },
         'multiselect/js/jquery.multi-select': { deps: ['jquery'] },
