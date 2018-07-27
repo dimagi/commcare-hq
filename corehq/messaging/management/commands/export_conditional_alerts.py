@@ -16,6 +16,7 @@ from corehq.messaging.scheduling.models import (
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
 from django.core.management.base import BaseCommand, CommandError
+from io import open as io_open
 import copy
 import json
 import jsonobject
@@ -68,6 +69,14 @@ class SimpleSMSAlertSchedule(jsonobject.JsonObject):
     schedule_type = SIMPLE_SMS_ALERT_SCHEDULE
     message = jsonobject.DictProperty(six.text_type)
     extra_options = jsonobject.ObjectProperty(ExtraSchedulingOptions)
+
+
+def open_for_json_write(path):
+    # json.dumps returns bytes in python2, but unicode in python3
+    if six.PY2:
+        return open(path, 'wb')
+
+    return io_open(path, 'w', encoding='utf-8')
 
 
 class Command(BaseCommand):
@@ -201,7 +210,7 @@ class Command(BaseCommand):
                 'schedule': json_schedule.to_json(),
             }))
 
-        with open('conditional_alerts_for_%s.txt' % domain, 'wb') as f:
+        with open_for_json_write('conditional_alerts_for_%s.txt' % domain) as f:
             for line in result:
                 f.write(line)
                 f.write('\n')
