@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from datetime import date
 import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
@@ -1211,6 +1212,7 @@ def enterprise_settings(request, domain):
 
     context = {
         'account': account,
+        'accounts_email': settings.ACCOUNTS_EMAIL,
         'domain': domain,
         'current_page': {
             'title': _('Enterprise Settings'),
