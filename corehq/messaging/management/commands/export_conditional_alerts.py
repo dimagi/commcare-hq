@@ -115,10 +115,10 @@ class Command(BaseCommand):
             raise CommandError("Expected scheduler module integration to be disabled")
 
         json_rule.recipients = copy.deepcopy(action.recipients)
-        reset_case_property_name = action.reset_case_property_name
-        start_date_case_property = action.start_date_case_property
-        specific_start_date = action.specific_start_date
-        scheduler_module_info = CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
+        json_rule.reset_case_property_name = action.reset_case_property_name
+        json_rule.start_date_case_property = action.start_date_case_property
+        json_rule.specific_start_date = action.specific_start_date
+        json_rule.scheduler_module_info = CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
 
         return json_rule
 
