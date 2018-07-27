@@ -86,7 +86,7 @@ class Command(ResourceStaticCommand):
                     if re.search(r'sourceMappingURL=bundle.js.map', line):
                         line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
                     fout.write(line)
-            resource_versions[module['name'] + ".js"] = file_hash
+            #resource_versions[module['name'] + ".js"] = file_hash
 
         # Write out resource_versions.js for all js files in resource_versions
         # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ
