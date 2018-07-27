@@ -353,6 +353,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     is_active = models.BooleanField(default=True)
     is_customer_billing_account = models.BooleanField(default=False)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
+    enterprise_restricted_signup_domains = ArrayField(models.CharField(max_length=128), default=list, blank=True)
     entry_point = models.CharField(
         max_length=25,
         default=EntryPoint.NOT_SET,
@@ -370,6 +371,12 @@ class BillingAccount(ValidateModelMixin, models.Model):
         default=PreOrPostPay.NOT_SET,
         choices=PreOrPostPay.CHOICES,
     )
+
+    # Settings visible to external users
+    restrict_domain_creation = models.BooleanField(default=False)
+    restrict_signup = models.BooleanField(default=False)
+    restrict_signup_message = models.CharField(max_length=128, null=True, blank=True)
+    restrict_signup_email = models.CharField(max_length=128, null=True, blank=True)
 
     class Meta(object):
         app_label = 'accounting'
