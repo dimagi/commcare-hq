@@ -10,7 +10,7 @@ var transformLocationTypeName = function(locationTypeName) {
     }
 };
 
-function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage) {
+function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage, gaService) {
     var vm = this;
 
     var ALL_OPTION = {
@@ -92,6 +92,9 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
     vm.apply = function() {
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+        gaService.trackCategory('Location Filter').event(
+            'Location Changed', vm.selectedLocationId.location_id
+        );
         $uibModalInstance.close(vm.selectedLocations);
     };
 
@@ -429,7 +432,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 }
 
 LocationFilterController.$inject = ['$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId'];
-LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage'];
+LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'gaService'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
