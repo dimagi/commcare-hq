@@ -1,0 +1,2360 @@
+{
+    "_id": "a82bd15183d840cd90ad3d8b149ae9f4",
+    "_rev": "3-4da1731e8e9a01ded22c156b6bdbafc6",
+    "add_ons": {
+        "advanced_itemsets": false,
+        "calc_xpaths": false,
+        "case_detail_overwrite": false,
+        "case_list_menu_item": true,
+        "conditional_enum": false,
+        "conditional_form_actions": false,
+        "custom_icon_badges": false,
+        "display_conditions": false,
+        "empty_case_lists": false,
+        "enum_image": true,
+        "menu_mode": true,
+        "register_from_case_list": true,
+        "subcases": false
+    },
+    "admin_password": null,
+    "admin_password_charset": "n",
+    "amplifies_project": "not_set",
+    "amplifies_workers": "not_set",
+    "anonymous_cloudcare_enabled": false,
+    "anonymous_cloudcare_hash": "V3RHP6",
+    "application_version": "2.0",
+    "archived_media": {},
+    "attribution_notes": null,
+    "auto_gps_capture": false,
+    "build_broken": false,
+    "build_broken_reason": null,
+    "build_comment": "Version being used in appcues test",
+    "build_profiles": {},
+    "build_signed": true,
+    "build_spec": {
+        "build_number": null,
+        "doc_type": "BuildSpec",
+        "latest": true,
+        "version": "2.44.2"
+    },
+    "built_on": "2018-07-27T22:17:54.423340Z",
+    "built_with": {
+        "build_number": 557,
+        "datetime": "2018-07-27T22:17:54.423340Z",
+        "doc_type": "BuildRecord",
+        "latest": null,
+        "signed": true,
+        "version": "2.44.2"
+    },
+    "cached_properties": {},
+    "case_sharing": false,
+    "cloudcare_enabled": true,
+    "comment": "Sample data collection app for tracking pregnant mothers.",
+    "comment_from": "9c019526e6acc048186bd01536a84558",
+    "copy_history": [],
+    "copy_of": "16807132a3f04ce6b5675e407853f6ef",
+    "created_from_template": null,
+    "custom_base_url": null,
+    "date_created": "2018-07-27T22:17:54.423340Z",
+    "deployment_date": null,
+    "description": null,
+    "doc_type": "Application",
+    "domain": "my-first-project-21",
+    "experienced_threshold": "3",
+    "external_blobs": {
+        "1506828eae282d5fa7d3b8e787584d714104b3bd.xml": {
+            "content_length": 645,
+            "content_type": "application/xml",
+            "digest": "md5-kvyZ3NX5E16iFKg3SXmFuw==",
+            "doc_type": "BlobMeta",
+            "id": "vWlZad0dLqE"
+        },
+        "1c9e049efea8c4669885582f94f9778858938665.xml": {
+            "content_length": 637,
+            "content_type": "application/xml",
+            "digest": "md5-k7KgxkQ4CVX/H95bNaQEmw==",
+            "doc_type": "BlobMeta",
+            "id": "Va8cW_5349o"
+        },
+        "325e241d18d6a906e8e61855bcd27f3bcfbd3d2f.xml": {
+            "content_length": 1127,
+            "content_type": "application/xml",
+            "digest": "md5-tC41lXs3brPgGxJ2c7+UBA==",
+            "doc_type": "BlobMeta",
+            "id": "LAGxBppX8BQ"
+        },
+        "35f7690f19104060be198d46081bbeff28bd0cc1.xml": {
+            "content_length": 645,
+            "content_type": "application/xml",
+            "digest": "md5-R9lZ+wJlNNutEhWoEGe/WQ==",
+            "doc_type": "BlobMeta",
+            "id": "bwU_DZN00tw"
+        },
+        "36055eb595a9ebe0c2cdedbfdec3c37751dd0f0f.xml": {
+            "content_length": 645,
+            "content_type": "application/xml",
+            "digest": "md5-7aYfnfrGSP0boU6x3JcOMQ==",
+            "doc_type": "BlobMeta",
+            "id": "k9OsDgwSMS0"
+        },
+        "44f0510ce6ab50b0c02882f8ab842d69a1ae1eb5.xml": {
+            "content_length": 21089,
+            "content_type": "application/xml",
+            "digest": "md5-CVvKVODR/D5yLhaczisB9w==",
+            "doc_type": "BlobMeta",
+            "id": "d_g2bKFyDA8"
+        },
+        "533fe96a40fac34e3814a0a3c52f2a4f0e576728.xml": {
+            "content_length": 11417,
+            "content_type": "application/xml",
+            "digest": "md5-jg36u96OSorXmr7q+yoTVA==",
+            "doc_type": "BlobMeta",
+            "id": "hR6K88ZVUcQ"
+        },
+        "5829dcf8c129ca5c97ae4950a08a365b3ab28c8f.xml": {
+            "content_length": 645,
+            "content_type": "application/xml",
+            "digest": "md5-BcEcb4QLysflgXW7SndsVA==",
+            "doc_type": "BlobMeta",
+            "id": "62LFX66kpbk"
+        },
+        "5d4dbf181533ae2278ef5a1eab6c66a7cb97848.xml": {
+            "content_length": 627,
+            "content_type": "application/xml",
+            "digest": "md5-YwmGP/txjNhROEWvhx7kqw==",
+            "doc_type": "BlobMeta",
+            "id": "_-ivjLmUmdk"
+        },
+        "5d81d45dd5a4129f8081934b8117b086a585b1cb.xml": {
+            "content_length": 637,
+            "content_type": "application/xml",
+            "digest": "md5-pNIqqAN2xtqQOc20s3XHtA==",
+            "doc_type": "BlobMeta",
+            "id": "5AQlP1uYL0Q"
+        },
+        "85d5ae6e969ed5324d704f0108df1d42fb951506.xml": {
+            "content_length": 10362,
+            "content_type": "application/xml",
+            "digest": "md5-pooNi0l0cCYhb98KgyxQ4g==",
+            "doc_type": "BlobMeta",
+            "id": "GUoKhICri2s"
+        },
+        "8e38b4211abc07878dfd70895f4d39a3455e2f8d.xml": {
+            "content_length": 645,
+            "content_type": "application/xml",
+            "digest": "md5-8iWAjekjRF63HjNRmVx8Kg==",
+            "doc_type": "BlobMeta",
+            "id": "jQLW2f34s-8"
+        },
+        "935bfe5e908da5debe1735dfa8ebb0e4f488678c.xml": {
+            "content_length": 1127,
+            "content_type": "application/xml",
+            "digest": "md5-166nZXzBci+ecRgCpvoP8w==",
+            "doc_type": "BlobMeta",
+            "id": "KQpIEgA0gqk"
+        },
+        "a73526fa4d1ca95673de3bb86b2b1fa4db59f066.xml": {
+            "content_length": 627,
+            "content_type": "application/xml",
+            "digest": "md5-0TwDBsE10LLHUaK1uAtMyw==",
+            "doc_type": "BlobMeta",
+            "id": "pFkzU32fljE"
+        },
+        "a7dab820b276eff6b0c0284c86de5185eea9d5ec.xml": {
+            "content_length": 637,
+            "content_type": "application/xml",
+            "digest": "md5-+yS3yKnwP2nUoO4CN6qCow==",
+            "doc_type": "BlobMeta",
+            "id": "G1JV7gX6YGg"
+        },
+        "a9243682a7740d5712fa31129e27041d25806f26.xml": {
+            "content_length": 623,
+            "content_type": "application/xml",
+            "digest": "md5-FvB1FLorYQq2vWHGPFHOBg==",
+            "doc_type": "BlobMeta",
+            "id": "Ab1TRbWqWFc"
+        },
+        "ac8eb2c2311f6b8ea705461c1ce8c1913d688ac7.xml": {
+            "content_length": 1614,
+            "content_type": "application/xml",
+            "digest": "md5-Rfd86uAYK0nuoTDRKcEWaQ==",
+            "doc_type": "BlobMeta",
+            "id": "j7P9X4yK2CA"
+        },
+        "ae3e038db50c1a1586b87c5baae4e758b9028cda.xml": {
+            "content_length": 22717,
+            "content_type": "application/xml",
+            "digest": "md5-QKGE0mVptrqb2pcl5JQ86A==",
+            "doc_type": "BlobMeta",
+            "id": "0TJr6D4Wes0"
+        },
+        "c81cafa3036818c186b653355fae139728287903.xml": {
+            "content_length": 2097,
+            "content_type": "application/xml",
+            "digest": "md5-DPYqjGvq9kBdqwHbxK1bZw==",
+            "doc_type": "BlobMeta",
+            "id": "QuyK5aC-zcY"
+        },
+        "ca1f5a0725004d8a2031e7baf59f529b571eb0f3.xml": {
+            "content_length": 11427,
+            "content_type": "application/xml",
+            "digest": "md5-iCRp5wyceZbwstna035V1w==",
+            "doc_type": "BlobMeta",
+            "id": "sBkRobavCHg"
+        },
+        "ed35656897da3de94f9ac84729028c28aaf715f4.xml": {
+            "content_length": 1196,
+            "content_type": "application/xml",
+            "digest": "md5-0ePerb2hdoV7vLSHR6G6oQ==",
+            "doc_type": "BlobMeta",
+            "id": "8_1QKV2BZ7I"
+        },
+        "f98c93a625fba3fddfdcea2b5470d6823cde8b12.xml": {
+            "content_length": 645,
+            "content_type": "application/xml",
+            "digest": "md5-th43KbWHPjHtUDiZ8po2Jg==",
+            "doc_type": "BlobMeta",
+            "id": "0KbVRrWLtRU"
+        },
+        "files/default/app_strings.txt": {
+            "content_length": 3834,
+            "content_type": "text/plain",
+            "digest": "md5-I0MZldoJ48OqM5vcVKdZqQ==",
+            "doc_type": "BlobMeta",
+            "id": "r4Dt93RVNko"
+        },
+        "files/en/app_strings.txt": {
+            "content_length": 2103,
+            "content_type": "text/plain",
+            "digest": "md5-wq7qBKus7SmJzm2Py0I/Lw==",
+            "doc_type": "BlobMeta",
+            "id": "OsWNfwLawlk"
+        },
+        "files/hin/app_strings.txt": {
+            "content_length": 1722,
+            "content_type": "text/plain",
+            "digest": "md5-MT5LIQGW33wEBGJfZ9U4Aw==",
+            "doc_type": "BlobMeta",
+            "id": "LsqAjxjfoqY"
+        },
+        "files/media_profile.ccpr": {
+            "content_length": 4909,
+            "content_type": "",
+            "digest": "md5-sYCR95phMleZxFSH7hbJTw==",
+            "doc_type": "BlobMeta",
+            "id": "mwkjM44OsiQ"
+        },
+        "files/media_profile.xml": {
+            "content_length": 4909,
+            "content_type": "application/xml",
+            "digest": "md5-RN2z54iIfN9ow477RS7kIw==",
+            "doc_type": "BlobMeta",
+            "id": "ab0xQhACVnQ"
+        },
+        "files/media_suite.xml": {
+            "content_length": 8284,
+            "content_type": "application/xml",
+            "digest": "md5-376GX19IVfDjg54439tcYw==",
+            "doc_type": "BlobMeta",
+            "id": "PHC26GKM0us"
+        },
+        "files/modules-0/forms-0.xml": {
+            "content_length": 11935,
+            "content_type": "application/xml",
+            "digest": "md5-nR95dusgQsCbnOnJsjyEfQ==",
+            "doc_type": "BlobMeta",
+            "id": "SB8xQRaq_9k"
+        },
+        "files/modules-1/forms-0.xml": {
+            "content_length": 20130,
+            "content_type": "application/xml",
+            "digest": "md5-rPyl7XQ1ObUOEow+EA1rXA==",
+            "doc_type": "BlobMeta",
+            "id": "W8zAMF0XoLg"
+        },
+        "files/modules-1/forms-1.xml": {
+            "content_length": 10855,
+            "content_type": "application/xml",
+            "digest": "md5-1zGvgYJrmagqIJbFIk0h9g==",
+            "doc_type": "BlobMeta",
+            "id": "y7JoKBntLVE"
+        },
+        "files/modules-2/forms-0.xml": {
+            "content_length": 21363,
+            "content_type": "application/xml",
+            "digest": "md5-ow/+IrkMJIF7ZoQyoBBhVg==",
+            "doc_type": "BlobMeta",
+            "id": "1dc5LSuZqEg"
+        },
+        "files/profile.ccpr": {
+            "content_length": 4574,
+            "content_type": "",
+            "digest": "md5-H/oeJZFMTq4UhEzRLAjiow==",
+            "doc_type": "BlobMeta",
+            "id": "oUenpiE2efs"
+        },
+        "files/profile.xml": {
+            "content_length": 4574,
+            "content_type": "application/xml",
+            "digest": "md5-FDFnvdTCsfduMueFkkTBJw==",
+            "doc_type": "BlobMeta",
+            "id": "XH8ywpWvROE"
+        },
+        "files/suite.xml": {
+            "content_length": 12475,
+            "content_type": "application/xml",
+            "digest": "md5-+TMtv0ALtNyv1qE4PI4eSw==",
+            "doc_type": "BlobMeta",
+            "id": "WXT3G1omIjI"
+        }
+    },
+    "grid_form_menus": "none",
+    "has_submissions": false,
+    "is_auto_generated": false,
+    "is_released": false,
+    "langs": [
+        "en",
+        "hin"
+    ],
+    "last_modified": "2018-07-27T22:18:39.699289Z",
+    "linked_whitelist": [],
+    "logo_refs": {},
+    "media_form_errors": false,
+    "media_language_map": {},
+    "minimum_use_threshold": "15",
+    "mobile_ucr_restore_version": "1.0",
+    "mobile_ucr_sync_interval": null,
+    "modules": [
+        {
+            "auto_select_case": false,
+            "case_details": {
+                "doc_type": "DetailPair",
+                "long": {
+                    "columns": [
+                        {
+                            "advanced": "",
+                            "case_tile_field": null,
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "name",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": {
+                                "annotations": [],
+                                "config": {},
+                                "doc_type": "GraphConfiguration",
+                                "graph_type": null,
+                                "locale_specific_config": {},
+                                "series": []
+                            },
+                            "hasAutocomplete": true,
+                            "header": {
+                                "en": "Name"
+                            },
+                            "late_flag": 30,
+                            "model": "case",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        }
+                    ],
+                    "custom_variables": null,
+                    "custom_xml": null,
+                    "display": "long",
+                    "doc_type": "Detail",
+                    "filter": null,
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": null,
+                    "persist_tile_on_forms": null,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": null,
+                    "print_template": {},
+                    "pull_down_tile": null,
+                    "sort_elements": [],
+                    "sort_nodeset_columns": false,
+                    "tabs": [],
+                    "use_case_tiles": null
+                },
+                "short": {
+                    "columns": [
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "name",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Name"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "date-opened",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Date Opened"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        }
+                    ],
+                    "custom_variables": "",
+                    "custom_xml": "",
+                    "display": "short",
+                    "doc_type": "Detail",
+                    "filter": null,
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": false,
+                    "persist_tile_on_forms": false,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": "",
+                    "print_template": {},
+                    "pull_down_tile": false,
+                    "sort_elements": [],
+                    "sort_nodeset_columns": null,
+                    "tabs": [],
+                    "use_case_tiles": false
+                }
+            },
+            "case_list": {
+                "custom_icons": [],
+                "doc_type": "CaseList",
+                "label": {},
+                "media_audio": {
+                    "en": ""
+                },
+                "media_image": {
+                    "en": ""
+                },
+                "show": false
+            },
+            "case_list_form": {
+                "custom_icons": [],
+                "doc_type": "CaseListForm",
+                "form_id": null,
+                "label": {
+                    "en": ""
+                },
+                "media_audio": {
+                    "en": ""
+                },
+                "media_image": {
+                    "en": ""
+                },
+                "post_form_workflow": "default"
+            },
+            "case_type": "pregnacy",
+            "comment": "",
+            "custom_icons": [],
+            "display_style": "list",
+            "doc_type": "Module",
+            "fixture_select": {
+                "active": false,
+                "display_column": null,
+                "doc_type": "FixtureSelect",
+                "fixture_type": null,
+                "localize": false,
+                "variable_column": null,
+                "xpath": ""
+            },
+            "forms": [
+                {
+                    "actions": {
+                        "case_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "always"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "close_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "FormAction"
+                        },
+                        "close_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "FormAction"
+                        },
+                        "doc_type": "FormActions",
+                        "load_from_form": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "open_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "always"
+                            },
+                            "doc_type": "OpenCaseAction",
+                            "external_id": null,
+                            "name_path": "/data/patient_name"
+                        },
+                        "open_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "OpenReferralAction",
+                            "followup_date": null,
+                            "name_path": null
+                        },
+                        "referral_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "subcases": [],
+                        "update_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "always"
+                            },
+                            "doc_type": "UpdateCaseAction",
+                            "update": {
+                                "Children_alive": "/data/children_alive",
+                                "Last_menstrual_period": "/data/last_menstrual_period",
+                                "Total_children": "/data/Total_children",
+                                "feeling_sick": "/data/feeling_sick",
+                                "village_name": "/data/village_name"
+                            }
+                        },
+                        "update_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "UpdateReferralAction",
+                            "followup_date": null
+                        },
+                        "usercase_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "usercase_update": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "UpdateCaseAction",
+                            "update": {}
+                        }
+                    },
+                    "auto_gps_capture": false,
+                    "case_references_data": {
+                        "doc_type": "CaseReferences",
+                        "load": {},
+                        "save": {}
+                    },
+                    "comment": "",
+                    "custom_icons": [],
+                    "custom_instances": [],
+                    "doc_type": "Form",
+                    "enable_release_notes": false,
+                    "form_filter": null,
+                    "form_links": [],
+                    "form_type": "module_form",
+                    "is_release_notes_form": false,
+                    "media_audio": {
+                        "en": ""
+                    },
+                    "media_image": {
+                        "en": "jr://file/commcare/image/module0_form0_en.png"
+                    },
+                    "name": {
+                        "en": "STEP 1: Register a new patient"
+                    },
+                    "no_vellum": false,
+                    "post_form_workflow": "default",
+                    "post_form_workflow_fallback": "",
+                    "requires": "none",
+                    "schedule_form_id": null,
+                    "show_count": false,
+                    "unique_id": "533fe96a40fac34e3814a0a3c52f2a4f0e576728",
+                    "version": 504,
+                    "xmlns": "http://openrosa.org/formdesigner/C87A7E2A-D98D-4E2C-9F0B-997E0AE635C6"
+                }
+            ],
+            "is_training_module": false,
+            "media_audio": {
+                "en": ""
+            },
+            "media_image": {
+                "en": ""
+            },
+            "module_filter": null,
+            "module_type": "basic",
+            "name": {
+                "en": "(HIDDEN MENU TITLE) Register a new patient"
+            },
+            "parent_select": {
+                "active": false,
+                "doc_type": "ParentSelect",
+                "module_id": null,
+                "relationship": "parent"
+            },
+            "put_in_root": true,
+            "ref_details": {
+                "doc_type": "DetailPair",
+                "long": {
+                    "columns": [],
+                    "custom_variables": null,
+                    "custom_xml": null,
+                    "display": "long",
+                    "doc_type": "Detail",
+                    "filter": null,
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": null,
+                    "persist_tile_on_forms": null,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": null,
+                    "print_template": {},
+                    "pull_down_tile": null,
+                    "sort_elements": [],
+                    "sort_nodeset_columns": null,
+                    "tabs": [],
+                    "use_case_tiles": null
+                },
+                "short": {
+                    "columns": [],
+                    "custom_variables": null,
+                    "custom_xml": null,
+                    "display": "short",
+                    "doc_type": "Detail",
+                    "filter": null,
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": null,
+                    "persist_tile_on_forms": null,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": null,
+                    "print_template": {},
+                    "pull_down_tile": null,
+                    "sort_elements": [],
+                    "sort_nodeset_columns": null,
+                    "tabs": [],
+                    "use_case_tiles": null
+                }
+            },
+            "referral_list": {
+                "custom_icons": [],
+                "doc_type": "CaseList",
+                "label": {},
+                "media_audio": {},
+                "media_image": {},
+                "show": false
+            },
+            "root_module_id": null,
+            "search_config": {
+                "blacklisted_owner_ids_expression": null,
+                "command_label": {
+                    "en": "Search All Cases"
+                },
+                "default_properties": [],
+                "doc_type": "CaseSearch",
+                "include_closed": false,
+                "properties": [],
+                "relevant": "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
+                "search_button_display_condition": null
+            },
+            "task_list": {
+                "custom_icons": [],
+                "doc_type": "CaseList",
+                "label": {},
+                "media_audio": {},
+                "media_image": {},
+                "show": false
+            },
+            "unique_id": "bc85faf2696386c3b7581e29485ef36cad25482b"
+        },
+        {
+            "auto_select_case": false,
+            "case_details": {
+                "doc_type": "DetailPair",
+                "long": {
+                    "columns": [
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "name",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": false,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Name"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "village_name",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Location"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "date-opened",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Registration Date"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "feeling_sick",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Feeling Sick"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "last_menstrual_period",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Last Menstrual Period"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "children_alive",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Has Living Children?"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        }
+                    ],
+                    "custom_variables": "",
+                    "custom_xml": null,
+                    "display": "long",
+                    "doc_type": "Detail",
+                    "filter": null,
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": null,
+                    "persist_tile_on_forms": null,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": null,
+                    "print_template": {},
+                    "pull_down_tile": null,
+                    "sort_elements": [],
+                    "sort_nodeset_columns": false,
+                    "tabs": [],
+                    "use_case_tiles": null
+                },
+                "short": {
+                    "columns": [
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "name",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": false,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Patient's Name"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "village_name",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Location"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "date-opened",
+                            "filter_xpath": "",
+                            "format": "date",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Registration Date"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        }
+                    ],
+                    "custom_variables": "",
+                    "custom_xml": "",
+                    "display": "short",
+                    "doc_type": "Detail",
+                    "filter": null,
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": false,
+                    "persist_tile_on_forms": false,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": "",
+                    "print_template": {},
+                    "pull_down_tile": false,
+                    "sort_elements": [
+                        {
+                            "blanks": "last",
+                            "direction": "ascending",
+                            "display": {
+                                "en": "Feeling Sick"
+                            },
+                            "doc_type": "SortElement",
+                            "field": "feeling_sick",
+                            "sort_calculation": "",
+                            "type": "plain"
+                        }
+                    ],
+                    "sort_nodeset_columns": null,
+                    "tabs": [],
+                    "use_case_tiles": false
+                }
+            },
+            "case_list": {
+                "custom_icons": [],
+                "doc_type": "CaseList",
+                "label": {},
+                "media_audio": {
+                    "en": ""
+                },
+                "media_image": {
+                    "en": ""
+                },
+                "show": false
+            },
+            "case_list_form": {
+                "custom_icons": [],
+                "doc_type": "CaseListForm",
+                "form_id": "533fe96a40fac34e3814a0a3c52f2a4f0e576728",
+                "label": {
+                    "en": "Register a new case"
+                },
+                "media_audio": {
+                    "en": ""
+                },
+                "media_image": {
+                    "en": "jr://file/commcare/image/module1_case_list_form_en.png"
+                },
+                "post_form_workflow": "case_list"
+            },
+            "case_type": "pregnacy",
+            "comment": "",
+            "custom_icons": [],
+            "display_style": "list",
+            "doc_type": "Module",
+            "fixture_select": {
+                "active": false,
+                "display_column": null,
+                "doc_type": "FixtureSelect",
+                "fixture_type": null,
+                "localize": false,
+                "variable_column": null,
+                "xpath": ""
+            },
+            "forms": [
+                {
+                    "actions": {
+                        "case_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "always"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "close_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "FormAction"
+                        },
+                        "close_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "FormAction"
+                        },
+                        "doc_type": "FormActions",
+                        "load_from_form": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "open_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "OpenCaseAction",
+                            "external_id": null,
+                            "name_path": null
+                        },
+                        "open_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "OpenReferralAction",
+                            "followup_date": null,
+                            "name_path": null
+                        },
+                        "referral_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "subcases": [],
+                        "update_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "always"
+                            },
+                            "doc_type": "UpdateCaseAction",
+                            "update": {
+                                "danger_signs": "/data/danger_signs",
+                                "feeling_sick": "/data/feeling_sick",
+                                "had_referral_checkup": "/data/had_referral_checkup",
+                                "referral": "/data/referral",
+                                "referral_anyway": "/data/referral_anyway"
+                            }
+                        },
+                        "update_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "UpdateReferralAction",
+                            "followup_date": null
+                        },
+                        "usercase_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "usercase_update": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "UpdateCaseAction",
+                            "update": {}
+                        }
+                    },
+                    "auto_gps_capture": false,
+                    "case_references_data": {
+                        "doc_type": "CaseReferences",
+                        "load": {
+                            "/data/copy-1-of-please_note_you_indicated_the_patient_is_not_currently_feeling_sick_and_a_r": [
+                                "#case/case_name"
+                            ],
+                            "/data/danger_signs": [
+                                "#case/case_name"
+                            ],
+                            "/data/feeling_sick": [
+                                "#case/case_name"
+                            ],
+                            "/data/follow_up_forms_enable_your_field_workers_to_update_information_in_your_cas": [
+                                "#case/case_name"
+                            ],
+                            "/data/please_note_you_indicated_the_patient_is_not_currently_feeling_sick_and_a_r": [
+                                "#case/case_name"
+                            ],
+                            "/data/previously_sick": [
+                                "#case/feeling_sick",
+                                "#case/case_name"
+                            ],
+                            "/data/referral": [
+                                "#case/case_name"
+                            ],
+                            "/data/referral_anyway": [
+                                "#case/case_name"
+                            ],
+                            "/data/referrals_empower_your_field_workers_to_refer_cases_to_other_commcare_users": [
+                                "#case/case_name"
+                            ]
+                        },
+                        "save": {}
+                    },
+                    "comment": "",
+                    "custom_icons": [],
+                    "custom_instances": [],
+                    "doc_type": "Form",
+                    "enable_release_notes": false,
+                    "form_filter": null,
+                    "form_links": [],
+                    "form_type": "module_form",
+                    "is_release_notes_form": false,
+                    "media_audio": {
+                        "en": ""
+                    },
+                    "media_image": {
+                        "en": "jr://file/commcare/image/module1_form0_en.png"
+                    },
+                    "name": {
+                        "en": "Form: Mid-Pregnancy Home Visit"
+                    },
+                    "no_vellum": false,
+                    "post_form_workflow": "default",
+                    "post_form_workflow_fallback": "",
+                    "requires": "case",
+                    "schedule_form_id": null,
+                    "show_count": false,
+                    "unique_id": "44f0510ce6ab50b0c02882f8ab842d69a1ae1eb5",
+                    "version": 555,
+                    "xmlns": "http://openrosa.org/formdesigner/F4676FFC-0BB8-4088-89B6-BB676BA35972"
+                },
+                {
+                    "actions": {
+                        "case_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "always"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "close_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "always"
+                            },
+                            "doc_type": "FormAction"
+                        },
+                        "close_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "FormAction"
+                        },
+                        "doc_type": "FormActions",
+                        "load_from_form": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "open_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "OpenCaseAction",
+                            "external_id": null,
+                            "name_path": null
+                        },
+                        "open_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "OpenReferralAction",
+                            "followup_date": null,
+                            "name_path": null
+                        },
+                        "referral_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "subcases": [],
+                        "update_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "always"
+                            },
+                            "doc_type": "UpdateCaseAction",
+                            "update": {
+                                "baby_name": "/data/baby_name",
+                                "pregnancy_outcome": "/data/pregnancy_outcome"
+                            }
+                        },
+                        "update_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "UpdateReferralAction",
+                            "followup_date": null
+                        },
+                        "usercase_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "usercase_update": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "UpdateCaseAction",
+                            "update": {}
+                        }
+                    },
+                    "auto_gps_capture": false,
+                    "case_references_data": {
+                        "doc_type": "CaseReferences",
+                        "load": {
+                            "/data/closing_a_case_ensures_your_field_workers_are_focusing_only_on_your_program": [
+                                "#case/case_name"
+                            ],
+                            "/data/note_submitting_this_form_will_close_case_names_pregnancy_case": [
+                                "#case/case_name"
+                            ]
+                        },
+                        "save": {}
+                    },
+                    "comment": "",
+                    "custom_icons": [],
+                    "custom_instances": [],
+                    "doc_type": "Form",
+                    "enable_release_notes": false,
+                    "form_filter": null,
+                    "form_links": [],
+                    "form_type": "module_form",
+                    "is_release_notes_form": false,
+                    "media_audio": {
+                        "en": ""
+                    },
+                    "media_image": {
+                        "en": "jr://file/commcare/image/module1_form2_en.png"
+                    },
+                    "name": {
+                        "en": "Form: Birth Outcome"
+                    },
+                    "no_vellum": false,
+                    "post_form_workflow": "default",
+                    "post_form_workflow_fallback": "",
+                    "requires": "case",
+                    "schedule_form_id": null,
+                    "show_count": false,
+                    "unique_id": "85d5ae6e969ed5324d704f0108df1d42fb951506",
+                    "version": 518,
+                    "xmlns": "http://openrosa.org/formdesigner/2A88C8EE-1716-457F-B01E-32CCD815D8AB"
+                }
+            ],
+            "is_training_module": false,
+            "media_audio": {
+                "en": ""
+            },
+            "media_image": {
+                "en": "jr://file/commcare/image/module1_en.png"
+            },
+            "module_filter": null,
+            "module_type": "basic",
+            "name": {
+                "en": "STEP 2: Follow up with your patients"
+            },
+            "parent_select": {
+                "active": false,
+                "doc_type": "ParentSelect",
+                "module_id": null,
+                "relationship": "parent"
+            },
+            "put_in_root": false,
+            "ref_details": {
+                "doc_type": "DetailPair",
+                "long": {
+                    "columns": [],
+                    "custom_variables": null,
+                    "custom_xml": null,
+                    "display": "long",
+                    "doc_type": "Detail",
+                    "filter": null,
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": null,
+                    "persist_tile_on_forms": null,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": null,
+                    "print_template": {},
+                    "pull_down_tile": null,
+                    "sort_elements": [],
+                    "sort_nodeset_columns": null,
+                    "tabs": [],
+                    "use_case_tiles": null
+                },
+                "short": {
+                    "columns": [],
+                    "custom_variables": null,
+                    "custom_xml": null,
+                    "display": "short",
+                    "doc_type": "Detail",
+                    "filter": null,
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": null,
+                    "persist_tile_on_forms": null,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": null,
+                    "print_template": {},
+                    "pull_down_tile": null,
+                    "sort_elements": [],
+                    "sort_nodeset_columns": null,
+                    "tabs": [],
+                    "use_case_tiles": null
+                }
+            },
+            "referral_list": {
+                "custom_icons": [],
+                "doc_type": "CaseList",
+                "label": {},
+                "media_audio": {},
+                "media_image": {},
+                "show": false
+            },
+            "root_module_id": null,
+            "search_config": {
+                "blacklisted_owner_ids_expression": null,
+                "command_label": {
+                    "en": "Search All Cases"
+                },
+                "default_properties": [],
+                "doc_type": "CaseSearch",
+                "include_closed": false,
+                "properties": [],
+                "relevant": "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
+                "search_button_display_condition": null
+            },
+            "task_list": {
+                "custom_icons": [],
+                "doc_type": "CaseList",
+                "label": {},
+                "media_audio": {},
+                "media_image": {},
+                "show": false
+            },
+            "unique_id": "ec2bbe20eb7cf768f75d1dc5a18c18dd9df1cce"
+        },
+        {
+            "auto_select_case": false,
+            "case_details": {
+                "doc_type": "DetailPair",
+                "long": {
+                    "columns": [
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "name",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Name"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "feeling_sick",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Feeling Sick"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "danger_signs",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Danger Signs"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "last_menstrual_period",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Last Menstrual Period"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        }
+                    ],
+                    "custom_variables": "",
+                    "custom_xml": null,
+                    "display": "long",
+                    "doc_type": "Detail",
+                    "filter": null,
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": null,
+                    "persist_tile_on_forms": null,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": null,
+                    "print_template": {},
+                    "pull_down_tile": null,
+                    "sort_elements": [],
+                    "sort_nodeset_columns": false,
+                    "tabs": [],
+                    "use_case_tiles": null
+                },
+                "short": {
+                    "columns": [
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "name",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Name"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "village_name",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Location"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": ".",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "danger_signs",
+                            "filter_xpath": "",
+                            "format": "plain",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Danger signs"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "relevant": "",
+                            "time_ago_interval": 365.25,
+                            "useXpathExpression": false
+                        }
+                    ],
+                    "custom_variables": "",
+                    "custom_xml": "",
+                    "display": "short",
+                    "doc_type": "Detail",
+                    "filter": "(referral ='Yes' or referral_anyway = 'yes_refer_now') and had_referral_checkup != 1",
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": false,
+                    "persist_tile_on_forms": false,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": "",
+                    "print_template": {},
+                    "pull_down_tile": false,
+                    "sort_elements": [],
+                    "sort_nodeset_columns": null,
+                    "tabs": [],
+                    "use_case_tiles": false
+                }
+            },
+            "case_list": {
+                "custom_icons": [],
+                "doc_type": "CaseList",
+                "label": {},
+                "media_audio": {
+                    "en": ""
+                },
+                "media_image": {
+                    "en": ""
+                },
+                "show": false
+            },
+            "case_list_form": {
+                "custom_icons": [],
+                "doc_type": "CaseListForm",
+                "form_id": "",
+                "label": {
+                    "en": ""
+                },
+                "media_audio": {
+                    "en": ""
+                },
+                "media_image": {
+                    "en": ""
+                },
+                "post_form_workflow": "default"
+            },
+            "case_type": "pregnacy",
+            "comment": "",
+            "custom_icons": [],
+            "display_style": "list",
+            "doc_type": "Module",
+            "fixture_select": {
+                "active": false,
+                "display_column": null,
+                "doc_type": "FixtureSelect",
+                "fixture_type": null,
+                "localize": false,
+                "variable_column": null,
+                "xpath": ""
+            },
+            "forms": [
+                {
+                    "actions": {
+                        "case_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "always"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "close_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "FormAction"
+                        },
+                        "close_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "FormAction"
+                        },
+                        "doc_type": "FormActions",
+                        "load_from_form": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "open_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "OpenCaseAction",
+                            "external_id": null,
+                            "name_path": null
+                        },
+                        "open_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "OpenReferralAction",
+                            "followup_date": null,
+                            "name_path": null
+                        },
+                        "referral_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "subcases": [],
+                        "update_case": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": null,
+                                "question": null,
+                                "type": "always"
+                            },
+                            "doc_type": "UpdateCaseAction",
+                            "update": {
+                                "danger_signs": "/data/danger_signs",
+                                "had_referral_checkup": "/data/had_referral_checkup",
+                                "has_condition_improved": "/data/has_condition_improved"
+                            }
+                        },
+                        "update_referral": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "UpdateReferralAction",
+                            "followup_date": null
+                        },
+                        "usercase_preload": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "PreloadAction",
+                            "preload": {}
+                        },
+                        "usercase_update": {
+                            "condition": {
+                                "answer": null,
+                                "doc_type": "FormActionCondition",
+                                "operator": "=",
+                                "question": null,
+                                "type": "never"
+                            },
+                            "doc_type": "UpdateCaseAction",
+                            "update": {}
+                        }
+                    },
+                    "auto_gps_capture": false,
+                    "case_references_data": {
+                        "doc_type": "CaseReferences",
+                        "load": {
+                            "/data/convulsions_counseling_message": [
+                                "#case/danger_signs",
+                                "#case/case_name"
+                            ],
+                            "/data/copy-1-of-please_advise_case_name_to_make_a_return_visit_to_the_clinic_in_7_days": [
+                                "#case/case_name"
+                            ],
+                            "/data/danger_signs": [
+                                "#case/case_name"
+                            ],
+                            "/data/has_condition_improved": [
+                                "#case/case_name"
+                            ],
+                            "/data/headache_counseling_message": [
+                                "#case/danger_signs",
+                                "#case/case_name"
+                            ],
+                            "/data/please_advise_case_name_to_make_a_return_visit_to_the_clinic_in_7_days": [
+                                "#case/case_name"
+                            ],
+                            "/data/please_only_complete_this_form_if_case_name_is_currently_at_the_clinic": [
+                                "#case/case_name"
+                            ],
+                            "/data/question1": [
+                                "#case/case_name"
+                            ],
+                            "/data/referrals_allow_your_field_workers_to_refer_cases_to_other_commcare_users_t": [
+                                "#case/case_name"
+                            ],
+                            "/data/rupturing_counseling_message": [
+                                "#case/danger_signs",
+                                "#case/case_name"
+                            ],
+                            "/data/stopped_moving_counseling_message": [
+                                "#case/danger_signs",
+                                "#case/case_name"
+                            ]
+                        },
+                        "save": {}
+                    },
+                    "comment": "",
+                    "custom_icons": [],
+                    "custom_instances": [],
+                    "doc_type": "Form",
+                    "enable_release_notes": false,
+                    "form_filter": null,
+                    "form_links": [],
+                    "form_type": "module_form",
+                    "is_release_notes_form": false,
+                    "media_audio": {
+                        "en": ""
+                    },
+                    "media_image": {
+                        "en": "jr://file/commcare/image/module2_form0_en.png"
+                    },
+                    "name": {
+                        "en": "STEP 3: Assess a referred patient"
+                    },
+                    "no_vellum": false,
+                    "post_form_workflow": "default",
+                    "post_form_workflow_fallback": "",
+                    "requires": "case",
+                    "schedule_form_id": null,
+                    "show_count": false,
+                    "unique_id": "ae3e038db50c1a1586b87c5baae4e758b9028cda",
+                    "version": null,
+                    "xmlns": "http://openrosa.org/formdesigner/C1B5E914-079C-4D8E-AB68-4C20A8B56892"
+                }
+            ],
+            "is_training_module": false,
+            "media_audio": {
+                "en": ""
+            },
+            "media_image": {
+                "en": ""
+            },
+            "module_filter": null,
+            "module_type": "basic",
+            "name": {
+                "en": "(HIDDEN MENU TITLE) Assess a referred patient"
+            },
+            "parent_select": {
+                "active": false,
+                "doc_type": "ParentSelect",
+                "module_id": null,
+                "relationship": "parent"
+            },
+            "put_in_root": true,
+            "ref_details": {
+                "doc_type": "DetailPair",
+                "long": {
+                    "columns": [],
+                    "custom_variables": null,
+                    "custom_xml": null,
+                    "display": "long",
+                    "doc_type": "Detail",
+                    "filter": null,
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": null,
+                    "persist_tile_on_forms": null,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": null,
+                    "print_template": {},
+                    "pull_down_tile": null,
+                    "sort_elements": [],
+                    "sort_nodeset_columns": null,
+                    "tabs": [],
+                    "use_case_tiles": null
+                },
+                "short": {
+                    "columns": [],
+                    "custom_variables": null,
+                    "custom_xml": null,
+                    "display": "short",
+                    "doc_type": "Detail",
+                    "filter": null,
+                    "lookup_action": null,
+                    "lookup_autolaunch": false,
+                    "lookup_display_results": false,
+                    "lookup_enabled": false,
+                    "lookup_extras": [],
+                    "lookup_field_header": {},
+                    "lookup_field_template": null,
+                    "lookup_image": null,
+                    "lookup_name": null,
+                    "lookup_responses": [],
+                    "persist_case_context": null,
+                    "persist_tile_on_forms": null,
+                    "persistent_case_context_xml": "case_name",
+                    "persistent_case_tile_from_module": null,
+                    "print_template": {},
+                    "pull_down_tile": null,
+                    "sort_elements": [],
+                    "sort_nodeset_columns": null,
+                    "tabs": [],
+                    "use_case_tiles": null
+                }
+            },
+            "referral_list": {
+                "custom_icons": [],
+                "doc_type": "CaseList",
+                "label": {},
+                "media_audio": {},
+                "media_image": {},
+                "show": false
+            },
+            "root_module_id": null,
+            "search_config": {
+                "blacklisted_owner_ids_expression": null,
+                "command_label": {
+                    "en": "Search All Cases"
+                },
+                "default_properties": [],
+                "doc_type": "CaseSearch",
+                "include_closed": false,
+                "properties": [],
+                "relevant": "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0",
+                "search_button_display_condition": null
+            },
+            "task_list": {
+                "custom_icons": [],
+                "doc_type": "CaseList",
+                "label": {},
+                "media_audio": {},
+                "media_image": {},
+                "show": false
+            },
+            "unique_id": "d05b01bb13497ca69fe388cb4d26041aa9df73f1"
+        }
+    ],
+    "multimedia_map": {
+        "jr://file/commcare/audio/data/convulsions_counseling_message-lewuhw.mp3": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareAudio",
+            "multimedia_id": "ea313b8eed45c14d4579e6c3cf2c6a56",
+            "output_size": {},
+            "unique_id": "de39da3f541569c5a9197220080e0307",
+            "version": 552
+        },
+        "jr://file/commcare/audio/data/convulsions_counseling_message-y2u53c.mp3": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareAudio",
+            "multimedia_id": "ea313b8eed45c14d4579e6c3cf2c6a56",
+            "output_size": {},
+            "unique_id": "6e9cff6ad71ac3fb136d09c4cdc0efc3",
+            "version": 552
+        },
+        "jr://file/commcare/audio/data/copy-1-of-play_your_counseling_message_now-bg9j5n.mp3": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareAudio",
+            "multimedia_id": "ea313b8eed45c14d4579e6c3cf2c5858",
+            "output_size": {},
+            "unique_id": "077bde0254e4ee907e385db172dd2231",
+            "version": 552
+        },
+        "jr://file/commcare/audio/data/copy-1-of-play_your_counseling_message_now-d29nup.mp3": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareAudio",
+            "multimedia_id": "ea313b8eed45c14d4579e6c3cf2c5858",
+            "output_size": {},
+            "unique_id": "b4d247ed3a99673a1fd133de86bbeecf",
+            "version": 552
+        },
+        "jr://file/commcare/audio/data/danger_signs-Headache-dlibab.mp3": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareAudio",
+            "multimedia_id": "ea313b8eed45c14d4579e6c3cf2c4bd5",
+            "output_size": {},
+            "unique_id": "a8cad1976d7bfd9ccb5d92507ac24ed3",
+            "version": 534
+        },
+        "jr://file/commcare/audio/data/danger_signs-Headache-oyknqp.mp3": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareAudio",
+            "multimedia_id": "ea313b8eed45c14d4579e6c3cf2c4bd5",
+            "output_size": {},
+            "unique_id": "8a423ab4a30307fa7f3ded839ba86e95",
+            "version": 534
+        },
+        "jr://file/commcare/audio/data/play_your_counseling_message_now-emp54w.mp3": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareAudio",
+            "multimedia_id": "ea313b8eed45c14d4579e6c3cf2c4bd5",
+            "output_size": {},
+            "unique_id": "4598566510df7cc296911d11a2c621d8",
+            "version": 534
+        },
+        "jr://file/commcare/audio/data/play_your_counseling_message_now-tefgvo.mp3": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareAudio",
+            "multimedia_id": "ea313b8eed45c14d4579e6c3cf2c4bd5",
+            "output_size": {},
+            "unique_id": "e3c37d407fb1148f19084f8e15ec49a8",
+            "version": 534
+        },
+        "jr://file/commcare/audio/data/stopped_moving_counseling_message-nvg14g.mp3": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareAudio",
+            "multimedia_id": "ea313b8eed45c14d4579e6c3cf2c31d2",
+            "output_size": {},
+            "unique_id": "61ef9448004a13621c1047b8ed96f29e",
+            "version": 552
+        },
+        "jr://file/commcare/audio/data/stopped_moving_counseling_message-wjdtac.mp3": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareAudio",
+            "multimedia_id": "ea313b8eed45c14d4579e6c3cf2c31d2",
+            "output_size": {},
+            "unique_id": "c4058e22d7ea48c8abc63448ec985760",
+            "version": 552
+        },
+        "jr://file/commcare/image/module0_form0_en.png": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareImage",
+            "multimedia_id": "64a4728f61e330026f9c9903ae6f9120",
+            "output_size": {},
+            "unique_id": "b6ad0a996a886428ccf3d0e7073c0efb",
+            "version": 286
+        },
+        "jr://file/commcare/image/module1_case_list_form_en.png": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareImage",
+            "multimedia_id": "64a4728f61e330026f9c9903ae6f9120",
+            "output_size": {},
+            "unique_id": "d17a3704afd1838df30c8bab09b6d25f",
+            "version": 133
+        },
+        "jr://file/commcare/image/module1_en.png": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareImage",
+            "multimedia_id": "64a4728f61e330026f9c9903aeb3a0e5",
+            "output_size": {},
+            "unique_id": "9ad8ea57151d0af2207c6bb47a7a53a9",
+            "version": 151
+        },
+        "jr://file/commcare/image/module1_form0_en.png": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareImage",
+            "multimedia_id": "35015ac525f2a5d00fec5af82353fdf0",
+            "output_size": {},
+            "unique_id": "a50b379191928f3c36197c68b4036a52",
+            "version": 362
+        },
+        "jr://file/commcare/image/module1_form2_en.png": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareImage",
+            "multimedia_id": "64a4728f61e330026f9c9903aeb6c0b5",
+            "output_size": {},
+            "unique_id": "d581175119451669e1429ec9b2b0b9cc",
+            "version": 201
+        },
+        "jr://file/commcare/image/module2_form0_en.png": {
+            "doc_type": "HQMediaMapItem",
+            "form_media": false,
+            "media_type": "CommCareImage",
+            "multimedia_id": "64a4728f61e330026f9c9903aeb44f77",
+            "output_size": {},
+            "unique_id": "c4acbd134f94a66db142865d62363fb2",
+            "version": 472
+        }
+    },
+    "name": "Pregnancy Case Management Application",
+    "phone_model": null,
+    "platform": "nokia/s40",
+    "practice_mobile_worker_id": "",
+    "profile": {
+        "features": {
+            "sense": "false",
+            "users": "true"
+        },
+        "properties": {
+            "ViewStyle": "v_chatterbox",
+            "cc-autosync-freq": "freq-never",
+            "cc-autoup-freq": "freq-never",
+            "cc-content-valid": "yes",
+            "cc-days-form-retain": "-1",
+            "cc-entry-mode": "cc-entry-quick",
+            "cc-fuzzy-search-enabled": "yes",
+            "cc-inflation-target-density": "none",
+            "cc-login-duration-seconds": "86400",
+            "cc-login-images": "No",
+            "cc-resize-images": "full",
+            "cc-send-procedure": "cc-send-http",
+            "cc-send-unsent": "cc-su-auto",
+            "cc-show-incomplete": "no",
+            "cc-show-saved": "no",
+            "cc-user-mode": "cc-u-normal",
+            "extra_key_action": "audio",
+            "log_prop_daily": "log_never",
+            "log_prop_weekly": "log_short",
+            "logenabled": "Enabled",
+            "loose_media": "no",
+            "password_format": "a",
+            "purge-freq": "0",
+            "restore-tolerance": "loose",
+            "server-tether": "push-only",
+            "unsent-number-limit": "5",
+            "unsent-time-limit": "5",
+            "user_reg_server": "required"
+        }
+    },
+    "recipients": "",
+    "secure_submissions": true,
+    "short_odk_media_url": "http://bit.ly/2AgLn6Q",
+    "short_odk_url": null,
+    "short_url": null,
+    "smart_lang_display": null,
+    "target_commcare_flavor": "none",
+    "text_input": "roman",
+    "translation_strategy": "select-known",
+    "translations": {},
+    "use_custom_suite": false,
+    "use_grid_menus": false,
+    "use_j2me_endpoint": false,
+    "user_type": null,
+    "vellum_case_management": true,
+    "version": 557
+}
