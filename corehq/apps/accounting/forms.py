@@ -2376,11 +2376,34 @@ class EnterpriseSettingsForm(forms.Form):
     restrict_domain_creation = forms.BooleanField(
         label=ugettext_lazy("Restrict Project Space Creation"),
         required=False,
-        help_text=ugettext_lazy("Do not allow non-admins to create new project spaces")
+        help_text=ugettext_lazy("Do not allow non-admins to create new project spaces"),
+    )
+    restrict_signup = forms.BooleanField(
+        label=ugettext_lazy("Restrict User Signups"),
+        required=False,
+        help_text=ugettext_lazy("Do not allow new users to sign up on commcarehq.org."),
+    )
+    restrict_signup_message = forms.CharField(
+        label="Signup Restriction Message",
+        required=False,
+        help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
+        widget=forms.Textarea(attrs={'rows': 2}),
+    )
+    restrict_signup_email = forms.EmailField(
+        label="Signup Restriction Contact",
+        required=False,
+        help_text=ugettext_lazy("Email address that users should contact to request an account"),
     )
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain', None)
+        self.account = kwargs.pop('account', None)
+        kwargs['initial'] = {
+            "restrict_domain_creation": self.account.restrict_domain_creation,
+            "restrict_signup": self.account.restrict_signup,
+            "restrict_signup_message": self.account.restrict_signup_message,
+            "restrict_signup_email": self.account.restrict_signup_email,
+        }
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
@@ -2388,6 +2411,9 @@ class EnterpriseSettingsForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper[0] = PrependedText('restrict_domain_creation', '')
+        self.helper[1] = PrependedText('restrict_signup', '')
+        self.helper[2] = 'restrict_signup_message'
+        self.helper[3] = 'restrict_signup_email'
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Enterprise Settings')
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -2401,5 +2427,8 @@ class EnterpriseSettingsForm(forms.Form):
 
     def save(self, account):
         account.restrict_domain_creation = self.cleaned_data.get('restrict_domain_creation', False)
+        account.restrict_signup = self.cleaned_data.get('restrict_signup', False)
+        account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
+        account.restrict_signup_email = self.cleaned_data.get('restrict_signup_email', '')
         account.save()
         return True
