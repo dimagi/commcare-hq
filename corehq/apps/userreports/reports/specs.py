@@ -35,7 +35,6 @@ from corehq.apps.userreports.columns import ColumnConfig, get_expanded_column_co
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
-from corehq.apps.es import aggregations
 from memoized import memoized
 import six
 
@@ -50,20 +49,6 @@ SQLAGG_COLUMN_MAP = {
     'sum': SumColumn,
     'simple': SimpleColumn,
     'year': YearColumn,
-}
-
-ES_AGG_MAP = {
-    'avg': aggregations.AvgAggregation,
-    'count': aggregations.ValueCountAggregation,
-    'count_unique': aggregations.CardinalityAggregation,
-    'min': aggregations.MinAggregation,
-    'max': aggregations.MaxAggregation,
-    'sum': aggregations.SumAggregation,
-    'simple': lambda x, y: None,  # this is not an aggregation
-    # these can be implemented, but will need some python level interpretation
-    # should use date aggregation with a format and merge equal key_as_string
-    # 'month': MonthColumn,
-    # 'year': YearColumn,
 }
 
 
@@ -91,18 +76,6 @@ class BaseReportColumn(JsonObject):
         return [self.column_id]
 
     def get_column_config(self, data_source_config, lang):
-        raise NotImplementedError('subclasses must override this')
-
-    def aggregations(self, data_source_config, lang):
-        """
-        Returns a list of aggregations to be used in an ES query
-        """
-        raise NotImplementedError('subclasses must override this')
-
-    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
-        """
-        Returns a dictionary of the data of this column from an ES query
-        """
         raise NotImplementedError('subclasses must override this')
 
     def get_fields(self, data_source_config=None, lang=None):
@@ -204,39 +177,6 @@ class FieldColumn(ReportColumn):
     def _column_data_type(self, data_source_config):
         return self._data_source_col_config(data_source_config).get('datatype')
 
-    def _use_terms_aggregation_for_max_min(self, data_source_config):
-        return (
-            self.aggregation in ['max', 'min'] and
-            self._column_data_type(data_source_config) and
-            self._column_data_type(data_source_config) not in ['integer', 'decimal']
-        )
-
-    def aggregations(self, data_source_config, lang):
-        # SQL supports max and min on strings so hack it into ES
-        if self._use_terms_aggregation_for_max_min(data_source_config):
-            aggregation = aggregations.TermsAggregation(self.column_id, self.field, size=1)
-            order = "desc" if self.aggregation == 'max' else 'asc'
-            aggregation = aggregation.order('_term', order=order)
-        else:
-            aggregation = ES_AGG_MAP[self.aggregation](self.column_id, self.field)
-        return [aggregation] if aggregation else []
-
-    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
-        if not from_aggregation:
-            value = row[self.field]
-        elif self.aggregation == 'simple':
-            value = row['past_bucket_values'][self.field]
-        elif self._use_terms_aggregation_for_max_min(data_source_config):
-            buckets = row[self.column_id].get('buckets', [])
-            if buckets:
-                value = buckets[0]['key']
-            else:
-                value = ''
-        else:
-            value = int(row[self.column_id]['value'])
-
-        return {self.column_id: value}
-
     def get_query_column_ids(self):
         return [self.column_id]
 
@@ -288,25 +228,6 @@ class ExpandedColumn(ReportColumn):
         return [self.field] + [
             c.aggregation.name for c in self.get_column_config(data_source_config, lang).columns
         ]
-
-    def aggregations(self, data_source_config, lang):
-        return [c.aggregation for c in self.get_column_config(data_source_config, lang).columns]
-
-    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
-        sub_columns = self.get_column_config(data_source_config, lang).columns
-        ret = {}
-
-        if not from_aggregation:
-            for counter, sub_col in enumerate(sub_columns):
-                ui_col = self.column_id + "-" + str(counter)
-                if row[self.column_id] == sub_col.expand_value:
-                    ret[ui_col] = 1
-                else:
-                    ret[ui_col] = 0
-        else:
-            for sub_col in sub_columns:
-                ret[sub_col.ui_alias] = sub_col.get_es_data(row)
-        return ret
 
 
 class AggregateDateColumn(ReportColumn):
@@ -435,21 +356,6 @@ class PercentageColumn(ReportColumn):
 
     def get_fields(self, data_source_config=None, lang=None):
         return self.numerator.get_fields() + self.denominator.get_fields()
-
-    def aggregations(self, data_source_config, lang):
-        num_aggs = self.numerator.aggregations(data_source_config, lang)
-        denom_aggs = self.denominator.aggregations(data_source_config, lang)
-        return num_aggs + denom_aggs
-
-    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
-        num = self.numerator
-        denom = self.denominator
-        num_data = num.get_es_data(row, data_source_config, lang, from_aggregation)
-        denom_data = denom.get_es_data(row, data_source_config, lang, from_aggregation)
-        return {
-            num.column_id: num_data[num.column_id],
-            denom.column_id: denom_data[denom.column_id]
-        }
 
 
 def _add_column_id_if_missing(obj):
