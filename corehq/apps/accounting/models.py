@@ -2794,6 +2794,9 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
     def generate_pdf(self, invoice):
         self.save()
         pdf_data = NamedTemporaryFile()
+        account_name = ''
+        if invoice.is_customer_invoice:
+            account_name = invoice.account.name
         template = InvoiceTemplate(
             pdf_data.name,
             invoice_number=invoice.invoice_number,
@@ -2811,6 +2814,7 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             is_wire=invoice.is_wire,
             is_customer=invoice.is_customer_invoice,
             is_prepayment=invoice.is_wire and invoice.is_prepayment,
+            account_name=account_name
         )
 
         if not invoice.is_wire:
