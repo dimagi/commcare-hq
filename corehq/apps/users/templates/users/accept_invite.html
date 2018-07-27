@@ -5,13 +5,7 @@
 
 {% block title %}{% trans "Invitation to join the " %}{{ invite_to }} {{ invite_type }}{% endblock title %}
 
-{% block js-inline  %}{{ block.super }}
-    {% if not hide_password_feedback %}
-        <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-        <script src="{% static 'registration/js/password.js' %}"></script>
-    {% endif %}
-    <script src="{% static "hqwebapp/js/captcha.js" %}"></script>
-{% endblock %}
+{% requirejs_main 'registration/js/password' %}
 
 {% block tabs %}{% endblock %}
 
