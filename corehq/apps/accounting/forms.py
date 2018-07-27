@@ -2406,15 +2406,28 @@ class EnterpriseSettingsForm(forms.Form):
         }
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
+        self.helper.form_id = 'enterprise-settings-form'
         self.helper.form_class = 'form-horizontal'
         self.helper.form_action = reverse("edit_enterprise_settings", args=[self.domain])
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper[0] = PrependedText('restrict_domain_creation', '')
-        self.helper[1] = PrependedText('restrict_signup', '')
-        self.helper[2] = 'restrict_signup_message'
-        self.helper[3] = 'restrict_signup_email'
-        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Enterprise Settings')
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Edit Enterprise Settings"),
+                PrependedText('restrict_domain_creation', ''),
+                crispy.Div(
+                    PrependedText('restrict_signup', '', data_bind='checked: restrictSignup'),
+                ),
+                crispy.Div(
+                    crispy.Field('restrict_signup_message'),
+                    data_bind='visible: restrictSignup',
+                ),
+                crispy.Div(
+                    crispy.Field('restrict_signup_email'),
+                    data_bind='visible: restrictSignup',
+                ),
+            )
+        )
         self.helper.layout.append(
             hqcrispy.FormActions(
                 StrictButton(

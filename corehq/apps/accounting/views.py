@@ -1210,6 +1210,7 @@ def enterprise_settings(request, domain):
     form = EnterpriseSettingsForm(domain=domain, account=account)
 
     context = {
+        'account': account,
         'domain': domain,
         'current_page': {
             'title': _('Enterprise Settings'),
