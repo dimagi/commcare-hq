@@ -1907,7 +1907,7 @@ class TriggerCustomerInvoiceForm(forms.Form):
             if month == 9:
                 return datetime.date(year, 7, 1), datetime.date(year, 9, 30)    # Quarter 3
             if month == 12:
-                return datetime.date(year, 10, 1), datetime.date(year, 12, 31)  # Quarter 3
+                return datetime.date(year, 10, 1), datetime.date(year, 12, 31)  # Quarter 4
             else:
                 raise InvoiceError(
                     "Account %s is set to be invoiced quarterly. "
