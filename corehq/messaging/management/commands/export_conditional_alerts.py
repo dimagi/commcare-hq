@@ -55,7 +55,7 @@ class ExtraSchedulingOptions(jsonobject.JsonObject):
 
 class SimpleSMSDailyScheduleWithTime(jsonobject.JsonObject):
     schedule_type = SIMPLE_SMS_DAILY_SCHEDULE_WITH_TIME
-    time = jsonobject.TimeProperty(exact=True)
+    time = jsonobject.TimeProperty()
     message = jsonobject.DictProperty(six.text_type)
     total_iterations = jsonobject.IntegerProperty()
     start_offset = jsonobject.IntegerProperty()
