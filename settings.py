@@ -371,6 +371,12 @@ HQ_APPS = (
     'custom.champ',
 )
 
+
+ENIKSHAY_APPS = (
+    'custom.enikshay',
+    'custom.enikshay.two_b_datamigration',
+)
+
 # also excludes any app starting with 'django.'
 APPS_TO_EXCLUDE_FROM_TESTS = (
     'captcha',
@@ -401,7 +407,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
 )
 
 # any built-in management commands we want to override should go in hqscripts
-INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS
+INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
