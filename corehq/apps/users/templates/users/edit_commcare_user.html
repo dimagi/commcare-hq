@@ -28,7 +28,7 @@
         {% trans "This user is marked as a demo user.  All forms submitted by this user will be ignored and not appear in reports or data exports" %}
     </p>
     {% endif %}
-    <ul class="nav nav-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">
+    <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">
         <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
         <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
         {% if commtrack_enabled or uses_locations %}
