@@ -23,6 +23,7 @@ class TestDomainUserHistory(BaseInvoiceTestCase):
             user.delete()
         for domain_user_history in DomainUserHistory.objects.all():
             domain_user_history.delete()
+        super(TestDomainUserHistory, self).tearDown()
 
     def test_domain_user_history(self):
         domain_user_history = DomainUserHistory.create(domain=self.domain.name,
@@ -40,13 +41,3 @@ class TestDomainUserHistory(BaseInvoiceTestCase):
         self.assertEqual(domain_user_history.domain, self.domain.name)
         self.assertEqual(domain_user_history.num_users, self.num_users)
         self.assertEqual(domain_user_history.record_date, self.record_date)
-
-    def test_delete_outdated_domain_user_history(self):
-        tasks.calculate_users_in_all_domains()
-        self.assertEqual(DomainUserHistory.objects.count(), 1)
-        domain_user_history = DomainUserHistory.objects.first()
-        domain_user_history.record_date = self.today - relativedelta(years=2)
-        domain_user_history.save()
-
-        tasks.delete_outdated_domain_user_history(self.today)
-        self.assertEqual(DomainUserHistory.objects.count(), 0)

@@ -596,12 +596,13 @@ class ProductLineItemFactory(LineItemFactory):
             return self.num_prorated_days
         if self.invoice.is_customer_invoice:
             if self.invoice.account.invoicing_plan == InvoicingPlan.QUARTERLY:
-                return self.quantity_over_period(3)
+                return self.months_product_active_over_period(3)
             elif self.invoice.account.invoicing_plan == InvoicingPlan.YEARLY:
-                return self.quantity_over_period(12)
+                return self.months_product_active_over_period(12)
         return 1
 
-    def quantity_over_period(self, num_months):
+    def months_product_active_over_period(self, num_months):
+        # Calculate the number of months out of num_months the subscription was active
         quantity = 0
         date_start = months_from_date(self.invoice.date_end, -(num_months - 1))
         while date_start < self.invoice.date_end:

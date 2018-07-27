@@ -1872,12 +1872,12 @@ class TriggerCustomerInvoiceForm(forms.Form):
                 "Invoices exist that were already generated with this same "
                 "criteria. You must manually suppress these invoices: "
                 "{invoice_list}".format(
-                    num_invoices=prev_invoices.count(),
+                    num_invoices=len(prev_invoices),
                     invoice_list=', '.join(
                         ['<a href="{edit_url}">{name}</a>'.format(
                             edit_url=reverse(CustomerInvoiceSummaryView.urlname, args=(x.id,)),
                             name=x.invoice_number
-                        ) for x in prev_invoices.all()]
+                        ) for x in prev_invoices]
                     ),
                 )
             )

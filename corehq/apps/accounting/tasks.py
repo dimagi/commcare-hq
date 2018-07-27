@@ -902,7 +902,6 @@ def email_enterprise_report(domain, slug, couch_user):
 
 @periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
 def calculate_users_in_all_domains():
-    delete_outdated_domain_user_history(datetime.date.today())
     for domain in Domain.get_all_names():
         num_users = CommCareUser.total_by_domain(domain)
         record_date = datetime.date.today() - relativedelta(days=1)
@@ -912,11 +911,3 @@ def calculate_users_in_all_domains():
             record_date=record_date
         )
         user_history.save()
-
-
-def delete_outdated_domain_user_history(reference_date):
-    # Delete DomainUserHistory objects more than two years old (Only ones from the last 12 months will be invoiced)
-    last_date = reference_date - relativedelta(years=2)
-    for domain_user_history in DomainUserHistory.objects.filter(record_date__lte=last_date):
-        domain_user_history.delete()
-    return
