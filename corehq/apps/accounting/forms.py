@@ -2381,7 +2381,7 @@ class EnterpriseSettingsForm(forms.Form):
     restrict_signup = forms.BooleanField(
         label=ugettext_lazy("Restrict User Signups"),
         required=False,
-        help_text=ugettext_lazy("Do not allow new users to sign up on commcarehq.org."),
+        help_text=ugettext_lazy("<span data-bind='html: restrictSignupHelp'></span>"),
     )
     restrict_signup_message = forms.CharField(
         label="Signup Restriction Message",
