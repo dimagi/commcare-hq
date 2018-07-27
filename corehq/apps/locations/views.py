@@ -22,7 +22,7 @@ from soil.util import expose_cached_download, get_download_context
 from corehq import toggles
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
-from corehq.apps.custom_data_fields import CustomDataModelMixin
+from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_select2, use_select2_v4
@@ -57,7 +57,7 @@ from .permissions import (
 from .models import LocationType, SQLLocation, filter_for_archived
 from .forms import LocationFormSet, UsersAtLocationForm
 from .tree_utils import assert_no_cycles
-from .util import load_locs_json, location_hierarchy_config, dump_locations
+from .util import load_locs_json, location_hierarchy_config
 import six
 from six.moves import map
 from six.moves import range
@@ -764,6 +764,7 @@ class EditLocationView(NewLocationView):
             raise Http404()
 
 
+@location_safe
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
@@ -785,6 +786,7 @@ class LocationImportStatusView(BaseLocationView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@location_safe
 class LocationImportView(BaseLocationView):
     urlname = 'location_import'
     page_title = ugettext_noop('Upload Organization Structure From Excel')
@@ -836,7 +838,7 @@ class LocationImportView(BaseLocationView):
             # ref is HTTP response: lock could not be acquired
             return ref
         file_ref = ref.value
-        task = import_locations_async.delay(domain, file_ref.download_id)
+        task = import_locations_async.delay(domain, file_ref.download_id, request.couch_user.user_id)
         file_ref.set_task(task)
         return HttpResponseRedirect(
             reverse(
@@ -872,6 +874,7 @@ class LocationImportView(BaseLocationView):
 
 
 @require_can_edit_locations
+@location_safe
 def location_importer_job_poll(request, domain, download_id,
                                template="hqwebapp/partials/download_status.html"):
     template = "locations/manage/partials/locations_upload_status.html"
@@ -889,19 +892,25 @@ def location_importer_job_poll(request, domain, download_id,
 
 
 @require_can_edit_locations
+@location_safe
 def location_export(request, domain):
+    headers_only = request.GET.get('download_type', 'full') == 'empty'
+    if not request.can_access_all_locations and not headers_only:
+        return no_permissions(request)
     if not LocationType.objects.filter(domain=domain).exists():
         messages.error(request, _("You need to define organization levels before "
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
     download = DownloadBase()
-    res = download_locations_async.delay(domain, download.download_id, include_consumption)
+    res = download_locations_async.delay(domain, download.download_id,
+                                         include_consumption, headers_only)
     download.set_task(res)
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
 
 @require_can_edit_locations
+@location_safe
 def location_download_job_poll(request, domain,
                                download_id,
                                template="hqwebapp/partials/shared_download_status.html"):
@@ -913,6 +922,7 @@ def location_download_job_poll(request, domain,
     return render(request, template, context)
 
 
+@location_safe
 class DownloadLocationStatusView(BaseLocationView):
     urlname = 'download_org_structure_status'
     page_title = ugettext_noop('Download Organization Structure Status')

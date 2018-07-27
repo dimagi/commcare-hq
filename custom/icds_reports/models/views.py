@@ -96,6 +96,8 @@ class DailyAttendanceView(models.Model):
 
 
 class ChildHealthMonthlyView(models.Model):
+    """Contains one row for the status of every child_health case at the end of each month
+    """
     case_id = models.TextField(primary_key=True)
     awc_id = models.TextField(blank=True, null=True)
     awc_name = models.TextField(blank=True, null=True)
@@ -111,18 +113,62 @@ class ChildHealthMonthlyView(models.Model):
     dob = models.DateField(blank=True, null=True)
     sex = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
-    age_in_months = models.IntegerField(blank=True, null=True)
-    open_in_month = models.IntegerField(blank=True, null=True)
-    valid_in_month = models.IntegerField(blank=True, null=True)
-    nutrition_status_last_recorded = models.TextField(blank=True, null=True)
-    current_month_nutrition_status = models.TextField(blank=True, null=True)
-    pse_days_attended = models.IntegerField(blank=True, null=True)
-    recorded_weight = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
-    recorded_height = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
-    thr_eligible = models.IntegerField(blank=True, null=True)
-    current_month_stunting = models.TextField(blank=True, null=True)
-    current_month_wasting = models.TextField(blank=True, null=True)
-    fully_immunized = models.IntegerField(blank=True, null=True)
+    age_in_months = models.IntegerField(
+        blank=True, null=True, help_text="age in months at the end of the month"
+    )
+    open_in_month = models.IntegerField(
+        blank=True, null=True, help_text="Open at the end of the month"
+    )
+    valid_in_month = models.IntegerField(
+        blank=True, null=True,
+        help_text="Open, alive, registered_status != 'not_registered', "
+        "migration_status != 'migrated', age at start of month < 73 months"
+    )
+    nutrition_status_last_recorded = models.TextField(
+        blank=True, null=True,
+        help_text="based on zscore_grading_wfa, "
+        "Either 'severely_underweight', 'moderately_underweight', or 'normal' "
+        "when age at start of month < 61 months and valid_in_month "
+        "or NULL otherwise"
+    )
+    current_month_nutrition_status = models.TextField(
+        blank=True, null=True,
+        help_text="nutrition_status_last_recorded if recorded in the month"
+    )
+    pse_days_attended = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of days a Daily Feeing Form has been submitted against this child case"
+        "when valid_in_month and age in months between 36 and 72 months"
+    )
+    recorded_weight = models.DecimalField(
+        max_digits=65535, decimal_places=65535, blank=True, null=True,
+        help_text="weight_child if it has been recorded in the month"
+    )
+    recorded_height = models.DecimalField(
+        max_digits=65535, decimal_places=65535, blank=True, null=True,
+        help_text="height_child if it has been recorded in the month"
+    )
+    thr_eligible = models.IntegerField(
+        blank=True, null=True,
+        help_text="valid_in_month and age between 6 and 36 months"
+    )
+    current_month_stunting = models.TextField(
+        blank=True, null=True,
+        help_text="based on zscore_grading_hfa, "
+        "Either 'severe', 'moderate', or 'normal' "
+        "when valid_in_monthand zscore_grading_hfa changed in month"
+        "or 'unmeasured' otherwise"
+    )
+    current_month_wasting = models.TextField(
+        blank=True, null=True,
+        help_text="based on zscore_grading_wfh, "
+        "Either 'severe', 'moderate', or 'normal' "
+        "when valid_in_monthand zscore_grading_wfh changed in month"
+        "or 'unmeasured' otherwise"
+    )
+    fully_immunized = models.IntegerField(
+        blank=True, null=True, help_text="Child has been immunized"
+    )
     current_month_nutrition_status_sort = models.IntegerField(blank=True, null=True)
     current_month_stunting_sort = models.IntegerField(blank=True, null=True)
     current_month_wasting_sort = models.IntegerField(blank=True, null=True)
@@ -138,6 +184,12 @@ class ChildHealthMonthlyView(models.Model):
 
 
 class AggAwcMonthly(models.Model):
+    """Contains one row for the status of every AWC, Supervisor, Block,
+    District and State at the end of each month
+
+    For rows for higher level of locations, the lower levels are 'All'.
+    For example, in a supervisor row, awc_id = 'All'
+    """
     awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
@@ -153,36 +205,79 @@ class AggAwcMonthly(models.Model):
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
-    aggregation_level = models.IntegerField(blank=True, null=True)
+    aggregation_level = models.IntegerField(
+        blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
+    )
     block_map_location_name = models.TextField(blank=True, null=True)
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
-    num_awcs = models.IntegerField(blank=True, null=True)
+    num_awcs = models.IntegerField(blank=True, null=True, help_text="number of AWCs")
     num_launched_states = models.IntegerField(blank=True, null=True)
     num_launched_districts = models.IntegerField(blank=True, null=True)
     num_launched_blocks = models.IntegerField(blank=True, null=True)
     num_launched_supervisors = models.IntegerField(blank=True, null=True)
-    num_launched_awcs = models.IntegerField(blank=True, null=True)
-    awc_days_open = models.IntegerField(blank=True, null=True)
-    awc_days_pse_conducted = models.IntegerField(blank=True, null=True)
-    awc_num_open = models.IntegerField(blank=True, null=True)
-    wer_weighed = models.IntegerField(blank=True, null=True)
-    wer_eligible = models.IntegerField(blank=True, null=True)
-    num_anc_visits = models.IntegerField(blank=True, null=True)
-    num_children_immunized = models.IntegerField(blank=True, null=True)
-    cases_household = models.IntegerField(blank=True, null=True)
-    cases_person = models.IntegerField(blank=True, null=True)
-    cases_person_all = models.IntegerField(blank=True, null=True)
-    cases_person_has_aadhaar = models.IntegerField(blank=True, null=True)
-    cases_person_beneficiary = models.IntegerField(blank=True, null=True)
-    cases_person_adolescent_girls_11_14 = models.IntegerField(blank=True, null=True)
-    cases_person_adolescent_girls_15_18 = models.IntegerField(blank=True, null=True)
-    cases_person_adolescent_girls_11_14_all = models.IntegerField(blank=True, null=True)
-    cases_person_adolescent_girls_15_18_all = models.IntegerField(blank=True, null=True)
-    cases_person_referred = models.IntegerField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(
+        blank=True, null=True,
+        help_text="number of AWCs that have at least one Household registration form"
+    )
+    awc_days_open = models.IntegerField(
+        blank=True, null=True,
+        help_text="Days an AWC has submitted an Daily Feeding Form in this month"
+    )
+    awc_days_pse_conducted = models.IntegerField(
+        blank=True, null=True, help_text="Days an AWC has conducted pse in this month"
+    )
+    awc_num_open = models.IntegerField(
+        blank=True, null=True, help_text="Number of AWC where awc_days_open > 1 for this month"
+    )
+    wer_weighed = models.IntegerField(
+        blank=True, null=True, help_text="Number of children that have been weighed in the month"
+    )
+    wer_eligible = models.IntegerField(
+        blank=True, null=True, help_text="Number of children valid_in_month and age < 60 months"
+    )
+    num_anc_visits = models.IntegerField(
+        blank=True, null=True, help_text="Number of anc_visits in the month"
+    )
+    num_children_immunized = models.IntegerField(
+        blank=True, null=True, help_text="Number of children immunized in the month"
+    )
+    cases_household = models.IntegerField(
+        blank=True, null=True, help_text="Number of open household cases"
+    )
+    cases_person = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of open person cases where registered_status != 'not_registered' and "
+        "migration_status != 'migrated'"
+    )
+    cases_person_all = models.IntegerField(
+        blank=True, null=True, help_text="Number of open person cases"
+    )
+    cases_person_has_aadhaar = models.IntegerField(blank=True, null=True, help_text="no longer used")
+    cases_person_beneficiary = models.IntegerField(blank=True, null=True, help_text="no longer used")
+    cases_person_adolescent_girls_11_14 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of cases_person that are female between 11 and 14 years"
+    )
+    cases_person_adolescent_girls_15_18 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of cases_person that are female between 15 and 18 years"
+    )
+    cases_person_adolescent_girls_11_14_all = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of cases_person_all that are female between 11 and 14 years"
+    )
+    cases_person_adolescent_girls_15_18_all = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of cases_person_all that are female between 15 and 18 years"
+    )
+    cases_person_referred = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of person cases whose last_referral_date is in this month"
+    )
     cases_ccs_pregnant = models.IntegerField(blank=True, null=True)
     cases_ccs_lactating = models.IntegerField(blank=True, null=True)
     cases_child_health = models.IntegerField(blank=True, null=True)
