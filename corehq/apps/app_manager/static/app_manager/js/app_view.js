@@ -68,12 +68,19 @@ hqDefine("app_manager/js/app_view", function() {
             return self;
         };
         if ($('#multimedia-tab').length) {
-            var multimediaTab = new multimediaTabModel();
+            var multimediaTab = multimediaTabModel(),
+                initializeMultimediaTab = function() {
+                    if (multimediaTab.load_state() === null) {
+                        multimediaTab.load_if_necessary();
+                    }
+                };
             $("#multimedia-tab").koApplyBindings(multimediaTab);
+            if ($('[href="#multimedia-tab"]').parent().hasClass("active")) {
+                // Multimedia tab has already been selected
+                initializeMultimediaTab();
+            }
             $('[href="#multimedia-tab"]').on('shown.bs.tab', function () {
-                if (multimediaTab.load_state() === null) {
-                    multimediaTab.load_if_necessary();
-                }
+                initializeMultimediaTab();
             });
         }
     });
