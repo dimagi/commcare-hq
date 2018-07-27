@@ -761,7 +761,8 @@ class StaticReportConfiguration(JsonObject):
                     for path in files:
                         yield _get_wrapped_object_from_file(path, cls)
 
-        return __get_all() if settings.UNIT_TESTING else _filter_by_server_env(__get_all())
+        filter_by_env = settings.UNIT_TESTING or settings.DEBUG
+        return __get_all() if filter_by_env else _filter_by_server_env(__get_all())
 
     @classmethod
     @memoized

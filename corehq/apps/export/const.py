@@ -118,3 +118,6 @@ class SharingOption(object):
         EXPORT_ONLY,
         EDIT_AND_EXPORT,
     )
+
+
+UNKNOWN_EXPORT_OWNER = 'unknown'
