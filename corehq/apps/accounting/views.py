@@ -1207,11 +1207,10 @@ def enterprise_dashboard_email(request, domain, slug):
 def enterprise_settings(request, domain):
     account = _get_account_or_404(request, domain)
 
-    form = EnterpriseSettingsForm(domain=domain, initial={
-        "restrict_domain_creation": account.restrict_domain_creation,
-    })
+    form = EnterpriseSettingsForm(domain=domain, account=account)
 
     context = {
+        'account': account,
         'domain': domain,
         'current_page': {
             'title': _('Enterprise Settings'),
@@ -1226,10 +1225,7 @@ def enterprise_settings(request, domain):
 @require_POST
 def edit_enterprise_settings(request, domain):
     account = _get_account_or_404(request, domain)
-
-    form = EnterpriseSettingsForm(request.POST, domain=domain, initial={
-        "restrict_domain_creation": account.restrict_domain_creation,
-    })
+    form = EnterpriseSettingsForm(request.POST, domain=domain, account=account)
 
     if form.is_valid():
         form.save(account)
