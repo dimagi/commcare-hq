@@ -123,7 +123,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         context.update({
             'unknown_available': bool(self._unknown_forms),
             'unknown': {
-                'show':bool(self._show_unknown),
+                'show': bool(self._show_unknown),
                 'slug': self.unknown_slug,
                 'selected': self._selected_unknown_xmlns,
                 'options': self._unknown_forms_options,
