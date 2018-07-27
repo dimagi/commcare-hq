@@ -41,7 +41,7 @@ class TestUpdateRoles(BaseLinkedAppsTest):
             role.delete()
         super(TestUpdateRoles, self).tearDown()
 
-    def test_update_web_apps_list(self, mock):
+    def test_update_web_apps_list(self):
         self.assertEqual([], UserRole.by_domain(self.linked_domain))
 
         report_mapping = {'master_report_id': 'linked_report_id'}
