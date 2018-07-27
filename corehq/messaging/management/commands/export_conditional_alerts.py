@@ -94,7 +94,9 @@ class Command(BaseCommand):
             definition = criterion.definition
             if not isinstance(definition, MatchPropertyDefinition):
                 raise CommandError(
-                    "Rule %s references currently unsupported criterion definition for export." % rule.pk
+                    "Rule %s references currently unsupported criterion definition for export. "
+                    "Either add support to this script for unsupported criteria or exclude rule "
+                    "from export." % rule.pk
                 )
 
             json_rule.criteria.append(MatchPropertyCriterion(
@@ -104,11 +106,17 @@ class Command(BaseCommand):
             ))
 
         if len(rule.memoized_actions) != 1:
-            raise CommandError("Expected exactly one action for rule %s" % rule.pk)
+            raise CommandError(
+                "Expected exactly one action for rule %s. This is an unexpected configuration. "
+                "Was this rule created with the UI?" % rule.pk
+            )
 
         action = rule.memoized_actions[0].definition
         if not isinstance(action, CreateScheduleInstanceActionDefinition):
-            raise CommandError("Expected CreateScheduleInstanceActionDefinition")
+            raise CommandError(
+                "Expected CreateScheduleInstanceActionDefinition for rule %s. This is an unexpected "
+                "configuration. Was this rule created with the UI?" % rule.pk
+            )
 
         for recipient_type, recipient_id in action.recipients:
             if recipient_type not in (
@@ -118,10 +126,19 @@ class Command(BaseCommand):
                 CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE,
                 CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
             ):
-                raise CommandError("Unexpected recipient_type in rule %s" % rule.pk)
+                raise CommandError(
+                    "Unsupported recipient_type %s referenced in rule %s. That's probably because the "
+                    "recipient type references a specific object like a user or location whose id cannot "
+                    "be guaranteed to be the same in the imported project. This rule must be excluded "
+                    "from export" % (recipient_type, rule.pk)
+                )
 
         if action.get_scheduler_module_info().enabled:
-            raise CommandError("Expected scheduler module integration to be disabled")
+            raise CommandError(
+                "Scheduler module integration is not supported for export because it references "
+                "a form whose unique id is not guaranteed to be the same in the imported project. Please "
+                "exclude rule %s from export." % rule.pk
+            )
 
         json_rule.recipients = copy.deepcopy(action.recipients)
         json_rule.reset_case_property_name = action.reset_case_property_name
@@ -144,7 +161,11 @@ class Command(BaseCommand):
 
     def get_json_timed_schedule(self, schedule):
         if schedule.ui_type != Schedule.UI_TYPE_DAILY:
-            raise CommandError("Expected simple daily schedule")
+            raise CommandError(
+                "Only simple daily TimedSchedules are supported by this export script. Either exclude "
+                "rules with other types of TimedSchedules from export or add support to this script "
+                "for the missing schedule types."
+            )
 
         json_schedule = SimpleSMSDailyScheduleWithTime(
             total_iterations=schedule.total_iterations,
@@ -156,13 +177,21 @@ class Command(BaseCommand):
 
         event = schedule.memoized_events[0]
         if not isinstance(event, TimedEvent):
-            raise CommandError("Expected TimedEvent")
+            raise CommandError(
+                "Only TimedSchedules which use simple TimedEvents are supported by this export "
+                "script. Either exclude rules with other types of TimedEvents from export or add "
+                "support to this script for the missing use cases."
+            )
 
         json_schedule.time = event.time
 
         content = event.content
         if not isinstance(content, SMSContent):
-            raise CommandError("Expected SMSContent")
+            raise CommandError(
+                "Only Schedules which send SMSContent are supported by this export script. "
+                "Either exclude rules with other content types from export or add support "
+                "to this script for the missing use cases."
+            )
 
         json_schedule.message = copy.deepcopy(content.message)
 
@@ -170,7 +199,11 @@ class Command(BaseCommand):
 
     def get_json_alert_schedule(self, schedule):
         if schedule.ui_type != Schedule.UI_TYPE_IMMEDIATE:
-            raise CommandError("Expected simple immediate schedule")
+            raise CommandError(
+                "Only simple immediate AlertSchedules are supported by this export script. Either exclude "
+                "rules with other types of AlertSchedules from export or add support to this script "
+                "for the missing schedule types."
+            )
 
         json_schedule = SimpleSMSAlertSchedule(
             extra_options=self.get_json_scheduling_options(schedule),
@@ -179,7 +212,11 @@ class Command(BaseCommand):
         event = schedule.memoized_events[0]
         content = event.content
         if not isinstance(content, SMSContent):
-            raise CommandError("Expected SMSContent")
+            raise CommandError(
+                "Only Schedules which send SMSContent are supported by this export script. "
+                "Either exclude rules with other content types from export or add support "
+                "to this script for the missing use cases."
+            )
 
         json_schedule.message = copy.deepcopy(content.message)
 
@@ -196,14 +233,21 @@ class Command(BaseCommand):
 
             action = rule.memoized_actions[0].definition
             if action.schedule.location_type_filter:
-                raise CommandError("Expected location_type_filter to be empty for rule %s" % rule.pk)
+                raise CommandError(
+                    "Expected location_type_filter to be empty for rule %s. Location type filtering "
+                    "references primary keys of LocationType objects which aren't guaranteed to be "
+                    "the same in the imported project. This rule must be excluded from export." % rule.pk
+                )
 
             if isinstance(action.schedule, TimedSchedule):
                 json_schedule = self.get_json_timed_schedule(action.schedule)
             elif isinstance(action.schedule, AlertSchedule):
                 json_schedule = self.get_json_alert_schedule(action.schedule)
             else:
-                raise CommandError("Unexpected Schedule type for rule %s" % rule.pk)
+                raise CommandError(
+                    "Unexpected Schedule type for rule %s. Support must be added to this script for "
+                    "anything other than TimedSchedules or AlertSchedules." % rule.pk
+                )
 
             result.append(json.dumps({
                 'rule': json_rule.to_json(),
