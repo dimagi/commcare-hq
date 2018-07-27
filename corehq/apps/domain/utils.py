@@ -6,6 +6,7 @@ import re
 import datetime
 import json
 import csv342 as csv
+import sys
 import tempfile
 
 from django.conf import settings
@@ -169,3 +170,10 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
     temp_file_path = create_result_file()
     download_url = ExposeBlobDownload().get_link(temp_file_path, result_file_name, Format.CSV)
     email_result(download_url)
+
+
+def silence_during_tests():
+    if settings.UNIT_TESTING:
+        return open(os.devnull, 'w')
+    else:
+        return sys.stdout
