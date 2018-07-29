@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import pytz
 from datetime import timedelta, datetime, date, time
 import re
@@ -163,7 +164,10 @@ def looks_like_timestamp(value):
 
 
 def property_references_parent(case_property):
-    return isinstance(case_property, six.string_types) and case_property.startswith("parent/")
+    return isinstance(case_property, six.string_types) and (
+        case_property.startswith("parent/") or
+        case_property.startswith("host/")
+    )
 
 
 def case_matches_criteria(case, match_type, case_property, value_to_match):
@@ -1956,7 +1960,7 @@ class EmailUsage(models.Model):
     month = models.IntegerField()
     count = models.IntegerField(default=0)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('domain', 'year', 'month')
         app_label = "reminders"
 

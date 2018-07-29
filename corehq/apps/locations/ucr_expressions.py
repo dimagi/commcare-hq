@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from jsonobject import DefaultProperty
+from __future__ import unicode_literals
+from jsonobject import DefaultProperty, StringProperty
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.decorators import ucr_context_cache
@@ -75,6 +76,7 @@ class AncestorLocationExpression(JsonObject):
     type = TypeProperty("ancestor_location")
     location_id = DefaultProperty(required=True)
     location_type = DefaultProperty(required=True)
+    location_property = StringProperty(required=False)
 
     def configure(self, location_id_expression, location_type_expression):
         self._location_id_expression = location_id_expression
@@ -83,18 +85,25 @@ class AncestorLocationExpression(JsonObject):
     def __call__(self, item, context=None):
         location_id = self._location_id_expression(item, context)
         location_type = self._location_type_expression(item, context)
-        return self._get_ancestor(location_id, location_type, context)
+        location = self._get_ancestors_by_type(location_id, context).get(location_type)
+
+        if self.location_property:
+            return location.get(self.location_property)
+
+        return location
 
     @staticmethod
-    @ucr_context_cache(vary_on=('location_id', 'location_type',))
-    def _get_ancestor(location_id, location_type, context):
-        try:
-            location = _get_location(location_id, context)
-            ancestor = location.get_ancestors(include_self=False).get(location_type__name=location_type)
-            return ancestor.to_json()
-        except (AttributeError, SQLLocation.DoesNotExist):
-            # location is None, or location does not have an ancestor of that type
-            return None
+    @ucr_context_cache(vary_on=('location_id',))
+    def _get_ancestors_by_type(location_id, context):
+        location = _get_location(location_id, context)
+        if not location:
+            return {}
+        ancestors = (location.get_ancestors(include_self=False)
+                             .prefetch_related('location_type', 'parent'))
+        return {
+            ancestor.location_type.name: ancestor.to_json(include_lineage=False)
+            for ancestor in ancestors
+        }
 
 
 def ancestor_location(spec, context):

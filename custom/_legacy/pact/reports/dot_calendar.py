@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from calendar import HTMLCalendar
 from calendar import month_name
 from datetime import date, timedelta, datetime
 import logging
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from pact.dot_data import (
     DOTDay,
     filter_obs_for_day,

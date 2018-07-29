@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.db import models
 
 
@@ -12,7 +13,7 @@ class CalendarFixtureSettings(models.Model):
     days_after = models.PositiveIntegerField(default=DEFAULT_DAYS_AFTER)
 
     def __repr__(self):
-        return u'{}: {} before - {} after'.format(self.domain, self.days_before, self.days_after)
+        return '{}: {} before - {} after'.format(self.domain, self.days_before, self.days_after)
 
     @classmethod
     def for_domain(cls, domain):

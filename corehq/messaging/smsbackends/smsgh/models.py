@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import requests
 from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.messaging.smsbackends.smsgh.forms import SMSGHBackendForm
+from django.conf import settings
 
 
 GHANA_COUNTRY_CODE = '233'
@@ -15,7 +17,7 @@ class SMSGHException(Exception):
 
 class SQLSMSGHBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 
@@ -94,7 +96,7 @@ class SQLSMSGHBackend(SQLSMSBackend):
             'ClientId': config.client_id,
             'ClientSecret': config.client_secret,
         }
-        response = requests.get(self.get_url(), params=params)
+        response = requests.get(self.get_url(), params=params, timeout=settings.SMS_GATEWAY_TIMEOUT)
 
         if self.response_is_error(response):
             self.handle_error(response, msg)

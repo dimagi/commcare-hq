@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from contextlib import contextmanager
 
@@ -9,54 +10,6 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
-
-
-class BootstrapMultiField(MultiField):
-    template = "hqwebapp/crispy/layout/multifield.html"
-    field_template = "hqwebapp/crispy/field/multifield.html"
-
-    def __init__(self, *args, **kwargs):
-        super(BootstrapMultiField, self).__init__(*args, **kwargs)
-        self.help_bubble_text = None
-        if 'help_bubble_text' in kwargs:
-            self.help_bubble_text = kwargs.pop('help_bubble_text')
-
-    def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
-        fields_output = u''
-        for field in self.fields:
-            fields_output += render_field(
-                field, form, form_style, context,
-                self.field_template, self.label_class, layout_object=self,
-                template_pack=template_pack
-            )
-
-        errors = self._get_errors(form, self.fields)
-        if len(errors) > 0:
-            self.css_class += " error"
-
-        context.update({
-            'multifield': self,
-            'fields_output': fields_output,
-            'error_list': errors,
-            'help_bubble_text': self.help_bubble_text,
-        })
-        return render_to_string(self.template, context.flatten())
-
-    def _get_errors(self, form, fields):
-        errors = []
-        for field in fields:
-            if isinstance(field, OldField) or issubclass(field.__class__, OldField):
-                fname = field.fields[0]
-                error = form[fname].errors
-                if error:
-                    errors.append(error)
-            else:
-                try:
-                    errors.extend(self._get_errors(form, field.fields))
-                except AttributeError:
-                    pass
-        return errors
 
 
 class HiddenFieldWithErrors(OldField):
@@ -82,20 +35,6 @@ class TextField(OldField):
         return super(TextField, self).render(form, form_style, context, template_pack=template_pack)
 
 
-class InlineColumnField(InlineField):
-
-    def __init__(self, *args, **kwargs):
-        self.block_css_class = kwargs.pop('block_css_class')
-        super(InlineColumnField, self).__init__(*args, **kwargs)
-
-    def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
-        context.update({
-            'block_css_class': self.block_css_class,
-        })
-        return super(InlineColumnField, self).render(form, form_style, context, template_pack=template_pack)
-
-
 class ErrorsOnlyField(OldField):
     template = 'hqwebapp/crispy/field/errors_only_field.html'
 
@@ -113,7 +52,7 @@ class FormActions(OriginalFormActions):
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        html = u''
+        html = ''
         for field in self.fields:
             html += render_field(
                 field, form, form_style, context,
@@ -224,7 +163,7 @@ class B3MultiField(LayoutObject):
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        html = u''
+        html = ''
 
         errors = self._get_errors(form, self.fields)
         if len(errors) > 0:

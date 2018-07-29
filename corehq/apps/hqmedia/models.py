@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import hashlib
 import logging
 import mimetypes
@@ -9,11 +10,12 @@ import magic
 from couchdbkit.exceptions import ResourceConflict
 from django.template.defaultfilters import filesizeformat
 
+from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from PIL import Image
@@ -23,6 +25,7 @@ from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from corehq.blobs.mixin import BlobMixin
 import six
+from io import open
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -350,7 +353,10 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_image_object(cls, data):
-        return Image.open(BytesIO(data))
+        try:
+            return Image.open(BytesIO(data))
+        except IOError:
+            raise BadMediaFileException(_('Upload is not a valid image file.'))
 
     @classmethod
     def _get_resized_image(cls, image, size):
@@ -368,7 +374,7 @@ class CommCareImage(CommCareMultimedia):
     def get_invalid_image_data(cls):
         import os
         invalid_image_path = os.path.join(os.path.dirname(__file__), 'static/hqmedia/images/invalid_image.png')
-        return Image.open(open(invalid_image_path))
+        return Image.open(open(invalid_image_path, 'rb'))
 
     @classmethod
     def get_thumbnail_data(cls, data, size):
@@ -535,7 +541,6 @@ class HQMediaMixin(Document):
 
     archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
 
-    @property
     @memoized
     def all_media(self):
         """
@@ -691,14 +696,13 @@ class HQMediaMixin(Document):
         menu_media['audio'] = audio_ref
         return menu_media
 
-    @property
     @memoized
     def all_media_paths(self):
-        return set([m.path for m in self.all_media])
+        return set([m.path for m in self.all_media()])
 
     @memoized
     def get_all_paths_of_type(self, media_class_name):
-        return set([m.path for m in self.all_media if m.media_class.__name__ == media_class_name])
+        return set([m.path for m in self.all_media() if m.media_class.__name__ == media_class_name])
 
     def get_media_ref_kwargs(self, module, module_index, form=None,
                              form_index=None, is_menu_media=False):
@@ -726,7 +730,7 @@ class HQMediaMixin(Document):
         if self.check_media_state()['has_form_errors']:
             return
         paths = list(self.multimedia_map) if self.multimedia_map else []
-        permitted_paths = self.all_media_paths | self.logo_paths
+        permitted_paths = self.all_media_paths() | self.logo_paths
         for path in paths:
             if path not in permitted_paths:
                 map_changed = True
@@ -789,7 +793,7 @@ class HQMediaMixin(Document):
         """
             Used for the multimedia controller.
         """
-        return [m.as_dict(lang) for m in self.all_media]
+        return [m.as_dict(lang) for m in self.all_media()]
 
     def get_object_map(self):
         object_map = {}
@@ -827,14 +831,14 @@ class HQMediaMixin(Document):
     def check_media_state(self):
         has_missing_refs = False
 
-        for media in self.all_media:
+        for media in self.all_media():
             try:
                 self.multimedia_map[media.path]
             except KeyError:
                 has_missing_refs = True
 
         return {
-            "has_media": bool(self.all_media),
+            "has_media": bool(self.all_media()),
             "has_form_errors": self.media_form_errors,
             "has_missing_refs": has_missing_refs,
         }

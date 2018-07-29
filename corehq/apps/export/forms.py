@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import timedelta
 import dateutil
 from django import forms
@@ -730,11 +731,6 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
 class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
     # This class will be removed when the switch over to ES exports is complete
 
-    def get_edit_url(self, export):
-        from corehq.apps.export.views import EditCustomFormExportView
-        return reverse(EditCustomFormExportView.urlname,
-                       args=(self.domain_object.name, export.get_id))
-
     def get_form_filter(self):
         form_filter = SerializableFunction(app_export_filter, app_id=None)
         datespan_filter = self._get_datespan_filter()
@@ -1152,11 +1148,6 @@ class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
 class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
     _export_type = 'case'
     # This class will be removed when the switch over to ES exports is complete
-
-    def get_edit_url(self, export):
-        from corehq.apps.export.views import EditCustomCaseExportView
-        return reverse(EditCustomCaseExportView.urlname,
-                       args=(self.domain_object.name, export.get_id))
 
     def get_case_filter(self):
         group = self._get_group()

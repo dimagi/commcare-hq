@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import os
 import re
@@ -17,6 +18,7 @@ from django_transfer import TransferHttpResponse
 from soil.progress import get_task_progress, get_multiple_task_progress
 from corehq.blobs import DEFAULT_BUCKET, get_blob_db
 import six
+from io import open
 
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
@@ -80,7 +82,7 @@ class DownloadBase(object):
         else:
             return cache.cache.get(download_id, None)
 
-    def save(self, expiry=None):
+    def save(self, expiry=24 * 60 * 60):
         self.get_cache().set(self.download_id, self, expiry)
 
     def clean_content_disposition(self, content_disposition):
@@ -199,14 +201,14 @@ class CachedDownload(DownloadBase):
 
     def get_content(self):
         return self.get_cache().get(self.cacheindex, None)
-    
+
     @classmethod
     def create(cls, payload, expiry, **kwargs):
         if isinstance(payload, FileWrapper):
             # I don't know what to do other than create a memory bottleneck here
             # can revisit when loading a whole file into memory becomes a
             # serious concern
-            payload = ''.join(payload)
+            payload = b''.join(payload)
         download_id = str(uuid.uuid4())
         ret = cls(download_id, **kwargs)
         cache.caches[ret.cache_backend].set(download_id, payload, expiry)

@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division
 
+from __future__ import unicode_literals
 from collections import defaultdict, OrderedDict
 from datetime import datetime
 
@@ -73,8 +74,8 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of pregnant women who delivered in a public or private medical facility "
-            "in the last month. "
+            "Of the total number of women enrolled for Anganwadi services who gave birth in the last month, "
+            "the percentage who delivered in a public or private medical facility. "
             "<br/><br/>"
             "Delivery in medical instituitions is associated with a decrease in maternal mortality rate"
         )),
@@ -129,8 +130,8 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
         "rightLegend": {
             "average": average,
             "info": _((
-                "Percentage of pregnant women who delivered in a public or private medical facility "
-                "in the last month. "
+                "Of the total number of women enrolled for Anganwadi services who gave birth in the last month, "
+                "the percentage who delivered in a public or private medical facility. "
                 "<br/><br/>"
                 "Delivery in medical instituitions is associated with a decrease in maternal mortality rate"
             )),

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.decorators import method_decorator
 from django.utils.deprecation import MiddlewareMixin
 from django.views.decorators.debug import sensitive_post_parameters
@@ -13,4 +14,5 @@ class GlobalRequestMiddleware(MiddlewareMixin):
         set_request(request)
 
     def process_response(self, request, response):
+        set_request(None)
         return response

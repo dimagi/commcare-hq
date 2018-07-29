@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import logging
 from django.db.models import Q
@@ -22,7 +23,7 @@ from corehq.apps.reports.datatables import (
     DTSortDirection,
 )
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from .models import DeviceReportEntry

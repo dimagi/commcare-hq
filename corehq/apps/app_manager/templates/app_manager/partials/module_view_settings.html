@@ -39,7 +39,6 @@
     <fieldset>
         {% block settings_fields %}
 
-
           {% if child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
           <div class="panel panel-appmanager" data-slug="menu">
             <div class="panel-heading">
@@ -50,7 +49,7 @@
                 {% include "app_manager/partials/module_view_case_type.html" %}
               {% endif %}
 
-              {% if child_module_enabled %}
+              {% if child_module_enabled and not module.is_training_module%}
                 <div class="form-group">
                     <label class="col-sm-2 control-label">
                         {% trans "Parent Menu" %}
@@ -61,7 +60,7 @@
                     <div class="col-sm-4">
                         <select type="text" name="root_module_id" class="form-control">
                             <option value="">{% trans "No Parent" %}</option>
-                            {% for mod in valid_parent_modules %}
+                            {% for mod in valid_parents_for_child_module %}
                                 <option value="{{mod.unique_id}}"{% if mod.unique_id == module.root_module_id %} selected{% endif %}>
                                     {{ mod.name|trans:langs }}
                                 </option>

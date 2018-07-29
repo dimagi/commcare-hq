@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from django.test import TestCase
 from mock import patch
@@ -13,6 +14,7 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.models import CommCareUser
+from custom.icds.messaging.custom_content import run_indicator_for_user
 from custom.icds.messaging.indicators import LSVHNDSurveyIndicator
 
 
@@ -65,11 +67,11 @@ class TestLSVHNDSurveyIndicator(TestCase):
             return date.strftime('%Y-%m-%d')
 
         return {
-            u'form': {
-                u'meta': {
-                    u'user_id': user_id
+            'form': {
+                'meta': {
+                    'user_id': user_id
                 },
-                u'vhsnd_date_past_month': es_formatted_date(date),
+                'vhsnd_date_past_month': es_formatted_date(date),
             }
         }
 
@@ -77,22 +79,21 @@ class TestLSVHNDSurveyIndicator(TestCase):
         last_subs.return_value = {
             self.aww.get_id: [self._make_form(self.aww.get_id, self.today)]
         }
-        indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        self.assertEqual(len(indicator.get_messages(language_code='en')), 0)
+        messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
+        self.assertEqual(len(messages), 0)
 
     def test_form_sent_thirty_six_days_ago(self, last_subs):
         last_subs.return_value = {
             self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=36))]
         }
-        indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        self.assertEqual(len(indicator.get_messages(language_code='en')), 0)
+        messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
+        self.assertEqual(len(messages), 0)
 
     def test_form_sent_thirty_seven_days_ago(self, last_subs):
         last_subs.return_value = {
             self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=37))]
         }
-        indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        messages = indicator.get_messages(language_code='en')
+        messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertTrue('AWC1' in messages[0])
 
@@ -104,8 +105,7 @@ class TestLSVHNDSurveyIndicator(TestCase):
             self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=37))],
             aww_2.get_id: [self._make_form(aww_2.get_id, self.today - timedelta(days=37))]
         }
-        indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        messages = indicator.get_messages(language_code='en')
+        messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertTrue('AWC1' in message)
@@ -119,8 +119,7 @@ class TestLSVHNDSurveyIndicator(TestCase):
             self.aww.get_id: [self._make_form(self.aww.get_id, self.today - timedelta(days=15))],
             aww_2.get_id: [self._make_form(aww_2.get_id, self.today - timedelta(days=37))]
         }
-        indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        messages = indicator.get_messages(language_code='en')
+        messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         message = messages[0]
         self.assertFalse('AWC1' in message)
@@ -128,7 +127,6 @@ class TestLSVHNDSurveyIndicator(TestCase):
 
     def test_no_form_submitted(self, last_subs):
         last_subs.return_value = {}
-        indicator = LSVHNDSurveyIndicator(self.domain, self.ls)
-        messages = indicator.get_messages(language_code='en')
+        messages = run_indicator_for_user(self.ls, LSVHNDSurveyIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertTrue('AWC1' in messages[0])

@@ -12,9 +12,30 @@
                     </h4>
                 </div>
                 <div class="panel-body">
+                    {% if request|toggle_enabled:"COPY_FORM_TO_APP" %}
+                    <span id="app-module-selection">
+                        <select name="to_app_id"
+                                class='form-control'
+                                style="min-width: 150px;"
+                                data-bind="options: apps,
+                                           optionsText: 'name',
+                                           optionsValue: 'id',
+                                           value: selectedAppId"></select>
+                        <!-- ko with: selectedApp -->
+                        <select name="to_module_id"
+                                class='form-control'
+                                style="min-width: 150px;"
+                                data-bind="options: modules,
+                                           optionsText: 'name',
+                                           optionsValue: 'id',
+                                           value: selectedModuleId"></select>
+                        <!-- /ko -->
+                    </span>
+                    {% else %}
                     <select name='to_module_id' class='form-control' style="min-width: 150px;">{% for mod in app.get_modules %}
                         <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
                         {% endfor %}</select>
+                    {% endif %}
                     <button class='btn btn-default' type="submit">
                         <i class="fa fa-copy"></i>
                         {% trans "Copy" %}
@@ -43,17 +64,9 @@
                 </li>
                 <li>
                     <a {% if not form.source %}class="disabled"{% endif %}
-                       href="{% url "get_xform_source" domain app.id form.unique_id %}?download=true">
+                       href="{% url "get_xform_source" domain app.id form.unique_id %}">
                         <i class="fa fa-arrow-down"></i>
                         {% trans "Download" %}
-                    </a>
-                </li>
-                <li>
-                    <a id="xform-source-opener"
-                       class="{% if not form.source %}disabled{% endif %}"
-                       data-href="{% url "get_xform_source" domain app.id form.unique_id %}">
-                        <i class="fa fa-search"></i>
-                        {% trans "View" %}
                     </a>
                 </li>
             </ul>

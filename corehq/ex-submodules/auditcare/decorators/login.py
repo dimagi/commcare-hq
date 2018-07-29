@@ -1,6 +1,7 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import django
 from django.contrib.auth.forms import AuthenticationForm
 
@@ -41,7 +42,7 @@ def query2str(items):
     kvs = []
     for k, v in items:
         if k != 'password':
-            kvs.append(u'%s=%s' % (k, v))
+            kvs.append('%s=%s' % (k, v))
 
     return '\n'.join(kvs)
 

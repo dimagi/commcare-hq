@@ -1,15 +1,17 @@
 hqDefine("hqwebapp/js/select2_handler", [
     "jquery",
     "knockout",
+    "select2-3.5.2-legacy/select2",
+    "bootstrap-timepicker/js/bootstrap-timepicker",
 ], function(
     $,
     ko
 ) {
-    var BaseSelect2Handler = function (options) {
+    var baseSelect2Handler = function (options) {
         // For use with BaseAsyncHandler
         // todo: documentation (biyeun)
         'use strict';
-        var self = this;
+        var self = {};
         self.fieldName = options.fieldName;
         self.multiple = options.multiple || false;
         self.value = ko.observable();
@@ -95,9 +97,11 @@ hqDefine("hqwebapp/js/select2_handler", [
                 fieldInput.on("change", self.onSelect2Change);
             }
         };
+
+        return self;
     };
 
     return {
-        BaseSelect2Handler: BaseSelect2Handler,
+        baseSelect2Handler: baseSelect2Handler,
     };
 });

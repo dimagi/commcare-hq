@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import re
 
@@ -11,7 +12,7 @@ from django import forms
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD, REGEX_FIELD_VALIDATION
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from .models import (CustomDataFieldsDefinition, CustomDataField,
                      validate_reserved_words)
@@ -200,7 +201,7 @@ class CustomDataModelMixin(object):
             self.save_custom_fields()
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
-            msg = _(u"{} fields saved successfully").format(
+            msg = _("{} fields saved successfully").format(
                 six.text_type(self.entity_string)
             )
             messages.success(request, msg)

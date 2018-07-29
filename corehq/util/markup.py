@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from abc import abstractmethod, ABCMeta
 
@@ -8,7 +9,7 @@ import sys
 from django.utils.html import format_html, escape
 from django.utils.safestring import mark_safe
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 url_re = re.compile(
     r"""(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))"""

@@ -1,6 +1,6 @@
 """
 Aggregate Queries
----------------
+-----------------
 Aggregations are a replacement for Facets
 
 Here is an example used to calculate how many new pregnancy cases each user has
@@ -35,6 +35,7 @@ As of this writing, there's not much else developed, but it's pretty easy to
 add support for other aggregation types and more results processing
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from copy import deepcopy
 import re
 from collections import namedtuple, defaultdict
@@ -472,8 +473,8 @@ class RangeAggregation(Aggregation):
     :param name: the aggregation name
     :param field: the field to perform the range aggregations on
     :param ranges: list of AggregationRange objects
-    :param keyed: set to True to have the results returned by key instead of as a list
-                  (see RangeResult.normalized_buckets)
+    :param keyed: set to True to have the results returned by key instead of as
+    a list (see RangeResult.normalized_buckets)
     """
     type = "range"
     result_class = RangeResult
@@ -565,23 +566,27 @@ class NestedTermAggregationsHelper(object):
 
     Example usage:
 
-    # counting all forms submitted in a domain grouped by app id and user id
-    NestedTermAggregationsHelper(
-        base_query=FormES().domain(domain_name),
-        terms=[
-            AggregationTerm('app_id', 'app_id'),
-            AggregationTerm('user_id', 'form.meta.userID'),
-        ]
-    ).get_data()
+    .. code-block:: python
 
-    # summing the balances of ledger values, grouped by the entry id
-    NestedTermAggregationsHelper(
-        base_query=LedgerES().domain(domain).section(section_id),
-        terms=[
-            AggregationTerm('entry_id', 'entry_id'),
-        ],
-        inner_most_aggregation=SumAggregation('balance', 'balance'),
-    ).get_data()
+        # counting all forms submitted in a domain grouped by app id and user id
+
+        NestedTermAggregationsHelper(
+            base_query=FormES().domain(domain_name),
+            terms=[
+                AggregationTerm('app_id', 'app_id'),
+                AggregationTerm('user_id', 'form.meta.userID'),
+            ]
+        ).get_data()
+
+        # summing the balances of ledger values, grouped by the entry id
+
+        NestedTermAggregationsHelper(
+            base_query=LedgerES().domain(domain).section(section_id),
+            terms=[
+                AggregationTerm('entry_id', 'entry_id'),
+            ],
+            inner_most_aggregation=SumAggregation('balance', 'balance'),
+        ).get_data()
 
     This works by bucketing docs first by one terms aggregation, then within
     that bucket, bucketing further by the next term, and so on. This is then

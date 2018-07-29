@@ -11,7 +11,7 @@ from custom.ewsghana.filters import EWSRestrictionLocationFilter, TransactionChe
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.ewsghana.filters import MultiProductFilter
 from custom.ewsghana.utils import ews_date_format, get_country_id
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 

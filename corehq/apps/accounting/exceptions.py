@@ -56,3 +56,7 @@ class CreateAccountingAdminError(Exception):
 
 class ProductPlanNotFoundError(Exception):
     pass
+
+
+class EnterpriseReportError(Exception):
+    pass

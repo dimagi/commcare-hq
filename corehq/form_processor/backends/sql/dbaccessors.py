@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import functools
 import itertools
 import logging
@@ -22,6 +23,7 @@ from django.db.models import Q, F
 from django.db.models.functions import Greatest, Concat
 from django.db.models.expressions import Value
 
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
     XFormNotFound,
@@ -581,6 +583,17 @@ class FormAccessorSQL(AbstractFormAccessor):
         return return_value
 
     @staticmethod
+    def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml, _):
+        attachment_metadata = form_data.get_attachment_meta("form.xml")
+        # Write the new xml to the database
+        attachment_metadata.write_content(form_attachment_new_xml)
+        attachment_metadata.save()
+        operation = XFormOperationSQL(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
+                                      operation=XFormOperationSQL.GDPR_SCRUB)
+        form_data.track_create(operation)
+        FormAccessorSQL.update_form(form_data)
+
+    @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
@@ -685,7 +698,11 @@ class FormAccessorSQL(AbstractFormAccessor):
                         model.form = form
                         model.save()
             else:
-                form.save()
+                with transaction.atomic(db_name):
+                    form.save()
+                    for operation in new_operations:
+                        operation.form = form
+                        operation.save()
 
         if publish_changes:
             publish_form_saved(form)
@@ -750,9 +767,11 @@ class CaseReindexAccessor(ReindexAccessor):
     """
     :param: domain: If supplied the accessor will restrict results to only that domain
     """
-    def __init__(self, domain=None, limit_db_aliases=None):
+    def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None):
         super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
+        self.start_date = start_date
+        self.end_date = end_date
 
     @property
     def model_class(self):
@@ -772,6 +791,10 @@ class CaseReindexAccessor(ReindexAccessor):
         filters = [Q(deleted=False)]
         if self.domain:
             filters.append(Q(domain=self.domain))
+        if self.start_date is not None:
+            filters.append(Q(server_modified_on__gte=self.start_date))
+        if self.end_date is not None:
+            filters.append(Q(server_modified_on__lt=self.end_date))
         return filters
 
 
@@ -898,18 +921,18 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return sum([result.deleted_count for result in results])
 
     @staticmethod
-    def get_attachment_by_identifier(case_id, identifier):
+    def get_attachment_by_name(case_id, attachment_name):
         try:
             return CaseAttachmentSQL.objects.raw(
-                'select * from get_case_attachment_by_identifier(%s, %s)',
-                [case_id, identifier]
+                'select * from get_case_attachment_by_name(%s, %s)',
+                [case_id, attachment_name]
             )[0]
         except IndexError:
-            raise AttachmentNotFound(identifier)
+            raise AttachmentNotFound(attachment_name)
 
     @staticmethod
-    def get_attachment_content(case_id, attachment_id):
-        meta = CaseAccessorSQL.get_attachment_by_identifier(case_id, attachment_id)
+    def get_attachment_content(case_id, attachment_name):
+        meta = CaseAccessorSQL.get_attachment_by_name(case_id, attachment_name)
         return AttachmentContent(meta.content_type, meta.read_content(stream=True))
 
     @staticmethod
@@ -1009,8 +1032,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     attachment.save()
 
                 CaseAttachmentSQL.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
-                for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
-                    attachment.delete_content()
 
                 case.clear_tracked_models()
         except InternalError as e:

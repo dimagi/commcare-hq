@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division
+from __future__ import unicode_literals
 import logging
 from collections import namedtuple
 from django.conf import settings

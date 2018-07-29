@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 
 from __future__ import division
+from __future__ import unicode_literals
 import datetime
 import math
-import operator
 from collections import defaultdict, namedtuple
 
 from django.conf import settings
@@ -56,11 +56,10 @@ from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
 import six
-from functools import reduce
 from six.moves import range
 from six.moves import map
 from six.moves.urllib.parse import urlencode
@@ -938,7 +937,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             results.get(json_format_date(date), 0)
             for date in self.dates
         ]
-        styled_date_cols = ['<span class="muted">0</span>' if c == 0 else c for c in date_cols]
+        styled_date_cols = ['<span class="text-muted">0</span>' if c == 0 else c for c in date_cols]
         first_col = self.get_raw_user_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
@@ -1405,8 +1404,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         columns.append(DataTablesColumnGroup(_("Case Activity"),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of cases owned by the user that were opened, modified or closed in date range.  This includes case sharing cases.")),
-            DataTablesColumn(_("# Total Cases"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Total number of cases owned by the user.  This includes case sharing cases.")),
+            DataTablesColumn(_("# Total Cases (Owned & Shared)"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Total number of cases owned by the user.  This includes cases created by the user "
+                            "and cases that were shared with this user.")),
             DataTablesColumn(_("% Active Cases"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Percentage of cases owned by user that were active.  This includes case sharing cases.")),
         ))
@@ -1454,6 +1454,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         ) if ufilters else []
 
     @property
+    @memoized
     def users_to_iterate(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
             user_query = EMWF.user_es_query(
@@ -1509,7 +1510,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @staticmethod
     def _html_anchor_tag(href, value):
-        return u'<a href="{}" target="_blank">{}</a>'.format(href, value)
+        return '<a href="{}" target="_blank">{}</a>'.format(href, value)
 
     @staticmethod
     def _make_url(base_url, params):
@@ -1609,11 +1610,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             if group_name == 'no_group':
                 continue
 
-            case_sharing_groups = set(reduce(operator.add, [u['group_ids'] + [u['location_id']] for u in users], []))
-            active_cases = sum([int(report_data.active_cases_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
-                sum([int(report_data.active_cases_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
-            total_cases = sum([int(report_data.total_cases_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
-                sum([int(report_data.total_cases_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
+            owner_ids = _get_owner_ids_from_users(users)
+
+            active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+            total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             active_users = int(active_users_by_group.get(group, 0))
             total_users = len(self.users_by_group.get(group, []))
 
@@ -1665,12 +1665,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         rows = []
         last_form_by_user = self.es_last_submissions()
         for user in self.users_to_iterate:
-            active_cases = int(report_data.active_cases_by_owner.get(user["user_id"].lower(), 0)) + \
-                sum([int(report_data.active_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]]) + \
-                int(report_data.active_cases_by_owner.get(user["location_id"], 0))
-            total_cases = int(report_data.total_cases_by_owner.get(user["user_id"].lower(), 0)) + \
-                sum([int(report_data.total_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]]) + \
-                int(report_data.total_cases_by_owner.get(user["location_id"], 0))
+            owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
+            active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+            total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
 
             cases_opened = int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
             cases_closed = int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
@@ -1737,13 +1734,28 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def _report_data(self):
         avg_datespan = self.avg_datespan
 
+        case_owners = _get_owner_ids_from_users(self.users_to_iterate)
+        user_ids = self.user_ids
+
         return WorkerActivityReportData(
-            avg_submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan),
-            submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan),
-            active_cases_by_owner=get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types),
-            total_cases_by_owner=get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types),
-            cases_closed_by_user=get_case_counts_closed_by_user(self.domain, self.datespan, self.case_types),
-            cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types),
+            avg_submissions_by_user=get_submission_counts_by_user(
+                self.domain, avg_datespan, user_ids=user_ids
+            ),
+            submissions_by_user=get_submission_counts_by_user(
+                self.domain, self.datespan, user_ids=user_ids
+            ),
+            active_cases_by_owner=get_active_case_counts_by_owner(
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners
+            ),
+            total_cases_by_owner=get_total_case_counts_by_owner(
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners
+            ),
+            cases_closed_by_user=get_case_counts_closed_by_user(
+                self.domain, self.datespan, self.case_types, user_ids=user_ids
+            ),
+            cases_opened_by_user=get_case_counts_opened_by_user(
+                self.domain, self.datespan, self.case_types, user_ids=user_ids
+            ),
         )
 
     def _total_row(self, rows, report_data):
@@ -1758,10 +1770,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             else:
                 total_row.append('---')
         num = len([row for row in rows if row[3] != _(self.NO_FORMS_TEXT)])
-        case_owners = set()
-        for user in self.users_to_iterate:
-            case_owners = case_owners.union((user.user_id, user.location_id))
-            case_owners = case_owners.union(user.group_ids)
+        case_owners = _get_owner_ids_from_users(self.users_to_iterate)
         total_row[6] = sum(
             [int(report_data.active_cases_by_owner.get(id, 0))
              for id in case_owners])
@@ -1819,3 +1828,17 @@ def _get_selected_users(domain, request):
         request.GET.getlist(EMWF.slug),
         request.couch_user,
     ))
+
+
+def _get_owner_ids_from_users(users):
+    owner_ids = set()
+    for user in users:
+        owner_ids.update([user['user_id'].lower(), user['location_id']])
+        owner_ids.update(user['group_ids'])
+
+    try:
+        owner_ids.remove(None)
+    except KeyError:
+        pass
+
+    return list(owner_ids)

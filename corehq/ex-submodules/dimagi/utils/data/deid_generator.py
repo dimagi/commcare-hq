@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import hashlib
 from datetime import datetime
 from functools import reduce

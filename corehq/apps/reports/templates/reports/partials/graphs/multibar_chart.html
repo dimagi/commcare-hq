@@ -1,45 +1,10 @@
 {% load hq_shared_tags %}
-<script>
-    nv.addGraph(function() {
-        var chart_config = {{ chart.config_dict|JSON }};
-        var chart_data = {{ chart.data|JSON }};
-        var chart_id = '#{{ chart_id }}';
 
-        $(chart_id).show();
-
-        var chart = nv.models.multiBarChart();
-
-        chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
-        {% if chart.x_axis.format %}
-            chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
-        {% endif %}
-
-        chart.yAxis.axisLabel({{ chart.y_axis.label|JSON }});
-        {% if chart.y_axis.format %}
-            chart.yAxis.tickFormat(d3.format({{ chart.y_axis.format|JSON }}));
-        {% endif %}
-
-        chart.showControls(chart_config.showControls);
-        chart.showLegend(chart_config.showLegend);
-        chart.reduceXTicks(chart_config.reduceXTicks);
-        chart.rotateLabels(chart_config.rotateLabels);
-        chart.tooltips(chart_config.tooltips);
-        // Customize tooltip message
-        {% if chart.tooltipFormat %}
-            chart.tooltipContent(function(key, y, e, graph) { return e+ '{{ chart.tooltipFormat }}' +y });
-        {% endif %}
-        chart.stacked(chart_config.stacked);
-        chart.margin(chart_config.margin);
-        chart.staggerLabels(chart_config.staggerLabels);
-        chart.multibar.groupSpacing(chart_config.groupSpacing);
-        chart.multibar.forceY(chart_config.forceY);
-
-        d3.select(chart_id + ' svg')
-                .datum(chart_data)
-                .transition().duration(500).call(chart);
-
-        nv.utils.windowResize(chart.update);
-
-        return chart;
-    });
-</script>
+<div class="charts-multibar-chart"
+     data-config-dict="{% html_attr chart.config_dict %}"
+     data-chart-data="{% html_attr chart.data %}"
+     data-chart-id="{{ chart_id }}"
+     data-chart-x-axis="{% html_attr chart.x_axis %}"
+     data-chart-y-axis="{% html_attr chart.y_axis %}"
+     data-chart-tooltip-format="{% html_attr chart.tooltipFormat %}">
+</div>

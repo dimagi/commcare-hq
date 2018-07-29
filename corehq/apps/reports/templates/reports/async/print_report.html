@@ -7,9 +7,10 @@
 {% block js-inline %}
     {{ block.super }}
     <script>
+        // This is fine as an inline script; it's independent of all HQ code and all third-party libraries
         $(function() {
             setTimeout(function() {
-                $('.hq-loading').hide();
+                document.querySelector('.hq-loading').style.display = 'none';
                 window.print();
             }, 2000);
         })

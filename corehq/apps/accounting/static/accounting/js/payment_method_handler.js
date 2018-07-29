@@ -44,7 +44,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
         var self = this;
         opts = opts ? opts : {};
 
-        BillingHandler.apply(this, arguments);
+        BillingHandler.apply(this, [formId, opts]);
         self.paymentMethod = ko.observable(self.WIRE);
 
         self.handleGeneralError = function (response, textStatus, errorThrown) {
@@ -96,7 +96,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
             return self.selectedCardType() === 'new';
         });
 
-        self.newCard = ko.observable(new StripeCard());
+        self.newCard = ko.observable(stripeCardModel());
 
         self.handlers = [self];
 
@@ -138,7 +138,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
 
         self.loadCards = function (cards) {
             _.each(cards.data, function (card) {
-                var stripe_card = new StripeCard();
+                var stripe_card = stripeCardModel();
                 stripe_card.loadSavedData(card);
                 self.savedCards.push(stripe_card);
             });
@@ -150,7 +150,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.reset = function () {
             self.paymentIsComplete(false);
             self.serverErrorMsg('');
-            self.newCard(new StripeCard());
+            self.newCard(stripeCardModel());
         };
 
         self.processPayment = function () {
@@ -221,7 +221,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
                 if (response.wasSaved) {
                     for (var i = 0; i < self.handlers.length; i++) {
                         var handler = self.handlers[i];
-                        var stripe_card = new StripeCard();
+                        var stripe_card = stripeCardModel();
                         stripe_card.loadSavedData(response.card);
                         handler.savedCards.push(stripe_card);
                         handler.selectedCardType('saved');
@@ -442,9 +442,9 @@ hqDefine('accounting/js/payment_method_handler', function () {
     CreditCostItem.prototype = Object.create( BaseCostItem.prototype );
     CreditCostItem.prototype.constructor = CreditCostItem;
 
-    var StripeCard = function () {
+    var stripeCardModel = function () {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.number = ko.observable();
         self.cvc = ko.observable();
@@ -454,7 +454,6 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.token = ko.observable();
         self.isTestMode = ko.observable(false);
         self.isProcessing = ko.observable(false);
-        self.agreedToPrivacyPolicy = ko.observable(false);
         self.newSavedCard = ko.observable(false);
 
         self.autopayCard = ko.computed(function(){
@@ -470,7 +469,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.isSaved = ko.observable(false);
 
         self.cardFormIsValid = ko.computed(function () {
-            return self.isSaved() || (!self.isSaved() && self.agreedToPrivacyPolicy());
+            return self.isSaved() || !self.isSaved();
         });
 
         self.showErrors = ko.computed(function () {
@@ -524,6 +523,8 @@ hqDefine('accounting/js/payment_method_handler', function () {
                 }
             });
         };
+
+        return self;
     };
     return {
         WireInvoiceHandler: WireInvoiceHandler,

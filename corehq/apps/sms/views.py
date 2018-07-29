@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
 import io
 from datetime import datetime, timedelta, time
@@ -12,7 +13,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq import privileges
 from corehq import toggles
-from corehq.apps.hqadmin.views import BaseAdminSectionView
+from corehq.apps.hqadmin.views.users import BaseAdminSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
@@ -68,9 +69,11 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.decorators import require_privilege_but_override_for_migrator
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+from corehq.messaging.util import show_messaging_dashboard
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.soft_assert import soft_assert
@@ -86,7 +89,7 @@ from corehq.apps.domain.models import Domain
 from corehq.const import SERVER_DATETIME_FORMAT, SERVER_DATE_FORMAT
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.decorators.view import get_file
 from django.utils.functional import cached_property
 from dimagi.utils.logging import notify_exception
@@ -112,7 +115,11 @@ SMS_CHAT_HISTORY_CHOICES = (
 
 @login_and_domain_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse(ComposeMessageView.urlname, args=[domain]))
+    if show_messaging_dashboard(domain, request.couch_user):
+        from corehq.messaging.scheduling.views import MessagingDashboardView
+        return HttpResponseRedirect(reverse(MessagingDashboardView.urlname, args=[domain]))
+    else:
+        return HttpResponseRedirect(reverse(ComposeMessageView.urlname, args=[domain]))
 
 
 class BaseMessagingSectionView(BaseDomainView):
@@ -123,12 +130,19 @@ class BaseMessagingSectionView(BaseDomainView):
         return toggles.REMINDERS_MIGRATION_IN_PROGRESS.enabled(self.domain)
 
     @cached_property
+    def new_reminders_migrator(self):
+        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
+
+    @cached_property
     def can_use_inbound_sms(self):
         return has_privilege(self.request, privileges.INBOUND_SMS)
 
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+    @method_decorator(require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS))
+    @method_decorator(require_permission(Permissions.edit_data))
+    def dispatch(self, request, *args, **kwargs):
+        if not (settings.ENTERPRISE_MODE or self.domain_object.granted_messaging_access):
+            return render(request, "sms/wall.html", self.main_context)
+        return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
 
     @property
     def section_url(self):
@@ -163,12 +177,9 @@ class ComposeMessageView(BaseMessagingSectionView):
         page_context.update(get_sms_autocomplete_context(self.request, self.domain))
         return page_context
 
-    @method_decorator(requires_old_reminder_framework())
-    @method_decorator(require_permission(Permissions.edit_data))
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_typeahead
     def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+        return super(ComposeMessageView, self).dispatch(*args, **kwargs)
 
 
 @require_api_user_permission(PERMISSION_POST_SMS)
@@ -212,6 +223,11 @@ def get_sms_autocomplete_context(request, domain):
 @login_and_domain_required
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def send_to_recipients(request, domain):
+    # This is invoked from both the ComposeMessageView as well as from
+    # the view that sends SMS to users when publishing an app.
+    # Currently the permission to publish an app is just the login_and_domain_required
+    # decorator, and this view matches that.
+
     recipients = request.POST.get('recipients')
     message = request.POST.get('message')
     if not recipients:
@@ -391,7 +407,7 @@ class TestSMSMessageView(BaseDomainView):
 
 
 @csrf_exempt
-@login_or_digest_ex(allow_cc_users=True)
+@require_permission(Permissions.edit_data, login_decorator=login_or_digest_ex(allow_cc_users=True))
 @requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 def api_send_sms(request, domain):
     """
@@ -683,7 +699,6 @@ class ChatOverSMSView(BaseMessagingSectionView):
     template_name = 'sms/chat_contacts.html'
     page_title = _("Chat over SMS")
 
-    @method_decorator(require_permission(Permissions.edit_data))
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ChatOverSMSView, self).dispatch(*args, **kwargs)
@@ -776,7 +791,7 @@ def format_contact_data(domain, data):
         vn_id = row[4]
         if row[1] == 'case':
             row[1] = _('Case')
-            row[4] = reverse('case_details', args=[domain, contact_id])
+            row[4] = reverse('case_data', args=[domain, contact_id])
         elif row[1] == 'mobile_worker':
             row[1] = _('Mobile Worker')
             row[4] = reverse(EditCommCareUserView.urlname, args=[domain, contact_id])
@@ -1641,10 +1656,6 @@ class SubscribeSMSView(BaseMessagingSectionView):
     urlname = 'subscribe_sms'
     page_title = ugettext_noop("Subscribe SMS")
 
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    def dispatch(self, *args, **kwargs):
-        return super(SubscribeSMSView, self).dispatch(*args, **kwargs)
-
     @property
     def commtrack_settings(self):
         return Domain.get_by_name(self.domain).commtrack_settings
@@ -1841,11 +1852,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @property
     @memoized
-    def new_reminders_migrator(self):
-        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
-
-    @property
-    @memoized
     def form(self):
         if self.request.method == "POST":
             form = SettingsForm(
@@ -1867,8 +1873,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     enabled_disabled(len(domain_obj.restricted_sms_times) > 0),
                 "restricted_sms_times_json":
                     [w.to_json() for w in domain_obj.restricted_sms_times],
-                "send_to_duplicated_case_numbers":
-                    enabled_disabled(domain_obj.send_to_duplicated_case_numbers),
                 "sms_survey_date_format":
                     domain_obj.sms_survey_date_format,
                 "use_custom_case_username":
@@ -1910,8 +1914,10 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
                 "registration_welcome_message":
                     self.get_welcome_message_recipient(domain_obj),
-                "daily_outbound_sms_limit":
-                    domain_obj.daily_outbound_sms_limit,
+                "override_daily_outbound_sms_limit":
+                    ENABLED if domain_obj.custom_daily_outbound_sms_limit else DISABLED,
+                "custom_daily_outbound_sms_limit":
+                    domain_obj.custom_daily_outbound_sms_limit,
                 "uses_new_reminders":
                     'Y' if domain_obj.uses_new_reminders else 'N',
             }
@@ -1943,8 +1949,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                  "default_sms_response"),
                 ("custom_case_username",
                  "custom_case_username"),
-                ("send_to_duplicated_case_numbers",
-                 "send_to_duplicated_case_numbers"),
                 ("sms_survey_date_format",
                  "sms_survey_date_format"),
                 ("sms_conversation_length",
@@ -1964,8 +1968,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                 field_map.extend([
                     ("custom_chat_template",
                      "custom_chat_template"),
-                    ("daily_outbound_sms_limit",
-                     "daily_outbound_sms_limit"),
+                    ("custom_daily_outbound_sms_limit",
+                     "custom_daily_outbound_sms_limit"),
                 ])
             if self.new_reminders_migrator:
                 field_map.extend([
@@ -2009,7 +2013,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
     @method_decorator(domain_admin_required)
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_timepicker
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -2025,10 +2028,6 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     empty_notification = ugettext_noop("No registration invitations sent yet.")
     loading_message = ugettext_noop("Loading invitations...")
     strict_domain_fetching = True
-
-    @method_decorator(require_permission(Permissions.edit_data))
-    def dispatch(self, request, *args, **kwargs):
-        return super(ManageRegistrationInvitationsView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -2162,6 +2161,10 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
 
 
 class InvitationAppInfoView(View, DomainViewMixin):
+    """
+    This view is accessed by CommCare automatically by logged-out users during
+    installation of an app in the mobile worker self-registration workflow.
+    """
     urlname = 'sms_registration_invitation_app_info'
 
     @property
@@ -2204,8 +2207,8 @@ class InvitationAppInfoView(View, DomainViewMixin):
         raise Http404()
 
     def get(self, *args, **kwargs):
-        url = str(self.odk_url).strip()
-        response = 'ccapp: %s signature: %s' % (url, sign(url))
+        url = six.binary_type(self.odk_url).strip()
+        response = b'ccapp: %s signature: %s' % (url, sign(url))
         response = base64.b64encode(response)
         return HttpResponse(response)
 

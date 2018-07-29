@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import pytz
 import uuid
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -7,7 +8,7 @@ from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
@@ -15,16 +16,23 @@ from corehq.messaging.scheduling import util
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.sql_db.models import PartitionedModel
-from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from couchdbkit.exceptions import ResourceNotFound
-from datetime import tzinfo
-from dimagi.utils.decorators.memoized import memoized
+from datetime import timedelta, date, datetime, time
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from memoized import memoized
 from dimagi.utils.modules import to_function
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
 import six
+
+
+# The number of minutes after which a schedule instance is considered stale.
+# Stale instances are just fast-forwarded according to their schedule and
+# no content is sent.
+STALE_SCHEDULE_INSTANCE_INTERVAL = 2 * 24 * 60
 
 
 class ScheduleInstance(PartitionedModel):
@@ -44,7 +52,7 @@ class ScheduleInstance(PartitionedModel):
     RECIPIENT_TYPE_USER_GROUP = 'Group'
     RECIPIENT_TYPE_LOCATION = 'Location'
 
-    class Meta:
+    class Meta(object):
         abstract = True
         index_together = (
             # index for equality comparisons on the leading columns
@@ -52,25 +60,64 @@ class ScheduleInstance(PartitionedModel):
             ('domain', 'active', 'next_event_due'),
         )
 
-    @property
-    def today_for_recipient(self):
-        return ServerTime(util.utcnow()).user_time(self.timezone).done().date()
+    def get_today_for_recipient(self, schedule):
+        return ServerTime(util.utcnow()).user_time(self.get_timezone(schedule)).done().date()
 
     @property
     @memoized
     def recipient(self):
         if self.recipient_type == self.RECIPIENT_TYPE_CASE:
-            return CaseAccessors(self.domain).get_case(self.recipient_id)
+            try:
+                case = CaseAccessors(self.domain).get_case(self.recipient_id)
+            except CaseNotFound:
+                return None
+
+            if case.domain != self.domain:
+                return None
+
+            return case
         elif self.recipient_type == self.RECIPIENT_TYPE_MOBILE_WORKER:
-            return CommCareUser.get(self.recipient_id)
+            user = CouchUser.get_by_user_id(self.recipient_id, domain=self.domain)
+            if not isinstance(user, CommCareUser):
+                return None
+
+            return user
         elif self.recipient_type == self.RECIPIENT_TYPE_WEB_USER:
-            return WebUser.get(self.recipient_id)
+            user = CouchUser.get_by_user_id(self.recipient_id, domain=self.domain)
+            if not isinstance(user, WebUser):
+                return None
+
+            return user
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_GROUP:
-            return CommCareCaseGroup.get(self.recipient_id)
+            try:
+                group = CommCareCaseGroup.get(self.recipient_id)
+            except ResourceNotFound:
+                return None
+
+            if group.domain != self.domain:
+                return None
+
+            return group
         elif self.recipient_type == self.RECIPIENT_TYPE_USER_GROUP:
-            return Group.get(self.recipient_id)
+            try:
+                group = Group.get(self.recipient_id)
+            except ResourceNotFound:
+                return None
+
+            if group.domain != self.domain:
+                return None
+
+            return group
         elif self.recipient_type == self.RECIPIENT_TYPE_LOCATION:
-            return SQLLocation.by_location_id(self.recipient_id)
+            location = SQLLocation.by_location_id(self.recipient_id)
+
+            if location is None:
+                return None
+
+            if location.domain != self.domain:
+                return None
+
+            return location
         else:
             raise UnknownRecipientType(self.recipient_type)
 
@@ -83,28 +130,28 @@ class ScheduleInstance(PartitionedModel):
 
     @property
     @memoized
-    def timezone(self):
-        timezone = None
+    def domain_timezone(self):
+        try:
+            return get_timezone_for_domain(self.domain)
+        except ValidationError:
+            return pytz.UTC
 
+    def get_timezone(self, schedule):
         if self.recipient_is_an_individual_contact(self.recipient):
             try:
-                timezone = self.recipient.get_time_zone()
+                timezone_str = self.recipient.get_time_zone()
+                if timezone_str:
+                    return coerce_timezone_value(timezone_str)
             except ValidationError:
                 pass
 
-        if not timezone:
-            timezone = get_timezone_for_domain(self.domain)
-
-        if isinstance(timezone, tzinfo):
-            return timezone
-
-        if isinstance(timezone, six.string_types):
-            try:
-                return coerce_timezone_value(timezone)
-            except ValidationError:
-                pass
-
-        return pytz.UTC
+        if schedule.use_utc_as_default_timezone:
+            # See note on Schedule.use_utc_as_default_timezone.
+            # When use_utc_as_default_timezone is enabled and the contact has
+            # no time zone configured, use UTC.
+            return pytz.UTC
+        else:
+            return self.domain_timezone
 
     @classmethod
     def create_for_recipient(cls, schedule, recipient_type, recipient_id, start_date=None,
@@ -152,7 +199,14 @@ class ScheduleInstance(PartitionedModel):
                 # for locations the user selected in the UI, and not for
                 # locations that happen to get here because they are a case
                 # owner, for example.
-                location_ids = location.get_descendants(include_self=True).filter(is_archived=False).location_ids()
+                qs = location.get_descendants(include_self=True).filter(is_archived=False)
+
+                # We also only apply the location_type_filter when the recipient_type
+                # is RECIPIENT_TYPE_LOCATION for the same reason.
+                if self.memoized_schedule.location_type_filter:
+                    qs = qs.filter(location_type_id__in=self.memoized_schedule.location_type_filter)
+
+                location_ids = qs.location_ids()
             else:
                 location_ids = [location.location_id]
 
@@ -165,6 +219,31 @@ class ScheduleInstance(PartitionedModel):
         else:
             raise UnknownRecipientType(recipient.__class__.__name__)
 
+    def convert_to_set(self, value):
+        if isinstance(value, (list, tuple)):
+            return set(value)
+
+        return set([value])
+
+    def passes_user_data_filter(self, contact):
+        if not isinstance(contact, CouchUser):
+            return True
+
+        if not self.memoized_schedule.user_data_filter:
+            return True
+
+        for key, value in six.iteritems(self.memoized_schedule.user_data_filter):
+            if key not in contact.user_data:
+                return False
+
+            allowed_values_set = self.convert_to_set(value)
+            actual_values_set = self.convert_to_set(contact.user_data[key])
+
+            if actual_values_set.isdisjoint(allowed_values_set):
+                return False
+
+        return True
+
     def expand_recipients(self):
         """
         Can be used as a generator to iterate over all individual contacts who
@@ -176,9 +255,28 @@ class ScheduleInstance(PartitionedModel):
 
         for member in recipient_list:
             for contact in self._expand_recipient(member):
-                yield contact
+                if self.passes_user_data_filter(contact):
+                    yield contact
 
-    def handle_current_event(self):
+    def get_content_send_lock(self, client, recipient):
+        if is_commcarecase(recipient):
+            doc_type = 'CommCareCase'
+            doc_id = recipient.case_id
+        else:
+            doc_type = recipient.doc_type
+            doc_id = recipient.get_id
+
+        key = "send-content-for-%s-%s-%s-%s-%s" % (
+            self.__class__.__name__,
+            self.schedule_instance_id.hex,
+            self.next_event_due.strftime('%Y-%m-%d %H:%M:%S'),
+            doc_type,
+            doc_id,
+        )
+        return client.lock(key, timeout=STALE_SCHEDULE_INSTANCE_INTERVAL * 60)
+
+    def send_current_event_content_to_recipients(self):
+        client = get_redis_client()
         content = self.memoized_schedule.get_current_event_content(self)
 
         if isinstance(self, CaseScheduleInstanceMixin):
@@ -191,18 +289,50 @@ class ScheduleInstance(PartitionedModel):
         recipient_count = 0
         for recipient in self.expand_recipients():
             recipient_count += 1
-            content.send(recipient, logged_event)
 
-        # As a precaution, always explicitly move to the next event after processing the current
-        # event to prevent ever getting stuck on the current event.
-        self.memoized_schedule.move_to_next_event(self)
-        self.memoized_schedule.move_to_next_event_not_in_the_past(self)
+            #   The framework will retry sending a non-processed schedule instance
+            # once every hour.
+
+            #   If we are processing a long list of recipients here and an error
+            # occurs half-way through, we don't want to reprocess the entire list
+            # of recipients again when the framework retries it an hour later.
+
+            #   So we use a non-blocking lock tied to the event due time and recipient
+            # to make sure that we don't try resending the same content to the same
+            # recipient more than once in the event of a retry.
+
+            #   If we succeed in sending the content, we don't release the lock so
+            # that it won't retry later. If we fail in sending the content, we release
+            # the lock so that it will retry later.
+
+            lock = self.get_content_send_lock(client, recipient)
+            if lock.acquire(blocking=False):
+                try:
+                    content.send(recipient, logged_event)
+                except:
+                    # Release the lock if an error happened so that we can try sending
+                    # to this recipient again later.
+                    lock.release()
+                    raise
 
         # Update the MessagingEvent for reporting
         if recipient_count == 0:
             logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
         else:
             logged_event.completed()
+
+    @property
+    def is_stale(self):
+        return (util.utcnow() - self.next_event_due) > timedelta(minutes=STALE_SCHEDULE_INSTANCE_INTERVAL)
+
+    def handle_current_event(self):
+        if not self.is_stale:
+            self.send_current_event_content_to_recipients()
+
+        # As a precaution, always explicitly move to the next event after processing the current
+        # event to prevent ever getting stuck on the current event.
+        self.memoized_schedule.move_to_next_event(self)
+        self.memoized_schedule.move_to_next_event_not_in_the_past(self)
 
     @property
     def schedule(self):
@@ -221,16 +351,30 @@ class ScheduleInstance(PartitionedModel):
         """
         return self.schedule
 
+    def additional_deactivation_condition_reached(self):
+        """
+        Subclasses can override this to provide additional checks under
+        which a ScheduleInstance should be deactivated, which will be checked
+        when the ScheduleInstances are being refreshed as well as right before
+        and after processing them, through check_active_flag_against_schedule().
+        """
+        return False
+
+    def should_be_active(self):
+        return self.memoized_schedule.active and not self.additional_deactivation_condition_reached()
+
     def check_active_flag_against_schedule(self):
         """
         Returns True if the active flag was changed and the schedule instance should be saved.
         Returns False if nothing changed.
         """
-        if self.active and not self.memoized_schedule.active:
+        should_be_active = self.should_be_active()
+
+        if self.active and not should_be_active:
             self.active = False
             return True
 
-        if not self.active and self.memoized_schedule.active:
+        if not self.active and should_be_active:
             if self.memoized_schedule.total_iterations_complete(self):
                 return False
 
@@ -347,7 +491,7 @@ class CaseScheduleInstanceMixin(object):
 
     RECIPIENT_TYPE_SELF = 'Self'
     RECIPIENT_TYPE_CASE_OWNER = 'Owner'
-    RECIPIENT_TYPE_LAST_SUBMTTING_USER = 'LastSubmittingUser'
+    RECIPIENT_TYPE_LAST_SUBMITTING_USER = 'LastSubmittingUser'
     RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
     RECIPIENT_TYPE_CHILD_CASE = 'SubCase'
     RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
@@ -357,7 +501,7 @@ class CaseScheduleInstanceMixin(object):
     def case(self):
         try:
             return CaseAccessors(self.domain).get_case(self.case_id)
-        except (CaseNotFound, ResourceNotFound):
+        except CaseNotFound:
             return None
 
     @property
@@ -368,6 +512,36 @@ class CaseScheduleInstanceMixin(object):
 
         return None
 
+    def additional_deactivation_condition_reached(self):
+        from corehq.apps.data_interfaces.models import _try_date_conversion
+
+        if self.memoized_schedule.stop_date_case_property_name and self.case:
+            values = self.case.resolve_case_property(self.memoized_schedule.stop_date_case_property_name)
+            values = [element.value for element in values]
+
+            timezone = pytz.UTC if self.memoized_schedule.use_utc_as_default_timezone else self.domain_timezone
+
+            for stop_date in values:
+                if isinstance(stop_date, datetime):
+                    pass
+                elif isinstance(stop_date, date):
+                    stop_date = datetime.combine(stop_date, time(0, 0))
+                else:
+                    stop_date = _try_date_conversion(stop_date)
+
+                if not isinstance(stop_date, datetime):
+                    continue
+
+                if stop_date.tzinfo:
+                    stop_date = stop_date.astimezone(pytz.UTC).replace(tzinfo=None)
+                else:
+                    stop_date = UserTime(stop_date, timezone).server_time().done()
+
+                if self.next_event_due >= stop_date:
+                    return True
+
+        return False
+
     @property
     @memoized
     def recipient(self):
@@ -375,9 +549,15 @@ class CaseScheduleInstanceMixin(object):
             return self.case
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_OWNER:
             return self.case_owner
-        if self.recipient_type == self.RECIPIENT_TYPE_LAST_SUBMTTING_USER:
+        elif self.recipient_type == self.RECIPIENT_TYPE_LAST_SUBMITTING_USER:
+            if self.case and self.case.modified_by:
+                return CouchUser.get_by_user_id(self.case.modified_by, domain=self.domain)
+
             return None
         elif self.recipient_type == self.RECIPIENT_TYPE_PARENT_CASE:
+            if self.case:
+                return self.case.parent
+
             return None
         elif self.recipient_type == self.RECIPIENT_TYPE_CHILD_CASE:
             return None

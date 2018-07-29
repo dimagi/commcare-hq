@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 from django.utils import html
 from corehq.apps.users.models import CouchUser
 from custom.succeed.reports.patient_task_list import PatientTaskListReport
 from custom.succeed.reports import *
 from custom.succeed.reports.patient_details import PatientDetailsReport
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from custom.succeed.utils import is_cm, is_chw
 import six
 
@@ -118,11 +119,10 @@ class PatientInteractionsReport(PatientDetailsReport):
                                                            CHW_APP_TASK_MODULE, CM_NEW_TASK, ret['patient']['_id'])
 
         ret['view_appointments_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
-                                                         CM_APP_APPOINTMENTS_MODULE, AP2,
-                                                         parent_id=ret['patient']['_id'])
+                                                         CM_APP_APPOINTMENTS_MODULE, AP2, ret['patient']['_id'])
         ret['add_appointments_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
                                                         CM_APP_PD_MODULE, AP1,
-                                                        case_id=ret['patient']['_id'])
+                                                        ret['patient']['_id'])
 
         # Risk Factor Table
         rows = []

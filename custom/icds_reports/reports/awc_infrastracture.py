@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 
 from django.db.models.aggregates import Sum
@@ -42,7 +43,8 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
             [
                 {
                     'label': _('AWCs Reported Clean Drinking Water'),
-                    'help_text': _('Percentage of AWCs that reported having a source of clean drinking water'),
+                    'help_text': _('Of the AWCs that have submitted an Infrastructure Details form, the '
+                                   'percentage of AWCs that reported having a source of clean drinking water. '),
                     'percent': percent_diff(
                         'clean_water',
                         this_month_data,
@@ -63,7 +65,8 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                 },
                 {
                     'label': _("AWCs Reported Functional Toilet"),
-                    'help_text': _('Percentage of AWCs that reported having a functional toilet'),
+                    'help_text': _('Of the AWCs that submitted an Infrastructure Details form, the percentage '
+                                   'of AWCs that reported having a functional toilet'),
                     'percent': percent_diff(
                         'functional_toilet',
                         this_month_data,
@@ -95,7 +98,8 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                 # },
                 {
                     'label': _('AWCs Reported Weighing Scale: Infants'),
-                    'help_text': _('Percentage of AWCs that reported having a weighing scale for infants'),
+                    'help_text': _('Of the AWCs that have submitted an Infrastructure Details form, the '
+                                   'percentage of AWCs that reported having a weighing scale for infants'),
                     'percent': percent_diff(
                         'infant_scale',
                         this_month_data,
@@ -117,7 +121,8 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                 {
                     'label': _('AWCs Reported Weighing Scale: Mother and Child'),
                     'help_text': _(
-                        'Percentage of AWCs that reported having a weighing scale for mother and child'
+                        'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
+                        'AWCs that reported having a weighing scale for mother and child'
                     ),
                     'percent': percent_diff(
                         'adult_scale',
@@ -141,7 +146,8 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
             [
                 {
                     'label': _('AWCs Reported Medicine Kit'),
-                    'help_text': _('Percentage of AWCs that reported having a Medicine Kit'),
+                    'help_text': _('Of the AWCs that have submitted an Infrastructure Details form, '
+                                   'the percentage of AWCs that reported having a Medicine Kit'),
                     'percent': percent_diff(
                         'medicine_kits',
                         this_month_data,

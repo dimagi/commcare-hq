@@ -1,4 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
+from distutils.version import LooseVersion
+
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.const import OPENROSA_VERSION_MAP
 from corehq.apps.products.models import Product
@@ -62,7 +66,7 @@ class ProductFixturesProvider(FixtureProvider):
             return []
 
         if (restore_state.params.openrosa_version
-                and restore_state.params.openrosa_version < OPENROSA_VERSION_MAP['INDEXED_PRODUCTS_FIXTURE']):
+                and restore_state.params.openrosa_version < LooseVersion(OPENROSA_VERSION_MAP['INDEXED_PRODUCTS_FIXTURE'])):
             # Don't include index schema when openrosa version is specified and below 2.1
             return fixture_nodes
         else:

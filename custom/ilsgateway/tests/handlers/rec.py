@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 
 from corehq.toggles import EMG_AND_REC_SMS_HANDLERS, NAMESPACE_DOMAIN
@@ -52,7 +53,7 @@ class ReceiptTest(ILSTestScript):
         order = EmergencyOrder.objects.get(pk=self.order.pk)
         self.assertDictEqual(
             order.confirmed_status.products,
-            {'dp': {'quantity': u'100'}, 'fs': {'quantity': u'50'}}
+            {'dp': {'quantity': '100'}, 'fs': {'quantity': '50'}}
         )
 
     def test_invalid_quantity(self):

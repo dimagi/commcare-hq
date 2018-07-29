@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import math
 from django.test import SimpleTestCase, RequestFactory
 from django.test.utils import override_settings
@@ -63,7 +64,7 @@ class SoftAssertTest(SimpleTestCase):
     @softer_assert()
     def test_message_newlines(self):
         _soft_assert = soft_assert(notify_admins=True)
-        _soft_assert(False, u"don't\ncrash")
+        _soft_assert(False, "don't\ncrash")
 
 
 class SoftAssertHelpersTest(SimpleTestCase):

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.http.response import JsonResponse
 from django.utils.decorators import method_decorator
 from django.shortcuts import render
@@ -53,27 +54,3 @@ class LocationsView(View):
 @location_safe
 class DistrictLocationsView(LocationsView):
     choice_provider = DistrictChoiceProvider
-
-
-@method_decorator(domain_admin_required, name='dispatch')
-class DuplicateIdsReport(TemplateView):
-    def get(self, request, domain, case_type, *args, **kwargs):
-        case_type = {'voucher': CASE_TYPE_VOUCHER, 'person': CASE_TYPE_PERSON}[case_type]
-        # By default, only show full debug info for the 300 most recent cases
-        limit_debug_to = None if request.GET.get('full_debug_info') else 300
-        context = self.get_duplicate_id_case_info(domain, case_type, limit_debug_to)
-        return render(request, 'enikshay/duplicate_ids_report.html', context)
-
-    @staticmethod
-    def get_duplicate_id_case_info(domain, case_type, limit_debug_to=None):
-        total_cases = CaseES().domain(domain).case_type(case_type).count()
-        bad_cases = get_duplicated_case_stubs(domain, case_type)
-        add_debug_info_to_cases(bad_cases, limit_debug_to)
-        context = {
-            'case_type': case_type,
-            'num_bad_cases': len(bad_cases),
-            'num_total_cases': total_cases,
-            'num_good_cases': total_cases - len(bad_cases),
-            'bad_cases': bad_cases,
-        }
-        return context

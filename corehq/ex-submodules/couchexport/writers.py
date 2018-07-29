@@ -1,26 +1,29 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
+import io
 from base64 import b64decode
 from codecs import BOM_UTF8
 import os
 import re
 import tempfile
 import zipfile
-import csv
+import csv342 as csv
 import json
 import bz2
 from collections import OrderedDict
+import openpyxl
 
 from django.template.loader import render_to_string, get_template
+from django.utils.functional import Promise
 import xlwt
 
 from couchexport.models import Format
 import six
+from openpyxl.styles import numbers
+from openpyxl.worksheet.write_only import WriteOnlyCell
 from six.moves import zip
 from six.moves import map
-
-
-def _encode_if_needed(val):
-    return val.encode("utf8") if isinstance(val, six.text_type) else val
 
 
 class UniqueHeaderGenerator(object):
@@ -110,10 +113,15 @@ class CsvFileWriter(ExportFileWriter):
     def _open(self):
         # Excel needs UTF8-encoded CSVs to start with the UTF-8 byte-order mark (FB 163268)
         self._file.write(BOM_UTF8)
-        self._csvwriter = csv.writer(self._file, csv.excel)
 
     def write_row(self, row):
-        self._csvwriter.writerow(row)
+        buffer = io.StringIO()
+        csvwriter = csv.writer(buffer, csv.excel)
+        csvwriter.writerow([
+            col.decode('utf-8') if isinstance(col, six.binary_type) else col
+            for col in row
+        ])
+        self._file.write(buffer.getvalue().encode('utf-8'))
 
 
 class PartialHtmlFileWriter(ExportFileWriter):
@@ -152,7 +160,7 @@ class ExportWriter(object):
     max_table_name_size = 500
     target_app = 'Excel'  # Where does this writer export to? Export button to say "Export to Excel"
 
-    def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=''):
+    def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=b''):
         """
         Create any initial files, headings, etc necessary.
         :param header_table: tuple of one of the following formats
@@ -180,7 +188,12 @@ class ExportWriter(object):
 
     def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
-            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", six.text_type(name)))
+            if isinstance(name, six.binary_type):
+                name = name.decode('utf8')
+            elif isinstance(name, Promise):
+                # noinspection PyCompatibility
+                name = unicode(name) if six.PY2 else str(name)
+            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", name))
 
         table_title_truncated = self.table_name_generator.next_unique(
             _clean_name(table_title or table_index)
@@ -306,10 +319,9 @@ class ZippedExportWriter(OnDiskExportWriter):
     """
     Writer that creates a zip file containing a csv for each table.
     """
-    table_file_extension = ".csv"
+    table_file_extension = b".csv"
 
     def _write_final_result(self):
-
         archive = zipfile.ZipFile(self.file, 'w', zipfile.ZIP_DEFLATED)
         for index, name in self.table_names.items():
             if isinstance(name, six.text_type):
@@ -320,8 +332,10 @@ class ZippedExportWriter(OnDiskExportWriter):
         self.file.seek(0)
 
     def _get_archive_filename(self, name):
-        path = _encode_if_needed(self.archive_basepath)
-        return os.path.join(path, '{}{}'.format(name, self.table_file_extension))
+        path = self.archive_basepath
+        if isinstance(path, six.text_type):
+            path = path.encode('utf-8')
+        return os.path.join(path, b'{}{}'.format(name, self.table_file_extension))
 
 
 class CsvExportWriter(ZippedExportWriter):
@@ -338,7 +352,6 @@ class UnzippedCsvExportWriter(OnDiskExportWriter):
     format = Format.UNZIPPED_CSV
 
     def _write_final_result(self):
-
         tablefile = list(self.tables.values())[0].get_file()
         for line in tablefile:
             self.file.write(line)
@@ -349,15 +362,14 @@ class Excel2007ExportWriter(ExportWriter):
     format = Format.XLS_2007
     max_table_name_size = 31
 
-    def _init(self):
-        try:
-            import openpyxl
-        except ImportError:
-            raise Exception("It doesn't look like this machine is configured for "
-                            "excel export. To export to excel you have to run the "
-                            "command:  easy_install openpyxl")
+    def __init__(self, format_as_text=False):
+        super(Excel2007ExportWriter, self).__init__()
+        self.format_as_text = format_as_text
 
-        self.book = openpyxl.Workbook(optimized_write=True)
+    def _init(self):
+        # https://openpyxl.readthedocs.io/en/latest/optimized.html
+        self.book = openpyxl.Workbook(write_only=True)
+
         self.tables = {}
         self.table_indices = {}
 
@@ -372,7 +384,7 @@ class Excel2007ExportWriter(ExportWriter):
 
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
         dirty_chars = re.compile(
-            u'[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
+            '[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
         )
 
         def get_write_value(value):
@@ -383,13 +395,14 @@ class Excel2007ExportWriter(ExportWriter):
             elif value is not None:
                 value = six.text_type(value)
             else:
-                value = u''
-            return dirty_chars.sub(u'?', value)
+                value = ''
+            return dirty_chars.sub('?', value)
 
-        # NOTE: don't touch this. changing anything like formatting in the
-        # row by referencing the cells will cause huge memory issues.
-        # see: http://openpyxl.readthedocs.org/en/latest/optimized.html
-        sheet.append(list(map(get_write_value, row)))
+        cells = [WriteOnlyCell(sheet, get_write_value(val)) for val in row]
+        if self.format_as_text:
+            for cell in cells:
+                cell.number_format = numbers.FORMAT_TEXT
+        sheet.append(cells)
 
     def _close(self):
         """

@@ -1,12 +1,13 @@
 /* global module, inject, _, chai */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Newborn Low Weight Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('low_birth', 'low_birth');
@@ -19,6 +20,7 @@ describe('Newborn Low Weight Directive', function () {
             {id: 'F', name: 'Female'},
         ]);
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -30,13 +32,20 @@ describe('Newborn Low Weight Directive', function () {
         $httpBackend.expectGET('low_birth').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<newborn-low-weight data='test'></newborn-low-weight>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('newbornLowWeight');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -85,8 +94,10 @@ describe('Newborn Low Weight Directive', function () {
             '<p>test</p>'
             + '<div>Total Number of Newborns born in given month: <strong>20</strong></div>'
             + '<div>Number of Newborns with LBW in given month: <strong>5</strong></div>'
+            + '<div>Total Number of children born and weight in given month: <strong>10</strong></div>'
             + '<div>% newborns with LBW in given month: <strong>50.00%</strong></div>'
-            + '<div>% Unweighted: <strong>50.00%</strong></div>');
+            + '<div>% of children with weight in normal: <strong>50.00%</strong></div>'
+            + '<div>% Unweighted: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -180,9 +191,9 @@ describe('Newborn Low Weight Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of newborns with born with birth weight less than 2500 grams. \n' +
+            'Of all the children born in the current month and enrolled for Anganwadi services, the percentage that had a birth weight less than 2500 grams. \n' +
             '\n' +
-            'Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life'
+            'Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. '
         );
     });
 
@@ -193,10 +204,28 @@ describe('Newborn Low Weight Directive', function () {
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
             + '<div>Total Number of Newborns born in given month: <strong>12</strong></div>'
             + '<div>Number of Newborns with LBW in given month: <strong>5</strong></div>'
-            + '<div>% newborns with LBW in given month: <strong>72.00%</strong></div>'
-            + '<div>% Unweighted: <strong>83.33%</strong></div>';
+            + '<div>Total Number of children born and weight in given month: <strong>10</strong></div>'
+            + '<div>% newborns with LBW in given month: <strong>50.00%</strong></div>'
+            + '<div>% of children with weight in normal: <strong>50.00%</strong></div>'
+            + '<div>% Unweighted: <strong>16.67%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total Number of Newborns born in given month: <strong>25</strong></div>' +
+            '<div>Number of Newborns with LBW in given month: <strong>0</strong></div>' +
+            '<div>Total Number of children born and weight in given month: <strong>0</strong></div>' +
+            '<div>% newborns with LBW in given month: <strong>NaN%</strong></div>' +
+            '<div>% of children with weight in normal: <strong>NaN%</strong></div>' +
+            '<div>% Unweighted: <strong>100.00%</strong></div></div>';
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
     });
 

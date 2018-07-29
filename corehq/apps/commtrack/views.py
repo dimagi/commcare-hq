@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import copy
 
@@ -15,10 +16,10 @@ from corehq import toggles
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_select2
 from corehq.util.timezones.conversions import ServerTime
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -57,6 +58,7 @@ class BaseCommTrackManageView(BaseDomainView):
             raise Http404()
         return super(BaseCommTrackManageView, self).get(*args, **kwargs)
 
+    @use_select2
     @method_decorator(domain_admin_required)  # TODO: will probably want less restrictive permission?
     def dispatch(self, request, *args, **kwargs):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
@@ -316,23 +318,30 @@ class RebuildStockStateView(BaseCommTrackManageView):
         else:
             return ServerTime(server_date).ui_string()
 
+    def _get_selected_case_id(self):
+        location_id = self.request.GET.get('location_id')
+        if location_id:
+            try:
+                return (SQLLocation.objects
+                        .get(domain=self.domain, location_id=location_id)
+                        .supply_point_id)
+            except SQLLocation.DoesNotExist:
+                messages.error(self.request, 'Your location id did not match a location')
+
     @property
     def page_context(self, **kwargs):
-        stock_state_limit = 100
-        stock_transaction_limit = 10000
+        stock_state_limit = int(self.request.GET.get('stock_state_limit', 100))
+        stock_transaction_limit = int(self.request.GET.get('stock_transaction_limit', 1000))
         stock_state_limit_exceeded = False
         stock_transaction_limit_exceeded = False
 
         query = StockTransaction.objects.filter(report__domain=self.domain)
-        if self.location_id:
-            try:
-                case_id = (SQLLocation.objects
-                           .get(domain=self.domain, location_id=self.location_id)
-                           .supply_point_id)
-            except SQLLocation.DoesNotExist:
-                messages.error(self.request, 'Your location id did not match a location')
-            else:
-                query = query.filter(case_id=case_id)
+        selected_case_id = self._get_selected_case_id()
+        if selected_case_id:
+            query = query.filter(case_id=selected_case_id)
+        selected_product_id = self.request.GET.get('product_id')
+        if selected_product_id:
+            query = query.filter(product_id=selected_product_id)
 
         stock_state_keys = [
             (txn.case_id, txn.section_id, txn.product_id)
@@ -347,26 +356,12 @@ class RebuildStockStateView(BaseCommTrackManageView):
         actions_by_stock_state_key = []
         stock_transaction_count = 0
         for stock_state_key in stock_state_keys:
-            case_id, section_id, product_id = stock_state_key
-            actions = [
-                (
-                    action.__class__.__name__,
-                    action,
-                    self.get_server_date_by_form_id(
-                        action.stock_transaction.report.form_id),
-                ) for action in
-                plan_rebuild_stock_state(case_id, section_id, product_id)
-            ]
-            stock_transaction_count += len(actions)
+            actions = self.get_actions_by_stock_state_key(*stock_state_key)
+            stock_transaction_count += len(actions[1])
             if stock_transaction_count > stock_transaction_limit:
                 stock_transaction_limit_exceeded = True
                 break
-            actions_by_stock_state_key.append(
-                ({'case_id': case_id, 'section_id': section_id,
-                  'product_id': product_id},
-                 actions,
-                 get_doc_info_by_id(self.domain, case_id))
-            )
+            actions_by_stock_state_key.append(actions)
 
         assert len(set(stock_state_keys)) == len(stock_state_keys)
         return {
@@ -377,9 +372,23 @@ class RebuildStockStateView(BaseCommTrackManageView):
             'stock_transaction_limit': stock_transaction_limit,
         }
 
-    def get(self, *args, **kwargs):
-        self.location_id = self.request.GET.get('location_id')
-        return super(RebuildStockStateView, self).get(*args, **kwargs)
+    def get_actions_by_stock_state_key(self, case_id, section_id, product_id):
+        actions = [
+            (
+                action.__class__.__name__,
+                action,
+                self.get_server_date_by_form_id(
+                    action.stock_transaction.report.form_id),
+            ) for action in
+            plan_rebuild_stock_state(case_id, section_id, product_id)
+        ]
+        return (
+            {'case_id': case_id,
+             'section_id': section_id,
+             'product_id': product_id},
+            actions,
+            get_doc_info_by_id(self.domain, case_id)
+        )
 
     def post(self, request, *args, **kwargs):
         case_id = request.POST.get('case_id')

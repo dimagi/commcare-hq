@@ -5,7 +5,7 @@ import numbers
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from sqlagg.columns import SimpleColumn
 from sqlagg.sorting import OrderBy
@@ -61,9 +61,9 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         fields = {c.slug for c in db_columns}
 
         return db_columns + [
-            DatabaseColumn('', SimpleColumn(deferred_filter.field))
-            for deferred_filter in self._deferred_filters.values()
-            if deferred_filter.field not in fields]
+            DatabaseColumn('', SimpleColumn(field))
+            for field in self._defer_fields
+            if field not in fields]
 
     @memoized
     @method_decorator(catch_and_raise_exceptions)
@@ -86,8 +86,9 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
             # TODO - don't append columns that are not part of filters or group bys
             qc.append_column(c.view)
 
-        session = connection_manager.get_scoped_session(self.engine_id)
-        return qc.count(session.connection(), self.filter_values)
+        session_helper = connection_manager.get_session_helper(self.engine_id)
+        with session_helper.session_context() as session:
+            return qc.count(session.connection(), self.filter_values)
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_row(self):
@@ -107,16 +108,18 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         for c in self.columns:
             qc.append_column(c.view)
 
-        session = connection_manager.get_scoped_session(self.engine_id)
-        totals = qc.totals(
-            session.connection(),
-            [
-                column_id
-                for col in self.top_level_columns for column_id in _get_relevant_column_ids(col, expanded_columns)
-                if col.calculate_total
-            ],
-            self.filter_values
-        )
+        session_helper = connection_manager.get_session_helper(self.engine_id)
+        with session_helper.session_context() as session:
+            totals = qc.totals(
+                session.connection(),
+                [
+                    column_id
+                    for col in self.top_level_columns
+                    for column_id in _get_relevant_column_ids(col, expanded_columns)
+                    if col.calculate_total
+                ],
+                self.filter_values
+            )
 
         total_row = [
             _clean_total_row(totals.get(column_id), col)

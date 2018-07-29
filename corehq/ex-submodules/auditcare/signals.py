@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 
 from django.db.models.query import QuerySet
@@ -88,7 +89,7 @@ for full_str in settings.AUDIT_MODEL_SAVE:
     comps = full_str.split('.')
     model_class = comps[-1]
     mod_str = '.'.join(comps[0:-1])
-    mod = __import__(mod_str, {}, {}, [model_class])
+    mod = __import__(mod_str, {}, {}, [str(model_class)])
     if hasattr(mod, model_class):
         audit_model = getattr(mod, model_class)
         if issubclass(audit_model, models.Model):

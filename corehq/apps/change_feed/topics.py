@@ -1,19 +1,18 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from kafka.common import OffsetRequest
 from kafka.util import kafka_bytestring
 
+from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
-from .document_types import CASE, FORM, DOMAIN, META, APP
+from couchforms.models import all_known_formlike_doc_types
 
-# this is redundant but helps avoid import warnings until nothing references these
-CASE = CASE
-FORM = FORM
-DOMAIN = DOMAIN
-META = META
-APP = APP
-
-# new models
+CASE = 'case'
+FORM = 'form'
+DOMAIN = 'domain'
+META = 'meta'
+APP = 'app'
 CASE_SQL = 'case-sql'
 FORM_SQL = 'form-sql'
 SMS = 'sms'
@@ -22,6 +21,7 @@ COMMCARE_USER = 'commcare-user'
 GROUP = 'group'
 WEB_USER = 'web-user'
 LOCATION = 'location'
+SYNCLOG_SQL = 'synclog-sql'
 
 
 CASE_TOPICS = (CASE, CASE_SQL)
@@ -41,11 +41,43 @@ ALL = (
     WEB_USER,
     APP,
     LOCATION,
+    SYNCLOG_SQL,
 )
 
 
-def get_topic(document_type_object):
-    return document_type_object.primary_type
+def get_topic_for_doc_type(doc_type, data_source_type=None):
+    from corehq.apps.change_feed import document_types
+    from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
+
+    if doc_type in document_types.CASE_DOC_TYPES:
+        return {
+            'sql': CASE_SQL,
+            'couch': CASE
+        }.get(data_source_type, CASE)
+    elif doc_type in all_known_formlike_doc_types():
+        return {
+            'sql': FORM_SQL,
+            'couch': FORM
+        }.get(data_source_type, FORM)
+    elif doc_type in document_types.DOMAIN_DOC_TYPES:
+        return DOMAIN
+    elif doc_type in document_types.MOBILE_USER_DOC_TYPES:
+        return COMMCARE_USER
+    elif doc_type in document_types.WEB_USER_DOC_TYPES:
+        return WEB_USER
+    elif doc_type in document_types.GROUP_DOC_TYPES:
+        return GROUP
+    elif doc_type in document_types.SYNCLOG_DOC_TYPES:
+        return SYNCLOG_SQL
+    elif doc_type in app_doc_types():
+        return APP
+    elif doc_type == LOCATION_DOC_TYPE:
+        return LOCATION
+    elif doc_type in ALL:  # for docs that don't have a doc_type we use the Kafka topic
+        return doc_type
+    else:
+        # at some point we may want to make this more granular
+        return META  # note this does not map to the 'meta' Couch database
 
 
 def get_topic_offset(topic):

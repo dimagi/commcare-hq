@@ -5,6 +5,7 @@ Use this in preparation ``for form_processor/0067_auto_20170915_1506.py`` migrat
 from __future__ import print_function
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from itertools import groupby
 
 from django.core.management.base import BaseCommand

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from collections import namedtuple
 
@@ -99,7 +100,6 @@ class TestBaseFilterExportDownloadForm(SimpleTestCase):
         self.assertFalse(BaseFilterExportDownloadForm.skip_layout)
 
 
-@patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
 class TestEmwfFilterFormExport(TestCase):
     form = EmwfFilterFormExport
     filter = form.dynamic_filter_class
@@ -126,7 +126,6 @@ class TestEmwfFilterFormExport(TestCase):
         )
 
 
-@patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
 class TestEmwfFilterExportMixin(TestCase):
     form = EmwfFilterFormExport
     filter_builder = FormExportFilterBuilder
@@ -187,7 +186,6 @@ class TestEmwfFilterExportMixin(TestCase):
         self.assertEqual(self.filter_export._get_selected_es_user_types(['t__0', 't__1']), [0, 1])
 
 
-@patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
 class TestEmwfFilterFormExportFilters(TestCase):
     form = EmwfFilterFormExport
     filter_builder = FormExportFilterBuilder
@@ -272,7 +270,6 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.assertEqual(user_filters[0].submitted_by, self.user_ids)
 
 
-@patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
 @patch.object(FormExportFilterBuilder, '_get_datespan_filter', lambda self, x: None)
 @patch.object(FormExportFilterBuilder, '_get_group_filter')
 @patch.object(FormExportFilterBuilder, '_get_user_type_filter')
@@ -319,7 +316,6 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
         locations_patch.assert_called_once_with([])
 
 
-@patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
 @patch.object(CaseExportFilterBuilder, '_get_datespan_filter', lambda self, x: [])
 @patch.object(FilterCaseESExportDownloadForm, '_get_group_ids')
 @patch.object(Group, 'get_static_user_ids_for_groups')

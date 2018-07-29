@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import BadValueError
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.groups.dbaccessors import group_by_domain

@@ -1,6 +1,6 @@
 (function () {
-    var PasswordModel = function () {
-        var self = this;
+    var passwordModel = function () {
+        var self = {};
         self.penalizedWords = ['dimagi', 'commcare', 'hq', 'commcarehq'];
         self.password = ko.observable();
         self.strength = ko.computed(function () {
@@ -24,7 +24,7 @@
             } else if (self.strength() < 1) {
                 return gettext("Your password is too weak! Try adding numbers or symbols!");
             } else if (self.strength() === 1) {
-                return gettext("Your password is almost strong enough!");
+                return gettext("Your password is almost strong enough! Try adding numbers or symbols!");
             } else {
                 return gettext("Good Job! Your password is strong!");
             }
@@ -32,8 +32,8 @@
         self.passwordSufficient = ko.computed(function () {
             return self.strength() > 1;
         });
+        return self;
     };
 
-    var passwordModel = new PasswordModel();
-    $('.check-password').koApplyBindings(passwordModel);
+    $('.check-password').koApplyBindings(passwordModel());
 })();

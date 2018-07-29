@@ -1,14 +1,20 @@
 from __future__ import absolute_import, division
+from __future__ import unicode_literals
 import json
 import os
+import time
 import zipfile
 
 from collections import defaultdict
 from datetime import datetime, timedelta
+from functools import wraps
 
 import operator
 
-from six.moves import cStringIO
+import pytz
+import qrcode
+from base64 import b64encode
+from io import BytesIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
 from xhtml2pdf import pisa
@@ -17,19 +23,23 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
+from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
-from dimagi.utils.couch import get_redis_client
+from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
 import six
 import uuid
 from six.moves import range
+from sqlagg.filters import EQ, NOT, AND
+from io import open
 
 OPERATORS = {
     "==": operator.eq,
@@ -50,26 +60,30 @@ GREY = '#9D9D9D'
 DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
+DATA_NOT_VALID = "Data Not Valid"
+
+india_timezone = pytz.timezone('Asia/Kolkata')
+
 
 class MPRData(object):
-    resource_file = 'resources/block_mpr.json'
+    resource_file = '../resources/block_mpr.json'
 
 
 class ASRData(object):
-    resource_file = 'resources/block_asr.json'
+    resource_file = '../resources/block_asr.json'
 
 
 class ICDSData(object):
 
     def __init__(self, domain, filters, report_id):
-        report_config = ReportFactory.from_spec(
-            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain))
+        report_config = ConfigurableReportDataSource.from_spec(
+            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain), domain)
         )
         report_config.set_filter_values(filters)
         self.report_config = report_config
 
-    def _get_static_report_configuration_without_owner_transform(self, report_id):
-        static_report_configuration = StaticReportConfiguration.by_id(report_id)
+    def _get_static_report_configuration_without_owner_transform(self, report_id, domain):
+        static_report_configuration = StaticReportConfiguration.by_id(report_id, domain)
         for report_column in static_report_configuration.report_columns:
             transform = report_column.transform
             if transform.get('type') == 'custom' and transform.get('custom_type') == 'owner_display':
@@ -101,7 +115,7 @@ class ICDSMixin(object):
 
     @property
     def sources(self):
-        with open(os.path.join(os.path.dirname(__file__), self.resource_file)) as f:
+        with open(os.path.join(os.path.dirname(__file__), self.resource_file), encoding='utf-8') as f:
             return json.loads(f.read())[self.slug]
 
     @property
@@ -323,10 +337,10 @@ def get_latest_issue_tracker_build_id():
     return get_latest_released_build_id('icds-cas', ISSUE_TRACKER_APP_ID)
 
 
-def get_status(value, second_part='', normal_value='', exportable=False):
-    status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+def get_status(value, second_part='', normal_value='', exportable=False, data_entered=False):
+    status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     if not value or value in ['unweighed', 'unmeasured', 'unknown']:
-        status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+        status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     elif value in ['severely_underweight', 'severe']:
         status = {'value': 'Severely ' + second_part, 'color': 'red'}
     elif value in ['moderately_underweight', 'moderate']:
@@ -459,22 +473,42 @@ def chosen_filters_to_labels(config, default_interval=''):
 
 def zip_folder(pdf_files):
     zip_hash = uuid.uuid4().hex
-    client = get_redis_client()
-    in_memory = cStringIO()
+    icds_file = IcdsFile(blob_id=zip_hash, data_type='issnip_monthly')
+    in_memory = BytesIO()
     zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
-    for pdf_file in pdf_files:
-        file = client.get(pdf_file['uuid'])
-        zip_file.writestr('ISSNIP_monthly_register_{}.pdf'.format(pdf_file['location_name']), file)
+    files_to_zip = IcdsFile.objects.filter(blob_id__in=list(pdf_files.keys()), data_type='issnip_monthly')
+
+    for pdf_file in files_to_zip:
+        zip_file.writestr(
+            'ICDS_CAS_monthly_register_{}.pdf'.format(pdf_files[pdf_file.blob_id]),
+            pdf_file.get_file_from_blobdb().read()
+        )
     zip_file.close()
-    client.set(zip_hash, in_memory.getvalue())
-    client.expire(zip_hash, 24 * 60 * 60)
+
+    # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
+    # we read this to save file in blobdb
+    in_memory.seek(0)
+    icds_file.store_file_in_blobdb(in_memory, expired=60 * 60 * 24)
+    icds_file.save()
     return zip_hash
 
 
-def create_pdf_file(pdf_hash, pdf_context):
+def create_excel_file(excel_data, data_type, file_format):
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    export_from_tables(excel_data, export_file, file_format)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.save()
+    return file_hash
+
+
+def create_pdf_file(pdf_context):
+    pdf_hash = uuid.uuid4().hex
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
-    resultFile = cStringIO()
-    client = get_redis_client()
+    resultFile = BytesIO()
+    icds_file = IcdsFile(blob_id=pdf_hash, data_type='issnip_monthly')
     try:
         pdf_page = template.render(pdf_context)
     except Exception as ex:
@@ -483,10 +517,29 @@ def create_pdf_file(pdf_hash, pdf_context):
         pdf_page,
         dest=resultFile,
         show_error_as_pdf=True)
-    client.set(pdf_hash, resultFile.getvalue())
-    client.expire(pdf_hash, 24 * 60 * 60)
-    resultFile.close()
+    # we need to reset buffer position to the beginning after creating pdf, if not read() will return empty string
+    # we read this to save file in blobdb
+    resultFile.seek(0)
+
+    icds_file.store_file_in_blobdb(resultFile, expired=60 * 60 * 24)
+    icds_file.save()
     return pdf_hash
+
+
+def generate_qrcode(data):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    image = qr.make_image()
+    output = BytesIO()
+    image.save(output, "PNG")
+    qr_content = b64encode(output.getvalue())
+    return qr_content
 
 
 def icds_pre_release_features(user):
@@ -519,14 +572,97 @@ def get_child_locations(domain, location_id, show_test):
 
 
 def person_has_aadhaar_column(beta):
-    if beta:
-        return 'cases_person_has_aadhaar_v2'
-
-    return 'cases_person_has_aadhaar'
+    return 'cases_person_has_aadhaar_v2'
 
 
 def person_is_beneficiary_column(beta):
-    if beta:
-        return 'cases_person_beneficiary_v2'
+    return 'cases_person_beneficiary_v2'
 
-    return 'cases_person_beneficiary'
+
+def wasting_moderate_column(beta):
+    return 'wasting_moderate_v2' if beta else 'wasting_moderate'
+
+
+def wasting_severe_column(beta):
+    return 'wasting_severe_v2' if beta else 'wasting_severe'
+
+
+def wasting_normal_column(beta):
+    return 'wasting_normal_v2' if beta else 'wasting_normal'
+
+
+def stunting_moderate_column(beta):
+    return 'zscore_grading_hfa_moderate' if beta else 'stunting_moderate'
+
+
+def stunting_severe_column(beta):
+    return 'zscore_grading_hfa_severe' if beta else 'stunting_severe'
+
+
+def stunting_normal_column(beta):
+    return 'zscore_grading_hfa_normal' if beta else 'stunting_normal'
+
+
+def current_month_stunting_column(beta):
+    return 'current_month_stunting_v2' if beta else 'current_month_stunting'
+
+
+def current_month_wasting_column(beta):
+    return 'current_month_wasting_v2' if beta else 'current_month_wasting'
+
+
+def hfa_recorded_in_month_column(beta):
+    return 'zscore_grading_hfa_recorded_in_month' if beta else 'height_measured_in_month'
+
+
+def wfh_recorded_in_month_column(beta):
+    return 'zscore_grading_wfh_recorded_in_month' if beta else 'weighed_and_height_measured_in_month'
+
+
+def default_age_interval(beta):
+    return '0 - 5 years' if beta else '6 - 60 months'
+
+
+def get_age_filters(beta):
+    if beta:
+        return [
+            NOT(EQ('age_tranche', 'age_72'))
+        ]
+    return [
+        AND([
+            NOT(EQ('age_tranche', 'age_0')),
+            NOT(EQ('age_tranche', 'age_6')),
+            NOT(EQ('age_tranche', 'age_72'))
+        ])
+    ]
+
+
+def track_time(func):
+    """A decorator to track the duration an aggregation script takes to execute"""
+    from custom.icds_reports.models import AggregateSQLProfile
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        AggregateSQLProfile.objects.create(
+            name=func.__name__,
+            duration=int(end - start)
+        )
+        return result
+
+    return wrapper
+
+
+def percent_num(x, y):
+    return (x or 0) * 100 / float(y or 1)
+
+
+def percent(x, y):
+    return "%.2f %%" % (percent_num(x, y))
+
+
+class ICDSDatabaseColumn(DatabaseColumn):
+    def get_raw_value(self, row):
+        return (self.view.get_value(row) or '') if row else ''

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.callcenter import const
 from corehq.apps.callcenter.const import WEEK1, WEEK0, MONTH0
 from corehq.apps.callcenter.models import (

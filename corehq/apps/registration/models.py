@@ -1,9 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from dimagi.ext.couchdbkit import Document, StringProperty,\
     BooleanProperty, DateTimeProperty
 import datetime
 from corehq.apps.domain.models import Domain
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class RegistrationRequest(Document):

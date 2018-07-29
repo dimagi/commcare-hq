@@ -1,12 +1,16 @@
-/* globals hqDefine, ko, $, _ */
-
-hqDefine('dhis2/js/dhis2_map_settings', function () {
-    'use strict';
-
-    var module = {};
-
-    var DataValueMap = function (properties) {
-        var self = this;
+hqDefine('dhis2/js/dhis2_map_settings', [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/alert_user',
+], function (
+    $,
+    ko,
+    initialPageData,
+    alertUser
+) {
+    var dataValueMap = function (properties) {
+        var self = {};
 
         self.ucrColumn = ko.observable(properties["column"]);
         self.dataElementId = ko.observable(properties["data_element_id"]);
@@ -23,10 +27,12 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
                 "comment": self.dhis2Comment(),
             };
         };
+
+        return self;
     };
 
-    var DataSetMap = function (properties) {
-        var self = this;
+    var dataSetMap = function (properties) {
+        var self = {};
 
         self.description = ko.observable(properties["description"]);
         self.ucrId = ko.observable(properties["ucr_id"]);
@@ -53,7 +59,7 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
         self.init = function () {
             if (properties.hasOwnProperty("datavalue_maps") && properties["datavalue_maps"].length > 0) {
                 for (var i = 0; i < properties["datavalue_maps"].length; i++) {
-                    self.dataValueMaps.push(new DataValueMap(properties["datavalue_maps"][i]));
+                    self.dataValueMaps.push(dataValueMap(properties["datavalue_maps"][i]));
                 }
             } else {
                 self.addDataValueMap();
@@ -61,7 +67,7 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
         };
 
         self.addDataValueMap = function () {
-            self.dataValueMaps.push(new DataValueMap({}));
+            self.dataValueMaps.push(dataValueMap({}));
         };
 
         self.removeDataValueMap = function (dataValueMap) {
@@ -89,11 +95,12 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
                 "datavalue_maps": dataValueMaps,
             };
         };
+
+        return self;
     };
 
-    module.Dhis2MapSettings = function (dataSetMaps, sendDataUrl) {
-        var self = this;
-        var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
+    var dhis2MapSettings = function (dataSetMaps, sendDataUrl) {
+        var self = {};
 
         self.frequencyOptions = [
             {"value": "monthly", "text": "Monthly"},
@@ -104,9 +111,9 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
         self.init = function () {
             if (dataSetMaps.length > 0) {
                 for (var i = 0; i < dataSetMaps.length; i++) {
-                    var dataSetMap = new DataSetMap(dataSetMaps[i]);
-                    dataSetMap.init();
-                    self.dataSetMaps.push(dataSetMap);
+                    var map = dataSetMap(dataSetMaps[i]);
+                    map.init();
+                    self.dataSetMaps.push(map);
                 }
             } else {
                 self.addDataSetMap();
@@ -114,7 +121,7 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
         };
 
         self.addDataSetMap = function () {
-            self.dataSetMaps.push(new DataSetMap({}));
+            self.dataSetMaps.push(dataSetMap({}));
         };
 
         self.removeDataSetMap = function (dataSetMap) {
@@ -130,18 +137,24 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
             $.post(
                 form.action,
                 {'dataset_maps': JSON.stringify(dataSetMaps)},
-                function (data) { alert_user(data['success'], 'success', true); }
-            ).fail(function () { alert_user(gettext('Unable to save DataSet maps'), 'danger'); });
+                function (data) { alertUser.alert_user(data['success'], 'success', true); }
+            ).fail(function () { alertUser.alert_user(gettext('Unable to save DataSet maps'), 'danger'); });
         };
 
         self.sendData = function () {
             $.post(
                 sendDataUrl,
                 {},
-                function (data) { alert_user(data['success'], 'success', true); }
+                function (data) { alertUser.alert_user(data['success'], 'success', true); }
             );
         };
+
+        return self;
     };
 
-    return module;
+    $(function () {
+        var viewModel = dhis2MapSettings(initialPageData.get('dataset_maps'), initialPageData.get('send_data_url'));
+        viewModel.init();
+        $('#dataset-maps').koApplyBindings(viewModel);
+    });
 });

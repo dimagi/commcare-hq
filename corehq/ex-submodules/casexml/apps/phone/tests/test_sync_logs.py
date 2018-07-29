@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.xml import V1

@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
 from django.conf import settings
 
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
@@ -11,9 +13,10 @@ ICDS_REPORTS_APP = 'icds_reports'
 ICDS_MODEL = 'icds_model'
 SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 WAREHOUSE_APP = 'warehouse'
+SYNCLOGS_APP = 'phone'
 
 
-class PartitionRouter(object):
+class MultiDBRouter(object):
 
     def db_for_read(self, model, **hints):
         return db_for_read_write(model, write=False)
@@ -31,23 +34,33 @@ class PartitionRouter(object):
         if obj1_partitioned and obj2_partitioned:
             return obj1.db == obj2.db
         elif not obj1_partitioned and not obj2_partitioned:
+            app1, app2 = obj1._meta.app_label, obj2._meta.app_label
+            if app1 in (SYNCLOGS_APP, WAREHOUSE_APP):
+                # these apps live in their own databases
+                return app1 == app2
             return True
         return False
 
 
-class MonolithRouter(object):
-
-    def allow_migrate(self, db, app_label, model=None, **hints):
-        return app_label != PROXY_APP
-
-
 def allow_migrate(db, app_label):
+    """
+    Return ``True`` if a app's migrations should be applied to the specified database otherwise
+    return ``False``.
+
+    Note: returning ``None`` is tantamount to returning ``True``
+
+    :return: Must return a boolean value, not None.
+    """
     if app_label == ICDS_REPORTS_APP:
         db_alias = get_icds_ucr_db_alias()
-        return db_alias and db_alias == db
+        return bool(db_alias and db_alias == db)
+    elif app_label == SYNCLOGS_APP:
+        return db == settings.SYNCLOGS_SQL_DB_ALIAS
+    elif app_label == WAREHOUSE_APP:
+        return db == settings.WAREHOUSE_DATABASE_ALIAS
 
     if not settings.USE_PARTITIONED_DATABASE:
-        return app_label != PROXY_APP
+        return app_label != PROXY_APP and db in ('default', None)
 
     if app_label == PROXY_APP:
         return db == partition_config.get_proxy_db()
@@ -58,8 +71,6 @@ def allow_migrate(db, app_label):
         )
     elif app_label == SQL_ACCESSORS_APP:
         return db in partition_config.get_form_processing_dbs()
-    elif app_label == WAREHOUSE_APP:
-        return hasattr(settings, "WAREHOUSE_DATABASE_ALIAS") and db == settings.WAREHOUSE_DATABASE_ALIAS
     else:
         return db == partition_config.get_main_db()
 
@@ -70,20 +81,25 @@ def db_for_read_write(model, write=True):
     :param write: Default to True since the DB for writes can also handle reads
     :return: Django DB alias to use for query
     """
+    app_label = model._meta.app_label
+
+    if app_label == WAREHOUSE_APP:
+        return settings.WAREHOUSE_DATABASE_ALIAS
+    elif app_label == SYNCLOGS_APP:
+        return settings.SYNCLOGS_SQL_DB_ALIAS
+
     if not settings.USE_PARTITIONED_DATABASE:
         return 'default'
 
-    app_label = model._meta.app_label
     if app_label == FORM_PROCESSOR_APP:
         return partition_config.get_proxy_db()
-    elif app_label == WAREHOUSE_APP:
-        error_msg = 'Cannot read/write to warehouse db without warehouse database defined'
-        assert hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"), error_msg
-        return settings.WAREHOUSE_DATABASE_ALIAS
-    elif app_label == ICDS_MODEL:
+    elif app_label in (ICDS_MODEL, ICDS_REPORTS_APP):
         engine_id = ICDS_UCR_ENGINE_ID
         if not write:
-            engine_id = connection_manager.get_load_balanced_read_engine_id(ICDS_UCR_ENGINE_ID)
+            engine_id = connection_manager.get_load_balanced_read_db_alais(ICDS_UCR_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
     else:
-        return partition_config.get_main_db()
+        default_db = partition_config.get_main_db()
+        if not write:
+            return connection_manager.get_load_balanced_read_db_alais(app_label, default_db)
+        return default_db

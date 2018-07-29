@@ -3,7 +3,7 @@
 
     window.TourUtils = {
         getEndTourAsync: function (endUrl) {
-            return function (tour) {
+            return function () {
                 $.post(endUrl);
             };
         },

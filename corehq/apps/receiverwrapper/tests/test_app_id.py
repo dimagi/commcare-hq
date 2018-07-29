@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.cache import cache
 from django.test import TestCase
 from corehq.apps.app_manager.models import Application

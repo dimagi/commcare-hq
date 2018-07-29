@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from django.core.management.base import BaseCommand
 from casexml.apps.case.models import CommCareCase

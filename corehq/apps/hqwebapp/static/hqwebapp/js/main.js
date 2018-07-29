@@ -1,12 +1,14 @@
 hqDefine('hqwebapp/js/main', [
     "jquery",
     "underscore",
+    "hqwebapp/js/initial_page_data",
     "hqwebapp/js/alert_user",
     "analytix/js/google",
     "hqwebapp/js/hq_extensions.jquery",
 ], function(
     $,
     _,
+    initialPageData,
     alertUser,
     googleAnalytics
 ) {
@@ -36,7 +38,7 @@ hqDefine('hqwebapp/js/main', [
         'use strict';
         wrap = wrap === undefined ? true : wrap;
         var el = $(
-            '<div class="hq-help">' + 
+            '<div class="hq-help">' +
                 '<a href="#" tabindex="-1">' +
                     '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
         );
@@ -68,10 +70,6 @@ hqDefine('hqwebapp/js/main', [
 
             e.preventDefault();
             $.postGo(action, $.unparam(data));
-        });
-        $('.post-link').click(function (e) {
-            e.preventDefault();
-            $.postGo($(this).attr('href'), {});
         });
 
         $(".button", $elem).button().wrap('<span />');
@@ -287,7 +285,54 @@ hqDefine('hqwebapp/js/main', [
             }
         });
 
-        // EULA and CDA modals
+        $(document).on('click', '.post-link', function(e) {
+            e.preventDefault();
+            $.postGo($(this).attr('href'), {});
+        });
+
+        // Maintenance alerts
+        var $maintenance = $(".alert-maintenance");
+        if ($maintenance.length) {
+            var id = $maintenance.data("id"),
+                alertCookie = "alert_maintenance";
+            if ($.cookie(alertCookie) == id) {  // eslint-disable-line eqeqeq
+                $maintenance.addClass('hide');
+            } else {
+                $maintenance.on('click', '.close', function() {
+                    $.cookie(alertCookie, id, { expires: 7, path: '/' });
+                });
+            }
+        }
+
+        // EULA modal
+        var eulaCookie = "gdpr_rollout";
+        if (!$.cookie(eulaCookie)) {
+            var $modal = $("#eulaModal");
+            if ($modal.length) {
+                $("body").addClass("has-eula");
+                $("#eula-agree").click(function() {
+                    $(this).disableButton();
+                    $.ajax({
+                        url: initialPageData.reverse("agree_to_eula"),
+                        method: "POST",
+                        success: function() {
+                            $("#eulaModal").modal('hide');
+                            $("body").removeClass("has-eula");
+                        },
+                        error: function() {
+                            // do nothing, user will get the popup again on next page load
+                            $("body").removeClass("has-eula");
+                        },
+                    });
+                });
+                $modal.modal({
+                    keyboard: false,
+                    backdrop: 'static',
+                });
+            }
+        }
+
+        // CDA modal
         _.each($(".remote-modal"), function(modal) {
             var $modal = $(modal);
             $modal.on("show show.bs.modal", function() {
@@ -306,11 +351,6 @@ hqDefine('hqwebapp/js/main', [
     return {
         beforeUnloadCallback: beforeUnloadCallback,
         eventize: eventize,
-        icons: {
-            GRIP: 'icon-resize-vertical icon-blue fa fa-arrows-v',
-            ADD: 'icon-plus icon-blue fa fa-plus',
-            DELETE: 'icon-remove icon-blue fa fa-remove',
-        },
         initBlock: initBlock,
         initDeleteButton: DeleteButton.init,
         initSaveButton: SaveButton.init,

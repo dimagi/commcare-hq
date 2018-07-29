@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from custom.bihar.calculations.types import CaseCalculator, DoneDueCalculator, AddCalculator
 from custom.bihar.calculations.utils.calculations import get_related_prop, get_form

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.db import transaction
 from corehq.apps.case_importer.exceptions import ImporterRefError
 from corehq.apps.case_importer.tracking.filestorage import transient_file_store, \
@@ -6,7 +7,8 @@ from corehq.apps.case_importer.tracking.filestorage import transient_file_store,
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
     CaseUploadFormRecord
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
+from io import open
 
 
 class CaseUpload(object):
@@ -49,7 +51,7 @@ class CaseUpload(object):
         from corehq.apps.case_importer.tasks import bulk_import_async
         task = bulk_import_async.delay(config, domain, self.upload_id)
         original_filename = transient_file_store.get_filename(self.upload_id)
-        with open(self.get_tempfile()) as f:
+        with open(self.get_tempfile(), 'rb') as f:
             case_upload_file_meta = persistent_file_store.write_file(f, original_filename)
 
         CaseUploadRecord(

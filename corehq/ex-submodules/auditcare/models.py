@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 import hashlib
 import json
@@ -13,13 +14,13 @@ from django.utils.functional import cached_property
 from dimagi.ext.couchdbkit import (
     Document, StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
 )
-from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 
 from auditcare import utils
 import six
+from io import open
 
 log = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class AuditEvent(Document):
         except Exception:
             return ""
 
-    class Meta:
+    class Meta(object):
         app_label = 'auditcare'
 
 
@@ -141,7 +142,7 @@ class ModelActionAudit(AuditEvent):
     def summary(self):
         return "%s ID: %s" % (self.object_type, self.object_uuid)
 
-    class Meta:
+    class Meta(object):
         app_label = 'auditcare'
 
     @classmethod
@@ -317,7 +318,7 @@ class NavigationEventAudit(AuditEvent):
     def summary(self):
         return "%s from %s" % (self.request_path, self.ip_address)
 
-    class Meta:
+    class Meta(object):
         app_label = 'auditcare'
 
     @cached_property
@@ -383,8 +384,7 @@ class AccessAudit(AuditEvent):
 
     failures_since_start = IntegerProperty()
 
-
-    class Meta:
+    class Meta(object):
         app_label = 'auditcare'
 
     @property
@@ -478,7 +478,7 @@ class AuditCommand(AuditEvent):
             # only supporting linux at this point, adding other OS's can be done later
             # This is largely for production logging of these commands.
             if puname[0] == 'Linux':
-                with open('/proc/%s/cmdline' % audit.pid, 'r') as fin:
+                with open('/proc/%s/cmdline' % audit.pid, 'r', encoding='utf-8') as fin:
                     cmd_args = fin.read()
                     audit.description = cmd_args.replace('\0', ' ')
             elif puname[0] == 'Darwin':
@@ -511,28 +511,3 @@ def audit_login_failed(sender, **kwargs):
     AuditEvent.audit_login_failed(kwargs["request"], kwargs["username"])
 
 user_login_failed.connect(audit_login_failed)
-
-
-class FieldAccess(models.Model):
-    object_type = StringProperty() #String of ContentType, verbose_name='Case linking content type', blank=True, null=True)
-    field = StringProperty()
-
-    class Meta:
-        app_label = 'auditcare'
-
-#    class Meta:
-#        unique_together = ('object_type', 'field')
-
-class ModelAuditEvent(models.Model):
-    object_type = StringProperty() # String of ContentType/Model, verbose_name='Case linking content type', blank=True, null=True)
-    object_uuid = StringProperty() #('object_uuid', max_length=32, db_index=True, blank=True, null=True)
-
-    properties = StringListProperty() #models.ManyToManyField(FieldAccess, blank=True, null=True)
-    property_data = DictProperty() #models.TextField() #json of the actual fields accessed
-
-    user = StringProperty() # The User's username accessing this
-    accessed = DateTimeProperty(default=getdate)
-
-    class Meta:
-        app_label = 'auditcare'
-

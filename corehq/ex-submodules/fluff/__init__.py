@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from fluff import exceptions
 from fluff.exceptions import EmitterValidationError
 from fluff.signals import BACKEND_SQL, BACKEND_COUCH

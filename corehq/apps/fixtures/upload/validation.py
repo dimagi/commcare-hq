@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
@@ -95,7 +96,7 @@ def _validate_fixture_upload(workbook):
 
                     try:
                         field_prop_len = len(data_item['field'][field.field_name])
-                    except TypeError:
+                    except (TypeError, KeyError):
                         field_prop_len = None
 
                     for prop in sheet_props:

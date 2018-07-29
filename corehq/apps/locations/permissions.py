@@ -75,6 +75,7 @@ HQ. These are deprecated, and we intend to transition projects off of those
 onto the whitelist once we've added enough features to meet their use-case.
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django_prbac.decorators import requires_privilege_raise404
 from tastypie.resources import Resource
 from corehq import privileges
@@ -282,8 +283,16 @@ def conditionally_location_safe(conditional_function):
 
     """
     def _inner(view_fn):
-        if isinstance(view_fn, type) and issubclass(view_fn, GenericReportView):
-            CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_fn.slug] = conditional_function
+        if isinstance(view_fn, type):
+
+            # Django class-based views
+            if issubclass(view_fn, View):
+                view_fn.dispatch.__func__._conditionally_location_safe_function = conditional_function
+
+            # HQ report classes
+            if issubclass(view_fn, GenericReportView):
+                CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_fn.slug] = conditional_function
+
         else:
             view_fn._conditionally_location_safe_function = conditional_function
         return view_fn

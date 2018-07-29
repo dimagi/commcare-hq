@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import json
 import uuid
@@ -7,9 +8,10 @@ from mock import patch
 
 from couchexport.models import Format
 
-from corehq.apps.export.export import get_export_file
 from corehq.apps.export.models import SMSExportInstance, SMSExportDataSchema
 from corehq.apps.sms.models import WORKFLOWS_FOR_REPORTS
+
+from .util import get_export_json
 
 
 class TestSmsExport(SimpleTestCase):
@@ -73,27 +75,26 @@ class TestSmsExport(SimpleTestCase):
         docs.return_value = self._message_docs()
         owner_id_to_display.return_value = None
 
-        export_file = get_export_file([self.export_no_meta], [])
+        export_json = get_export_json(self.export_no_meta)
 
-        with export_file as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    u'Messages': {
-                        u'headers': [
-                            u'Contact Type',
-                            u'Contact ID',
-                            u'Timestamp',
-                            u'User Name',
-                            u'Phone Number',
-                            u'Direction',
-                            u'Message',
-                            u'Type',
-                        ],
-                        u'rows': self._make_message_rows(docs()),
-                    }
+        self.assertEqual(
+            export_json,
+            {
+                'Messages': {
+                    'headers': [
+                        'Contact Type',
+                        'Contact ID',
+                        'Timestamp',
+                        'User Name',
+                        'Phone Number',
+                        'Direction',
+                        'Message',
+                        'Type',
+                    ],
+                    'rows': self._make_message_rows(docs()),
                 }
-            )
+            }
+        )
 
     @patch('corehq.apps.export.transforms.cached_user_id_to_username')
     @patch('corehq.apps.export.export.get_export_documents')
@@ -101,28 +102,27 @@ class TestSmsExport(SimpleTestCase):
         docs.return_value = self._message_docs()
         owner_id_to_display.return_value = None
 
-        export_file = get_export_file([self.export_meta], [])
+        export_json = get_export_json(self.export_meta)
 
-        with export_file as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    u'Messages': {
-                        u'headers': [
-                            u'Contact Type',
-                            u'Contact ID',
-                            u'Timestamp',
-                            u'User Name',
-                            u'Phone Number',
-                            u'Direction',
-                            u'Message',
-                            u'Type',
-                            u'Message Log ID',
-                        ],
-                        u'rows': self._make_message_rows(docs(), include_meta=True),
-                    }
+        self.assertEqual(
+            export_json,
+            {
+                'Messages': {
+                    'headers': [
+                        'Contact Type',
+                        'Contact ID',
+                        'Timestamp',
+                        'User Name',
+                        'Phone Number',
+                        'Direction',
+                        'Message',
+                        'Type',
+                        'Message Log ID',
+                    ],
+                    'rows': self._make_message_rows(docs(), include_meta=True),
                 }
-            )
+            }
+        )
 
     @patch('corehq.apps.export.transforms._cached_case_id_to_case_name')
     @patch('corehq.apps.export.transforms.cached_user_id_to_username')
@@ -140,27 +140,26 @@ class TestSmsExport(SimpleTestCase):
         rows_value[1][0] = 'Case'
         rows_value[2][0] = 'Unknown'
 
-        export_file = get_export_file([self.export_no_meta], [])
+        export_json = get_export_json(self.export_no_meta)
 
-        with export_file as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    u'Messages': {
-                        u'headers': [
-                            u'Contact Type',
-                            u'Contact ID',
-                            u'Timestamp',
-                            u'User Name',
-                            u'Phone Number',
-                            u'Direction',
-                            u'Message',
-                            u'Type',
-                        ],
-                        u'rows': rows_value
-                    }
+        self.assertEqual(
+            export_json,
+            {
+                'Messages': {
+                    'headers': [
+                        'Contact Type',
+                        'Contact ID',
+                        'Timestamp',
+                        'User Name',
+                        'Phone Number',
+                        'Direction',
+                        'Message',
+                        'Type',
+                    ],
+                    'rows': rows_value
                 }
-            )
+            }
+        )
 
     @patch('corehq.apps.export.transforms.cached_user_id_to_username')
     @patch('corehq.apps.export.export.get_export_documents')
@@ -176,27 +175,26 @@ class TestSmsExport(SimpleTestCase):
         rows_value[0][-1] = 'other'
         rows_value[1][-1] = 'survey'
 
-        export_file = get_export_file([self.export_no_meta], [])
+        export_json = get_export_json(self.export_no_meta)
 
-        with export_file as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    u'Messages': {
-                        u'headers': [
-                            u'Contact Type',
-                            u'Contact ID',
-                            u'Timestamp',
-                            u'User Name',
-                            u'Phone Number',
-                            u'Direction',
-                            u'Message',
-                            u'Type',
-                        ],
-                        u'rows': rows_value,
-                    }
+        self.assertEqual(
+            export_json,
+            {
+                'Messages': {
+                    'headers': [
+                        'Contact Type',
+                        'Contact ID',
+                        'Timestamp',
+                        'User Name',
+                        'Phone Number',
+                        'Direction',
+                        'Message',
+                        'Type',
+                    ],
+                    'rows': rows_value,
                 }
-            )
+            }
+        )
 
     @patch('corehq.apps.export.transforms._cached_case_id_to_case_name')
     @patch('corehq.apps.export.transforms.cached_user_id_to_username')
@@ -216,24 +214,23 @@ class TestSmsExport(SimpleTestCase):
         rows_value[1][3] = 'case'
         rows_value[2][0] = 'Unknown'
 
-        export_file = get_export_file([self.export_no_meta], [])
+        export_json = get_export_json(self.export_no_meta)
 
-        with export_file as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    u'Messages': {
-                        u'headers': [
-                            u'Contact Type',
-                            u'Contact ID',
-                            u'Timestamp',
-                            u'User Name',
-                            u'Phone Number',
-                            u'Direction',
-                            u'Message',
-                            u'Type',
-                        ],
-                        u'rows': rows_value
-                    }
+        self.assertEqual(
+            export_json,
+            {
+                'Messages': {
+                    'headers': [
+                        'Contact Type',
+                        'Contact ID',
+                        'Timestamp',
+                        'User Name',
+                        'Phone Number',
+                        'Direction',
+                        'Message',
+                        'Type',
+                    ],
+                    'rows': rows_value
                 }
-            )
+            }
+        )

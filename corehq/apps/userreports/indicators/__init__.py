@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import defaultdict
 
+from datetime import date, timedelta
+
+import six
+
+from corehq.apps.userreports.indicators.utils import get_values_by_product
 from corehq.apps.userreports.util import truncate_value
-from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
-from fluff import TYPE_INTEGER
+from fluff import TYPE_DATE, TYPE_INTEGER, TYPE_SMALL_INTEGER
 
 
 class Column(object):
@@ -21,6 +24,8 @@ class Column(object):
         """
         Column name going into the database - needs to be truncated according to db limitations
         """
+        # we have to explicitly truncate the column IDs otherwise postgres will do it
+        # and will choke on them if there are duplicates: http://manage.dimagi.com/default.asp?175495
         return truncate_value(self.id)
 
     def __repr__(self):
@@ -68,16 +73,21 @@ class BooleanIndicator(SingleColumnIndicator):
     A boolean indicator leverages the filter logic and returns "1" if
     the filter is true, or "0" if it is false.
     """
+    column_datatype = TYPE_INTEGER
 
     def __init__(self, display_name, column_id, filter, wrapped_spec):
         super(BooleanIndicator, self).__init__(display_name,
-                                               Column(column_id, datatype=TYPE_INTEGER),
+                                               Column(column_id, datatype=self.column_datatype),
                                                wrapped_spec)
         self.filter = filter
 
     def get_values(self, item, context=None):
         value = 1 if self.filter(item, context) else 0
         return [ColumnValue(self.column, value)]
+
+
+class SmallBooleanIndicator(BooleanIndicator):
+    column_datatype = TYPE_SMALL_INTEGER
 
 
 class RawIndicator(SingleColumnIndicator):
@@ -110,6 +120,8 @@ class CompoundIndicator(ConfigurableIndicator):
 
 
 class LedgerBalancesIndicator(ConfigurableIndicator):
+    column_datatype = TYPE_INTEGER
+    default_value = 0
 
     def __init__(self, spec):
         self.product_codes = spec.product_codes
@@ -120,18 +132,10 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
 
     def _make_column(self, product_code):
         column_id = '{}_{}'.format(self.column_id, product_code)
-        return Column(column_id, TYPE_INTEGER)
+        return Column(column_id, self.column_datatype)
 
-    @staticmethod
-    def _get_values_by_product(ledger_section, case_id, product_codes, domain):
-        """returns a defaultdict mapping product codes to their values"""
-        ret = defaultdict(lambda: 0)
-        ledgers = LedgerAccessors(domain).get_ledger_values_for_case(case_id)
-        for ledger in ledgers:
-            if ledger.section_id == ledger_section and ledger.entry_id in product_codes:
-                ret[ledger.entry_id] = ledger.stock_on_hand
-
-        return ret
+    def _get_values_by_product(self, domain, case_id):
+        return get_values_by_product(domain, case_id, self.ledger_section, self.product_codes)
 
     def get_columns(self):
         return [self._make_column(product_code) for product_code in self.product_codes]
@@ -139,6 +143,21 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
     def get_values(self, item, context=None):
         case_id = self.case_id_expression(item)
         domain = context.root_doc['domain']
-        values = self._get_values_by_product(self.ledger_section, case_id, self.product_codes, domain)
-        return [ColumnValue(self._make_column(product_code), values[product_code])
-                for product_code in self.product_codes]
+        values = self._get_values_by_product(domain, case_id)
+        return [
+            ColumnValue(self._make_column(product_code), values.get(product_code, self.default_value))
+            for product_code in self.product_codes
+        ]
+
+
+class DueListDateIndicator(LedgerBalancesIndicator):
+    column_datatype = TYPE_DATE
+    default_value = date(1970, 1, 1)
+
+    def _get_values_by_product(self, domain, case_id):
+        unix_epoch = date(1970, 1, 1)
+        values_by_product = super(DueListDateIndicator, self)._get_values_by_product(domain, case_id)
+        return {
+            product_code: unix_epoch + timedelta(days=value)
+            for product_code, value in six.iteritems(values_by_product)
+        }

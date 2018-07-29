@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import itertools
 import os
 import shlex
@@ -11,6 +12,7 @@ from django.conf import settings
 from lxml import etree
 
 from dimagi.utils.subprocess_manager import subprocess_context
+from io import open
 
 CONVERTED_PATHS = set(['profile.xml', 'media_profile.xml', 'media_profile.ccpr', 'profile.ccpr'])
 
@@ -103,7 +105,7 @@ def sign_jar(jad, jar, use_j2me_endpoint=False):
                     if stderr.strip():
                         raise Exception(stderr)
 
-            with open(jad_file.name) as f:
+            with open(jad_file.name, encoding='utf-8') as f:
                 txt = f.read()
                 jad = JadDict.from_jad(txt, use_j2me_endpoint=use_j2me_endpoint)
             

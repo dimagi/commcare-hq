@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.filters.base import (
@@ -33,7 +34,7 @@ class DeviceLogTagFilter(BaseReportFilter):
             'errors_only_slug': self.errors_only_slug,
             'default_on': show_all,
             'logtags': tags,
-            'errors_css_id': 'device_log_errors_only_checkbox',
+            'errors_css_id': 'device-log-errors-only-checkbox',
             self.errors_only_slug: errors_only,
         }
         return context

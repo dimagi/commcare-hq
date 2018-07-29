@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from decimal import Decimal, InvalidOperation
 from jsonobject.base_properties import JsonProperty
 from jsonobject.exceptions import BadValueError

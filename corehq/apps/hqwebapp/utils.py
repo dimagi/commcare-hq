@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 
 from django.conf import settings
@@ -7,8 +8,9 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_PSS
 from django.templatetags.i18n import language_name
+from django.utils.translation import activate, LANGUAGE_SESSION_KEY
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -53,11 +55,12 @@ def send_confirmation_email(invitation):
                                 text_content=text_content)
 
 
-def get_bulk_upload_form(context, context_key="bulk_upload"):
-    return BulkUploadForm(
+def get_bulk_upload_form(context, context_key="bulk_upload", form_class=BulkUploadForm):
+    return form_class(
         context[context_key]['plural_noun'],
         context[context_key].get('action'),
-        context_key + "_form"
+        context_key + "_form",
+        context.get(context_key)
     )
 
 
@@ -135,3 +138,13 @@ def get_environment_friendly_name():
     except KeyError:
         env = settings.SERVER_ENVIRONMENT
     return env
+
+
+def update_session_language(req, old_lang, new_lang):
+    # Update the language for this session if the user signing in has a different language than the current
+    # session default
+    if new_lang != old_lang:
+        # update the current session's language setting
+        req.session[LANGUAGE_SESSION_KEY] = new_lang
+        # and activate it for the current thread so the response page is translated too
+        activate(new_lang)

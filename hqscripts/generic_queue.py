@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+import attr
 from corehq.sql_db.util import handle_connection_failure
 from datetime import datetime
 from time import sleep
@@ -6,6 +8,13 @@ from django.core.management.base import BaseCommand
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client, RedisClientError
 from dimagi.utils.logging import notify_exception
+
+
+@attr.s
+class QueueItem(object):
+    id = attr.ib()
+    key = attr.ib()
+    object = attr.ib(default=None)
 
 
 class GenericEnqueuingOperation(BaseCommand):
@@ -42,20 +51,18 @@ class GenericEnqueuingOperation(BaseCommand):
     def populate_queue(self):
         client = get_redis_client()
         utcnow = datetime.utcnow()
-        entries = self.get_items_to_be_processed(utcnow)
-        for entry in entries:
-            item_id = entry["id"]
-            process_datetime_str = entry["key"]
-            self.enqueue(item_id, process_datetime_str, redis_client=client)
+        items = self.get_items_to_be_processed(utcnow)
+        for item in items:
+            self.enqueue(item, redis_client=client)
 
-    def enqueue(self, item_id, process_datetime_str, redis_client=None):
+    def enqueue(self, item, redis_client=None):
         client = redis_client or get_redis_client()
         queue_name = self.get_queue_name()
         enqueuing_lock = self.get_enqueuing_lock(client,
-            "%s-enqueuing-%s-%s" % (queue_name, item_id, process_datetime_str))
+            "%s-enqueuing-%s-%s" % (queue_name, item.id, item.key))
         if enqueuing_lock.acquire(blocking=False):
             try:
-                self.enqueue_item(item_id)
+                self.enqueue_item(item)
             except:
                 # We couldn't enqueue, so release the lock
                 release_lock(enqueuing_lock, True)
@@ -76,17 +83,20 @@ class GenericEnqueuingOperation(BaseCommand):
         raise NotImplementedError("This method must be implemented.")
 
     def get_items_to_be_processed(self, utcnow):
-        """Should return the couch query result containing the items to be
-        enqueued. The result should just have the id of the item to be 
-        processed and the key from the couch view for each item. The couch 
+        """Should return the items to be enqueued.
+        The result should just have the id of the item to be
+        processed and the key from the couch view for each item. The couch
         view should emit a single value, which should be the timestamp that
-        the item should be processed. Since this just returns ids and keys, 
+        the item should be processed. Since this just returns ids and keys,
         no limiting is necessary.
-        utcnow - The current timestamp, in utc, at the time of the method's
-            call. Retrieve all items to be processed before this timestamp."""
+
+        :param utcnow: The current timestamp, in utc, at the time of the method's
+            call. Retrieve all items to be processed before this timestamp.
+        :return: list of ``QueueItem``
+        """
         raise NotImplementedError("This method must be implemented.")
 
-    def enqueue_item(self, _id):
+    def enqueue_item(self, item):
         """This method should enqueue the item.
         _id - The couch document _id of the item that is being referenced."""
         raise NotImplementedError("This method must be implemented.")

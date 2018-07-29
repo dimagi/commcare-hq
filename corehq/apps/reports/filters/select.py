@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import calendar
 
@@ -110,17 +111,6 @@ class SelectApplicationFilter(BaseSingleOptionFilter):
             'version': app.version}) for app in apps_for_domain]
 
 
-class MultiCaseGroupFilter(BaseMultipleOptionFilter):
-    slug = "case_group"
-    label = ugettext_lazy("Case Group")
-    default_text = ugettext_lazy("All Case Groups")
-    placeholder = ugettext_lazy('Click to select case groups')
-
-    @property
-    def options(self):
-        return get_case_group_meta_in_domain(self.domain)
-
-
 class RepeaterFilter(BaseSingleOptionFilter):
     slug = 'repeater'
     label = ugettext_lazy('Repeater')
@@ -131,7 +121,7 @@ class RepeaterFilter(BaseSingleOptionFilter):
     def options(self):
         repeaters = self._get_repeaters()
         return list(map(
-            lambda repeater: (repeater.get_id, u'{}: {}'.format(
+            lambda repeater: (repeater.get_id, '{}: {}'.format(
                 repeater.doc_type,
                 repeater.url,
             )),

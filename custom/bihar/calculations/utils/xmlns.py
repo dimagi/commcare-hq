@@ -6,6 +6,7 @@
 # https://bitbucket.org/dimagi/cc-apps/src/eb2ba2b0fd0a403fdccf5a12b557d42107ae5bc2/bihar/mockup/bihar_bp.xml
 
 
+from __future__ import unicode_literals
 PNC = 'http://bihar.commcarehq.org/pregnancy/pnc'
 DELIVERY = 'http://bihar.commcarehq.org/pregnancy/del'
 REGISTRATION = 'http://bihar.commcarehq.org/pregnancy/registration'

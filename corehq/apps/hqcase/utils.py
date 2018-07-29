@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import re
 import uuid
@@ -25,7 +26,7 @@ EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
 
 SYSTEM_FORM_XMLNS_MAP = {
     SYSTEM_FORM_XMLNS: 'System Form',
-    EDIT_FORM_XMLNS: 'Data Correction Form',
+    EDIT_FORM_XMLNS: 'Data Cleaning Form',
 }
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [

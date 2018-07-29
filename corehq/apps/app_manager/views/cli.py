@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.text import slugify
 from django.template.loader import render_to_string
 
@@ -115,7 +116,7 @@ def direct_ccz(request, domain):
         )
 
     app.set_media_versions(None)
-    download = FileDownload(u'application-{}-{}'.format(app_id, version))
+    download = FileDownload('application-{}-{}'.format(app_id, version))
     errors = build_application_zip(
         include_multimedia_files=include_multimedia,
         include_index_files=True,

@@ -60,17 +60,8 @@
           "argument_expression": {
             "type": "ancestor_location",
             "location_id": {
-              "value_expression": {
-                "datatype": null,
-                "type": "property_path",
-                "property_path": [
-                  "user_data",
-                  "commcare_location_id"
-                ]
-              },
-              "type": "related_doc",
-              "related_doc_type": "CommCareUser",
-              "doc_id_expression": {
+              "type": "icds_user_location",
+              "user_id_expression": {
                 "expression": {
                   "datatype": null,
                   "type": "property_path",
@@ -110,8 +101,8 @@
           "boolean_property": {
             "type": "root_doc",
             "expression": {
-              "type": "property_name",
-              "property_name": "play_comp_feeding_vid"
+              "type": "property_path",
+              "property_path": ["form", "play_comp_feeding_vid"]
             }
           },
           "true_values": ["yes"],
@@ -205,9 +196,82 @@
           "type": "property_name",
           "property_name": "hand_wash"
         }
+      },
+      {
+        "column_id": "given_ors",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "given_ors"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "recent_diarrhea",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "recent_diarrhea"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "deworming",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "named",
+            "name": "deworming"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       }
     ],
-    "named_expressions": {},
+    "named_expressions": {
+      "deworming": {
+        "type": "nested",
+        "argument_expression": {
+          "type": "array_index",
+          "array_expression": {
+            "type": "filter_items",
+            "items_expression": {
+              "type": "property_path",
+              "property_path": ["iteration", "item"]
+            },
+            "filter_expression": {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "property_path",
+                "property_path": ["filter", "deworming", "deworming"]
+              }
+            }
+          },
+          "index_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "value_expression": {
+          "type": "property_path",
+          "property_path": ["filter", "deworming", "deworming"]
+        }
+      }
+    },
     "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
@@ -215,7 +279,7 @@
         {
           "column": "timeend",
           "subtype": "date",
-          "constraint": "day"
+          "constraint": "month"
         }
       ]
     },

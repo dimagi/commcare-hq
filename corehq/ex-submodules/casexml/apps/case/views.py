@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 from corehq.apps.users.util import cached_owner_id_to_display
 
@@ -34,6 +35,7 @@ class CaseDisplayWrapper(object):
                         {
                             "expr": "name",
                             "name": _("Name"),
+                            "has_history": True,
                         },
                         {
                             "expr": "opened_on",
@@ -69,6 +71,7 @@ class CaseDisplayWrapper(object):
                             "expr": "owner_id",
                             "name": _("Owner"),
                             "process": 'doc_info',
+                            "has_history": True,
                         },
                         {
                             "expr": "_id",

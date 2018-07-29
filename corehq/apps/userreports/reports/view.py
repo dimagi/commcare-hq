@@ -3,14 +3,13 @@ from __future__ import unicode_literals
 import json
 from io import BytesIO
 from contextlib import contextmanager, closing
-from datetime import datetime
 
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
-    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
+    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER, DatatablesParams
 from corehq.apps.reports_core.filters import Choice, PreFilter
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
@@ -20,11 +19,10 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
 )
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
-    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE, UCR_LABORATORY_BACKEND
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.tasks import export_ucr_async
-from corehq.util.timezones.utils import get_timezone_for_domain
 
-from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR, INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS
+from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from django.conf import settings
@@ -50,12 +48,11 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
     report_config_id_is_static,
 )
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.reports.util import (
-    get_expanded_columns,
+    ReportExport,
     has_location_filter,
 )
-from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.userreports.util import (
     default_language,
     has_report_builder_trial,
@@ -65,10 +62,8 @@ from corehq.apps.userreports.util import (
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from corehq.util.view_utils import reverse
-from couchexport.export import export_from_tables
 from couchexport.models import Format
-from dimagi.utils.couch.pagination import DatatablesParams
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from dimagi.utils.web import json_request
 from no_exceptions.exceptions import Http403
@@ -127,7 +122,7 @@ def tmp_report_config(report_config):
     report_config.delete()
 
 
-class ConfigurableReport(JSONResponseMixin, BaseDomainView):
+class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     section_name = ugettext_noop("Reports")
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
@@ -143,7 +138,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def domain(self):
         if self._domain is not None:
             return self._domain
-        return super(ConfigurableReport, self).domain
+        return super(ConfigurableReportView, self).domain
 
     @use_select2
     @use_daterangepicker
@@ -156,7 +151,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             from corehq.apps.userreports.views import paywall_home
             return HttpResponseRedirect(paywall_home(self.domain))
         else:
-            original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
+            original = super(ConfigurableReportView, self).dispatch(request, *args, **kwargs)
             return original
 
     def should_redirect_to_paywall(self, request):
@@ -210,7 +205,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def data_source(self):
-        report = ReportFactory.from_spec(self.spec, include_prefilters=True)
+        report = ConfigurableReportDataSource.from_spec(self.spec, include_prefilters=True)
         report.lang = self.lang
         return report
 
@@ -303,7 +298,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 }
                 context.update(self.main_context)
                 return self.render_to_response(context)
-            return super(ConfigurableReport, self).get(request, *args, **kwargs)
+            return super(ConfigurableReportView, self).get(request, *args, **kwargs)
         else:
             raise Http403()
 
@@ -443,11 +438,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         }
         if total_row is not None:
             json_response["total_row"] = total_row
-        if data_source.data_source.config.backend_id == UCR_LABORATORY_BACKEND:
-            compare_ucr_dbs.delay(
-                self.domain, self.report_config_id, self.filter_values,
-                sort_column, sort_order, params
-            )
         return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):
@@ -522,55 +512,21 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     @memoized
+    def report_export(self):
+        return ReportExport(self.domain, self.title, self.spec, self.lang, self.filter_values)
+
+    @property
     def export_table(self):
-        try:
-            data = self.data_source
-            data.set_filter_values(self.filter_values)
-            data.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
-        except UserReportsError as e:
-            return self.render_json_response({
-                'error': e.message,
-            })
-
-        raw_rows = list(data.get_data())
-
-        headers = [
-            column.header
-            for column in self.data_source.inner_columns if column.data_tables_column.visible
-        ]
-
-        column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
-        column_ids = []
-        for column in self.spec.report_columns:
-            if column.visible:
-                column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
-
-        rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
-        total_rows = [data.get_total_row()] if data.has_total_row else []
-
-        export_table = [
-            [
-                self.title,
-                [headers] + rows + total_rows
-            ]
-        ]
-
-        if INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS.enabled(self.domain):
-            time_zone = get_timezone_for_domain(self.domain)
-            export_table.append([
-                'metadata',
-                [
-                    [_('Report Name'), self.title],
-                    [_('Generated On'), datetime.now(time_zone).strftime('%Y-%m-%d %H:%M')],
-                ] + list(self._get_filter_values())
-            ])
-        return export_table
+        return self.report_export.get_table()
 
     @property
     @memoized
     def email_response(self):
         with closing(BytesIO()) as temp:
-            export_from_tables(self.export_table, temp, Format.HTML)
+            try:
+                self.report_export.create_export(temp, Format.HTML)
+            except UserReportsError as e:
+                return self.render_json_response({'error': six.text_type(e)})
             return HttpResponse(json.dumps({
                 'report': temp.getvalue(),
             }), content_type='application/json')
@@ -579,14 +535,14 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @memoized
     def excel_response(self):
         file = BytesIO()
-        export_from_tables(self.export_table, file, Format.XLS_2007)
+        self.report_export.create_export(file, Format.XLS_2007)
         return file
 
     @property
     @memoized
     def export_response(self):
         download = DownloadBase()
-        res = export_ucr_async.delay(self.export_table, download.download_id, self.title, self.request.couch_user)
+        res = export_ucr_async.delay(self.report_export, download.download_id, self.request.couch_user)
         download.set_task(res)
         return redirect(DownloadUCRStatusView.urlname, self.domain, download.download_id, self.report_config_id)
 
@@ -618,7 +574,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
 
 # Base class for classes that provide custom rendering for UCRs
-class CustomConfigurableReport(ConfigurableReport):
+class CustomConfigurableReport(ConfigurableReportView):
     # Ensures that links in saved reports will hit CustomConfigurableReportDispatcher
     slug = 'custom_configurable'
 
@@ -638,7 +594,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         report_config_id = subreport_slug
         try:
             report_class = self._report_class(domain, report_config_id)
-        except BadSpecError:
+        except (BadSpecError, DocumentNotFound):
             raise Http404
         return report_class.as_view()(request, domain=domain, subreport_slug=report_config_id, **kwargs)
 
@@ -678,7 +634,7 @@ class DownloadUCRStatusView(BaseDomainView):
                 'title': _("Download Report Status"),
                 'progress_text': _("Preparing report download."),
                 'error_text': _("There was an unexpected error! Please try again or report an issue."),
-                'next_url': reverse(ConfigurableReport.slug, args=[self.domain, self.report_config_id]),
+                'next_url': reverse(ConfigurableReportView.slug, args=[self.domain, self.report_config_id]),
                 'next_url_text': _("Go back to report"),
             })
             return render(request, 'hqwebapp/soil_status_full.html', context)
@@ -696,7 +652,7 @@ class DownloadUCRStatusView(BaseDomainView):
     def parent_pages(self):
         return [{
             'title': self.spec.title,
-            'url': reverse(ConfigurableReport.slug, args=[self.domain, self.report_config_id]),
+            'url': reverse(ConfigurableReportView.slug, args=[self.domain, self.report_config_id]),
         }]
 
     @property

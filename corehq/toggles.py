@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -61,7 +62,8 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
                  always_disabled=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None, relevant_environments=None):
+                 enabled_for_new_users_after=None, relevant_environments=None,
+                 notification_emails=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -77,10 +79,12 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
+
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
+        self.notification_emails = notification_emails
 
     def enabled(self, item, namespace=Ellipsis):
         if self.relevant_environments and not (
@@ -125,6 +129,9 @@ class StaticToggle(object):
         )
 
     def set(self, item, enabled, namespace=None):
+        if namespace == NAMESPACE_USER:
+            namespace = None  # because:
+            #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
@@ -465,6 +472,13 @@ CASE_DETAIL_PRINT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+COPY_FORM_TO_APP = StaticToggle(
+    'copy_form_to_app',
+    'Allow copying a form from one app to another',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
     'UW: Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
@@ -472,7 +486,6 @@ DATA_FILE_DOWNLOAD = StaticToggle(
     [NAMESPACE_DOMAIN],
     # TODO: Create Confluence docs and add help link
 )
-
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
@@ -497,9 +510,9 @@ GRAPH_CREATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-IS_DEVELOPER = StaticToggle(
-    'is_developer',
-    'Is developer',
+IS_CONTRACTOR = StaticToggle(
+    'is_contractor',
+    'Is contractor',
     TAG_INTERNAL,
     description="Used to give non super-users access to select super-user features"
 )
@@ -536,6 +549,7 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
     help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
+    notification_emails=['jemord']
 )
 
 EXPORT_NO_SORT = StaticToggle(
@@ -619,6 +633,25 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     TAG_SOLUTIONS,
     help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+def _enable_search_index(domain, enabled):
+    from corehq.apps.case_search.tasks import reindex_case_search_for_domain, delete_case_search_cases_for_domain
+    from corehq.pillows.case_search import domains_needing_search_index
+    domains_needing_search_index.clear()
+    if enabled:
+        reindex_case_search_for_domain.delay(domain)
+    else:
+        delete_case_search_cases_for_domain.delay(domain)
+
+
+CASE_LIST_EXPLORER = StaticToggle(
+    'case_list_explorer',
+    'Show the case list explorer report',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
 )
 
 LIVEQUERY_SYNC = StaticToggle(
@@ -856,9 +889,13 @@ NON_COMMTRACK_LEDGERS = StaticToggle(
 
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
-    'Enikshay: Inject custom instance declarations',
+    'Inject custom instance declarations',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    description=(
+        'Enables the insertion of custom instances into a case list configuration. '
+        'Currently used by SimPrints-integrated projects.'
+    ),
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
@@ -882,13 +919,6 @@ CUSTOM_MENU_BAR = StaticToggle(
     "for non-admin users",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-ICDS_REPORTS = StaticToggle(
-    'icds_reports',
-    'Enable access to the Tableau dashboard for ICDS',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
 )
 
 DASHBOARD_ICDS_REPORT = StaticToggle(
@@ -991,13 +1021,6 @@ SUPPORT = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
 )
 
-CASE_PROPERTY_HISTORY = StaticToggle(
-    'case_property_history',
-    'Shows a modal on the case property page allowing you to see the history of various case properties',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 BASIC_CHILD_MODULE = StaticToggle(
     'child_module',
     'Basic modules can be child modules',
@@ -1023,6 +1046,20 @@ FIXTURE_CASE_SELECTION = StaticToggle(
 EWS_INVALID_REPORT_RESPONSE = StaticToggle(
     'ews_invalid_report_response',
     'EWS: Send response about invalid stock on hand',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
+    'use_sms_with_inactive_contacts',
+    'Use SMS with inactive contacts',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
+    'enable_include_sms_gateway_charging',
+    'Enable include SMS gateway charging',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
@@ -1098,13 +1135,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-OLD_EXPORTS = StaticToggle(
-    'old_exports',
-    'Use old backend export infrastructure',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
 TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
     'not_tf_sql_backend',
     'Domains that do not use a SQLite backend for Touchforms',
@@ -1133,7 +1163,8 @@ REMINDERS_MIGRATION_IN_PROGRESS = StaticToggle(
     'reminders_migration_in_progress',
     "Disables editing of reminders so that the migration to the new framework can happen.",
     TAG_INTERNAL,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 
@@ -1150,6 +1181,14 @@ INBOUND_SMS_LENIENCY = StaticToggle(
     "Inbound SMS leniency on domain-owned gateways. "
     "WARNING: This wil be rolled out slowly; do not enable on your own.",
     TAG_INTERNAL,
+    [NAMESPACE_DOMAIN]
+)
+
+
+HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
+    'hide_messaging_dashboard',
+    "Hide messaging dashboard from users who are not superusers.",
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1291,20 +1330,27 @@ LOCATION_USERS = StaticToggle(
     ),
 )
 
+LOCATION_SAFETY_EXEMPTION = StaticToggle(
+    'location_safety_exemption',
+    'Exemption from location restrictions for EWS and ILS',
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "ewsghana and ilsgateway do some custom location permissions stuff. "
+        "This feature flag grants them access to the web user pages, but it does "
+        "not actually restrict their access at all. This is implemented strictly "
+        "for backwards compatibility and should not be enabled for any other "
+        "project."
+    ),
+    relevant_environments={'production'},
+    always_enabled={'ews-ghana', 'ils-gateway'},
+)
+
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN]
-)
-
-ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
-    'anonymous_web_apps_usage',
-    'Infomap: Allow anonymous users to access Web Apps applications',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'},
-    description='Users are automatically logged into Web Apps as a designated mobile worker.'
 )
 
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
@@ -1389,6 +1435,15 @@ SKIP_REMOVE_INDICES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+MOBILE_RECOVERY_MEASURES = StaticToggle(
+    'mobile_recovery_measures',
+    'Mobile recovery measures',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description=("Used for widely deployed projects where recovery from "
+                 "large-scale failures would otherwise be next to impossible."),
+)
+
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
     'ICDS: Used for ICDS emergencies when UCR sync is killing the DB',
@@ -1426,14 +1481,6 @@ REGEX_FIELD_VALIDATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ICDS_LIVEQUERY = PredictablyRandomToggle(
-    'icds_livequery',
-    'ICDS: Enable livequery case sync for a random subset of ICDS users',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    randomness=0.0,
-)
-
 REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
     'remote_request_quetion_type',
     'Enikshay: Enable remote request question type in the form builder',
@@ -1466,15 +1513,8 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     'mobile_user_login_lockout',
     "On too many wrong password attempts, lock out mobile users",
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
-    'show_all_scheduled_report_emails',
-    "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
-    "admin, show all in the current project)",
-    TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 LINKED_DOMAINS = StaticToggle(
@@ -1486,4 +1526,81 @@ LINKED_DOMAINS = StaticToggle(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
     help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications'
+)
+
+SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
+    'sumologic_logs',
+    'Send logs to sumologic',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_OTHER],
+)
+
+TARGET_COMMCARE_FLAVOR = StaticToggle(
+    'target_commcare_flavor',
+    'Target CommCare Flavor.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+APPCUES_AB_TEST = PredictablyRandomToggle(
+    'appcues_ab_test',
+    'True if user is in variant group for Appcues AB test. Irrelevent if user is not in test.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    randomness=0.5
+)
+
+WAREHOUSE_APP_STATUS = StaticToggle(
+    'warehouse_app_status',
+    "User warehouse backend for the app status report. Currently only for sql domains",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
+TRAINING_MODULE = StaticToggle(
+    'training-module',
+    'Training Modules',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
+
+EXPORT_MULTISORT = StaticToggle(
+    'export_multisort',
+    'Sort multiple rows in exports at once.',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+)
+
+
+EXPORT_OWNERSHIP = StaticToggle(
+    'export_ownership',
+    'Allow exports to have ownership.',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+)
+
+
+APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
+    'app_trans_with_transifex',
+    'Translate Application Content With Transifex',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
+
+
+VALIDATE_APP_TRANSLATIONS = StaticToggle(
+    'validate_app_translations',
+    'Validate app translations before uploading them',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
+
+
+AGGREGATE_UCRS = StaticToggle(
+    'aggregate_ucrs',
+    'Enable experimental aggregate UCR support',
+    TAG_INTERNAL,  # this might change in the future
+    namespaces=[NAMESPACE_DOMAIN],
+    notification_emails=['czue'],
 )

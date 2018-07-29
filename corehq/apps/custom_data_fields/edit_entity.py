@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 from django.core.validators import RegexValidator
 from django.urls import reverse
@@ -9,7 +10,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Div, HTML, Field
 from corehq.apps.hqwebapp.widgets import Select2MultipleChoiceWidget
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from .models import (CustomDataFieldsDefinition, is_system_key,
                      CUSTOM_DATA_FIELD_PREFIX)
@@ -103,7 +104,7 @@ class CustomDataEditor(object):
                     label=field.label,
                     required=field.is_required,
                     choices=[(c, c) for c in field.choices],
-                    widget=Select2MultipleChoiceWidget
+                    widget=forms.SelectMultiple(attrs={'class': 'ko-select2'}),
                 )
             return choice_field
         else:
@@ -132,7 +133,7 @@ class CustomDataEditor(object):
         else:
             field_names = list(fields)
 
-        CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
+        CustomDataForm = type('CustomDataForm' if six.PY3 else b'CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
         CustomDataForm.helper.label_class = 'col-sm-4' if self.angular_model else 'col-lg-3'
@@ -164,7 +165,7 @@ class CustomDataEditor(object):
     def uncategorized_form(self):
 
         def FakeInput(val):
-            return HTML(u'<p class="form-control-static">{}</p>'
+            return HTML('<p class="form-control-static">{}</p>'
                         .format(val))
 
         def Label(val):

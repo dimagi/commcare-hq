@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -7,7 +8,7 @@ from custom.icds_reports.reports.enrolled_children import get_enrolled_children_
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestEnrolledChildren(TestCase):
 
     def test_map_data(self):
@@ -22,8 +23,8 @@ class TestEnrolledChildren(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of children between the age "
-                            "of (0 - 6 years) who are enrolled for Anganwadi Services",
+                    "info": "Of the total number of children between 0 - 6 years, the percentage of children "
+                            "who are enrolled for Anganwadi Services",
                     "average": 643.5,
                     "average_format": "number",
                     'extended_info': [
@@ -82,8 +83,8 @@ class TestEnrolledChildren(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of children between the age "
-                            "of (0 - 6 years) who are enrolled for Anganwadi Services",
+                    "info": "Of the total number of children between 0 - 6 years, the percentage of children "
+                            "who are enrolled for Anganwadi Services",
                     "average": 309.0,
                     "average_format": "number",
                     'extended_info': [
@@ -187,8 +188,8 @@ class TestEnrolledChildren(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Total number of children between the age"
-                        " of 0 - 6 years who are enrolled for Anganwadi Services",
+                "info": "Of the total number of children between 0-6 years, the percentage of "
+                        "children who are enrolled for Anganwadi Services",
                 "tooltips_data": {
                     "s2": {
                         'all': 214,

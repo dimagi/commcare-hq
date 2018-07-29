@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from six.moves.urllib.parse import urlencode
 from six.moves.urllib.request import urlopen
 import sys
@@ -84,7 +85,7 @@ class HttpBackendForm(BackendForm):
 
 class SQLHttpBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

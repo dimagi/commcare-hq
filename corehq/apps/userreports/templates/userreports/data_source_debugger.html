@@ -3,17 +3,6 @@
 {% load hq_shared_tags %}
 {% block js %}{{ block.super }}
     <script src="{% static 'userreports/js/data_source_evaluator.js' %}"></script>
-    <script>
-        $(function () {
-            var DataSourceModel = hqImport('userreports/js/data_source_evaluator').DataSourceModel;
-            var submitUrl = hqImport("hqwebapp/js/initial_page_data").reverse("data_source_evaluator");
-
-            ko.applyBindings(
-                new DataSourceModel(submitUrl),
-                document.getElementById('data-source-debugger')
-            );
-        });
-    </script>
 {% endblock %}
 {% block page_content %}
     {% registerurl "data_source_evaluator" domain %}

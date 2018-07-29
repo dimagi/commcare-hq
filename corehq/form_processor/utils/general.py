@@ -1,9 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import threading
 
 from django.conf import settings
 
-from corehq.toggles import OLD_EXPORTS, TF_DOES_NOT_USE_SQLITE_BACKEND
+from corehq.toggles import TF_DOES_NOT_USE_SQLITE_BACKEND
 
 _thread_local = threading.local()
 
@@ -62,10 +63,6 @@ def _get_domain_name_and_object(domain_object_or_name):
         return domain_object_or_name, Domain.get_by_name(domain_object_or_name)
     else:
         return domain_object_or_name, None
-
-
-def use_new_exports(domain_name):
-    return (not OLD_EXPORTS.enabled(domain_name)) or should_use_sql_backend(domain_name)
 
 
 def use_sqlite_backend(domain_name):

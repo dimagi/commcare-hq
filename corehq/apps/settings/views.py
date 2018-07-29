@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import re
 from base64 import b64encode
 from django.views.decorators.debug import sensitive_post_parameters
 from pygooglechart import QRChart
-from corehq.apps.hqwebapp.utils import sign
+from corehq.apps.hqwebapp.utils import sign, update_session_language
 from corehq.apps.settings.forms import (
     HQPasswordChangeForm, HQPhoneNumberMethodForm, HQDeviceValidationForm,
     HQTOTPDeviceForm, HQPhoneNumberForm, HQTwoFactorMethodForm, HQEmptyForm
@@ -22,25 +23,27 @@ import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_lazy,
-    activate, LANGUAGE_SESSION_KEY)
+from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_lazy)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
-                                           login_required)
+                                           login_required, two_factor_exempt)
 from django.urls import reverse
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.util.quickcache import quickcache
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from dimagi.utils.couch import CriticalSection
+from django.shortcuts import redirect
 
 from tastypie.models import ApiKey
+from two_factor.models import PhoneDevice
 from two_factor.utils import default_device
 from two_factor.views import (
     ProfileView, SetupView, SetupCompleteView,
-    BackupTokensView, DisableView, PhoneSetupView
+    BackupTokensView, DisableView, PhoneSetupView, PhoneDeleteView
 )
 import six
+from io import open
 
 
 @login_and_domain_required
@@ -111,6 +114,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     template_name = 'settings/edit_my_account.html'
 
     @use_select2
+    @two_factor_exempt
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
@@ -213,11 +217,8 @@ class MyAccountSettingsView(BaseMyAccountView):
             old_lang = self.request.couch_user.language
             self.settings_form.update_user()
             new_lang = self.request.couch_user.language
-            if new_lang != old_lang:
-                # update the current session's language setting
-                request.session[LANGUAGE_SESSION_KEY] = new_lang
-                # and activate it for the current thread so the response page is translated too
-                activate(new_lang)
+            update_session_language(request, old_lang, new_lang)
+
         return self.get(request, *args, **kwargs)
 
 
@@ -319,7 +320,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     page_title = ugettext_lazy("Two Factor Authentication Setup")
 
     form_list = (
-        ('welcome', HQEmptyForm),
+        ('welcome_setup', HQEmptyForm),
         ('method', HQTwoFactorMethodForm),
         ('generator', HQTOTPDeviceForm),
         ('sms', HQPhoneNumberForm),
@@ -375,7 +376,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     page_title = ugettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
-        ('setup', HQPhoneNumberMethodForm),
+        ('method', HQPhoneNumberMethodForm),
         ('validation', HQDeviceValidationForm),
     )
 
@@ -384,11 +385,40 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         # this is only here to add the login_required decorator
         return super(TwoFactorPhoneSetupView, self).dispatch(request, *args, **kwargs)
 
+    def done(self, form_list, **kwargs):
+        """
+        Store the device and reload the page.
+        """
+        self.get_device(user=self.request.user, name='backup').save()
+        messages.add_message(self.request, messages.SUCCESS, _("Phone number added."))
+        return redirect(reverse(TwoFactorProfileView.urlname))
+
+    def get_device(self, **kwargs):
+        """
+        Uses the data from the setup step and generated key to recreate device, gets the 'method' step
+        in the form_list.
+        """
+        kwargs = kwargs or {}
+        kwargs.update(self.storage.validated_step_data.get('method', {}))
+        return PhoneDevice(key=self.get_key(), **kwargs)
+
+class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
+
+    def get_success_url(self):
+        messages.add_message(self.request, messages.SUCCESS, ugettext_lazy("Phone number removed."))
+        return reverse(TwoFactorProfileView.urlname)
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(PhoneDeleteView, self).dispatch(request, *args, **kwargs)
+
 
 class TwoFactorResetView(TwoFactorSetupView):
     urlname = 'reset'
 
     form_list = (
+        ('welcome_reset', HQEmptyForm),
         ('method', HQTwoFactorMethodForm),
         ('generator', HQTOTPDeviceForm),
         ('sms', HQPhoneNumberForm),

@@ -96,7 +96,7 @@ Model acessors
 --------------
 To access models from the database there are classes that abstract the actual DB operations.
 These classes are generally names :code:`<type>Accessors` and must be instantiated with a domain
- name in order to know which DB needs to be queried.
+name in order to know which DB needs to be queried.
 
 **Forms**
 

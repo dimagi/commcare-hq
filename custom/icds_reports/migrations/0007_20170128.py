@@ -15,6 +15,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('create_functions.sql'),
         migrator.get_migration('setup_category_tables.sql'),
     ]

@@ -34,10 +34,8 @@
             ">
                 <td class="text-center col-sm-1">
                     <span class="sort-disabled" data-bind="ifnot: grip"></span>
-                    <i class="grip sortable-handle" data-bind="
+                    <i class="grip sortable-handle fa fa-arrows-v" data-bind="
                         if: grip,
-                        css: hqImport('hqwebapp/js/main').icons.GRIP,
-                        style: {cursor: 'move'},
                         event: {mousedown: function(){ $(':focus').blur(); }}
                     "></i>
                 </td>
@@ -109,10 +107,10 @@
                 <td class="col-sm-1 text-center">
                     <i style="cursor: pointer;"
                        title="{% trans "Delete"|escapejs %}"
+                       class="fa fa-remove"
                        data-bind="
                         visible: ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
                         click: function(){screen.columns.remove($data);},
-                        css: hqImport('hqwebapp/js/main').icons.DELETE,
                     "></i>
                 </td>
             {# there must be no whitespace between <tbody> and <tr> #}

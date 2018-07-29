@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 
 A_MONTH = datetime.timedelta(days=30)

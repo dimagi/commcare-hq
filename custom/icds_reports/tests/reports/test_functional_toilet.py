@@ -1,6 +1,7 @@
 
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from django.test import TestCase
@@ -10,9 +11,8 @@ from custom.icds_reports.reports.functional_toilet import get_functional_toilet_
 from custom.icds_reports.const import ChartColors, MapColors
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestFunctionalToilet(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_functional_toilet_data_map(
@@ -81,7 +81,8 @@ class TestFunctionalToilet(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of AWCs that reported having a functional toilet"
+            "Of the AWCs that submitted an Infrastructure Details form, the percentage of AWCs that reported "
+            "having a functional toilet"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -347,7 +348,8 @@ class TestFunctionalToilet(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs that reported having a functional toilet",
+                "info": "Of the AWCs that submitted an Infrastructure Details form, the percentage of AWCs "
+                        "that reported having a functional toilet",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 0,

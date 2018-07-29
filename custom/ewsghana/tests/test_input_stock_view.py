@@ -8,7 +8,6 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
-from corehq.apps.domain.utils import DOMAIN_MODULE_KEY
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.models import SMS
@@ -19,7 +18,6 @@ from custom.ewsghana.models import EWSExtension
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockStatus
 from custom.ewsghana.utils import make_url
 from . import test_utils
-from dimagi.utils.couch.database import get_db
 
 TEST_DOMAIN = 'ewsghana-test-input-stock'
 
@@ -30,24 +28,6 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
     def setUpClass(cls):
         super(TestInputStockView, cls).setUpClass()
         cls.domain = initial_bootstrap(TEST_DOMAIN)
-        db = get_db()
-        if db.doc_exist(DOMAIN_MODULE_KEY):
-            module_config = db.open_doc(DOMAIN_MODULE_KEY)
-            module_map = module_config.get('module_map')
-            if module_map:
-                module_map[TEST_DOMAIN] = 'custom.ewsghana'
-            else:
-                module_config['module_map'][TEST_DOMAIN] = 'custom.ewsghana'
-        else:
-            module_config = db.save_doc(
-                {
-                    '_id': DOMAIN_MODULE_KEY,
-                    'module_map': {
-                        'ewsghana-test-input-stock': 'custom.ewsghana'
-                    }
-                }
-            )
-        db.save_doc(module_config)
 
         cls.setup_subscription(TEST_DOMAIN, SoftwarePlanEdition.ENTERPRISE)
 

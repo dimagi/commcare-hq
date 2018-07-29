@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import Counter
 
 from django.contrib.auth.models import User
@@ -85,10 +86,6 @@ def _get_couchdb_counts(domain):
         'CommCareUser-Deleted': get_doc_count_in_domain_by_class(domain, CommCareUser) - mobile_user_count
     })
 
-    # this is very slow, excluding for now
-    # for _, doc_ids in SyncLogIDProvider().get_doc_ids(domain):
-    #     couch_db_counts['SyncLog'] += len(doc_ids)
-    #
     return couch_db_counts
 
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import os
 import uuid
@@ -17,6 +18,7 @@ from couchforms.models import UnfinishedSubmissionStub
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin, softer_assert
+from io import open
 
 
 class EditFormTest(TestCase, TestFileMixin):

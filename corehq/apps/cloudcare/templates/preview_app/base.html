@@ -27,10 +27,19 @@
     <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
 {% endblock %}
 
-{% analytics_ab_test 'kissmetrics.data_feedback_loop_feb2018' ab_test %}
+{% initial_page_data 'allowed_host' request.get_host %}
+{% initial_page_data 'app' app %}
+{% initial_page_data 'debugger_enabled' request.couch_user.can_edit_data %}
+{% initial_page_data 'domain' request.domain %}
+{% initial_page_data 'environment' environment %}
+{% initial_page_data 'formplayer_url' formplayer_url %}
+{% initial_page_data 'is_dimagi' request.couch_user.is_dimagi %}
+{% initial_page_data 'language' request.user.language|default:'en' %}
+{% initial_page_data 'maps_api_key' maps_api_key %}
+{% initial_page_data 'username' request.user.username %}
 {% registerurl 'list_case_exports' request.domain %}
 {% registerurl 'list_form_exports' request.domain %}
-{% registerurl 'case_details' request.domain '---' %}
+{% registerurl 'case_data' request.domain '---' %}
 {% registerurl 'render_form_data' request.domain '---' %}
 
 <section id="case-crumbs" style="width: 800px"></section>
@@ -66,33 +75,5 @@
 {% block js %}
 <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
 <script src="{% static 'cloudcare/js/preview_app/preview_app.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}
-<script>
-    window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
-    hqImport('cloudcare/js/preview_app/preview_app').start({
-        apps: [{{ app|JSON }}],
-        language: "{{ request.user.language|default:'en' }}",
-        username: "{{ request.user.username  }}",
-        domain: "{{ request.domain }}",
-        formplayer_url: "{{ formplayer_url }}",
-        singleAppMode: true,
-        phoneMode: true,
-        oneQuestionPerScreen: !{{ request.couch_user.is_dimagi|JSON }},
-        allowedHost: "{{ request.get_host }}",
-        environment: {{ environment|JSON }},
-        {% if request.couch_user.can_edit_data %}
-        debuggerEnabled: true,
-        {% endif %}
-    });
-    $('.dragscroll').on('scroll', function () {
-      $('.form-control').blur();
-    });
-    // Adjust for those pesky scrollbars
-    _.each($('.scrollable-container'), function (sc) {
-      var scrollWidth = $(sc).prop('offsetWidth') - $(sc).prop('clientWidth');
-      $(sc).addClass('has-scrollbar-'+scrollWidth);
-    });
-</script>
+<script src="{% static 'cloudcare/js/preview_app/main.js' %}"></script>
 {% endblock %}

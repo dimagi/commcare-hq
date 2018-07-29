@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 
 from django.conf.urls import include, url
@@ -6,7 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
 from corehq.apps.userreports.reports.view import (
-    ConfigurableReport,
+    ConfigurableReportView,
     CustomConfigurableReportDispatcher,
 )
 from corehq.apps.userreports.views import (
@@ -29,13 +30,11 @@ from .views import (
     EditFormInstance,
     AddSavedReportConfigView,
     FormDataView,
-    CaseDetailsView,
+    CaseDataView,
     CaseAttachmentsView,
     MySavedReportsView,
     ScheduledReportsView,
     ReportNotificationUnsubscribeView,
-    default,
-    old_saved_reports,
     case_forms,
     case_property_changes,
     case_property_names,
@@ -51,6 +50,7 @@ from .views import (
     restore_edit,
     form_multimedia_export,
     archive_form,
+    edit_form,
     resave_form_view,
     unarchive_form,
     project_health_user_details,
@@ -58,7 +58,6 @@ from .views import (
     export_default_or_custom_data,
     hq_download_saved_export,
     hq_deid_download_saved_export,
-    hq_update_saved_export,
     export_report,
     email_report,
     delete_config,
@@ -77,7 +76,7 @@ custom_report_urls = [
 ]
 
 urlpatterns = [
-    ConfigurableReport.url_pattern(),
+    ConfigurableReportView.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
 
     # Report Builder
@@ -91,11 +90,11 @@ urlpatterns = [
     url(r'builder/subscribe/activating_subscription/$', ReportBuilderPaywallActivatingSubscription.as_view(),
         name=ReportBuilderPaywallActivatingSubscription.urlname),
 
-    url(r'^$', default, name="reports_home"),
+    url(r'^$', MySavedReportsView.as_view(), name="reports_home"),
     url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
-    url(r'^saved_reports', old_saved_reports, name='old_saved_reports'),
+    url(r'^saved_reports', MySavedReportsView.as_view(), name="old_saved_reports"),
 
-    url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDetailsView.as_view(), name=CaseDetailsView.urlname),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDataView.as_view(), name=CaseDataView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/forms/$', case_forms, name="single_case_forms"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/attachments/$',
         CaseAttachmentsView.as_view(), name=CaseAttachmentsView.urlname),
@@ -105,11 +104,12 @@ urlpatterns = [
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', rebuild_case_view, name="rebuild_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/resave/$', resave_case_view, name="resave_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/close/$', close_case_view, name="close_case"),
-    url(r'^case_data/(?P<case_id>[\w\-]+)/undo-close/$', undo_close_case_view, name="undo_close_case"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/undo-close/(?P<xform_id>[\w\-:]+)/$',
+        undo_close_case_view, name="undo_close_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/export_transactions/$',
         export_case_transactions, name="export_case_transactions"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', case_form_data, name="case_form_data"),
-    url(r'^case_data/(?P<case_id>[\w\-]+)/case_property/(?P<case_property_name>[\w_.]+)/$',
+    url(r'^case_data/(?P<case_id>[\w\-]+)/case_property/(?P<case_property_name>[\w_\-.]+)/$',
         case_property_changes, name="case_property_changes"),
 
     # Download and view form data
@@ -119,6 +119,7 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', restore_edit, name='restore_edit'),
     url(r'^form_data/download/media/$',
         form_multimedia_export, name='form_multimedia_export'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/correct_data/$', edit_form, name='edit_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', resave_form_view, name='resave_form'),
@@ -145,7 +146,6 @@ urlpatterns = [
         name="hq_download_saved_export"),
     url(r"^export/saved/download/deid/(?P<export_id>[\w\-]+)/$", hq_deid_download_saved_export,
         name="hq_deid_download_saved_export"),
-    url(r"^export/saved/update/$", hq_update_saved_export, name="hq_update_saved_export"),
 
     # Full Excel export
     url(r'^full_excel_export/(?P<export_hash>[\w\-]+)/(?P<format>[\w\-]+)$', export_report, name="export_report"),

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.conf.urls import url
 
 from custom.enikshay.integrations.ninetyninedots.views import (
@@ -8,17 +9,9 @@ from custom.enikshay.integrations.ninetyninedots.views import (
     UpdatePatientRepeaterView,
     UpdateTreatmentOutcomeRepeaterView,
     UnenrollPatientRepeaterView,
-    update_adherence_confidence,
-    update_default_confidence,
-    update_patient_adherence,
-    update_patient_details,
 )
 
 urlpatterns = [
-    url(r'^update_patient_adherence$', update_patient_adherence, name='update_patient_adherence'),
-    url(r'^update_patient_details$', update_patient_details, name='update_patient_details'),
-    url(r'^update_adherence_confidence$', update_adherence_confidence, name='update_adherence_confidence'),
-    url(r'^update_default_confidence$', update_default_confidence, name='update_default_confidence'),
     url(
         r'^new_register_patient_repeater$',
         RegisterPatientRepeaterView.as_view(),

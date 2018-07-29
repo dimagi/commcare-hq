@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.motech.repeaters.const import RECORD_FAILURE_STATE, RECORD_PENDING_STATE
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from six.moves import map

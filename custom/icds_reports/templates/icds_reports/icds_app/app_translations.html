@@ -1,0 +1,18 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block page_content %}
+    {% if not integration_available %}
+        <p class="text-error">
+            <span class="label label-danger">
+                {% trans 'Transifex integration not set for this domain' %}
+            </span>
+        </p>
+    {% else %}
+        <form class="form form-horizontal" name="product" method="post">
+            <legend>{% trans "ICDS App Translations" %}</legend>
+            {% crispy translations_form %}
+        </form>
+    {% endif %}
+{% endblock %}

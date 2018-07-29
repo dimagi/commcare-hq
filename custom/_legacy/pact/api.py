@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, time
 import logging
 import uuid
@@ -60,11 +61,12 @@ def get_cloudcare_app():
 
 
 def get_cloudcare_url(case_id, mode):
-    from corehq.apps.cloudcare.utils import webapps_url
+    from corehq.apps.cloudcare.utils import webapps_module_form_case
 
     app_dict = get_cloudcare_app()
     build_id = app_dict['build_id']
-    return webapps_url(PACT_DOMAIN, app_id=build_id, module_id=0, form_id=app_dict[mode], case_id=case_id)
+    return webapps_module_form_case(
+        PACT_DOMAIN, app_id=build_id, module_id=0, form_id=app_dict[mode], case_id=case_id)
 
 
 class PactFormAPI(DomainAPI):

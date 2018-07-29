@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 import re
 import json
@@ -14,7 +15,7 @@ CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
 SEARCH_QUERY_ADDITION_KEY = 'commcare_custom_search_query'
 SEARCH_QUERY_CUSTOM_VALUE = 'commcare_custom_value'
-CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = u'commcare_blacklisted_owner_ids'
+CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 UNSEARCHABLE_KEYS = (
     SEARCH_QUERY_ADDITION_KEY,
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
@@ -87,7 +88,7 @@ class CaseSearchConfig(models.Model):
     """
     Contains config for case search
     """
-    class Meta:
+    class Meta(object):
         app_label = 'case_search'
 
     domain = models.CharField(
@@ -219,16 +220,21 @@ def case_search_enabled_for_domain(domain):
 
 def enable_case_search(domain):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
+    from corehq.pillows.case_search import domains_needing_search_index
+
     config, created = CaseSearchConfig.objects.get_or_create(pk=domain)
     if not config.enabled:
         config.enabled = True
         config.save()
         case_search_enabled_for_domain.clear(domain)
+        domains_needing_search_index.clear()
         reindex_case_search_for_domain.delay(domain)
 
 
 def disable_case_search(domain):
     from corehq.apps.case_search.tasks import delete_case_search_cases_for_domain
+    from corehq.pillows.case_search import domains_needing_search_index
+
     try:
         config = CaseSearchConfig.objects.get(pk=domain)
     except CaseSearchConfig.DoesNotExist:
@@ -238,6 +244,7 @@ def disable_case_search(domain):
         config.enabled = False
         config.save()
         case_search_enabled_for_domain.clear(domain)
+        domains_needing_search_index.clear()
         delete_case_search_cases_for_domain.delay(domain)
 
 

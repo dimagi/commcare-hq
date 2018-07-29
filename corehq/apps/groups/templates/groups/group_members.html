@@ -13,6 +13,7 @@
 
 {% block js %}{{ block.super }}
     {% include 'hqwebapp/includes/ui_element_js.html' %}
+    <script src="{% static 'hqwebapp/js/select_2_ajax_widget.js' %}"></script>
     <script src="{% static 'groups/js/group_members.js' %}"></script>
 {% endblock %}
 
@@ -122,7 +123,7 @@
                                 <div id="group-data-ui-editor"></div>
                             </div>
                         </div>
-                        <input name="group-data" id="group-data" type="hidden" value="{{ group.metadata|JSON }}">
+                        <input name="group-data" id="group-data" type="hidden" value="{% html_attr group.metadata %}">
                         <div class="form-actions">
                             <div class="col-sm-9 col-sm-offset-2">
                                 <button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button>

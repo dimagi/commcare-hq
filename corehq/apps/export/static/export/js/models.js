@@ -52,12 +52,38 @@ hqDefine('export/js/models', function () {
             return format;
         });
 
+        self.sharingOptions = options.sharingOptions !== undefined ? options.sharingOptions : _.map(constants.SHARING_OPTIONS, function(format){
+            return format;
+        });
+
         // If any column has a deid transform, show deid column
         self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
             return table.selected() && _.any(table.columns(), function(column) {
                 return column.selected() && column.deid_transform();
             });
         }));
+
+        // Set column widths
+        self.questionColumnClass = ko.computed(function() {
+            var width = 6;
+            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+                width--;
+            }
+            if (self.isDeidColumnVisible()) {
+                width--;
+            }
+            return "col-sm-" + width;
+        });
+        self.displayColumnClass = ko.computed(function() {
+            var width = 5;
+            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+                width--;
+            }
+            if (self.isDeidColumnVisible()) {
+                width--;
+            }
+            return "col-sm-" + width;
+        });
 
         self.hasHtmlFormat = ko.pureComputed(function() {
             return this.export_format() === constants.EXPORT_FORMATS.HTML;
@@ -194,9 +220,31 @@ hqDefine('export/js/models', function () {
         } else if (format === constants.EXPORT_FORMATS.XLS) {
             return gettext('Excel (older versions)');
         } else if (format === constants.EXPORT_FORMATS.XLSX) {
-            return gettext('Excel 2007');
+            return gettext('Excel 2007+');
         }
     };
+
+    ExportInstance.prototype.getSharingOptionValues = function() {
+        return _.filter(constants.SHARING_OPTIONS, function(format) {
+            return this.sharingOptions.indexOf(format) !== -1;
+        }, this);
+    };
+
+    ExportInstance.prototype.getSharingOptionText = function(format) {
+        if (format === constants.SHARING_OPTIONS.PRIVATE) {
+            return gettext('Private');
+        } else if (format === constants.SHARING_OPTIONS.EXPORT_ONLY) {
+            return gettext('Export Only');
+        } else if (format === constants.SHARING_OPTIONS.EDIT_AND_EXPORT) {
+            return gettext('Edit and Export');
+        }
+    };
+
+    ExportInstance.prototype.getSharingHelpText = gettext(
+        '<strong>Private</strong>: Only you can edit and export.'
+        + ' <strong>Export Only</strong>: You can edit and export, other users can only export.'
+        + ' <strong>Edit and Export</strong>: All users can edit and export.'
+    );
 
     /**
      * isNew
@@ -246,7 +294,7 @@ hqDefine('export/js/models', function () {
      * Reports to analytics what type of configurations people are saving
      * exports as.
      *
-     * @param {function} callback - A funtion to be called after recording analytics.
+     * @param {function} callback - A function to be called after recording analytics.
      */
     ExportInstance.prototype.recordSaveAnalytics = function(callback) {
         var analyticsAction = this.is_daily_saved_export() ? 'Saved' : 'Regular',
@@ -338,6 +386,8 @@ hqDefine('export/js/models', function () {
         include: [
             '_id',
             'name',
+            'description',
+            'sharing',
             'tables',
             'type',
             'export_format',
@@ -547,6 +597,7 @@ hqDefine('export/js/models', function () {
         self.showOptions = ko.observable(false);
         self.userDefinedOptionToAdd = ko.observable('');
         self.isUserDefined = false;
+        self.selectedForSort = ko.observable(false);
     };
 
     /**

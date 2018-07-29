@@ -1,6 +1,7 @@
 # coding=utf-8
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from custom.enikshay.reports.const import AGE_RANGES, PATIENT_TYPES
@@ -35,7 +36,7 @@ def get_headers():
         if len(age_range) > 1:
             headers.append(DataTablesColumn('%d-%d' % (age_range[0], age_range[1])))
         else:
-            headers.append(DataTablesColumn(u'≥%d' % age_range[0]))
+            headers.append(DataTablesColumn('≥%d' % age_range[0]))
     headers.append(DataTablesColumn(_('Total')))
     return headers
 

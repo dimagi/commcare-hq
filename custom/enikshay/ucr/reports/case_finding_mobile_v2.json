@@ -1,10 +1,10 @@
 {
     "domains": [
-        "enikshay",
-        "enikshay-reports-qa"
+        "enikshay"
     ],
     "server_environment": [
-        "enikshay"
+        "enikshay",
+        "softlayer"
     ],
     "data_source_table": "episode",
     "report_id": "case_finding_mobile",

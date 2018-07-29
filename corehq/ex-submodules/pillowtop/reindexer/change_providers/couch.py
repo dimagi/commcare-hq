@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from copy import copy
 from corehq.util.couch_helpers import paginate_view, MultiKeyViewArgsProvider
 from corehq.util.pagination import paginate_function

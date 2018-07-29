@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 
 from dimagi.utils.couch.cache import cache_core
@@ -91,7 +92,7 @@ def _get_cache_invalidation_pillow(pillow_id, couch_db, couch_filter=None):
     checkpoint = FakeCheckpoint(
         'cache_invalidate_pillow', couch_db
     )
-    change_feed = CouchChangeFeed(couch_db, include_docs=True, couch_filter=couch_filter)
+    change_feed = CouchChangeFeed(couch_db, couch_filter=couch_filter)
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

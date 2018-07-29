@@ -39,8 +39,9 @@ Please note that these instructions are targeted toward UNIX-based systems. For 
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Python 2.7](https://www.python.org/downloads/)
+- [Pip](https://pip.pypa.io/en/stable/installing/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
-- [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
+- [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
 #### Setup virtualenv
 
@@ -57,6 +58,8 @@ Once all the dependencies are in order, please do the following:
     $ git submodule update --init --recursive
     $ workon commcare-hq  # if your "commcare-hq" virtualenv is not already activated
     $ pip install -r requirements/requirements.txt
+
+(If the last command fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207).)
 
 There is also a separate collection of Dimagi dev oriented tools that you can install:
 
@@ -103,12 +106,8 @@ You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
 
-Create a superuser for your local environment. (Ignore warnings
-related to Raven for the following three commands.)
-
-    $ ./manage.py make_superuser <email>
-
-To set up elasticsearch indexes run the following:
+To set up elasticsearch indexes run the following (Ignore warnings
+related to Raven for the following two commands.):
 
     $ ./manage.py ptop_preindex
 
@@ -208,22 +207,52 @@ For all STATICFILES changes (primarily LESS and JavaScript), run:
     $ manage.py compress
 
 
-#### FormPlayer
+#### Formplayer
 
-To enable FormPlayer, ensure that `TOUCHFORMS_API_USER` and
-`TOUCHFORMS_API_PASSWORD` in `localsettings.py` are the credentials of the
-django admin user you created above (with manage.py bootstrap) and then create
-the file `submodules/touchforms-src/touchforms/backend/localsettings.py` with
-the following contents:
+Formplayer is a Java service that allows us to use applications on the web instead of on a mobile device. 
+
+In `localsettings.py`:
 ```
-URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
+FORMPLAYER_URL = 'http://localhost:8010'
 ```
+
+Then you need to have formplayer running. There are a few options as described below.
+
+##### Running Formplayer in Docker
+
+Please refer to FormPlayer's install instructions under "[Running in Docker](https://github.com/dimagi/formplayer#running-in-docker)".
 
 If you are on Mac, don't bother trying to run this in Docker. There seems to be some kind of bug.
-Check out the install instructions under "[Building and Running]
-(https://github.com/dimagi/formplayer#building-and-running)".
+Instead, try running formplayer from a .jar file
 
-Otherwise, please refer to FormPlayer's install instructions under "[Running in Docker](https://github.com/dimagi/formplayer#running-in-docker)".
+##### Running formplayer.jar
+
+Prerequisite: install Java (left as an exercise for the reader)
+
+To get set up, download the settings file and `formplayer.jar`. You may run this
+in the commcare-hq repo root.
+
+```bash
+$ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o formplayer.properties
+$ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
+```
+
+Thereafter, to run formplayer, navigate to the dir where you installed them
+above (probably the repo root), and run:
+
+```bash
+$ java -jar formplayer.jar --spring.config.name=formplayer
+```
+
+This starts a process in the foreground, so you'll need to keep it open as long
+as you plan on using formplayer. If formplayer stops working, you can try
+re-fetching it using the same command above. Feel free to add it to your
+`hammer` command or wherever.
+
+```bash
+$ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
+```
+
 
 Running CommCare HQ
 -------------------
@@ -243,6 +272,10 @@ Then run the following separately:
     $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
     # Windows
     > manage.py celeryd --settings=settings
+
+Create a superuser for your local environment
+
+    $ ./manage.py make_superuser <email>
 
 If you want to use CloudCare you will also need to run the Touchforms server.
 
@@ -290,9 +323,12 @@ To avoid having to run the databse setup for each test run you can specify the `
  which will use an existing test database if one exists:
 
     $ REUSE_DB=1 ./manage.py test corehq.apps.app_manager
-    $ REUSE_DB=reset ./manage.py test corehq.apps.app_manager  # drop the current test DB and create a fresh one
 
-See `corehq.tests.nose.HqdbContext` for full description of `REUSE_DB`.
+Or, to drop the current test DB and create a fresh one
+    $ ./manage.py test corehq.apps.app_manager --reusedb=reset
+
+See `corehq.tests.nose.HqdbContext` for full description
+of `REUSE_DB` and `--reusedb`.
 
 ### Running tests by tag
 You can run all tests with a certain tag as follows:

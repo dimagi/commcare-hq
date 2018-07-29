@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
@@ -9,6 +10,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.linked_domain.models import DomainLink
 from corehq.toggles import LINKED_DOMAINS
 
 from .dbaccessors import get_all_built_app_ids_and_versions
@@ -37,12 +39,13 @@ class CopyApplicationForm(forms.Form):
         export_zipped_apps_enabled = kwargs.pop('export_zipped_apps_enabled', False)
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
         fields = ['domain', 'name', 'toggles']
+        self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
         if export_zipped_apps_enabled:
             self.fields['gzip'] = forms.FileField(required=False)
             fields.append('gzip')
-        if LINKED_DOMAINS.enabled(from_domain):
+        if LINKED_DOMAINS.enabled(self.from_domain):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
@@ -60,23 +63,27 @@ class CopyApplicationForm(forms.Form):
         )
 
     def clean_domain(self):
-        domain_name = self.cleaned_data['domain']
-        domain = Domain.get_by_name(domain_name)
-        if domain is None:
+        domain = self.cleaned_data['domain']
+        domain_obj = Domain.get_by_name(domain)
+        if domain_obj is None:
             raise forms.ValidationError("A valid project space is required.")
-        return domain_name
+        return domain
 
     def clean(self):
         domain = self.cleaned_data.get('domain')
         if self.cleaned_data.get('linked'):
             if not LINKED_DOMAINS.enabled(domain):
                 raise forms.ValidationError("The target project space does not have linked apps enabled.")
+            link = DomainLink.objects.filter(linked_domain=domain)
+            if link and link[0].master_domain != self.from_domain:
+                raise forms.ValidationError(
+                    "The target project space is already linked to a different domain")
         return self.cleaned_data
 
 
 class PromptUpdateSettingsForm(forms.Form):
     app_prompt = forms.ChoiceField(
-        label=ugettext_lazy("Prompt Updates to Latest Released App Version"),
+        label=ugettext_lazy("Prompt Updates to App"),
         choices=(
             ('off', ugettext_lazy('Off')),
             ('on', ugettext_lazy('On')),
@@ -84,14 +91,14 @@ class PromptUpdateSettingsForm(forms.Form):
         ),
         help_text=ugettext_lazy(
             "If enabled, users will receive in-app prompts to update "
-            "to the latest released version of the app, if they are not "
+            "to the selected version of the app, if they are not "
             "already on it. (Selecting 'Forced' will make it so that users "
             "cannot continue to use CommCare until they update)"
         )
     )
 
     apk_prompt = forms.ChoiceField(
-        label=ugettext_lazy("Prompt Updates to Latest CommCare Version"),
+        label=ugettext_lazy("Prompt Updates to CommCare"),
         choices=(
             ('off', ugettext_lazy('Off')),
             ('on', ugettext_lazy('On')),
@@ -99,7 +106,7 @@ class PromptUpdateSettingsForm(forms.Form):
         ),
         help_text=ugettext_lazy(
             "If enabled, users will receive in-app prompts to update "
-            "to the latest version of CommCare, if they are not already "
+            "to the selected version of CommCare, if they are not already "
             "on it. (Selecting 'Forced' will make it so that users cannot "
             "continue to use CommCare until they upgrade)"
         )
@@ -125,7 +132,7 @@ class PromptUpdateSettingsForm(forms.Form):
 
         self.fields['app_version'].choices = [(LATEST_APP_VALUE, 'Latest Released Version')] + [
             (app.version, 'Version {}'.format(app.version))
-            for app in get_all_built_app_ids_and_versions(domain, app_id)[0:10]
+            for app in get_all_built_app_ids_and_versions(domain, app_id)[-10:]
         ]
 
         self.helper = FormHelper()

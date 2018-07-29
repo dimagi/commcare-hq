@@ -1,11 +1,11 @@
-<div class="download-directive">
+<div class="download-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
     <div class="row fixes-filters">
         <div class="col-md-11">
             <span class="breadcrump-element">Export Program Area Indicators: </span>
         </div>
     </div>
     <div class="report-content">
-        <div class="alert alert-info" ng-show="$ctrl.now === $ctrl.selectedMonth">
+        <div class="alert alert-info" ng-show="$ctrl.showWarning()">
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
         </div>
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isChildBeneficiaryListSelected() && $ctrl.hasErrors()">
@@ -18,7 +18,8 @@
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isISSNIPMonthlyRegisterSelected() && $ctrl.hasErrorsISSNIPExport()">
             <strong>Please make the following selections before you can export:</strong>
             <ul>
-                <li ng-if="!$ctrl.isDistrictOrBelowSelected()" style="padding: 5px;">Select at least a district-level location</li>
+                <li ng-if="!$ctrl.isBlockOrBelowSelected()" style="padding: 5px;">Select at least a block-level location</li>
+                <li ng-if="!$ctrl.isAWCsSelected() && !$ctrl.isCombinedPDFSelected()" style="padding: 5px;">Select at least one AWC</li>
             </ul>
         </div>
         <div class="form-horizontal black">
@@ -95,7 +96,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelectYear($item)">
                             <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
                             <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">
                                 <div ng-bind-html="year.name"></div>
@@ -166,7 +167,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div style="margin-bottom: 15px;" class="col-sm-6">
-                        <ui-select multiple ng-disabled="!$ctrl.isDistrictOrBelowSelected()" ng-model="$ctrl.selectedAWCs" on-select="$ctrl.onSelectAWCs($item)" close-on-select="false" theme="bootstrap">
+                        <ui-select multiple ng-disabled="!$ctrl.isBlockOrBelowSelected()" ng-model="$ctrl.selectedAWCs" on-select="$ctrl.onSelectAWCs($item)" close-on-select="false" theme="bootstrap">
                             <ui-select-match placeholder="Please select AWCs"><span ng-bind="$item.name"></span></ui-select-match>
                               <ui-select-choices repeat="location.location_id as location in $ctrl.awcLocations | propsFilter: {name: $select.search}">
                                   <div ng-bind-html="location.name | highlight: $select.search"></div>
@@ -192,7 +193,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelectYear($item)">
                             <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
                             <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">
                                 <div ng-bind-html="year.name"></div>
@@ -201,20 +202,10 @@
                     </div>
                 </div>
             </div>
-            <div class="form-group" ng-if="!$ctrl.isISSNIPMonthlyRegisterSelected()">
+            <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-6">
                     <form action="{% url 'icds_export_indicator' domain %}" method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="location" ng-value="$ctrl.selectedLocationId" />
-                        <input type="hidden" name="aggregation_level" ng-value="$ctrl.selectedLevel" />
-                        <input type="hidden" name="month" ng-value="$ctrl.selectedMonth" />
-                        <input type="hidden" name="year" ng-value="$ctrl.selectedYear" />
-                        <input type="hidden" name="indicator" ng-value="$ctrl.selectedIndicator" />
-                        <input type="hidden" name="format" ng-value="$ctrl.selectedFormat" />
-                        <input type="hidden" name="pdfformat" ng-value="$ctrl.selectedPDFFormat" />
-                        <input type="hidden" name="selected_awcs" ng-value="$ctrl.selectedPDFFormat === 'one' ? 'all' : $ctrl.selectedAWCs" />
-                        <input ng-if="$ctrl.isChildBeneficiaryListSelected()" type="hidden" ng-repeat="filter in $ctrl.selectedFilterOptions()" name="filter[]" ng-value="filter.id"/>
-                        <button type="submit"
+                        <button type="button" ng-click="$ctrl.submitForm('{{ csrf_token }}')"
                                 class="btn btn-default normalButton orangeButton"
                                 ng-disabled="$ctrl.hasErrors() || $ctrl.hasErrorsISSNIPExport()">
                             Export
@@ -226,25 +217,10 @@
                     </form>
                 </div>
             </div>
-            <div class="form-group" ng-if="$ctrl.isISSNIPMonthlyRegisterSelected()">
-                <div class="col-sm-offset-2 col-sm-6">
-                    <form action="{% url 'icds_export_indicator' domain %}" method="POST">
-                        <button type="button" ng-click="$ctrl.submitISSNIPForm('{{ csrf_token }}')"
-                                class="btn btn-default normalButton orangeButton"
-                                ng-disabled="$ctrl.hasErrors() || $ctrl.hasErrorsISSNIPExport()">
-                            Export
-                        </button>
-                        <button type="button" ng-click="$ctrl.resetForm()"
-                                class="btn btn-default normalButton orangeButton">
-                            Reset
-                        </button>
-                    </form>
-                </div>
-            </div>
-            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedISSNIPTask) && !$ctrl.downloaded">
-                <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask" class="fa fa-circle-o-notch fa-spin"></i>
-                <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask">Preparing your ISSNIP report...</span>
-                <span ng-if="$ctrl.readyToDownload()">Your ISSNIP report is ready to be downloaded</span>
+            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedTask) && !$ctrl.downloaded">
+                <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask" class="fa fa-circle-o-notch fa-spin"></i>
+                <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask">Preparing your report...</span>
+                <span ng-if="$ctrl.readyToDownload()">Your report is ready to be downloaded</span>
                 <a class="btn btn-primary" ng-click="$ctrl.goToLink()"
                    ng-disabled="!$ctrl.readyToDownload()"><span>Download</span></a>
             </div>

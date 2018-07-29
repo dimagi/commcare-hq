@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from django.urls import reverse
 from django.http import Http404
@@ -13,7 +14,7 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from couchforms.analytics import get_exports_by_form
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from six.moves import map
 
 
@@ -135,7 +136,7 @@ def get_app_sources(domain):
             "case": [{"text": t, "value": t} for t in app.get_case_types()],
             "form": [
                 {
-                    "text": u'{} / {}'.format(form.get_module().default_name(), form.default_name()),
+                    "text": '{} / {}'.format(form.get_module().default_name(), form.default_name()),
                     "value": form.get_unique_id()
                 } for form in app.get_forms()
             ]

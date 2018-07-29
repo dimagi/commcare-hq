@@ -1,11 +1,11 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 
 from couchdbkit import Database, BulkSaveError
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.phone.models import SyncLog
 from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.config import DocumentTransform, save
 from corehq.apps.groups.models import Group
@@ -36,14 +36,6 @@ class Command(BaseCommand):
             default=False,
             help="In addition to getting cases owned by the group itself, also get those owned by all users in the group",
         )
-        parser.add_argument(
-            '--include-sync-logs',
-            action='store_true',
-            dest='include_sync_logs',
-            default=False,
-            help="Get sync logs for all users in the group",
-        )
-
 
     def lenient_bulk_save(self, cls, docs):
         try:
@@ -169,22 +161,3 @@ class Command(BaseCommand):
                 include_docs=True,
             )]
             self.lenient_bulk_save(UserRole, roles)
-
-        if options['include_sync_logs']:
-            print('copying sync logs')
-            for user_id in user_ids:
-                log_ids = [res['id'] for res in sourcedb.view("phone/sync_logs_by_user",
-                    startkey=[user_id, {}],
-                    endkey=[user_id],
-                    descending=True,
-                    reduce=False,
-                    include_docs=True
-                )]
-                print('user: %s, logs: %s' % (user_id, len(log_ids)))
-                for i, subset in enumerate(chunked(log_ids, CHUNK_SIZE)):
-                    print(i * CHUNK_SIZE)
-                    logs = [SyncLog.wrap(log['doc']) for log in sourcedb.all_docs(
-                        keys=list(subset),
-                        include_docs=True,
-                    )]
-                    self.lenient_bulk_save(SyncLog, logs)

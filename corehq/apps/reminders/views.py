@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import timedelta, datetime, time
 import json
 
@@ -50,35 +51,25 @@ from corehq.apps.reminders.util import (
     get_recipient_name,
     requires_old_reminder_framework,
 )
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.messaging.decorators import reminders_framework_permission
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from custom.ewsghana.forms import EWSBroadcastForm
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
 ACTION_ACTIVATE = 'activate'
 ACTION_DEACTIVATE = 'deactivate'
 ACTION_DELETE = 'delete'
-
-reminders_framework_permission = lambda *args, **kwargs: (
-    require_permission(Permissions.edit_data)(
-        requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK)(*args, **kwargs)
-    )
-)
-
-survey_reminders_permission = lambda *args, **kwargs: (
-    require_permission(Permissions.edit_data)(
-        requires_privilege_with_fallback(privileges.INBOUND_SMS)(*args, **kwargs)
-    )
-)
 
 
 def add_migration_in_progress_message(request):
@@ -104,10 +95,9 @@ class ScheduledRemindersCalendarView(BaseMessagingSectionView):
     template_name = 'reminders/partial/scheduled_reminders.html'
 
     @method_decorator(requires_old_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(reminders_framework_permission)
     def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+        return super(ScheduledRemindersCalendarView, self).dispatch(*args, **kwargs)
 
     @property
     def page_context(self):
@@ -176,7 +166,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     @use_timepicker
     @use_select2
     def dispatch(self, request, *args, **kwargs):
-        if self.reminders_migration_in_progress:
+        if self.reminders_migration_in_progress and not self.new_reminders_migrator:
             return HttpResponseRedirect(reverse(RemindersListView.urlname, args=[self.domain]))
         return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
 
@@ -241,10 +231,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @property
     def available_case_types(self):
-        case_types = []
-        for app in self.apps:
-            case_types.extend([m.case_type for m in app.modules])
-        return set(case_types)
+        return sorted(get_case_types_for_domain_es(self.domain))
 
     @property
     def action(self):
@@ -265,7 +252,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @property
     def search_case_type_response(self):
-        return list(self.available_case_types)
+        return self.available_case_types
 
     def clean_dict_list(self, dict_list):
         """
@@ -517,7 +504,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
 
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+        return super(AddStructuredKeywordView, self).dispatch(*args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -722,14 +709,13 @@ class CreateBroadcastView(BaseMessagingSectionView):
     force_create_new_broadcast = False
 
     @method_decorator(requires_old_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_jquery_ui
     @use_timepicker
     @use_select2
     def dispatch(self, *args, **kwargs):
-        if self.reminders_migration_in_progress:
+        if self.reminders_migration_in_progress and not self.new_reminders_migrator:
             return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+        return super(CreateBroadcastView, self).dispatch(*args, **kwargs)
 
     @property
     @memoized
@@ -893,10 +879,9 @@ class RemindersListView(BaseMessagingSectionView):
     page_title = ugettext_noop("Reminder Definitions")
 
     @method_decorator(requires_old_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
+        return super(RemindersListView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -910,7 +895,7 @@ class RemindersListView(BaseMessagingSectionView):
     def reminders(self):
         all_handlers = CaseReminderHandler.get_handlers(self.domain,
             reminder_type_filter=REMINDER_TYPE_DEFAULT)
-        if not self.can_use_survey:
+        if not self.can_use_survey and not self.new_reminders_migrator:
             all_handlers = [x for x in all_handlers if x.method not in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
         for handler in all_handlers:
             yield self._fmt_reminder_data(handler)
@@ -919,7 +904,9 @@ class RemindersListView(BaseMessagingSectionView):
     def page_context(self):
         return {
             'reminders': list(self.reminders),
-            'reminders_migration_in_progress': self.reminders_migration_in_progress,
+            'reminders_migration_in_progress': (
+                self.reminders_migration_in_progress and not self.new_reminders_migrator
+            ),
         }
 
     @property
@@ -978,7 +965,7 @@ class RemindersListView(BaseMessagingSectionView):
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
         if action in [ACTION_ACTIVATE, ACTION_DEACTIVATE, ACTION_DELETE]:
-            if self.reminders_migration_in_progress:
+            if self.reminders_migration_in_progress and not self.new_reminders_migrator:
                 return HttpResponse(
                     "Cannot complete action because reminders migration is in progress.",
                     status=400
@@ -997,7 +984,6 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     DELETE_BROADCAST = 'delete_broadcast'
 
     @method_decorator(requires_old_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         return super(BroadcastListView, self).dispatch(request, *args, **kwargs)
@@ -1005,7 +991,9 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     @property
     def page_context(self):
         return {
-            'reminders_migration_in_progress': self.reminders_migration_in_progress,
+            'reminders_migration_in_progress': (
+                self.reminders_migration_in_progress and not self.new_reminders_migrator
+            ),
         }
 
     @property
@@ -1089,7 +1077,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
         if action == self.DELETE_BROADCAST:
-            if self.reminders_migration_in_progress:
+            if self.reminders_migration_in_progress and not self.new_reminders_migrator:
                 return HttpResponse(
                     "Cannot complete action because reminders migration is in progress.",
                     status=400
@@ -1110,7 +1098,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+        return super(KeywordsListView, self).dispatch(*args, **kwargs)
 
     @property
     def page_url(self):

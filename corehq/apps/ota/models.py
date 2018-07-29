@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import io
+from collections import namedtuple
 
 from django.db import models, transaction
 
@@ -104,7 +106,7 @@ class SerialIdBucket(models.Model):
     bucket_id = models.CharField(max_length=255)
     current_value = models.IntegerField(default=-1)
 
-    class Meta:
+    class Meta(object):
         index_together = ('domain', 'bucket_id',)
         unique_together = ('domain', 'bucket_id',)
 
@@ -130,3 +132,72 @@ class SerialIdBucket(models.Model):
         bucket.current_value += 1
         bucket.save()
         return bucket.current_value
+
+
+Measure = namedtuple('Measure', 'slug name description')
+
+
+class MobileRecoveryMeasure(models.Model):
+    """
+    Model representing a method of recovering from a fatal error on mobile.
+    """
+    MEASURES = (
+        Measure('app_reinstall_ota', "Reinstall App, OTA",
+                "Reinstall the current CommCare app by triggering an OTA install"),
+        Measure('app_reinstall_local', "Reinstall App, Local",
+                "Reinstall the current CommCare app (by triggering an offline install "
+                "with a default .ccz that's already on the device, and then doing an "
+                "OTA update from there)"),
+        Measure('app_update', "Update App",
+                "Update the current CommCare app"),
+        Measure('cc_reinstall', "CC Reinstall Needed",
+                "Notify the user that CommCare needs to be reinstalled"),
+        Measure('cc_update', "CC Update Needed",
+                "Notify the user that CommCare needs to be updated"),
+    )
+    measure = models.CharField(
+        max_length=255,
+        choices=[(m.slug, m.name) for m in MEASURES],
+        help_text="<br/>".join(
+            "<strong>{}:</strong> {}".format(m.name, m.description)
+            for m in MEASURES
+        )
+    )
+
+    domain = models.CharField(max_length=255)
+    app_id = models.CharField(max_length=50)
+
+    cc_all_versions = models.BooleanField(
+        verbose_name="All CommCare Versions", default=True)
+    cc_version_min = models.CharField(
+        verbose_name="Min CommCare Version", max_length=255, blank=True)
+    cc_version_max = models.CharField(
+        verbose_name="Max CommCare Version", max_length=255, blank=True)
+
+    app_all_versions = models.BooleanField(
+        verbose_name="All App Versions", default=True)
+    app_version_min = models.IntegerField(
+        verbose_name="Min App Version", null=True, blank=True)
+    app_version_max = models.IntegerField(
+        verbose_name="Max App Version", null=True, blank=True)
+
+    created_on = models.DateTimeField(auto_now_add=True)
+    username = models.CharField(max_length=255, editable=False)
+    notes = models.TextField(blank=True)
+
+    @property
+    def sequence_number(self):
+        return self.pk
+
+    def to_mobile_json(self):
+        res = {
+            "sequence_number": self.sequence_number,
+            "type": self.measure,
+        }
+        if not self.cc_all_versions:
+            res["cc_version_min"] = self.cc_version_min
+            res["cc_version_max"] = self.cc_version_max
+        if not self.app_all_versions:
+            res["app_version_min"] = self.app_version_min
+            res["app_version_max"] = self.app_version_max
+        return res

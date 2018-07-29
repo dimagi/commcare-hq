@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplication
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.change_feed import topics

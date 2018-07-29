@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from contextlib import contextmanager
 from corehq.util.soft_assert import soft_assert
 

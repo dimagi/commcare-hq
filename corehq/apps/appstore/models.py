@@ -1,8 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from corehq.apps.appstore.exceptions import CopiedFromDeletedException
 from dimagi.ext.couchdbkit import *
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class SnapshotMixin(DocumentSchema):

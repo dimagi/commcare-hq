@@ -31,25 +31,9 @@
 
 {% block js %} {{ block.super }}
     <!-- todo add the media player back in -->
-    <script src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
     <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    <script src="{% static 'hqmedia/js/references_main.js' %}"></script>
     <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %} {{ block.super }}
-    <script>
-        var reference_controller = new MultimediaReferenceController(
-            {{ references|JSON }},
-            {{ object_map|JSON }},
-            {{ totals|JSON }}
-        );
-        reference_controller.render();
-        $("#multimedia-reference-checker").koApplyBindings(reference_controller);
-
-        $('.preview-media').tooltip();
-    </script>
-    {% url "download_multimedia_zip" domain app.get_id as media_url%}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=media_url%}
 {% endblock %}
 
 {% block page_name %}
@@ -70,8 +54,11 @@
 {% endblock %}
 
 {% block page_content %}
+{% initial_page_data 'object_map' object_map %}
+{% initial_page_data 'references' references %}
 {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
 {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+{% initial_page_data 'totals' totals %}
 {% initial_page_data 'uploaders' uploaders_js %}
 
 <div id="multimedia-reference-checker">
@@ -106,7 +93,7 @@
                     <a class="btn btn-primary"
                         href="#multimedia-zip-modal"
                         data-toggle="modal"
-                        onclick="download_application_zip()">
+                        onclick="hqImport('app_manager/js/download_async_modal').downloadApplicationZip()">
                         <i class="fa fa-download"></i> {% trans 'Download ZIP' %}
                     </a>
                 </p>
@@ -184,8 +171,12 @@
         {% include 'hqmedia/partials/multimedia_uploader.html' %}
     {% endfor %}
 
-    <div id="jquery_jplayer"></div>
     {% endif %}
 </div>
 
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% url "download_multimedia_zip" domain app.get_id as media_url%}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=media_url%}
 {% endblock %}

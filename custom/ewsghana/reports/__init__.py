@@ -11,14 +11,15 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
+from corehq.apps.reports.graph_models import MultiBarChart, PieChart
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from custom.ewsghana.filters import EWSRestrictionLocationFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.common import ALL_OPTION
+from custom.common.models import LineChart
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
 from custom.ewsghana.models import EWSExtension
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
 from custom.ewsghana.utils import get_descendants, filter_slugs_by_role, ews_date_format, get_products_for_locations, \
     get_products_for_locations_by_program, get_products_for_locations_by_products, calculate_last_period, \

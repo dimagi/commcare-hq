@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.sms.models import (
     FORWARD_ALL, FORWARD_BY_KEYWORD, MessagingEvent,

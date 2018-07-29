@@ -1,17 +1,26 @@
 {% extends "scheduling/create_schedule_base.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'locations/js/widgets_main.js' %}"></script>
     <script src="{% static 'data_interfaces/js/make_read_only.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}{{ block.super }}
     {% initial_page_data 'read_only_mode' read_only_mode %}
+    <p class="help-block">
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+        For information on Broadcasts, see the
+        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Broadcasts">Broadcasts</a>
+        help page.
+        {% endblocktrans %}
+    </p>
+    {% include 'scheduling/partial/custom_event_templates.html' %}
     <form class="form form-horizontal main-form" method="POST" action="#">
-        <div id="create-schedule-form">
-            {% crispy schedule_form %}
-        </div>
+        {% include 'scheduling/partial/schedule_form.html' %}
     </form>
 {% endblock %}

@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
+import re
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 import hashlib
@@ -16,14 +19,12 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instance_ids
 from corehq.apps.export.const import SAVED_EXPORTS_QUEUE
 from corehq.apps.reports.util import send_report_download_email
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
 from couchexport.files import Temp
-from couchexport.groupexports import export_for_group, rebuild_export
+from couchexport.groupexports import rebuild_export
 from couchexport.tasks import cache_file_to_be_served
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -51,7 +52,6 @@ from .analytics.esaccessors import (
 from .export import save_metadata_export_to_tempfile
 from .models import (
     FormExportSchema,
-    HQGroupExportConfiguration,
     ReportNotification,
     UnsupportedScheduledReportError,
 )
@@ -59,6 +59,7 @@ from .scheduled import get_scheduled_report_ids
 import six
 from six.moves import map
 from six.moves import filter
+from io import open
 
 
 logging = get_task_logger(__name__)
@@ -69,8 +70,13 @@ def send_delayed_report(report_id):
     """
     Sends a scheduled report, via celery background task.
     """
-    if settings.SERVER_ENVIRONMENT == 'production' and ReportNotification.get(report_id).domain == 'ews-ghana':
-        # this is used because ews-ghana was spamming the queue:
+    domain = ReportNotification.get(report_id).domain
+    if (
+        settings.SERVER_ENVIRONMENT == 'production' and
+        any(re.match(pattern, domain) for pattern in settings.THROTTLE_SCHED_REPORTS_PATTERNS)
+    ):
+        # This is to prevent a few scheduled reports from clogging up
+        # the background queue.
         # https://manage.dimagi.com/default.asp?270029#BugEvent.1457969
         send_report_throttled.delay(report_id)
     else:
@@ -134,40 +140,6 @@ def weekly_reports():
 def monthly_reports():
     for report_id in get_scheduled_report_ids('monthly'):
         send_delayed_report(report_id)
-
-
-@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def saved_exports():
-    for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
-        export_for_group_async.delay(group_config_id)
-
-    for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
-        from corehq.apps.export.tasks import rebuild_export_task
-        last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        rebuild_export_task.apply_async(
-            args=[
-                daily_saved_export_id, last_access_cutoff
-            ],
-            # Normally the rebuild_export_task uses the background queue,
-            # however we want to override it to use its own queue so that it does
-            # not disrupt other actions.
-            queue=SAVED_EXPORTS_QUEUE,
-        )
-
-
-@task(queue='background_queue', ignore_result=True)
-def rebuild_export_task(groupexport_id, index, last_access_cutoff=None, filter=None):
-    group_config = HQGroupExportConfiguration.get(groupexport_id)
-    config, schema = group_config.all_exports[index]
-    rebuild_export(config, schema, last_access_cutoff, filter=filter)
-
-
-@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
-def export_for_group_async(group_config_id):
-    # exclude exports not accessed within the last 7 days
-    last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-    group_config = HQGroupExportConfiguration.get(group_config_id)
-    export_for_group(group_config, last_access_cutoff=last_access_cutoff)
 
 
 @task(queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
@@ -310,7 +282,7 @@ def build_form_multimedia_zip(
         _, fpath = tempfile.mkstemp()
 
     _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name)
-    filename = u"{}.zip".format(zip_name)
+    filename = "{}.zip".format(zip_name)
     expose_download(use_transfer, fpath, filename, download_id, 'zip')
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
 
@@ -331,18 +303,18 @@ def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_fo
 
 
 def _format_filename(form_info, question_id, extension, case_id_to_name):
-    filename = u"{}-{}-form_{}{}".format(
+    filename = "{}-{}-form_{}{}".format(
         unidecode(question_id),
         form_info['username'] or form_info['form'].user_id or 'user_unknown',
         form_info['form'].form_id or 'unknown',
         extension
     )
     if form_info['case_ids']:
-        case_names = u'-'.join(map(
+        case_names = '-'.join(map(
             lambda case_id: case_id_to_name[case_id],
             form_info['case_ids'],
         ))
-        filename = u'{}-{}'.format(case_names, filename)
+        filename = '{}-{}'.format(case_names, filename)
     return filename
 
 
@@ -450,9 +422,9 @@ def _extract_form_attachment_info(form, properties):
             continue
         try:
             question_id = six.text_type(
-                u'-'.join(find_question_id(form.form_data, attachment_name)))
+                '-'.join(find_question_id(form.form_data, attachment_name)))
         except TypeError:
-            question_id = u'unknown' + six.text_type(unknown_number)
+            question_id = 'unknown' + six.text_type(unknown_number)
             unknown_number += 1
 
         if not properties or question_id in properties:

@@ -5,7 +5,25 @@ var Formplayer = {
     ViewModels: {},
     Errors: {},
 };
-var markdowner = window.markdownit();
+var md = window.markdownit();
+
+var defaultRender = md.renderer.rules.link_open || function(tokens, idx, options, env, self) {
+    return self.renderToken(tokens, idx, options);
+};
+
+md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+    // If you are sure other plugins can't add `target` - drop check below
+    var aIndex = tokens[idx].attrIndex('target');
+
+    if (aIndex < 0) {
+        tokens[idx].attrPush(['target', '_blank']); // add new attribute
+    } else {
+        tokens[idx].attrs[aIndex][1] = '_blank';    // replace value of existing attr
+    }
+
+    // pass token to default renderer.
+    return defaultRender(tokens, idx, options, env, self);
+};
 
 
 //if index is part of a repeat, return only the part beyond the deepest repeat
@@ -129,7 +147,7 @@ Container.prototype.fromJS = function(json) {
         },
         caption_markdown: {
             update: function(options) {
-                return options.data ? markdowner.render(options.data) : null;
+                return options.data ? md.render(options.data) : null;
             },
         },
         children: {
@@ -429,11 +447,14 @@ function Question(json, parent) {
     self.afterRender = function() { self.entry.afterRender(); };
 
     self.triggerAnswer = function() {
-        $.publish('formplayer.dirty');
         self.pendingAnswer(_.clone(self.answer()));
-        $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
+        publishAnswerEvent();
     };
-    self.onchange = _.throttle(self.triggerAnswer, self.throttle);
+    var publishAnswerEvent = _.throttle(function() {
+        $.publish('formplayer.dirty');
+        $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
+    }, self.throttle);
+    self.onchange = self.triggerAnswer;
 
     self.mediaSrc = function(resourceType) {
         if (!resourceType || !_.isFunction(Formplayer.resourceMap)) { return ''; }
@@ -456,7 +477,7 @@ Question.prototype.fromJS = function(json) {
         },
         caption_markdown: {
             update: function(options) {
-                return options.data ? markdowner.render(options.data) : null;
+                return options.data ? md.render(options.data) : null;
             },
         },
     };

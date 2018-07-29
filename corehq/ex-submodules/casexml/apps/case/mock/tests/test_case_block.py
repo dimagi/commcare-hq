@@ -1,5 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
+
+import six
 from django.test import SimpleTestCase
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
@@ -36,7 +39,7 @@ class CaseBlockTest(SimpleTestCase):
                 case_name='Johnny',
                 update={'case_name': 'Johnny'},
             ).as_xml()
-        self.assertEqual(context.exception.message, "Key 'case_name' specified twice")
+        self.assertEqual(six.text_type(context.exception), "Key 'case_name' specified twice")
 
     def test_buggy_behavior(self):
         """The following is a BUG; should fail!! Should fix and change tests"""

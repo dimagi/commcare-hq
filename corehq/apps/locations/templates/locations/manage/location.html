@@ -8,94 +8,17 @@
     {{ block.super }}
 {% endblock title %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'locations/js/location_drilldown.async.js' %}"></script>
-    <script src="{% static 'locations/js/location.js' %}"></script>
-    {% include 'hqwebapp/includes/ui_element_js.html' %}
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        // Multiselect widget
-        $(function () {
-            var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-
-            multiselect_utils.createFullMultiselectWidget(
-                'id_products-selected_ids',
-                django.gettext("Available Products"),
-                django.gettext("Products at Location"),
-                django.gettext("Search Products...")
-            );
-        });
-    </script>
-{% endblock %}
+{% requirejs_main 'locations/js/location' %}
 
 {% block page_content %}
+    {% initial_page_data 'api_root' api_root %}
+    {% initial_page_data 'location_id' location.get_id %}
+    {% initial_page_data 'hierarchy' hierarchy %}
+    {% initial_page_data 'loc_types_with_users' loc_types_with_users %}
+    {% initial_page_data 'locations' locations %}
+    {% initial_page_data 'location_parent_get_id' location.parent.get_id %}
+
     <div>
-      {# can't go in js-inline, because needs to initialize stuff that the field templates reference #}
-      <script>
-        var TEMPLATE_STRINGS = {
-            new_user_success: _.template('{% trans "User <%= name %> added successfully.  A validation message has been sent to the phone number provided." %}')
-        };
-        $(function() {
-
-          var location_url = '{{ api_root }}';
-          var loc_id = {{ location.get_id|JSON }};
-          var hierarchy = {{ hierarchy|JSON }};
-          var loc_types_with_users = {{ loc_types_with_users|JSON }};
-
-          model = new LocationSelectViewModel({
-              "hierarchy": hierarchy,
-              "default_caption": "\u2026",
-              "auto_drill": false,
-              "loc_filter": function(loc) {
-                  return loc.uuid() != loc_id && loc.can_have_children();
-              },
-              "loc_url": location_url
-          });
-
-          model.editing = ko.observable(false);
-          model.allowed_child_types = ko.computed(function() {
-              var active_loc = (this.selected_location() || this.root());
-              return (active_loc ? active_loc.allowed_child_types() : []);
-          }, model);
-          model.loc_type = ko.observable();
-          model.loc_type.subscribe(function(val) {
-              var subforms = $('.custom_subform');
-              $.each(subforms, function(i, e) {
-                  var $e = $(e);
-                  var loc_type = $e.attr('loctype');
-                  $e[loc_type == val ? 'show' : 'hide']();
-              });
-          });
-
-          model.has_user = ko.computed(function() {
-              var loc_type = model.allowed_child_types().length === 1 ?
-                             model.allowed_child_types()[0] :
-                             model.loc_type();
-              return loc_types_with_users.indexOf(loc_type) !== -1;
-          });
-
-          var locs = {{ locations|JSON }};
-          var selected_parent = '{{ location.parent.get_id }}';
-          model.load(locs, selected_parent);
-          model.orig_parent_id = model.selected_locid();
-
-          $("#loc_form :button[type='submit']").click(function(e) {
-              if (this.name === 'update-loc') {
-                  hqImport('analytix/js/google').track.event('Organization Structure', 'Edit', 'Update Location');
-              } else {
-                  hqImport('analytix/js/google').track.event('Organization Structure', 'Edit', 'Create Child Location');
-              }
-          });
-
-          hqImport('analytix/js/google').track.click($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location')
-
-          $('#loc_form').koApplyBindings(model);
-
-        });
-      </script>
-
       {% if not creates_new_location %}
 
         <p class="lead">
@@ -118,7 +41,7 @@
           {% endif %}
 
           {% if location.supply_point_id %}
-          <a class="btn btn-default" href="{% url "case_details" domain location.supply_point_id %}">
+          <a class="btn btn-default" href="{% url "case_data" domain location.supply_point_id %}">
             <i class="fa fa-external-link"></i> {% trans "View Location Case" %}
           </a>
           {% endif %}

@@ -1,171 +1,20 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
+import os
 
 from datetime import timedelta, datetime
-
-import pytz
 from celery.schedules import crontab
-from celery.task import task, periodic_task
+from celery.task import periodic_task
+from celery.task import task
 from django.conf import settings
-
-from corehq.apps.locations.dbaccessors import (
-    generate_user_ids_from_primary_location_ids_from_couch,
-    get_location_ids_with_location_type,
-)
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reminders.tasks import CELERY_REMINDERS_QUEUE
-from corehq.apps.reminders.util import get_one_way_number_for_recipient
-from corehq.apps.sms.api import send_sms, MessageMetadata
-from corehq.apps.users.models import CommCareUser
 from corehq.blobs import get_blob_db
 from corehq.form_processor.models import XFormAttachmentSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.util.timezones.conversions import ServerTime
-from custom.icds.const import (
-    AWC_LOCATION_TYPE_CODE,
-    SUPERVISOR_LOCATION_TYPE_CODE,
-    ANDHRA_PRADESH_SITE_CODE,
-    MAHARASHTRA_SITE_CODE,
-    MADHYA_PRADESH_SITE_CODE,
-    BIHAR_SITE_CODE,
-    CHHATTISGARH_SITE_CODE,
-    JHARKHAND_SITE_CODE,
-    RAJASTHAN_SITE_CODE,
-    UTTAR_PRADESH_SITE_CODE,
-    HINDI,
-    TELUGU,
-    MARATHI,
-)
-from custom.icds.messaging.indicators import (
-    AWWAggregatePerformanceIndicator,
-    AWWSubmissionPerformanceIndicator,
-    LSAggregatePerformanceIndicator,
-    LSSubmissionPerformanceIndicator,
-    LSVHNDSurveyIndicator,
-)
-
-
-@task(queue=CELERY_REMINDERS_QUEUE, ignore_result=True)
-def run_indicator(domain, user_id, indicator_class, language_code=None):
-    """
-    Runs the given indicator for the given user and sends the SMS if needed.
-
-    :param domain: The domain the indicator is being run for
-    :param user_id: The id of either an AWW or LS CommCareUser
-    :param indicator_class: a subclass of AWWIndicator or LSIndicator
-    """
-    user = CommCareUser.get_by_user_id(user_id, domain=domain)
-
-    # The user's phone number and preferred language is stored on the usercase
-    usercase = user.get_usercase()
-
-    phone_number = get_one_way_number_for_recipient(usercase)
-    if not phone_number or phone_number == '91':
-        # If there is no phone number, don't bother calculating the indicator
-        return
-
-    if not language_code:
-        language_code = usercase.get_language_code()
-
-    indicator = indicator_class(domain, user)
-    messages = indicator.get_messages(language_code=language_code)
-
-    if not isinstance(messages, list):
-        raise ValueError("Expected a list of messages")
-
-    metadata = MessageMetadata(custom_metadata={
-        'icds_indicator': indicator_class.slug,
-    })
-
-    for message in messages:
-        send_sms(domain, usercase, phone_number, message, metadata=metadata)
-
-
-def get_awc_location_ids(domain):
-    return get_location_ids_with_location_type(domain, AWC_LOCATION_TYPE_CODE)
-
-
-def get_supervisor_location_ids(domain):
-    return get_location_ids_with_location_type(domain, SUPERVISOR_LOCATION_TYPE_CODE)
-
-
-def get_current_date():
-    return ServerTime(datetime.utcnow()).user_time(pytz.timezone('Asia/Kolkata')).done().date()
-
-
-def get_user_ids_under_location(domain, site_code):
-    if not site_code:
-        return set([])
-
-    location = SQLLocation.objects.get(domain=domain, site_code=site_code)
-    location_ids = list(location.get_descendants(include_self=False).filter(is_archived=False).location_ids())
-    return set(generate_user_ids_from_primary_location_ids_from_couch(domain, location_ids))
-
-
-def get_language_code(user_id, telugu_user_ids, marathi_user_ids):
-    if user_id in telugu_user_ids:
-        return TELUGU
-    elif user_id in marathi_user_ids:
-        return MARATHI
-    else:
-        return HINDI
-
-
-@periodic_task(
-    run_every=crontab(hour=9, minute=0),
-    queue=settings.CELERY_PERIODIC_QUEUE,
-    ignore_result=True
-)
-def run_user_indicators(phased_rollout=True):
-    """
-    Runs the weekly / monthly user SMS indicators at 9am IST.
-    This task is run every day and the following logic is applied:
-        - if it's Monday, the weekly indicators are sent
-        - if it's the first of the month, the monthly indicators are sent
-        - if it's neither, nothing happens
-    """
-    current_date = get_current_date()
-    is_first_of_month = current_date.day == 1
-    is_monday = current_date.weekday() == 0
-
-    if not (is_first_of_month or is_monday):
-        return
-
-    for domain in settings.ICDS_SMS_INDICATOR_DOMAINS:
-        telugu_user_ids = get_user_ids_under_location(domain, ANDHRA_PRADESH_SITE_CODE)
-        marathi_user_ids = get_user_ids_under_location(domain, MAHARASHTRA_SITE_CODE)
-        hindi_user_ids = get_user_ids_under_location(domain, MADHYA_PRADESH_SITE_CODE)
-        hindi_user_ids |= get_user_ids_under_location(domain, BIHAR_SITE_CODE)
-        hindi_user_ids |= get_user_ids_under_location(domain, CHHATTISGARH_SITE_CODE)
-        hindi_user_ids |= get_user_ids_under_location(domain, JHARKHAND_SITE_CODE)
-        hindi_user_ids |= get_user_ids_under_location(domain, RAJASTHAN_SITE_CODE)
-        hindi_user_ids |= get_user_ids_under_location(domain, UTTAR_PRADESH_SITE_CODE)
-        user_ids_to_send_to = marathi_user_ids | telugu_user_ids | hindi_user_ids
-
-        for user_id in generate_user_ids_from_primary_location_ids_from_couch(domain,
-                get_awc_location_ids(domain)):
-            if phased_rollout and user_id not in user_ids_to_send_to:
-                continue
-            language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
-
-            if is_first_of_month:
-                run_indicator.delay(domain, user_id, AWWAggregatePerformanceIndicator, language_code)
-
-            if is_monday:
-                run_indicator.delay(domain, user_id, AWWSubmissionPerformanceIndicator, language_code)
-
-        for user_id in generate_user_ids_from_primary_location_ids_from_couch(domain,
-                get_supervisor_location_ids(domain)):
-            if phased_rollout and user_id not in user_ids_to_send_to:
-                continue
-            language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
-
-            if is_first_of_month:
-                run_indicator.delay(domain, user_id, LSAggregatePerformanceIndicator, language_code)
-
-            if is_monday:
-                run_indicator.delay(domain, user_id, LSSubmissionPerformanceIndicator, language_code)
-                run_indicator.delay(domain, user_id, LSVHNDSurveyIndicator, language_code)
-
+from corehq.util.datadog.gauges import datadog_counter
+from django.core.mail.message import EmailMessage
+from custom.icds.translations.integrations.transifex import Transifex
+from io import open
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
     @periodic_task(run_every=crontab(minute=0, hour='22'))
@@ -173,27 +22,113 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         start = datetime.utcnow()
         max_age = start - timedelta(days=90)
         db = get_blob_db()
-        paths = []
-        deleted_attachments = []
 
-        def _get_query(db_name, max_age):
+        def _get_query(db_name, max_age=max_age):
             return XFormAttachmentSQL.objects.using(db_name).filter(
                 content_type='image/jpeg',
                 form__domain='icds-cas',
                 form__received_on__lt=max_age
             )
 
+        run_again = False
         for db_name in get_db_aliases_for_partitioned_query():
-            attachments = _get_query(db_name, max_age)
-            while attachments.exists():
-                for attachment in attachments[:10000]:
-                    paths.append(db.get_path(attachment.blob_id, attachment.blobdb_bucket()))
-                    deleted_attachments.append(attachment.pk)
+            paths = []
+            deleted_attachments = []
+            bytes_deleted = 0
+            attachments = _get_query(db_name)
+            for attachment in attachments[:1000]:
+                paths.append(db.get_path(attachment.blob_id, attachment.blobdb_bucket()))
+                deleted_attachments.append(attachment.pk)
+                bytes_deleted += attachment.content_length if attachment.content_length else 0
 
-                if paths:
-                    db.bulk_delete(paths)
-                    XFormAttachmentSQL.objects.using(db_name).filter(pk__in=deleted_attachments).delete()
-                    paths = []
-                    deleted_attachments = []
+            if paths:
+                db.bulk_delete(paths)
+                XFormAttachmentSQL.objects.using(db_name).filter(pk__in=deleted_attachments).delete()
+                datadog_counter('commcare.icds_images.bytes_deleted', value=bytes_deleted)
+                datadog_counter('commcare.icds_images.count_deleted', value=len(paths))
+                run_again = True
 
-                attachments = _get_query(db_name, max_age)
+        if run_again:
+            delete_old_images.delay()
+
+
+@task
+def delete_resources_on_transifex(domain, data, email):
+    version = data.get('version')
+    transifex = Transifex(domain,
+                          data.get('app_id'),
+                          data.get('target_lang') or data.get('source_lang'),
+                          data.get('transifex_project_slug'),
+                          version,)
+    delete_status = transifex.delete_resources()
+    result_note = "Hi,\nThe request to delete resources for app {app_id}(version {version}), " \
+                  "was completed on project {transifex_project_slug} on transifex. " \
+                  "The result is as follows:\n".format(**data)
+    email = EmailMessage(
+        subject='[{}] - Transifex removed translations'.format(settings.SERVER_ENVIRONMENT),
+        body=(result_note +
+              "\n".join([' '.join([sheet_name, result]) for sheet_name, result in delete_status.items()])
+              ),
+        to=[email],
+        from_email=settings.DEFAULT_FROM_EMAIL
+    )
+    email.send()
+
+
+@task
+def push_translation_files_to_transifex(domain, data, email):
+    upload_status = None
+    if data.get('target_lang'):
+        upload_status = Transifex(domain,
+                                  data.get('app_id'),
+                                  data.get('target_lang'),
+                                  data.get('transifex_project_slug'),
+                                  data.get('version'),
+                                  is_source_file=False,
+                                  exclude_if_default=True).send_translation_files()
+    elif data.get('source_lang'):
+        upload_status = Transifex(domain,
+                                  data.get('app_id'),
+                                  data.get('source_lang'),
+                                  data.get('transifex_project_slug'),
+                                  data.get('version')).send_translation_files()
+    if upload_status:
+        result_note = "Hi,\nThe upload for app {app_id}(version {version}), " \
+                      "with source language '{source_lang}' and target lang '{target_lang}' " \
+                      "was completed on project {transifex_project_slug} on transifex. " \
+                      "The result is as follows:\n".format(**data)
+        email = EmailMessage(
+            subject='[{}] - Transifex pushed translations'.format(settings.SERVER_ENVIRONMENT),
+            body=(result_note +
+                  "\n".join([' '.join([sheet_name, result]) for sheet_name, result in upload_status.items()])
+                  ),
+            to=[email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.send()
+
+
+@task
+def pull_translation_files_from_transifex(domain, data, email=None):
+    version = data.get('version')
+    transifex = Transifex(domain,
+                          data.get('app_id'),
+                          data.get('target_lang') or data.get('source_lang'),
+                          data.get('transifex_project_slug'),
+                          version,
+                          lock_translations=data.get('lock_translations'),)
+    translation_file = None
+    try:
+        translation_file, filename = transifex.generate_excel_file()
+        with open(translation_file.name, 'rb') as file_obj:
+            email = EmailMessage(
+                subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
+                body="PFA Translations pulled from transifex.",
+                to=[email],
+                from_email=settings.DEFAULT_FROM_EMAIL
+            )
+            email.attach(filename=filename, content=file_obj.read())
+            email.send()
+    finally:
+        if translation_file and os.path.exists(translation_file.name):
+            os.remove(translation_file.name)

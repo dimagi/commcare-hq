@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
@@ -103,7 +104,6 @@ class FormsStyleGuideView(BaseStyleGuideArticleView):
         return [
             'forms/intro',
             'forms/anatomy',
-            'forms/controls',
         ]
 
     @property

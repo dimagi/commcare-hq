@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import OrderedDict
 import re
 import os
@@ -11,11 +12,12 @@ from corehq.apps.reports.sqlreport import DataFormatter
 import six
 from six.moves import range
 from six.moves import map
+from io import open
 
 
 @quickcache(['domain'], timeout=5 * 60)
 def get_domain_configuration(domain):
-    with open(os.path.join(os.path.dirname(__file__), 'resources/%s.json' % (domain))) as f:
+    with open(os.path.join(os.path.dirname(__file__), 'resources/%s.json' % (domain)), encoding='utf-8') as f:
         _loaded_configuration = json.loads(f.read())
         return DomainConfiguration(
             geography_hierarchy=_loaded_configuration['geography_hierarchy'],
@@ -268,7 +270,7 @@ class TableCardDataGroupsIndividualFormatter(TableCardDataIndividualFormatter):
         id_to_name = {}
         for row in sorted(data.keys()):
             groups.add(row[0])
-            id_to_name[row[0]] = u'{} ({})'.format(row[1].title(), row[2])
+            id_to_name[row[0]] = '{} ({})'.format(row[1].title(), row[2])
 
         groups = sorted(list(groups), key=lambda r: id_to_name[r])
         result = OrderedDict()
@@ -278,7 +280,7 @@ class TableCardDataGroupsIndividualFormatter(TableCardDataIndividualFormatter):
         for key, row in six.iteritems(data):
             formatted_row = self._format.format_row(row)
             result[key[0]][row['practices']] = formatted_row[1]
-            id_to_name[key[0]] = u'{} ({})'.format(key[1], key[2])
+            id_to_name[key[0]] = '{} ({})'.format(key[1], key[2])
 
         for key, row in result.items():
             formatted_row = []

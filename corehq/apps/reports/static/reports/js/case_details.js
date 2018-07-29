@@ -1,179 +1,30 @@
-hqDefine("reports/js/case_details", function() {
-    var PropertyModel = function(options) {
-        var self = this;
-        self.name = options.name;
-        self.value = ko.observable(options.value || '');
-        self.dirty = ko.observable(false);
-    };
-
-    var EditPropertiesModel = function(options) {
-        var self = this;
-
-        self.propertyNames = ko.observableArray();  // ordered list of names, populated by ajax call because it's slow
-        self.properties = {};                       // map of name => PropertyModel, populated in init
-
-        // If there are a lot of items, make a bigger modal and render properties as columns
-        // Supports a small one-column modal, a larger two-column modal, or a full-screen three-column modal
-        self.itemsPerColumn = 12;
-        self.columnsPerPage = ko.observable(1);
-        self.itemsPerPage = ko.computed(function() {
-            return self.itemsPerColumn * self.columnsPerPage();
-        });
-        self.columnClass = ko.observable('');
-        self.modalClass = ko.observable('');
-        self.modalDialogClass = ko.observable('');
-        self.propertyNames.subscribe(function(newValue) {
-            self.columnsPerPage(Math.min(3, Math.ceil(newValue.length / self.itemsPerColumn)));
-            self.columnClass("col-sm-" + (12 / self.columnsPerPage()));
-            self.modalClass(self.columnsPerPage() === 3 ? "full-screen-modal" : "");
-            self.modalDialogClass(self.columnsPerPage() === 2 ? "modal-lg" : "");
-        });
-
-        // This modal supports pagination and a search box, all of which is done client-side
-        self.currentPage = ko.observable();
-        self.totalPages = ko.observable();  // observable because it will change if there's a search query
-        self.query = ko.observable();
-
-        self.showSpinner = ko.observable(true);
-        self.showPagination = ko.computed(function() {
-            return !self.showSpinner() && self.propertyNames().length > self.itemsPerPage();
-        });
-        self.showError = ko.observable(false);
-        self.showRetry = ko.observable(false);
-        self.disallowSave = ko.computed(function() {
-            return self.showSpinner() || self.showError();
-        });
-
-        self.incrementPage = function(increment) {
-            var newCurrentPage = self.currentPage() + increment;
-            if (newCurrentPage <= 0 || newCurrentPage > self.totalPages()) {
-                return;
-            }
-            self.currentPage(newCurrentPage);
-        };
-
-        self.visibleItems = ko.observableArray([]);     // All items visible on the current page
-        self.visibleColumns = ko.observableArray([]);   // visibleItems broken down into columns for rendering; an array of arrays
-
-        self.showNoData = ko.computed(function() {
-            return !self.showError() && self.visibleItems().length === 0;
-        });
-
-        // Handle pagination and filtering, filling visibleItems with whatever should be on the current page
-        // Forces a re-render because it clears and re-fills visibleColumns
-        self.render = function() {
-            var added = 0,
-                index = 0;
-
-            // Remove all items
-            self.visibleItems.splice(0);
-
-            // Cycle over all items on previous pages
-            while (added < self.itemsPerPage() * (self.currentPage() - 1) && index < self.propertyNames().length) {
-                if (self.matchesQuery(self.propertyNames()[index])) {
-                    added++;
-                }
-                index++;
-            }
-
-            // Add as many items as fit on a page
-            added = 0;
-            while (added < self.itemsPerPage() && index < self.propertyNames().length) {
-                if (self.matchesQuery(self.propertyNames()[index])) {
-                    var name = self.propertyNames()[index];
-                    if (!self.properties[name]) {
-                        self.properties[name] = new PropertyModel({ name: name });
-                    }
-                    self.visibleItems.push(self.properties[name]);
-                    added++;
-                }
-                index++;
-            }
-
-            // Break visibleItems into separate columns for rendering
-            self.visibleColumns.splice(0);
-            var itemsPerColumn = self.itemsPerPage() / self.columnsPerPage();
-            for (var i = 0; i < self.itemsPerPage(); i += itemsPerColumn) {
-                self.visibleColumns.push(self.visibleItems.slice(i, i + itemsPerColumn));
-            }
-        };
-
-        self.initQuery = function() {
-            self.query("");
-        };
-
-        self.query.subscribe(function() {
-            self.currentPage(1);
-            self.totalPages(Math.ceil(_.filter(self.propertyNames(), self.matchesQuery).length / self.itemsPerPage()) || 1);
-            self.render();
-        });
-
-        // Track an array of page numbers, e.g., [1, 2, 3], to render the pagination widget.
-        // Having it as an array makes knockout rendering simpler.
-        self.visiblePages = ko.observableArray([]);
-        self.totalPages.subscribe(function(newValue) {
-            self.visiblePages(_.map(_.range(newValue), function(p) { return p + 1; }));
-        });
-
-        self.matchesQuery = function(propertyName) {
-            return !self.query() || propertyName.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
-        };
-
-        self.currentPage.subscribe(self.render);
-
-        self.submitForm = function(model, e) {
-            var $button = $(e.currentTarget);
-            $button.disableButton();
-            $.post({
-                url: hqImport("hqwebapp/js/initial_page_data").reverse("edit_case"),
-                data: _.mapObject(self.properties, function(model) {
-                    return model.value();
-                }),
-                success: function() {
-                    window.location.reload();
-                },
-                error: function() {
-                    $button.enableButton();
-                    self.showRetry(true);
-                },
-            });
-            return true;
-        };
-
-        self.init = function() {
-            self.properties = _.extend({}, _.mapObject(options.properties, function(value, name) {
-                return new PropertyModel({
-                    name: name,
-                    value: value,
-                });
-            }));
-            self.initQuery();
-            self.currentPage(1);
-            self.showError(false);
-            self.showRetry(false);
-            self.render();
-        };
-
-        $.get({
-            url: hqImport("hqwebapp/js/initial_page_data").reverse('case_property_names'),
-            success: function(names) {
-                _.each(names, function(name) {
-                    self.propertyNames.push(name);
-                });
-                self.showSpinner(false);
-                self.init();
-            },
-            error: function() {
-                self.showSpinner(false);
-                self.showError(true);
-            },
-        });
-
-        return self;
-    };
-
-    var XFormDataModel = function(data) {
-        var self = this;
+hqDefine("reports/js/case_details", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'clipboard/dist/clipboard',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/google',
+    'case/js/case_property_modal',
+    'reports/js/data_corrections',
+    'reports/js/single_form',
+    'case/js/case_hierarchy',
+    'case/js/repeat_records',
+    'reports/js/readable_form',
+    'jquery-memoized-ajax/jquery.memoized.ajax.min',
+], function(
+    $,
+    ko,
+    _,
+    Clipboard,
+    initialPageData,
+    googleAnalytics,
+    casePropertyModal,
+    dataCorrections,
+    singleForm
+) {
+    var xformDataModel = function(data) {
+        var self = {};
         self.id = ko.observable(data.id);
 
 
@@ -195,10 +46,12 @@ hqDefine("reports/js/case_details", function() {
         self.userID = ko.observable(data.user.id);
         self.username = ko.observable(self.format_user(data.user.username));
         self.readable_name = ko.observable(data.readable_name);
+
+        return self;
     };
 
-    var XFormListViewModel = function() {
-        var self = this;
+    var xformListViewModel = function() {
+        var self = {};
 
         self.pagination_options = [10,25,50,100];
 
@@ -217,7 +70,7 @@ hqDefine("reports/js/case_details", function() {
 
         self.getParameterByName = function(name, url) {
             if (!url) url = window.location.href;
-            name = name.replace(/[\[\]]/g, "\\$&");
+            name = name.replace(/[[\]]/g, "\\$&");
             var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
                 results = regex.exec(url);
             if (!results) return null;
@@ -225,7 +78,7 @@ hqDefine("reports/js/case_details", function() {
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         };
 
-        var api_url = hqImport("hqwebapp/js/initial_page_data").get('xform_api_url');
+        var apiUrl = initialPageData.get('xform_api_url');
         var init = function() {
             var hash = window.location.hash.split('?');
             if (hash[0] !== '#!history') {
@@ -239,12 +92,19 @@ hqDefine("reports/js/case_details", function() {
             }
         };
 
-        self.get_xform_data = function(xform_id) {
-            $.cachedAjax({
+        self.get_xform_data = function(xformId) {
+            $.memoizedAjax({
                 "type": "GET",
-                "url": hqImport("hqwebapp/js/initial_page_data").reverse('case_form_data', xform_id),
+                "url": initialPageData.reverse('case_form_data', xformId),
                 "success": function(data) {
-                    $("#xform_data_panel").html(data);
+                    var $panel = $("#xform_data_panel");
+                    $panel.html(data.html);
+                    singleForm.initSingleForm({
+                        instance_id: data.xform_id,
+                        form_question_map: data.question_response_map,
+                        ordered_question_values: data.ordered_question_values,
+                        container: $panel,
+                    });
                 },
             });
         };
@@ -252,11 +112,11 @@ hqDefine("reports/js/case_details", function() {
         init();
 
         self.xform_history_cb = function(data) {
-            self.total_rows(hqImport("hqwebapp/js/initial_page_data").get('xform_ids').length);
-            var mapped_xforms = $.map(data, function (item) {
-                return new XFormDataModel(item);
+            self.total_rows(initialPageData.get('xform_ids').length);
+            var mappedXforms = $.map(data, function (item) {
+                return xformDataModel(item);
             });
-            self.xforms(mapped_xforms);
+            self.xforms(mappedXforms);
             var xformId = self.selected_xform_doc_id();
             if (xformId) {
                 self.selected_xform_idx(self.xforms.indexOf());
@@ -274,8 +134,8 @@ hqDefine("reports/js/case_details", function() {
         });
 
         self.refresh_forms = ko.computed(function () {
-            var disp_index = self.disp_page_index();
-            if (disp_index > self.page_count.peek()) {
+            var dispIndex = self.disp_page_index();
+            if (dispIndex > self.page_count.peek()) {
                 self.disp_page_index(self.page_count.peek());
                 return;
             }
@@ -283,15 +143,15 @@ hqDefine("reports/js/case_details", function() {
                 return;
             }
             self.data_loading(true);
-            var start_num = disp_index || 1;
-            var start_range = (start_num - 1) * self.page_size();
-            var end_range = start_range + self.page_size();
+            var startNum = dispIndex || 1;
+            var startRange = (startNum - 1) * self.page_size();
+            var endRange = startRange + self.page_size();
             $.ajax({
                 "type": "GET",
-                "url":  api_url,
+                "url":  apiUrl,
                 "data": {
-                    'start_range': start_range,
-                    'end_range': end_range,
+                    'start_range': startRange,
+                    'end_range': endRange,
                 },
                 "success": function(data) {
                     self.xform_history_cb(data);
@@ -325,19 +185,19 @@ hqDefine("reports/js/case_details", function() {
         };
 
         self.page_start_num = ko.computed(function() {
-            var start_num = self.disp_page_index() || 1;
-            var calc_start_num = ((start_num - 1) * self.page_size()) + 1;
-            return calc_start_num;
+            var startNum = self.disp_page_index() || 1;
+            var calcStartNum = ((startNum - 1) * self.page_size()) + 1;
+            return calcStartNum;
         });
 
         self.page_end_num = ko.computed(function() {
-            var start_num = self.disp_page_index() || 1;
-            var end_page_num = ((start_num - 1) * self.page_size()) + self.page_size();
-            if (end_page_num > self.total_rows()) {
+            var startNum = self.disp_page_index() || 1;
+            var endPageNum = ((startNum - 1) * self.page_size()) + self.page_size();
+            if (endPageNum > self.total_rows()) {
                 return self.total_rows();
             }
             else {
-                return end_page_num;
+                return endPageNum;
             }
         });
 
@@ -361,32 +221,55 @@ hqDefine("reports/js/case_details", function() {
                 }
             }
         });
+
+        return self;
     };
 
     $(function() {
         $('#close_case').submit(function() {
-            hqImport('analytix/js/google').track.event('Edit Data', 'Close Case', '-', "", {}, function () {
+            googleAnalytics.track.event('Edit Data', 'Close Case', '-', "", {}, function () {
                 document.getElementById('close_case').submit();
             });
             return false;
         });
 
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            $editPropertiesModal = $("#edit-dynamic-properties");
-        if ($editPropertiesModal.length) {
-            $("#edit-dynamic-properties-trigger").click(function() {
-                $editPropertiesModal.modal();
-            });
-            $editPropertiesModal.koApplyBindings(new EditPropertiesModel({
-                properties: initial_page_data('dynamic_properties'),
-            }));
-        }
+        // Data cleaning
+        dataCorrections.init($("#case-actions .data-corrections-trigger"), $("body > .data-corrections-modal"), {
+            properties: initialPageData.get('dynamic_properties'),
+            propertyNamesUrl: initialPageData.reverse('case_property_names'),
+            saveUrl: initialPageData.reverse("edit_case"),
+            analyticsDescriptor: 'Clean Case Data',
+        });
 
-        $("#history").koApplyBindings(new XFormListViewModel());
+        $("#history").koApplyBindings(xformListViewModel());
 
         var $properties = $("#properties");
         if ($properties.length) {
             $properties.koApplyBindings();
         }
+
+        // Case property history modal
+        var $casePropertyNames = $("a.case-property-name"),
+            $propertiesModal = $("#case-properties-modal"),
+            modalData = casePropertyModal.casePropertyModal();
+        $propertiesModal.koApplyBindings(modalData);
+        $casePropertyNames.click(function(){
+            modalData.init($(this).data('property-name'));
+            $propertiesModal.modal();
+        });
+
+        // Tab history
+        // Modified from https://gist.github.com/josheinstein/5586469
+        if (location.hash.substr(0,2) === "#!") {
+            var hash = location.hash.substr(2);
+            hash = hash.split('?')[0];
+            $("a[href='#" + hash + "']").tab("show");
+        }
+        $("a[data-toggle='tab']").on("shown", function (e) {
+            var hash = $(e.target).attr("href");
+            if (hash.substr(0,1) === "#") {
+                location.replace("#!" + hash.substr(1));
+            }
+        });
     });
 });

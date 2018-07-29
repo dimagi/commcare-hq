@@ -45,7 +45,7 @@
     {% if data %}
         {% for case_id, view_data in data.items %}
             <h4>Data for user: <a href="{% url "edit_commcare_user" view_data.case.domain view_data.case.hq_user_id %}">{{ view_data.case.name }} ({{ view_data.case.username }})</a></h4>
-            <p>User case ID: <a href="{% url "case_details" view_data.case.domain view_data.case.case_id %}">{{ view_data.case.case_id }}</a></p>
+            <p>User case ID: <a href="{% url "case_data" view_data.case.domain view_data.case.case_id %}">{{ view_data.case.case_id }}</a></p>
             <table>
                 <thead>
                     <tr>

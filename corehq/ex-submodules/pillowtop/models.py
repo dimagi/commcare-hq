@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django.db import models
 from kafka.common import TopicAndPartition
@@ -40,7 +41,7 @@ class DjangoPillowCheckpoint(models.Model):
         else:
             return self.sequence
 
-    class Meta:
+    class Meta(object):
         app_label = "pillowtop"
 
     @staticmethod
@@ -72,10 +73,10 @@ class KafkaCheckpoint(models.Model):
     checkpoint_id = models.CharField(max_length=126, db_index=True)
     topic = models.CharField(max_length=126)
     partition = models.IntegerField()
-    offset = models.IntegerField()
+    offset = models.BigIntegerField()
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('checkpoint_id', 'topic', 'partition')
 
     @classmethod

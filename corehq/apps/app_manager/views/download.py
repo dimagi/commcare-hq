@@ -1,6 +1,6 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
-import os
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
@@ -14,6 +14,7 @@ from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versio
 from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.app_manager.tasks import make_async_build
@@ -180,17 +181,6 @@ def download_jar(request, domain, app_id):
     return response
 
 
-def download_test_jar(request):
-    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'CommCare.jar')) as f:
-        jar = f.read()
-
-    response = HttpResponse(content_type="application/java-archive")
-    set_file_download(response, "CommCare.jar")
-    response['Content-Length'] = len(jar)
-    response.write(jar)
-    return response
-
-
 @safe_cached_download
 def download_raw_jar(request, domain, app_id):
     """
@@ -222,6 +212,14 @@ class DownloadCCZ(DownloadMultimediaZip):
 
 @safe_cached_download
 def download_file(request, domain, app_id, path):
+    download_target_version = request.GET.get('download_target_version') == 'true'
+    if download_target_version:
+        parts = path.split('.')
+        assert len(parts) == 2
+        target = Application.get(app_id).target_commcare_flavor
+        assert target != 'none'
+        path = parts[0] + '-' + target + '.' + parts[1]
+
     if path == "app.json":
         return JsonResponse(request.app.to_json())
 
@@ -237,6 +235,9 @@ def download_file(request, domain, app_id, path):
     except KeyError:
         content_type = None
     response = HttpResponse(content_type=content_type)
+
+    if request.GET.get('download') == 'true':
+        response['Content-Disposition'] = "attachment; filename={}".format(path)
 
     build_profile = request.GET.get('profile')
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)

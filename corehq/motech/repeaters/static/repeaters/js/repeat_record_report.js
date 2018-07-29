@@ -1,5 +1,5 @@
 /* globals CodeMirror */
-hqDefine('domain/js/repeat_record_report', function() {
+hqDefine('repeaters/js/repeat_record_report', function() {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     $(function() {

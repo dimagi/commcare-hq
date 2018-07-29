@@ -1,6 +1,5 @@
 from .general import (
     should_use_sql_backend,
-    use_new_exports,
     is_commcarecase,
 )
 

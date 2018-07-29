@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import copy
 from couchforms.models import XFormInstance
@@ -14,6 +15,7 @@ from mvp.indicator_admin.crud import MVPActiveCasesCRUDManager, MVPChildCasesByA
 class MVP(object):
     NAMESPACE = "mvp_indicators"
     DOMAINS = [
+        "jennytraining",
         "mvp-tiby",
         "mvp-potou",
         "mvp-sauri",

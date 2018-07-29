@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType

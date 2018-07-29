@@ -3,21 +3,20 @@ from __future__ import unicode_literals
 import uuid
 
 from sqlagg import SumWhen
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports import tasks
-from corehq.apps.userreports.app_manager import _clean_table_name
+from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.columns import get_distinct_values
-from corehq.apps.userreports.const import (
-    DEFAULT_MAXIMUM_EXPANSION, UCR_SQL_BACKEND, UCR_ES_BACKEND
-)
+from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.apps.userreports.reports.factory import ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
 from corehq.apps.userreports.sql.columns import expand_column
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -25,7 +24,6 @@ from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import delete_all_cases
 from six.moves import range
 
 
@@ -81,7 +79,6 @@ class TestFieldColumn(SimpleTestCase):
             })
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class ChoiceListColumnDbTest(TestCase):
 
     def test_column_uniqueness_when_truncated(self):
@@ -123,12 +120,6 @@ class ChoiceListColumnDbTest(TestCase):
         self.assertEqual(1, q.count())
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class ChoiceListColumnDbTestES(ChoiceListColumnDbTest):
-    pass
-
-
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
@@ -183,7 +174,7 @@ class TestExpandedColumn(TestCase):
         )
         report_config.save()
         self.addCleanup(report_config.delete)
-        data_source = ReportFactory.from_spec(report_config)
+        data_source = ConfigurableReportDataSource.from_spec(report_config)
 
         return data_source, data_source.top_level_columns[0]
 
@@ -194,7 +185,7 @@ class TestExpandedColumn(TestCase):
             domain=cls.domain,
             display_name='foo',
             referenced_doc_type='CommCareCase',
-            table_id=_clean_table_name(cls.domain, str(uuid.uuid4().hex)),
+            table_id=clean_table_name(cls.domain, str(uuid.uuid4().hex)),
             configured_filter={
                 "type": "boolean_expression",
                 "operator": "eq",
@@ -311,11 +302,6 @@ class TestExpandedColumn(TestCase):
         expected_rows = [get_expected_row(v, set(submitted_vals)) for v in submitted_vals]
         data = data_source.get_data()
         self.assertEqual(sorted(expected_rows), sorted(data))
-
-
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class TestExpandedColumnES(TestExpandedColumn):
-    pass
 
 
 class TestAggregateDateColumn(SimpleTestCase):

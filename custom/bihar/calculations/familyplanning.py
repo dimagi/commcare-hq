@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from django.utils.translation import ugettext_noop as _
 from custom.bihar.calculations.newborn import is_recently_delivered

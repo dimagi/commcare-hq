@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.models import SortElement
@@ -9,7 +10,7 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
-        self.factory = AppFactory(build_version='2.26')
+        self.factory = AppFactory(build_version='2.26.0')
         self.factory.new_basic_module('registration', 'patient registration')
         module = self.factory.app.get_module(0)
         self.case_details = module.case_details

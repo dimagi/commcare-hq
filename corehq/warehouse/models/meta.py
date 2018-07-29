@@ -1,15 +1,15 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.db import models
 
 
 class Batch(models.Model):
-    batch_id = models.UUIDField(unique=True, db_index=True, primary_key=True)
-
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
 
     created_on = models.DateTimeField(auto_now_add=True)
     completed_on = models.DateTimeField(null=True)
+    dag_slug = models.CharField(max_length=100)
 
 
 class CommitRecord(models.Model):

@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from copy import deepcopy
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
@@ -20,11 +21,15 @@ import commcare_translations
 class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
-    def test_all_media_paths(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_all_media_paths(self, mock):
         image_path = 'jr://file/commcare/image{}.jpg'
         audio_path = 'jr://file/commcare/audio{}.mp3'
         app = Application.wrap(self.get_json('app'))
 
+        for num in ['1', '2', '3', '4']:
+            app.create_mapping(CommCareImage(_id=num), image_path.format(num), save=False)
+            app.create_mapping(CommCareAudio(_id=num), audio_path.format(num), save=False)
         app.get_module(0).case_list.show = True
         app.get_module(0).case_list.set_icon('en', image_path.format('4'))
         app.get_module(0).case_list.set_audio('en', audio_path.format('4'))
@@ -42,7 +47,19 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         should_contain_media = [image_path.format(num) for num in [1, 2, 3, 4]] + \
                                [audio_path.format(num) for num in [1, 2, 3, 4]]
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(app.all_media_paths, set(should_contain_media))
+        self.assertEqual(app.all_media_paths(), set(should_contain_media))
+        self.assertEqual(set(app.multimedia_map.keys()), set(should_contain_media))
+
+        # test multimedia removed
+        app.get_module(0).case_list.set_icon('en', '')
+        app.get_module(0).case_list.set_audio('en', '')
+        app.get_module(0).set_icon('en', '')
+        app.get_module(0).set_audio('en', '')
+        app.get_module(0).case_list_form.set_icon('en', '')
+        app.get_module(0).case_list_form.set_audio('en', '')
+        app.get_module(0).get_form(0).set_icon('en', '')
+        app.get_module(0).get_form(0).set_audio('en', '')
+        self.assertFalse(list(app.multimedia_map.keys()))
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_all_media_paths_with_inline_video(self, mock):
@@ -50,7 +67,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app = Application.wrap(self.get_json('app_video_inline'))
 
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(app.all_media_paths, set([inline_video_path]))
+        self.assertEqual(app.all_media_paths(), set([inline_video_path]))
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_all_media_paths_with_expanded_audio(self, mock):
@@ -58,7 +75,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app = Application.wrap(self.get_json('app_expanded_audio'))
 
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(app.all_media_paths, set([inline_video_path]))
+        self.assertEqual(app.all_media_paths(), set([inline_video_path]))
 
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
     def test_case_list_media(self):
@@ -130,7 +147,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app.get_module(0).media_audio.update({'en': audio_path})
 
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(len(app.all_media), 2)
+        self.assertEqual(len(app.all_media()), 2)
 
 
 class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
@@ -151,7 +168,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.app = Application.new_app('domain', "my app")
         self.module = self.app.add_module(Module.new_module("Module 1", None))
         self.form = self.app.new_form(0, "Form 1", None)
-        self.min_spec = BuildSpec.from_string('2.21/latest')
+        self.min_spec = BuildSpec.from_string('2.21.0/latest')
         self.app.build_spec = self.min_spec
 
     def makeXML(self, menu_locale_id, image_locale_id, audio_locale_id):
@@ -343,7 +360,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         :param custom_icon_locale_method: method to find locale id in app strings for custom icon
         :param xml_node: where to find the xml partial for comparison
         """
-        custom_icon = CustomIcon(form="badge", text={'en': 'IconText', 'hin': u'चित्र'})
+        custom_icon = CustomIcon(form="badge", text={'en': 'IconText', 'hin': 'चित्र'})
         form_or_module.custom_icons = [custom_icon]
 
         custom_icon_block_template = """

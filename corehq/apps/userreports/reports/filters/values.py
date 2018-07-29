@@ -4,7 +4,7 @@ import datetime
 from collections import namedtuple
 
 from django.urls import reverse
-
+from memoized import memoized
 from sqlagg.filters import (
     BasicFilter,
     BetweenFilter,
@@ -40,6 +40,12 @@ CHOICE_DELIMITER = "\u001f"
 class FilterValue(object):
 
     def __init__(self, filter, value):
+        """
+        args:
+            filter: should be a raw filter spec, the filter dict
+                defined in the ReportConfiguraion
+            value: should be the filter value from the user request
+        """
         self.filter = filter
         self.value = value
 
@@ -49,14 +55,11 @@ class FilterValue(object):
     def to_sql_values(self):
         raise NotImplementedError()
 
-    def to_es_filter(self):
-        raise NotImplementedError()
-
 
 class DateFilterValue(FilterValue):
 
     def __init__(self, filter, value):
-        assert filter.type == 'date'
+        assert filter['type'] == 'date'
         assert isinstance(value, DateSpan) or value is None
         super(DateFilterValue, self).__init__(filter, value)
 
@@ -65,18 +68,18 @@ class DateFilterValue(FilterValue):
             return None
         if self.value.startdate is None:
             return LTFilter(
-                self.filter.field,
-                '%s_enddate' % self.filter.slug)
+                self.filter['field'],
+                '%s_enddate' % self.filter['slug'])
         elif self.value.enddate is None:
             return GTFilter(
-                self.filter.field,
-                '%s_startdate' % self.filter.slug
+                self.filter['field'],
+                '%s_startdate' % self.filter['slug']
             )
         else:
             return BetweenFilter(
-                self.filter.field,
-                '%s_startdate' % self.filter.slug,
-                '%s_enddate' % self.filter.slug
+                self.filter['field'],
+                '%s_startdate' % self.filter['slug'],
+                '%s_enddate' % self.filter['slug']
             )
 
     def to_sql_values(self):
@@ -89,15 +92,15 @@ class DateFilterValue(FilterValue):
         if self.value.inclusive:
             enddate = self._offset_enddate(enddate)
 
-        if self.filter.compare_as_string:
+        if self.filter.get('compare_as_string'):
             startdate = str(startdate) if startdate is not None else None
             enddate = str(enddate) if enddate is not None else None
 
         sql_values = {}
         if startdate is not None:
-            sql_values.update({'%s_startdate' % self.filter.slug: startdate})
+            sql_values.update({'%s_startdate' % self.filter['slug']: startdate})
         if enddate is not None:
-            sql_values.update({'%s_enddate' % self.filter.slug: enddate})
+            sql_values.update({'%s_enddate' % self.filter['slug']: enddate})
 
         return sql_values
 
@@ -109,27 +112,21 @@ class DateFilterValue(FilterValue):
             enddate = enddate + datetime.timedelta(days=1) - datetime.timedelta.resolution
         return enddate
 
-    def to_es_filter(self):
-        if self.value is None:
-            return None
-
-        return filters.date_range(self.filter.field, lt=self.value.startdate, gt=self.value.enddate)
-
 
 class QuarterFilterValue(FilterValue):
 
     @property
     def startdate_slug(self):
-        return '%s_startdate' % self.filter.slug
+        return '%s_startdate' % self.filter['slug']
 
     @property
     def enddate_slug(self):
-        return '%s_enddate' % self.filter.slug
+        return '%s_enddate' % self.filter['slug']
 
     def to_sql_filter(self):
         return ANDFilter([
-            GTEFilter(self.filter.field, self.startdate_slug),
-            LTFilter(self.filter.field, self.enddate_slug)
+            GTEFilter(self.filter['field'], self.startdate_slug),
+            LTFilter(self.filter['field'], self.enddate_slug)
         ])
 
     def to_sql_values(self):
@@ -146,19 +143,18 @@ class IsDistinctFromFilter(BasicFilter):
 
 
 class NumericFilterValue(FilterValue):
-    DBSpecificFilter = namedtuple('DBSpecificFilter', ['sql', 'es'])
     operators_to_filters = {
-        '=': DBSpecificFilter(EQFilter, filters.term),
-        '!=': DBSpecificFilter(NOTEQFilter, filters.not_term),
-        'distinct from': DBSpecificFilter(IsDistinctFromFilter, filters.not_term),
-        '>=': DBSpecificFilter(GTEFilter, lambda field, val: filters.range_filter(field, gte=val)),
-        '>': DBSpecificFilter(GTFilter, lambda field, val: filters.range_filter(field, gt=val)),
-        '<=': DBSpecificFilter(LTEFilter, lambda field, val: filters.range_filter(field, lte=val)),
-        '<': DBSpecificFilter(LTFilter, lambda field, val: filters.range_filter(field, lt=val)),
+        '=': EQFilter,
+        '!=': NOTEQFilter,
+        'distinct from': IsDistinctFromFilter,
+        '>=': GTEFilter,
+        '>': GTFilter,
+        '<=': LTEFilter,
+        '<': LTFilter,
     }
 
     def __init__(self, filter, value):
-        assert filter.type == "numeric"
+        assert filter['type'] == "numeric"
         assert (isinstance(value, dict) and "operator" in value and "operand" in value) or value is None
         if value:
             assert value['operator'] in self.operators_to_filters
@@ -168,22 +164,15 @@ class NumericFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.value is None:
             return None
-        filter_class = self.operators_to_filters[self.value['operator']].sql
-        return filter_class(self.filter.field, self.filter.slug)
+        filter_class = self.operators_to_filters[self.value['operator']]
+        return filter_class(self.filter['field'], self.filter['slug'])
 
     def to_sql_values(self):
         if self.value is None:
             return {}
         return {
-            self.filter.slug: self.value["operand"],
+            self.filter['slug']: self.value["operand"],
         }
-
-    def to_es_filter(self):
-        if self.value is None:
-            return None
-
-        filter_class = self.operators_to_filters[self.value['operator']].es
-        return filter_class(self.filter.field, self.value['operand'])
 
 
 class BasicBetweenFilter(BasicFilter):
@@ -258,24 +247,24 @@ class PreFilterValue(FilterValue):
     def to_sql_filter(self):
         if self._is_dyn_date():
             return BasicBetweenFilter(
-                self.filter.field,
-                get_INFilter_bindparams(self.filter.slug, ['start_date', 'end_date'])
+                self.filter['field'],
+                get_INFilter_bindparams(self.filter['slug'], ['start_date', 'end_date'])
             )
         elif self._is_null():
-            return self._null_filter(self.filter.field)
+            return self._null_filter(self.filter['field'])
         elif self._is_list():
             return self._array_filter(
-                self.filter.field,
-                get_INFilter_bindparams(self.filter.slug, self.value['operand'])
+                self.filter['field'],
+                get_INFilter_bindparams(self.filter['slug'], self.value['operand'])
             )
         else:
-            return self._scalar_filter.sql(self.filter.field, self.filter.slug)
+            return self._scalar_filter(self.filter['field'], self.filter['slug'])
 
     def to_sql_values(self):
         if self._is_dyn_date():
             start_date, end_date = get_daterange_start_end_dates(self.value['operator'], *self.value['operand'])
             return {
-                get_INFilter_element_bindparam(self.filter.slug, i): str(v)
+                get_INFilter_element_bindparam(self.filter['slug'], i): str(v)
                 for i, v in enumerate([start_date, end_date])
             }
         elif self._is_null():
@@ -283,24 +272,11 @@ class PreFilterValue(FilterValue):
         elif self._is_list():
             # Array params work like IN bind params
             return {
-                get_INFilter_element_bindparam(self.filter.slug, i): v
+                get_INFilter_element_bindparam(self.filter['slug'], i): v
                 for i, v in enumerate(self.value['operand'])
             }
         else:
-            return {self.filter.slug: self.value['operand']}
-
-    def to_es_filter(self):
-        # TODO: support the array and null operators defined at top of class
-        if self._is_dyn_date():
-            start_date, end_date = get_daterange_start_end_dates(self.value['operator'], *self.value['operand'])
-            return filters.date_range(self.filter.field, gt=start_date, lt=end_date)
-        elif self._is_null():
-            return filters.missing(self.filter.field)
-        elif self._is_list():
-            terms = [v.value for v in self.value['operand']]
-            return filters.term(self.filter.field, terms)
-        else:
-            return self._scalar_filter.es(self.filter.field, self.value['operand'])
+            return {self.filter['slug']: self.value['operand']}
 
 
 class ChoiceListFilterValue(FilterValue):
@@ -308,7 +284,7 @@ class ChoiceListFilterValue(FilterValue):
     ALLOWED_TYPES = ('choice_list', 'dynamic_choice_list', 'multi_field_dynamic_choice_list')
 
     def __init__(self, filter, value):
-        assert filter.type in self.ALLOWED_TYPES
+        assert filter['type'] in self.ALLOWED_TYPES
         if not isinstance(value, list):
             # if in single selection mode just force it to a list
             value = [value]
@@ -322,31 +298,52 @@ class ChoiceListFilterValue(FilterValue):
     def is_null(self):
         return NONE_CHOICE in [choice.value for choice in self.value]
 
+    @property
+    def _ancestor_filter(self):
+        """
+        Returns an instance of AncestorSQLParams per the spec, returns None
+            if it is not applicable
+        """
+        ancestor_expression = self.filter.get('ancestor_expression')
+        if not (self.show_all and self.show_none) and ancestor_expression:
+            if len(self.value) > 1:
+                # if multiple locations are passed, for partition to work
+                #   multiple ancestor locations should be passed, but that
+                #   would require multiple DB calls. So instead don't pass
+                #   any ancestors at all
+                return None
+            location = self.value[0].value
+            params = AncestorSQLParams(self.filter['ancestor_expression'], location)
+            if params.sql_value():
+                return params
+
     def to_sql_filter(self):
         if self.show_all:
             return None
         if self.is_null:
-            return ISNULLFilter(self.filter.field)
-        return INFilter(
-            self.filter.field,
-            get_INFilter_bindparams(self.filter.slug, self.value)
+            return ISNULLFilter(self.filter['field'])
+
+        in_filter = INFilter(
+            self.filter['field'],
+            get_INFilter_bindparams(self.filter['slug'], self.value)
         )
+        if self._ancestor_filter:
+            return ANDFilter(
+                [self._ancestor_filter.sql_filter(), in_filter]
+            )
+        else:
+            return in_filter
 
     def to_sql_values(self):
         if self.show_all or self.is_null:
             return {}
-        return {
-            get_INFilter_element_bindparam(self.filter.slug, i): val.value
+        values = {
+            get_INFilter_element_bindparam(self.filter['slug'], i): val.value
             for i, val in enumerate(self.value)
         }
-
-    def to_es_filter(self):
-        if self.show_all:
-            return None
-        if self.is_null:
-            return filters.missing(self.filter.field)
-        terms = [v.value for v in self.value]
-        return filters.term(self.filter.field, terms)
+        if self._ancestor_filter:
+            values.update(self._ancestor_filter.sql_value())
+        return values
 
 
 class MultiFieldChoiceListFilterValue(ChoiceListFilterValue):
@@ -356,23 +353,13 @@ class MultiFieldChoiceListFilterValue(ChoiceListFilterValue):
         if self.show_all:
             return None
         if self.is_null:
-            return ORFilter([ISNULLFilter(field) for field in self.filter.fields])
+            return ORFilter([ISNULLFilter(field) for field in self.filter.get('fields')])
         return ORFilter([
             INFilter(
                 field,
-                get_INFilter_bindparams(self.filter.slug, self.value)
-            ) for field in self.filter.fields
+                get_INFilter_bindparams(self.filter['slug'], self.value)
+            ) for field in self.filter.get('fields')
         ])
-
-    def to_es_filter(self):
-        if self.show_all:
-            return None
-        if self.is_null:
-            return filters.OR(*[filters.missing(field) for field in self.filter.fields])
-        terms = [v.value for v in self.value]
-        return filters.OR(
-            *[filters.term(self.filter.field, terms)]
-        )
 
 
 class LocationDrilldownFilterValue(FilterValue):
@@ -387,28 +374,70 @@ class LocationDrilldownFilterValue(FilterValue):
     def show_none(self):
         return self.value == self.SHOW_NONE
 
+    @property
+    def _ancestor_filter(self):
+        ancestor_expression = self.filter.get('ancestor_expression')
+        if (not (self.show_all and self.show_none) and
+           ancestor_expression and len(self.value) == 1):
+            params = AncestorSQLParams(self.filter['ancestor_expression'], self.value[0])
+            if params.sql_value():
+                return params
+
     def to_sql_filter(self):
         if self.show_all:
             return None
 
-        return INFilter(
-            self.filter.field,
-            get_INFilter_bindparams(self.filter.slug, [None] if self.show_none else self.value)
+        in_filter = INFilter(
+            self.filter['field'],
+            get_INFilter_bindparams(self.filter['slug'], [None] if self.show_none else self.value)
         )
+
+        if self._ancestor_filter:
+            return ANDFilter(
+                [self._ancestor_filter.sql_filter(), in_filter]
+            )
+        else:
+            return in_filter
 
     def to_sql_values(self):
         if self.show_all:
             return {}
-        return {
-            get_INFilter_element_bindparam(self.filter.slug, i): val
+        values = {
+            get_INFilter_element_bindparam(self.filter['slug'], i): val
             for i, val in enumerate([None] if self.show_none else self.value)
         }
+        if self._ancestor_filter:
+            values.update(self._ancestor_filter.sql_value())
+        return values
 
-    def to_es_filter(self):
-        if self.show_all:
+
+class AncestorSQLParams(object):
+    def __init__(self, ancestor_expression, location_id):
+        self.ancestor_expression = ancestor_expression
+        self.location_id = location_id
+
+    def sql_filter(self):
+        return EQFilter(self.ancestor_expression['field'], self.ancestor_expression['field'])
+
+    @memoized
+    def sql_value(self):
+        # all locations in self.value will have same ancestor, so just pick first one to query
+        from corehq.apps.locations.models import SQLLocation
+        location = SQLLocation.by_location_id(self.location_id)
+        if location:
+            ancestor = location.get_ancestor_of_type(
+                self.ancestor_expression['location_type']
+            )
+        else:
             return None
-        return filters.term(self.filter.field, self.value)
+        if ancestor:
+            return {
+                self.ancestor_expression['field']: ancestor.location_id
+            }
+        else:
+            return None
 
 
 def dynamic_choice_list_url(domain, report, filter):
+    # filter must be an instance of DynamicChoiceListFilter
     return reverse('choice_list_api', args=[domain, report.spec._id, filter.name])

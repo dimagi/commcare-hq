@@ -2,6 +2,7 @@
 This file contains stuff for publishing and reading changes for UCR.
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import ReadOnlyDocumentStore
 from pillowtop.feed.interface import ChangeMeta
@@ -35,10 +36,11 @@ class ReadonlyLocationDocumentStore(ReadOnlyDocumentStore):
 
 
 def publish_location_saved(domain, location_id, is_deletion=False):
+    from corehq.apps.change_feed import data_sources
     change_meta = ChangeMeta(
         document_id=location_id,
-        data_source_type='location',
-        data_source_name='location',
+        data_source_type=data_sources.SOURCE_SQL,
+        data_source_name=data_sources.LOCATION,
         document_type=LOCATION_DOC_TYPE,
         domain=domain,
         is_deletion=is_deletion,

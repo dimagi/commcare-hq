@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import os
 from mock import patch
@@ -14,7 +15,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.models import FormExportDataSchema, FormExportInstance
-from corehq.apps.export.export import get_export_file
+from corehq.apps.export.tests.util import get_export_json
 from six.moves import zip
 
 
@@ -153,10 +154,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
 
         with patch('corehq.apps.export.export.get_export_documents') as docs:
             docs.return_value = self.form_es_response
-            export_file = get_export_file([instance], [])
-
-        with export_file as export:
-            export_data = json.loads(export.read())
+            export_data = get_export_json(instance)
 
         def get_form_data(table):
             headers = export_data[table]['headers']

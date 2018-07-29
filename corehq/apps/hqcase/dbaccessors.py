@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.util.soft_assert.api import soft_assert
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs

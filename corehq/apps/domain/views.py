@@ -1,10 +1,13 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 import datetime
+from collections import defaultdict
 from decimal import Decimal
 import logging
 import json
 import io
+import csv342 as csv
 
 from couchdbkit import ResourceNotFound
 import dateutil
@@ -116,15 +119,17 @@ from corehq.apps.domain.models import (
     LICENSES,
     TransferDomainRequest,
 )
-from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.domain.utils import normalize_domain_name, send_repeater_payloads
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.domain.forms import ProjectSettingsForm
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
-from corehq.apps.users.decorators import require_permission
+
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.apps.ota.models import MobileRecoveryMeasure
 import six
 from six.moves import map
 
@@ -324,14 +329,9 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
     strict_domain_fetching = True
 
     @property
-    def autocomplete_fields(self):
-        return []
-
-    @property
     def main_context(self):
         context = super(BaseEditProjectInfoView, self).main_context
         context.update({
-            'autocomplete_fields': self.autocomplete_fields,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
             # ideally the template gets access to the domain doc through
             # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
@@ -514,10 +514,20 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
-def autocomplete_fields(request, field):
-    prefix = request.GET.get('prefix', '')
-    results = Domain.field_by_prefix(field, prefix)
-    return HttpResponse(json.dumps(results))
+@require_POST
+@require_can_edit_web_users
+def generate_repeater_payloads(request, domain):
+    try:
+        email_id = request.POST.get('email_id')
+        repeater_id = request.POST.get('repeater_id')
+        data = csv.reader(request.FILES['payload_ids_file'])
+        payload_ids = [row[0] for row in data]
+    except Exception as e:
+        messages.error(request, _("Could not process the file. %s") % str(e))
+    else:
+        send_repeater_payloads.delay(repeater_id, payload_ids, email_id)
+        messages.success(request, _("Successfully queued request. You should receive an email shortly."))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
 @location_safe
@@ -919,8 +929,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 }
             except BillingRecord.DoesNotExist:
                 log_accounting_error(
-                    u"An invoice was generated for %(invoice_id)d "
-                    u"(domain: %(domain)s), but no billing record!" % {
+                    "An invoice was generated for %(invoice_id)d "
+                    "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
                     }
@@ -1278,10 +1288,10 @@ class SelectPlanView(DomainAccountingSettings):
 
     @property
     def steps(self):
-        edition_name = u" (%s)" % self.edition_name if self.edition_name else ""
+        edition_name = " (%s)" % self.edition_name if self.edition_name else ""
         return [
             {
-                'title': _(u"1. Select a Plan%(edition_name)s") % {
+                'title': _("1. Select a Plan%(edition_name)s") % {
                     "edition_name": edition_name
                 },
                 'url': reverse(SelectPlanView.urlname, args=[self.domain]),
@@ -1544,7 +1554,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             if not is_saved:
                 messages.error(
                     request, _(
-                        u"It appears there was an issue subscribing your project to the %s Software Plan. You "
+                        "It appears there was an issue subscribing your project to the %s Software Plan. You "
                         "may try resubmitting, but if that doesn't work, rest assured someone will be "
                         "contacting you shortly."
                     ) % software_plan_name
@@ -1552,7 +1562,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             else:
                 messages.success(
                     request, _(
-                        u"Your project has been successfully subscribed to the %s Software Plan."
+                        "Your project has been successfully subscribed to the %s Software Plan."
                     ) % software_plan_name
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
@@ -1756,7 +1766,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             'fixture_forms': fixture_forms,
             'fixture_ids': [data.id for data, form in fixture_forms],
             'can_publish_as_org': self.can_publish_as_org,
-            'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'countries', 'region'),
         }
         if self.published_snapshot:
             context.update({
@@ -1886,7 +1895,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     def has_signed_eula(self):
         eula_signed = self.request.couch_user.is_eula_signed()
         if not eula_signed:
-            messages.error(self.request, _("You must agree to our eula to publish a project to Exchange"))
+            messages.error(self.request, _("You must agree to our terms of service "
+                                           "to publish a project to Exchange"))
         return eula_signed
 
     @property
@@ -2234,10 +2244,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
-    def autocomplete_fields(self):
-        return ['countries']
-
-    @property
     @memoized
     def internal_settings_form(self):
         can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
@@ -2246,6 +2252,9 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         initial = {
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
+            'use_custom_auto_case_update_limit': 'Y' if self.domain_object.auto_case_update_limit else 'N',
+            'auto_case_update_limit': self.domain_object.auto_case_update_limit,
+            'granted_messaging_access': self.domain_object.granted_messaging_access,
         }
         internal_attrs = [
             'sf_contract_id',
@@ -2455,7 +2464,7 @@ def set_published_snapshot(request, domain, snapshot_name=''):
     return redirect('domain_snapshot_settings', domain.name)
 
 
-class ProBonoMixin():
+class ProBonoMixin(object):
     page_title = ugettext_lazy("Pro-Bono Application")
     is_submitted = False
 
@@ -2643,7 +2652,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             if request.GET.get('resend', None):
                 self.active_transfer.send_transfer_request()
                 messages.info(request,
-                              _(u"Resent transfer request for project '{domain}'").format(domain=self.domain))
+                              _("Resent transfer request for project '{domain}'").format(domain=self.domain))
 
         return super(TransferDomainView, self).get(request, *args, **kwargs)
 
@@ -2713,7 +2722,7 @@ class ActivateTransferDomainView(BasePageView):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         self.active_transfer.transfer_domain(ip=get_ip(request))
-        messages.success(request, _(u"Successfully transferred ownership of project '{domain}'")
+        messages.success(request, _("Successfully transferred ownership of project '{domain}'")
                          .format(domain=self.active_transfer.domain))
 
         return HttpResponseRedirect(reverse('dashboard_default', args=[self.active_transfer.domain]))
@@ -2745,7 +2754,7 @@ class DeactivateTransferDomainView(View):
         # Do not want to send them back to the activate page
         if referer.endswith(reverse('activate_transfer_domain', args=[guid])):
             messages.info(request,
-                          _(u"Declined ownership of project '{domain}'").format(domain=transfer.domain))
+                          _("Declined ownership of project '{domain}'").format(domain=transfer.domain))
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(referer)
@@ -2905,3 +2914,26 @@ class PasswordResetView(View):
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
         return response
+
+
+@method_decorator(domain_admin_required, name='dispatch')
+class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
+    urlname = 'recovery_measures_history'
+    page_title = ugettext_lazy("Recovery Measures History")
+    template_name = 'domain/admin/recovery_measures_history.html'
+
+    @property
+    def page_context(self):
+        measures_by_app_id = defaultdict(list)
+        for measure in (MobileRecoveryMeasure.objects
+                        .filter(domain=self.domain)
+                        .order_by('pk')):
+            measures_by_app_id[measure.app_id].append(measure)
+
+        all_apps = get_apps_in_domain(self.domain, include_remote=False)
+        return {
+            'measures_by_app': sorted((
+                (app.name, measures_by_app_id[app._id])
+                for app in all_apps
+            ), key=lambda x: (-1 * len(x[1]), x[0])),
+        }

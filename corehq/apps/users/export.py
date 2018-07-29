@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 def export_users(users, workbook, mimic_upload=False):
     data_prefix = 'data: ' if mimic_upload else 'd.'
     user_keys = ('user_id', 'username', 'is_active', 'name', 'groups')

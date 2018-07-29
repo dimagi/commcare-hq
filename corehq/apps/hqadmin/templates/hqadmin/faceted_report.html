@@ -5,20 +5,20 @@
 {% block view-tabs %}
 {% endblock %}
 
+{% block stylesheets %}{{ block.super }}
+    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
+{% endblock %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'reports/js/reports.config.js' %}"></script>
     <script src="{% static 'reports/js/reports.util.js' %}"></script>
-    <script src="{% static 'reports/js/filters.js' %}"></script>
+    {% include 'reports/partials/filters_js.html' %}
     <script src="{% static 'reports/js/reports.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
-    <script>
-        var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport(),
-            asyncHQReport = hqImport("reports/js/standard_hq_report").getAsyncHQReport();
-    </script>
 {% endblock %}
 
 {% block page_navigation %}
@@ -31,5 +31,6 @@
 
 {% block page_content %}
     {% initial_page_data 'js_options' report.js_options %}
+    {% initial_page_data 'report_table_js_options' report_table_js_options %}
     {{ block.super }}
 {% endblock %}

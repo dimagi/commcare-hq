@@ -5,18 +5,7 @@
 {% registerurl 'case_importer_update_upload_comment' domain '---' %}
 
 {% addtoblock js %}
-<script src="{% static 'case_importer/js/import_history.js' %}"></script>
-{% endaddtoblock %}
-
-{% addtoblock js-inline %}
-<script>
-$(function () {
-    var RecentUploads = hqImport('case_importer/js/import_history').RecentUploads;
-    var recentUploads = RecentUploads();
-    $('#recent-uploads').koApplyBindings(recentUploads);
-    _.delay(recentUploads.fetchCaseUploads);
-});
-</script>
+    <script src="{% static 'case_importer/js/import_history.js' %}"></script>
 {% endaddtoblock %}
 
 <div id="recent-uploads" class="ko-template">

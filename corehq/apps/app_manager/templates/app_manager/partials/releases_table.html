@@ -57,13 +57,18 @@
     <div id="build-errors-wrapper"></div>
 
     <div class="label label-success label-lg hide"
-         data-bind="visible: buildState, css: {hide: false}">
+         data-bind="visible: buildState() === 'pending', css: {hide: false}">
       <i class="fa fa-spin fa-spinner"></i> {% trans "Please wait while your CommCare Application builds..." %}
     </div>
 
     <div class="alert alert-danger hide"
          data-bind="visible: buildState() == 'error', css: {hide: false}">
-      {% trans "Whoops, that didn't go through. Reload the page and click Make New Version to try again." %}
+        <span data-bind="visible: buildErrorCode() === 403">
+            {% trans "Sorry, you don't have permission to do this action!" %}
+        </span>
+        <span data-bind="visible: buildErrorCode() !== 403">
+            {% trans "Whoops, that didn't go through. Reload the page and click Make New Version to try again." %}
+        </span>
     </div>
 
     <div class="label label-primary label-lg hide"
@@ -92,7 +97,7 @@
                 'error': build_broken
             }">
           <div class="panel-heading">
-              {% if request.user.is_superuser %}
+              {% if request|toggle_enabled:"SUPPORT" %}
                   <div class="release-trash-container">
                     <a href="#"
                        class="hide release-remove"

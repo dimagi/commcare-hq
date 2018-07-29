@@ -32,6 +32,15 @@
                 </div>
             </li>
             {% if request.couch_user.is_web_user and domain and domain != 'public' and not request.project.is_snapshot %}
+                {% if IS_DOMAIN_BILLING_ADMIN %}
+                <li class="nav-divider divider"></li>
+                <li class="dropdown-header nav-header">{% trans 'Manage Enterprise' %}</li>
+                <li>
+                    <a href="{% url "enterprise_dashboard" domain %}">
+                        <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Enterprise Dashboard" %}
+                    </a>
+                </li>
+                {% endif %}
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Project' %}</li>
             <li>
@@ -75,41 +84,45 @@
             </li>
         </ul>
     </li>
-    <li class="dropdown">
+    {% if enterprise_mode and allow_report_an_issue and not 500traceback or not enterprise_mode %}
+        {# In enterprise mode, the bubble is only shown when the user can report an issue and this isn't from a 500 error #}
+        {# In non-enterprise mode, the bubble is always shown #}
+        <li class="dropdown">
         <a href="#" class="dropdown-toggle dropdown-toggle-with-icon track-usage-link"
            data-toggle="dropdown" data-category="Nav Bar" data-action="Click Question Mark">
             <i class="fa fa-question-circle nav-main-icon"></i> <span class="responsive-label">{% trans "Help &amp; Resources" %}</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
-            <li class="dropdown-header nav-header">
-            {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
-            {{ cc_name }} Help
-            {% endblocktrans %}
-            </li>
-            <li>
-                <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" class="track-usage-link" target="_blank"
-                   data-category="Nav Bar" data-action="Question Mark" data-label="Visit the Help Site">
-                    <i class="fa fa-question-circle icon-question-sign dropdown-icon"></i> {% trans "Visit the Help Site" %}
-                </a>
-            </li>
-            <li>
-                <a href="{% trans 'https://forum.dimagi.com/' %}" class="track-usage-link" target="_blank"
-                   data-category="Nav Bar" data-action="Question Mark" data-label="User Forum">
-                    <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
-                </a>
-            </li>
-            {% if not enterprise_mode or not 500traceback %}
-                {% if allow_report_an_issue %}
-                    <li>
-                        <a href="#modalReportIssue" data-toggle="modal" class="track-usage-link"
-                           data-category="Nav Bar" data-action="Question Mark" data-label="Report an Issue">
-                            <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
-                        </a>
-                    </li>
-                {% endif %}
+            {% if not enterprise_mode %}
+                <li class="dropdown-header nav-header">
+                    {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
+                        {{ cc_name }} Help
+                    {% endblocktrans %}
+                </li>
+                <li>
+                    <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" class="track-usage-link" target="_blank"
+                       data-category="Nav Bar" data-action="Question Mark" data-label="Visit the Help Site">
+                        <i class="fa fa-question-circle icon-question-sign dropdown-icon"></i> {% trans "Visit the Help Site" %}
+                    </a>
+                </li>
+                <li>
+                    <a href="{% trans 'https://forum.dimagi.com/' %}" class="track-usage-link" target="_blank"
+                       data-category="Nav Bar" data-action="Question Mark" data-label="User Forum">
+                        <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
+                    </a>
+                </li>
+            {% endif %}
+            {% if allow_report_an_issue and not 500traceback %}
+                <li>
+                    <a href="#modalReportIssue" data-toggle="modal" class="track-usage-link"
+                       data-category="Nav Bar" data-action="Question Mark" data-label="Report an Issue">
+                        <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
+                    </a>
+                </li>
             {% endif %}
         </ul>
-    </li>
+        </li>
+    {% endif %}
     {% if request.couch_user and request.couch_user.is_web_user %}
     {% include 'notifications/partials/global_notifications.html' %}
     <li id="settingsmenu-project" class="dropdown">

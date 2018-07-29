@@ -5,8 +5,8 @@ import uuid
 from django.test import TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
-from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.tests.utils import doc_to_change, run_with_all_ucr_backends
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.apps.userreports.util import get_indicator_adapter
 from six.moves import range
 
@@ -168,13 +168,12 @@ class ReportDataTest(TestCase):
         for row in rows:
             pillow.process_change(doc_to_change(_get_case(row)))
 
-    @run_with_all_ucr_backends
     def test_basic_query(self):
         # add a few rows to the data source
         rows = self._add_some_rows(3)
 
         # check the returned data from the report looks right
-        report_data_source = ReportFactory.from_spec(self.report_config)
+        report_data_source = ConfigurableReportDataSource.from_spec(self.report_config)
         report_data = report_data_source.get_data()
         self.assertEqual(len(rows), len(report_data))
         rows_by_name = {r.name: r for r in rows}
@@ -184,41 +183,37 @@ class ReportDataTest(TestCase):
             self.assertEqual(10, row['ten'])
             self.assertEqual(10 * row['number'], row['by_tens'])
 
-    @run_with_all_ucr_backends
     def test_limit(self):
         count = 5
         self._add_some_rows(count)
-        report_data_source = ReportFactory.from_spec(self.report_config)
+        report_data_source = ConfigurableReportDataSource.from_spec(self.report_config)
         original_data = report_data_source.get_data()
         self.assertEqual(count, len(original_data))
         limited_data = report_data_source.get_data(limit=3)
         self.assertEqual(3, len(limited_data))
         self.assertEqual(original_data[:3], limited_data)
 
-    @run_with_all_ucr_backends
     def test_skip(self):
         count = 5
         self._add_some_rows(count)
-        report_data_source = ReportFactory.from_spec(self.report_config)
+        report_data_source = ConfigurableReportDataSource.from_spec(self.report_config)
         original_data = report_data_source.get_data()
         self.assertEqual(count, len(original_data))
         skipped = report_data_source.get_data(start=3)
         self.assertEqual(count - 3, len(skipped))
         self.assertEqual(original_data[3:], skipped)
 
-    # @run_with_all_ucr_backends  Doesn't work with ES backend yet
     def test_total_row(self):
         rows = self._add_some_rows(3)
-        report_data_source = ReportFactory.from_spec(self.report_config)
+        report_data_source = ConfigurableReportDataSource.from_spec(self.report_config)
 
         total_number = sum(row.number for row in rows)
         self.assertEqual(report_data_source.get_total_row(), ['Total', total_number, '', '', ''])
 
-    @run_with_all_ucr_backends
     def test_transform(self):
         count = 5
         self._add_some_rows(count)
-        report_data_source = ReportFactory.from_spec(self.report_config)
+        report_data_source = ConfigurableReportDataSource.from_spec(self.report_config)
         original_data = report_data_source.get_data()
         self.assertEqual(count, len(original_data))
         rows_by_number = {int(row['number']): row for row in original_data}

@@ -13,8 +13,8 @@ hqDefine('toggle_ui/js/edit-flag', [
     hqMain
 ) {
     var PAD_CHAR = '&nbsp;';
-    function ToggleView() {
-        var self = this;
+    function toggleViewModel() {
+        var self = {};
         self.items = ko.observableArray();
         self.randomness = ko.observable();
 
@@ -98,11 +98,12 @@ hqDefine('toggle_ui/js/edit-flag', [
             }
         };
 
+        return self;
     }
 
     $(function(){
         var $home = $('#toggle_editing_ko');
-        var view = new ToggleView();
+        var view = toggleViewModel();
         view.init({
             items: initialPageData.get('items'),
             namespaces: initialPageData.get('namespaces'),

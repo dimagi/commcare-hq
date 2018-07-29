@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, timedelta, time
 import uuid
 from casexml.apps.case.models import CommCareCase
@@ -8,7 +9,7 @@ from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.util.dates import iso_string_to_date
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 
 from pact.enums import PACT_DOMAIN, PACT_CASE_TYPE, XMLNS_DOTS_FORM

@@ -109,7 +109,7 @@ hqDefine("fixtures/js/lookup-manage", [
         };
         for (var i = 0; i < raw_fields.length; i += 1) {
             var tag = raw_fields[i].field_name();
-            var with_props = (raw_fields[i].properties().length == 0) ? false : true;
+            var with_props = !!raw_fields[i].properties().length;
             self.addField(undefined, undefined, {
                 tag: tag,
                 with_props: with_props,
@@ -233,8 +233,8 @@ hqDefine("fixtures/js/lookup-manage", [
         return self;
     }
 
-    function App() {
-        var self = this;
+    function appModel() {
+        var self = {};
         self.data_types = ko.observableArray([]);
         self.loading = ko.observable(0);
         self.file = ko.observable();
@@ -378,10 +378,12 @@ hqDefine("fixtures/js/lookup-manage", [
                 },
             });
         };
+
+        return self;
     }
 
     var el = $('#fixtures-ui');
-    var app = new App();
+    var app = appModel();
     el.koApplyBindings(app);
     el.removeClass('hide');
     app.loadData();

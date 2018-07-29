@@ -1,15 +1,24 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import uuid
 from collections import defaultdict
+from numpy import random
 
-from corehq.sql_db.config import partition_config
 from django.conf import settings
 from django import db
 from django.db.utils import InterfaceError as DjangoInterfaceError
 from functools import wraps
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 import six
-from corehq.sql_db.models import PartitionedModel
+from memoized import memoized
+
+from corehq.sql_db.config import partition_config
+from corehq.util.quickcache import quickcache
+
+
+ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
+STALE_CHECK_FREQUENCY = 30
 
 
 def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
@@ -49,7 +58,7 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
             else:
                 qs = qs.values_list(*values)
 
-        for result in qs:
+        for result in qs.iterator():
             yield result
 
 
@@ -84,6 +93,10 @@ def get_db_aliases_for_partitioned_query():
 
 def get_default_db_aliases():
     return ['default']
+
+
+def get_all_db_aliases():
+    return list(settings.DATABASES)
 
 
 def get_default_and_partitioned_db_aliases():
@@ -133,6 +146,7 @@ def handle_connection_failure(get_db_aliases=get_default_db_aliases):
 
 
 def get_all_sharded_models():
+    from corehq.sql_db.models import PartitionedModel
     for subclass in _get_all_nested_subclasses(PartitionedModel):
         if not subclass._meta.abstract:
             yield subclass
@@ -149,3 +163,97 @@ def _get_all_nested_subclasses(cls):
         if subclass not in seen:
             seen.add(subclass)
             yield subclass
+
+
+@memoized
+def get_standby_databases():
+    standby_dbs = []
+    for db_alias in settings.DATABASES:
+        with db.connections[db_alias].cursor() as cursor:
+            cursor.execute("SELECT pg_is_in_recovery()")
+            [(is_standby, )] = cursor.fetchall()
+            if is_standby:
+                standby_dbs.append(db_alias)
+    return standby_dbs
+
+
+def get_replication_delay_for_standby(db_alias):
+    """
+    Finds the replication delay for given database by running a SQL query on standby database.
+        See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
+
+    If the given database is not a standby database, zero delay is returned
+    If standby process (wal_receiver) is not running on standby a `VERY_LARGE_DELAY` is returned
+    """
+    if db_alias not in get_standby_databases():
+        return 0
+    # used to indicate that the wal_receiver process on standby is not running
+    VERY_LARGE_DELAY = 100000
+    sql = """
+    SELECT
+    CASE
+        WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN {delay}
+        WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
+        ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
+    END
+    AS replication_lag;
+    """.format(delay=VERY_LARGE_DELAY)
+    with db.connections[db_alias].cursor() as cursor:
+        cursor.execute(sql)
+        [(delay, )] = cursor.fetchall()
+        return delay
+
+
+@memoized
+def get_standby_delays_by_db():
+    ret = {}
+    for _db, config in six.iteritems(settings.DATABASES):
+        delay = config.get('HQ_ACCEPTABLE_STANDBY_DELAY')
+        if delay:
+            ret[_db] = delay
+    return ret
+
+
+@quickcache(['dbs'], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING)
+def filter_out_stale_standbys(dbs):
+    # from given list of databases filters out those with more than
+    #   acceptable standby delay, if that database is a standby
+    delays_by_db = get_standby_delays_by_db()
+    return [
+        db
+        for db in dbs
+        if get_replication_delay_for_standby(db) <= delays_by_db.get(db, ACCEPTABLE_STANDBY_DELAY_SECONDS)
+    ]
+
+
+def select_db_for_read(weighted_dbs):
+    """
+    Returns a randomly selected database per the weights assigned from
+        a list of databases. If any database is standby and its replication has
+        more than accesptable delay, that db is dropped from selection
+
+    Args:
+        weighted_dbs: a list of tuple of db and the weight.
+            [
+                ("pgmain", 5),
+                ("pgmainstandby", 5)
+            ]
+
+    """
+    # convert to a db to weight dictionary
+    weights_by_db = {_db: weight for _db, weight in weighted_dbs}
+
+    # filter out stale standby dbs
+    fresh_dbs = filter_out_stale_standbys(weights_by_db)
+    dbs = []
+    weights = []
+    for _db, weight in six.iteritems(weights_by_db):
+        if _db in fresh_dbs:
+            dbs.append(_db)
+            weights.append(weight)
+
+    if dbs:
+        # normalize weights of remaining dbs
+        total_weight = sum(weights)
+        normalized_weights = [float(weight) / total_weight for weight in weights]
+        return random.choice(dbs, p=normalized_weights)

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import uuid
 
@@ -34,7 +35,6 @@ from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.hqwebapp.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -53,6 +53,7 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
 from corehq.apps.builds.models import CommCareBuildConfig
+from corehq.apps.users.models import CouchUser
 import six
 
 
@@ -102,6 +103,11 @@ def paginate_releases(request, domain, app_id):
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
         app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
+        app['target_commcare_flavor'] = (
+            SavedAppBuild.get(app['_id']).target_commcare_flavor
+            if toggles.TARGET_COMMCARE_FLAVOR.enabled(domain)
+            else 'none'
+        )
 
     if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
@@ -112,22 +118,13 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
-@require_deploy_apps
-def releases_ajax(request, domain, app_id):
-    context = get_releases_context(request, domain, app_id)
-    response = render(request, "app_manager/partials/releases.html", context)
-    response.set_cookie('lang', encode_if_unicode(context['lang']))
-    return response
-
-
 def get_releases_context(request, domain, app_id):
     app = get_app(domain, app_id)
-    context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
     prompt_settings_form = PromptUpdateSettingsForm.from_app(app, request_user=request.couch_user)
 
-    context.update({
+    context = {
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'can_view_cloudcare': has_privilege(request, privileges.CLOUDCARE),
@@ -143,7 +140,8 @@ def get_releases_context(request, domain, app_id):
         'latest_build_id': get_latest_build_id(domain, app_id),
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
-    })
+        'full_name': request.couch_user.full_name,
+    }
     if not app.is_remote_app():
         context.update({
             'enable_update_prompts': app.enable_update_prompts,
@@ -222,12 +220,14 @@ def save_copy(request, domain, app_id):
 
     if not errors:
         try:
+            user_id = request.couch_user.get_id
             copy = app.make_build(
                 comment=comment,
-                user_id=request.couch_user.get_id,
+                user_id=user_id,
                 previous_version=app.get_latest_app(released_only=False)
             )
             copy.save(increment_version=False)
+            CouchUser.get(user_id).set_has_built_app()
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
@@ -309,18 +309,27 @@ def delete_copy(request, domain, app_id):
 
 
 def odk_install(request, domain, app_id, with_media=False):
+    download_target_version = request.GET.get('download_target_version') == 'true'
     app = get_app(domain, app_id)
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
     build_profile_id = request.GET.get('profile')
     profile_url = app.odk_profile_url if not with_media else app.odk_media_profile_url
+    kwargs = []
     if build_profile_id is not None:
-        profile_url += '?profile={profile}'.format(profile=build_profile_id)
+        kwargs.append('profile={profile}'.format(profile=build_profile_id))
+    if download_target_version:
+        kwargs.append('download_target_version=true')
+    if kwargs:
+        profile_url += '?' + '&'.join(kwargs)
     context = {
         "domain": domain,
         "app": app,
         "qr_code": reverse(qr_code_view,
                            args=[domain, app_id],
-                           params={'profile': build_profile_id}),
+                           params={
+                               'profile': build_profile_id,
+                               'download_target_version': 'true' if download_target_version else 'false',
+                           }),
         "profile_url": profile_url,
     }
     return render(request, "app_manager/odk_install.html", context)
@@ -328,13 +337,19 @@ def odk_install(request, domain, app_id, with_media=False):
 
 def odk_qr_code(request, domain, app_id):
     profile = request.GET.get('profile')
-    qr_code = get_app(domain, app_id).get_odk_qr_code(build_profile_id=profile)
+    download_target_version = request.GET.get('download_target_version') == 'true'
+    qr_code = get_app(domain, app_id).get_odk_qr_code(
+        build_profile_id=profile, download_target_version=download_target_version
+    )
     return HttpResponse(qr_code, content_type="image/png")
 
 
 def odk_media_qr_code(request, domain, app_id):
     profile = request.GET.get('profile')
-    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True, build_profile_id=profile)
+    download_target_version = request.GET.get('download_target_version') == 'true'
+    qr_code = get_app(domain, app_id).get_odk_qr_code(
+        with_media=True, build_profile_id=profile, download_target_version=download_target_version
+    )
     return HttpResponse(qr_code, content_type="image/png")
 
 
@@ -415,7 +430,6 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     page_title = ugettext_lazy("App diff")
     template_name = 'app_manager/app_diff.html'
 
-    @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
 

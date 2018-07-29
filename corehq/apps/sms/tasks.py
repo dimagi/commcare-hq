@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import division
+from __future__ import unicode_literals
 import hashlib
 import math
 from datetime import datetime, timedelta
@@ -11,10 +12,11 @@ from django.conf import settings
 from django.db import DataError, transaction
 
 from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_trial
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (create_billable_for_sms, get_utcnow,
-    log_sms_exception, process_incoming, send_message_via_backend)
+    log_sms_exception, process_incoming, send_message_via_backend,
+    DelayProcessing)
 from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.mixin import (InvalidFormatException,
     PhoneNumberInUseException, apply_leniency)
@@ -25,12 +27,16 @@ from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.toggles import RETRY_SMS_INDEFINITELY
+from corehq.messaging.util import use_phone_entries
+from corehq.toggles import RETRY_SMS_INDEFINITELY, USE_SMS_WITH_INACTIVE_CONTACTS
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.rate_limit import rate_limit
+
+
+MAX_TRIAL_SMS = 0
 
 
 def remove_from_queue(queued_sms):
@@ -159,6 +165,22 @@ def get_connection_slot_lock(phone_number, backend, max_simultaneous_connections
     return client.lock(key, timeout=60)
 
 
+def passes_trial_check(msg):
+    if msg.domain and domain_is_on_trial(msg.domain):
+        with CriticalSection(['check-sms-sent-on-trial-for-%s' % msg.domain], timeout=60):
+            key = 'sms-sent-on-trial-for-%s' % msg.domain
+            expiry = 90 * 24 * 60 * 60
+            client = get_redis_client()
+            value = client.get(key) or 0
+            if value >= MAX_TRIAL_SMS:
+                msg.set_system_error(SMS.ERROR_TRIAL_SMS_EXCEEDED)
+                return False
+
+            client.set(key, value + 1, timeout=expiry)
+
+    return True
+
+
 def handle_outgoing(msg):
     """
     Should return a requeue flag, so if it returns True, the message will be
@@ -191,11 +213,12 @@ def handle_outgoing(msg):
             # Requeue the message and try it again shortly
             return True
 
-    result = send_message_via_backend(
-        msg,
-        backend=backend,
-        orig_phone_number=orig_phone_number
-    )
+    if passes_trial_check(msg):
+        result = send_message_via_backend(
+            msg,
+            backend=backend,
+            orig_phone_number=orig_phone_number
+        )
 
     if max_simultaneous_connections:
         release_lock(connection_slot_lock, True)
@@ -216,6 +239,8 @@ def handle_incoming(msg):
     try:
         process_incoming(msg)
         handle_successful_processing_attempt(msg)
+    except DelayProcessing:
+        raise
     except:
         log_sms_exception(msg)
         handle_unsuccessful_processing_attempt(msg)
@@ -225,10 +250,15 @@ class OutboundDailyCounter(object):
 
     def __init__(self, domain_object=None):
         self.domain_object = domain_object
-        self.utc_date = datetime.utcnow().date()
+
+        if domain_object:
+            self.date = ServerTime(datetime.utcnow()).user_time(domain_object.get_default_timezone()).done().date()
+        else:
+            self.date = datetime.utcnow().date()
+
         self.key = 'outbound-daily-count-for-%s-%s' % (
             domain_object.name if domain_object else '',
-            self.utc_date.strftime('%Y-%m-%d')
+            self.date.strftime('%Y-%m-%d')
         )
 
         # We need access to the raw redis client because calling incr on
@@ -250,9 +280,13 @@ class OutboundDailyCounter(object):
         return self.client.decr(self.key)
 
     @property
+    def current_usage(self):
+        return self.client.get(self.key) or 0
+
+    @property
     def daily_limit(self):
         if self.domain_object:
-            return self.domain_object.daily_outbound_sms_limit
+            return self.domain_object.get_daily_outbound_sms_limit()
         else:
             # If the message isn't tied to a domain, still impose a limit.
             # Outbound messages not tied to a domain can happen when unregistered
@@ -275,7 +309,7 @@ class OutboundDailyCounter(object):
             # Log the fact that we reached this limit
             DailyOutboundSMSLimitReached.create_for_domain_and_date(
                 self.domain_object.name if self.domain_object else '',
-                self.utc_date
+                self.date
             )
             return False
 
@@ -344,7 +378,13 @@ def process_sms(queued_sms_pk):
                 else:
                     requeue = handle_outgoing(msg)
             elif msg.direction == INCOMING:
-                handle_incoming(msg)
+                try:
+                    handle_incoming(msg)
+                except DelayProcessing:
+                    process_sms.apply_async([queued_sms_pk], countdown=60)
+                    if recipient_block:
+                        release_lock(recipient_lock, True)
+                    release_lock(message_lock, True)
             else:
                 msg.set_system_error(SMS.ERROR_INVALID_DIRECTION)
                 remove_from_queue(msg)
@@ -474,6 +514,9 @@ def _sync_case_phone_number(contact_case):
 @no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_user_phone_numbers(self, couch_user_id):
+    if not use_phone_entries():
+        return
+
     try:
         _sync_user_phone_numbers(couch_user_id)
     except Exception as e:
@@ -492,7 +535,10 @@ def _sync_user_phone_numbers(couch_user_id):
     with CriticalSection([couch_user.phone_sync_key], timeout=5 * 60):
         phone_entries = couch_user.get_phone_entries()
 
-        if couch_user.is_deleted():
+        if (
+            couch_user.is_deleted() or
+            (not couch_user.is_active and not USE_SMS_WITH_INACTIVE_CONTACTS.enabled(couch_user.domain))
+        ):
             for phone_number in phone_entries.values():
                 phone_number.delete()
             return

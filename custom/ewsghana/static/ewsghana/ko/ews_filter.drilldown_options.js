@@ -1,3 +1,4 @@
+/* globals drilldownFinalNotification */
 ko.bindingHandlers.select2 = {
     init: function(el, valueAccessor, allBindingsAccessor, viewModel) {
       ko.utils.domNodeDisposal.addDisposeCallback(el, function() {
@@ -61,7 +62,7 @@ ko.bindingHandlers.select2 = {
 var EWSDrilldownOptionFilterControl = function (options) {
     var self = this;
 
-    self.notification = new DrilldownFinalNotification(options.notifications);
+    self.notification = new drilldownFinalNotification(options.notifications);
     self.controls = ko.observableArray(ko.utils.arrayMap(options.controls, function (select) {
         return new EWSDrilldownOption(select, options.drilldown_map);
     }));

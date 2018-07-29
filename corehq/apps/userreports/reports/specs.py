@@ -36,7 +36,7 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
 from corehq.apps.es import aggregations
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 

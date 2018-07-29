@@ -1,13 +1,21 @@
+from __future__ import division
 from __future__ import absolute_import
-import random
+from __future__ import unicode_literals
 from contextlib import contextmanager
 from six.moves.urllib.parse import urlencode
+import six
 
+from django.apps import apps
 from django.conf import settings
 import sqlalchemy
 from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 from django.core import signals
+
+from corehq.util.test_utils import unit_testing_only
+
+from .util import select_db_for_read
+
 
 DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
@@ -98,11 +106,18 @@ class ConnectionManager(object):
         """
         return self._get_or_create_helper(engine_id).engine
 
-    def get_load_balanced_read_engine_id(self, engine_id):
+    def get_load_balanced_read_db_alais(self, engine_id, default=None):
+        """
+        returns the load balanced read db alias based on list of read databases
+            and their weights obtained from settings.REPORTING_DATABASES and
+            settings.LOAD_BALANCED_APPS.
+
+            If a suitable db is not found returns the `default` or `engine_id` itself
+        """
         read_dbs = self.read_database_mapping.get(engine_id, [])
-        if read_dbs:
-            return random.choice(read_dbs)
-        return engine_id
+        load_balanced_db = select_db_for_read(read_dbs)
+
+        return load_balanced_db or default or engine_id
 
     def close_scoped_sessions(self):
         for helper in self._session_helpers.values():
@@ -137,22 +152,25 @@ class ConnectionManager(object):
         else:
             for engine_id, db_config in reporting_db_config.items():
                 write_db = db_config
-                read = None
+                weighted_read_dbs = None
                 if isinstance(db_config, dict):
                     write_db = db_config['WRITE']
-                    read = db_config['READ']
-                    for db_alias, weighting in read:
-                        assert isinstance(weighting, int), 'weighting must be int'
-                        assert db_alias in settings.DATABASES, db_alias
+                    weighted_read_dbs = db_config['READ']
+                    dbs = [db for db, weight in weighted_read_dbs]
+                    assert set(dbs).issubset(set(settings.DATABASES))
 
                 self._add_django_db(engine_id, write_db)
-                if read:
-                    self.read_database_mapping[engine_id] = []
-                    for read_db, weighting in read:
+                if weighted_read_dbs:
+                    self.read_database_mapping[engine_id] = weighted_read_dbs
+                    for read_db, weighting in weighted_read_dbs:
                         assert read_db == write_db or read_db not in self.db_connection_map, read_db
-                        self.read_database_mapping[engine_id].extend([read_db] * weighting)
                         if read_db != write_db:
                             self._add_django_db(read_db, read_db)
+
+        for app, weighted_read_dbs in settings.LOAD_BALANCED_APPS.items():
+            self.read_database_mapping[app] = weighted_read_dbs
+            dbs = [db for db, weight in weighted_read_dbs]
+            assert set(dbs).issubset(set(settings.DATABASES))
 
         if DEFAULT_ENGINE_ID not in self.db_connection_map:
             self._add_django_db(DEFAULT_ENGINE_ID, 'default')
@@ -208,6 +226,7 @@ def _close_connections(**kwargs):
 signals.request_finished.connect(_close_connections)
 
 
+@unit_testing_only
 @contextmanager
 def override_engine(engine_id, connection_url):
     original_url = connection_manager.get_connection_string(engine_id)

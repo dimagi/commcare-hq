@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.safestring import mark_safe
 from corehq.apps.indicators.admin import BaseIndicatorAdminInterface
 from corehq.apps.indicators.admin.forms import (CouchIndicatorForm, CountUniqueCouchIndicatorForm,

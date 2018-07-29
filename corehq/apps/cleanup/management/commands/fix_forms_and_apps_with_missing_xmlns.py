@@ -1,6 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import uuid
 import re
 from collections import defaultdict
@@ -24,6 +25,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
 import six
+from io import open
 
 
 ONE_HOUR = 60 * 60
@@ -62,8 +64,8 @@ class Command(BaseCommand):
         unique_id_to_xmlns_map = {}
         app_to_unique_ids_map = defaultdict(set)
 
-        with open(log_path, "w") as log_file:
-            with open(prev_log_path, "r") as prev_log_file:
+        with open(log_path, "w", encoding='utf-8') as log_file:
+            with open(prev_log_path, "r", encoding='utf-8') as prev_log_file:
                 self.rebuild_maps(prev_log_file, log_file, unique_id_to_xmlns_map, app_to_unique_ids_map)
             self.fix_xforms(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run)
             self.fix_apps(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run)
@@ -339,6 +341,6 @@ def get_xmlns(form_unique_id, app_id, domain):
 def name_matches(xform_name, form_names):
     if xform_name in list(form_names.values()):
         return True
-    if xform_name in [u"{} [{}]".format(v, k) for k, v in six.iteritems(form_names)]:
+    if xform_name in ["{} [{}]".format(v, k) for k, v in six.iteritems(form_names)]:
         return True
     return False

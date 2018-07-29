@@ -15,6 +15,7 @@ describe('AWC Reports Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     var mockBeneficiaryDetails = {
@@ -72,15 +73,15 @@ describe('AWC Reports Directive', function () {
         controller.userLocationId = 'test_id4';
         controller.location = {name: 'name4', location_id: 'test_id4'};
         controller.selectedLocations.push(
-            {name: 'name1', location_id: 'test_id1'},
-            {name: 'name2', location_id: 'test_id2'},
-            {name: 'name3', location_id: 'test_id3'},
-            {name: 'name4', location_id: 'test_id4'},
-            {name: 'name5', location_id: 'test_id5'},
-            {name: 'name6', location_id: 'test_id6'}
+            {name: 'name1', location_id: 'test_id1', user_have_access: 0},
+            {name: 'name2', location_id: 'test_id2', user_have_access: 0},
+            {name: 'name3', location_id: 'test_id3', user_have_access: 0},
+            {name: 'name4', location_id: 'test_id4', user_have_access: 1},
+            {name: 'All', location_id: 'all', user_have_access: 0},
+            null
         );
         var index = controller.getDisableIndex();
-        assert.equal(index, 3);
+        assert.equal(index, 2);
     });
 
     it('tests show beneficiary table', function () {
@@ -93,8 +94,14 @@ describe('AWC Reports Directive', function () {
     });
 
     it('tests get popover content', function () {
-        var expected = "<div>Weight: 50.00 kg</div><div>Height: 150.00 cm</div><div>Age: 40 months</div>";
+        var expected = "<div>Weight: 50.00 kg</div><div>Height: Data Not Valid</div><div>Age: 40 months</div>";
         var result = controller.getPopoverContent(50, 150, 40, 'both');
+        assert.equal(expected, result);
+    });
+
+    it('tests get popover content too small height', function () {
+        var expected = "<div>Height: Data Not Valid</div><div>Age: 4 months</div>";
+        var result = controller.getPopoverContent(10, 40, 4, 'height');
         assert.equal(expected, result);
     });
 
@@ -112,8 +119,8 @@ describe('AWC Reports Directive', function () {
         });
         assert.equal(chart.showValues, true);
         assert.equal(chart.showControls, false);
+        assert.equal(chart.showLegend, false);
         assert.equal(chart.duration, 500);
-        assert.equal(chart.clipVoronoi, false);
         assert.equal(chart.useInteractiveGuideline, true);
         assert.equal(chart.xAxis.axisLabel, '');
         assert.equal(chart.yAxis.axisLabel, '');

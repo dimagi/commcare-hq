@@ -1,21 +1,5 @@
-{% extends "reports/async/tabular.html" %}
+{% extends "reports/tabular.html" %}
 {% load hq_shared_tags %}
-
-{% block js-inline %} {{ block.super }}
-  <script>
-    $.when(
-        $.getScript("{% static 'crud/js/crud.admin.js' %}")
-    ).done(function () {
-      var crud_interface = new CRUDAdminControl({
-        itemType: '{{ crud_item.type }}',
-        formSubmitPath: '{{ crud_item.url }}',
-        formType: '{{ crud_item.form }}',
-        {% if hideButton %}hideButton: 1{% endif %} // True is not accepted in JavaScript
-      });
-      crud_interface.init();
-    });
-    </script>
-{% endblock %}
 
 {% block reportcontent %}
     {% if detailed_description %}
@@ -37,14 +21,14 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title"><span class="label label-success">Create New</span> {{ crud_item.type }}</h4>
+                    <h4 class="modal-title"><span class="label label-success">Create New</span> {{ crud_item_type }}</h4>
                 </div>
                 <form class="form-horizontal" action="" method="post">
                     {% csrf_token %}
                     <div class="modal-body" style="overflow-y: scroll; max-height: 500px;">
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" id="js-crud-add-submit" class="btn btn-primary" data-loading-text="Submitting..."><i class="fa fa-plus"></i> Create {{ crud_item.type }}</button>
+                        <button type="submit" id="js-crud-add-submit" class="btn btn-primary" data-loading-text="Submitting..."><i class="fa fa-plus"></i> Create {{ crud_item_type }}</button>
                         <button class="btn btn-default" data-dismiss="modal">Close</button>
                     </div>
                 </form>
@@ -56,14 +40,14 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title"><span class="label label-info">Update</span> {{ crud_item.type }}</h4>
+                    <h4 class="modal-title"><span class="label label-info">Update</span> {{ crud_item_type }}</h4>
                 </div>
                 <form class="form-horizontal" action="" method="post">
                     {% csrf_token %}
                     <div class="modal-body" style="overflow-y: scroll; max-height: 500px;">
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary" data-loading-text="Updating..."><i class="fa fa-arrow-up"></i> Update {{ crud_item.type }}</button>
+                        <button type="submit" class="btn btn-primary" data-loading-text="Updating..."><i class="fa fa-arrow-up"></i> Update {{ crud_item_type }}</button>
                         <button class="btn btn-default" data-dismiss="modal">Close</button>
                         <button class="btn btn-danger pull-left" type="submit" data-loading-text="Deleting..."><i class="fa fa-remove"></i> Delete</button>
                     </div>

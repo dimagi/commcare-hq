@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
@@ -8,7 +9,7 @@ from io import BytesIO
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.quickcache import quickcache
 from dimagi.utils.chunked import chunked
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from ..utils import should_use_sql_backend
 
@@ -175,6 +176,11 @@ class FormAccessors(object):
 
     def soft_undelete_forms(self, form_ids):
         return self.db_accessor.soft_undelete_forms(self.domain, form_ids)
+
+    def modify_attachment_xml_and_metadata(self, form_data, form_attachment_new_xml, new_username):
+        return self.db_accessor.modify_attachment_xml_and_metadata(form_data,
+                                                                   form_attachment_new_xml,
+                                                                   new_username)
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):

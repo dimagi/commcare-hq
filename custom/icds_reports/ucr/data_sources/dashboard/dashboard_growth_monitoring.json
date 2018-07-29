@@ -1,0 +1,367 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "icds-cas"
+  ],
+  "server_environment": [
+    "softlayer",
+    "icds-new",
+    "localdev"
+  ],
+  "config": {
+    "table_id": "static-dashboard_growth_monitoring_forms",
+    "display_name": "Forms - Growth Monitoring (Static) (Dashboard)",
+    "referenced_doc_type": "XFormInstance",
+    "description": "Growth Monitoring Form Data Used by the Dashboard",
+    "base_item_expression": {
+      "type": "conditional",
+      "test": {
+        "type": "named",
+        "name": "is_delivery_form"
+      },
+      "expression_if_true": {
+        "type": "property_path",
+        "property_path": ["form", "child"]
+      },
+      "expression_if_false": {
+        "type": "iterator",
+        "expressions": [0]
+      }
+    },
+    "configured_filter": {
+      "operator": "in",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "property_value": [
+        "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
+        "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75",
+        "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+      ]
+    },
+    "configured_indicators": [
+      {
+        "column_id": "timeend",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "datatype": "datetime",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        }
+      },
+      {
+        "column_id": "state_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "argument_expression": {
+            "type": "ancestor_location",
+            "location_id": {
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "commcare_location_id"
+                ]
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "meta",
+                    "userID"
+                  ]
+                },
+                "type": "root_doc"
+              }
+            },
+            "location_type": "state"
+          }
+        }
+      },
+      {
+        "column_id": "received_on",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_name",
+            "datatype": "datetime",
+            "property_name": "received_on"
+          }
+        }
+      },
+      {
+        "column_id": "child_health_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "is_delivery_form"
+          },
+          "expression_if_true": {
+            "type": "property_path",
+            "property_path": ["case_open_child_health_3", "case", "@case_id"]
+          },
+          "expression_if_false": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": ["form", "case_child_health_0", "case", "@case_id"]
+            }
+          }
+        }
+      },
+      {
+        "column_id": "weight_child",
+        "datatype": "decimal",
+        "type": "expression",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "is_delivery_form"
+          },
+          "expression_if_true": {
+            "type": "property_path",
+            "property_path": ["case_open_child_health_3", "case", "update", "weight_child"]
+          },
+          "expression_if_false": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": ["form", "weight_child"]
+            }
+          }
+        }
+      },
+      {
+        "column_id": "height_child",
+        "datatype": "decimal",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "height_child"]
+          }
+        }
+      },
+      {
+        "column_id": "zscore_grading_wfa",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "conditional",
+            "test": {
+              "type": "named",
+              "name": "is_delivery_form"
+            },
+            "expression_if_true": {
+              "type": "property_path",
+              "property_path": ["case_open_child_health_3", "case", "update", "zscore_grading_wfa"]
+            },
+            "expression_if_false": {
+              "type": "root_doc",
+              "expression": {
+                "type": "property_path",
+                "property_path": ["form", "zscore_grading_wfa"]
+              }
+            }
+          },
+          "cases": {
+            "red": {
+              "type": "constant",
+              "constant": 1
+            },
+            "yellow": {
+              "type": "constant",
+              "constant": 2
+            },
+            "green": {
+              "type": "constant",
+              "constant": 3
+            },
+            "white": {
+              "type": "constant",
+              "constant": 4
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "column_id": "zscore_grading_hfa",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": ["form", "zscore_grading_hfa"]
+            }
+          },
+          "cases": {
+            "red": {
+              "type": "constant",
+              "constant": 1
+            },
+            "yellow": {
+              "type": "constant",
+              "constant": 2
+            },
+            "green": {
+              "type": "constant",
+              "constant": 3
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "column_id": "zscore_grading_wfh",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": ["form", "zscore_grading_wfh"]
+            }
+          },
+          "cases": {
+            "red": {
+              "type": "constant",
+              "constant": 1
+            },
+            "yellow": {
+              "type": "constant",
+              "constant": 2
+            },
+            "green": {
+              "type": "constant",
+              "constant": 3
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "column_id": "muac_grading",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": ["form", "muac_grading"]
+            }
+          },
+          "cases": {
+            "red": {
+              "type": "constant",
+              "constant": 1
+            },
+            "yellow": {
+              "type": "constant",
+              "constant": 2
+            },
+            "green": {
+              "type": "constant",
+              "constant": 3
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      }
+    ],
+    "named_expressions": {
+    },
+    "named_filters": {
+      "is_delivery_form": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          }
+        },
+        "property_value": "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
+      }
+    },
+    "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "timeend",
+          "subtype": "date",
+          "constraint": "month"
+        }
+      ]
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": ["state_id", "weight_child"]
+      },
+      {
+        "column_ids": ["state_id", "height_child"]
+      },
+      {
+        "column_ids": ["state_id", "zscore_grading_wfa"]
+      },
+      {
+        "column_ids": ["state_id", "zscore_grading_hfa"]
+      },
+      {
+        "column_ids": ["state_id", "zscore_grading_wfh"]
+      },
+      {
+        "column_ids": ["state_id", "muac_grading"]
+      }
+    ],
+    "disable_destructive_rebuild": true
+  }
+}

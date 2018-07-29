@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 from corehq.apps.consumption.shortcuts import (get_default_consumption, set_default_monthly_consumption_for_domain,
     set_default_consumption_for_product, set_default_consumption_for_supply_point,

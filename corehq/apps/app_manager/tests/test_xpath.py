@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.xpath import XPath, CaseSelectionXPath, LedgerdbXpath, CaseTypeXpath
 
@@ -67,29 +68,29 @@ class CaseSelectionXPathTests(SimpleTestCase):
     def test_case(self):
         self.assertEqual(
             self.select_by_water.case(),
-            u"instance('casedb')/casedb/case[water='black']"
+            "instance('casedb')/casedb/case[water='black']"
         )
 
     def test_instance_name(self):
         self.assertEqual(
             self.select_by_water.case(instance_name='doobiedb'),
-            u"instance('doobiedb')/doobiedb/case[water='black']"
+            "instance('doobiedb')/doobiedb/case[water='black']"
         )
 
     def test_case_name(self):
         self.assertEqual(
             self.select_by_water.case(instance_name='doobiedb', case_name='song'),
-            u"instance('doobiedb')/doobiedb/song[water='black']"
+            "instance('doobiedb')/doobiedb/song[water='black']"
         )
 
     def test_case_type(self):
         self.assertEqual(
             CaseTypeXpath('song').case(),
-            u"instance('casedb')/casedb/case[@case_type='song']"
+            "instance('casedb')/casedb/case[@case_type='song']"
         )
 
     def test_ledger(self):
         self.assertEqual(
             LedgerdbXpath('ledger_id').ledger(),
-            u"instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/ledger_id]"
+            "instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/ledger_id]"
         )

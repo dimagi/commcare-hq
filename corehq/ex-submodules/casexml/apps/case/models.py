@@ -5,6 +5,7 @@ For details on casexml check out:
 http://bitbucket.org/javarosa/javarosa/wiki/casexml
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 import re
 from datetime import datetime
@@ -24,7 +25,7 @@ from casexml.apps.case.signals import case_post_save
 from casexml.apps.case import const
 from dimagi.utils.modules import to_function
 from dimagi.utils import web
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchforms.models import XFormInstance

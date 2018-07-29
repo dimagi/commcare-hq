@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -7,9 +8,8 @@ from custom.icds_reports.reports.immunization_coverage_data import get_immunizat
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestImmunizationCoverage(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_immunization_coverage_data_map(
@@ -78,8 +78,9 @@ class TestImmunizationCoverage(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of children 1 year+ who have received complete immunization as per "
-            "National Immunization Schedule of India required by age 1."
+            "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
+            "the percentage of children who have received the complete immunization as per the National "
+            "Immunization Schedule of India that is required by age 1."
             "<br/><br/>"
             "This includes the following immunizations:<br/>"
             "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
@@ -301,8 +302,9 @@ class TestImmunizationCoverage(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children 1 year+ who have received complete immunization as per "
-                        "National Immunization Schedule of India required by age 1."
+                "info": "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
+                        "the percentage of children who have received the complete immunization as per the "
+                        "National Immunization Schedule of India that is required by age 1."
                         "<br/><br/>"
                         "This includes the following immunizations:<br/>"
                         "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"

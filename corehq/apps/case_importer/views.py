@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os.path
 from django.http import HttpResponseRedirect
 from django.utils.datastructures import MultiValueDictKeyError
@@ -10,7 +11,7 @@ from corehq.apps.case_importer.exceptions import ImporterError
 from django.views.decorators.http import require_POST
 from corehq.apps.case_importer.suggested_fields import get_suggested_case_fields
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
-
+from corehq.util.workbook_reading import SpreadsheetFileExtError
 from corehq.apps.case_importer.util import get_importer_error_message
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.users.decorators import require_permission
@@ -69,7 +70,8 @@ def excel_config(request, domain):
         case_upload.check_file()
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
-
+    except SpreadsheetFileExtError:
+        return render_error(request, domain, _("Please upload file with extension .xls or .xlsx"))
     with case_upload.get_spreadsheet() as spreadsheet:
         columns = spreadsheet.get_header_columns()
         row_count = spreadsheet.max_row

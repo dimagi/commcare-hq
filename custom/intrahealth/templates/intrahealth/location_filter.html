@@ -10,26 +10,25 @@
 </div>
 <input name="location_id" type="hidden" data-bind="value: selected_locid" />
 
-<script type="text/javascript">
-
-    var REQUIRED = {{ required }}
+<script>
 
     $.when(
-        $.getScript("{% static 'locations/js/location_drilldown.async.js' %}"),
+        $.getScript("{% static 'locations/js/location_drilldown.js' %}"),
         $.getScript("{% static 'intrahealth/js/intrahealth_loc_drilldown.async.js' %}")
     ).done(function () {
         var locs = {{ locations|safe }};
         var selected = '{{ loc_id }}';
         var hierarchy = {{ hierarchy|JSON }};
         var location_url = '{{ api_root }}';
-
-        var model = new LocationSelectViewModel({
+        var locationDrilldown = hqImport('locations/js/location_drilldown');
+        var model = new locationDrilldown.locationSelectViewModel({
             "hierarchy": hierarchy,
             "default_caption": false,
             "auto_drill": null,
             "loc_filter": false,
             "loc_url": location_url,
-            "func": IntrahealthLocModel
+            "func": IntrahealthLocModel,
+            "required": {{ required }},
         });
 
         $('#group_{{ control_slug }}').koApplyBindings(model);
@@ -37,4 +36,3 @@
     });
 
 </script>
-

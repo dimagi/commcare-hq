@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.testcases import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -67,15 +68,15 @@ class TestLocationFilter(TestCase):
 
     def test_get_location_filter_state(self):
         config = get_location_filter(self.state.location_id, self.domain_name)
-        self.assertEqual(config, {'aggregation_level': 2, u'state_id': self.state.location_id})
+        self.assertEqual(config, {'aggregation_level': 2, 'state_id': self.state.location_id})
         self.assertEqual(get_location_level(config['aggregation_level']), 'district')
 
     def test_get_location_filter_district(self):
         config = get_location_filter(self.district.location_id, self.domain_name)
         self.assertEqual(config, {
             'aggregation_level': 3,
-            u'district_id': self.district.location_id,
-            u'state_id': self.state.location_id
+            'district_id': self.district.location_id,
+            'state_id': self.state.location_id
         })
         self.assertEqual(get_location_level(config['aggregation_level']), 'block')
 
@@ -83,9 +84,9 @@ class TestLocationFilter(TestCase):
         config = get_location_filter(self.block.location_id, self.domain_name)
         self.assertEqual(config, {
             'aggregation_level': 4,
-            u'block_id': self.block.location_id,
-            u'district_id': self.district.location_id,
-            u'state_id': self.state.location_id
+            'block_id': self.block.location_id,
+            'district_id': self.district.location_id,
+            'state_id': self.state.location_id
         })
         self.assertEqual(get_location_level(config['aggregation_level']), 'supervisor')
 
@@ -93,10 +94,10 @@ class TestLocationFilter(TestCase):
         config = get_location_filter(self.supervisor.location_id, self.domain_name)
         self.assertEqual(config, {
             'aggregation_level': 5,
-            u'supervisor_id': self.supervisor.location_id,
-            u'block_id': self.block.location_id,
-            u'district_id': self.district.location_id,
-            u'state_id': self.state.location_id
+            'supervisor_id': self.supervisor.location_id,
+            'block_id': self.block.location_id,
+            'district_id': self.district.location_id,
+            'state_id': self.state.location_id
         })
         self.assertEqual(get_location_level(config['aggregation_level']), 'awc')
 
@@ -104,10 +105,10 @@ class TestLocationFilter(TestCase):
         config = get_location_filter(self.awc.location_id, self.domain_name)
         self.assertEqual(config, {
             'aggregation_level': 6,
-            u'awc_id': self.awc.location_id,
-            u'supervisor_id': self.supervisor.location_id,
-            u'block_id': self.block.location_id,
-            u'district_id': self.district.location_id,
-            u'state_id': self.state.location_id
+            'awc_id': self.awc.location_id,
+            'supervisor_id': self.supervisor.location_id,
+            'block_id': self.block.location_id,
+            'district_id': self.district.location_id,
+            'state_id': self.state.location_id
         })
         self.assertEqual(get_location_level(config['aggregation_level']), 'awc')

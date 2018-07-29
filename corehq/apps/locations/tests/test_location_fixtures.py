@@ -1,10 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 import mock
 import os
 from xml.etree import cElementTree as ElementTree
-from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
-from corehq.apps.custom_data_fields.models import CustomDataField
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.locations.views import LocationFieldsView
 
 from corehq.util.test_utils import flag_enabled
@@ -627,6 +627,25 @@ class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Middlesex', 'Berkshires', 'Pioneer Valley']
         )
 
+    def test_include_only_location_types(self):
+        self.user._couch_user.set_location(self.locations['Massachusetts'])
+        location_type = self.locations['Massachusetts'].location_type
+        location_type.include_only = [
+            self.location_types['state'],
+            self.location_types['county'],
+            self.location_types['city'],
+        ]
+        location_type.save()
+        # include county and state
+        self.assert_fixture_queryset_equals_locations([
+            'Massachusetts',
+            'Middlesex',
+            'Cambridge',
+            'Somerville',
+            'Suffolk',
+            'Boston',
+        ])
+
 
 class ShouldSyncLocationFixturesTest(TestCase):
 
@@ -701,6 +720,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         after_save = datetime.utcnow()
         self.assertEqual('winterfell', location.name)
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
+        # Should not resync if last sync was after location save
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
@@ -711,9 +731,11 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
         location = SQLLocation.objects.last()
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
+        # Should resync if last sync was after location was saved but before location was archived
         self.assertTrue(
             should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
+        # Should not resync if last sync was after location was deleted
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_archive), locations_queryset, self.user.to_ota_restore_user())
         )

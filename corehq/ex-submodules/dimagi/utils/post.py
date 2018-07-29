@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import subprocess
 import tempfile
@@ -7,6 +8,7 @@ import requests
 from zeep import Client, Transport
 from zeep.cache import InMemoryCache
 import six
+from io import open
 
 
 def tmpfile(*args, **kwargs):

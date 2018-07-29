@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 
 from django.db import models
@@ -40,7 +41,7 @@ class MALTRow(models.Model):
     use_threshold = models.PositiveSmallIntegerField(default=15)
     experienced_threshold = models.PositiveSmallIntegerField(default=3)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('month', 'domain_name', 'user_id', 'app_id', 'device_id')
 
     @classmethod
@@ -82,7 +83,7 @@ class GIRRow(models.Model):
     performance_threshold = models.PositiveIntegerField(null=True)
     experienced_threshold = models.PositiveIntegerField(null=True)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('month', 'domain_name')
 
     def export_row(self, past_months):

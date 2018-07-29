@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 from datetime import datetime, timedelta
 import hashlib
@@ -14,9 +15,10 @@ from django import template
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django_prbac.utils import has_privilege
 
+from corehq.motech.utils import pformat_json
 from dimagi.utils.make_uuid import random_hex
 from corehq import privileges
 from corehq.apps.domain.models import Domain
@@ -27,6 +29,7 @@ from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq import toggles
 import six
+from io import open
 
 
 register = template.Library()
@@ -100,6 +103,14 @@ try:
     from resource_versions import resource_versions
 except (ImportError, SyntaxError):
     resource_versions = {}
+
+
+@register.filter
+def pp_json(data):
+    """
+    Pretty-print data as JSON
+    """
+    return pformat_json(data)
 
 
 @register.filter
@@ -282,8 +293,8 @@ def can_use_restore_as(request):
 @register.simple_tag
 def toggle_js_url(domain, username):
     return (
-        u'{url}?username={username}'
-        u'&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
+        '{url}?username={username}'
+        '&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
     ).format(
         url=reverse('toggles_js', args=[domain]),
         username=username,
@@ -298,7 +309,7 @@ def toggle_js_url(domain, username):
 def toggle_js_domain_cachebuster(domain):
     # to get fresh cachebusters on the next deploy
     # change the date below (output from *nix `date` command)
-    #   Mon Oct 31 10:30:09 EDT 2016
+    #   Wed Apr 25 14:12:12 EDT 2018
     return random_hex()[:3]
 
 
@@ -488,20 +499,24 @@ def maintenance_alert():
         return ''
     else:
         return format_html(
-            '<div class="alert alert-warning alert-maintenance" style="text-align: center; margin-bottom: 0;">{}</div>',
+            '<div class="alert alert-warning alert-maintenance" data-id="{}">{}{}</div>',
+            alert.id,
+            mark_safe('<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'),
             mark_safe(alert.html),
         )
 
 
-@register.simple_tag(takes_context=True)
-def prelogin_url(context, urlname):
+@register.simple_tag
+def prelogin_url(urlname):
     """
-    A prefix aware url tag replacement for prelogin URLs
+    Fetches the correct dimagi.com url for a "prelogin" view.
     """
-    if context.get('url_uses_prefix', False) and context.get('LANGUAGE_CODE', False):
-        return reverse(urlname, args=[context['LANGUAGE_CODE']])
-    else:
-        return reverse(urlname)
+    urlname_to_url = {
+        'go_to_pricing': 'https://dimagi.com/commcare/pricing/',
+        'public_pricing': 'https://dimagi.com/commcare/pricing/',
+
+    }
+    return urlname_to_url.get(urlname, 'https://dimagi.com/commcare/')
 
 
 @register.tag
@@ -643,7 +658,7 @@ def registerurl(parser, token):
         def render(self, context):
             args = [expression.resolve(context) for expression in expressions]
             url = reverse(url_name, args=args)
-            return (u"<div data-name=\"{}\" data-value={}></div>"
+            return ("<div data-name=\"{}\" data-value={}></div>"
                     .format(url_name, json.dumps(url)))
 
     nodelist = NodeList([FakeNode()])
@@ -667,7 +682,7 @@ def _create_page_data(parser, token, node_slug):
     class FakeNode(template.Node):
         def render(self, context):
             resolved = value.resolve(context)
-            return (u"<div data-name=\"{}\" data-value=\"{}\"></div>"
+            return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
                     .format(name, html_attr(resolved)))
 
     nodelist = NodeList([FakeNode()])

@@ -1,10 +1,10 @@
-{% extends "reports/async/tabular.html" %}
+{% extends "reports/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function () {
             var reportContent = $('#report-content');
 

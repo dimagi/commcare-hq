@@ -13,6 +13,7 @@ hqDefine('registration/js/new_user.ko', function () {
     var module = {};
 
     var _private = {},
+        _appcues = hqImport('analytix/js/appcues'),
         _kissmetrics = hqImport('analytix/js/kissmetrix');
 
     _private.rmiUrl = null;
@@ -37,19 +38,22 @@ hqDefine('registration/js/new_user.ko', function () {
 
     // Can't set up analytics until the values for the A/B tests are ready
     _kissmetrics.whenReadyAlways(function() {
-        _private.isAbPhoneNumber = _kissmetrics.getAbTest('New User Phone Number') === 'show_number';
+        _kissmetrics.track.event("Viewed CommCare signup page");
 
         _private.submitSuccessAnalytics = function (data) {
             _kissmetrics.track.event("Account Creation was Successful");
-            if (data.persona) {
-                _kissmetrics.track.event("Persona Field Filled Out", {
-                    personaChoice: data.persona,
-                    personaOther: data.persona_other,
-                });
-            }
-            if (_private.isAbPhoneNumber) {
-                _kissmetrics.track.event("Phone Number Field Filled Out");
-            }
+
+            var appcuesEvent = "Assigned user to Appcues test",
+                appcuesData = {
+                    'Appcues test': data.appcuesAbTest,
+                };
+
+            _appcues.identify(data.email, appcuesData);
+            _appcues.trackEvent(appcuesEvent, appcuesData);
+
+            _kissmetrics.identify(data.email);
+            _kissmetrics.identifyTraits(appcuesData);
+            _kissmetrics.track.event(appcuesEvent, appcuesData);
         };
     });
 
@@ -88,9 +92,9 @@ hqDefine('registration/js/new_user.ko', function () {
         throw "overwrite onModule load to remove loading indicators";
     };
 
-    module.FormViewModel = function (defaults, containerSelector, steps) {
-        var self = this;
-        
+    module.formViewModel = function (defaults, containerSelector, steps) {
+        var self = {};
+
         module.onModuleLoad();
 
         // add a short delay to some of the validators so that
@@ -226,6 +230,12 @@ hqDefine('registration/js/new_user.ko', function () {
         self.steps = ko.observableArray(steps);
         self.currentStep = ko.observable(0);
 
+        self.currentStep.subscribe(function(newValue) {
+            if (newValue === 1) {
+                _kissmetrics.track.event("Clicked Next button on Step 1 of CommCare signup");
+            }
+        });
+
         var _getDataForSubmission = function () {
             var password = self.password();
             if (typeof(hex_parser) !== 'undefined') {
@@ -290,7 +300,6 @@ hqDefine('registration/js/new_user.ko', function () {
                     _getFormStepUi(_nextStep).fadeIn(500);
                     self.currentStep(_nextStep);
                 });
-
         };
 
         self.previousStep = function () {
@@ -368,7 +377,10 @@ hqDefine('registration/js/new_user.ko', function () {
                         } else if (response.success) {
                             self.isSubmitting(false);
                             self.isSubmitSuccess(true);
-                            _private.submitSuccessAnalytics(submitData);
+                            _private.submitSuccessAnalytics(_.extend({}, submitData, {
+                                email: self.email(),
+                                appcuesAbTest: response.appcues_ab_test ? 'On' : 'Off',
+                            }));
                         }
                     },
                     error: function () {
@@ -379,6 +391,8 @@ hqDefine('registration/js/new_user.ko', function () {
             );
             self.nextStep();
         };
+
+        return self;
     };
 
     return module;

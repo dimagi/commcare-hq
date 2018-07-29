@@ -1,8 +1,24 @@
-/* globals hqDefine, hqImport, define, require, form_tour_start, WS4Redis, django */
+/* globals hqDefine, hqImport, define, require, WS4Redis, django */
 hqDefine("app_manager/js/forms/form_designer", function() {
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+        appcues = hqImport('analytix/js/appcues'),
+        FORM_TYPES = {
+            REGISTRATION: "registration",
+            SURVEY: "survey",
+            FOLLOWUP: "followup",
+        },
+        trackFormEvent = function (eventType) {
+            var formType = FORM_TYPES.FOLLOWUP;
+            if (initialPageData("is_registration_form")) {
+                formType = FORM_TYPES.REGISTRATION;
+            } else if (initialPageData("is_survey")) {
+                formType = FORM_TYPES.SURVEY;
+            }
+            appcues.trackEvent(eventType + " (" + formType + ")");
+        };
+
     $(function() {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-        var VELLUM_OPTIONS = _.extend({}, initial_page_data("vellum_options"), {
+        var VELLUM_OPTIONS = _.extend({}, initialPageData("vellum_options"), {
             itemset: {
                 dataSourcesFilter: function (sources) {
                     return _.filter(sources, function (source) {
@@ -43,139 +59,162 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         });
         VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
             onFormSave: function(data) {
-                var app_manager = hqImport('app_manager/js/app_manager');
-                app_manager.updateDOM(data.update);
+                var appManager = hqImport('app_manager/js/app_manager');
+                appManager.updateDOM(data.update);
                 $('.js-preview-toggle').removeAttr('disabled');
-                if (initial_page_data("days_since_created")) {
+                if (initialPageData("days_since_created") === 0) {
                     hqImport('analytix/js/kissmetrix').track.event('Saved the Form Builder within first 24 hours');
                 }
+                trackFormEvent(appcues.EVENT_TYPES.FORM_SAVE);
             },
             onReady: function() {
-                if (initial_page_data('vellum_debug') === 'dev') {
-                    var less_error_id = "#less-error-message\\:static-style-less-hqstyle-core",
-                        less_error = $(less_error_id);
-                    if (less_error.length) {
-                        console.log("hiding less error:", less_error_id);
-                        console.log(less_error.text());
-                        less_error.hide();
+                if (initialPageData('vellum_debug') === 'dev') {
+                    var lessErrorId = "#less-error-message\\:static-style-less-hqstyle-core",
+                        lessError = $(lessErrorId);
+                    if (lessError.length) {
+                        console.log("hiding less error:", lessErrorId);     // eslint-disable-line no-console
+                        console.log(lessError.text());                      // eslint-disable-line no-console
+                        lessError.hide();
                     }
                 }
-                if (initial_page_data('days_since_created') === 0) {
-                    $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
-                        hqImport('analytix/js/kissmetrix').track.event('Added question in Form Builder within first 24 hours');
-                    });
+
+                var kissmetrixTrack = function() {};
+                if (initialPageData('days_since_created') === 0) {
+                    kissmetrixTrack = function() {
+                        hqImport('analytix/js/kissmetrix').track.event(
+                            'Added question in Form Builder within first 24 hours'
+                        );
+                    };
                 }
+                $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
+                    kissmetrixTrack();
+                    trackFormEvent(appcues.EVENT_TYPES.QUESTION_CREATE);
+                });
+
+                trackFormEvent(appcues.EVENT_TYPES.FORM_LOADED);
             },
         });
 
-        CKEDITOR_BASEPATH = initial_page_data('CKEDITOR_BASEPATH');
+        CKEDITOR_BASEPATH = initialPageData('CKEDITOR_BASEPATH');     // eslint-disable-line no-unused-vars, no-undef
 
-        define("jquery", [], function () { return window.jQuery; });
-        define("jquery.bootstrap", ["jquery"], function () {});
-        define("underscore", [], function () { return window._; });
-        define("moment", [], function () { return window.moment; });
-        define("vellum/hqAnalytics", [], function () {
-            function workflow(message) {
-                hqImport('analytix/js/kissmetrix').track.event(message);
-            }
+        // This unfortunate chain of import callbacks was required because
+        // appcues appears to make an attempt to use the same requirejs
+        // as the host app. Because we only use requirejs for some parts
+        // of the app, appcues gets very confused and throws errors, likely
+        // corrupting or invalidating the data in some way. By requiring
+        // appcues to have completed it's init prior to importing requirejs
+        // or using it to incorporate vellum, these issues disappear.
+        hqImport("analytix/js/appcues").then(function() {
+            $.getScript(initialPageData("requirejs_static_url"), function() {
+                define("jquery", [], function () { return window.jQuery; });
+                define("jquery.bootstrap", ["jquery"], function () {});
+                define("underscore", [], function () { return window._; });
+                define("moment", [], function () { return window.moment; });
+                define("vellum/hqAnalytics", [], function () {
+                    function workflow(message) {
+                        hqImport('analytix/js/kissmetrix').track.event(message);
+                    }
 
-            function usage(label, group, message) {
-                hqImport('analytix/js/google').track.event(label, group, message);
-            }
+                    function usage(label, group, message) {
+                        hqImport('analytix/js/google').track.event(label, group, message);
+                    }
 
-            function fbUsage(group, message) {
-                usage("Form Builder", group, message);
-            }
+                    function fbUsage(group, message) {
+                        usage("Form Builder", group, message);
+                    }
 
-            return {
-                fbUsage: fbUsage,
-                usage: usage,
-                workflow: workflow,
-            };
-        });
+                    return {
+                        fbUsage: fbUsage,
+                        usage: usage,
+                        workflow: workflow,
+                    };
+                });
 
-        require.config({
-            /* to use non-built files in HQ:
-                * clone Vellum into submodules/formdesigner
-                * Run make in that directory (requires node.js)
-                * set settings.VELLUM_DEBUG to "dev" or "dev-min"
-            */
-            baseUrl: initial_page_data('requirejs_url'),
-            // handle very bad connections
-            waitSeconds: 60,
-            urlArgs: initial_page_data('requirejs_args'),
-            paths: {
-                'jquery.vellum': 'main',
-            },
-        });
+                require.config({
+                    /* to use non-built files in HQ:
+                        * clone Vellum into submodules/formdesigner
+                        * Run make in that directory (requires node.js)
+                        * set settings.VELLUM_DEBUG to "dev" or "dev-min"
+                    */
+                    baseUrl: initialPageData('requirejs_url'),
+                    // handle very bad connections
+                    waitSeconds: 60,
+                    urlArgs: initialPageData('requirejs_args'),
+                    paths: {
+                        'jquery.vellum': 'main',
+                    },
+                });
 
-        require(["jquery", "jquery.vellum", "moment"], function ($) {
-            $(function () {
-                $("#edit").hide();
-                $('#hq-footer').hide();
-                $('#formdesigner').vellum(VELLUM_OPTIONS);
-
-                var notification_options = initial_page_data("notification_options");
-                if (notification_options) {
-                    var notifications = hqImport('app_manager/js/forms/app_notifications'),
-                        vellum = $("#formdesigner").vellum("get");
-                    // initialize redis
-                    WS4Redis({
-                        uri: notification_options.WEBSOCKET_URI + notification_options.notify_facility + '?subscribe-broadcast',
-                        receive_message: notifications.alertUser(notification_options.user_id, vellum.alertUser, vellum),
-                        heartbeat_msg: notification_options.WS4REDIS_HEARTBEAT,
+                require(["jquery", "jquery.vellum", "moment"], function ($) {
+                    $(function () {
+                        $("#edit").hide();
+                        $('#hq-footer').hide();
+                        $('#formdesigner').vellum(VELLUM_OPTIONS);
+                        var notificationOptions = initialPageData("notification_options");
+                        if (notificationOptions) {
+                            var notifications = hqImport('app_manager/js/forms/app_notifications'),
+                                vellum = $("#formdesigner").vellum("get");
+                            // initialize redis
+                            WS4Redis({
+                                uri: notificationOptions.WEBSOCKET_URI + notificationOptions.notify_facility + '?subscribe-broadcast',
+                                receive_message: notifications.alertUser(notificationOptions.user_id, vellum.alertUser, vellum),
+                                heartbeat_msg: notificationOptions.WS4REDIS_HEARTBEAT,
+                            });
+                        }
                     });
+                });
+                hqImport('analytix/js/kissmetrix').track.event('Entered the Form Builder');
+
+                hqImport('app_manager/js/app_manager').setPrependedPageTitle("\u270E ", true);
+                hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Edit Form"));
+
+                if (initialPageData('form_uses_cases')) {
+                    // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
+                    var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
+                        attempts = attempts || 0;
+                        if ($(selector).length) {
+                            var $toggleParent = $(selector);
+                            $toggleParent.prepend(layout);
+                            callback();
+                        } else if (attempts <= 30) {
+                            // give up appending element after waiting 30 seconds to load
+                            setTimeout(function () {
+                                _prependTemplateToSelector(selector, layout, attempts++, callback);
+                            }, 1000);
+                        }
+                    };
+                    _prependTemplateToSelector(
+                        '.fd-form-actions',
+                        $('#js-fd-manage-case').html(),
+                        0,
+                        function () {
+                        }
+                    );
                 }
+
+                var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
+                    editDetails = hqImport('app_manager/js/forms/edit_form_details');
+                hqImport('app_manager/js/app_manager').updatePageTitle(initialPageData("form_name"));
+                editDetails.initName(
+                    initialPageData("form_name"),
+                    reverse("edit_form_attr", "name")
+                );
+                editDetails.initComment(
+                    initialPageData("form_comment").replace(/\\n/g, "\n"),
+                    reverse("edit_form_attr", "comment")
+                );
+                editDetails.setUpdateCallbackFn(function (name) {
+                    $('#formdesigner .fd-content-left .fd-head-text').text(name);
+                    $('.variable-form_name').text(name);
+                    hqImport('app_manager/js/app_manager').updatePageTitle(name);
+                    $('#edit-form-name-modal').modal('hide');
+                    $('#edit-form-name-modal').find('.disable-on-submit').enableButton();
+                });
+                $('#edit-form-name-modal').koApplyBindings(editDetails);
+                $("#edit-form-name-modal button[type='submit']").click(function() {
+                    hqImport('analytix/js/kissmetrix').track.event("Renamed form from form builder");
+                });
             });
-        });
-        hqImport('analytix/js/kissmetrix').track.event('Entered the Form Builder');
-
-        hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Edit Form"));
-
-        if (initial_page_data('form_uses_cases')) {
-            // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
-            var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
-                attempts = attempts || 0;
-                if ($(selector).length) {
-                    var $toggleParent = $(selector);
-                    $toggleParent.prepend(layout);
-                    callback();
-                } else if (attempts <= 30) {
-                    // give up appending element after waiting 30 seconds to load
-                    setTimeout(function () {
-                        _prependTemplateToSelector(selector, layout, attempts++, callback);
-                    }, 1000);
-                }
-            };
-            _prependTemplateToSelector(
-                '.fd-form-actions',
-                $('#js-fd-manage-case').html(),
-                0,
-                function () {
-                }
-            );
-        }
-
-        var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
-            editDetails = hqImport('app_manager/js/forms/edit_form_details');
-        editDetails.initName(
-            initial_page_data("form_name"),
-            reverse("edit_form_attr", "name")
-        );
-        editDetails.initComment(
-            initial_page_data("form_comment").replace(/\\n/g, "\n"),
-            reverse("edit_form_attr", "comment")
-        );
-        editDetails.setUpdateCallbackFn(function (name) {
-            $('#formdesigner .fd-content-left .fd-head-text').text(name);
-            $('.variable-form_name').text(name);
-            hqImport('app_manager/js/app_manager').updatePageTitle(name);
-            $('#edit-form-name-modal').modal('hide');
-            $('#edit-form-name-modal').find('.disable-on-submit').enableButton();
-        });
-        $('#edit-form-name-modal').koApplyBindings(editDetails);
-        $("#edit-form-name-modal button[type='submit']").click(function() {
-            hqImport('analytix/js/kissmetrix').track.event("Renamed form from form builder");
         });
     });
 });

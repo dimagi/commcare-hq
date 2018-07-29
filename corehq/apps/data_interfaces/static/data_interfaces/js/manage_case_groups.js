@@ -1,25 +1,16 @@
-hqDefine("data_interfaces/js/manage_case_groups", [
-    "jquery",
-    "underscore",
-    "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/crud_paginated_list_init",
-    "hqwebapp/js/bulk_upload_file",
-], function(
-    $,
-    _,
-    initialPagedata
-) {
+hqDefine("data_interfaces/js/manage_case_groups", function() {
+    var initialPagedata = hqImport('hqwebapp/js/initial_page_data');
     $(function() {
         var bulkUploadId = initialPagedata.get("bulk_upload_id");
         if (bulkUploadId) {
             var isPollingActive = true,
                 attempts = 0;
-    
+
             var retry = function () {
                 attempts += 1;
                 setTimeout(pollStatus, 2000);
             };
-    
+
             var pollStatus = function () {
                 if (isPollingActive && attempts < 10) {
                     $.ajax({

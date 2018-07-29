@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import jsonfield
 import pytz
 import re
@@ -10,6 +11,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
+from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
@@ -33,7 +35,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
     get_case_timed_schedule_instances_for_schedule_id,
 )
-from corehq.sql_db.util import run_query_across_partitioned_databases
+from corehq.sql_db.util import run_query_across_partitioned_databases, get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
@@ -42,10 +44,11 @@ from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField
 from django.db import models, transaction
 from django.db.models import Q
 from corehq.apps.hqcase.utils import update_case
@@ -64,7 +67,10 @@ def _try_date_conversion(date_or_string):
         isinstance(date_or_string, six.string_types) and
         ALLOWED_DATE_REGEX.match(date_or_string)
     ):
-        date_or_string = parse(date_or_string)
+        try:
+            return parse(date_or_string)
+        except ValueError:
+            pass
 
     return date_or_string
 
@@ -97,7 +103,7 @@ class AutomaticUpdateRule(models.Model):
 
     locked_for_editing = models.BooleanField(default=False)
 
-    class Meta:
+    class Meta(object):
         app_label = "data_interfaces"
 
     class MigrationError(Exception):
@@ -165,6 +171,38 @@ class AutomaticUpdateRule(models.Model):
 
             return rule
 
+    @property
+    def references_parent_case(self):
+        for crierion in self.memoized_criteria:
+            definition = crierion.definition
+            if isinstance(definition, ClosedParentDefinition):
+                return True
+            elif (
+                isinstance(definition, MatchPropertyDefinition) and
+                property_references_parent(definition.property_name)
+            ):
+                return True
+
+        for action in self.memoized_actions:
+            definition = action.definition
+            if isinstance(definition, UpdateCaseDefinition):
+                for property_definition in definition.get_properties_to_update():
+                    if property_references_parent(property_definition.name):
+                        return True
+                    if (
+                        property_definition.value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY and
+                        property_references_parent(property_definition.value)
+                    ):
+                        return True
+            elif isinstance(definition, CreateScheduleInstanceActionDefinition):
+                if (
+                    property_references_parent(definition.reset_case_property_name) or
+                    property_references_parent(definition.start_date_case_property)
+                ):
+                    return True
+
+        return False
+
     @classmethod
     def by_domain(cls, domain, workflow, active_only=True):
         additional_filters = {}
@@ -177,6 +215,10 @@ class AutomaticUpdateRule(models.Model):
             deleted=False,
             **additional_filters
         )
+
+    @classmethod
+    def domain_has_conditional_alerts(cls, domain):
+        return cls.by_domain(domain, cls.WORKFLOW_SCHEDULING, active_only=False).exists()
 
     @classmethod
     @quickcache(['domain', 'workflow', 'active_only'], timeout=30 * 60)
@@ -216,14 +258,14 @@ class AutomaticUpdateRule(models.Model):
         return date
 
     @classmethod
-    def get_case_ids(cls, domain, case_type, boundary_date=None):
+    def get_case_ids(cls, domain, case_type, boundary_date=None, db=None):
         if should_use_sql_backend(domain):
-            return cls._get_case_ids_from_postgres(domain, case_type, boundary_date=boundary_date)
+            return cls._get_case_ids_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
         else:
             return cls._get_case_ids_from_es(domain, case_type, boundary_date=boundary_date)
 
     @classmethod
-    def _get_case_ids_from_postgres(cls, domain, case_type, boundary_date=None):
+    def _get_case_ids_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
         q_expression = Q(
             domain=domain,
             type=case_type,
@@ -234,7 +276,12 @@ class AutomaticUpdateRule(models.Model):
         if boundary_date:
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
-        return run_query_across_partitioned_databases(CommCareCaseSQL, q_expression, values=['case_id'])
+        if db:
+            for c_id in CommCareCaseSQL.objects.using(db).filter(q_expression).values_list('case_id', flat=True):
+                yield c_id
+        else:
+            for c_id in run_query_across_partitioned_databases(CommCareCaseSQL, q_expression, values=['case_id']):
+                yield c_id
 
     @classmethod
     def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
@@ -469,7 +516,7 @@ class CaseRuleCriteria(models.Model):
 
 class CaseRuleCriteriaDefinition(models.Model):
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def matches(self, case, now):
@@ -487,6 +534,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
     MATCH_HAS_VALUE = 'HAS_VALUE'
     MATCH_HAS_NO_VALUE = 'HAS_NO_VALUE'
+    MATCH_REGEX = 'REGEX'
 
     MATCH_CHOICES = (
         MATCH_DAYS_BEFORE,
@@ -495,6 +543,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
         MATCH_NOT_EQUAL,
         MATCH_HAS_VALUE,
         MATCH_HAS_NO_VALUE,
+        MATCH_REGEX,
     )
 
     property_name = models.CharField(max_length=126)
@@ -571,6 +620,22 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     def check_has_no_value(self, case, now):
         return not self.check_has_value(case, now)
 
+    def check_regex(self, case, now):
+        try:
+            regex = re.compile(self.property_value)
+        except (re.error, ValueError, TypeError):
+            return False
+
+        for value in self.get_case_values(case):
+            if isinstance(value, six.string_types):
+                try:
+                    if regex.match(value):
+                        return True
+                except (re.error, ValueError, TypeError):
+                    pass
+
+        return False
+
     def matches(self, case, now):
         return {
             self.MATCH_DAYS_BEFORE: self.check_days_before,
@@ -579,6 +644,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             self.MATCH_NOT_EQUAL: self.check_not_equal,
             self.MATCH_HAS_VALUE: self.check_has_value,
             self.MATCH_HAS_NO_VALUE: self.check_has_no_value,
+            self.MATCH_REGEX: self.check_regex,
         }.get(self.match_type)(case, now)
 
 
@@ -644,7 +710,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
     property_value = models.CharField(max_length=126, null=True)
     match_type = models.CharField(max_length=15)
 
-    class Meta:
+    class Meta(object):
         app_label = "data_interfaces"
 
     def get_case_values(self, case):
@@ -800,7 +866,7 @@ class CaseRuleActionResult(object):
 
 class CaseRuleActionDefinition(models.Model):
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def when_case_matches(self, case, rule):
@@ -1073,17 +1139,19 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
     reset_case_property_name = models.CharField(max_length=126, null=True)
 
     # (Optional) The name of a case property which represents the date on which to start
-    # the schedule. If present, this option overrides the start date information in
-    # scheduler_module_info. If no start date information is configured on this
-    # CreateScheduleInstanceActionDefinition, then the date the rule is satisfied will
-    # be used as the start date for the schedule.
+    # the schedule instance.
     # Only applicable when the schedule is a TimedSchedule
     start_date_case_property = models.CharField(max_length=126, null=True)
 
-    # A dict with the structure represented by SchedulerModuleInfo;
-    # when enabled=True in this dict, the framework uses info related to the
-    # specified visit number to set the start date for any schedule instances
-    # created from this CreateScheduleInstanceActionDefinition.
+    # (Optional) A specific date which represents the date on which to start
+    # the schedule instance.
+    # Only applicable when the schedule is a TimedSchedule
+    specific_start_date = models.DateField(null=True)
+
+    # (Optional) A dict with the structure represented by SchedulerModuleInfo.
+    # enabled must be set to True in this dict in order for it to count.
+    # the framework uses info related to the specified visit number to set
+    # the start date for any schedule instances created from this CreateScheduleInstanceActionDefinition.
     # Only applicable when the schedule is a TimedSchedule
     scheduler_module_info = jsonfield.JSONField(default=dict)
 
@@ -1163,22 +1231,35 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
             kwargs = {}
             scheduler_module_info = self.get_scheduler_module_info()
 
+            # Figure out what to use as the start date of the schedule instance.
+            # Use the information from start_date_case_property, specific_start_date, or
+            # scheduler_module_info. If no start date configuration is provided in
+            # any of those options, then the date the rule is satisfied will be used
+            # as the start date for the schedule instance.
+
             if self.start_date_case_property:
                 start_date = self.get_date_from_start_date_case_property(case)
                 if not start_date:
+                    # The case property doesn't reference a date, so delete any
+                    # schedule instances pertaining to this rule and case and return
                     self.delete_schedule_instances(case)
                     return CaseRuleActionResult()
 
                 kwargs['start_date'] = start_date
+            elif self.specific_start_date:
+                kwargs['start_date'] = self.specific_start_date
             elif scheduler_module_info.enabled:
                 try:
                     case_phase_matches, schedule_instance_start_date = VisitSchedulerIntegrationHelper(case,
                         scheduler_module_info).get_result()
                 except VisitSchedulerIntegrationHelper.VisitSchedulerIntegrationException:
+                    self.delete_schedule_instances(case)
                     self.notify_scheduler_integration_exception(case, scheduler_module_info)
                     return CaseRuleActionResult()
 
                 if not case_phase_matches:
+                    # The case is not in the matching schedule phase, so delete
+                    # schedule instances pertaining to this rule and case and return
                     self.delete_schedule_instances(case)
                     return CaseRuleActionResult()
                 else:
@@ -1237,7 +1318,7 @@ class AutomaticUpdateAction(models.Model):
     property_value_type = models.CharField(max_length=15,
                                            default=EXACT)
 
-    class Meta:
+    class Meta(object):
         app_label = "data_interfaces"
 
 
@@ -1254,7 +1335,7 @@ class CaseRuleSubmission(models.Model):
     # A shortcut to keep track of which forms get archived
     archived = models.BooleanField(default=False)
 
-    class Meta:
+    class Meta(object):
         index_together = (
             ('domain', 'created_on'),
             ('domain', 'rule', 'created_on'),
@@ -1327,28 +1408,51 @@ class DomainCaseRuleRun(models.Model):
     finished_on = models.DateTimeField(null=True)
     status = models.CharField(max_length=1)
 
-    cases_checked = models.IntegerField(null=True)
-    num_updates = models.IntegerField(null=True)
-    num_closes = models.IntegerField(null=True)
-    num_related_updates = models.IntegerField(null=True)
-    num_related_closes = models.IntegerField(null=True)
-    num_creates = models.IntegerField(null=True)
+    cases_checked = models.IntegerField(default=0)
+    num_updates = models.IntegerField(default=0)
+    num_closes = models.IntegerField(default=0)
+    num_related_updates = models.IntegerField(default=0)
+    num_related_closes = models.IntegerField(default=0)
+    num_creates = models.IntegerField(default=0)
 
-    class Meta:
+    dbs_completed = JSONField(default=list)
+
+    class Meta(object):
         index_together = (
             ('domain', 'started_on'),
         )
 
-    def done(self, status, cases_checked, result):
+    @classmethod
+    def done(cls, run_id, status, cases_checked, result, db=None):
         if not isinstance(result, CaseRuleActionResult):
             raise TypeError("Expected an instance of CaseRuleActionResult")
 
-        self.status = status
-        self.cases_checked = cases_checked
-        self.num_updates = result.num_updates
-        self.num_closes = result.num_closes
-        self.num_related_updates = result.num_related_updates
-        self.num_related_closes = result.num_related_closes
-        self.num_creates = result.num_creates
-        self.finished_on = datetime.utcnow()
-        self.save()
+        if status not in (cls.STATUS_HALTED, cls.STATUS_FINISHED):
+            raise ValueError("Expected STATUS_HALTED or STATUS_FINISHED")
+
+        with CriticalSection(['update-domain-case-rule-run-%s' % run_id]):
+            run = cls.objects.get(pk=run_id)
+
+            run.cases_checked += cases_checked
+            run.num_updates += result.num_updates
+            run.num_closes += result.num_closes
+            run.num_related_updates += result.num_related_updates
+            run.num_related_closes += result.num_related_closes
+            run.num_creates += result.num_creates
+
+            if db:
+                run.dbs_completed.append(db)
+                all_dbs = get_db_aliases_for_partitioned_query()
+
+                if set(all_dbs) == set(run.dbs_completed):
+                    run.finished_on = datetime.utcnow()
+            else:
+                run.finished_on = datetime.utcnow()
+
+            if status == cls.STATUS_HALTED:
+                run.status = status
+            elif status == cls.STATUS_FINISHED and run.status != cls.STATUS_HALTED and run.finished_on:
+                run.status = status
+
+            run.save()
+            return run

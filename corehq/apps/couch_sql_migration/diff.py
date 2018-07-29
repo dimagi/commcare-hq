@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff
 
 PARTIAL_DIFFS = {
@@ -99,34 +100,34 @@ PARTIAL_DIFFS = {
 
 FORM_IGNORED_DIFFS = (
     FormJsonDiff(
-        diff_type=u'missing', path=(u'history', u'[*]', u'doc_type'),
-        old_value=u'XFormOperation', new_value=Ellipsis
+        diff_type='missing', path=('history', '[*]', 'doc_type'),
+        old_value='XFormOperation', new_value=Ellipsis
     ),
     FormJsonDiff(
-        diff_type=u'diff', path=(u'doc_type',),
-        old_value=u'HQSubmission', new_value=u'XFormInstance'
+        diff_type='diff', path=('doc_type',),
+        old_value='HQSubmission', new_value='XFormInstance'
     ),
-    FormJsonDiff(diff_type=u'missing', path=(u'deleted_on',), old_value=Ellipsis, new_value=None),
-    FormJsonDiff(diff_type=u'missing', path=(u'location_',), old_value=[], new_value=Ellipsis),
-    FormJsonDiff(diff_type=u'missing', path=(u'form', u'case', u'#text'), old_value=u'', new_value=Ellipsis),
-    FormJsonDiff(diff_type=u'type', path=(u'xmlns',), old_value=None, new_value=u''),
-    FormJsonDiff(diff_type=u'type', path=(u'initial_processing_complete',), old_value=None, new_value=True),
-    FormJsonDiff(diff_type=u'missing', path=(u'backend_id',), old_value=Ellipsis, new_value=u'sql'),
+    FormJsonDiff(diff_type='missing', path=('deleted_on',), old_value=Ellipsis, new_value=None),
+    FormJsonDiff(diff_type='missing', path=('location_',), old_value=[], new_value=Ellipsis),
+    FormJsonDiff(diff_type='missing', path=('form', 'case', '#text'), old_value='', new_value=Ellipsis),
+    FormJsonDiff(diff_type='type', path=('xmlns',), old_value=None, new_value=''),
+    FormJsonDiff(diff_type='type', path=('initial_processing_complete',), old_value=None, new_value=True),
+    FormJsonDiff(diff_type='missing', path=('backend_id',), old_value=Ellipsis, new_value='sql'),
 )
 
 CASE_IGNORED_DIFFS = (
-    FormJsonDiff(diff_type=u'type', path=(u'name',), old_value=u'', new_value=None),
-    FormJsonDiff(diff_type=u'type', path=(u'closed_by',), old_value=u'', new_value=None),
-    FormJsonDiff(diff_type=u'missing', path=(u'location_id',), old_value=Ellipsis, new_value=None),
-    FormJsonDiff(diff_type=u'missing', path=(u'referrals',), old_value=[], new_value=Ellipsis),
-    FormJsonDiff(diff_type=u'missing', path=(u'location_',), old_value=[], new_value=Ellipsis),
-    FormJsonDiff(diff_type=u'type', path=(u'type',), old_value=None, new_value=u''),
+    FormJsonDiff(diff_type='type', path=('name',), old_value='', new_value=None),
+    FormJsonDiff(diff_type='type', path=('closed_by',), old_value='', new_value=None),
+    FormJsonDiff(diff_type='missing', path=('location_id',), old_value=Ellipsis, new_value=None),
+    FormJsonDiff(diff_type='missing', path=('referrals',), old_value=[], new_value=Ellipsis),
+    FormJsonDiff(diff_type='missing', path=('location_',), old_value=[], new_value=Ellipsis),
+    FormJsonDiff(diff_type='type', path=('type',), old_value=None, new_value=''),
     # this happens for cases where the creation form has been archived but the case still has other forms
-    FormJsonDiff(diff_type=u'type', path=(u'owner_id',), old_value=None, new_value=u''),
-    FormJsonDiff(diff_type=u'missing', path=(u'closed_by',), old_value=Ellipsis, new_value=None),
-    FormJsonDiff(diff_type=u'type', path=(u'external_id',), old_value=u'', new_value=None),
-    FormJsonDiff(diff_type=u'missing', path=(u'deleted_on',), old_value=Ellipsis, new_value=None),
-    FormJsonDiff(diff_type=u'missing', path=(u'backend_id',), old_value=Ellipsis, new_value=u'sql'),
+    FormJsonDiff(diff_type='type', path=('owner_id',), old_value=None, new_value=''),
+    FormJsonDiff(diff_type='missing', path=('closed_by',), old_value=Ellipsis, new_value=None),
+    FormJsonDiff(diff_type='type', path=('external_id',), old_value='', new_value=None),
+    FormJsonDiff(diff_type='missing', path=('deleted_on',), old_value=Ellipsis, new_value=None),
+    FormJsonDiff(diff_type='missing', path=('backend_id',), old_value=Ellipsis, new_value='sql'),
 )
 
 RENAMED_FIELDS = {

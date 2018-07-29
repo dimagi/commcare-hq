@@ -37,36 +37,12 @@
 
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    {% include 'cloudcare/includes/formplayer-inline.html' %}
+{% block js %}{{ block.super }}
+    <script src="{% static "reports/js/edit_submission.js" %}"></script>
 {% endblock %}
 
-{% block head %}{{ block.super }}
-    <script>
-    $(function () {
-        GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is a global variable depended on by touchforms
-        var edit_context = {{ edit_context|JSON }};
-        var uses_sql_backend = {{ use_sqlite_backend|JSON }};
-        var username = "{{ username }}";
-        var edit_formplayer = {{ edit_formplayer|JSON }};
-        var restoreAs = edit_context.sessionData.username;
-        $('#edit-container').inlineFormplayer({
-            formUrl: edit_context.formUrl,
-            submitUrl: edit_context.submitUrl,
-            sessionData: edit_context.sessionData,
-            uses_sql_backend: uses_sql_backend,
-            formplayerEnabled: edit_formplayer,
-            domain: edit_context.domain,
-            username: username,
-            restoreAs: restoreAs,
-            onsubmit: function () {
-                window.location.href = edit_context.returnUrl;
-            },
-            onload: function () {
-            }
-        });
-    });
-    </script>
+{% block js-inline %}{{ block.super }}
+    {% include 'cloudcare/includes/formplayer-inline.html' %}
 {% endblock %}
 
 {% block title %}{% trans 'Edit Submission' %}{% endblock %}
@@ -75,6 +51,19 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'edit_context' edit_context %}
+    {% initial_page_data 'edit_formplayer' edit_formplayer %}
+    {% initial_page_data 'maps_api_key' maps_api_key %}
+    {% initial_page_data 'use_sqlite_backend' use_sqlite_backend %}
+    {% initial_page_data 'username' username %}
+
+    <div class='alert alert-info'>
+        {% blocktrans %}
+            This page will be removed in August 2018. Use the "Clean Form Submission" button on the form submission page
+            to edit this form.
+        {% endblocktrans %}
+    </div>
+
     <div class="inline-touchforms" data-bind="template: { name: 'form-fullform-ko-template' }" id="edit-container"></div>
     <div id="loading" class="hq-loading" style="display: none;">
         <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />

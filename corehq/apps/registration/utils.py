@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import logging
 from django.utils.translation import ugettext
 import uuid
@@ -24,6 +25,8 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID
+from corehq import toggles
+from corehq.util.view_utils import absolute_reverse
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -36,7 +39,6 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.first_name = full_name[0]
     new_user.last_name = full_name[1]
     new_user.email = username
-    new_user.email_opt_out = False  # auto add new users
     new_user.subscribed_to_commcare_users = False
     new_user.eula.signed = True
     new_user.eula.date = now
@@ -102,7 +104,10 @@ def request_new_domain(request, form, is_new_user=True):
         # domains with no subscription are equivalent to be on free Community plan
         create_30_day_advanced_trial(new_domain, current_user.username)
     else:
-        ensure_explicit_community_subscription(new_domain.name, date.today())
+        ensure_explicit_community_subscription(
+            new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
+            web_user=current_user.username,
+        )
 
     UserRole.init_domain_with_presets(new_domain.name)
 
@@ -129,52 +134,12 @@ def request_new_domain(request, form, is_new_user=True):
         send_domain_registration_email(request.user.email,
                                        dom_req.domain,
                                        dom_req.activation_guid,
-                                       request.user.get_full_name())
+                                       request.user.get_full_name(),
+                                       request.user.first_name)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
     send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
-
-
-REGISTRATION_EMAIL_BODY_HTML = u"""
-<p><h2>30 Day Free Trial</h2></p>
-<p>Welcome to your 30 day free trial! Evaluate all of our features for the next 30 days to decide which plan is right for you. Unless you subscribe to a paid plan, at the end of the 30 day trial you will be subscribed to the free Community plan. Read more about our pricing plans <a href="{pricing_link}">here</a>.</p>
-<p><h2>Want to learn more?</h2></p>
-<p>Check out our tutorials and other documentation on the <a href="{wiki_link}">CommCare Help Site</a>, the home of all CommCare documentation.</p>
-<p><h2>Need Support?</h2></p>
-<p>We encourage you to join the CommCare Forum, where CommCare users from all over the world ask each other questions and share information. Join <a href="{forum_link}">here</a></p>
-<p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page. Our developers will look into the problem as soon as possible.</p>
-<p>We hope you enjoy your experience with CommCareHQ!</p>
-<p>The CommCareHQ Team</p>
-
-<p>If your email viewer won't permit you to click on the link above, cut and paste the following link into your web browser:
-{registration_link}
-</p>
-"""
-
-REGISTRATION_EMAIL_BODY_PLAINTEXT = u"""
-30 Day Free Trial
-
-Welcome to your 30 day free trial! Evaluate all of our features for the next 30 days to decide which plan is right for you. Unless you subscribe to a paid plan, at the end of the 30 day trial you will be subscribed to the free Community plan. Read more about our pricing plans:
-{pricing_link}
-
-Want to learn more?
-
-Check out our tutorials and other documentation on the CommCare Help Site, the home of all CommCare documentation:
-{wiki_link}
-
-Need Support?
-
-We encourage you to join the CommCare Forum, where CommCare users from all over the world ask each other questions and share information. Join here:
-{forum_link}
-
-If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page. Our developers will look into the problem as soon as possible.
-
-We hope you enjoy your experience with CommCareHQ!
-
-The CommCareHQ Team
-
-"""
 
 
 WIKI_LINK = 'http://help.commcarehq.org'
@@ -182,15 +147,15 @@ FORUM_LINK = 'https://forum.dimagi.com/'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
-def send_domain_registration_email(recipient, domain_name, guid, full_name):
+def send_domain_registration_email(recipient, domain_name, guid, full_name, first_name):
     DNS_name = get_site_domain()
     registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
-
     params = {
         "domain": domain_name,
         "pricing_link": PRICING_LINK,
         "registration_link": registration_link,
         "full_name": full_name,
+        "first_name": first_name,
         "forum_link": FORUM_LINK,
         "wiki_link": WIKI_LINK,
         'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,
@@ -203,8 +168,7 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
     try:
         send_html_email_async.delay(subject, recipient, message_html,
                                     text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL,
-                                    ga_track=True)
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -218,7 +182,7 @@ def send_new_request_update_email(user, requesting_ip, entity_name, entity_type=
         message = "A brand new user just requested a %s called %s." % (entity_texts[0], entity_name)
     else:
         message = "An existing user just created a new %s called %s." % (entity_texts[0], entity_name)
-    message = u"""%s
+    message = """%s
 
 Details include...
 
@@ -234,11 +198,36 @@ You can view the %s here: %s""" % (
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
         send_mail_async.delay(
-            u"New %s: %s" % (entity_texts[0], entity_name),
+            "New %s: %s" % (entity_texts[0], entity_name),
             message, settings.SERVER_EMAIL, recipients
         )
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
+
+
+def send_mobile_experience_reminder(recipient, full_name):
+    url = absolute_reverse("login")
+
+    params = {
+        "full_name": full_name,
+        "url": url,
+        'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+    }
+    message_plaintext = render_to_string(
+        'registration/email/mobile_signup_reminder.txt', params)
+    message_html = render_to_string(
+        'registration/email/mobile_signup_reminder.html', params)
+
+    subject = ugettext('Visit CommCareHQ on your computer!')
+
+    try:
+        send_html_email_async.delay(subject, recipient, message_html,
+                                    text_content=message_plaintext,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
+    except Exception:
+        logging.warning(
+            "Can't send email, but the message was:\n%s" % message_plaintext)
+        raise
 
 
 # Only new-users are eligible for advanced trial

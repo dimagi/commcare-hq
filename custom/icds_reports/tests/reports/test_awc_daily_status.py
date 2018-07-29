@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -7,7 +8,7 @@ from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_da
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestAWCDailyStatus(TestCase):
 
     def test_map_data(self):
@@ -22,7 +23,7 @@ class TestAWCDailyStatus(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                    "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
                     "average": 0.0,
                     "period": "Daily",
                     'extended_info': [
@@ -68,7 +69,7 @@ class TestAWCDailyStatus(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                    "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
                     "average": 0.0,
                     "extended_info": [
                         {
@@ -125,7 +126,7 @@ class TestAWCDailyStatus(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                    "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
                     "average": 0.0,
                     "period": "Daily",
                     'extended_info': [
@@ -541,7 +542,7 @@ class TestAWCDailyStatus(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
                 "tooltips_data": {
                     "s2": {
                         "in_day": 0,
@@ -582,7 +583,7 @@ class TestAWCDailyStatus(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
                 "tooltips_data": {
                     "s2": {
                         "in_day": 0,

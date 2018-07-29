@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import itertools
 from django.test.testcases import SimpleTestCase
 from mock import patch

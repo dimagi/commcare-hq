@@ -20,6 +20,7 @@ from corehq.util.test_utils import generate_cases, trap_extra_setup
 from dimagi.ext.couchdbkit import Document
 from mock import patch
 import six
+from io import open
 
 
 class BaseTestCase(SimpleTestCase):
@@ -55,7 +56,7 @@ class BaseTestCase(SimpleTestCase):
             return os.path.exists(self.path)
 
         def open(self):
-            return open(self.path)
+            return open(self.path, encoding='utf-8')
 
         def listdir(self):
             return os.listdir(self.path)
@@ -551,7 +552,7 @@ class TestBlobMixinWithMigratingDbBeforeCopyToNew(TestBlobMixinWithS3Backend):
             super_ = super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
             if super_.exists():
                 return super_.open()
-            return open(self.fspath)
+            return open(self.fspath, encoding='utf-8')
 
         def listdir(self):
             super_ = super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
@@ -920,7 +921,7 @@ class PutInOldCopyToNewBlobDB(TemporaryMigratingBlobDB):
 
 class BaseFakeDocument(Document):
 
-    class Meta:
+    class Meta(object):
         app_label = "couch"
 
     saved = False
@@ -933,10 +934,10 @@ class BaseFakeDocument(Document):
 
     @classmethod
     def get_db(cls):
-        class fake_db:
+        class fake_db(object):
             dbname = "commcarehq_test"
 
-            class server:
+            class server(object):
 
                 @staticmethod
                 def next_uuid():
@@ -946,7 +947,7 @@ class BaseFakeDocument(Document):
 
 class FakeCouchDocument(mod.BlobMixin, BaseFakeDocument):
 
-    class Meta:
+    class Meta(object):
         app_label = "couch"
 
     doc_type = "FakeCouchDocument"
@@ -954,7 +955,7 @@ class FakeCouchDocument(mod.BlobMixin, BaseFakeDocument):
 
 class DeferredPutBlobDocument(mod.DeferredBlobMixin, BaseFakeDocument):
 
-    class Meta:
+    class Meta(object):
         app_label = "couch"
 
 
@@ -991,7 +992,7 @@ class AttachmentFallback(object):
 
 class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
 
-    class Meta:
+    class Meta(object):
         app_label = "couch"
 
     doc_type = "FallbackToCouchDocument"
@@ -999,7 +1000,7 @@ class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
 
     @classmethod
     def get_db(cls):
-        class fake_db:
+        class fake_db(object):
             dbname = "commcarehq_test"
 
             @staticmethod

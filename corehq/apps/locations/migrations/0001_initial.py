@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from __future__ import absolute_import
 from django.db import models, migrations
-import mptt.fields
 import jsonfield.fields
 
 
@@ -57,7 +56,7 @@ class Migration(migrations.Migration):
                 ('level', models.PositiveIntegerField(editable=False, db_index=True)),
                 ('_products', models.ManyToManyField(to='products.SQLProduct', null=True)),
                 ('location_type', models.ForeignKey(to='locations.LocationType', on_delete=models.CASCADE)),
-                ('parent', mptt.fields.TreeForeignKey(related_name='children', blank=True, to='locations.SQLLocation', null=True, on_delete=models.CASCADE)),
+                ('parent', models.ForeignKey(related_name='children', blank=True, to='locations.SQLLocation', null=True, on_delete=models.CASCADE)),
             ],
             options={
             },

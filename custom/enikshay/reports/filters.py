@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 
 from django.urls import reverse
@@ -14,7 +15,7 @@ from custom.enikshay.reports.utils import StubReport
 
 from django.utils.translation import ugettext_lazy as _
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class EnikshayLocationFilter(BaseMultipleOptionFilter):
@@ -96,67 +97,6 @@ class EnikshayMigrationFilter(BaseSingleOptionFilter):
         ('1', 'Show only migrated from Nikshay'),
         ('0', 'Show only eNikshay'),
     )
-
-
-class QuarterFilter(BaseReportFilter):
-    label = _('Quarter')
-    slug = 'datespan'
-
-    template = 'enikshay/filters/quarter_filter.html'
-
-    @classmethod
-    @memoized
-    def quarter_filter(cls):
-        return UCRQuarterFilter(name=cls.slug, label=cls.label, css_id=cls.slug)
-
-    @property
-    def years(self):
-        return self.quarter_filter().years
-
-    @property
-    def default_year(self):
-        return datetime.utcnow().year
-
-    @property
-    def year(self):
-        return self.request.GET.get('datespan-year') or self.default_year
-
-    @property
-    def quarter(self):
-        return self.request.GET.get('datespan-quarter') or 1
-
-    @property
-    def filter_context(self):
-        return {
-            'context_': {
-                'label': self.label
-            },
-            'filter': {
-                'years': self.years,
-                'year': self.year,
-                'quarter': self.quarter,
-                'css_id': self.quarter_filter().css_id
-            }
-
-        }
-
-    @classmethod
-    def get_value(cls, request, domain):
-        year = request.GET.get('datespan-year')
-        quarter = request.GET.get('datespan-quarter')
-
-        if not year or not quarter:
-            return cls.quarter_filter().default_value()
-
-        try:
-            return cls.quarter_filter().value(
-                **{
-                    'datespan-year': request.GET.get('datespan-year'),
-                    'datespan-quarter': request.GET.get('datespan-quarter')
-                }
-            )
-        except FilterValueException:
-            return cls.quarter_filter().default_value()
 
 
 class DateOfDiagnosisFilter(DatespanFilter):

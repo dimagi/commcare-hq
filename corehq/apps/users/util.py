@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 
 from django.conf import settings
@@ -7,6 +8,7 @@ from django.utils import html, safestring
 
 from couchdbkit.resource import ResourceNotFound
 from corehq import privileges, toggles
+from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.util.quickcache import quickcache
 
 from django.core.cache import cache
@@ -25,6 +27,7 @@ WEIRD_USER_IDS = [
     UNOWNED_EXTENSION_OWNER_ID,
     SYSTEM_USER_ID,
     ARCHIVED_CASE_OWNER_ID,
+    CALLCENTER_USER
 ]
 
 
@@ -184,12 +187,12 @@ def can_add_extra_mobile_workers(request):
 
 
 def user_display_string(username, first_name="", last_name=""):
-    full_name = u"{} {}".format(first_name or u'', last_name or u'').strip()
+    full_name = "{} {}".format(first_name or '', last_name or '').strip()
 
     def parts():
-        yield u'%s' % html.escape(raw_username(username))
+        yield '%s' % html.escape(raw_username(username))
         if full_name:
-            yield u' "%s"' % html.escape(full_name)
+            yield ' "%s"' % html.escape(full_name)
 
     return safestring.mark_safe(''.join(parts()))
 

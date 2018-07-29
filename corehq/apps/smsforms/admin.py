@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.contrib import admin
 from .models import *
 
@@ -9,21 +10,22 @@ class SQLXFormsSessionAdmin(admin.ModelAdmin):
     list_display = [
         'domain',
         'session_type',
+        'start_time',
         'modified_time',
-        'completed',
-        'user_id',
+        'session_is_open',
+        'connection_id',
+        'session_id',
+        'submission_id',
+    ]
+
+    search_fields = [
+        'domain',
         'session_id',
         'submission_id',
         'connection_id',
     ]
 
-    search_fields = [
-        'domain',
-        'user_id',
-        'session_id',
-        'submission_id',
-        'connection_id',
-    ]
+    ordering = ('-start_time',)
 
 
 admin.site.register(SQLXFormsSession, SQLXFormsSessionAdmin)

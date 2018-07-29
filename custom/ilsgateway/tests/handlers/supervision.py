@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.reminders import SUPERVISION_CONFIRM_YES, SUPERVISION_CONFIRM_NO

@@ -49,3 +49,21 @@ SELECT
     '{{ batch_id }}'
 FROM
     {{ domain_staging }}
+ON CONFLICT (domain_id) DO UPDATE
+SET domain = EXCLUDED.domain,
+    default_timezone = EXCLUDED.default_timezone,
+    hr_name = EXCLUDED.hr_name,
+    creating_user_id = EXCLUDED.creating_user_id,
+    project_type = EXCLUDED.project_type,
+    deleted = EXCLUDED.deleted,
+    is_active = EXCLUDED.is_active,
+    case_sharing = EXCLUDED.case_sharing,
+    commtrack_enabled = EXCLUDED.commtrack_enabled,
+    is_test = EXCLUDED.is_test,
+    location_restriction_for_users = EXCLUDED.location_restriction_for_users,
+    use_sql_backend = EXCLUDED.use_sql_backend,
+    first_domain_for_user = EXCLUDED.first_domain_for_user,
+    domain_last_modified = EXCLUDED.domain_last_modified,
+    domain_created_on = EXCLUDED.domain_created_on,
+    dim_last_modified = EXCLUDED.dim_last_modified,
+    batch_id = EXCLUDED.batch_id;

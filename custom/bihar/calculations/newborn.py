@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from custom.bihar.calculations.pregnancy import VisitedQuickly
 from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator, CaseCalculator
 from custom.bihar.calculations.utils.calculations import get_related_prop

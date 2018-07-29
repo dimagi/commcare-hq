@@ -13,11 +13,12 @@ describe('Download Directive', function () {
         beforeEach(module('icdsApp', function ($provide) {
             $provide.constant("userLocationId", null);
             $provide.constant("locationHierarchy", [
-                ['awc', ['supervisor']],
-                ['block', ['district']],
-                ['district', ['state']],
                 ['state', [null]],
-                ['supervisor', ['block']]]);
+                ['district', ['state']],
+                ['block', ['district']],
+                ['supervisor', ['block']],
+                ['awc', ['supervisor']],
+            ]);
             $provide.constant("haveAccessToFeatures", false);
         }));
 
@@ -52,6 +53,8 @@ describe('Download Directive', function () {
         });
 
         it('tests initialize months', function () {
+            controller.selectedYear = 2015;
+            controller.onSelectYear({id: 2015, value: 2015});
             var expected = [
                 {"name": "January", "id": 1},
                 {"name": "February", "id": 2},
@@ -70,6 +73,23 @@ describe('Download Directive', function () {
             assert.deepEqual(expected, controller.months);
         });
 
+        it('tests initialize months when we have current year', function () {
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+                {"name": "August", "id": 8},
+                {"name": "September", "id": 9},
+                {"name": "October", "id": 10},
+            ];
+
+            assert.deepEqual(expected, controller.months);
+        });
+
         it('tests selected month', function () {
             var result = controller.selectedMonth;
             var expected = 10;
@@ -78,7 +98,7 @@ describe('Download Directive', function () {
 
         it('tests initialize years', function () {
             var result = controller.years;
-            var expected = [{"name": 2014, "id": 2014}, {"name": 2015, "id": 2015}, {"name": 2016, "id": 2016}];
+            var expected = [];
             assert.deepEqual(expected, result);
         });
 
@@ -91,11 +111,11 @@ describe('Download Directive', function () {
         it('tests initialize hierarchy', function () {
             var result = controller.hierarchy;
             var expected = [
-                [{"name": "awc", "parents": ["supervisor"], "level": 4}],
-                [{"name": "block", "parents": ["district"], "level": 2}],
-                [{"name": "district", "parents": ["state"], "level": 1}],
                 [{"name": "state", "parents": [null], "level": 0}],
+                [{"name": "district", "parents": ["state"], "level": 1}],
+                [{"name": "block", "parents": ["district"], "level": 2}],
                 [{"name": "supervisor", "parents": ["block"], "level": 3}],
+                [{"name": "awc", "parents": ["supervisor"], "level": 4}],
             ];
 
             assert.deepEqual(expected, result);
@@ -151,7 +171,7 @@ describe('Download Directive', function () {
 
         it('tests get formats when child beneficiary list is not selected', function () {
             controller.selectedIndicator = 5;
-            var expected = [{"id": "csv", "name": "CSV"}, {"id": "xls", "name": "Excel"}];
+            var expected = [{"id": "csv", "name": "CSV"}, {"id": "xlsx", "name": "Excel"}];
 
             var result = controller.getFormats();
             assert.deepEqual(expected, result);
@@ -169,13 +189,57 @@ describe('Download Directive', function () {
 
         it('tests on indicator select when child beneficiary list is not selected', function () {
             controller.selectedIndicator = 5;
-            var expected = "xls";
+            var expected = "xlsx";
 
             controller.onIndicatorSelect();
             var result = controller.selectedFormat;
 
             assert.equal(expected, result);
         });
+
+        it('tests isDistrictOrBelowSelected - state selected', function () {
+            controller.selectedLocations = ['state', 'all'];
+            var result = controller.isDistrictOrBelowSelected();
+            assert.isFalse(result);
+        });
+
+        it('tests isDistrictOrBelowSelected - district selected', function () {
+            controller.selectedLocations = ['state', 'district'];
+            var result = controller.isDistrictOrBelowSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isBlockOrBelowSelected - district selected', function () {
+            controller.selectedLocations = ['state', 'district', 'all'];
+            var result = controller.isBlockOrBelowSelected();
+            assert.isFalse(result);
+        });
+
+        it('tests isBlockOrBelowSelected - block selected', function () {
+            controller.selectedLocations = ['state', 'district', 'block'];
+            var result = controller.isBlockOrBelowSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isAWCsSelected - AWC not selected', function () {
+            controller.selectedAWCs = [];
+            var result = controller.isAWCsSelected();
+            assert.isFalse(result);
+        });
+
+        it('tests isAWCsSelected - AWC selected', function () {
+            controller.selectedAWCs = ['awc_1', 'awc_2'];
+            var result = controller.isAWCsSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isCombinedPDFSelected', function () {
+            controller.selectedIndicator = 7;
+            controller.selectedPDFFormat = 'one';
+            var result = controller.isCombinedPDFSelected();
+            assert.isTrue(result);
+        });
+
     });
 
     describe('Download Directive have access to features', function() {
@@ -220,7 +284,7 @@ describe('Download Directive', function () {
             clock.restore();
         }));
 
-        it('tests not visible option to download issnip report', function () {
+        it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
             assert.equal(7, length);
         });
@@ -268,9 +332,9 @@ describe('Download Directive', function () {
             clock.restore();
         }));
 
-        it('tests not visible option to download issnip report', function () {
+        it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(6, length);
+            assert.equal(7, length);
         });
     });
 

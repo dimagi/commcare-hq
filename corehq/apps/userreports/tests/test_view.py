@@ -13,13 +13,12 @@ from corehq.apps.userreports import tasks
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 
@@ -141,7 +140,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         report_config.save()
         self.addCleanup(report_config.delete)
 
-        view = ConfigurableReport(request=HttpRequest())
+        view = ConfigurableReportView(request=HttpRequest())
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = report_config._id
@@ -162,10 +161,9 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         cls.case = cls._new_case({'fruit': 'apple', 'num1': 4, 'num2': 6})
         cls.case.save()
 
-    @run_with_all_ucr_backends
     def test_export_table(self):
         """
-        Test the output of ConfigurableReport.export_table()
+        Test the output of ConfigurableReportView.export_table()
         """
         report, view = self._build_report_and_view()
 
@@ -180,7 +178,6 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         ]
         self.assertEqual(view.export_table, expected)
 
-    @run_with_all_ucr_backends
     def test_paginated_build_table(self):
         """
         Simulate building a report where chunking occurs

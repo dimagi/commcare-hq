@@ -1,11 +1,10 @@
 {
   "domains": [
-    "enikshay",
-    "enikshay-reports-qa",
-    "enikshay-performance-test"
+    "enikshay"
   ],
   "server_environment": [
-    "enikshay"
+    "enikshay",
+    "softlayer"
   ],
   "data_source_table": "episode_2b_v5",
   "report_id": "summary_of_patients",

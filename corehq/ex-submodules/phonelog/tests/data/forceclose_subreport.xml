@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<device_report xmlns="http://code.javarosa.org/devicereport">
+  <device_id>014915000230428</device_id>
+  <report_date>2018-02-13T18:26:27.550-05</report_date>
+  <app_version>CommCare Android, version "2.43"(1). App v260. CommCare Version 2.43. Build 1, built on: 2018-02-13</app_version>
+  <user_subreport>
+    <user>
+      <username>t1</username>
+      <user_id>37cc2dcdb1abf5c16bab0763f435e6b7</user_id>
+      <sync_token>aedc8e424183dcdf50530d89094ff7d7</sync_token>
+    </user>
+  </user_subreport>
+  <log_subreport>
+    <log date="2018-02-22T17:21:43.608-05">
+      <type>forceclose</type>
+      <msg>java.lang.RuntimeException: Unable to start activity ComponentInfo{org.commcare.dalvik.debug/org.commcare.activities.MenuActivity}: java.lang.RuntimeException
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2416)
+        at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2476)
+        at android.app.ActivityThread.-wrap11(ActivityThread.java)
+        at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1344)
+        at android.os.Handler.dispatchMessage(Handler.java:102)
+        at android.os.Looper.loop(Looper.java:148)
+        at android.app.ActivityThread.main(ActivityThread.java:5417)
+        at java.lang.reflect.Method.invoke(Native Method)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+      Caused by: java.lang.RuntimeException
+        at org.commcare.activities.MenuActivity.onCreateSessionSafe(MenuActivity.java:35)
+        at org.commcare.activities.SessionAwareHelper.onCreateHelper(SessionAwareHelper.java:21)
+        at org.commcare.activities.SessionAwareCommCareActivity.onCreate(SessionAwareCommCareActivity.java:20)
+        at android.app.Activity.performCreate(Activity.java:6251)
+        at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1107)
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2369)
+        ... 9 more
+      </msg>
+    </log>
+  </log_subreport>
+  <force_close_subreport>
+    <force_close date="2018-02-22T17:21:21.232-05">
+      <type>forceclose</type>
+      <msg>java.lang.RuntimeException: Unable to start activity ComponentInfo{org.commcare.dalvik.debug/org.commcare.activities.MenuActivity}: java.lang.RuntimeException
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2416)
+        at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2476)
+        at android.app.ActivityThread.-wrap11(ActivityThread.java)
+        at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1344)
+        at android.os.Handler.dispatchMessage(Handler.java:102)
+        at android.os.Looper.loop(Looper.java:148)
+        at android.app.ActivityThread.main(ActivityThread.java:5417)
+        at java.lang.reflect.Method.invoke(Native Method)
+        at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+      Caused by: java.lang.RuntimeException
+        at org.commcare.activities.MenuActivity.onCreateSessionSafe(MenuActivity.java:35)
+        at org.commcare.activities.SessionAwareHelper.onCreateHelper(SessionAwareHelper.java:21)
+        at org.commcare.activities.SessionAwareCommCareActivity.onCreate(SessionAwareCommCareActivity.java:20)
+        at android.app.Activity.performCreate(Activity.java:6251)
+        at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1107)
+        at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2369)
+        ... 9 more</msg>
+      <app_build>260</app_build>
+      <android_version>6.0.1</android_version>
+      <device_model>Nexus 7</device_model>
+      <session_readable>readable_session</session_readable>
+      <session_serialized>AAAAAA==
+      </session_serialized>
+      <app_id>73d5f08b9d55fe48602906a89672c214</app_id>
+      <user_id>37cc2dcdb1abf5c16bab0763f435e6b7</user_id>
+    </force_close>
+  </force_close_subreport>
+  <meta>
+    <instanceID>c630b875-7933-44af-b46c-5054c2de0c0d</instanceID>
+  </meta>
+</device_report>

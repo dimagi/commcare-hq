@@ -4,7 +4,7 @@ import uuid
 from django.test import TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     get_sample_report_config, doc_to_change
@@ -131,10 +131,10 @@ class UCRMultiDBTest(TestCase):
             self.ds1_adapter.save(sample_doc)
 
         # ds 1 should have data, ds2 should not
-        ds1_rows = ReportFactory.from_spec(report_config_1).get_data()
+        ds1_rows = ConfigurableReportDataSource.from_spec(report_config_1).get_data()
         self.assertEqual(1, len(ds1_rows))
         self.assertEqual(num_docs, ds1_rows[0]['count'])
-        ds2_rows = ReportFactory.from_spec(report_config_2).get_data()
+        ds2_rows = ConfigurableReportDataSource.from_spec(report_config_2).get_data()
         self.assertEqual(0, len(ds2_rows))
 
         # save one doc to ds 2
@@ -142,9 +142,9 @@ class UCRMultiDBTest(TestCase):
         self.ds2_adapter.save(sample_doc)
 
         # ds 1 should still have same data, ds2 should now have one row
-        ds1_rows = ReportFactory.from_spec(report_config_1).get_data()
+        ds1_rows = ConfigurableReportDataSource.from_spec(report_config_1).get_data()
         self.assertEqual(1, len(ds1_rows))
         self.assertEqual(num_docs, ds1_rows[0]['count'])
-        ds2_rows = ReportFactory.from_spec(report_config_2).get_data()
+        ds2_rows = ConfigurableReportDataSource.from_spec(report_config_2).get_data()
         self.assertEqual(1, len(ds2_rows))
         self.assertEqual(1, ds2_rows[0]['count'])

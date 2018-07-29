@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import json
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
@@ -356,7 +357,3 @@ def get_cloudcare_app(domain, app_name):
         return look_up_app_json(domain, app[0]['_id'])
     else:
         raise ResourceNotFound(_("Not found application by name: %s") % app_name)
-
-
-def get_cloudcare_form_url(domain, app_build_id=None, module_id=None, form_id=None, case_id=None):
-    return reverse("formplayer_main", args=[domain])

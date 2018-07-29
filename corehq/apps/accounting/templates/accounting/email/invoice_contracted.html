@@ -1,26 +1,25 @@
-<p>Dear Finance team,</p>
+<p>Hello Dimagi Team member,</p>
 
 <p>
-The {{ plan_name }} plan subscription for project space {{ domain }} (attached to Billing account <strong>{{billing_account}}</strong> {% if salesforce_contract_id %} and Salesforce ID <strong>{{salesforce_contract_id}}</strong>){% endif %}), set as Contracted, has incurred a total of ${{amount_due}} additional charges in the past months. Those charges are linked to additional SMS or user charges that are not included in the Pre-paid software plan nor in any pre-paid additional SMS/Credits that would have been included in the contract and added as credits at the initial set-up of that subscription. You can find attached the detailed invoice.
+    You are listed as the Dimagi Contact related to the Billing Account <strong>{{billing_account}}</strong> for project space {{ domain }} (on the The CommCare Plan Edition) subscription, and we need your help determining how these charges should be handled. This project is currently set to type Implementation, which means we have an existing services contract that is funding the product subscription.
 </p>
 
-The billing contacts for this Billing Account are:
+<p>
+    In the past month, this account has incurred a total of $USD {{amount_due}} additional charges above what was already budgeted for in their current services contract. These charges are typically related to additional SMS or users that are not included in the pre-paid software plan nor in any pre-paid user or SMS credits that would have been included in the contract and added as credits as part of the initial set-up for the subscription.
+</p>
+
+Next Steps: Please review the attached detailed invoice, and to confirm one of the next steps outlined below:
 <ul>
-{% for billing_contact in billing_contacts %}
-<li><a href="mailto:{{billing_contact}}">{{billing_contact}}</a></li>
-{% endfor %}
+<li> These charges are real, and should be passed on to the client via GS </li>
+<li> These charges are real, and should be passed on to the client via accounts@ </li>
+<li> These charges are NOT real, or the charges are real but should be waived (if the users are test and can be deactivated or the customer should be on a higher plan level with more users included, etc) </li>
 </ul>
 
 <p>
-    The finance team is responsible for deciding when and how to communicate these additional charges/this invoice to the partner.
+    Please email your your PM, project backstop, and CC {{ accounts_email }} once you’ve determined the appropriate next steps.
 </p>
 
 <p>
-If you want to look at the detailed monthly invoices, you can go <a href="{{admin_invoices_url}}">here</a>
-</p>
-
-<p>
-Best Regards,
-The CommCare HQ Team
-<a href="http://www.commcarehq.org">www.commcarehq.org</a>
+Thanks,
+Accounts
 </p>

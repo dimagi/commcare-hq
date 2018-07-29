@@ -3,9 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-    <script src='{% static 'repeaters/js/add_form_repeater.js' %}'></script>
-{% endblock %}
+{% requirejs_main 'repeaters/js/add_form_repeater' %}
 
 {% block page_content %}
     {% registerurl "test_repeater" domain %}

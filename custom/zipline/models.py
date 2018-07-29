@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy as _
 
 import jsonfield
@@ -42,7 +43,7 @@ class EmergencyOrderStatusUpdate(models.Model):
         (STATUS_DELIVERED, _('Delivered'))
     )
 
-    class Meta:
+    class Meta(object):
         app_label = 'zipline'
         index_together = [
             ['order', 'package_number'],
@@ -127,7 +128,7 @@ class EmergencyOrderStatusUpdate(models.Model):
 
 class EmergencyOrder(models.Model):
 
-    class Meta:
+    class Meta(object):
         app_label = 'zipline'
 
     domain = models.CharField(max_length=126)
@@ -206,7 +207,7 @@ class EmergencyOrder(models.Model):
 
 class EmergencyOrderPackage(models.Model):
 
-    class Meta:
+    class Meta(object):
         app_label = 'zipline'
 
         index_together = [
@@ -294,7 +295,7 @@ class EmergencyOrderPackage(models.Model):
 
 class BaseOrderableProduct(models.Model):
 
-    class Meta:
+    class Meta(object):
         abstract = True
         app_label = 'zipline'
         unique_together = [

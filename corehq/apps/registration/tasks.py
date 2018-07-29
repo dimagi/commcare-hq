@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from celery.schedules import crontab
 from celery.task import periodic_task
 from django.conf import settings
@@ -34,6 +35,7 @@ def activation_24hr_reminder_email():
             "domain": request.domain,
             "registration_link": registration_link,
             "full_name": user.full_name,
+            "first_name": user.first_name,
             'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,
         }
 
@@ -46,6 +48,5 @@ def activation_24hr_reminder_email():
         send_html_email_async.delay(
             subject, request.new_user_username, message_html,
             text_content=message_plaintext,
-            email_from=settings.DEFAULT_FROM_EMAIL,
-            ga_track=True
+            email_from=settings.DEFAULT_FROM_EMAIL
         )

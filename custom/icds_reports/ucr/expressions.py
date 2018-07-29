@@ -1,15 +1,19 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 
 from jsonobject.base_properties import DefaultProperty
+from quickcache.django_quickcache import get_django_quickcache
 from six.moves import filter
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
+from corehq.apps.users.models import CommCareUser
 from corehq.elastic import mget_query
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -18,8 +22,6 @@ from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, Dict
 
 
 CUSTOM_UCR_EXPRESSIONS = [
-    ('icds_month_start', 'custom.icds_reports.ucr.expressions.month_start'),
-    ('icds_month_end', 'custom.icds_reports.ucr.expressions.month_end'),
     ('icds_parent_id', 'custom.icds_reports.ucr.expressions.parent_id'),
     ('icds_parent_parent_id', 'custom.icds_reports.ucr.expressions.parent_parent_id'),
     ('icds_get_case_forms_by_date', 'custom.icds_reports.ucr.expressions.get_case_forms_by_date'),
@@ -32,6 +34,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_get_app_version', 'custom.icds_reports.ucr.expressions.get_app_version'),
     ('icds_datetime_now', 'custom.icds_reports.ucr.expressions.datetime_now'),
     ('icds_boolean', 'custom.icds_reports.ucr.expressions.boolean_question'),
+    ('icds_user_location', 'custom.icds_reports.ucr.expressions.icds_user_location'),
 ]
 
 
@@ -125,7 +128,7 @@ class GetLastCasePropertyUpdateSpec(JsonObject):
     xmlns = ListProperty(required=False)
 
 
-class FormsInDateExpressionSpec(JsonObject):
+class FormsInDateExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('icds_get_case_forms_in_date')
     case_id_expression = DefaultProperty(required=True)
     xmlns = ListProperty(required=False)
@@ -313,62 +316,38 @@ class BooleanChoiceQuestion(JsonObject):
     nullable = BooleanProperty(default=True)
 
 
+icds_ucr_quickcache = get_django_quickcache(memoize_timeout=60, timeout=60 * 60)
+
+
+@icds_ucr_quickcache(('user_id',))
+def _get_user_location_id(user_id):
+    user = CommCareUser.get_db().get(user_id)
+    return user.get('user_data', {}).get('commcare_location_id')
+
+
+class ICDSUserLocation(JsonObject):
+    """Heavily cached expression to reduce queries to Couch
+    """
+    type = TypeProperty('icds_user_location')
+    user_id_expression = DefaultProperty(required=True)
+
+    def configure(self, user_id_expression):
+        self._user_id_expression = user_id_expression
+
+    def __call__(self, item, context=None):
+        user_id = self._user_id_expression(item, context)
+
+        if not user_id:
+            return None
+
+        return _get_user_location_id(user_id)
+
+    def __str__(self):
+        return "User's location id"
+
+
 def _datetime_now():
     return datetime.utcnow()
-
-
-def month_start(spec, context):
-    # fix offset to 3 months in past
-    spec = {
-        'type': 'month_start_date',
-        'date_expression': {
-            'date_expression': {
-                'expression': {
-                    'type': 'property_name',
-                    'property_name': 'modified_on'
-                },
-                'type': 'root_doc'
-            },
-            'type': 'add_months',
-            'months_expression': {
-                'type': 'evaluator',
-                'context_variables': {
-                    'iteration': {
-                        'type': 'base_iteration_number'
-                    }
-                },
-                'statement': 'iteration - 3'
-            }
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def month_end(spec, context):
-    # fix offset to 3 months in past
-    spec = {
-        'type': 'month_end_date',
-        'date_expression': {
-            'date_expression': {
-                'expression': {
-                    'type': 'property_name',
-                    'property_name': 'modified_on'
-                },
-                'type': 'root_doc'
-            },
-            'type': 'add_months',
-            'months_expression': {
-                'type': 'evaluator',
-                'context_variables': {
-                    'iteration': {
-                        'type': 'base_iteration_number'
-                    }
-                },
-                'statement': 'iteration - 3'
-            }
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
 
 
 def parent_id(spec, context):
@@ -768,6 +747,14 @@ def boolean_question(spec, context):
         }
     }
     return ExpressionFactory.from_spec(spec, context)
+
+
+def icds_user_location(spec, context):
+    wrapped = ICDSUserLocation.wrap(spec)
+    wrapped.configure(
+        user_id_expression=ExpressionFactory.from_spec(wrapped.user_id_expression, context)
+    )
+    return wrapped
 
 
 def icds_get_related_docs_ids(case_id):

@@ -2,27 +2,32 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import OrderedDict
 
-from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.reports.specs import ReportColumn, ExpressionColumn
+from corehq.apps.userreports.reports.filters.specs import create_filter_value
 from corehq.apps.userreports.util import get_table_name
 import six
 
 
 class ConfigurableReportDataSourceMixin(object):
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
+        from corehq.apps.userreports.models import DataSourceConfiguration
+        from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
         self.lang = None
         self.domain = domain
         if isinstance(config_or_config_id, DataSourceConfiguration):
             self._config = config_or_config_id
             self._config_id = self._config._id
+        elif isinstance(config_or_config_id, AggregateTableDefinition):
+            self._config = config_or_config_id
+            self._config_id = config_or_config_id.id
         else:
-            assert isinstance(config_or_config_id, six.string_types)
+            assert isinstance(config_or_config_id, six.string_types), \
+                '{} is not an allowed type'.format(type(config_or_config_id))
             self._config = None
             self._config_id = config_or_config_id
 
-        self._filters = {f.slug: f for f in filters}
+        self._filters = {f['slug']: f for f in filters}
         self._filter_values = {}
-        self._deferred_filters = {}
+        self._defer_fields = {}
         self._order_by = order_by
         self._aggregation_columns = aggregation_columns
         self._column_configs = OrderedDict()
@@ -37,11 +42,12 @@ class ConfigurableReportDataSourceMixin(object):
     @property
     def aggregation_columns(self):
         return self._aggregation_columns + [
-            deferred_filter.field for deferred_filter in self._deferred_filters.values()
-            if deferred_filter.field not in self._aggregation_columns]
+            deferred_filter for deferred_filter in self._defer_fields
+            if deferred_filter not in self._aggregation_columns]
 
     @property
     def config(self):
+        from corehq.apps.userreports.models import get_datasource_config
         if self._config is None:
             self._config, _ = get_datasource_config(self._config_id, self.domain)
         return self._config
@@ -68,10 +74,13 @@ class ConfigurableReportDataSourceMixin(object):
 
     @property
     def top_level_db_columns(self):
+        from corehq.apps.userreports.reports.specs import ReportColumn
+
         return [col for col in self.top_level_columns if isinstance(col, ReportColumn)]
 
     @property
     def top_level_computed_columns(self):
+        from corehq.apps.userreports.reports.specs import ExpressionColumn
         return [col for col in self.top_level_columns if isinstance(col, ExpressionColumn)]
 
     @property
@@ -80,11 +89,11 @@ class ConfigurableReportDataSourceMixin(object):
 
     def set_filter_values(self, filter_values):
         for filter_slug, value in filter_values.items():
-            self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
+            raw_filter_spec = self._filters[filter_slug]
+            self._filter_values[filter_slug] = create_filter_value(raw_filter_spec, value)
 
-    def defer_filters(self, filter_slugs):
-        self._deferred_filters.update({
-            filter_slug: self._filters[filter_slug] for filter_slug in filter_slugs})
+    def set_defer_fields(self, defer_fields):
+        self._defer_fields = defer_fields
 
     def set_order_by(self, columns):
         self._order_by = columns
@@ -117,3 +126,14 @@ class ConfigurableReportDataSourceMixin(object):
         else:
             # if the column isn't found just treat it as a normal field
             return [column_id]
+
+
+class NoPropertyTypeCoercionMixIn(object):
+    """
+    This disables automatic type conversion on a JsonObject
+    So, for example, nested date-like things don't get automatically converted to dates.
+
+    Used by many of the spec classes.
+    """
+    class Meta(object):
+        string_conversions = ()

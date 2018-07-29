@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.es import users as user_es, filters
 from corehq.apps.domain.models import Domain
@@ -116,7 +117,6 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
 
 
 class EmwfUtils(object):
-
     def __init__(self, domain):
         self.domain = domain
 
@@ -206,7 +206,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         "Specify groups and users to include in the report")
     is_cacheable = False
     options_url = 'emwf_options'
-    search_help_inline = mark_safe(ugettext_lazy(
+    search_help_inline = ugettext_lazy(mark_safe(
         'To quick search for a location, write your query as "parent"/descendant. '
         'For more info, see the '
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '

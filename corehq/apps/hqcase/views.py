@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.contrib import messages
 from django.http.response import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
-from corehq.apps.domain.decorators import require_superuser_or_developer
+from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.es.case_search import CasePropertyAggregation, CaseSearchES
 from corehq.apps.hqcase.tasks import delete_exploded_case_task, explode_case_task
@@ -21,7 +22,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
     page_title = "Explode Cases"
 
     @use_select2
-    @method_decorator(require_superuser_or_developer)
+    @method_decorator(require_superuser_or_contractor)
     def dispatch(self, *args, **kwargs):
         return super(ExplodeCasesView, self).dispatch(*args, **kwargs)
 

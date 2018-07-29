@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse, resolve, Resolver404
 from corehq.tabs.uitab import url_is_location_safe
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.export.models.new import FormExportInstance, CaseExportInstance
 from corehq.apps.export.views import ExportsPermissionsMixin, user_can_view_deid_exports
 from corehq.apps.reports.models import ReportConfig, CaseExportSchema, FormExportSchema
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class Tile(object):

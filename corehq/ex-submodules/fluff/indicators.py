@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import functools
 from couchdbkit.ext.django import schema
 import datetime
@@ -104,10 +105,8 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
     @property
     def kafka_topic(self):
         """if set, this will use a kafka feed instead of couch for the pillow"""
-        from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
-        from corehq.apps.change_feed.topics import get_topic
-        meta = get_doc_meta_object_from_document(self.document_class().to_json())
-        return get_topic(meta)
+        from corehq.apps.change_feed.topics import get_topic_for_doc_type
+        return get_topic_for_doc_type(self.document_class().to_json()['doc_type'])
 
     @property
     def wrapped_group_by(self):
@@ -402,5 +401,5 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
             for calc_name, calc in cls._calculators.items()
         )
 
-    class Meta:
+    class Meta(object):
         app_label = 'fluff'

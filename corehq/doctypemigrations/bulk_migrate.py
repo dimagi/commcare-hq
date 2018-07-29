@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types
 from corehq.util.couch import IterDB
 

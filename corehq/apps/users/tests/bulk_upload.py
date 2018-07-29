@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from copy import deepcopy
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
@@ -24,13 +25,13 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.domain = Domain(name=self.domain_name)
         self.domain.save()
         self.user_specs = [{
-            u'username': u'hello',
-            u'user_id': u'should not update',
-            u'name': u'Another One', u'language': None,
-            u'is_active': u'True',
-            u'phone-number': u'23424123',
-            u'password': 123,
-            u'email': None
+            'username': 'hello',
+            'user_id': 'should not update',
+            'name': 'Another One', 'language': None,
+            'is_active': 'True',
+            'phone-number': '23424123',
+            'password': 123,
+            'email': None
         }]
 
         permissions = Permissions(edit_apps=True, view_reports=True)
@@ -264,14 +265,14 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         self.domain.strong_mobile_passwords = True
         self.domain.save()
         self.user_specs = [{
-            u'username': u'tswift',
-            u'user_id': u'1989',
-            u'name': u'Taylor Swift',
-            u'language': None,
-            u'is_active': u'True',
-            u'phone-number': u'8675309',
-            u'password': 'TaylorSwift89!',
-            u'email': None
+            'username': 'tswift',
+            'user_id': '1989',
+            'name': 'Taylor Swift',
+            'language': None,
+            'is_active': 'True',
+            'phone-number': '8675309',
+            'password': 'TaylorSwift89!',
+            'email': None
         }]
 
     def tearDown(self):
@@ -280,14 +281,14 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
 
     def test_duplicate_password(self):
         user_spec = [{
-            u'username': u'thiddleston',
-            u'user_id': u'1990',
-            u'name': u'Tom Hiddleston',
-            u'language': None,
-            u'is_active': u'True',
-            u'phone-number': u'8675309',
-            u'password': 'TaylorSwift89!',
-            u'email': None
+            'username': 'thiddleston',
+            'user_id': '1990',
+            'name': 'Tom Hiddleston',
+            'language': None,
+            'is_active': 'True',
+            'phone-number': '8675309',
+            'password': 'TaylorSwift89!',
+            'email': None
         }]
 
         rows = bulk_upload_async(
@@ -314,12 +315,12 @@ class TestUserBulkUploadUtils(SimpleTestCase):
     def test_check_duplicate_usernames(self):
         user_specs = [
             {
-                u'username': u'hello',
-                u'user_id': u'should not update',
+                'username': 'hello',
+                'user_id': 'should not update',
             },
             {
-                u'username': u'hello',
-                u'user_id': u'other id',
+                'username': 'hello',
+                'user_id': 'other id',
             },
         ]
 
@@ -328,12 +329,12 @@ class TestUserBulkUploadUtils(SimpleTestCase):
     def test_no_duplicate_usernames(self):
         user_specs = [
             {
-                u'username': u'hello',
-                u'user_id': u'should not update',
+                'username': 'hello',
+                'user_id': 'should not update',
             },
             {
-                u'username': u'goodbye',
-                u'user_id': u'other id',
+                'username': 'goodbye',
+                'user_id': 'other id',
             },
         ]
 
@@ -345,7 +346,7 @@ class TestUserBulkUploadUtils(SimpleTestCase):
     def test_existing_username_with_no_id(self):
         user_specs = [
             {
-                u'username': u'hello',
+                'username': 'hello',
             },
         ]
 

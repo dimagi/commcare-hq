@@ -1,5 +1,6 @@
 from __future__ import division
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
@@ -119,7 +120,7 @@ def get_pillow_config_by_name(pillow_name):
     for config in all_configs:
         if config.name == pillow_name:
             return config
-    raise PillowNotFoundError(u'No pillow found with name {}'.format(pillow_name))
+    raise PillowNotFoundError('No pillow found with name {}'.format(pillow_name))
 
 
 def force_seq_int(seq):
@@ -233,10 +234,10 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
 
 
 def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
-    payloads = ['']
+    payloads = [b'']
     for bulk_chunk in chunked(bulk_changes, chunk_size):
         current_payload = payloads[-1]
-        payload_chunk = '\n'.join(map(simplejson.dumps, bulk_chunk)) + '\n'
+        payload_chunk = b'\n'.join(map(simplejson.dumps, bulk_chunk)) + b'\n'
         appended_payload = current_payload + payload_chunk
         new_payload_size = sys.getsizeof(appended_payload)
         if new_payload_size > max_size:
@@ -269,7 +270,7 @@ def ensure_matched_revisions(change):
             fetched_rev = _convert_rev_to_int(doc_rev)
             stored_rev = _convert_rev_to_int(change_rev)
             if fetched_rev < stored_rev or stored_rev == -1:
-                message = u"Mismatched revs for {}: Cloudant rev {} vs. Changes feed rev {}".format(
+                message = "Mismatched revs for {}: Cloudant rev {} vs. Changes feed rev {}".format(
                     change.id,
                     doc_rev,
                     change_rev

@@ -11,7 +11,8 @@
     <p>
         <a class="btn {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}btn-warning{% else %}btn-primary{% endif %}"
             {% if include_modal %}
-                href="#multimedia-zip-modal" data-toggle="modal" onclick="download_application_zip()"
+                href="#multimedia-zip-modal" data-toggle="modal"
+                onclick="hqImport('app_manager/js/download_async_modal').downloadApplicationZip()"
             }
             {% else %}
                 {# This happens when the template gets included in app_manager/partials/releases.html #}
@@ -33,7 +34,7 @@
     <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
 {% endif %}
 {% if multimedia_state.has_form_errors %}
-    <div class="alert alert-error"><i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Warning:</strong>
+    <div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Warning:</strong>
         This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
     {% endblocktrans %}</div>
 {% endif %}

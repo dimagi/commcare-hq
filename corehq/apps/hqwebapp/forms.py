@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 
 from django import forms
@@ -10,15 +11,14 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
-from corehq import toggles
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
+from crispy_forms.bootstrap import StrictButton, InlineField
 from crispy_forms.helper import FormHelper
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from six.moves import map
 
 
@@ -52,12 +52,12 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
             user = CouchUser.get_by_username(username)
-            if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)) and user.is_locked_out():
+            if user and user.is_locked_out() and user.supports_lockout():
                 raise ValidationError(lockout_message)
             else:
                 raise
         user = CouchUser.get_by_username(username)
-        if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)) and user.is_locked_out():
+        if user and user.is_locked_out() and user.supports_lockout():
             raise ValidationError(lockout_message)
         return cleaned_data
 
@@ -71,7 +71,7 @@ class BulkUploadForm(forms.Form):
     bulk_upload_file = forms.FileField(label="")
     action = forms.CharField(widget=forms.HiddenInput(), initial='bulk_upload')
 
-    def __init__(self, plural_noun, action, form_id, *args, **kwargs):
+    def __init__(self, plural_noun, action, form_id, context, *args, **kwargs):
         super(BulkUploadForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_id = form_id
@@ -81,13 +81,7 @@ class BulkUploadForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 "",
-                crispy.Field(
-                    'bulk_upload_file',
-                    data_bind="value: file",
-                ),
-                crispy.Field(
-                    'action',
-                ),
+                *self.crispy_form_fields(context)
             ),
             StrictButton(
                 ('<i class="fa fa-cloud-upload"></i> Upload %s'
@@ -98,6 +92,30 @@ class BulkUploadForm(forms.Form):
                 type='submit',
             ),
         )
+
+    def crispy_form_fields(self, context):
+        return [
+            crispy.Field(
+                'bulk_upload_file',
+                data_bind="value: file",
+            ),
+            crispy.Field(
+                'action',
+            ),
+        ]
+
+
+class AppTranslationsBulkUploadForm(BulkUploadForm):
+    validate = forms.BooleanField(label="Just validate and not update translations", required=False,
+                                  initial=False)
+
+    def crispy_form_fields(self, context):
+        crispy_form_fields = super(AppTranslationsBulkUploadForm, self).crispy_form_fields(context)
+        if context.get('can_validate_app_translations'):
+            crispy_form_fields.extend([
+                InlineField('validate')
+            ])
+        return crispy_form_fields
 
 
 class FormListForm(object):

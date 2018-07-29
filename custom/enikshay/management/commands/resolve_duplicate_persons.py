@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import csv
 import datetime
 from six.moves import filter
 from django.core.management.base import BaseCommand
 from unidecode import unidecode
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.locations.models import SQLLocation

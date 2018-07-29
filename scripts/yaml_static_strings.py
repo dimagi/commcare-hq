@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import argparse
 import yaml
 import six
+from io import open
 
 parser = argparse.ArgumentParser(
     description='''
@@ -36,7 +38,7 @@ parser.add_argument(
 
 
 def format_string(value, prefix):
-    return u"{}('{}'),".format(prefix, value.replace("'", "\\'"))
+    return "{}('{}'),".format(prefix, value.replace("'", "\\'"))
 
 
 if __name__ == "__main__":
@@ -46,7 +48,7 @@ if __name__ == "__main__":
     prefix = args.prefix
     output = []
 
-    with open(yaml_filename, 'r') as f:
+    with open(yaml_filename, 'r', encoding='utf-8') as f:
         doc = yaml.load(f)
 
     for entry in doc:

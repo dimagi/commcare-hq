@@ -3,6 +3,7 @@ Some constants used in tests.
 """
 
 
+from __future__ import unicode_literals
 CREATE_SHORT = """
     <case>
         <case_id>asdf</case_id>

@@ -1,5 +1,5 @@
 {% load i18n %}
-<div>
+<div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
     <div class="row no-margin fixes-filters">
         <div class="col-md-5">
             <div class="row">
@@ -18,7 +18,7 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations" is-open-modal="$ctrl.message"></filters>
         </div>
     </div>
-    <div class="report-content" cg-busy="$ctrl.myPromise">
+    <div class="report-content">
         <div ng-if="$ctrl.data">
             <div class="row" ng-if="$ctrl.step === 'pse'">
                 <div class="row no-margin">

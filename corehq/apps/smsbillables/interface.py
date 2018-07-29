@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.db.models.aggregates import Count
 from corehq.apps.accounting.filters import DateCreatedFilter
 from corehq.apps.reports.datatables import (
@@ -217,7 +218,8 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
             DataTablesColumn("Direction"),
             DataTablesColumn("Country Code"),
             DataTablesColumn("Prefix"),
-            DataTablesColumn("Fee (Amount, Currency)")
+            DataTablesColumn("Fee (Amount, Currency)"),
+            DataTablesColumn("Is Active"),
         )
 
     @property
@@ -241,6 +243,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
                     'amount': str(gateway_fee.amount),
                     'currency': gateway_fee.currency.code,
                 },
+                criteria.is_active,
             ])
         return rows
 

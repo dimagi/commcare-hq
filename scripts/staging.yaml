@@ -9,7 +9,8 @@
 # to check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
-#     $ scripts/rebuildstaging --deploy
+#     $ scripts/rebuildstaging
+#     $ commcare-cloud staging fab deploy
 # Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
@@ -48,24 +49,20 @@
 trunk: master
 name: autostaging
 branches:
-  - vellum-staging # J$ 11/13
-  # - je/cythonized-jsonobject # j$ 1/8
-  - xbryanc:dlemailbutton_updates  # Bryan 1/29
-  - sophiamcg:organization-structure-search-tree-interaction  # Sophia 1/29
-  - xbryanc:show_scheduled_reports_updates  # Bryan 1/31
-  - sophiamcg:organization-structure-collapse-button  # Sophia 1/31
-  - fr/two-factor-mobile-users  # FR 2/7
-  - dmr/celery-queues  # Danny 2/12
-  - nh/omrs/repeater_format  # Norman 2/15
-  - jr/ejs/sms-chat # Jordan 2/16
+  - nh/omrs/levenshtein # Norman June 29
+  - es/location-upload  # Ethan July 6
+  - jls/appcues-template-apps  # Jenny July 16
+  - jls/requirejs-case-importer  # Jenny July 17
+  - revert-21236-fr/add-secure-urllib3  # Danny July 18
+  #- jls/requirejs-domain-billing  # Jenny July 19
+  - nh/lw/dhis  # Norman July 20
+  - dmr/fix-package-security-vulnerabilities  # Danny July 21
+  - jls/enterprise-settings  # Jenny July 23
+  - nh/fix_staging/why  # Norman July 24
+  - jls/requirejs-login  # Jenny July 22
+  - jls/unify-tab-history  # Jenny July 10
 submodules:
-  submodules/touchforms-src:
-    # let's leave this here even when empty
-    # just so we always get latest master
-    branches: []
   submodules/django-digest-src:
-    branches: []
-  corehq/apps/prelogin:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []

@@ -1,10 +1,10 @@
 {
     "domains": [
-        "enikshay",
-        "enikshay-reports-qa"
+        "enikshay"
     ],
     "server_environment": [
-        "enikshay"
+        "enikshay",
+        "softlayer"
     ],
     "data_source_table": "test_2b_v4",
     "report_id": "dmc_lab_register_2b",

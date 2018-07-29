@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+
+from __future__ import unicode_literals
+from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -32,6 +35,9 @@ def create_short_form_repeat_records(sender, xform, **kwargs):
 
 
 def create_repeat_records(repeater_cls, payload):
+    repeater_name = repeater_cls.__module__ + '.' + repeater_cls.__name__
+    if settings.REPEATERS_WHITELIST is not None and repeater_name not in settings.REPEATERS_WHITELIST:
+        return
     domain = payload.domain
     if domain:
         repeaters = repeater_cls.by_domain(domain)

@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple, defaultdict
 from functools import partial
 import logging
@@ -262,12 +263,14 @@ def rebuild_table(engine, pillow, indicator_doc):
         pillow.reset_checkpoint()
 
 
-def get_migration_context(connection, table_names):
-    opts = {
-        'include_symbol': partial(include_symbol, table_names),
-        'compare_type': True,
-        # 'compare_server_default': True  # we don't care about this
-    }
+def get_migration_context(connection, table_names=None, include_object=None):
+    opts = {'compare_type': True}
+
+    if callable(include_object):
+        opts['include_object'] = include_object
+    else:
+        opts['include_symbol'] = partial(include_symbol, table_names)
+
     return MigrationContext.configure(connection, opts=opts)
 
 

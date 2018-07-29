@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from decimal import Decimal
 
 from django.db import models
@@ -8,7 +9,7 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from corehq.form_processor.change_publishers import publish_ledger_v1_saved
 from dimagi.ext.couchdbkit import *
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
@@ -237,7 +238,7 @@ class SupplyPointCase(CommCareCase):
     """
     location_id = StringProperty()
 
-    class Meta:
+    class Meta(object):
         # This is necessary otherwise couchdbkit will confuse this app with casexml
         app_label = "commtrack"
 
@@ -359,7 +360,7 @@ class StockState(models.Model):
         serializer = StockStateSerializer(self)
         return dict(serializer.data)
 
-    class Meta:
+    class Meta(object):
         app_label = 'commtrack'
         unique_together = ('section_id', 'case_id', 'product_id')
 
@@ -387,7 +388,7 @@ class StockExportColumn(ComplexExportColumn):
 
     def get_headers(self):
         for product_id, section in self._column_tuples:
-            yield u"{product} ({section})".format(
+            yield "{product} ({section})".format(
                 product=Product.get(product_id).name,
                 section=section
             )
@@ -407,12 +408,11 @@ class StockExportColumn(ComplexExportColumn):
         return values
 
 
-def close_supply_point_case(location):
-    supply_point_id = location.supply_point_id
+def close_supply_point_case(domain, supply_point_id):
     if supply_point_id:
         close_case(
             supply_point_id,
-            location.domain,
+            domain,
             const.COMMTRACK_USERNAME,
             __name__ + ".close_supply_point_case",
         )
@@ -443,10 +443,10 @@ def sync_supply_point(location, is_deletion=False):
         return None
 
     if location.location_type.administrative or is_deletion:
-        close_supply_point_case(location)
+        close_supply_point_case(location.domain, location.supply_point_id)
         location.supply_point_id = None
     elif location.is_archived:
-        close_supply_point_case(location)
+        close_supply_point_case(location.domain, location.supply_point_id)
     else:
         updated_supply_point = _reopen_or_create_supply_point(location)
         location.supply_point_id = updated_supply_point.case_id

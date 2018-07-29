@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import pytz
 import uuid
 from mock import patch
@@ -942,6 +943,7 @@ class TestUserESAccessors(SimpleTestCase):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'doc_type': self.doc_type,
+            'location_id': None
         })
 
     def test_inactive_user_query(self):
@@ -956,6 +958,7 @@ class TestUserESAccessors(SimpleTestCase):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'doc_type': self.doc_type,
+            'location_id': None
         })
 
 

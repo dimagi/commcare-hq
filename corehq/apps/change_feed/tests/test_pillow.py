@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from mock import patch
 from django.conf import settings
@@ -10,7 +11,7 @@ from kafka.common import ConsumerTimeout, KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
-from corehq.apps.change_feed.data_sources import COUCH
+from corehq.apps.change_feed.data_sources import SOURCE_COUCH
 from corehq.pillows.case import get_case_to_elasticsearch_pillow
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.test_utils import trap_extra_setup
@@ -47,7 +48,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
         message = next(self.consumer)
 
         change_meta = change_meta_from_kafka_message(message.value)
-        self.assertEqual(COUCH, change_meta.data_source_type)
+        self.assertEqual(SOURCE_COUCH, change_meta.data_source_type)
         self.assertEqual(self._fake_couch.dbname, change_meta.data_source_name)
         self.assertEqual('test-id', change_meta.document_id)
         self.assertEqual(document['doc_type'], change_meta.document_type)
@@ -62,7 +63,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
         document = {
             'doc_type': 'CommCareCase',
             'type': 'mother',
-            'domain': u'हिंदी',
+            'domain': 'हिंदी',
         }
         self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
         message = next(self.consumer)

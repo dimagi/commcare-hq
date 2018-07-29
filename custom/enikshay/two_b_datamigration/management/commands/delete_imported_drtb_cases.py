@@ -12,6 +12,7 @@ Example usage:
 """
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 from corehq.apps.es import CaseSearchES
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.chunked import chunked

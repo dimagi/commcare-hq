@@ -2,12 +2,13 @@
   "name": "CommCareHQ",
   "version": "0.0.1",
   "dependencies": {
+    "ace-builds": "1.3.3",
     "angular": "1.4.4",
     "angular-bootstrap": "^2.5.0",
     "angular-bootstrap-legacy": "0.11.2",
     "angular-datamaps": "^0.1.2",
     "angular-datatables": "0.5.6",
-    "angular-nvd3": "^0.1.1",
+    "angular-nvd3": "1.0.9",
     "angular-route": "1.4.4",
     "angular-resource": "1.4.4",
     "angular-message-format": "1.4.4",
@@ -18,13 +19,12 @@
     "angular-leaflet-directive": "angular-leaflet#^0.10.0",
     "angular-perfect-scrollbar": "^0.1.0",
     "angular-busy": "^4.1.4",
-    "angular-daterangepicker": "^0.2.2",
     "ui-select": "angular-ui/ui-select#v0.13.2",
     "backbone": "0.9.1",
     "backbone-1.3.2": "backbone#1.3.2",
     "backbone.marionette": "2.4.5",
     "bootstrap": "3.3.7",
-    "bootstrap-daterangepicker": "2.1.13",
+    "bootstrap-daterangepicker": "3.0.3",
     "bootstrap-switch": "3.3.2",
     "bootstrap-timepicker": "0.5.1",
     "bootstrap-tour": "0.10.2",
@@ -36,6 +36,7 @@
     "jquery-form": "4.2.2",
     "jquery-migrate": "1.2.1",
     "jquery.rmi": "dimagi/jquery.rmi#8c34f32817",
+    "jquery-textchange": "0.2.3",
     "jquery-timeago": "1.2.0",
     "jquery-tiny-pubsub": "https://github.com/cowboy/jquery-tiny-pubsub.git#~0.7.0",
     "jquery-treetable": "^3.2.0",
@@ -60,10 +61,11 @@
     "nprogress": "0.2.0",
     "d3": "3.1",
     "nvd3": "1.1.10-beta",
+    "d3-3.5.17": "d3#3.5.17",
+    "nvd3-1.8.6": "nvd3#1.8.6",
     "codemirror": "5.5.0",
-    "syntaxhighlighter": "alexgorbatchev/syntaxhighlighter#3.0.83",
     "zxcvbn": "4.2.0",
-    "font-awesome": "fontawesome#4.5.0",
+    "font-awesome": "fontawesome#4.7.0",
     "moment": "2.12.0",
     "css-grid-polyfill-binaries": "1.1.1",
     "requirejs": "~2.3.1",
@@ -76,7 +78,8 @@
     "jsdiff": "~3.2.0",
     "datamaps": "^0.5.8",
     "topojson": "^3.0.0",
-    "r.js": "^2.3.5"
+    "r.js": "^2.3.5",
+    "jquery-memoized-ajax": "^0.5.0"
   },
   "devDependencies": {
     "chai": "3.3.0",
@@ -94,6 +97,8 @@
     "d3": "3.1",
     "datamaps": "^0.5.8",
     "topojson": "^3.0.0",
-    "nvd3": "1.1.10-beta"
+    "nvd3": "1.1.10-beta",
+    "d3-3.5.17": "d3#3.5.17",
+    "nvd3-1.8.6": "nvd3#1.8.6"
   }
 }

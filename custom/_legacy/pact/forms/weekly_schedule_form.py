@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import uuid
 from django import forms
 from django.forms import widgets
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from pact.enums import PACT_DOMAIN
 
 DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']

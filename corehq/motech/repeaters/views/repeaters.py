@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import json
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
@@ -10,7 +11,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.post import simple_post
 
 from corehq import toggles
@@ -24,6 +25,7 @@ from corehq.motech.repeaters.forms import (
     CaseRepeaterForm,
     FormRepeaterForm,
     GenericRepeaterForm,
+    OpenmrsRepeaterForm,
     SOAPCaseRepeaterForm,
     SOAPLocationRepeaterForm,
 )
@@ -59,7 +61,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
             'repeaters': self.repeaters,
             'pending_record_count': RepeatRecord.count(self.domain),
             'gefingerpoken': self.request.couch_user.is_superuser or
-                             toggles.IS_DEVELOPER.enabled(self.request.couch_user.username)
+                             toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
         }
 
 
@@ -201,8 +203,14 @@ class AddCaseRepeaterView(AddRepeaterView):
 
 class AddOpenmrsRepeaterView(AddCaseRepeaterView):
     urlname = 'new_openmrs_repeater$'
+    repeater_form_class = OpenmrsRepeaterForm
     page_title = ugettext_lazy("Forward to OpenMRS")
     page_name = ugettext_lazy("Forward to OpenMRS")
+
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super(AddOpenmrsRepeaterView, self).set_repeater_attr(repeater, cleaned_data)
+        repeater.location_id = self.add_repeater_form.cleaned_data['location_id']
+        return repeater
 
 
 class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):

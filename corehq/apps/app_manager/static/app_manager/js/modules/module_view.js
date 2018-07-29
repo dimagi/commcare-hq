@@ -6,7 +6,7 @@ hqDefine("app_manager/js/modules/module_view", function() {
             moduleType = moduleBrief.module_type,
             options = initial_page_data('js_options') || {};
 
-        hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Module Settings"));
+        hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
 
         // Set up details
         if (moduleBrief.case_type) {
@@ -31,7 +31,7 @@ hqDefine("app_manager/js/modules/module_view", function() {
                     lang: moduleBrief.lang,
                     langs: moduleBrief.langs,
                     saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_module_detail_screens'),
-                    parentModules: initial_page_data('parent_modules'),
+                    parentModules: initial_page_data('parent_case_modules'),
                     childCaseTypes: detail.subcase_types,
                     fixture_columns_by_type: options.fixture_columns_by_type || {},
                     parentSelect: detail.parent_select,
@@ -105,8 +105,8 @@ hqDefine("app_manager/js/modules/module_view", function() {
 
         // Registration in case list
         if ($('#case-list-form').length) {
-            var CaseListForm = function (originalFormId, formOptions, postFormWorkflow) {
-                var self = this;
+            var caseListFormModel = function (originalFormId, formOptions, postFormWorkflow) {
+                var self = {};
 
                 self.caseListForm = ko.observable(originalFormId);
                 self.postFormWorkflow = ko.observable(postFormWorkflow);
@@ -131,9 +131,11 @@ hqDefine("app_manager/js/modules/module_view", function() {
                 // the multimedia section has its own separate set of knockout bindings
                 showMedia(originalFormId);
                 self.caseListForm.subscribe(showMedia);
+
+                return self;
             };
             var case_list_form_options = initial_page_data('case_list_form_options');
-            var caseListForm = new CaseListForm(
+            var caseListForm = caseListFormModel(
                 case_list_form_options ? case_list_form_options.form.form_id : null,
                 case_list_form_options ? case_list_form_options.options : [],
                 case_list_form_options ? case_list_form_options.form.post_form_workflow: 'default'

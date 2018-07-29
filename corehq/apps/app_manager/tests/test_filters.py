@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from collections import namedtuple
 from contextlib import contextmanager
@@ -303,7 +304,7 @@ class AutoFilterTests(TestCase):
             "my label",
             True,
             dynamic_choice_list_url,
-            DataSourceColumnChoiceProvider(None, None)
+            DataSourceColumnChoiceProvider(None, None),
         )
 
     # AncestorLocationTypeFilter is not an AutoFilter, but we'll hitch a ride here to reuse setup and teardown

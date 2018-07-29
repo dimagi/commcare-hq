@@ -1,11 +1,14 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict
 import re
+from django.utils.translation import ugettext as _
+
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 
@@ -86,7 +89,8 @@ class EntryInstances(PostProcessor):
 
         for instance in custom_instances:
             if instance.instance_id in known_instance_ids:
-                raise DuplicateInstanceIdError(instance.instance_id)
+                raise DuplicateInstanceIdError(
+                    _("Duplicate custom instance in {}: {}").format(entry.command.id, instance.instance_id))
             # Remove custom instances from required instances, but add them even if they aren't referenced anywhere
             required_instances.discard(instance.instance_id)
         return {
@@ -148,16 +152,22 @@ def commcare_fixture_instances(domain, instance_name):
         return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
+def _commcare_reports_instances(domain, instance_name, prefix):
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+    if instance_name.startswith(prefix) and toggles.MOBILE_UCR.enabled(domain):
+        instance_id = instance_name[len(prefix):]
+        uuid = get_uuids_by_instance_id(domain).get(instance_id, [instance_id])[0]
+        return Instance(id=instance_name, src='jr://fixture/{}{}'.format(prefix, uuid))
+
+
 @register_factory('commcare-reports')
 def commcare_reports_fixture_instances(domain, instance_name):
-    if instance_name.startswith('commcare-reports:') and toggles.MOBILE_UCR.enabled(domain):
-        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+    return _commcare_reports_instances(domain, instance_name, 'commcare-reports:')
 
 
 @register_factory('commcare-reports-filters')
 def commcare_reports_filters_instances(domain, instance_name):
-    if instance_name.startswith('commcare-reports-filters:') and toggles.MOBILE_UCR.enabled(domain):
-        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+    return _commcare_reports_instances(domain, instance_name, 'commcare-reports-filters:')
 
 
 @register_factory('locations')

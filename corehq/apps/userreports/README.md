@@ -1037,6 +1037,9 @@ soh_aspirin | soh_bandaids | soh_gauze
  67         |  32          |  9
 
 
+If the ledger you're using is a due list and you wish to save the dates instead of integers, you can change the "type" from "ledger_balances" to "due_list_dates".
+
+
 ### Practical notes for creating indicators
 
 These are some practical notes for how to choose what indicators to create.
@@ -1285,6 +1288,7 @@ Example assuming "village" is a location ID, which is converted to names using t
   "choice_provider": {
       "type": "location",
       "include_descendants": true,
+      "order_by_hierarchy": true,
       "show_full_path": true
   }
 }
@@ -2009,7 +2013,7 @@ the following style:
 
 Sometimes a client's needs for a rendered report are outside of the scope of the framework.  To render
 the report using a custom Django template or with custom Excel formatting, define a subclass of
-`ConfigurableReport` and override the necessary functions.  Then include the python path to the class
+`ConfigurableReportView` and override the necessary functions.  Then include the python path to the class
 in the field `custom_configurable_report` of the static report and don't forget to include the static
 report in `STATIC_DATA_SOURCES` in `settings.py`.
 

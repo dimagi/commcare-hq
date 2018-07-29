@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from six.moves.urllib.parse import urlencode
 from six.moves.urllib.request import urlopen
 from corehq.apps.sms.util import clean_phone_number
@@ -9,7 +10,7 @@ from django.conf import settings
 
 class SQLTropoBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

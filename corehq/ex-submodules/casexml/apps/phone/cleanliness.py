@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime
 from couchdbkit import ResourceNotFound
@@ -84,10 +85,10 @@ def set_cleanliness_flags(domain, owner_id, force_full=False, raise_soft_asserti
     For a given owner ID, manually sets the cleanliness flag on that ID.
     """
     if not domain or len(domain) > 100:
-        raise InvalidDomainError(u'Domain {} must be a non-empty string less than 100 characters'.format(domain))
+        raise InvalidDomainError('Domain {} must be a non-empty string less than 100 characters'.format(domain))
     if not owner_id or len(owner_id) > 100:
         raise InvalidOwnerIdError(
-            u'Owner ID {} must be a non-empty string less than 100 characters'.format(owner_id)
+            'Owner ID {} must be a non-empty string less than 100 characters'.format(owner_id)
         )
     cleanliness_object = OwnershipCleanlinessFlag.objects.get_or_create(
         owner_id=owner_id,

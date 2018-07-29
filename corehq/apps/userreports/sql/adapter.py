@@ -19,7 +19,7 @@ from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 metadata = sqlalchemy.MetaData()
@@ -32,6 +32,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.engine_id = get_engine_id(config)
         self.session_helper = connection_manager.get_session_helper(self.engine_id)
         self.engine = self.session_helper.engine
+
+    @property
+    def table_id(self):
+        return self.config.table_id
+
+    @property
+    def display_name(self):
+        return self.config.display_name
 
     @memoized
     def get_table(self):
@@ -87,7 +95,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         # this will hang if there are any open sessions, so go ahead and close them
         self.session_helper.Session.remove()
         with self.engine.begin() as connection:
-            self.get_table().drop(connection, checkfirst=True)
+            if self.config.sql_settings.partition_config:
+                connection.execute('DROP TABLE "{tablename}" CASCADE'.format(tablename=self.get_table().name))
+            else:
+                self.get_table().drop(connection, checkfirst=True)
 
     def refresh_table(self):
         # SQL is always fresh
@@ -137,24 +148,22 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             self.handle_exception(doc, e)
 
     def _save_rows(self, rows, doc):
-        if not rows:
-            return
+        rows = [
+            {i.column.database_column_name: i.value for i in row}
+            for row in rows
+        ]
 
         table = self.get_table()
-        with self.engine.begin() as connection:
-            # delete all existing rows for this doc to ensure we aren't left with stale data
-            delete = table.delete(table.c.doc_id == doc['_id'])
-            connection.execute(delete)
-            for row in rows:
-                all_values = {i.column.database_column_name: i.value for i in row}
-                insert = table.insert().values(**all_values)
-                connection.execute(insert)
+        delete = table.delete(table.c.doc_id == doc['_id'])
+        with self.session_helper.session_context() as session:
+            session.execute(delete)
+            session.bulk_insert_mappings(self.get_sqlalchemy_mapping(), rows)
 
     def delete(self, doc):
         table = self.get_table()
-        with self.engine.begin() as connection:
-            delete = table.delete(table.c.doc_id == doc['_id'])
-            connection.execute(delete)
+        delete = table.delete(table.c.doc_id == doc['_id'])
+        with self.session_helper.session_context() as session:
+            session.execute(delete)
 
     def doc_exists(self, doc):
         with self.session_helper.session_context() as session:

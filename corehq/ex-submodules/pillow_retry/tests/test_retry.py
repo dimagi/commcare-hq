@@ -1,0 +1,156 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
+from django.conf import settings
+from django.test import TestCase
+from fakecouch import FakeCouchDb
+from kafka import KafkaConsumer
+from kafka.common import KafkaUnavailableError
+from mock import MagicMock, patch
+
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message, KafkaChangeFeed
+from corehq.apps.change_feed.data_sources import SOURCE_COUCH
+from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import trap_extra_setup
+from pillow_retry.api import process_pillow_retry
+from pillow_retry.models import PillowError
+from pillowtop.feed.couch import populate_change_metadata
+from pillowtop.feed.interface import Change
+from pillowtop.pillow.interface import ConstructedPillow, PillowRuntimeContext
+from pillowtop.processors.sample import CountingProcessor
+from testapps.test_pillowtop.utils import process_pillow_changes
+
+
+class TestException(Exception):
+    pass
+
+
+class TestMixin(object):
+
+    def _check_errors(self, expected_attempts, message=None):
+        errors = list(PillowError.objects.filter(pillow=self.pillow.pillow_id).all())
+        self.assertEqual(1, len(errors))
+
+        self.assertEqual("pillow_retry.tests.test_retry.TestException", errors[0].error_type)
+        self.assertEqual(expected_attempts, errors[0].total_attempts)
+        self.assertEqual(expected_attempts, errors[0].current_attempt)
+
+        if message:
+            self.assertIn(message, errors[0].error_traceback)
+
+        return errors
+
+
+class CouchPillowRetryProcessingTest(TestCase, TestMixin):
+    def setUp(self):
+        self._fake_couch = FakeCouchDb()
+        self._fake_couch.dbname = 'test_commcarehq'
+        with trap_extra_setup(KafkaUnavailableError):
+            self.consumer = KafkaConsumer(
+                topics.CASE,
+                group_id='test-consumer',
+                bootstrap_servers=[settings.KAFKA_URL],
+                consumer_timeout_ms=100,
+            )
+        self.pillow = get_change_feed_pillow_for_db('fake-changefeed-pillow-id', self._fake_couch)
+        self.original_process_change = self.pillow.process_change
+
+    def tearDown(self):
+        PillowError.objects.all().delete()
+
+    def test(self):
+        document = {
+            'doc_type': 'CommCareCase',
+            'type': 'mother',
+            'domain': 'kafka-test-domain',
+        }
+
+        change = Change(id='test-id', sequence_id='3', document=document)
+        populate_change_metadata(change, SOURCE_COUCH, self._fake_couch.dbname)
+
+        with patch('pillow_retry.api.get_pillow_by_name', return_value=self.pillow):
+            # first change creates error
+            message = 'test retry 1'
+            self.pillow.process_change = MagicMock(side_effect=TestException(message))
+            self.pillow.process_with_error_handling(change, PillowRuntimeContext(changes_seen=0))
+
+            errors = self._check_errors(1, message)
+
+            # second attempt updates error
+            process_pillow_retry(errors[0])
+
+            errors = self._check_errors(2)
+
+            # third attempt successful
+            self.pillow.process_change = self.original_process_change
+            process_pillow_retry(errors[0])
+
+            errors = list(PillowError.objects.filter(pillow=self.pillow.pillow_id).all())
+            self.assertEqual(0, len(errors))
+
+            message = next(self.consumer)
+
+            change_meta = change_meta_from_kafka_message(message.value)
+            self.assertEqual(SOURCE_COUCH, change_meta.data_source_type)
+            self.assertEqual(self._fake_couch.dbname, change_meta.data_source_name)
+            self.assertEqual('test-id', change_meta.document_id)
+            self.assertEqual(document['doc_type'], change_meta.document_type)
+            self.assertEqual(document['type'], change_meta.document_subtype)
+            self.assertEqual(document['domain'], change_meta.domain)
+            self.assertEqual(False, change_meta.is_deletion)
+
+
+class KakfaPillowRetryProcessingTest(TestCase, TestMixin):
+
+    def setUp(self):
+        self.processor = CountingProcessor()
+        self.pillow = ConstructedPillow(
+            name='test-kafka-case-feed',
+            checkpoint=None,
+            change_feed=KafkaChangeFeed(
+                topics=[topics.CASE, topics.CASE_SQL], group_id='test-kafka-case-feed'
+            ),
+            processor=self.processor
+        )
+        self.original_process_change = self.pillow.process_change
+
+    def tearDown(self):
+        ensure_index_deleted(CASE_INDEX_INFO.index)
+
+    def test(self):
+        document = {
+            '_id': 'test-id',
+            'doc_type': 'CommCareCase',
+            'type': 'mother',
+            'domain': 'kafka-test-domain',
+        }
+
+        change = Change(id='test-id', sequence_id='3', document=document)
+        populate_change_metadata(change, SOURCE_COUCH, 'test_commcarehq')
+
+        with patch('pillow_retry.api.get_pillow_by_name', return_value=self.pillow):
+            # first change creates error
+            message = 'test retry 1'
+            self.pillow.process_change = MagicMock(side_effect=TestException(message))
+            self.pillow.process_with_error_handling(change, PillowRuntimeContext(changes_seen=0))
+
+            errors = self._check_errors(1, message)
+
+            # second attempt updates error
+            with process_pillow_changes(self.pillow):
+                process_pillow_retry(errors[0])
+
+            errors = self._check_errors(2)
+
+            # third attempt successful
+            self.pillow.process_change = self.original_process_change
+            with process_pillow_changes(self.pillow):
+                process_pillow_retry(errors[0])
+
+            errors = list(PillowError.objects.filter(pillow=self.pillow.pillow_id).all())
+            self.assertEqual(0, len(errors))
+
+            self.assertEqual(1, self.processor.count)

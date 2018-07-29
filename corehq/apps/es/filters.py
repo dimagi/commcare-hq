@@ -17,6 +17,7 @@ either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 """
 
 
+from __future__ import unicode_literals
 def match_all():
     return {"match_all": {}}
 

@@ -276,8 +276,8 @@ Q & A
   What does it mean for an extension case to "live its own life"? Is it
   meaningful to have an extension case apart from the parent of which it is an
   extension? How are the attributes of an extension case "living its own life"
-  different from one that is not living it's own life (I'm assuming _not living
-  its own life_ means it has the same lifecycle as its parent).
+  different from one that is not living it's own life (I'm assuming *not living
+  its own life* means it has the same lifecycle as its parent).
 
   - Danny Roberts:
 

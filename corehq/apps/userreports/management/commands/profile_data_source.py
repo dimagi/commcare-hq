@@ -6,7 +6,7 @@ import pstats
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.models import get_datasource_config
 
 
@@ -22,7 +22,7 @@ class Command(BaseCommand):
     def handle(self, domain, data_source_id, doc_id, **options):
         config, _ = get_datasource_config(data_source_id, domain)
         doc_type = config.referenced_doc_type
-        doc_store = get_document_store(domain, doc_type)
+        doc_store = get_document_store_for_doc_type(domain, doc_type)
         doc = doc_store.get_document(doc_id)
         sort_by = options['sort']
         local_variables = {'config': config, 'doc': doc}

@@ -10,8 +10,9 @@ from io import BytesIO
 import corehq.blobs.fsdb as mod
 from corehq.blobs.exceptions import ArgumentError
 from corehq.blobs.tests.util import get_id
-from corehq.util.test_utils import generate_cases
+from corehq.util.test_utils import generate_cases, patch_datadog
 from six.moves import zip
+from io import open
 
 
 class _BlobDBTests(object):
@@ -25,8 +26,12 @@ class _BlobDBTests(object):
 
     def test_put_and_size(self):
         identifier = get_id()
-        info = self.db.put(BytesIO(b"content"), identifier)
-        self.assertEqual(self.db.size(info.identifier), len(b'content'))
+        with patch_datadog() as stats:
+            info = self.db.put(BytesIO(b"content"), identifier)
+        size = len(b'content')
+        self.assertEqual(sum(s for s in stats["commcare.blobs.added.count"]), 1)
+        self.assertEqual(sum(s for s in stats["commcare.blobs.added.bytes"]), size)
+        self.assertEqual(self.db.size(info.identifier), size)
 
     def test_put_and_get_with_unicode_names(self):
         bucket = "doc.4500"
@@ -92,7 +97,10 @@ class _BlobDBTests(object):
 
         blob_infos = list(zip(blobs, infos))
         paths = [self.db.get_path(info.identifier, blob[1]) for blob, info in blob_infos]
-        self.assertTrue(self.db.bulk_delete(paths), 'delete failed')
+        with patch_datadog() as stats:
+            self.assertTrue(self.db.bulk_delete(paths), 'delete failed')
+        self.assertEqual(sum(s for s in stats["commcare.blobs.deleted.count"]), 2)
+        self.assertEqual(sum(s for s in stats["commcare.blobs.deleted.bytes"]), 28)
 
         for blob, info in blob_infos:
             with self.assertRaises(mod.NotFound):
@@ -103,7 +111,10 @@ class _BlobDBTests(object):
     def test_delete_bucket(self):
         bucket = join("doctype", "ys7v136b")
         info = self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
-        self.assertTrue(self.db.delete(bucket=bucket))
+        with patch_datadog() as stats:
+            self.assertTrue(self.db.delete(bucket=bucket))
+        self.assertEqual(sum(s for s in stats["commcare.blobs.deleted.count"]), 1)
+        self.assertEqual(sum(s for s in stats["commcare.blobs.deleted.bytes"]), 7)
 
         self.assertTrue(info.identifier)
         with self.assertRaises(mod.NotFound):
@@ -139,6 +150,13 @@ class _BlobDBTests(object):
         self.assertNotIn(".", info.identifier)
         return info
 
+    def test_put_with_colliding_blob_id(self):
+        ident = get_id()
+        self.db.put(BytesIO(b"bing"), ident)
+        self.db.put(BytesIO(b"bang"), ident)
+        with self.db.get(ident) as fh:
+            self.assertEqual(fh.read(), b"bang")
+
 
 @generate_cases([
     ("test.1", "\u4500.1"),
@@ -169,14 +187,6 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
         rmtree(cls.rootdir)
         cls.rootdir = None
         super(TestFilesystemBlobDB, cls).tearDownClass()
-
-    def test_put_with_colliding_blob_id(self):
-        # unfortunately can't do this on S3 because there is no way to
-        # reliably check if an object exists before putting it.
-        ident = get_id()
-        self.db.put(BytesIO(b"bing"), ident)
-        with self.assertRaises(mod.FileExists):
-            self.db.put(BytesIO(b"bang"), ident)
 
     def test_delete(self):
         info, bucket = super(TestFilesystemBlobDB, self).test_delete()

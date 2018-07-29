@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 import os
 from xml.sax.saxutils import escape
@@ -41,7 +42,8 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from corehq import toggles
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
+from io import open
 
 
 class DetailContributor(SectionContributor):
@@ -172,8 +174,6 @@ class DetailContributor(SectionContributor):
                     detail_type=detail_type, *column_info
                 ).fields
                 for field in fields:
-                    if column_info.column.useXpathExpression:
-                        field.template.text.xpath_function = column_info.column.field
                     d.fields.append(field)
 
             # Add actions
@@ -587,7 +587,8 @@ class CaseTileHelper(object):
         Return a string suitable for building a case tile detail node
         through `String.format`.
         """
-        with open(os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"
-        )) as f:
-            return f.read().decode('utf-8')
+        with open(
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"),
+            encoding='utf-8'
+        ) as f:
+            return f.read()

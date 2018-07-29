@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 import sh
 from sh_verbose import ShVerbose
@@ -11,6 +12,10 @@ def get_git(path=None):
 
 def get_grep():
     return sh.grep.bake(_tty_out=False)
+
+
+def get_tail():
+    return sh.tail.bake(_tty_out=False)
 
 
 class OriginalBranch(object):
@@ -36,6 +41,12 @@ def git_current_branch(git=None):
     if branch.startswith('('):
         branch = git.log('--pretty=oneline', n=1).strip().split(' ')[0]
     return branch
+
+
+def git_recent_tags(grep_string="production-deploy"):
+    git, grep, tail = get_git(), get_grep(), get_tail()
+    last_tags = tail(grep(git.tag('--sort=committerdate'), grep_string), n=4)
+    return last_tags
 
 
 def git_submodules(git=None):

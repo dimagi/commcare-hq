@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -318,6 +319,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         ),
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
+
 
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})

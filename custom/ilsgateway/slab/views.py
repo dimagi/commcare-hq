@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.contrib import messages
 from django.urls import reverse
 from django.http.response import HttpResponseRedirect, HttpResponseBadRequest
@@ -16,7 +17,7 @@ from corehq.apps.hqwebapp.decorators import (
 from custom.ilsgateway.models import SLABConfig
 from custom.ilsgateway.slab.forms import SLABEditLocationForm
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class SLABConfigurationView(LocationsListView):

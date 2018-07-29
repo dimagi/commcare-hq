@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 from django.test import SimpleTestCase
 from corehq.apps.settings.utils import get_temp_file

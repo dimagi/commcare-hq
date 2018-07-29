@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 import re
 from couchdbkit import ResourceNotFound
@@ -83,16 +84,16 @@ def get_version_and_app_from_build_id(domain, build_id):
 
     """
     if not build_id:
-        return None
+        return None, None
 
     try:
         build = get_app(domain, build_id)
     except (ResourceNotFound, Http404):
-        return None
+        return None, None
     if not build.copy_of:
-        return None
+        return None, None
     elif domain and build.domain != domain:
-        return None
+        return None, None
     else:
         return build.version, build.copy_of
 
@@ -157,7 +158,7 @@ def _first_group_match(text, patterns):
                 return match.groups()[0]
 
 
-class BuildVersionSource:
+class BuildVersionSource(object):
     BUILD_ID = object()
     APPVERSION_TEXT = object()
     XFORM_VERSION = object()

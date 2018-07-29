@@ -1,8 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from django.test import TestCase
-from corehq.apps.change_feed import data_sources
-from corehq.apps.change_feed.document_types import GROUP, change_meta_from_doc
+from corehq.apps.change_feed import data_sources, topics
+from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.es import GroupES
@@ -35,13 +36,13 @@ class GroupPillowTest(TestCase):
         group.save()
 
         # send to kafka
-        since = get_topic_offset(GROUP)
+        since = get_topic_offset(topics.GROUP)
         change_meta = change_meta_from_doc(
             document=group.to_json(),
-            data_source_type=data_sources.COUCH,
+            data_source_type=data_sources.SOURCE_COUCH,
             data_source_name=Group.get_db().dbname,
         )
-        producer.send_change(GROUP, change_meta)
+        producer.send_change(topics.GROUP, change_meta)
 
         # send to elasticsearch
         pillow = get_group_pillow()

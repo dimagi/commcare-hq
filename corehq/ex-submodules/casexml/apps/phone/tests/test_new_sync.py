@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import uuid
 from django.test import TestCase, SimpleTestCase
@@ -186,6 +187,11 @@ class TestNewSyncSpecifics(TestCase):
             username=uuid.uuid4().hex,
         )
         cls.user_id = cls.user.user_id
+
+    @classmethod
+    def tearDownClass(cls):
+        set_request(None)
+        super(TestNewSyncSpecifics, cls).tearDownClass()
 
     def test_legacy_support_toggle(self):
         restore_config = RestoreConfig(self.project, restore_user=self.user)

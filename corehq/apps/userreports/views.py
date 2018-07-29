@@ -41,7 +41,7 @@ from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.undo import get_deleted_doc_type, is_deleted, undo_delete, soft_delete
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
@@ -53,6 +53,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_ba
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
+from corehq.apps.reports.models import ReportConfig
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
@@ -60,14 +61,14 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_nvd3,
 )
-from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
+from corehq.apps.userreports.app_manager.helpers import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
 )
-from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -97,7 +98,7 @@ from corehq.apps.userreports.reports.builder.forms import (
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
@@ -163,6 +164,7 @@ def swallow_programming_errors(fn):
     return decorated
 
 
+@method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator(), name='dispatch')
 class BaseUserConfigReportsView(BaseDomainView):
     section_name = ugettext_lazy("Configurable Reports")
 
@@ -175,6 +177,9 @@ class BaseUserConfigReportsView(BaseDomainView):
             'reports': ReportConfiguration.by_domain(self.domain) + static_reports,
             'data_sources': DataSourceConfiguration.by_domain(self.domain) + static_data_sources,
         })
+        if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
+            from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
+            context['aggregate_data_sources'] = AggregateTableDefinition.objects.filter(domain=self.domain)
         return context
 
     @property
@@ -184,10 +189,6 @@ class BaseUserConfigReportsView(BaseDomainView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
-
-    @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseUserConfigReportsView, self).dispatch(request, *args, **kwargs)
 
 
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
@@ -214,7 +215,6 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'report': self.config,
-            'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
         }
 
     @property
@@ -279,7 +279,7 @@ class ReportBuilderView(BaseDomainView):
             ),
             'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
-            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+            'pricing_page_url': settings.PRICING_PAGE_URL,
             'support_email': settings.SUPPORT_EMAIL,
         })
         return main_context
@@ -346,7 +346,7 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
             'at_report_limit': num_builder_reports >= max_allowed_reports and max_allowed_reports is not None,
             'max_allowed_reports': max_allowed_reports if max_allowed_reports is not None else 0,
             'support_email': settings.SUPPORT_EMAIL,
-            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+            'pricing_page_url': settings.PRICING_PAGE_URL,
         })
         return context
 
@@ -435,7 +435,7 @@ class EditReportInBuilder(View):
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
                 messages.error(request, e.message)
-                return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
+                return HttpResponseRedirect(reverse(ConfigurableReportView.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
 
@@ -463,6 +463,12 @@ class ConfigureReport(ReportBuilderView):
             self.app = Application.get(self.app_id)
             self.source_type = self.request.GET['source_type']
             self.source_id = self.request.GET['source']
+
+        if not self.app_id:
+            raise BadBuilderConfigError(_(
+                "Report builder data source doesn't reference an application. "
+                "It is likely this report has been customized and it is no longer editable. "
+            ))
 
         try:
             data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
@@ -632,7 +638,7 @@ class ConfigureReport(ReportBuilderView):
             self._delete_temp_data_source(report_data)
             send_hubspot_form(HUBSPOT_SAVED_UCR_FORM_ID, request)
             return json_response({
-                'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id]),
+                'report_url': reverse(ConfigurableReportView.slug, args=[self.domain, report_configuration._id]),
                 'report_id': report_configuration._id,
             })
 
@@ -651,6 +657,14 @@ class ConfigureReport(ReportBuilderView):
         if (number_of_report_builder_reports(self.domain) >=
                 allowed_report_builder_reports(self.request)):
             raise Http404()
+
+
+def update_report_description(request, domain, report_id):
+    new_description = request.POST['value']
+    report = get_document_or_404(ReportConfiguration, domain, report_id)
+    report.description = new_description
+    report.save()
+    return json_response({})
 
 
 def _get_form_type(report_type):
@@ -696,7 +710,7 @@ class ReportPreview(BaseDomainView):
         )
         if bound_form.is_valid():
             temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
-            response_data = ConfigurableReport.report_preview_data(self.domain, temp_report)
+            response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
             if response_data:
                 return json_response(response_data)
         return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
@@ -736,6 +750,13 @@ def delete_report(request, domain, report_id):
         ),
         extra_tags='html'
     )
+
+    report_configs = ReportConfig.by_domain_and_owner(
+        domain, request.couch_user.get_id, "configurable")
+    for rc in report_configs:
+        if rc.subreport_slug == config.get_id:
+            rc.delete()
+
     if did_purge_something:
         messages.warning(
             request,
@@ -762,7 +783,7 @@ def undelete_report(request, domain, report_id):
         )
     else:
         messages.info(request, _('Report "{name}" not deleted.').format(name=config.title))
-    return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
+    return HttpResponseRedirect(reverse(ConfigurableReportView.slug, args=[request.domain, report_id]))
 
 
 class ImportConfigReportView(BaseUserConfigReportsView):
@@ -836,7 +857,7 @@ def evaluate_expression(request, domain):
             'form': 'XFormInstance',
             'case': 'CommCareCase',
         }.get(doc_type, 'Unknown')
-        document_store = get_document_store(domain, usable_type)
+        document_store = get_document_store_for_doc_type(domain, usable_type)
         doc = document_store.get_document(doc_id)
         expression_text = request.POST['expression']
         expression_json = json.loads(expression_text)
@@ -884,7 +905,7 @@ def evaluate_data_source(request, domain):
     try:
         data_source = get_datasource_config(data_source_id, domain)[0]
         docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
-        document_store = get_document_store(domain, data_source.referenced_doc_type)
+        document_store = get_document_store_for_doc_type(domain, data_source.referenced_doc_type)
         rows = []
         for doc in document_store.iter_documents(docs_id):
             for row in data_source.get_all_values(doc):
@@ -953,7 +974,6 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'form': self.edit_form,
             'data_source': self.config,
             'read_only': self.read_only,
-            'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
             'used_by_reports': self.get_reports(),
         }
 
@@ -1265,6 +1285,11 @@ def process_url_params(params, columns):
 def export_data_source(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = IndicatorSqlAdapter(config)
+    url = reverse('export_configurable_data_source', args=[domain, config._id])
+    return export_sql_adapter_view(request, domain, adapter, url)
+
+
+def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
     q = adapter.get_query_object()
     table = adapter.get_table()
 
@@ -1295,7 +1320,7 @@ def export_data_source(request, domain, config_id):
             del keyword_params['format']
         return HttpResponseRedirect(
             '%s?%s' % (
-                reverse('export_configurable_data_source', args=[domain, config._id]),
+                too_large_redirect_url,
                 urlencode(keyword_params)
             )
         )
@@ -1309,7 +1334,7 @@ def export_data_source(request, domain, config_id):
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as tmpfile:
         try:
-            tables = [[config.table_id, get_table(q)]]
+            tables = [[adapter.table_id, get_table(q)]]
             export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
             msg = ugettext_lazy(
@@ -1317,7 +1342,7 @@ def export_data_source(request, domain, config_id):
                 "please make sure your parameters are valid."
             )
             return HttpResponse(msg, status=400)
-        return export_response(Temp(path), params.format, config.display_name)
+        return export_response(Temp(path), params.format, adapter.display_name)
 
 
 @login_and_domain_required

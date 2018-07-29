@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from corehq.apps.userreports.datatypes import DataTypeProperty
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 from jsonobject import DefaultProperty
 from jsonobject.exceptions import BadValueError
@@ -9,16 +11,6 @@ from corehq.apps.userreports.operators import in_multiselect, equal
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import add_tabbed_text
-
-
-DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal', 'array', 'small_integer']
-
-
-def DataTypeProperty(**kwargs):
-    """
-    Shortcut for valid data types.
-    """
-    return StringProperty(choices=DATA_TYPE_CHOICES, **kwargs)
 
 
 class IndicatorSpecBase(JsonObject):
@@ -71,6 +63,10 @@ class BooleanIndicatorSpec(IndicatorSpecBase):
         from corehq.apps.userreports.filters.factory import FilterFactory
         filter_object = FilterFactory.from_spec(self.filter, context)
         return str(filter_object)
+
+
+class SmallBooleanIndicatorSpec(BooleanIndicatorSpec):
+    type = TypeProperty('small_boolean')
 
 
 class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
@@ -139,3 +135,10 @@ class LedgerBalancesIndicatorSpec(IndicatorSpecBase):
 
     def readable_output(self, context):
         return "Ledgers from {}".format(str(self.get_case_id_expression(context)))
+
+
+class DueListDateIndicatorSpec(LedgerBalancesIndicatorSpec):
+    type = TypeProperty('due_list_date')
+
+    def readable_output(self, context):
+        return "Due List Dates from {}".format(str(self.get_case_id_expression(context)))

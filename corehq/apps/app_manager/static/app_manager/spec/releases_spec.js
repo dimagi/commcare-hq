@@ -13,6 +13,7 @@ describe('App Releases', function() {
                 build_broken: false,
                 is_released: false,
                 domain: 'test-domain',
+                target_commcare_flavor: false,
             }, extraProps);
         });
     }
@@ -34,14 +35,14 @@ describe('App Releases', function() {
             ajax_stub;
 
         beforeEach(function() {
-            var ReleasesMain = hqImport('app_manager/js/releases/releases').ReleasesMain,
+            var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel,
                 registerUrl = hqImport("hqwebapp/js/initial_page_data").registerUrl;
             registerUrl("odk_install", "/a/test-domain/apps/odk/---/install/");
             registerUrl("odk_media_install", "/a/test-domain/apps/odk/---/media_install/");
             registerUrl("download_ccz", "/a/text-domain/apps/download/---/CommCare.ccz");
             registerUrl("download_multimedia_zip", "/a/test-domain/apps/download/---/multimedia/commcare.zip");
             ajax_stub = sinon.stub($, 'ajax');
-            releases = new ReleasesMain(options);
+            releases = releasesMainModel(options);
             releases.addSavedApps(get_saved_apps(releases.fetchLimit));
         });
 
@@ -87,29 +88,29 @@ describe('App Releases', function() {
     });
 
     describe('app_code', function() {
-        var ReleasesMain = hqImport('app_manager/js/releases/releases').ReleasesMain;
-        var SavedApp = hqImport('app_manager/js/releases/releases').SavedApp;
+        var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel;
+        var savedAppModel = hqImport('app_manager/js/releases/releases').savedAppModel;
         var savedApp,
             releases;
         beforeEach(function() {
-            releases = new ReleasesMain(options);
+            releases = releasesMainModel(options);
 
             this.server = sinon.fakeServer.create();
             this.server.respondWith(
                 "GET",
-                new RegExp(SavedApp.URL_TYPES.SHORT_ODK_MEDIA_URL),
+                new RegExp(savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL),
                 [200, { "Content-type": "text/html" }, 'http://bit.ly/media/']
             );
             this.server.respondWith(
                 "GET",
-                new RegExp(SavedApp.URL_TYPES.SHORT_ODK_URL),
+                new RegExp(savedAppModel.URL_TYPES.SHORT_ODK_URL),
                 [200, { "Content-type": "text/html" }, 'http://bit.ly/nomedia/']
             );
         });
 
         it('should correctly load media url', function() {
             var props = { include_media: true };
-            props[SavedApp.URL_TYPES.SHORT_ODK_MEDIA_URL] = null;
+            props[savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL] = null;
             releases.addSavedApps(get_saved_apps(1, props));
 
             savedApp = releases.savedApps()[0];
@@ -126,7 +127,7 @@ describe('App Releases', function() {
 
         it('should correctly load non media url', function() {
             var props = { include_media: false };
-            props[SavedApp.URL_TYPES.SHORT_ODK_URL] = null;
+            props[savedAppModel.URL_TYPES.SHORT_ODK_URL] = null;
             releases.addSavedApps(get_saved_apps(1, props));
 
             savedApp = releases.savedApps()[0];
@@ -144,8 +145,8 @@ describe('App Releases', function() {
         it('should correctly toggle between media and non media', function() {
             var props = { include_media: false };
 
-            props[SavedApp.URL_TYPES.SHORT_ODK_URL] = null;
-            props[SavedApp.URL_TYPES.SHORT_ODK_MEDIA_URL] = null;
+            props[savedAppModel.URL_TYPES.SHORT_ODK_URL] = null;
+            props[savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL] = null;
             releases.addSavedApps(get_saved_apps(1, props));
             savedApp = releases.savedApps()[0];
 

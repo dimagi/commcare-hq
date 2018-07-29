@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy
@@ -33,7 +34,7 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     mapping = jsonobject.DictProperty()
 
     def __unicode__(self):
-        return u'{} ({})'.format(self.alias, self.index)
+        return '{} ({})'.format(self.alias, self.index)
 
     @property
     def meta(self):

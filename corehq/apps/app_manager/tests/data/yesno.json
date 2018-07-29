@@ -273,7 +273,9 @@
                 }
             ],
             "media_audio": null,
-            "media_image": {"default": "jr://file/commcare_media/image/image.jpeg"},
+            "media_image": {
+                "en": "jr://file/commcare_media/image/image.jpeg"
+            },
             "name": {
                 "en": "Untitled Module"
             },

@@ -1,7 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.dateparse import parse_datetime
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from collections import namedtuple
 from custom.enikshay.case_utils import get_person_case_from_episode
 from casexml.apps.case.xform import get_case_updates
@@ -53,9 +54,9 @@ class EpisodeFacilityIDMigration(object):
         diagnosing_facility_id = self.episode.get_case_property('diagnosing_facility_id')
         treatment_initiating_facility_id = self.episode.get_case_property('treatment_initiating_facility_id')
         if (diagnosing_facility_id is not None
-           and diagnosing_facility_id != u''
+           and diagnosing_facility_id != ''
            and treatment_initiating_facility_id is not None
-           and treatment_initiating_facility_id != u'') or (
+           and treatment_initiating_facility_id != '') or (
                 '_archive_' in [diagnosing_facility_id, treatment_initiating_facility_id]
         ):
             return False

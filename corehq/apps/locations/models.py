@@ -1,20 +1,23 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from datetime import datetime
 from functools import partial
 
 from bulk_update.helper import bulk_update as bulk_update_helper
 
-from dimagi.utils.decorators.memoized import memoized
-from django.db import models, transaction
 import jsonfield
+from django.conf import settings
+from django.db import models, transaction
+from django_cte import CTEQuerySet
+from memoized import memoized
+
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.queryutil import ComparedQuerySet, TimingContext
+from corehq.apps.locations.adjacencylist import AdjListModel, AdjListManager
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
-from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
 
 class LocationTypeManager(models.Manager):
@@ -109,7 +112,7 @@ class LocationType(models.Model):
     # If specified, include only the linked types
     include_only = models.ManyToManyField('self', symmetrical=False, related_name='included_in')
 
-    last_modified = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
     has_user = models.BooleanField(default=False)
 
     emergency_level = StockLevelField(default=0.5)
@@ -118,7 +121,7 @@ class LocationType(models.Model):
 
     objects = LocationTypeManager()
 
-    class Meta:
+    class Meta(object):
         app_label = 'locations'
         unique_together = (
             ('domain', 'code'),
@@ -193,7 +196,7 @@ class LocationType(models.Model):
         return self.name
 
     def __repr__(self):
-        return u"LocationType(domain='{}', name='{}', administrative={})".format(
+        return "LocationType(domain='{}', name='{}', administrative={})".format(
             self.domain,
             self.name,
             self.administrative,
@@ -264,12 +267,7 @@ class LocationQueriesMixin(object):
         if not assigned_location_ids:
             return self.none()  # No locations are assigned to this user
 
-        ids_query = SQLLocation.objects.get_locations_and_children(assigned_location_ids)
-        assert isinstance(ids_query, ComparedQuerySet), ids_query
-        return ComparedQuerySet(
-            self.filter(id__in=ids_query._mptt_set),
-            ids_query,
-        )
+        return SQLLocation.objects.get_locations_and_children(assigned_location_ids)
 
     def delete(self, *args, **kwargs):
         from .document_store import publish_location_saved
@@ -277,44 +275,31 @@ class LocationQueriesMixin(object):
             publish_location_saved(domain, location_id, is_deletion=True)
         return super(LocationQueriesMixin, self).delete(*args, **kwargs)
 
+    def _user_input_filter(self, domain, user_input):
+        """Build a Q expression for filtering on user input
+
+        Accepts partial matches, matches against name and site_code.
+        """
+        Q = models.Q
+        return Q(domain=domain) & Q(
+            Q(name__icontains=user_input) | Q(site_code__icontains=user_input)
+        )
+
     def filter_by_user_input(self, domain, user_input):
         """
         Accepts partial matches, matches against name and site_code.
         """
-        return (self.filter(domain=domain)
-                    .filter(models.Q(name__icontains=user_input) |
-                            models.Q(site_code__icontains=user_input)))
+        return self.filter(self._user_input_filter(domain, user_input))
 
 
-class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
-    pass
+class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
+
+    def accessible_to_user(self, domain, user):
+        ids_query = super(LocationQuerySet, self).accessible_to_user(domain, user)
+        return self.filter(id__in=ids_query)
 
 
-class LocationManager(LocationQueriesMixin, TreeManager):
-
-    def mptt_get_queryset_ancestors(self, *args, **kw):
-        return super(LocationManager, self).get_queryset_ancestors(*args, **kw)
-
-    def mptt_get_queryset_descendants(self, *args, **kw):
-        return super(LocationManager, self).get_queryset_descendants(*args, **kw)
-
-    def get_queryset_ancestors(self, queryset, include_self=False):
-        timing = TimingContext("get_queryset_ancestors")
-        mptt_qs = queryset
-        if isinstance(queryset, ComparedQuerySet):
-            mptt_qs = queryset._mptt_set
-        with timing("mptt"):
-            mptt_set = self.mptt_get_queryset_ancestors(mptt_qs, include_self)
-        return ComparedQuerySet(mptt_set, timing)
-
-    def get_queryset_descendants(self, queryset, include_self=False):
-        timing = TimingContext("get_queryset_descendants")
-        mptt_qs = queryset
-        if isinstance(queryset, ComparedQuerySet):
-            mptt_qs = queryset._mptt_set
-        with timing("mptt"):
-            mptt_set = self.mptt_get_queryset_descendants(mptt_qs, include_self)
-        return ComparedQuerySet(mptt_set, timing)
+class LocationManager(LocationQueriesMixin, AdjListManager):
 
     def get_or_None(self, **kwargs):
         try:
@@ -322,12 +307,8 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         except SQLLocation.DoesNotExist:
             return None
 
-    def _get_base_queryset(self):
-        return LocationQuerySet(self.model, using=self._db)
-
     def get_queryset(self):
-        return (self._get_base_queryset()
-                .order_by(self.tree_id_attr, self.left_attr))  # mptt default
+        return LocationQuerySet(self.model, using=self._db)
 
     def get_from_user_input(self, domain, user_input):
         """
@@ -348,7 +329,7 @@ class LocationManager(LocationQueriesMixin, TreeManager):
             Massachusetts/Middlesex/Cambridge
         It matches by name or site-code
         """
-        direct_matches = self.filter_by_user_input(domain, user_input)
+        direct_matches = self._user_input_filter(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
     def get_locations(self, location_ids):
@@ -388,7 +369,7 @@ class OnlyArchivedLocationManager(LocationManager):
         return list(self.accessible_to_user(domain, user).location_ids())
 
 
-class SQLLocation(MPTTModel):
+class SQLLocation(AdjListModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
@@ -397,11 +378,11 @@ class SQLLocation(MPTTModel):
     external_id = models.CharField(max_length=255, null=True, blank=True)
     metadata = jsonfield.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    last_modified = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
     is_archived = models.BooleanField(default=False)
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
-    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
 
     # Use getter and setter below to access this value
     # since stocks_all_products can cause an empty list to
@@ -420,25 +401,14 @@ class SQLLocation(MPTTModel):
     active_objects = OnlyUnarchivedLocationManager()
     inactive_objects = OnlyArchivedLocationManager()
 
-    def mptt_get_ancestors(self, **kw):
-        # VERIFIED does not call self.objects.get_queryset_ancestors
-        return super(SQLLocation, self).get_ancestors(**kw)
-
-    def mptt_get_descendants(self, **kw):
-        # VERIFIED does not call self.objects.get_queryset_descendants
-        return super(SQLLocation, self).get_descendants(**kw)
-
-    def get_ancestors(self, **kw):
-        timing = TimingContext("get_ancestors")
-        with timing("mptt"):
-            mptt_set = self.mptt_get_ancestors(**kw)
-        return ComparedQuerySet(mptt_set, timing)
-
-    def get_descendants(self, **kw):
-        timing = TimingContext("get_descendants")
-        with timing("mptt"):
-            mptt_set = self.mptt_get_descendants(**kw)
-        return ComparedQuerySet(mptt_set, timing)
+    def get_ancestor_of_type(self, type_code):
+        """
+        Returns the ancestor of given location_type_code of the location
+        """
+        try:
+            return self.get_ancestors().get(location_type__code=type_code)
+        except self.DoesNotExist:
+            return None
 
     @classmethod
     def get_sync_fields(cls):
@@ -460,24 +430,62 @@ class SQLLocation(MPTTModel):
         publish_location_saved(self.domain, self.location_id)
 
     def delete(self, *args, **kwargs):
-        from corehq.apps.commtrack.models import sync_supply_point
-        from .document_store import publish_location_saved
-        to_delete = self.get_descendants(include_self=True)
+        """Delete this location and all descentants
 
-        # This deletion should ideally happen in a transaction. It's not
-        # currently possible as supply point cases are stored either in a
-        # separate database or in couch. Happy Debugging!
+        Supply point cases and user updates are performed asynchronously.
+        """
+        from .tasks import update_users_at_locations
+        from .document_store import publish_location_saved
+
+        to_delete = self.get_descendants(include_self=True)
         for loc in to_delete:
-            loc._remove_users()
-            sync_supply_point(loc, is_deletion=True)
+            loc._remove_user()
 
         super(SQLLocation, self).delete(*args, **kwargs)
+        update_users_at_locations.delay(
+            self.domain,
+            [loc.location_id for loc in to_delete],
+            [loc.supply_point_id for loc in to_delete if loc.supply_point_id],
+            list(self.get_ancestors().location_ids()),
+        )
         publish_location_saved(self.domain, self.location_id, is_deletion=True)
 
     full_delete = delete
 
-    def to_json(self):
-        return {
+    @classmethod
+    def bulk_delete(cls, locations, ancestor_location_ids):
+        """Bulk delete the given locations and update their ancestors
+
+        WARNING databases may be left in an inconsistent state if the
+        transaction in which this deletion is performed is rolled back.
+        This method mutates other databases that will not be reverted on
+        transaction rollback.
+
+        :param locations: A list of SQLLocation objects. All locations
+        in the list are expected to be leaf nodes or parents of nodes
+        that are also in the list. Behavior of passing a non-leaf node
+        without also passing all of its descendants is undefined.
+        :param ancestor_location_ids: A list of ancestor `location_id`s
+        for the given `locations`.
+        """
+        from .tasks import update_users_at_locations
+        if not locations:
+            return
+        if len(set(loc.domain for loc in locations)) != 1:
+            raise ValueError("cannot bulk delete locations for multiple domains")
+        cls.objects.filter(id__in=[loc.id for loc in locations]).delete()
+        # NOTE _remove_user() not called here. No domains were using
+        # SQLLocation.user_id at the time this was written, and that
+        # field is slated for removal.
+        update_users_at_locations.delay(
+            locations[0].domain,
+            [loc.location_id for loc in locations],
+            [loc.supply_point_id for loc in locations if loc.supply_point_id],
+            ancestor_location_ids,
+        )
+
+    def to_json(self, include_lineage=True):
+        json_dict = {
             'name': self.name,
             'site_code': self.site_code,
             '_id': self.location_id,
@@ -492,13 +500,16 @@ class SQLLocation(MPTTModel):
             'metadata': self.metadata,
             'location_type': self.location_type.name,
             'location_type_code': self.location_type.code,
-            'lineage': self.lineage,
             'parent_location_id': self.parent_location_id,
         }
+        if include_lineage:
+            # lineage requires a non-trivial db hit
+            json_dict['lineage'] = self.lineage
+        return json_dict
 
     @property
     def lineage(self):
-        return list(self.get_ancestors(ascending=True).location_ids())
+        return list(reversed(self.path[:-1]))
 
     _id = property(lambda self: self.location_id)
     get_id = property(lambda self: self.location_id)
@@ -524,7 +535,7 @@ class SQLLocation(MPTTModel):
 
         self._products = value
 
-    def _remove_users(self):
+    def _remove_user(self):
         """
         Unassigns the users assigned to that location.
 
@@ -536,45 +547,50 @@ class SQLLocation(MPTTModel):
             user.active = False
             user.save()
 
-        _unassign_users_from_location(self.domain, self.location_id)
-
     def archive(self):
         """
         Mark a location and its descendants as archived and unassigns users
         assigned to the location.
         """
-        for loc in self.get_descendants(include_self=True):
+        from .tasks import update_users_at_locations
+        locations = self.get_descendants(include_self=True)
+        for loc in locations:
             loc.is_archived = True
             loc.save()
-            loc._remove_users()
+            loc._remove_user()
+
+        update_users_at_locations.delay(
+            self.domain,
+            [loc.location_id for loc in locations],
+            [loc.supply_point_id for loc in locations if loc.supply_point_id],
+            list(self.get_ancestors().location_ids()),
+        )
 
     def unarchive(self):
         """
         Unarchive a location and reopen supply point case if it
         exists.
         """
-        for loc in self.get_descendants(include_self=True):
+        import itertools
+        from corehq.apps.users.models import CommCareUser
+        for loc in itertools.chain(self.get_descendants(include_self=True), self.get_ancestors()):
             loc.is_archived = False
             loc.save()
 
             if loc.user_id:
-                from corehq.apps.users.models import CommCareUser
                 user = CommCareUser.get(loc.user_id)
                 user.active = True
                 user.save()
 
-    class Meta:
+    class Meta(object):
         app_label = 'locations'
         unique_together = ('domain', 'site_code',)
-        index_together = [
-            ('tree_id', 'lft', 'rght')
-        ]
 
     def __unicode__(self):
-        return u"{} ({})".format(self.name, self.domain)
+        return "{} ({})".format(self.name, self.domain)
 
     def __repr__(self):
-        return u"SQLLocation(domain='{}', name='{}', location_type='{}')".format(
+        return "SQLLocation(domain='{}', name='{}', location_type='{}')".format(
             self.domain,
             self.name,
             self.location_type.name if hasattr(self, 'location_type') else None,
@@ -582,7 +598,7 @@ class SQLLocation(MPTTModel):
 
     @property
     def display_name(self):
-        return u"{} [{}]".format(self.name, self.location_type.name)
+        return "{} [{}]".format(self.name, self.location_type.name)
 
     def archived_descendants(self):
         """
@@ -651,9 +667,15 @@ class SQLLocation(MPTTModel):
 
     @property
     def path(self):
-        _path = list(reversed(self.lineage))
-        _path.append(self._id)
-        return _path
+        try:
+            return self._path
+        except AttributeError:
+            self._path = list(self.get_ancestors(include_self=True).location_ids())
+        return self._path
+
+    @path.setter
+    def path(self, value):
+        self._path = value
 
     @classmethod
     def by_location_id(cls, location_id):
@@ -751,7 +773,7 @@ class LocationFixtureConfiguration(models.Model):
     sync_hierarchical_fixture = models.BooleanField(default=True)
 
     def __repr__(self):
-        return u'{}: flat: {}, hierarchical: {}'.format(
+        return '{}: flat: {}, hierarchical: {}'.format(
             self.domain, self.sync_flat_fixture, self.sync_hierarchical_fixture
         )
 
@@ -767,8 +789,13 @@ def _unassign_users_from_location(domain, location_id):
     """
     Unset location for all users assigned to that location.
     """
-    from corehq.apps.locations.dbaccessors import get_all_users_by_location
-    for user in get_all_users_by_location(domain, location_id):
+    from corehq.apps.locations.dbaccessors import user_ids_at_locations
+    from corehq.apps.users.models import CouchUser
+    from dimagi.utils.couch.database import iter_docs
+
+    user_ids = user_ids_at_locations([location_id])
+    for doc in iter_docs(CouchUser.get_db(), user_ids):
+        user = CouchUser.wrap_correctly(doc)
         if user.is_web_user():
             user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():

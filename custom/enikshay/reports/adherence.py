@@ -1,15 +1,16 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy, ugettext as _
 
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.reports.view import get_filter_values
 from custom.enikshay.reports.filters import PeriodFilter, EnikshayLocationFilter
 from custom.enikshay.reports.generic import EnikshayReport
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 @location_safe
@@ -65,8 +66,8 @@ class AdherenceReport(EnikshayReport):
 
     @property
     def ucr_report(self):
-        spec = StaticReportConfiguration.by_id('static-%s-adherence' % self.domain)
-        report = ReportFactory.from_spec(
+        spec = StaticReportConfiguration.by_id('static-%s-adherence' % self.domain, self.domain)
+        report = ConfigurableReportDataSource.from_spec(
             spec, include_prefilters=True
         )
 

@@ -7,10 +7,6 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'export/js/download_data_files.js' %}"></script>
-    <script>
-        var copyDataFileUrl = hqImport('export/js/download_data_files').copyDataFileUrl;
-        var deleteDataFile = hqImport('export/js/download_data_files').deleteDataFile;
-    </script>
 {% endblock %}
 
 {% block page_content %}
@@ -36,7 +32,7 @@
                 </td>
                 <td style="width: 6em; text-align: right;">
                     <a href="#"
-                       onclick="copyDataFileUrl(
+                       onclick="hqImport('export/js/download_data_files').copyDataFileUrl(
                                     '{{ url_base }}{% url 'download_data_file' domain data_file.id data_file.filename %}',
                                     $('#url_{{ data_file.id }}')
                                 )">
@@ -49,7 +45,7 @@
 
                     {% if is_admin %}
                     <a href="#"
-                       onclick="deleteDataFile(
+                       onclick="hqImport('export/js/download_data_files').deleteDataFile(
                                     '{% url 'download_data_file' domain data_file.id data_file.filename %}',
                                     $('#row_{{ data_file.id }}')
                                 )">

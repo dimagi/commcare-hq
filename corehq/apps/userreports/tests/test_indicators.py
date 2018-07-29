@@ -1,31 +1,31 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import namedtuple
-from datetime import datetime
-import uuid
+
 from copy import copy
+from datetime import datetime, date
 from decimal import Decimal
-from django.db.models.signals import post_save
-from mock import patch
+import uuid
+
 from django.test import SimpleTestCase, TestCase
+from mock import patch
+
 from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.models import StockState, update_domain_mapping
+
 from corehq.apps.commtrack.processing import StockProcessingResult
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.indicators import LedgerBalancesIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.products.models import SQLProduct
+from corehq.apps.userreports.indicators.utils import get_values_by_product
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata
-from corehq.util.context_managers import drop_connected_signals
 
 
 class SingleIndicatorTestBase(SimpleTestCase):
@@ -36,10 +36,11 @@ class SingleIndicatorTestBase(SimpleTestCase):
 
 
 class BooleanIndicatorTest(SingleIndicatorTestBase):
+    indicator_type = 'boolean'
 
     def setUp(self):
         self.indicator = IndicatorFactory.from_spec({
-            'type': 'boolean',
+            'type': self.indicator_type,
             'column_id': 'col',
             'filter': {
                 'type': 'property_match',
@@ -53,7 +54,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
     def testNoColumnId(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'filter': {
                     'type': 'property_match',
                     'property_name': 'foo',
@@ -64,7 +65,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
     def testEmptyColumnId(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'column_id': '',
                 'filter': {
                     'type': 'property_match',
@@ -76,14 +77,14 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
     def testNoFilter(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'column_id': 'col',
             })
 
     def testEmptyFilter(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'column_id': 'col',
                 'filter': None,
             })
@@ -91,7 +92,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
     def testBadFilterType(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'column_id': 'col',
                 'filter': 'wrong type',
             })
@@ -99,7 +100,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
     def testInvalidFilter(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'column_id': 'col',
                 'filter': {
                     'type': 'property_match',
@@ -120,7 +121,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
         # in slightly more compact format:
         # ((foo=bar) or (foo1=bar1 and foo2=bar2 and (foo3=bar3 or foo4=bar4)))
         indicator = IndicatorFactory.from_spec({
-            "type": "boolean",
+            "type": self.indicator_type,
             "column_id": "col",
             "filter": {
                 "type": "or",
@@ -198,7 +199,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
                     },
                     "type": "not"
                 },
-                "type": "boolean",
+                "type": self.indicator_type,
                 "display_name": None,
                 "column_id": "prop1_not_null"
             }
@@ -208,6 +209,10 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
         self._check_result(indicator, {}, 0, EvaluationContext(root_doc=dict(ccs_opened_date='')))
         self._check_result(indicator, {}, 0, EvaluationContext(root_doc=dict(ccs_opened_date=None)))
         self._check_result(indicator, {}, 0, EvaluationContext(root_doc=dict()))
+
+
+class SmallBooleanIndicatorTest(BooleanIndicatorTest):
+    indicator_type = 'small_boolean'
 
 
 class CountIndicatorTest(SingleIndicatorTestBase):
@@ -546,17 +551,50 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
         }
         self.stock_states = {'abc': 32, 'def': 85, 'ghi': 11}
 
-    @patch.object(LedgerBalancesIndicator, '_get_values_by_product')
-    def test_ledger_balances_indicator(self, get_values_by_product):
-        get_values_by_product.return_value = self.stock_states
+    def test_ledger_balances_indicator(self):
         indicator = IndicatorFactory.from_spec(self.spec)
-
         doc = {'_id': 'case1', 'domain': 'domain'}
-        values = indicator.get_values(doc, EvaluationContext(doc, 0))
+
+        with patch('corehq.apps.userreports.indicators.get_values_by_product', return_value=self.stock_states):
+            values = indicator.get_values(doc, EvaluationContext(doc, 0))
 
         self.assertEqual(
             [(val.column.id, val.value) for val in values],
             [('soh_abc', 32), ('soh_def', 85), ('soh_ghi', 11)]
+        )
+
+
+class DueListDateIndicatorTest(SimpleTestCase):
+
+    def setUp(self):
+        self.spec = {
+            "type": "due_list_date",
+            "column_id": "immun_dates",
+            "display_name": "Immunization date",
+            "ledger_section": "immuns",
+            "product_codes": ["tt_1", "tt_2", "hpv", "non_exist"],
+            "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            }
+        }
+        self.stock_states = {'tt_1': 17000, 'tt_2': 17020, 'hpv': 18000}
+
+    def test_ledger_balances_indicator(self):
+        indicator = IndicatorFactory.from_spec(self.spec)
+        doc = {'_id': 'case1', 'domain': 'domain'}
+
+        with patch('corehq.apps.userreports.indicators.get_values_by_product', return_value=self.stock_states):
+            values = indicator.get_values(doc, EvaluationContext(doc, 0))
+
+        self.assertEqual(
+            [(val.column.id, val.value) for val in values],
+            [
+                ('immun_dates_tt_1', date(2016, 7, 18)),
+                ('immun_dates_tt_2', date(2016, 8, 7)),
+                ('immun_dates_hpv', date(2019, 4, 14)),
+                ('immun_dates_non_exist', date(1970, 1, 1))
+            ]
         )
 
 
@@ -587,17 +625,11 @@ class TestGetValuesByProduct(TestCase):
     def setUpClass(cls):
         super(TestGetValuesByProduct, cls).setUpClass()
         cls.data = [
-            {"product": "coke", "section": "soh", "balance": 32},
-            {"product": "coke", "section": "consumption", "balance": 63},
-            {"product": "surge", "section": "soh", "balance": 85},
-            {"product": "fanta", "section": "soh", "balance": 11},
+            {"product_id": uuid.uuid4().hex, "product": "coke", "section": "soh", "balance": 32},
+            {"product_id": uuid.uuid4().hex, "product": "coke", "section": "consumption", "balance": 63},
+            {"product_id": uuid.uuid4().hex, "product": "surge", "section": "soh", "balance": 85},
+            {"product_id": uuid.uuid4().hex, "product": "fanta", "section": "soh", "balance": 11},
         ]
-        product_ids = {p['product'] for p in cls.data}
-
-        SQLProduct.objects.bulk_create([
-            SQLProduct(domain=cls.domain_name, product_id=id, code=id)
-            for id in product_ids
-        ])
 
     @classmethod
     def tearDownClass(cls):
@@ -608,18 +640,23 @@ class TestGetValuesByProduct(TestCase):
         super(TestGetValuesByProduct, self).setUp()
         self.ledger_processor = FormProcessorInterface(domain=self.domain_name).ledger_processor
         self.domain_obj = create_domain(self.domain_name)
+        SQLProduct.objects.bulk_create([
+            SQLProduct(domain=self.domain_name, product_id=data['product_id'], code=data['product'])
+            for data in self.data
+        ])
 
         transactions_flat = []
         self.transactions = {}
         for d in self.data:
             product = d['product']
+            product_id = d['product_id']
             section = d['section']
             balance = d['balance']
             transactions_flat.append(
                 StockTransactionHelper(
                     case_id=self.case_id,
                     section_id=section,
-                    product_id=product,
+                    product_id=product_id,
                     action='soh',
                     quantity=balance,
                     timestamp=datetime.utcnow()
@@ -640,18 +677,18 @@ class TestGetValuesByProduct(TestCase):
 
     @run_with_all_backends
     def test_get_soh_values_by_product(self):
-        values = LedgerBalancesIndicator._get_values_by_product(
-            'soh', self.case_id, ['coke', 'surge', 'new_coke'], self.domain_name
+        values = get_values_by_product(
+            self.domain_name, self.case_id, 'soh', ['coke', 'surge', 'new_coke']
         )
-        self.assertEqual(values['coke'], 32)
-        self.assertEqual(values['surge'], 85)
-        self.assertEqual(values['new_coke'], 0)
+        self.assertEqual(values.get('coke'), 32)
+        self.assertEqual(values.get('surge'), 85)
+        self.assertEqual(values.get('new_coke'), None)
 
     @run_with_all_backends
     def test_get_consumption_by_product(self):
-        values = LedgerBalancesIndicator._get_values_by_product(
-            'consumption', self.case_id, ['coke', 'surge', 'new_coke'], self.domain_name
+        values = get_values_by_product(
+            self.domain_name, self.case_id, 'consumption', ['coke', 'surge', 'new_coke']
         )
-        self.assertEqual(values['coke'], 63)
-        self.assertEqual(values['surge'], 0)
-        self.assertEqual(values['new_coke'], 0)
+        self.assertEqual(values.get('coke'), 63)
+        self.assertEqual(values.get('surge'), None)
+        self.assertEqual(values.get('new_coke'), None)

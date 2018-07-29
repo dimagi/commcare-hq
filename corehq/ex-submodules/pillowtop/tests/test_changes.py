@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from django.test import SimpleTestCase
 from pillowtop.dao.mock import MockDocumentStore

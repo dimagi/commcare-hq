@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
+from copy import copy
+
 from django.test import SimpleTestCase
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.expressions.utils import COUNT
 from corehq.util.test_utils import generate_cases
 
 
@@ -484,6 +487,91 @@ def test_sort_items_basic(self, doc, items_ex, sort_ex, expected):
         'sort_expression': sort_ex
     })
     self.assertEqual(expression(doc), expected)
+
+
+class NestedExpressionTest(SimpleTestCase):
+    DATE = datetime.date(2018, 1, 1)
+    DATE_LITERAL = '2018-01-01'
+    DATE_CONSTANT_EXPRESSION = {
+        'type': 'constant',
+        'constant': '2018-01-01',
+        'datatype': 'date',
+    }
+    DATE_LITERAL_FILTER = {
+        'type': 'boolean_expression',
+        'operator': 'eq',
+        'expression': {
+            'type': 'identity',
+        },
+        'property_value': DATE_LITERAL,
+    }
+    DATE_CONSTANT_FILTER = {
+        'type': 'boolean_expression',
+        'operator': 'eq',
+        'expression': {
+            'type': 'identity',
+        },
+        'property_value': DATE_CONSTANT_EXPRESSION,
+    }
+    ITEMS_EXPRESSION = {
+        'type': 'iterator',
+        "expressions": [
+            DATE_LITERAL,
+            DATE_CONSTANT_EXPRESSION,
+            'not a date',
+        ],
+    }
+
+    def test_filter_items_with_nested_dates(self):
+        for filter_spec in [self.DATE_LITERAL_FILTER, self.DATE_CONSTANT_FILTER]:
+            expression = ExpressionFactory.from_spec({
+                "type": "filter_items",
+                "items_expression": self.ITEMS_EXPRESSION,
+                "filter_expression": filter_spec,
+            })
+            self.assertEqual(2, len(expression({})))
+
+    def test_map_items_with_nested_dates(self):
+        for inner_expression_spec in [self.DATE_LITERAL, self.DATE_CONSTANT_EXPRESSION]:
+            expression = ExpressionFactory.from_spec({
+                "type": "map_items",
+                "items_expression": self.ITEMS_EXPRESSION,
+                "map_expression": inner_expression_spec,
+            })
+            result = expression({})
+            self.assertEqual(3, len(result))
+            for val in result:
+                self.assertEqual(self.DATE, val)
+
+    def test_reduce_items_with_nested_dates(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "reduce_items",
+            "items_expression": self.ITEMS_EXPRESSION,
+            "aggregation_fn": COUNT,
+        })
+        self.assertEqual(3, expression({}))
+
+    def test_flatten_items_with_nested_dates(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "flatten",
+            "items_expression": self.ITEMS_EXPRESSION,
+        })
+        # in this case the expression fails and defaults to an empty list because the inner dates aren't iterable
+        # this is fine as the bug was actually in the generation of the expression from the factory
+        self.assertEqual([], expression({}))
+
+    def test_sort_items_with_nested_dates(self):
+        items_expression = copy(self.ITEMS_EXPRESSION)
+        items_expression['expressions'] = items_expression['expressions'][:2]
+        expression = ExpressionFactory.from_spec({
+            "type": "sort_items",
+            "items_expression": items_expression,
+            "sort_expression": {'type': 'identity'}
+        })
+        result = expression({})
+        self.assertEqual(2, len(result))
+        for val in result:
+            self.assertEqual(self.DATE, val)
 
 
 class ListExpressionTest(SimpleTestCase):

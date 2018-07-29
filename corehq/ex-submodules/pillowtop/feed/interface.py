@@ -1,7 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
-from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
+from corehq.sql_db.util import handle_connection_failure, get_all_db_aliases
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
 from pillowtop.dao.exceptions import DocumentNotFoundError
@@ -14,16 +15,29 @@ class ChangeMeta(jsonobject.JsonObject):
 
     This is only used in kafka-based pillows.
     """
+    _allow_dynamic_properties = False
+
     document_id = DefaultProperty(required=True)
-    document_rev = jsonobject.StringProperty()  # Only relevant for Couch documents
+
+    # Only relevant for Couch documents
+    document_rev = jsonobject.StringProperty()
+
+    # 'couch' or 'sql'
     data_source_type = jsonobject.StringProperty(required=True)
+
+    # couch database name or one of data sources listed in corehq.apps.change_feed.data_sources
     data_source_name = jsonobject.StringProperty(required=True)
+
+    # doc_type property of doc or else the topic name
     document_type = DefaultProperty()
+
     document_subtype = jsonobject.StringProperty()
     domain = jsonobject.StringProperty()
     is_deletion = jsonobject.BooleanProperty()
     publish_timestamp = jsonobject.DateTimeProperty(default=datetime.utcnow)
-    _allow_dynamic_properties = False
+
+    # track of retry attempts
+    attempts = jsonobject.IntegerProperty(default=0)
 
 
 class Change(object):
@@ -62,7 +76,7 @@ class Change(object):
     def set_document(self, document):
         self.document = document
 
-    @handle_connection_failure(get_db_aliases=get_default_and_partitioned_db_aliases)
+    @handle_connection_failure(get_db_aliases=get_all_db_aliases())
     def get_document(self):
         if not self.document and self.document_store and not self._document_checked:
             try:
@@ -73,8 +87,12 @@ class Change(object):
                 self.error_raised = e
         return self.document
 
+    def increment_attempt_count(self):
+        if self.metadata:
+            self.metadata.attempts += 1
+
     def __repr__(self):
-        return u'Change id: {}, seq: {}, deleted: {}, metadata: {}, doc: {}'.format(
+        return 'Change id: {}, seq: {}, deleted: {}, metadata: {}, doc: {}'.format(
             self.id, self.sequence_id, self.deleted, self.metadata, self.document
         )
 

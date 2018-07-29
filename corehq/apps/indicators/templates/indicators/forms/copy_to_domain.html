@@ -5,24 +5,12 @@
 
 {% block title %}{% trans 'Bulk Copy Indicators' %}{% endblock title %}
 
-{% block js-inline %}
-    <script>
-    $(function () {
-        var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-        multiselect_utils.createFullMultiselectWidget(
-            'id_indicator_ids',
-            django.gettext("Available Indicators"),
-            django.gettext("Indicators to Copy"),
-            django.gettext("Search Indicators...")
-        );
-    });
-    </script>
-{% endblock %}
+{% requirejs_main 'indicators/js/copy_to_domain' %}
 
 {% block content %}
 <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
     <li><strong><a href="{% url "default_indicator_admin" domain %}">{% trans 'Administer Indicators' %}</a></strong></li>
-    <li class="active"><a href="{% url "indicator_bulk_copy" domain indicator_type %}">{% trans 'Bulk Copy Indicators:' %} {{ indicator_name }}</a></li>
+    <li class="active"><a href="{#% url "indicator_bulk_copy" domain indicator_type %#}">{% trans 'Bulk Copy Indicators:' %} {{ indicator_name }}</a></li>
 </ol>
 <div class="container">
     <div class="page-header">

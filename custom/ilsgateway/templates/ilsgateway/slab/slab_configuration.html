@@ -3,46 +3,25 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'locations/js/location_tree.async.js' %}"></script>
+    <script src="{% static 'locations/js/utils.js' %}"></script>
+    <script src="{% static 'locations/js/location_tree.js' %}"></script>
+    <script src="{% static 'ilsgateway/js/slab_configuration.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'locations/css/manage.css' %}">
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-    var LOAD_LOCS_URL = '{{ api_root }}',
-        NEW_LOC_URL = '{% url "create_location" domain %}';
-
-    var locs = {{ locations|JSON }};
-    var can_edit_root = {{ can_edit_root|yesno:"true,false" }};
-    var hierarchy = {{ hierarchy|JSON }};
-    var show_inactive = {{ show_inactive|yesno:"true,false" }};
-
-    function loc_edit_url(loc_id) {
-        var template = '{% url "slab_edit_location" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    function loc_descendant_url(loc_id) {
-        var template = '{% url "location_descendants_count" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    remove_elements_after_action = function(button) {
-        $(button).closest('.loc_section').remove();
-    };
-
-    $(function() {
-        var model = new LocationTreeViewModel(hierarchy);
-        $('#location_tree').koApplyBindings(model);
-        model.load(locs);
-    });
-</script>
-{% endblock %}
-
 {% block page_content %}
+
+    {% registerurl 'slab_edit_location' domain '---' %}
+    {% registerurl 'location_search' domain %}
+    {% registerurl 'create_location' domain %}
+    {% initial_page_data 'api_root' api_root %}
+    {% initial_page_data 'locations' locations %}
+    {% initial_page_data 'can_edit_root' can_edit_root %}
+    {% initial_page_data 'hierarchy' hierarchy %}
+    {% initial_page_data 'show_inactive' show_inactive %}
 
 {% if has_location_types %}
     <script type="text/html" id="location-template">
@@ -51,7 +30,7 @@
             <!-- header bar -->
             <div class="loc_header" data-bind="if: name() != '_root'">
                 <div style="float:right;" data-bind="if: can_edit() && type() === 'FACILITY'">
-                    <a class="btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
+                    <a class="btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid(), 'slab_edit_location') }">
                         {% trans "Edit" %}
                     </a>
                 </div>

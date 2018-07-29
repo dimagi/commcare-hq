@@ -2,7 +2,8 @@
     "domains": [
         "enikshay",
         "enikshay-reports-qa",
-        "enikshay-performance-test"
+        "enikshay-performance-test",
+        "enikshay-test"
     ],
     "server_environment": [
       "enikshay",
@@ -11,7 +12,6 @@
     "config": {
         "referenced_doc_type": "CommCareCase",
         "asynchronous": true,
-        "backend_id": "ES",
         "description": "",
         "base_item_expression": {
         },

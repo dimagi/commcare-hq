@@ -3,6 +3,7 @@ DO NOT WRITE ANY NEW FUNCTIONALITY BASED ON THIS FILE
 This is being kept around only to support legacy reports
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.template.loader import render_to_string
 import pytz
 import warnings
@@ -22,7 +23,7 @@ class ReportField(object):
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
                  css_label=None, css_field=None):
         warnings.warn(
-            "ReportField (%s) is deprecated. Use ReportFilter instead." % (
+            "ReportField (%s) is deprecated." % (
                 self.__class__.__name__
             ),
             DeprecationWarning,

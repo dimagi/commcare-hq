@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import FicheLocationFilter
-from custom.intrahealth.reports import IntraHealtMixin
+from custom.intrahealth.reports.utils import IntraHealtMixin
 from custom.intrahealth.sqldata import FicheData
 
 

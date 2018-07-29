@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.sms.mixin import UnrecognizedBackendException
 from corehq.apps.sms.models import SQLMobileBackend, Log, OUTGOING
@@ -10,7 +11,7 @@ class SQLIVRBackend(SQLMobileBackend):
     IVR Functionality has been removed, but this model is being kept
     in order to preserve foreign key references in the Call model history.
     """
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 
@@ -75,5 +76,5 @@ class Call(UUIDGeneratorMixin, Log):
     # The form unique id of the form that plays the survey for the call
     form_unique_id = models.CharField(max_length=126, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ivr'

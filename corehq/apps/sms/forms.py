@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 import json
 from couchdbkit.exceptions import ResourceNotFound
@@ -182,11 +183,6 @@ class SettingsForm(Form):
         required=False,
         widget=forms.HiddenInput,
     )
-    send_to_duplicated_case_numbers = ChoiceField(
-        required=False,
-        label=ugettext_noop("Send Messages to Non-Unique Phone Numbers"),
-        choices=ENABLED_DISABLED_CHOICES,
-    )
 
     sms_survey_date_format = ChoiceField(
         required=False,
@@ -284,7 +280,12 @@ class SettingsForm(Form):
     )
 
     # Internal settings
-    daily_outbound_sms_limit = IntegerField(
+    override_daily_outbound_sms_limit = ChoiceField(
+        required=False,
+        choices=ENABLED_DISABLED_CHOICES,
+        label=ugettext_lazy("Override Daily Outbound SMS Limit"),
+    )
+    custom_daily_outbound_sms_limit = IntegerField(
         required=False,
         label=ugettext_noop("Daily Outbound SMS Limit"),
         min_value=1000,
@@ -345,14 +346,6 @@ class SettingsForm(Form):
                               "}",
                 ),
                 data_bind="visible: showRestrictedSMSTimes",
-            ),
-            hqcrispy.FieldWithHelpBubble(
-                "send_to_duplicated_case_numbers",
-                help_bubble_text=_("Enabling this option will send "
-                                   "outgoing-only messages to phone numbers registered "
-                                   "with more than one mobile worker or case. SMS surveys "
-                                   "and keywords will still only work for unique phone "
-                                   "numbers in your project."),
             ),
             hqcrispy.FieldWithHelpBubble(
                 'sms_survey_date_format',
@@ -529,7 +522,21 @@ class SettingsForm(Form):
     def section_internal(self):
         return crispy.Fieldset(
             _("Internal Settings (Dimagi Only)"),
-            crispy.Field('daily_outbound_sms_limit'),
+            hqcrispy.B3MultiField(
+                _("Override Daily Outbound SMS Limit"),
+                crispy.Div(
+                    InlineField(
+                        'override_daily_outbound_sms_limit',
+                        data_bind='value: override_daily_outbound_sms_limit',
+                    ),
+                    css_class='col-sm-4'
+                ),
+                crispy.Div(
+                    InlineField('custom_daily_outbound_sms_limit'),
+                    data_bind="visible: override_daily_outbound_sms_limit() === '%s'" % ENABLED,
+                    css_class='col-sm-8'
+                ),
+            ),
             hqcrispy.B3MultiField(
                 _("Chat Template"),
                 crispy.Div(
@@ -762,10 +769,6 @@ class SettingsForm(Form):
         else:
             return []
 
-    def clean_send_to_duplicated_case_numbers(self):
-        return (self.cleaned_data.get("send_to_duplicated_case_numbers")
-            == ENABLED)
-
     def clean_count_messages_as_read_by_anyone(self):
         return (self.cleaned_data.get("count_messages_as_read_by_anyone")
             == ENABLED)
@@ -843,11 +846,14 @@ class SettingsForm(Form):
         # Just cast to int, the ChoiceField will validate that it is an integer
         return int(self.cleaned_data.get("sms_conversation_length"))
 
-    def clean_daily_outbound_sms_limit(self):
+    def clean_custom_daily_outbound_sms_limit(self):
         if not self._cchq_is_previewer:
             return None
 
-        value = self.cleaned_data.get("daily_outbound_sms_limit")
+        if self.cleaned_data.get('override_daily_outbound_sms_limit') != ENABLED:
+            return None
+
+        value = self.cleaned_data.get("custom_daily_outbound_sms_limit")
         if not value:
             raise ValidationError(_("This field is required"))
 

@@ -1,20 +1,20 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy, ugettext as _
 from django.views.decorators.http import require_POST
-from django.views.generic import ListView, DetailView
 from corehq import toggles
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
 from corehq.motech.dhis2.forms import Dhis2ConnectionForm
-from corehq.motech.dhis2.models import DataValueMap, DataSetMap, JsonApiLog
+from corehq.motech.dhis2.models import DataValueMap, DataSetMap
 from corehq.motech.dhis2.tasks import send_datasets
 from corehq.apps.domain.views import BaseProjectSettingsView
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from six.moves import range
 
@@ -94,50 +94,6 @@ class DataSetMapView(BaseProjectSettingsView):
             'dataset_maps': dataset_maps,
             'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
         }
-
-
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
-@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
-class Dhis2LogListView(BaseProjectSettingsView, ListView):
-    urlname = 'dhis2_log_list_view'
-    page_title = ugettext_lazy("DHIS2 Logs")
-    template_name = 'dhis2/logs.html'
-    context_object_name = 'logs'
-    paginate_by = 100
-
-    def get_queryset(self):
-        return JsonApiLog.objects.filter(domain=self.domain).order_by('-timestamp').only(
-            'timestamp',
-            'request_method',
-            'request_url',
-            'response_status',
-        )
-
-    @property
-    def object_list(self):
-        return self.get_queryset()
-
-
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
-@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
-class Dhis2LogDetailView(BaseProjectSettingsView, DetailView):
-    urlname = 'dhis2_log_detail_view'
-    page_title = ugettext_lazy("DHIS2 Logs")
-    template_name = 'dhis2/log_detail.html'
-    context_object_name = 'log'
-
-    def get_queryset(self):
-        return JsonApiLog.objects.filter(domain=self.domain)
-
-    @property
-    def object(self):
-        return self.get_object()
-
-    @property
-    @memoized
-    def page_url(self):
-        pk = self.kwargs['pk']
-        return reverse(self.urlname, args=[self.domain, pk])
 
 
 @require_POST

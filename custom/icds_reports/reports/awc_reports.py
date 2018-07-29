@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
@@ -10,12 +11,15 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, DailyAttendanceView, \
-    AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
+from custom.icds_reports.messages import wasting_help_text, stunting_help_text
+from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
+    AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
-    match_age, get_status, \
-    current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
-    person_has_aadhaar_column, person_is_beneficiary_column
+    match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
+    person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
+    wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
+    current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
+    chosen_filters_to_labels, default_age_interval
 from custom.icds_reports.const import MapColors
 import six
 
@@ -235,7 +239,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
 
             tmp_image.append({
                 'id': idx,
-                'image': absolute_reverse('api_form_attachment', args=(domain, doc_id, image_name)),
+                'image': absolute_reverse('icds_image_accessor', args=(domain, doc_id, image_name)),
                 'date': date_str
             })
         else:
@@ -319,10 +323,12 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     }
 
 
-@quickcache(['domain', 'config', 'month', 'prev_month', 'show_test'], timeout=30 * 60)
-def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=False):
+@quickcache(['domain', 'config', 'month', 'prev_month', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=False, icds_feature_flag=False):
 
     def get_data_for(date):
+        age_filters = {'age_tranche': 72} if icds_feature_flag else {'age_tranche__in': [0, 6, 72]}
+
         moderately_underweight = exclude_records_by_age_for_column(
             {'age_tranche': 72},
             'nutrition_status_moderately_underweight'
@@ -332,32 +338,32 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             'nutrition_status_severely_underweight'
         )
         wasting_moderate = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
-            'wasting_moderate'
+            age_filters,
+            wasting_moderate_column(icds_feature_flag)
         )
         wasting_severe = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
-            'wasting_severe'
+            age_filters,
+            wasting_severe_column(icds_feature_flag)
         )
         stunting_moderate = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
-            'stunting_moderate'
+            age_filters,
+            stunting_moderate_column(icds_feature_flag)
         )
         stunting_severe = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
-            'stunting_severe'
+            age_filters,
+            stunting_severe_column(icds_feature_flag)
         )
         nutrition_status_weighed = exclude_records_by_age_for_column(
             {'age_tranche': 72},
             'nutrition_status_weighed'
         )
         height_measured_in_month = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
-            'height_measured_in_month'
+            age_filters,
+            hfa_recorded_in_month_column(icds_feature_flag)
         )
         weighed_and_height_measured_in_month = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
-            'weighed_and_height_measured_in_month'
+            age_filters,
+            wfh_recorded_in_month_column(icds_feature_flag)
         )
 
         queryset = AggChildHealthMonthly.objects.filter(
@@ -425,17 +431,20 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
     this_month_institutional_delivery_data = get_institutional_delivery_data(datetime(*month))
     prev_month_institutional_delivery_data = get_institutional_delivery_data(datetime(*prev_month))
 
+    gender_label, age_label, chosen_filters = chosen_filters_to_labels(
+        config,
+        default_interval=default_age_interval(icds_feature_flag)
+    )
+
     return {
         'kpi': [
             [
                 {
                     'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
-                        """
-                        Percentage of children between 0-5 years enrolled for Anganwadi Services with
-                        weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.
-                        Children who are moderately or severely underweight have a higher risk of mortality.
-                        """
+                        "Of the total children weighed, the percentage of children between 0-5 years who were "
+                        "moderately/severely underweight in the current month. Children who are moderately or "
+                        "severely underweight have a higher risk of mortality. "
                     )),
                     'percent': percent_diff(
                         'underweight',
@@ -456,17 +465,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 },
                 {
                     'label': _('Wasting (Weight-for-Height)'),
-                    'help_text': _((
-                        """
-                        Percentage of children between 6 - 60 months enrolled for
-                        Anganwadi Services with weight-for-height
-                        below -2 standard deviations of the WHO Child Growth Standards median.
-
-                        Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute
-                        undernutrition usually as a consequence
-                        of insufficient food intake or a high incidence of infectious diseases.
-                        """
-                    )),
+                    'help_text': wasting_help_text(age_label),
                     'percent': percent_diff(
                         'wasting',
                         this_month_data,
@@ -488,14 +487,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             [
                 {
                     'label': _('Stunting (Height-for-Age)'),
-                    'help_text': _((
-                        """
-                            Percentage of children (6-60 months) with height-for-age below -2Z
-                            standard deviations of the WHO Child Growth Standards median.
-                            Stunting in children is a sign of chronic undernutrition and
-                            has long lasting harmful consequences on the growth of a child
-                        """
-                    )),
+                    'help_text': stunting_help_text(age_label),
                     'percent': percent_diff(
                         'stunting',
                         this_month_data,
@@ -515,12 +507,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 },
                 {
                     'label': _('Weighing Efficiency'),
-                    'help_text': _((
-                        """
-                        Percentage of children (0-5 years) who
-                        have been weighed of total children enrolled for Anganwadi Services
-                        """
-                    )),
+                    'help_text': _(
+                        "Of the children between the ages of 0-5 years who are enrolled for Anganwadi Services, "
+                        "the percentage who were weighed in the given month. "
+                    ),
                     'percent': percent_diff(
                         'wer_weight',
                         this_month_data_we,
@@ -544,12 +534,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Newborns with Low Birth Weight'),
                     'help_text': _(
-                        """
-                        Percentage of newborns born with birth weight less than 2500 grams.
-                        Newborns with Low Birth Weight are closely associated with foetal and
-                        neonatal mortality and morbidity, inhibited growth and cognitive development,
-                        and chronic diseases later in life"
-                        """
+                        "Of all the children born in the current month, the percentage that had a birth weight "
+                        "less than 2500 grams. Newborns with Low Birth Weight are closely associated wtih foetal "
+                        "and neonatal mortality and morbidity, inhibited growth and cognitive development, "
+                        "and chronic diseases later in life."
                     ),
                     'percent': percent_diff(
                         'low_birth',
@@ -571,12 +559,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Early Initiation of Breastfeeding'),
                     'help_text': _(
-                        """
-                        Percentage of children who were put to the breast within one hour of birth.
-
-                        Early initiation of breastfeeding ensure the newborn recieves the ""first milk""
-                        rich in nutrients and encourages exclusive breastfeeding practice
-                        """
+                        "Of the children born in the last month, the percentage whose "
+                        "breastfeeding was initiated within 1 hour of delivery. Early initiation "
+                        "of breastfeeding ensure the newborn recieves the \"first milk\" rich "
+                        "in nutrients and encourages exclusive breastfeeding practice"
                     ),
                     'percent': percent_diff(
                         'birth',
@@ -600,12 +586,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Exclusive breastfeeding'),
                     'help_text': _(
-                        """
-                        Percentage of infants 0-6 months of age who are fed exclusively with breast milk.
-                        An infant is exclusively breastfed if they recieve only breastmilk
-                        with no additional food, liquids (even water) ensuring
-                        optimal nutrition and growth between 0 - 6 months"
-                        """
+                        "Of the total children between the ages of 0 to 6 months, the percentage that was "
+                        "exclusively fed with breast milk. An infant is exclusively breastfed if they receive "
+                        "only breastmilk with no additional food or liquids (even water), ensuring optimal "
+                        "nutrition and growth between 0 - 6 months"
                     ),
                     'percent': percent_diff(
                         'month_ebf',
@@ -627,12 +611,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Children initiated appropriate Complementary Feeding'),
                     'help_text': _(
-                        """
-                        Percentage of children between 6 - 8 months given timely introduction to solid,
-                        semi-solid or soft food.
-                        Timely intiation of complementary feeding in addition to breastmilk
-                        at 6 months of age is a key feeding practice to reduce malnutrition"
-                        """
+                        "Of the total children between the ages of 6 to 8 months, the percentage that was "
+                        "given a timely introduction to solid, semi-solid or soft food. Timely intiation of "
+                        "complementary feeding in addition to breastmilk at 6 months of age is a key feeding "
+                        "practice to reduce malnutrition"
                     ),
                     'percent': percent_diff(
                         'month_cf',
@@ -656,14 +638,13 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Immunization Coverage (at age 1 year)'),
                     'help_text': _((
-                        """
-                            Percentage of children 1 year+ who have received complete immunization as per
-                            National Immunization Schedule of India required by age 1.
-                            <br/><br/>
-                            This includes the following immunizations:<br/>
-                            If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>
-                            If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1
-                        """
+                        "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
+                        "the percentage of children who have received the complete immunization as per the "
+                        "National Immunization Schedule of India that is required by age 1."
+                        "<br/><br/> "
+                        "This includes the following immunizations:<br/> "
+                        "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> "
+                        "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
                     )),
                     'percent': percent_diff(
                         'immunized',
@@ -685,11 +666,9 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Institutional Deliveries'),
                     'help_text': _((
-                        """
-                            Percentage of pregant women who delivered in a public or private medical
-                            facility in the last month.
-                            Delivery in medical instituitions is associated with a decrease maternal mortality rate
-                        """
+                        "Of the total number of women who gave birth in the last month, the percentage who "
+                        "delivered in a public or private medical facility. Delivery in medical instituitions "
+                        "is associated with a decrease in maternal mortality rate"
                     )),
                     'percent': percent_diff(
                         'institutional_delivery_in_month_sum',
@@ -817,7 +796,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                 {
                     'label': _('Percent Aadhaar-seeded Beneficiaries'),
                     'help_text': _(
-                        'Percentage of ICDS beneficiaries whose Aadhaar identification has been captured'
+                        'Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification '
+                        'has been captured. '
                     ),
                     'percent': percent_diff(
                         'person_aadhaar',
@@ -840,8 +820,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             [
                 {
                     'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
-                    'help_text': _('Percentage of children registered between '
-                                   '0-6 years old who are enrolled for Anganwadi Services'),
+                    'help_text': _('Of the total number of children between 0-6 years, the percentage '
+                                   'of children who are enrolled for Anganwadi Services'),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
                     'color': 'green' if percent_diff(
                         'child_health_all',
@@ -854,8 +834,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                 },
                 {
                     'label': _('Percent pregnant women enrolled for Anganwadi Services'),
-                    'help_text': _('Percentage of pregnant women registered who are enrolled for Anganwadi '
-                                   'Services'),
+                    'help_text': _('Of the total number of pregnant women, the percentage of pregnant '
+                                   'women enrolled for Anganwadi Services'),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
                     'color': 'green' if percent_diff(
                         'ccs_pregnant',
@@ -873,8 +853,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
 
                 {
                     'label': _('Percent lactating women enrolled for Anganwadi Services'),
-                    'help_text': _('Percentage of lactating women registered who are enrolled for Anganwadi '
-                                   'Services'),
+                    'help_text': _('Of the total number of lactating women, the percentage of '
+                                   'lactating women enrolled for Anganwadi Services'),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
                     'color': 'green' if percent_diff(
                         'css_lactating',
@@ -890,8 +870,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                 {
                     'label': _('Percent adolescent girls (11-14 years) enrolled for Anganwadi Services'),
                     'help_text': _((
-                        "Percentage of adolescent girls registered between 11-14 years"
-                        " old who are enrolled for Anganwadi Services"
+                        "Of the total number of adolescent girls (aged 11-14 years), the percentage "
+                        "of girls enrolled for Anganwadi Services"
                     )),
                     'percent': percent_diff(
                         'person_adolescent',
@@ -1004,8 +984,10 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
     }
 
 
-@quickcache(['start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before'], timeout=30 * 60)
-def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before):
+@quickcache([
+    'start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before', 'icds_features_flag'
+], timeout=30 * 60)
+def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before, icds_features_flag):
 
     data = ChildHealthMonthlyView.objects.filter(
         month=datetime(*month),
@@ -1013,33 +995,9 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=60
-    )
-
+    ).order_by(order)
     data_count = data.count()
-    if 'current_month_nutrition_status' in order:
-        sort_order = {
-            'Severely underweight': 1,
-            'Moderately underweight': 2,
-            'Normal weight for age': 3,
-            'Data Not Entered': 4
-        }
-        reverse = '-' in order
-        data = sorted(
-            data,
-            key=lambda val: (sort_order[
-                get_status(
-                    val.current_month_nutrition_status,
-                    'underweight',
-                    'Normal weight for age'
-                )['value']
-            ]),
-            reverse=reverse
-        )
-    else:
-        data = data.order_by('-month', order)
-
     data = data[start:(start + length)]
-
     config = {
         'data': [],
         'months': [
@@ -1057,10 +1015,8 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
             case_id=row_data.case_id,
             person_name=row_data.person_name,
             dob=row_data.dob,
-            sex=row_data.sex,
             age=calculate_date_for_age(row_data.dob, datetime(*month).date()),
             fully_immunized='Yes' if row_data.fully_immunized else 'No',
-            mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,
             current_month_nutrition_status=get_status(
                 row_data.current_month_nutrition_status,
@@ -1070,14 +1026,16 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
             recorded_weight=row_data.recorded_weight or 0,
             recorded_height=row_data.recorded_height or 0,
             current_month_stunting=get_status(
-                row_data.current_month_stunting,
+                getattr(row_data, current_month_stunting_column(icds_features_flag)),
                 'stunted',
-                'Normal height for age'
+                'Normal height for age',
+                data_entered=True if row_data.recorded_height else False
             ),
             current_month_wasting=get_status(
-                row_data.current_month_wasting,
+                getattr(row_data, current_month_wasting_column(icds_features_flag)),
                 'wasted',
-                'Normal weight for height'
+                'Normal weight for height',
+                data_entered=True if row_data.recorded_height and row_data.recorded_weight else False
             ),
             pse_days_attended=row_data.pse_days_attended
         )
@@ -1092,13 +1050,17 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
     return config
 
 
-@quickcache(['case_id'], timeout=30 * 60)
-def get_beneficiary_details(case_id):
+@quickcache(['case_id', 'awc_id', 'selected_month'], timeout=30 * 60)
+def get_beneficiary_details(case_id, awc_id, selected_month):
+    selected_month = datetime(*selected_month)
+    six_month_before = selected_month - relativedelta(months=6)
     data = ChildHealthMonthlyView.objects.filter(
-        case_id=case_id
+        case_id=case_id,
+        awc_id=awc_id,
+        month__range=(six_month_before, selected_month)
     ).order_by('month')
 
-    min_height = 45
+    min_height = 35
     max_height = 120.0
 
     beneficiary = {
@@ -1107,29 +1069,31 @@ def get_beneficiary_details(case_id):
         'wfl': []
     }
     for row in data:
+        age_in_months = row.age_in_months
+        recorded_weight = row.recorded_weight
+        recorded_height = row.recorded_height
         beneficiary.update({
             'person_name': row.person_name,
             'mother_name': row.mother_name,
             'dob': row.dob,
             'age': current_age(row.dob, datetime.now().date()),
             'sex': row.sex,
-            'age_in_months': row.age_in_months,
+            'age_in_months': age_in_months,
         })
-        if row.age_in_months <= 60:
-            if row.recorded_weight:
+        if age_in_months <= 60:
+            if recorded_weight:
                 beneficiary['weight'].append({
-                    'x': int(row.age_in_months),
-                    'y': float(row.recorded_weight)
+                    'x': int(age_in_months),
+                    'y': float(recorded_weight)
                 })
-            if row.recorded_height:
+            if recorded_height:
                 beneficiary['height'].append({
-                    'x': int(row.age_in_months),
-                    'y': float(row.recorded_height)
+                    'x': int(age_in_months),
+                    'y': float(recorded_height)
                 })
-        if row.recorded_height and min_height <= row.recorded_height <= max_height:
-            if row.recorded_height:
-                beneficiary['wfl'].append({
-                    'x': float(row.recorded_height),
-                    'y': float(row.recorded_weight) if row.recorded_height else 0
-                })
+        if recorded_height and min_height <= recorded_height <= max_height:
+            beneficiary['wfl'].append({
+                'x': float(row.recorded_height),
+                'y': float(recorded_weight) if row.recorded_height else 0
+            })
     return beneficiary

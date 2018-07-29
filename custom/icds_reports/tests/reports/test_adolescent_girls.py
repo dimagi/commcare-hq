@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -7,7 +8,7 @@ from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_da
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestAdolescentGirls(TestCase):
 
     def test_map_data(self):
@@ -22,7 +23,8 @@ class TestAdolescentGirls(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of adolescent girls who are enrolled for Anganwadi Services",
+                    "info": "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls "
+                            "enrolled for Anganwadi Services",
                     "average": 17.0,
                     "average_format": "number",
                     'extended_info': [
@@ -83,7 +85,8 @@ class TestAdolescentGirls(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of adolescent girls who are enrolled for Anganwadi Services",
+                    "info": "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls "
+                            "enrolled for Anganwadi Services",
                     "average": 8.5,
                     "average_format": "number",
                     'extended_info': [
@@ -213,7 +216,8 @@ class TestAdolescentGirls(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Total number of adolescent girls who are enrolled for Anganwadi Services",
+                "info": "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls "
+                        "enrolled for Anganwadi Services",
                 "tooltips_data": {
                     "s2": {
                         "all": 5,

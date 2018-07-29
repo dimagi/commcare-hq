@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -6,9 +7,8 @@ from custom.icds_reports.reports.adhaar import get_adhaar_data_map, get_adhaar_d
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestAdhaar(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_adhaar_data_map(
@@ -53,14 +53,14 @@ class TestAdhaar(TestCase):
             data['data'],
             {
                 "st1": {
-                    "in_month": 64,
-                    "all": 221,
+                    "in_month": 192,
+                    "all": 775,
                     'original_name': ["st1"],
-                    "fillKey": "25%-50%"
+                    "fillKey": "0%-25%"
                 },
                 "st2": {
-                    "in_month": 67,
-                    "all": 279,
+                    "in_month": 154,
+                    "all": 833,
                     'original_name': ["st2"],
                     "fillKey": "0%-25%"
                 }
@@ -77,10 +77,10 @@ class TestAdhaar(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of individuals registered using CAS "
-            "whose Aadhaar identification has been captured"
+            "Of the total number of ICDS beneficiaries, "
+            "the percentage whose Adhaar identification has been captured. "
         )
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_adhaar_data_map(
@@ -91,7 +91,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 26.486806467831137)
+        self.assertEqual(data['rightLegend']['average'], 21.630794253185144)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_adhaar_data_map(
@@ -107,11 +107,11 @@ class TestAdhaar(TestCase):
             [
                 {
                     'indicator': 'Total number of ICDS beneficiaries whose Aadhaar has been captured:',
-                    'value': "131"
+                    'value': "346"
                 },
                 {
                     'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',
-                    'value': '26.20%'
+                    'value': '21.52%'
                 }
             ]
         )
@@ -172,10 +172,10 @@ class TestAdhaar(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'in_month': 64,
+                    'in_month': 192,
                     'original_name': ['b1', 'b2'],
-                    'all': 221,
-                    'fillKey': '25%-50%'
+                    'all': 775,
+                    'fillKey': '0%-25%'
                 }
             }
         )
@@ -191,7 +191,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 30.264462809917354)
+        self.assertEqual(data['rightLegend']['average'], 24.561257284595996)
 
     def test_chart_data(self):
         self.assertDictEqual(
@@ -208,21 +208,21 @@ class TestAdhaar(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 28.959276018099548
+                        "percent": 24.774193548387096
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 24.014336917562723
+                        "percent": 18.48739495798319
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 28.959276018099548
+                        "percent": 24.774193548387096
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 24.014336917562723
+                        "percent": 18.48739495798319
                     }
                 ],
                 "chart_data": [
@@ -242,14 +242,14 @@ class TestAdhaar(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.25,
+                                "y": 0.19540983606557377,
                                 "x": 1491004800000,
-                                "all": 484
+                                "all": 1525
                             },
                             {
-                                "y": 0.262,
+                                "y": 0.21517412935323382,
                                 "x": 1493596800000,
-                                "all": 500
+                                "all": 1608
                             }
                         ],
                         "key": "Percentage of beneficiaries with Aadhaar numbers"
@@ -258,11 +258,11 @@ class TestAdhaar(TestCase):
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "percent": 28.959276018099548
+                        "percent": 24.774193548387096
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 24.014336917562723
+                        "percent": 18.48739495798319
                     }
                 ]
             }
@@ -283,16 +283,16 @@ class TestAdhaar(TestCase):
                 location_id='b1'
             ),
             {
-                "info": "Percentage of individuals registered using "
-                        "CAS whose Aadhaar identification has been captured",
+                "info": "Of the total number of ICDS beneficiaries, "
+                        "the percentage whose Adhaar identification has been captured. ",
                 "tooltips_data": {
                     "s2": {
-                        "in_month": 21,
-                        "all": 66
+                        "in_month": 51,
+                        "all": 262
                     },
                     "s1": {
-                        "in_month": 23,
-                        "all": 34
+                        "in_month": 72,
+                        "all": 139
                     }
                 },
                 "chart_data": [
@@ -303,11 +303,11 @@ class TestAdhaar(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.6764705882352942
+                                0.5179856115107914
                             ],
                             [
                                 "s2",
-                                0.3181818181818182
+                                0.1946564885496183
                             ]
                         ],
                         "key": ""

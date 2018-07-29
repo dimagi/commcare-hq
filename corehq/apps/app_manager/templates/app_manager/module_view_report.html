@@ -10,7 +10,7 @@
     <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
     <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/report_module.js' %}"></script>
-    <script src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
+    <script src="{% static 'reports_core/js/choice_list_utils.js' %}"></script>
     {% endcompress %}
     {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
@@ -31,6 +31,7 @@
     {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
     {% initial_page_data 'report_module_options' report_module_options %}
     {% initial_page_data 'static_data_options' static_data_options %}
+    {% initial_page_data 'uuids_by_instance_id' uuids_by_instance_id %}
     {% registerurl 'choice_list_api' domain 'report_id' 'filter_id' %}
     {% registerurl "edit_report_module" domain app.id module.unique_id %}
     {% registerurl "validate_module_for_build" domain app.id module.unique_id %}

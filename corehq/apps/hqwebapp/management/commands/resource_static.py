@@ -1,4 +1,5 @@
 from __future__ import absolute_import, print_function
+from __future__ import unicode_literals
 import hashlib
 import json
 import os
@@ -8,6 +9,7 @@ from django.contrib.staticfiles import finders
 from django.conf import settings
 from dimagi.utils import gitinfo
 from django.core import cache
+from io import open
 
 rcache = cache.caches['redis']
 RESOURCE_PREFIX = '#resource_%s'
@@ -69,6 +71,6 @@ class Command(BaseCommand):
         self.overwrite_resources(resources, sha=current_sha)
 
     def get_hash(self, filename):
-        with open(filename) as f:
+        with open(filename, 'rb') as f:
             hash = hashlib.sha1(f.read()).hexdigest()[:7]
         return hash

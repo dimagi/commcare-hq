@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from copy import deepcopy
 import uuid
 
@@ -12,7 +13,7 @@ from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from corehq.apps.change_feed.producer import send_to_kafka
 from corehq.apps.change_feed.topics import get_multi_topic_first_available_offsets
 from corehq.util.test_utils import trap_extra_setup
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.feed.interface import ChangeMeta
 from pillowtop.pillow.interface import ConstructedPillow

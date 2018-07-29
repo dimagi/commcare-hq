@@ -1,15 +1,15 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
+import csv342 as csv
 import datetime
 import io
-from dimagi.utils.csv import UnicodeWriter
 from collections import defaultdict, namedtuple
 import pytz
 import sys
 
 from celery import group
 from celery.task import periodic_task, task
-from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.utils.dateparse import parse_date
@@ -23,7 +23,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -73,11 +73,22 @@ CACHE_KEY = "reconciliation-task-{}"
 cache = get_redis_client()
 
 
-@periodic_task(
-    bind=True,
-    run_every=crontab(hour=2, minute=15),  # every day at 2:15am IST (8:45pm UTC, 4:45pm EST)
-    queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
-)
+class UnicodeWriter(object):
+    """
+    A CSV writer which will write rows to CSV file "f" using utf-8.
+    """
+    def __init__(self, f, dialect=csv.excel, **kwds):
+        # Redirect output to a queue
+        self.writer = csv.writer(f, dialect=dialect, **kwds)
+
+    def writerow(self, row):
+        self.writer.writerow([six.text_type(s).encode("utf-8") for s in row])
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)
+
+
 def enikshay_task(self):
     # runs adherence and voucher calculations for all domains that have
     # `toggles.UATBC_ADHERENCE_TASK` enabled
@@ -106,7 +117,7 @@ def run_task(updater, case_ids):
     return updater.run_batch(case_ids)
 
 
-class Timer:
+class Timer(object):
     def __enter__(self):
         self.start = datetime.datetime.now()
         self.end = None
@@ -756,9 +767,9 @@ class EpisodeVoucherUpdate(object):
             return {}
 
         return {
-            u'date_last_refill': date_last_refill.strftime("%Y-%m-%d"),
-            u'voucher_length': voucher_length,
-            u'refill_due_date': refill_due_date.strftime("%Y-%m-%d"),
+            'date_last_refill': date_last_refill.strftime("%Y-%m-%d"),
+            'voucher_length': voucher_length,
+            'refill_due_date': refill_due_date.strftime("%Y-%m-%d"),
         }
 
     def get_first_voucher_details(self):
@@ -781,9 +792,9 @@ class EpisodeVoucherUpdate(object):
             return {}
 
         return {
-            u'first_voucher_generation_date': first_voucher_generated.get_case_property('date_issued'),
-            u'first_voucher_drugs': first_prescription.get_case_property('drugs_ordered_readable'),
-            u'first_voucher_validation_date': (fulfilled_voucher_cases[0].get_case_property('date_fulfilled')
+            'first_voucher_generation_date': first_voucher_generated.get_case_property('date_issued'),
+            'first_voucher_drugs': first_prescription.get_case_property('drugs_ordered_readable'),
+            'first_voucher_validation_date': (fulfilled_voucher_cases[0].get_case_property('date_fulfilled')
                                               if fulfilled_voucher_cases else '')
         }
 
@@ -805,10 +816,10 @@ class EpisodeTestUpdate(object):
     def update_json(self):
         if self.diagnostic_tests:
             return {
-                u'diagnostic_tests': ", ".join([self._get_diagnostic_test_name(diagnostic_test)
+                'diagnostic_tests': ", ".join([self._get_diagnostic_test_name(diagnostic_test)
                                                 for diagnostic_test in self.diagnostic_tests
                                                 if self._get_diagnostic_test_name(diagnostic_test) is not None]),
-                u'diagnostic_test_results': ", ".join(
+                'diagnostic_test_results': ", ".join(
                     [diagnostic_test.get_case_property('result_grade')
                      for diagnostic_test in self.diagnostic_tests
                      if diagnostic_test.get_case_property('result_grade') is not None]
@@ -821,7 +832,7 @@ class EpisodeTestUpdate(object):
     def _get_diagnostic_test_name(self, diagnostic_test):
         site_specimen_name = diagnostic_test.get_case_property('site_specimen_name')
         if site_specimen_name:
-            return u"{}: {}".format(
+            return "{}: {}".format(
                 diagnostic_test.get_case_property('investigation_type_name'), site_specimen_name)
         else:
             return diagnostic_test.get_case_property('investigation_type_name')
@@ -883,19 +894,10 @@ def get_updated_fields(existing_properties, new_properties):
     updated_fields = {}
     for prop, value in new_properties.items():
         existing_value = six.text_type(existing_properties.get(prop, '--'))
-        new_value = six.text_type(value) if value is not None else u""
+        new_value = six.text_type(value) if value is not None else ""
         if existing_value != new_value:
             updated_fields[prop] = value
     return updated_fields
-
-
-@task(queue='background_queue', ignore_result=True)
-def run_model_reconciliation(command_name, email, person_case_ids=None, commit=False):
-    if settings.SERVER_ENVIRONMENT == "enikshay":
-        call_command(command_name,
-                     recipient=email,
-                     person_case_ids=person_case_ids,
-                     commit=commit)
 
 
 @task

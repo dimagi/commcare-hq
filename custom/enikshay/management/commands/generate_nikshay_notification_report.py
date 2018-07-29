@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 from datetime import datetime
 from openpyxl import Workbook
 import csv
@@ -141,7 +142,7 @@ class Command(BaseCommand):
         self.ws.append(row)
 
     def _add_repeat_record_attempt_headers(self):
-        max_columns = self.ws.get_highest_column()
+        max_columns = self.ws.max_column
         first_empty_index = max_columns
         for i in range(1, max_columns + 1):
             if not self.ws.cell(row=1, column=i).value:

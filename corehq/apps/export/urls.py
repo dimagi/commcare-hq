@@ -1,15 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf.urls import url
 from corehq.apps.export.views import (
-    CreateCustomFormExportView,
-    CreateCustomCaseExportView,
     CreateNewCustomFormExportView,
     CreateNewCustomCaseExportView,
-    EditCustomFormExportView,
-    EditCustomCaseExportView,
     EditNewCustomFormExportView,
     EditNewCustomCaseExportView,
-    DeleteCustomExportView,
     DeleteNewCustomExportView,
     DownloadFormExportView,
     DownloadCaseExportView,
@@ -74,12 +70,6 @@ urlpatterns = [
         name=DataFileDownloadDetail.urlname),
 
     # New export configuration views
-    url(r"^custom/form/create$",
-        CreateCustomFormExportView.as_view(),
-        name=CreateCustomFormExportView.urlname),
-    url(r"^custom/case/create$",
-        CreateCustomCaseExportView.as_view(),
-        name=CreateCustomCaseExportView.urlname),
     url(r"^custom/new/form/create$",
         CreateNewCustomFormExportView.as_view(),
         name=CreateNewCustomFormExportView.urlname),
@@ -144,12 +134,6 @@ urlpatterns = [
     url(r"^custom/case_daily_saved/edit/(?P<export_id>[\w\-]+)/$",
         EditCaseDailySavedExportView.as_view(),
         name=EditCaseDailySavedExportView.urlname),
-    url(r"^custom/form/edit/(?P<export_id>[\w\-]+)/$",
-        EditCustomFormExportView.as_view(),
-        name=EditCustomFormExportView.urlname),
-    url(r"^custom/case/edit/(?P<export_id>[\w\-]+)/$",
-        EditCustomCaseExportView.as_view(),
-        name=EditCustomCaseExportView.urlname),
     url(r"^custom/copy/(?P<export_id>[\w\-]+)/$",
         CopyExportView.as_view(),
         name=CopyExportView.urlname),
@@ -158,9 +142,6 @@ urlpatterns = [
         name='add_export_email_request'),
 
     # Delete export views
-    url(r"^custom/delete/(?P<export_id>[\w\-]+)/$",
-        DeleteCustomExportView.as_view(),
-        name=DeleteCustomExportView.urlname),
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
         DeleteNewCustomExportView.as_view(),
         name=DeleteNewCustomExportView.urlname),

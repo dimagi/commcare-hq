@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
@@ -77,8 +78,8 @@ def schedule_detail_variables(module, detail, detail_column_infos):
                         .format(form_name=trans(form["name"], langs=[module.get_app().default_language]),
                                 module_name=module.default_name()))
                 form_xpath = ScheduleFormXPath(form, phase, module)
-                name = u"next_{}".format(form.schedule_form_id)
-                forms_due.append(u"${}".format(name))
+                name = "next_{}".format(form.schedule_form_id)
+                forms_due.append("${}".format(name))
 
                 # Add an anchor and last_visit variables so we can reference it in the calculation
                 yield DetailVariable(name=form_xpath.anchor_detail_variable_name, function=phase.anchor)
@@ -95,10 +96,10 @@ def schedule_detail_variables(module, detail, detail_column_infos):
                     yield DetailVariable(name=name, function=form_xpath.xpath_phase_set)
 
         yield DetailVariable(name=SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
-                             function=u'date(min({}))'.format(','.join(forms_due)))
+                             function='date(min({}))'.format(','.join(forms_due)))
         yield DetailVariable(name=SCHEDULE_NEXT_DUE,
                              function=ScheduleFormXPath.next_visit_date(last_visit_dates))
-        yield DetailVariable(name='is_late', function=u'${} < today()'.format(SCHEDULE_NEXT_DUE))
+        yield DetailVariable(name='is_late', function='${} < today()'.format(SCHEDULE_NEXT_DUE))
 
         if len(forms_due) != len(set(forms_due)):
             raise ScheduleError(_("Your app has multiple forms with the same schedule abbreviation"))

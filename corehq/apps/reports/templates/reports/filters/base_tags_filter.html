@@ -1,16 +1,9 @@
 {% extends 'reports/filters/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
-    <input id="{{ css_id }}"
-           class="{{ css_class }} form-control"
+    <input class="{{ css_class }} form-control report-filter-tags"
+           data-tags="{% html_attr tags %}"
            name="{{ slug }}"
            placeholder="{{ placeholder }}"
            value="{{ selected }}" />
-{% endblock %}
-{% block filter_js %}
-<script>
-    $(function(){
-        $('#{{ css_id }}').select2({tags:{{ tags|JSON }}, allowClear: true});
-    });
-</script>
 {% endblock %}

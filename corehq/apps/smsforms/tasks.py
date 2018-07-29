@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.sms.api import send_sms_to_verified_number, MessageMetadata
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.messaging.scheduling.util import utcnow
 from corehq.util.celery_utils import no_result_task
-from touchforms.formplayer.api import current_question
+from corehq.apps.formplayer_api.smsforms.api import current_question
 
 
 @no_result_task(queue='reminder_queue')
@@ -27,7 +28,7 @@ def handle_due_survey_action(domain, contact_id, session_id):
                     workflow=session.workflow,
                     xforms_session_couch_id=session._id,
                 )
-                resp = current_question(session.session_id)
+                resp = current_question(session.session_id, domain)
                 send_sms_to_verified_number(
                     p,
                     resp.event.text_prompt,

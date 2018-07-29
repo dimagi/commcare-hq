@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from collections import namedtuple
 from datetime import datetime
@@ -141,7 +142,6 @@ class CaseAccessorTestsSQL(TestCase):
             content_type='image/jpeg',
             blob_id='122',
             md5='123',
-            identifier='pic.jpg',
         ))
         CaseAccessorSQL.save_case(case1)
 
@@ -163,7 +163,6 @@ class CaseAccessorTestsSQL(TestCase):
             name='pic.jpg',
             content_type='image/jpeg',
             blob_id='123',
-            identifier='pic1',
             md5='123'
         ))
         case.track_create(CaseAttachmentSQL(
@@ -172,16 +171,15 @@ class CaseAccessorTestsSQL(TestCase):
             name='my_doc',
             content_type='text/xml',
             blob_id='124',
-            identifier='doc1',
             md5='123'
         ))
         CaseAccessorSQL.save_case(case)
 
         with self.assertRaises(AttachmentNotFound):
-            CaseAccessorSQL.get_attachment_by_identifier(case.case_id, 'missing')
+            CaseAccessorSQL.get_attachment_by_name(case.case_id, 'missing')
 
         with self.assertNumQueries(1, using=db_for_read_write(CaseAttachmentSQL)):
-            attachment_meta = CaseAccessorSQL.get_attachment_by_identifier(case.case_id, 'pic1')
+            attachment_meta = CaseAccessorSQL.get_attachment_by_name(case.case_id, 'pic.jpg')
 
         self.assertEqual(case.case_id, attachment_meta.case_id)
         self.assertEqual('pic.jpg', attachment_meta.name)
@@ -196,7 +194,6 @@ class CaseAccessorTestsSQL(TestCase):
             name='pic.jpg',
             content_type='image/jpeg',
             blob_id='125',
-            identifier='pic1',
             md5='123',
         ))
         case.track_create(CaseAttachmentSQL(
@@ -205,7 +202,6 @@ class CaseAccessorTestsSQL(TestCase):
             name='doc',
             content_type='text/xml',
             blob_id='126',
-            identifier='doc1',
             md5='123',
         ))
         CaseAccessorSQL.save_case(case)
@@ -340,7 +336,6 @@ class CaseAccessorTestsSQL(TestCase):
             content_type='text/xml',
             blob_id='127',
             md5='123',
-            identifier='doc',
         ))
         CaseAccessorSQL.save_case(case)
 
@@ -359,7 +354,6 @@ class CaseAccessorTestsSQL(TestCase):
             content_type='text/xml',
             blob_id='128',
             md5='123',
-            identifier='doc'
         ))
         CaseAccessorSQL.save_case(case)
 
@@ -555,16 +549,16 @@ class CaseAccessorTestsSQL(TestCase):
             {
                 CaseIndexInfo(
                     case_id=case.case_id,
-                    identifier=u'task',
+                    identifier='task',
                     referenced_id=referenced_id1,
-                    referenced_type=u'task',
+                    referenced_type='task',
                     relationship=CommCareCaseIndexSQL.EXTENSION,
                 ),
                 CaseIndexInfo(
                     case_id=case.case_id,
-                    identifier=u'parent',
+                    identifier='parent',
                     referenced_id=referenced_id2,
-                    referenced_type=u'mother',
+                    referenced_type='mother',
                     relationship=CommCareCaseIndexSQL.CHILD
                 ),
             }

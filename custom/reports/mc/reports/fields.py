@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from corehq.apps.reports.filters.fixtures import AsyncDrillableFilter
+from __future__ import unicode_literals
+from custom.reports.mc.reports.models import AsyncDrillableFilter
 from django.utils.translation import ugettext_noop
 
 
@@ -16,4 +17,3 @@ class HealthFacilityField(AsyncDrillableFilter):
         {"type": "district", "display": "name"},
         {"type": "hf", "parent_ref": "district_id", "references": "id", "display": "name"},
     ]
-

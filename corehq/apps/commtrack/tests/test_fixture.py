@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import random
 import string
@@ -6,7 +7,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase
 
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,
     create_restore_user,
@@ -163,11 +164,7 @@ class FixtureTest(TestCase, TestXmlMixin):
             ElementTree.tostring(fixture_original)
         )
 
-        first_sync = sorted(SyncLog.view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False
-        ).all(), key=lambda x: x.date)[-1]
+        first_sync = self._get_latest_synclog()
 
         # make sure the time stamp on this first sync is
         # not on the same second that the products were created
@@ -183,11 +180,7 @@ class FixtureTest(TestCase, TestXmlMixin):
             "Fixture was not empty on second sync"
         )
 
-        second_sync = sorted(SyncLog.view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False
-        ).all(), key=lambda x: x.date)[-1]
+        second_sync = self._get_latest_synclog()
 
         self.assertTrue(first_sync._id != second_sync._id)
 
@@ -231,6 +224,9 @@ class FixtureTest(TestCase, TestXmlMixin):
             programs=program_xml
         )
 
+    def _get_latest_synclog(self):
+        return properly_wrap_sync_log(SyncLogSQL.objects.order_by('date').last().doc)
+
     def test_program_fixture(self):
         user = self.user
         Program(
@@ -268,12 +264,7 @@ class FixtureTest(TestCase, TestXmlMixin):
             ElementTree.tostring(fixture_original[0])
         )
 
-        first_sync = sorted(SyncLog.view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False
-        ).all(), key=lambda x: x.date)[-1]
-
+        first_sync = self._get_latest_synclog()
         # make sure the time stamp on this first sync is
         # not on the same second that the programs were created
         first_sync.date += datetime.timedelta(seconds=1)
@@ -288,11 +279,7 @@ class FixtureTest(TestCase, TestXmlMixin):
             "Fixture was not empty on second sync"
         )
 
-        second_sync = sorted(SyncLog.view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False
-        ).all(), key=lambda x: x.date)[-1]
+        second_sync = self._get_latest_synclog()
 
         self.assertTrue(first_sync._id != second_sync._id)
 

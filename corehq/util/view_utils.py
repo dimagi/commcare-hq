@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import logging
 import traceback
@@ -7,6 +8,7 @@ from functools import wraps
 from django import http
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.urls import reverse as _reverse
 from django.utils.encoding import smart_bytes
 from django.utils.http import urlencode
@@ -72,7 +74,7 @@ def json_error(f):
         except BadRequest as e:
             return _get_json_exception_response(400, request, e)
         except Exception as e:
-            notify_exception(request, 'JSON exception response: {}'.format(smart_bytes(e)))
+            notify_exception(request, b'JSON exception response: {}'.format(smart_bytes(e)))
             return _get_json_exception_response(500, request, e)
     return inner
 
@@ -96,10 +98,10 @@ def _get_json_exception_response(code, request, exception, log_message=None):
 
 
 def _json_exception_response_data(code, exception):
-    if isinstance(exception.message, six.text_type):
-        message = six.text_type(exception)
+    if isinstance(exception.args[0], six.binary_type):
+        message = exception.args[0].decode('utf-8')
     else:
-        message = str(exception).decode('utf-8')
+        message = six.text_type(exception)
     data = {
         'error': code,
         'message': message
@@ -128,3 +130,27 @@ def reverse(viewname, params=None, absolute=False, **kwargs):
 
 def absolute_reverse(*args, **kwargs):
     return reverse(*args, absolute=True, **kwargs)
+
+
+def get_case_or_404(domain, case_id):
+    from corehq.form_processor.exceptions import CaseNotFound
+    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+        if case.domain != domain or case.is_deleted:
+            raise Http404()
+        return case
+    except CaseNotFound:
+        raise Http404()
+
+
+def get_form_or_404(domain, id):
+    from corehq.form_processor.exceptions import XFormNotFound
+    from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+    try:
+        form = FormAccessors(domain).get_form(id)
+        if form.domain != domain or form.is_deleted:
+            raise Http404()
+        return form
+    except XFormNotFound:
+        raise Http404()

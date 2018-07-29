@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from io import BytesIO
 from django.http.response import HttpResponseServerError
@@ -18,16 +19,16 @@ from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from dimagi.utils.web import json_response
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.products.tasks import import_products_async
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.products.forms import ProductForm
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.commtrack.util import encode_if_needed
 from corehq.apps.programs.models import Program
-from corehq.apps.custom_data_fields import (CustomDataFieldsDefinition,
-                                            CustomDataEditor,
-                                            CustomDataModelMixin)
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
+from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.domain.decorators import (
     domain_admin_required,

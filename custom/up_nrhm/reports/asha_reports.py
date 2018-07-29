@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import calendar
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.generic import GenericTabularReport
@@ -14,7 +15,7 @@ from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
 from custom.up_nrhm.reports.district_functionality_report import DistrictFunctionalityReport
 from django.utils.translation import ugettext as _, ugettext_noop
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 def total_rows(report):
@@ -35,6 +36,7 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport, 
     show_all_rows = True
     default_rows = 20
     printable = True
+    sortable = False
     report_template_path = "up_nrhm/asha_report.html"
     extra_context_providers = [total_rows]
     no_value = '--'

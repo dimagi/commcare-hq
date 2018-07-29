@@ -2,20 +2,21 @@
 hqDefine('app_manager/js/forms/custom_instances', function() {
     'use strict';
 
-    var CustomInstance = function(instanceId, instancePath){
-        var self = this;
+    var customInstance = function(instanceId, instancePath){
+        var self = {};
         self.instanceId = ko.observable(instanceId || '');
         self.instancePath = ko.observable(instancePath || '');
+        return self;
     };
 
-    var CustomInstances = function(){
-        var self = this;
+    var customInstances = function(){
+        var self = {};
         self.customInstances = ko.observableArray();
 
         self.mapping = {
             customInstances: {
                 create: function(options){
-                    return new CustomInstance(options.data.instanceId, options.data.instancePath);
+                    return customInstance(options.data.instanceId, options.data.instancePath);
                 },
             },
         };
@@ -31,7 +32,7 @@ hqDefine('app_manager/js/forms/custom_instances', function() {
         self.addInstance = function(instance){
             instance = instance || {instanceId: null, instancePath: null};
             self.customInstances.push(
-                new CustomInstance(instance.instanceId, instance.instancePath)
+                customInstance(instance.instanceId, instance.instancePath)
             );
         };
 
@@ -43,8 +44,8 @@ hqDefine('app_manager/js/forms/custom_instances', function() {
             return JSON.stringify(self.unwrap().customInstances);
         });
 
+        return self;
     };
 
-    return new CustomInstances();
-
+    return customInstances();
 });

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import time
 import uuid
@@ -13,8 +14,7 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration.api import set_tz_migration_complete
-from corehq.apps.users.const import ANONYMOUS_USERNAME
-from corehq.apps.users.util import format_username
+from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
@@ -33,7 +33,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
     iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
 )
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from django.utils.html import format_html
 from dimagi.utils.logging import log_signal_errors
@@ -103,7 +103,7 @@ def cached_property(method):
     return find_cached
 
 
-class UpdatableSchema():
+class UpdatableSchema(object):
 
     def update(self, new_dict):
         for kw in new_dict:
@@ -236,7 +236,7 @@ class DayTimeWindow(DocumentSchema):
     end_time = TimeProperty()
 
 
-class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
+class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
@@ -317,15 +317,19 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     # everyone. Set to False so that a message is only counted as being read
     # for a user if only that user has read it.
     count_messages_as_read_by_anyone = BooleanProperty(default=False)
-    # Set to True to allow sending sms and all-label surveys to cases whose
-    # phone number is duplicated with another contact
-    send_to_duplicated_case_numbers = BooleanProperty(default=True)
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
     sms_survey_date_format = StringProperty()
 
+    granted_messaging_access = BooleanProperty(default=False)
+
     # Allowed outbound SMS per day
-    daily_outbound_sms_limit = IntegerProperty(default=5000)
+    # If this is None, then the default is applied. See get_daily_outbound_sms_limit()
+    custom_daily_outbound_sms_limit = IntegerProperty()
+
+    # Allowed number of case updates or closes from automatic update rules in the daily rule run.
+    # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
+    auto_case_update_limit = IntegerProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -419,6 +423,10 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         if 'location_types' in data:
             data['obsolete_location_types'] = data.pop('location_types')
 
+        if 'granted_messaging_access' not in data:
+            # enable messaging for domains created before this flag was added
+            data['granted_messaging_access'] = True
+
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
             self.deployment = Deployment()
@@ -438,20 +446,18 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return domain and domain.secure_sessions
 
     @staticmethod
-    @quickcache(['couch_user._id', 'is_active'],
-                skip_arg='strict', timeout=5*60, memoize_timeout=10)
-    def active_for_couch_user(couch_user, is_active=True, strict=False):
+    @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
+    def active_for_couch_user(couch_user, is_active=True):
         domain_names = couch_user.get_domains()
         return Domain.view(
             "domain/by_status",
             keys=[[is_active, d] for d in domain_names],
             reduce=False,
             include_docs=True,
-            stale=settings.COUCH_STALE_QUERY if not strict else None,
         ).all()
 
     @staticmethod
-    def active_for_user(user, is_active=True, strict=False):
+    def active_for_user(user, is_active=True):
         if isinstance(user, AnonymousUser):
             return []
         from corehq.apps.users.models import CouchUser
@@ -460,17 +466,9 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         else:
             couch_user = CouchUser.from_django_user(user)
         if couch_user:
-            return Domain.active_for_couch_user(
-                couch_user, is_active=is_active, strict=strict)
+            return Domain.active_for_couch_user(couch_user, is_active=is_active)
         else:
             return []
-
-    def get_anonymous_mobile_worker(self):
-        from corehq.apps.users.models import CouchUser
-
-        return CouchUser.get_by_username(
-            format_username(ANONYMOUS_USERNAME, self.name)
-        )
 
     @classmethod
     def field_by_prefix(cls, field, prefix=''):
@@ -655,7 +653,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return [d['key'] for d in Domain.view(
             "domain/domains",
             startkey=prefix,
-            endkey=prefix + u"zzz",
+            endkey=prefix + "zzz",
             reduce=False,
             include_docs=False
         ).all()]
@@ -710,6 +708,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             new_domain.internal = InternalProperties()
             new_domain.creating_user = user.username if user else None
             new_domain.date_created = datetime.utcnow()
+            new_domain.use_sql_backend = True
+            new_domain.granted_messaging_access = False
 
             for field in self._dirty_fields:
                 if hasattr(new_domain, field):
@@ -937,7 +937,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         for result in results:
             response = result[1]
             if isinstance(response, Exception):
-                message = u"Error occurred during domain pre_delete {}".format(self.name)
+                message = "Error occurred during domain pre_delete {}".format(self.name)
                 raise DomainDeleteException(message, response)
             elif response:
                 assert isinstance(response, list)
@@ -986,8 +986,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         import and return the python module corresponding to domain_name, or
         None if it doesn't exist.
         """
-        from corehq.apps.domain.utils import get_domain_module_map
-        module_name = get_domain_module_map().get(domain_name, domain_name)
+        module_name = settings.DOMAIN_MODULE_MAP.get(domain_name, domain_name)
 
         try:
             return import_module(module_name) if module_name else None
@@ -1006,8 +1005,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     @property
     def has_custom_logo(self):
-        return (self['_attachments'] and
-                LOGO_ATTACHMENT in self['_attachments'])
+        return self.has_attachment(LOGO_ATTACHMENT)
 
     def get_custom_logo(self):
         if not self.has_custom_logo:
@@ -1015,7 +1013,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
         return (
             self.fetch_attachment(LOGO_ATTACHMENT),
-            self['_attachments'][LOGO_ATTACHMENT]['content_type']
+            self.blobs[LOGO_ATTACHMENT].content_type
         )
 
     def get_case_display(self, case):
@@ -1088,6 +1086,13 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         self.is_secure_session_required.clear(self.name)
         domain_restricts_superusers.clear(self.name)
 
+    def get_daily_outbound_sms_limit(self):
+        if self.custom_daily_outbound_sms_limit:
+            return self.custom_daily_outbound_sms_limit
+
+        # https://manage.dimagi.com/default.asp?274299
+        return 50000
+
 
 class TransferDomainRequest(models.Model):
     active = models.BooleanField(default=True, blank=True)
@@ -1106,7 +1111,7 @@ class TransferDomainRequest(models.Model):
     DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
     DIMAGI_CONFIRM_ADDRESS = 'commcarehq-support@dimagi.com'
 
-    class Meta:
+    class Meta(object):
         app_label = 'domain'
 
     @property
@@ -1163,13 +1168,13 @@ class TransferDomainRequest(models.Model):
         self.email_from_request()
 
     def activate_url(self):
-        return u"{url_base}/domain/transfer/{guid}/activate".format(
+        return "{url_base}/domain/transfer/{guid}/activate".format(
             url_base=get_url_base(),
             guid=self.transfer_guid
         )
 
     def deactivate_url(self):
-        return u"{url_base}/domain/transfer/{guid}/deactivate".format(
+        return "{url_base}/domain/transfer/{guid}/deactivate".format(
             url_base=get_url_base(),
             guid=self.transfer_guid
         )
@@ -1181,14 +1186,14 @@ class TransferDomainRequest(models.Model):
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_TO_EMAIL), context)
 
         send_html_email_async.delay(
-            _(u'Transfer of ownership for CommCare project space.'),
+            _('Transfer of ownership for CommCare project space.'),
             self.to_user.email,
             html_content,
             text_content=text_content)
 
     def email_from_request(self):
         context = self.as_dict()
-        context['settings_url'] = u"{url_base}{path}".format(
+        context['settings_url'] = "{url_base}{path}".format(
             url_base=get_url_base(),
             path=reverse('transfer_domain_view', args=[self.domain]))
 
@@ -1196,7 +1201,7 @@ class TransferDomainRequest(models.Model):
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
 
         send_html_email_async.delay(
-            _(u'Transfer of ownership for CommCare project space.'),
+            _('Transfer of ownership for CommCare project space.'),
             self.from_user.email,
             html_content,
             text_content=text_content)
@@ -1222,7 +1227,7 @@ class TransferDomainRequest(models.Model):
             self.as_dict())
 
         send_html_email_async.delay(
-            _(u'There has been a transfer of ownership of {domain}').format(
+            _('There has been a transfer of ownership of {domain}').format(
                 domain=self.domain), self.DIMAGI_CONFIRM_ADDRESS,
             html_content, text_content=text_content
         )

@@ -1,16 +1,16 @@
-{% extends 'reports/async/tabular.html' %}
+{% extends 'reports/tabular.html' %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
 {% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'case/js/cheapxml.js' %}"></script>
-    <script type="text/javascript" src="{% static 'case/js/casexml.js' %}"></script>
-    <script type="text/javascript" src="{% static 'm4change/javascripts/mcct_project_review_page_management.js' %}"></script>
+    <script src="{% static 'case/js/cheapxml.js' %}"></script>
+    <script src="{% static 'case/js/casexml.js' %}"></script>
+    <script src="{% static 'm4change/javascripts/mcct_project_review_page_management.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
     (function () {
         var OPTIONS = {
             users: {{ users|JSON }},
@@ -63,7 +63,7 @@
     <div id="mcct_project_review_page_management">
         {{ block.super }}
     </div>
-    <script type="text/javascript">
+    <script>
         $(function () {
             $('.hq-help-template').each(function () {
                 hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);

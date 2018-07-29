@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from datadog import api as datadog_api
 import requests
@@ -88,6 +89,10 @@ class Command(BaseCommand):
                 'https://jenkins.dimagi.com/job/integration-tests/build',
                 params={'token': settings.MOBILE_INTEGRATION_TEST_TOKEN},
             )
+            requests.get(
+                'https://jenkins.dimagi.com/job/integration-tests-pipeline/build',
+                params={'token': settings.MOBILE_INTEGRATION_TEST_TOKEN},
+            )
 
         deploy_notification_text += "Find the diff {diff_link}"
 
@@ -131,9 +136,7 @@ class Command(BaseCommand):
                   "\n=============================================================\n")
 
         if options['mail_admins']:
-            message_body = get_deploy_email_message_body(
-                environment=options['environment'], user=options['user'],
-                compare_url=compare_url)
+            message_body = get_deploy_email_message_body(user=options['user'], compare_url=compare_url)
             call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})
             if settings.DAILY_DEPLOY_EMAIL:
                 recipient = settings.DAILY_DEPLOY_EMAIL

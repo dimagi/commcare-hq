@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import calendar
 import hashlib
 import uuid
@@ -35,7 +36,6 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
 from corehq.apps.reports.dbaccessors import (
     hq_group_export_configs_by_domain,
-    stale_get_exports_json,
 )
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.display import xmlns_to_name
@@ -64,7 +64,7 @@ from couchforms.filters import instances
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 import six
@@ -190,7 +190,7 @@ class TempCommCareUser(CommCareUser):
     def raw_username(self):
         return self.username
 
-    class Meta:
+    class Meta(object):
         app_label = 'reports'
 
 
@@ -296,7 +296,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def _dispatcher(self):
         from corehq.apps.userreports.models import CUSTOM_REPORT_PREFIX
         from corehq.apps.userreports.reports.view import (
-            ConfigurableReport,
+            ConfigurableReportView,
             CustomConfigurableReportDispatcher,
         )
 
@@ -313,7 +313,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             if self.subreport_slug.startswith(CUSTOM_REPORT_PREFIX):
                 return CustomConfigurableReportDispatcher()
             else:
-                return ConfigurableReport()
+                return ConfigurableReportView()
 
         if self.doc_type != 'ReportConfig-Deleted':
             self.doc_type += '-Deleted'
@@ -499,6 +499,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         mock_request.couch_user.current_domain = self.domain
         mock_request.couch_user.language = lang
         mock_request.method = 'GET'
+        mock_request.bypass_two_factor = True
 
         mock_query_string_parts = [self.query_string, 'filterSet=true']
         if self.is_configurable_report:
@@ -580,8 +581,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @property
     def is_configurable_report(self):
-        from corehq.apps.userreports.reports.view import ConfigurableReport
-        return self.report_type == ConfigurableReport.prefix
+        from corehq.apps.userreports.reports.view import ConfigurableReportView
+        return self.report_type == ConfigurableReportView.prefix
 
     @property
     @memoized
@@ -593,8 +594,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def configurable_report(self):
-        from corehq.apps.userreports.reports.view import ConfigurableReport
-        return ConfigurableReport.get_report(
+        from corehq.apps.userreports.reports.view import ConfigurableReportView
+        return ConfigurableReportView.get_report(
             self.domain, self.report_slug, self.subreport_slug
         )
 
@@ -815,10 +816,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 send_html_email_async.delay(
                     title, email, body,
                     email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=excel_files,
-                    ga_track=True,
-                    ga_tracking_info={'cd4': self.domain, 'cd10': ', '.join(slugs)},
-                )
+                    file_attachments=excel_files)
 
     def remove_recipient(self, email):
         try:
@@ -853,14 +851,6 @@ class HQExportSchema(SavedExportSchema):
         if not self.domain:
             self.domain = self.index[0]
         return self
-
-    @classmethod
-    def get_stale_exports(cls, domain):
-        return [
-            cls.wrap(export)
-            for export in stale_get_exports_json(domain)
-            if export['type'] == cls._default_type
-        ]
 
 
 class FormExportSchema(HQExportSchema):

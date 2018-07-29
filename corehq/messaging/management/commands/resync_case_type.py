@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query

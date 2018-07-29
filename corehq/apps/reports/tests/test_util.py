@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 from django.test import TestCase, SimpleTestCase
 from elasticsearch.exceptions import ConnectionError

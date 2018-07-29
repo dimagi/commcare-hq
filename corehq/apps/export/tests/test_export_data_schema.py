@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 from mock import patch
 
@@ -536,7 +537,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         cls.first_build.version = 3
         cls.first_build.has_submissions = True
 
-        factory = AppFactory(build_version='2.36')
+        factory = AppFactory(build_version='2.36.0')
         m0, f0 = factory.new_advanced_module('mod0', 'advanced')
         f0.source = cls.get_xml('repeat_group_form')
         f0.xmlns = 'repeat-xmlns'

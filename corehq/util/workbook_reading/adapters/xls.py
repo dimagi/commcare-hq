@@ -1,6 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from contextlib import contextmanager
 from datetime import datetime, time, date
+
+import six
 import xlrd
 from corehq.util.workbook_reading import Worksheet, Cell, Workbook, SpreadsheetFileInvalidError, \
     SpreadsheetFileNotFound, SpreadsheetFileEncrypted
@@ -13,12 +16,14 @@ def open_xls_workbook(filename):
         with xlrd.open_workbook(filename) as xlrd_workbook:
             yield _XLSWorkbookAdaptor(xlrd_workbook).to_workbook()
     except xlrd.XLRDError as e:
-        if e.message == u'Workbook is encrypted':
-            raise SpreadsheetFileEncrypted(e.message)
+        if six.text_type(e) == 'Workbook is encrypted':
+            raise SpreadsheetFileEncrypted(six.text_type(e))
         else:
-            raise SpreadsheetFileInvalidError(e.message)
+            raise SpreadsheetFileInvalidError(six.text_type(e))
+    except xlrd.compdoc.CompDocError as e:
+        raise SpreadsheetFileInvalidError(six.text_type(e))
     except IOError as e:
-        raise SpreadsheetFileNotFound(e.message)
+        raise SpreadsheetFileNotFound(six.text_type(e))
 
 
 class _XLSWorksheetAdaptor(object):

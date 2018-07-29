@@ -1,15 +1,19 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict, OrderedDict
 
 import itertools
+from django.template.defaultfilters import linebreaksbr
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from lxml import etree
 import copy
 import re
 from lxml.etree import XMLSyntaxError, Element
+from celery.task import task
 
+from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -25,6 +29,7 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 import six
 from six.moves import zip
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 def get_unicode_dicts(iterable):
@@ -47,7 +52,27 @@ def get_unicode_dicts(iterable):
     return rows
 
 
-def process_bulk_app_translation_upload(app, f):
+def read_uploaded_app_translation_file(f):
+    msgs = []
+    try:
+        workbook = WorkbookJSONReader(f)
+    # todo: HeaderValueError does not belong here
+    except (HeaderValueError, InvalidExcelFileException) as e:
+        msgs.append(
+            (messages.error, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
+        )
+        return False, msgs
+    except JSONReaderError as e:
+        msgs.append(
+            (messages.error, _(
+                "App Translation Failed! There is an issue with excel columns. Error details: {}."
+            ).format(e))
+        )
+        return False, msgs
+    return workbook, msgs
+
+
+def process_bulk_app_translation_upload(app, workbook):
     """
     Process the bulk upload file for the given app.
     We return these message tuples instead of calling them now to allow this
@@ -63,22 +88,6 @@ def process_bulk_app_translation_upload(app, f):
     headers = expected_bulk_app_sheet_headers(app)
     expected_sheets = {h[0]: h[1] for h in headers}
     processed_sheets = set()
-
-    try:
-        workbook = WorkbookJSONReader(f)
-    # todo: HeaderValueError does not belong here
-    except (HeaderValueError, InvalidExcelFileException) as e:
-        msgs.append(
-            (messages.error, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
-        )
-        return msgs
-    except JSONReaderError as e:
-        msgs.append(
-            (messages.error, _(
-                "App Translation Failed! There is an issue with excel columns. Error details: {}."
-            ).format(e))
-        )
-        return msgs
 
     for sheet in workbook.worksheets:
         # sheet.__iter__ can only be called once, so cache the result
@@ -105,7 +114,7 @@ def process_bulk_app_translation_upload(app, f):
             continue
 
         # CHECK FOR MISSING KEY COLUMN
-        if sheet.worksheet.title == "Modules and Forms":
+        if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
             # Several columns on this sheet could be used to uniquely identify
             # rows. Using sheet_name for now, but unique_id could also be used.
             if expected_columns[1] not in sheet.headers:
@@ -162,7 +171,7 @@ def process_bulk_app_translation_upload(app, f):
         # This could be added if we want though
         #      (it is not that bad if a user leaves out a row)
 
-        if sheet.worksheet.title == "Modules_and_forms":
+        if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
             # It's the first sheet
             ms = _process_modules_and_forms_sheet(rows, app)
             msgs.extend(ms)
@@ -181,16 +190,42 @@ def process_bulk_app_translation_upload(app, f):
     return msgs
 
 
+def validate_bulk_app_translation_upload(app, workbook, email):
+    from corehq.apps.app_manager.app_translations.validator import UploadedTranslationsValidator
+    msgs = UploadedTranslationsValidator(app, workbook).compare()
+    if msgs:
+        _email_app_translations_discrepancies(msgs, email, app.name)
+        return [(messages.error, _("Issues found. You should receive an email shortly."))]
+    else:
+        return [(messages.success, "No issues found.")]
+
+
+def _email_app_translations_discrepancies(msgs, email, app_name):
+    message = '\n\n'.join([
+        """Sheet {}:
+           {}""".format(sheet_name, '\n '.join(msgs[sheet_name]))
+        for sheet_name in msgs
+        if msgs.get(sheet_name)])
+
+    subject = "App Translations Discrepancies for {}".format(app_name)
+    body = """Hi,
+    Following discrepancies were found for app translations.
+
+    {}""".format(message)
+
+    send_html_email_async.delay(subject, email, linebreaksbr(body))
+
+
 def _make_modules_and_forms_row(row_type, sheet_name, languages,
                                 media_image, media_audio, unique_id):
     """
     assemble the various pieces of data that make up a row in the
-    "Modules_and_forms" sheet into a single row (a flat tuple).
+    {sheet_name} sheet into a single row (a flat tuple).
 
     This function is meant as the single point of truth for the
-    column ordering of Modules_and_forms
+    column ordering of {sheet_name}
 
-    """
+    """.format(sheet_name=MODULES_AND_FORMS_SHEET_NAME)
     assert row_type is not None
     assert sheet_name is not None
     assert isinstance(languages, list)
@@ -226,7 +261,7 @@ def expected_bulk_app_sheet_headers(app):
 
     # Add headers for the first sheet
     headers.append([
-        "Modules_and_forms",
+        MODULES_AND_FORMS_SHEET_NAME,
         _make_modules_and_forms_row(
             row_type='Type',
             sheet_name='sheet_name',
@@ -261,7 +296,7 @@ def expected_bulk_app_sheet_rows(app):
     """
 
     # keys are the names of sheets, values are lists of tuples representing rows
-    rows = {"Modules_and_forms": []}
+    rows = {MODULES_AND_FORMS_SHEET_NAME: []}
 
     for mod_index, module in enumerate(app.get_modules()):
         # This is duplicated logic from expected_bulk_app_sheet_headers,
@@ -277,7 +312,7 @@ def expected_bulk_app_sheet_rows(app):
             media_audio=[module.audio_by_language(lang) for lang in app.langs],
             unique_id=module.unique_id,
         )
-        rows["Modules_and_forms"].append(row_data)
+        rows[MODULES_AND_FORMS_SHEET_NAME].append(row_data)
 
         # Populate module sheet
         rows[module_string] = []
@@ -288,14 +323,25 @@ def expected_bulk_app_sheet_rows(app):
                         ('case_list_form_label', 'list') +
                         tuple(module.case_list_form.label.get(lang, '') for lang in app.langs)
                 )
-            for list_or_detail, case_properties in [
-                ("list", module.case_details.short.get_columns()),
-                ("detail", module.case_details.long.get_columns())
+
+            for list_or_detail, detail in [
+                ("list", module.case_details.short),
+                ("detail", module.case_details.long)
             ]:
+                # Add a row for each tab heading
+                for index, tab in enumerate(detail.tabs):
+                    rows[module_string].append(
+                        ("Tab {}".format(index), list_or_detail) +
+                        tuple(tab.header.get(lang, "") for lang in app.langs)
+                    )
+
+                # Add a row for each detail field
+                # Complex fields may get multiple rows
+                case_properties = detail.get_columns()
                 for detail in case_properties:
 
                     field_name = detail.field
-                    if detail.format == "enum":
+                    if re.search(r'\benum\b', detail.format):   # enum, conditional-enum, enum-image
                         field_name += " (ID Mapping Text)"
                     elif detail.format == "graph":
                         field_name += " (graph)"
@@ -307,7 +353,7 @@ def expected_bulk_app_sheet_rows(app):
                     )
 
                     # Add a row for any mapping pairs
-                    if detail.format == "enum":
+                    if re.search(r'\benum\b', detail.format):
                         for mapping in detail.enum:
                             rows[module_string].append(
                                 (
@@ -364,7 +410,7 @@ def expected_bulk_app_sheet_rows(app):
                 )
 
                 # Add form to the first street
-                rows["Modules_and_forms"].append(first_sheet_row)
+                rows[MODULES_AND_FORMS_SHEET_NAME].append(first_sheet_row)
 
                 if form.form_type == 'shadow_form':
                     continue
@@ -508,8 +554,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
     if isinstance(form, ShadowForm):
         msgs.append((
             messages.warning,
-            u"Found a ShadowForm at module-{module_index} form-{form_index} with the name {name}."
-            u" Cannot translate ShadowForms, skipping.".format(
+            "Found a ShadowForm at module-{module_index} form-{form_index} with the name {name}."
+            " Cannot translate ShadowForms, skipping.".format(
                 # Add one to revert back to match index in Excel sheet
                 module_index=module_index + 1,
                 form_index=form_index + 1,
@@ -612,6 +658,12 @@ def update_form_translations(sheet, rows, missing_cols, app):
         old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
         return _looks_like_markdown(old_trans) and not had_markdown(text_node_)
 
+    def has_translation(row_, langs):
+        for lang_ in langs:
+            for trans_type_ in ['default', 'audio', 'image', 'video']:
+                if row_.get(_get_col_key(trans_type_, lang_)):
+                    return True
+
     # Aggregate Markdown vetoes, and translations that currently have Markdown
     vetoes = defaultdict(lambda: False)  # By default, Markdown is not vetoed for a label
     markdowns = defaultdict(lambda: False)  # By default, Markdown is not in use
@@ -624,7 +676,18 @@ def update_form_translations(sheet, rows, missing_cols, app):
             text_node = itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s']" % (lang, label_id))
             vetoes[label_id] = vetoes[label_id] or is_markdown_vetoed(text_node)
             markdowns[label_id] = markdowns[label_id] or had_markdown(text_node)
-
+    # skip labels that have no translation provided
+    skip_label = set()
+    if form.is_registration_form():
+        for row in rows:
+            if not has_translation(row, app.langs):
+                skip_label.add(row['label'])
+        for label in skip_label:
+            msgs.append((
+                messages.error,
+                "You must provide at least one translation" +
+                " for the label '%s' in sheet '%s'" % (label, sheet.worksheet.title)
+            ))
     # Update the translations
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
@@ -632,12 +695,14 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
         for row in rows:
             label_id = row['label']
+            if label_id in skip_label:
+                continue
             text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
             if not text_node.exists():
                 msgs.append((
                     messages.warning,
-                    u"Unrecognized translation label {0} in sheet {1}. That row"
-                    u" has been skipped". format(label_id, sheet.worksheet.title)
+                    "Unrecognized translation label {0} in sheet {1}. That row"
+                    " has been skipped". format(label_id, sheet.worksheet.title)
                 ))
                 continue
 
@@ -699,7 +764,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
 def escape_output_value(value):
     try:
-        return etree.fromstring(u"<value>{}</value>".format(
+        return etree.fromstring("<value>{}</value>".format(
             re.sub("(?<!/)>", "&gt;", re.sub("<(\s*)(?!output)", "&lt;\\1", value))
         ))
     except XMLSyntaxError:
@@ -739,6 +804,7 @@ def _update_case_list_translations(sheet, rows, app):
 
     condensed_rows = []
     case_list_form_label = None
+    detail_tab_headers = [None for i in module.case_details.long.tabs]
     index_of_last_enum_in_condensed = -1
     index_of_last_graph_in_condensed = -1
     for i, row in enumerate(rows):
@@ -782,6 +848,22 @@ def _update_case_list_translations(sheet, rows, app):
         # It's a case list registration form label. Don't add it to condensed rows
         elif row['case_property'] == 'case_list_form_label':
             case_list_form_label = row
+
+        # If it's a tab header, don't add it to condensed rows
+        elif re.search(r'^Tab \d+$', row['case_property']):
+            index = int(row['case_property'].split(' ')[-1])
+            if index < len(detail_tab_headers):
+                detail_tab_headers[index] = row
+            else:
+                msgs.append((
+                    messages.error,
+                    "Expected {0} case detail tabs in sheet {1} but found row for Tab {2}. "
+                    "No changes were made for sheet {1}.".format(
+                        len(detail_tab_headers),
+                        sheet.worksheet.title,
+                        index
+                    )
+                ))
 
         # It's a normal case property
         else:
@@ -875,6 +957,9 @@ def _update_case_list_translations(sheet, rows, app):
                 detail['graph_configuration']['series'][series_index]['locale_specific_config'][config_key],
                 False
             )
+    for index, tab in enumerate(detail_tab_headers):
+        if tab:
+            _update_translation(tab, module.case_details.long.tabs[index].header)
     if case_list_form_label:
         _update_translation(case_list_form_label, module.case_list_form.label)
 

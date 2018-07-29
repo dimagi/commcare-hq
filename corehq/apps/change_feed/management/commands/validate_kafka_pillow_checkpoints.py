@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.management import BaseCommand
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
@@ -34,7 +35,7 @@ def validate_checkpoints(print_only):
             try:
                 validate_offsets(checkpoint_dict)
             except UnavailableKafkaOffset as e:
-                message = u'Problem with checkpoint for {}: {}'.format(
+                message = 'Problem with checkpoint for {}: {}'.format(
                     pillow.pillow_id, e
                 )
                 if print_only:

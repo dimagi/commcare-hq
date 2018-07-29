@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import logging
 from django.conf import settings
@@ -6,10 +7,11 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.urls import reverse
 from django.db import transaction
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
+from django.views.decorators.http import require_POST
 import sys
 
 from django.views.generic.base import TemplateView, View
@@ -20,6 +22,8 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
     track_clicked_signup_on_hubspot,
+    HUBSPOT_COOKIE,
+    track_web_user_registration_hubspot,
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
@@ -29,14 +33,21 @@ from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import DomainRegistrationForm, RegisterWebUserForm
-from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
-    send_domain_registration_email
+from corehq.apps.registration.utils import (
+    activate_new_user,
+    send_new_request_update_email,
+    request_new_domain,
+    send_domain_registration_email,
+    send_mobile_experience_reminder)
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
+from corehq import toggles
 from django.contrib.auth.models import User
+
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.resource_conflict import retry_resource
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import get_ip
 from corehq.util.context_processors import get_per_domain_context
 
@@ -49,59 +60,7 @@ def registration_default(request):
     return redirect(UserRegistrationView.urlname)
 
 
-class NewUserNumberAbTestMixin__Enabled(object):
-    @property
-    @memoized
-    def _ab_show_number(self):
-        return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
-
-    @property
-    def ab_show_number(self):
-        return self._ab_show_number.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM
-
-    @property
-    def ab_show_number_context(self):
-        return self._ab_show_number.context
-
-    def ab_show_number_update_response(self, response):
-        self._ab_show_number.update_response(response)
-
-
-class NewUserNumberAbTestMixin__NoAbEnabled(object):
-    @property
-    @memoized
-    def _ab_show_number(self):
-        return None
-
-    @property
-    def ab_show_number(self):
-        return True
-
-    @property
-    def ab_show_number_context(self):
-        return None
-
-    def ab_show_number_update_response(self, response):
-        pass
-
-
-class NewUserNumberAbTestMixin__Disabled(object):
-    @property
-    def ab_show_number(self):
-        return False
-
-    @property
-    def ab_show_number_context(self):
-        return None
-
-    def ab_show_number_update_response(self, response):
-        pass
-
-
-NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__NoAbEnabled
-
-
-class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):
+class ProcessRegistrationView(JSONResponseMixin, View):
     urlname = 'process_registration'
 
     def get(self, request, *args, **kwargs):
@@ -113,19 +72,54 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             username=reg_form.cleaned_data['email'],
             password=reg_form.cleaned_data['password']
         )
+        web_user = WebUser.get_by_username(new_user.username, strict=True)
+
         if 'phone_number' in reg_form.cleaned_data and reg_form.cleaned_data['phone_number']:
-            web_user = WebUser.get_by_username(new_user.username)
             web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
             web_user.save()
-        track_workflow(new_user.email, "Requested new account")
+
+        if settings.IS_SAAS_ENVIRONMENT:
+            email = new_user.email
+
+            # registration analytics
+            # only do anything with this in a SAAS environment
+
+            persona = reg_form.cleaned_data['persona']
+            persona_other = reg_form.cleaned_data['persona_other']
+            appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(web_user.username,
+                                                              toggles.NAMESPACE_USER)
+
+            track_workflow(email, "Requested New Account", {
+                'environment': settings.SERVER_ENVIRONMENT,
+            })
+            track_workflow(email, "Persona Field Filled Out", {
+                'personachoice': persona,
+                'personaother': persona_other,
+            })
+
+            track_web_user_registration_hubspot(
+                self.request,
+                web_user,
+                {
+                    'buyer_persona': persona,
+                    'buyer_persona_other': persona_other,
+                    "appcues_test": "On" if appcues_ab_test else "Off",
+                }
+            )
+            if not persona or (persona == 'Other' and not persona_other):
+                # There shouldn't be many instances of this.
+                _assert = soft_assert('@'.join(['bbuczyk', 'dimagi.com']), exponential_backoff=False)
+                _assert(
+                    False,
+                    "[BAD PERSONA DATA] Persona fields during "
+                    "login submitted empty. User: {}".format(email)
+                )
+
         login(self.request, new_user)
 
     @allow_remote_invocation
     def register_new_user(self, data):
-        reg_form = RegisterWebUserForm(
-            data['data'],
-            show_number=self.ab_show_number,
-        )
+        reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
             self._create_new_account(reg_form)
             try:
@@ -142,8 +136,14 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                         'project name unavailable': [],
                     }
                 }
+
+            username = reg_form.cleaned_data['email']
+            appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(username,
+                                                              toggles.NAMESPACE_USER)
+
             return {
                 'success': True,
+                'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -163,7 +163,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         }
 
 
-class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
+class UserRegistrationView(BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
@@ -178,14 +178,12 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")
-        response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
-        self.ab_show_number_update_response(response)
-        return response
+        return super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
             meta = get_meta(request)
-            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES, meta)
+            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
     @property
@@ -203,15 +201,10 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             'atypical_user': True if self.atypical_user else False
         }
         return {
-            'reg_form': RegisterWebUserForm(
-                initial=prefills,
-                show_number=self.ab_show_number,
-            ),
+            'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
-            'show_number': self.ab_show_number,
-            'ab_show_number': self.ab_show_number_context,
         }
 
     @property
@@ -335,7 +328,7 @@ def resend_confirmation(request):
         try:
             send_domain_registration_email(dom_req.new_user_username,
                     dom_req.domain, dom_req.activation_guid,
-                    request.user.get_full_name())
+                    request.user.get_full_name(), request.user.first_name)
         except Exception:
             context.update({
                 'current_page': {'page_name': _('Oops!')},
@@ -424,3 +417,12 @@ def eula_agreement(request):
         current_user.save()
 
     return HttpResponseRedirect(request.POST.get('next', '/'))
+
+
+@login_required
+@require_POST
+def send_mobile_reminder(request):
+    send_mobile_experience_reminder(request.user.username,
+                                    request.couch_user.full_name)
+
+    return HttpResponse()

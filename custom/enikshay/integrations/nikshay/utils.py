@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from custom.enikshay.integrations.nikshay.exceptions import NikshayHealthEstablishmentInvalidUpdate
 

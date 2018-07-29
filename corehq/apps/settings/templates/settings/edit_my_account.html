@@ -7,8 +7,6 @@
 
 {% block stylesheets %}
     <style>
-
-
         #phone-numbers-list form {
             display: inline;
             padding-left: .1em;
@@ -16,25 +14,8 @@
     </style>
 {% endblock %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-        $('#id_language').select2();
+{% requirejs_main 'settings/js/edit_my_account' %}
 
-        $('form[name="user_information"]').on("change", null, null, function() {
-            $(":submit").prop("disabled", false);
-        }).on("input", null, null, function() {
-            $(":submit").prop("disabled", false);
-        })
-        
-        $('#generate-api-key').click(function() {
-            var apiDiv = $(this).parent().parent().parent();
-            $.post('{% url 'new_api_key' %}', '', function(data) {
-                apiDiv.find('.form-control-static').text(data);
-            });
-        });
-    </script>
-{% endblock %}
-b3
 {% block modals %}{{ block.super }}
 {% if user_type == 'web' %}
     {% include 'users/partial/basic_info_modals.html' %}
@@ -42,6 +23,8 @@ b3
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl 'new_api_key' %}
+
     {% crispy form form.new_helper %}
     {% if user_type == 'web' %}
         {% include 'users/partial/manage_my_numbers.html' %}

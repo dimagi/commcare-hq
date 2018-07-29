@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.data_interfaces.forms import validate_case_property_name
 from django.core.exceptions import ValidationError
 from django.test import TestCase

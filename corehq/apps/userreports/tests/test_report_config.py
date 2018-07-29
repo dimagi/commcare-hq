@@ -9,9 +9,9 @@ from corehq.apps.userreports.dbaccessors import get_all_report_configs, \
     delete_all_report_configs
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.tests.utils import (
-    get_sample_report_config, mock_datasource_config, mock_sql_backend
+    get_sample_report_config, mock_datasource_config
 )
 
 
@@ -78,10 +78,9 @@ class ReportConfigurationTest(SimpleTestCase):
             filters=[],
             configured_charts=[]
         )
-        data_source = ReportFactory.from_spec(report_config)
-        with mock_sql_backend():
-            with mock_datasource_config():
-                self.assertEqual(['doc_id'], data_source.group_by)
+        data_source = ConfigurableReportDataSource.from_spec(report_config)
+        with mock_datasource_config():
+            self.assertEqual(['doc_id'], data_source.group_by)
 
     def test_fall_back_display_to_column_id(self):
         config = ReportConfiguration(
@@ -219,7 +218,7 @@ class ReportTranslationTest(TestCase):
     def setUp(self):
         super(ReportTranslationTest, self).setUp()
         report = ReportConfiguration.by_domain(self.DOMAIN)[0]
-        self.report_source = ReportFactory.from_spec(report)
+        self.report_source = ConfigurableReportDataSource.from_spec(report)
 
     def test_column_string_display_value(self):
         self.assertEqual(self.report_source.columns[0].header, "My Column")

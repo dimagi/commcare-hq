@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from dimagi.ext.couchdbkit import (
@@ -10,7 +11,7 @@ from dimagi.ext.couchdbkit import (
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.groups.models import Group
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class AppGroup(DocumentSchema):

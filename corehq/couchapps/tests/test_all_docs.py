@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db, get_doc_count_by_type, \
     delete_all_docs_by_doc_type, get_doc_count_by_domain_type

@@ -62,13 +62,15 @@ var CHWIndicator = function (options) {
     self.loadError = function (error) {
         self.mark_as_error();
     };
-    
+
     self.mark_as_error = function () {
-        $('.status-'+self.slug).replaceWith('<i class="fa fa-exclamation-triangle"></i>');
+        $('.status-' + self.slug).replaceWith('<i class="fa fa-exclamation-triangle"></i>');
     };
 
     self.apply_updates = function () {
-        var new_data = reportTables.datatable.fnGetData();
+        var slug = hqImport("hqwebapp/js/initial_page_data").get("js_options").slug,
+            datatable = $('#report_table_' + slug + '.datatable').dataTable(),
+            new_data = datatable.fnGetData();
         for (var user_id in self.data) {
             if (self.data.hasOwnProperty(user_id) &&
                 self.user_indices.hasOwnProperty(user_id)) {
@@ -77,9 +79,9 @@ var CHWIndicator = function (options) {
                 new_data[user_index][self.index+1] = formatted_data;
             }
         }
-        reportTables.datatable.fnClearTable();
-        reportTables.datatable.fnAddData(new_data);
-        reportTables.datatable.fnAdjustColumnSizing(true);
+        datatable.fnClearTable();
+        datatable.fnAddData(new_data);
+        datatable.fnAdjustColumnSizing(true);
 
         $('.dataTables_scrollFoot .total.'+self.slug).html(self.total);
         $('.dataTables_scrollFoot .average.'+self.slug).html(self.average);

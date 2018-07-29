@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import NoReverseMatch, reverse
 from django.http import Http404
 from corehq.apps.api.es import ReportCaseES, ReportXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
 from django.utils.safestring import mark_safe
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from pact.enums import PACT_CASE_TYPE, PACT_DOMAIN
 from . import chw_schedule
 from pact.reports import PactDrilldownReportMixin, PactElasticTabularReportMixin

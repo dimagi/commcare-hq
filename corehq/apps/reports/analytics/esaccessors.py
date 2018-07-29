@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
@@ -95,15 +96,15 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False,
     return case_query.run().aggregations.owner_id.counts_by_bucket()
 
 
-def get_case_counts_closed_by_user(domain, datespan, case_types=None, owner_ids=None):
-    return _get_case_counts_by_user(domain, datespan, case_types, False, owner_ids)
+def get_case_counts_closed_by_user(domain, datespan, case_types=None, user_ids=None):
+    return _get_case_counts_by_user(domain, datespan, case_types, False, user_ids)
 
 
-def get_case_counts_opened_by_user(domain, datespan, case_types=None, owner_ids=None):
-    return _get_case_counts_by_user(domain, datespan, case_types, True, owner_ids)
+def get_case_counts_opened_by_user(domain, datespan, case_types=None, user_ids=None):
+    return _get_case_counts_by_user(domain, datespan, case_types, True, user_ids)
 
 
-def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, owner_ids=None):
+def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, user_ids=None):
     date_field = 'opened_on' if is_opened else 'closed_on'
     user_field = 'opened_by' if is_opened else 'closed_by'
 
@@ -124,20 +125,27 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
     else:
         case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
 
-    if owner_ids:
-        case_query = case_query.filter(filters.term(user_field, owner_ids))
+    if user_ids:
+        case_query = case_query.filter(filters.term(user_field, user_ids))
 
     return case_query.run().aggregations.by_user.counts_by_bucket()
 
 
-def get_paged_forms_by_type(domain, doc_types, start=0, size=10):
+def get_paged_forms_by_type(
+        domain,
+        doc_types,
+        sort_col=None,
+        desc=True,
+        start=0,
+        size=10):
+    sort_col = sort_col or "received_on"
     query = (
         FormES()
         .domain(domain)
         .remove_default_filter('is_xform_instance')
         .remove_default_filter('has_user')
         .doc_type([doc_type.lower() for doc_type in doc_types])
-        .sort("received_on", desc=True)
+        .sort(sort_col, desc=desc)
         .start(start)
         .size(size)
     )
@@ -326,10 +334,11 @@ def get_group_stubs(group_ids):
 
 
 def get_user_stubs(user_ids):
+    from corehq.apps.reports.util import SimplifiedUserInfo
     return (UserES()
         .user_ids(user_ids)
         .show_inactive()
-        .values('_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active'))
+        .values(*SimplifiedUserInfo.ES_FIELDS))
 
 
 def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
@@ -554,14 +563,27 @@ def get_username_in_last_form_user_id_submitted(domain, user_id):
         return user_submissions[0]['form']['meta'].get('username', None)
 
 
-def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None):
+def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None, pagination=None):
     # todo: figure out why this causes circular import
     from corehq.apps.reports.commtrack.util import StockLedgerValueWrapper
-    query = LedgerES().domain(domain).section(section_id).case(case_ids)
+    query = (LedgerES()
+             .domain(domain)
+             .section(section_id)
+             .case(case_ids))
+    if pagination:
+        query = query.size(pagination.count).start(pagination.start)
     if entry_ids:
         query = query.entry(entry_ids)
 
     return [StockLedgerValueWrapper.wrap(row) for row in query.run().hits]
+
+
+def products_with_ledgers(domain, case_ids, section_id, entry_ids=None):
+    # returns entry ids/product ids that have associated ledgers
+    query = LedgerES().domain(domain).section(section_id).case(case_ids)
+    if entry_ids:
+        query = query.entry(entry_ids)
+    return set(query.values_list('entry_id', flat=True))
 
 
 def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):

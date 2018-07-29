@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import corehq.apps.ivr.tests.util as util
 from corehq.apps.ivr.models import Call
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend

@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import datetime
 
@@ -20,6 +21,7 @@ from corehq.sql_db.util import (
     split_list_by_db_partition, new_id_in_same_dbalias, get_db_aliases_for_partitioned_query
 )
 from dimagi.utils.chunked import chunked
+from io import open
 
 
 def get_forms_to_reprocess(form_ids):
@@ -75,8 +77,8 @@ def undo_form_edits(form_tuples, logger):
         for form in (live_form, deprecated_form):
             form.track_create(XFormOperationSQL(
                 user_id='system',
-                operation=XFormOperationSQL.UUID_DATA_FIX),
-                date=operation_date
+                operation=XFormOperationSQL.UUID_DATA_FIX,
+                date=operation_date)
             )
             FormAccessorSQL.update_form(form)
 
@@ -86,7 +88,7 @@ def undo_form_edits(form_tuples, logger):
         cases_to_rebuild[live_form.domain].update(affected_cases)
         ledgers_to_rebuild[live_form.domain].update(affected_ledgers)
         logger.log('Cases to rebuild: {}'.format(','.join(affected_cases)))
-        logger.log('Ledgers to rebuild: {}'.format(','.join(affected_ledgers)))
+        logger.log('Ledgers to rebuild: {}'.format(','.join([l.as_id() for l in affected_ledgers])))
 
     return cases_to_rebuild, ledgers_to_rebuild
 
@@ -127,7 +129,7 @@ def update_case_transactions_for_form(case_cache, live_case_updates, deprecated_
             ledger_transactions.append(transaction)
 
     if affected_cases:
-        LedgerAccessorSQL.delete_ledger_transactions_for_form(affected_cases, live_form.form_id)
+        LedgerAccessorSQL.delete_ledger_transactions_for_form(list(affected_cases), live_form.form_id)
 
     for transaction in ledger_transactions:
         transaction.save()
@@ -161,11 +163,14 @@ class Command(BaseCommand):
     help = 'Command to reprocess forms that were mistakenly attributed to edit forms due to UUID clash.'
 
     def add_arguments(self, parser):
+        parser.add_argument('--debug', action='store_true', default=False,
+                            help='Print forms that need to be reprocessed but not reprocess them')
         parser.add_argument('-d', '--domain')
         parser.add_argument('--db', help='Only process a single Django DB.')
         parser.add_argument('-c', '--case-id', nargs='+', help='Only process cases with these IDs.')
 
     def handle(self, domain, **options):
+        debug = options.get('debug')
         domain = options.get('domain')
         case_ids = options.get('case_id')
         db = options.get('db')
@@ -180,7 +185,7 @@ class Command(BaseCommand):
                 form_ids.update(case.xform_ids)
 
             with self:
-                check_and_process_forms(form_ids, self)
+                check_and_process_forms(form_ids, self, debug)
         else:
             if domain:
                 domains = [domain]
@@ -188,7 +193,7 @@ class Command(BaseCommand):
                 domains = iter_domains()
 
             for domain in domains:
-                print(u"Checking domain: %s" % domain)
+                print("Checking domain: %s" % domain)
                 form_ids_to_check = set()
                 dbs = [db] if db else get_db_aliases_for_partitioned_query()
                 for dbname in dbs:
@@ -201,22 +206,25 @@ class Command(BaseCommand):
                 print('  Found %s forms to check' % len(form_ids_to_check))
                 with self:
                     for chunk in chunked(form_ids_to_check, 500):
-                        check_and_process_forms(chunk, self)
+                        check_and_process_forms(chunk, self, debug)
 
-        def __enter__(self):
-            self._log_file = open(self.log_filename, 'w')
+    def __enter__(self):
+        self._log_file = open(self.log_filename, 'w', encoding='utf-8')
 
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            self._log_file.close()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._log_file.close()
 
-        def log(message):
-            self._log_file.write(message)
+    def log(self, message):
+        self._log_file.write(message)
 
 
-def check_and_process_forms(form_ids, logger):
+def check_and_process_forms(form_ids, logger, debug):
     print('  Checking {} forms'.format(len(form_ids)))
     logger.log('Checking forms: \n{}\n'.format(','.join(form_ids)))
     forms_to_process = get_forms_to_reprocess(form_ids)
+    if debug:
+        print(forms_to_process)
+        return
 
     print('  Found %s forms to reprocess' % len(forms_to_process) * 2)
     cases_to_rebuild, ledgers_to_rebuild = undo_form_edits(forms_to_process, logger)

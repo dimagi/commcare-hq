@@ -13,7 +13,14 @@
     </div>
 </div>
 {% endif %}
-<div class="form-group" data-bind="visible: show_location_filter_bool()">
+<div class="form-group report-filter-location-async"
+     data-bind="visible: show_location_filter_bool()"
+     data-make-optional='{{ make_optional|JSON }}'
+     data-loc-id='{{ loc_id }}'
+     data-location-url='{{ api_root }}'
+     data-hierarchy='{{ hierarchy|JSON }}'
+     data-auto-drill='{{ auto_drill|JSON }}'
+     data-locs='{{ locations|JSON }}'>
     <label class="control-label {{ css_label_class }}">{{ control_name }}</label> {# this is wrong, see filters/single_option.html for a proper implementation #}
     <div class="{{ css_field_class }}">
         <div data-bind="foreach: selected_path" style="display: inline-block;">
@@ -27,30 +34,5 @@
         </div>
         <i id="loc_ajax" class="fa fa-spinner fa-spin hide"></i>
     </div>
-</div>
 <input name="location_id" type="hidden" data-bind="value: selected_locid" />
-
-<script>
-
-  $.getScript("{% static 'locations/js/location_drilldown.async.js' %}", function() {
-
-      var location_url = '{{ api_root }}';
-      var locs = {{ locations|JSON }};
-      var selected = '{{ loc_id }}';
-      var hierarchy = {{ hierarchy|JSON }};
-      var auto_drill = {{ auto_drill | JSON }};
-
-      var show_location_filter = {% if make_optional and not loc_id %}'n'{% else %}'y'{% endif%};
-
-      var model = new LocationSelectViewModel({
-        "hierarchy": hierarchy,
-        "show_location_filter": show_location_filter,
-        "loc_url": location_url,
-        "auto_drill": auto_drill,
-      });
-      $('#group_{{ control_slug }}').koApplyBindings(model);
-      model.load(locs, selected);
-
-  });
-
-</script>
+</div>

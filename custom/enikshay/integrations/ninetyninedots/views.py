@@ -1,23 +1,10 @@
 from __future__ import absolute_import
-import json
+from __future__ import unicode_literals
 import pytz
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
-
-from corehq import toggles
-from corehq.apps.domain.decorators import api_auth, check_domain_migration
-from dimagi.utils.web import json_response
-from dimagi.utils.logging import notify_exception
 
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from custom.enikshay.integrations.ninetyninedots.exceptions import NinetyNineDotsException
-from custom.enikshay.integrations.ninetyninedots.utils import (
-    AdherenceCaseFactory,
-    PatientDetailsUpdater,
-    update_adherence_confidence_level,
-    update_default_confidence_level,
-)
 import six
 
 
@@ -49,113 +36,6 @@ class UnenrollPatientRepeaterView(AddCaseRepeaterView):
     urlname = 'unenroll_99dots_patient'
     page_title = "Unenroll 99DOTS Patients"
     page_name = "Unenroll 99DOTS Patients"
-
-
-@toggles.NINETYNINE_DOTS.required_decorator()
-@api_auth
-@require_POST
-@csrf_exempt
-@check_domain_migration
-def update_patient_adherence(request, domain):
-    try:
-        request_json = json.loads(request.body)
-    except ValueError:
-        return json_response({"error": "Malformed JSON"}, status_code=400)
-
-    beneficiary_id = request_json.get('beneficiary_id')
-    adherence_values = request_json.get('adherences')
-    factory = AdherenceCaseFactory(domain, beneficiary_id)
-
-    try:
-        validate_beneficiary_id(beneficiary_id)
-        validate_adherence_values(adherence_values)
-        factory.create_adherence_cases(adherence_values)
-    except NinetyNineDotsException as e:
-        return json_response({"error": six.text_type(e)}, status_code=400)
-
-    try:
-        factory.update_episode_adherence_properties()
-    except NinetyNineDotsException as e:
-        notify_exception(
-            request,
-            message=("An error occurred updating the episode case after receiving a 99DOTS"
-                     "adherence case for beneficiary {}. {}").format(beneficiary_id, e))
-    return json_response({"success": "Patient adherences updated."})
-
-
-@toggles.NINETYNINE_DOTS.required_decorator()
-@api_auth
-@require_POST
-@csrf_exempt
-@check_domain_migration
-def update_patient_details(request, domain):
-    try:
-        request_json = json.loads(request.body)
-    except ValueError:
-        return json_response({"error": "Malformed JSON"}, status_code=400)
-
-    try:
-        PatientDetailsUpdater(domain, request_json).update_cases()
-    except NinetyNineDotsException as e:
-        return json_response({"error": six.text_type(e)}, status_code=400)
-
-    return json_response({"success": "Patient details updated."})
-
-
-@toggles.NINETYNINE_DOTS.required_decorator()
-@api_auth
-@require_POST
-@csrf_exempt
-@check_domain_migration
-def update_adherence_confidence(request, domain):
-    try:
-        request_json = json.loads(request.body)
-    except ValueError:
-        return json_response({"error": "Malformed JSON"}, status_code=400)
-    beneficiary_id = request_json.get('beneficiary_id')
-    start_date = request_json.get('start_date')
-    end_date = request_json.get('end_date')
-    confidence_level = request_json.get('confidence_level')
-
-    try:
-        validate_beneficiary_id(beneficiary_id)
-        validate_dates(start_date, end_date)
-        validate_confidence_level(confidence_level)
-        update_adherence_confidence_level(
-            domain=domain,
-            person_id=beneficiary_id,
-            start_date=parse_datetime(start_date),
-            end_date=parse_datetime(end_date),
-            new_confidence=confidence_level
-        )
-    except NinetyNineDotsException as e:
-        return json_response({"error": e.message}, status_code=400)
-
-    return json_response({"success": "Patient adherences updated."})
-
-
-@toggles.NINETYNINE_DOTS.required_decorator()
-@api_auth
-@require_POST
-@csrf_exempt
-@check_domain_migration
-def update_default_confidence(request, domain):
-    try:
-        request_json = json.loads(request.body)
-    except ValueError:
-        return json_response({"error": "Malformed JSON"}, status_code=400)
-
-    beneficiary_id = request_json.get('beneficiary_id')
-    confidence_level = request_json.get('confidence_level')
-
-    try:
-        validate_beneficiary_id(beneficiary_id)
-        validate_confidence_level(confidence_level)
-        update_default_confidence_level(domain, beneficiary_id, confidence_level)
-    except NinetyNineDotsException as e:
-        return json_response({"error": e.message}, status_code=400)
-
-    return json_response({"success": "Default Confidence Updated"})
 
 
 def validate_beneficiary_id(beneficiary_id):

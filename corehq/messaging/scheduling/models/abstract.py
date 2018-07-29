@@ -1,10 +1,18 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import jsonfield
 import uuid
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.db import models, transaction
-from corehq.apps.reminders.util import get_one_way_number_for_recipient
-from corehq.apps.sms.api import MessageMetadata, send_sms
+from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
+from corehq.apps.sms.api import MessageMetadata, send_sms, send_sms_to_verified_number
+from corehq.apps.sms.models import (
+    MessagingEvent,
+    PhoneNumber,
+    WORKFLOW_REMINDER,
+    WORKFLOW_KEYWORD,
+    WORKFLOW_BROADCAST,
+)
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
@@ -18,6 +26,7 @@ from corehq.messaging.templating import (
     SimpleDictTemplateParam,
     CaseMessagingTemplateParam,
 )
+from corehq.messaging.util import use_phone_entries
 from django.utils.functional import cached_property
 
 
@@ -26,6 +35,8 @@ class Schedule(models.Model):
     UI_TYPE_DAILY = 'D'
     UI_TYPE_WEEKLY = 'W'
     UI_TYPE_MONTHLY = 'M'
+    UI_TYPE_CUSTOM_DAILY = 'CD'
+    UI_TYPE_CUSTOM_IMMEDIATE = 'CI'
     UI_TYPE_UNKNOWN = 'X'
 
     schedule_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
@@ -38,6 +49,12 @@ class Schedule(models.Model):
     # If True, include all users at that location or at any descendant locations as recipients
     include_descendant_locations = models.BooleanField(default=False)
 
+    # Only matters when include_descendant_locations is True.
+    # If this is an empty list, it's ignored.
+    # Otherwise, only the SQLLocations whose LocationType foreign keys are in this list
+    # will be considered when expanding the recipients of the schedule instance.
+    location_type_filter = jsonfield.JSONField(default=list)
+
     # If None, the list of languages defined in the project for messaging will be
     # inspected and the default language there will be used.
     default_language_code = models.CharField(max_length=126, null=True)
@@ -47,9 +64,37 @@ class Schedule(models.Model):
 
     # One of the UI_TYPE_* constants describing the type of UI that should be used
     # to edit this schedule.
-    ui_type = models.CharField(max_length=1, default=UI_TYPE_UNKNOWN)
+    ui_type = models.CharField(max_length=2, default=UI_TYPE_UNKNOWN)
 
-    class Meta:
+    #   The old reminders framework would interpret times using UTC if the contact
+    # didn't have a time zone configured. The new reminders framework uses the
+    # project's time zone if the contact doesn't have a time zone configured.
+    #   There are a lot of edge cases which make it not possible to just convert
+    # times in reminders during the reminders migration. So for old reminders
+    # where this makes a difference, this option is set to True during the migration.
+    use_utc_as_default_timezone = models.BooleanField(default=False)
+
+    #   If {}, this option will be ignored.
+    #   Otherwise, for each recipient in the recipient list that is a CouchUser,
+    # that recipient's custom user data will be checked against this option to
+    # determine if the recipient should stay in the recipient list or not.
+    #   This should be a dictionary where each key is the name of a custom user data
+    # field, and each value is a list of allowed values for that field.
+    #   For example, if this is set to: {'nickname': ['bob', 'jim'], 'phone_type': ['android']}
+    # then the recipient list would be filtered to only include users whose phone
+    # type is android and whose nickname is either bob or jim.
+    user_data_filter = jsonfield.JSONField(default=dict)
+
+    #   Only applies when this Schedule is used with CaseAlertScheduleInstances or
+    # CaseTimedScheduleInstances.
+    #   If null, this is ignored. Otherwise, it's the name of a case property which
+    # can be used to set a stop date for the schedule. If the case property doesn't
+    # reference a date (e.g., it's blank), then there's no effect. But if it references
+    # a date then the corresponding schedule instance will be deactivated once the
+    # framework realizes that date has passed.
+    stop_date_case_property_name = models.CharField(max_length=126, null=True)
+
+    class Meta(object):
         abstract = True
 
     def set_first_event_due_timestamp(self, instance, start_date=None):
@@ -116,6 +161,10 @@ class Schedule(models.Model):
 
         return False
 
+    @property
+    def references_parent_case(self):
+        return False
+
     def delete_related_events(self):
         """
         Deletes all Event and Content objects related to this Schedule.
@@ -135,7 +184,7 @@ class ContentForeignKeyMixin(models.Model):
     ivr_survey_content = models.ForeignKey('scheduling.IVRSurveyContent', null=True, on_delete=models.CASCADE)
     custom_content = models.ForeignKey('scheduling.CustomContent', null=True, on_delete=models.CASCADE)
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     @property
@@ -193,7 +242,7 @@ class Event(ContentForeignKeyMixin):
     # it doesn't matter as long as it sorts the events properly.
     order = models.IntegerField()
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
 
@@ -206,7 +255,7 @@ class Content(models.Model):
     # (i.e., this was scheduled content), this is the ScheduleInstance.
     schedule_instance = None
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def set_context(self, case=None, schedule_instance=None):
@@ -215,6 +264,20 @@ class Content(models.Model):
 
         if schedule_instance:
             self.schedule_instance = schedule_instance
+
+    @staticmethod
+    def get_workflow(logged_event):
+        if logged_event.source in (
+            MessagingEvent.SOURCE_IMMEDIATE_BROADCAST,
+            MessagingEvent.SOURCE_SCHEDULED_BROADCAST,
+        ):
+            return WORKFLOW_BROADCAST
+        elif logged_event.source == MessagingEvent.SOURCE_CASE_RULE:
+            return WORKFLOW_REMINDER
+        elif logged_event.source == MessagingEvent.SOURCE_KEYWORD:
+            return WORKFLOW_KEYWORD
+
+        return None
 
     @cached_property
     def case_rendering_context(self):
@@ -239,19 +302,32 @@ class Content(models.Model):
         return r
 
     @classmethod
-    def get_one_way_phone_number(cls, recipient):
+    def get_two_way_entry_or_phone_number(cls, recipient, try_user_case=True):
+        """
+        If recipient has a two-way number, returns it as a PhoneNumber entry.
+        If recipient does not have a two-way number but has a phone number configured,
+        returns the one-way phone number as a string.
+
+        If try_user_case is True and recipient is a CommCareUser who doesn't have a
+        two-way or one-way phone number, then it will try to get the two-way or
+        one-way number from the user's user case if one exists.
+        """
+        if use_phone_entries():
+            phone_entry = get_two_way_number_for_recipient(recipient)
+            if phone_entry:
+                return phone_entry
+
         phone_number = get_one_way_number_for_recipient(recipient)
 
-        if not phone_number and isinstance(recipient, CommCareUser):
-            if recipient.memoized_usercase:
-                phone_number = get_one_way_number_for_recipient(recipient.memoized_usercase)
+        # Avoid processing phone numbers that are obviously fake (len <= 3) to
+        # save on processing time
+        if phone_number and len(phone_number) > 3:
+            return phone_number
 
-        if not phone_number or len(phone_number) <= 3:
-            # Avoid processing phone numbers that are obviously fake to
-            # save on processing time
-            return None
+        if try_user_case and isinstance(recipient, CommCareUser) and recipient.memoized_usercase:
+            return cls.get_two_way_entry_or_phone_number(recipient.memoized_usercase)
 
-        return phone_number
+        return None
 
     @staticmethod
     def get_cleaned_message(message_dict, language_code):
@@ -302,12 +378,17 @@ class Content(models.Model):
             messaging_subevent_id=logged_subevent.pk,
         )
 
-    def send_sms_message(self, domain, recipient, phone_number, message, logged_subevent):
+    def send_sms_message(self, domain, recipient, phone_entry_or_number, message, logged_subevent):
         if not message:
             return
 
         metadata = self.get_sms_message_metadata(logged_subevent)
-        send_sms(domain, recipient, phone_number, message, metadata=metadata)
+
+        if isinstance(phone_entry_or_number, PhoneNumber):
+            send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata,
+                logged_subevent=logged_subevent)
+        else:
+            send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata)
 
 
 class Broadcast(models.Model):
@@ -319,8 +400,12 @@ class Broadcast(models.Model):
     # A List of [recipient_type, recipient_id]
     recipients = jsonfield.JSONField(default=list)
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def soft_delete(self):
         raise NotImplementedError()
+
+    @classmethod
+    def domain_has_broadcasts(cls, domain):
+        return cls.objects.filter(domain=domain, deleted=False).exists()

@@ -1,4 +1,4 @@
-define([
+hqDefine("data_dictionary/js/data_dictionary", [
     "jquery",
     "knockout",
     "underscore",
@@ -14,17 +14,17 @@ define([
     hqMain,
     googleAnalytics
 ) {
-    var CaseType = function (name) {
-        var self = this;
+    var caseType = function (name) {
+        var self = {};
         self.name = name;
         self.properties = ko.observableArray();
 
-        self.init = function (group_dict, changeSaveButton) {
-            _.each(group_dict, function (properties, group) {
-                var groupObj = new PropertyListItem(group, true, group, self.name);
+        self.init = function (groupDict, changeSaveButton) {
+            _.each(groupDict, function (properties, group) {
+                var groupObj = propertyListItem(group, true, group, self.name);
                 self.properties.push(groupObj);
                 _.each(properties, function (prop) {
-                    var propObj = new PropertyListItem(prop.name, false, prop.group, self.name, prop.data_type, prop.description, prop.deprecated);
+                    var propObj = propertyListItem(prop.name, false, prop.group, self.name, prop.data_type, prop.description, prop.deprecated);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.dataType.subscribe(changeSaveButton);
                     propObj.deprecated.subscribe(changeSaveButton);
@@ -32,10 +32,12 @@ define([
                 });
             });
         };
+
+        return self;
     };
 
-    var PropertyListItem = function (name, isGroup, groupName, caseType, dataType, description, deprecated) {
-        var self = this;
+    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description, deprecated) {
+        var self = {};
         self.name = name;
         self.expanded = ko.observable(true);
         self.isGroup = isGroup;
@@ -56,10 +58,12 @@ define([
         self.restoreProperty = function () {
             self.deprecated(false);
         };
+
+        return self;
     };
 
-    var DataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices) {
-        var self = this;
+    var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices) {
+        var self = {};
         self.caseTypes = ko.observableArray();
         self.activeCaseType = ko.observable();
         self.newPropertyName = ko.observable();
@@ -112,9 +116,9 @@ define([
         self.init = function () {
             $.getJSON(dataUrl)
                 .done(function (data) {
-                    _.each(data.case_types, function (caseType) {
-                        var caseTypeObj = new CaseType(caseType.name);
-                        var groupDict = _.groupBy(caseType.properties, function(prop) {return prop.group;});
+                    _.each(data.case_types, function (caseTypeData) {
+                        var caseTypeObj = caseType(caseTypeData.name);
+                        var groupDict = _.groupBy(caseTypeData.properties, function(prop) {return prop.group;});
                         caseTypeObj.init(groupDict, changeSaveButton);
                         self.caseTypes.push(caseTypeObj);
                     });
@@ -125,13 +129,13 @@ define([
                 });
         };
 
-        this.getActiveCaseType = function () {
+        self.getActiveCaseType = function () {
             return _.find(self.caseTypes(), function (prop) {
                 return prop.name === self.activeCaseType();
             });
         };
 
-        this.activeCaseTypeData = function () {
+        self.activeCaseTypeData = function () {
             var caseTypes = self.caseTypes();
             if (caseTypes.length) {
                 var caseType = self.getActiveCaseType();
@@ -142,9 +146,9 @@ define([
             return [];
         };
 
-        this.goToCaseType = function (caseType) {
+        self.goToCaseType = function (caseType) {
             if (self.saveButton.state === 'save') {
-                var dialog = confirm('You have unsaved changes to this case type. Are you sure you would like to continue?');
+                var dialog = confirm(gettext('You have unsaved changes to this case type. Are you sure you would like to continue?'));
                 if (!dialog) {
                     return;
                 }
@@ -154,22 +158,26 @@ define([
             self.saveButton.setState('saved');
         };
 
-        this.newCaseProperty = function () {
-            var prop = new PropertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
-            prop.dataType.subscribe(changeSaveButton);
-            prop.description.subscribe(changeSaveButton);
-            prop.deprecated.subscribe(changeSaveButton);
-            self.newPropertyName('');
-            self.casePropertyList.push(prop);
+        self.newCaseProperty = function () {
+            if (_.isString(self.newPropertyName())) {
+                var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
+                prop.dataType.subscribe(changeSaveButton);
+                prop.description.subscribe(changeSaveButton);
+                prop.deprecated.subscribe(changeSaveButton);
+                self.newPropertyName(undefined);
+                self.casePropertyList.push(prop);
+            }
         };
 
-        this.newGroup = function () {
-            var group = new PropertyListItem(self.newGroupName(), true, '', self.activeCaseType());
-            self.casePropertyList.push(group);
-            self.newGroupName('');
+        self.newGroup = function () {
+            if (_.isString(self.newGroupName())) {
+                var group = propertyListItem(self.newGroupName(), true, '', self.activeCaseType());
+                self.casePropertyList.push(group);
+                self.newGroupName(undefined);
+            }
         };
 
-        this.toggleGroup = function (group) {
+        self.toggleGroup = function (group) {
             group.toggle();
             var groupIndex = _.findIndex(self.casePropertyList(), function (element) {
                 return element.name === group.name;
@@ -183,20 +191,22 @@ define([
             }
         };
 
-        this.showDeprecated = function () {
+        self.showDeprecated = function () {
             self.showAll(true);
         };
 
-        this.hideDeprecated = function () {
+        self.hideDeprecated = function () {
             self.showAll(false);
         };
+
+        return self;
     };
 
     $(function() {
         var dataUrl = initialPageData.reverse('data_dictionary_json'),
             casePropertyUrl = initialPageData.reverse('update_case_property'),
             typeChoices = initialPageData.get('typeChoices'),
-            viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl, typeChoices);
+            viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices);
         viewModel.init();
         $('#hq-content').parent().koApplyBindings(viewModel);
         $('#download-dict').click(function() {

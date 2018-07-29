@@ -1,7 +1,7 @@
 hqDefine('app_manager/js/download_async_modal', function () {
-    var AsyncDownloader = function($el){
+    var asyncDownloader = function($el){
         "use strict";
-        var self = this;
+        var self = {};
         self.POLL_FREQUENCY = 1500; //ms
         self.ERROR_MESSAGE = gettext("Sorry, something went wrong with the download. " +
                              "If you see this repeatedly please report an issue.");
@@ -90,13 +90,18 @@ hqDefine('app_manager/js/download_async_modal', function () {
         });
 
         self.init();
+
+        return self;
     };
 
-    window.download_application_zip = function() {
+    var downloadApplicationZip = function() {
         var $modal = $(".download-async-modal"),
-            downloader = new AsyncDownloader($modal);
+            downloader = asyncDownloader($modal);
         downloader.generateDownload($modal.data("url"));
     };
 
-    return {AsyncDownloader: AsyncDownloader};
+    return {
+        asyncDownloader: asyncDownloader,
+        downloadApplicationZip: downloadApplicationZip,
+    };
 });

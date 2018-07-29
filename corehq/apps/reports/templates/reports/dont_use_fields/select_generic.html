@@ -16,6 +16,7 @@
     {% endif %}
     </select>
 </div>
+{# This is fine as an inline script; this file is only used by custom reports which we're not currently externalizing #}
 <script>
     $(function () {
         $('#{{ select.cssId }}').parent().koApplyBindings({

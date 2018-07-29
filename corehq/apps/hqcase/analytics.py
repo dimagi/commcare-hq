@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import warnings
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es import CaseES

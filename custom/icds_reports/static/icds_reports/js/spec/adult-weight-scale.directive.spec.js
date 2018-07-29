@@ -1,12 +1,13 @@
-/* global module, inject, chai */
+/* global module, inject, chai, _ */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Adult Weight Scale Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('adult_weight_scale', 'adult_weight_scale');
@@ -15,6 +16,7 @@ describe('Adult Weight Scale Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -26,13 +28,20 @@ describe('Adult Weight Scale Directive', function () {
         $httpBackend.expectGET('adult_weight_scale').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<adult-weight-scale data='test'></adult-weight-scale>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('adultWeightScale');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -79,7 +88,7 @@ describe('Adult Weight Scale Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 5, all: 10});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;"><p>test</p>' +
             '<div>Total number of AWCs that reported having a weighing scale for mother and child: <strong>5</strong>' +
-            '</div><div>% of AWCs that reported having a weighing scale for mother and child: <strong>50.00%</strong></div>');
+            '</div><div>% of AWCs that reported having a weighing scale for mother and child: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -174,7 +183,7 @@ describe('Adult Weight Scale Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of AWCs that reported having a weighing scale for mother and child');
+            'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a weighing scale for mother and child');
     });
 
     it('tests chart tooltip content', function () {
@@ -189,18 +198,30 @@ describe('Adult Weight Scale Directive', function () {
         assert.equal(expected, result);
     });
 
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total number of AWCs that reported having a weighing scale for mother and child: <strong>0</strong></div>' +
+            '<div>% of AWCs that reported having a weighing scale for mother and child: <strong>0.00%</strong></div></div>';
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
+        assert.equal(expected, result);
+    });
+
     it('tests disable locations for user', function () {
         controller.userLocationId = 'test_id4';
         controller.location = {name: 'name4', location_id: 'test_id4'};
         controller.selectedLocations.push(
-            {name: 'name1', location_id: 'test_id1'},
-            {name: 'name2', location_id: 'test_id2'},
-            {name: 'name3', location_id: 'test_id3'},
-            {name: 'name4', location_id: 'test_id4'},
-            {name: 'name5', location_id: 'test_id5'},
-            {name: 'name6', location_id: 'test_id6'}
+            {name: 'name1', location_id: 'test_id1', user_have_access: 0},
+            {name: 'name2', location_id: 'test_id2', user_have_access: 0},
+            {name: 'name3', location_id: 'test_id3', user_have_access: 0},
+            {name: 'name4', location_id: 'test_id4', user_have_access: 1},
+            {name: 'All', location_id: 'all', user_have_access: 0},
+            null
         );
         var index = controller.getDisableIndex();
-        assert.equal(index, 3);
+        assert.equal(index, 2);
     });
 });

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_current_app
@@ -31,5 +32,5 @@ class Command(BaseCommand):
     @property
     def report_map(self):
         if not self._report_map:
-            self._report_map = get_static_report_mapping(self.from_domain, self.to_domain, {})
+            self._report_map = get_static_report_mapping(self.from_domain, self.to_domain)
         return self._report_map

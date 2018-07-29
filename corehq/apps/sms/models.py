@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
 import hashlib
 import jsonfield
@@ -7,7 +8,7 @@ import uuid
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
-from django.db import models, transaction, IntegrityError
+from django.db import models, transaction, IntegrityError, connection
 from django.http import Http404
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -27,7 +28,7 @@ from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext_lazy
 import six
 
@@ -65,7 +66,7 @@ DIRECTION_CHOICES = (
 
 class Log(models.Model):
 
-    class Meta:
+    class Meta(object):
         abstract = True
         app_label = "sms"
 
@@ -177,6 +178,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_INVALID_DESTINATION_NUMBER = 'INVALID_DESTINATION_NUMBER'
     ERROR_MESSAGE_TOO_LONG = 'MESSAGE_TOO_LONG'
     ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
+    ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -193,6 +195,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
             ugettext_noop("The gateway could not process the message because it was too long."),
         ERROR_CONTACT_IS_INACTIVE:
             ugettext_noop("The recipient has been deactivated."),
+        ERROR_TRIAL_SMS_EXCEEDED:
+            ugettext_noop("The number of SMS that can be sent on a trial plan has been exceeded."),
     }
 
     UUIDS_TO_GENERATE = ['couch_id']
@@ -241,7 +245,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     # Holds any custom metadata for this SMS
     custom_metadata = jsonfield.JSONField(null=True, default=None)
 
-    class Meta:
+    class Meta(object):
         abstract = True
         app_label = 'sms'
 
@@ -265,8 +269,12 @@ class SMS(SMSBase):
         return data
 
     def publish_change(self):
+        from corehq.apps.sms.change_publishers import publish_sms_saved
         from corehq.apps.sms.tasks import publish_sms_change
-        publish_sms_change.delay(self)
+        try:
+            publish_sms_saved(self)
+        except Exception:
+            publish_sms_change.delay(self)
 
     def requeue(self):
         if self.processed or self.direction != OUTGOING:
@@ -289,10 +297,46 @@ class SMS(SMSBase):
             self.delete()
             queued_sms.save()
 
+    @staticmethod
+    def get_counts_by_date(domain, start_date, end_date, time_zone):
+        """
+        Retrieves counts of SMS sent and received over the given date range
+        for the given domain.
+
+        :param domain: the domain
+        :param start_date: the start date, as a date type
+        :param end_date: the end date (inclusive), as a date type
+        :param time_zone: the time zone to use when grouping counts by date,
+        as a string type (e.g., 'America/New_York')
+
+        :return: A list of (date, direction, count) named tuples
+        """
+
+        CountTuple = namedtuple('CountTuple', ['date', 'direction', 'sms_count'])
+
+        query = """
+        SELECT  (date AT TIME ZONE %s)::DATE AS date,
+                direction,
+                COUNT(*) AS sms_count
+        FROM    sms_sms
+        WHERE   domain = %s
+        AND     date >= (%s + TIME '00:00') AT TIME ZONE %s
+        AND     date < (%s + 1 + TIME '00:00') AT TIME ZONE %s
+        AND     (direction = 'I' OR (direction = 'O' and processed))
+        GROUP BY 1, 2
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                [time_zone, domain, start_date, time_zone, end_date, time_zone]
+            )
+            return [CountTuple(*row) for row in cursor.fetchall()]
+
 
 class QueuedSMS(SMSBase):
 
-    class Meta:
+    class Meta(object):
         db_table = 'sms_queued'
 
     @classmethod
@@ -304,7 +348,7 @@ class QueuedSMS(SMSBase):
 
 class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
 
-    class Meta:
+    class Meta(object):
         db_table = 'sms_lastreadmessage'
         app_label = 'sms'
         index_together = [
@@ -369,7 +413,7 @@ class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
 
 class ExpectedCallback(UUIDGeneratorMixin, models.Model):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         index_together = [
             ['domain', 'date'],
@@ -450,7 +494,7 @@ class PhoneBlacklist(models.Model):
     last_sms_opt_in_timestamp = models.DateTimeField(null=True)
     last_sms_opt_out_timestamp = models.DateTimeField(null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
 
     @classmethod
@@ -937,7 +981,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_SUBEVENT_ERROR = 'SUBEVENT_ERROR'
     ERROR_TOUCHFORMS_ERROR = 'TOUCHFORMS_ERROR'
     ERROR_INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR'
-    ERROR_GATEWAY_ERROR = 'GATEWAY_ERROR'
     ERROR_NO_SUITABLE_GATEWAY = 'NO_SUITABLE_GATEWAY'
     ERROR_GATEWAY_NOT_FOUND = 'GATEWAY_NOT_FOUND'
     ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
@@ -984,8 +1027,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('An error occurred in the formplayer service.'),
         ERROR_INTERNAL_SERVER_ERROR:
             ugettext_noop('Internal Server Error'),
-        ERROR_GATEWAY_ERROR:
-            ugettext_noop('Gateway error.'),
         ERROR_NO_SUITABLE_GATEWAY:
             ugettext_noop('No suitable gateway could be found.'),
         ERROR_GATEWAY_NOT_FOUND:
@@ -1016,7 +1057,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=True, db_index=True)
     recipient_id = models.CharField(max_length=126, null=True, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
 
     @classmethod
@@ -1290,7 +1331,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         if isinstance(content, (SMSContent, CustomContent)):
             return cls.CONTENT_SMS, None, None
         elif isinstance(content, SMSSurveyContent):
-            app, module, form = content.get_memoized_app_module_form(domain)
+            app, module, form, requires_input = content.get_memoized_app_module_form(domain)
             form_name = form.full_path_name if form else None
             return cls.CONTENT_SMS_SURVEY, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
@@ -1428,6 +1469,92 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         return qs.order_by('-date')[0] if qs.count() > 0 else None
 
+    @staticmethod
+    def get_counts_by_date(domain, start_date, end_date, time_zone):
+        """
+        Retrieves counts of messaging events at the subevent level over the
+        given date range for the given domain.
+
+        :param domain: the domain
+        :param start_date: the start date, as a date type
+        :param end_date: the end date (inclusive), as a date type
+        :param time_zone: the time zone to use when grouping counts by date,
+        as a string type (e.g., 'America/New_York')
+
+        :return: A list of (date, error_count, total_count) named tuples
+        """
+
+        CountTuple = namedtuple('CountTuple', ['date', 'error_count', 'total_count'])
+
+        query = """
+        SELECT      (A.date AT TIME ZONE %s)::DATE AS date,
+                    SUM(
+                        CASE
+                        WHEN B.status = 'ERR' OR C.error OR (B.id IS NULL AND A.status = 'ERR')
+                        THEN 1
+                        ELSE 0
+                        END
+                    ) AS error_count,
+                    COUNT(*) AS total_count
+        FROM        sms_messagingevent A
+        LEFT JOIN   sms_messagingsubevent B
+        ON          A.id = B.parent_id
+        LEFT JOIN   sms_sms C
+        ON          B.id = C.messaging_subevent_id
+        WHERE       A.domain = %s
+        AND         A.date >= (%s + TIME '00:00') AT TIME ZONE %s
+        AND         A.date < (%s + 1 + TIME '00:00') AT TIME ZONE %s
+        GROUP BY    1
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                [time_zone, domain, start_date, time_zone, end_date, time_zone]
+            )
+            return [CountTuple(*row) for row in cursor.fetchall()]
+
+    @classmethod
+    def get_counts_of_errors(cls, domain, start_date, end_date, time_zone):
+        """
+        Retrieves counts of errors at the event, subevent, or sms levels over the
+        given date range for the given domain.
+
+        :param domain: the domain
+        :param start_date: the start date, as a date type
+        :param end_date: the end date (inclusive), as a date type
+        :param time_zone: the time zone to use when filtering,
+        as a string type (e.g., 'America/New_York')
+
+        :return: A dictionary with each key being an error code and each value
+        being the count of that error's occurrences
+        """
+
+        query = """
+        SELECT      COALESCE(C.system_error_message, B.error_code, A.error_code) AS error,
+                    COUNT(*) AS count
+        FROM        sms_messagingevent A
+        LEFT JOIN   sms_messagingsubevent B
+        ON          A.id = B.parent_id
+        LEFT JOIN   sms_sms C
+        ON          B.id = C.messaging_subevent_id
+        WHERE       A.domain = %s
+        AND         A.date >= (%s + TIME '00:00') AT TIME ZONE %s
+        AND         A.date < (%s + 1 + TIME '00:00') AT TIME ZONE %s
+        GROUP BY    1
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                [domain, start_date, time_zone, end_date, time_zone]
+            )
+            return {
+                error: count
+                for error, count in cursor.fetchall()
+                if error and error != cls.ERROR_SUBEVENT_ERROR
+            }
+
 
 class MessagingSubEvent(models.Model, MessagingStatusMixin):
     """
@@ -1456,7 +1583,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     error_code = models.CharField(max_length=126, null=True)
     additional_error_text = models.TextField(null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
 
     def save(self, *args, **kwargs):
@@ -1522,7 +1649,7 @@ class SelfRegistrationInvitation(models.Model):
     # when it is created
     custom_user_data = jsonfield.JSONField(default=dict)
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
 
     @property
@@ -1897,7 +2024,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # to this backend
     reply_to_phone_number = models.CharField(max_length=126, null=True)
 
-    class Meta:
+    class Meta(object):
         db_table = 'messaging_mobilebackend'
         app_label = 'sms'
 
@@ -2330,7 +2457,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
 
 class SQLSMSBackend(SQLMobileBackend):
 
-    class Meta:
+    class Meta(object):
         proxy = True
         app_label = 'sms'
 
@@ -2359,6 +2486,24 @@ class SQLSMSBackend(SQLMobileBackend):
         """
         Override to specify a set of opt-in keywords to use for this
         backend type.
+        """
+        return []
+
+    @classmethod
+    def get_pass_through_opt_in_keywords(cls):
+        """
+        Use this to define opt-in keywords that the gateway counts as opt-in
+        keywords but that we don't want to have block normal processing in HQ.
+
+        This is useful when the gateway defines an opt-in keyword like
+        YES that is a common reply to SMS survey questions, and we don't
+        want users to continuously be getting opt-in replies when
+        sending YES.
+
+        When receiving these keywords, HQ will still mark the phone as having
+        opted-in in the PhoneBlacklist entry because it's important that the
+        opt-in status between the gateway and HQ remain in sync, but after doing
+        that, HQ will then process the inbound SMS just as a normal inbound message.
         """
         return []
 
@@ -2440,7 +2585,7 @@ class SQLMobileBackendMapping(models.Model):
     A SQLMobileBackendMapping instance is used to map SMS or IVR traffic
     to a given backend based on phone prefix.
     """
-    class Meta:
+    class Meta(object):
         db_table = 'messaging_mobilebackendmapping'
         app_label = 'sms'
         unique_together = ('domain', 'backend_type', 'prefix')
@@ -2537,7 +2682,7 @@ class SQLMobileBackendMapping(models.Model):
 
 class MobileBackendInvitation(models.Model):
 
-    class Meta:
+    class Meta(object):
         db_table = 'messaging_mobilebackendinvitation'
         app_label = 'sms'
         unique_together = ('backend', 'domain')
@@ -2563,7 +2708,7 @@ class MigrationStatus(models.Model):
     MIGRATION_PHONE_NUMBERS = 'phone_numbers'
     MIGRATION_KEYWORDS = 'keywords'
 
-    class Meta:
+    class Meta(object):
         db_table = 'messaging_migrationstatus'
         app_label = "sms"
 
@@ -2595,7 +2740,7 @@ class Keyword(UUIDGeneratorMixin, models.Model):
     """
     UUIDS_TO_GENERATE = ['couch_id']
 
-    class Meta:
+    class Meta(object):
         index_together = (
             ('domain', 'keyword')
         )
@@ -2762,14 +2907,14 @@ class DailyOutboundSMSLimitReached(models.Model):
     """
 
     # The domain name that reached its daily outbound SMS limit as defined
-    # on Domain.daily_outbound_sms_limit. This can be empty string if
+    # on Domain.get_daily_outbound_sms_limit(). This can be empty string if
     # we reached the limit for outbound SMS not tied to a domain.
     domain = models.CharField(max_length=126)
 
     # The UTC date representing the 24-hour window in which the limit was reached
     date = models.DateField()
 
-    class Meta:
+    class Meta(object):
         unique_together = (
             ('domain', 'date')
         )

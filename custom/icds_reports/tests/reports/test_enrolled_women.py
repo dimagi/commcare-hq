@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -7,7 +8,7 @@ from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_m
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestEnrolledWomen(TestCase):
 
     def test_map_data(self):
@@ -22,7 +23,8 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
+                    "info": "Of the total number of pregnant women, the percentage of pregnant women enrolled "
+                            "for Anganwadi Services",
                     "average": 77.5,
                     "average_format": "number",
                     'extended_info': [
@@ -79,7 +81,8 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
+                    "info": "Of the total number of pregnant women, the percentage of pregnant women enrolled "
+                            "for Anganwadi Services",
                     "average": 35.0,
                     "average_format": "number",
                     'extended_info': [
@@ -206,7 +209,8 @@ class TestEnrolledWomen(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
+                "info": "Of the total number of pregnant women, the percentage of pregnant women enrolled "
+                        "for Anganwadi Services",
                 "tooltips_data": {
                     "s2": {
                         "valid": 24,

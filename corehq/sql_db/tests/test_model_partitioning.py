@@ -1,5 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
+import six
+
 from corehq.form_processor.tests.utils import (
     only_run_with_partitioned_database,
     only_run_with_non_partitioned_database,
@@ -30,7 +33,7 @@ class PartitionedModelsTestMixin(object):
                 # is raised otherwise we won't be able to run any more queries.
                 model_class.objects.using(db).count()
         except ProgrammingError as e:
-            self.assertIsNotNone(re.match('.*relation.*does not exist.*', e.message))
+            self.assertIsNotNone(re.match('.*relation.*does not exist.*', six.text_type(e)))
         else:
             self.fail()
 

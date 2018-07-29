@@ -7,6 +7,7 @@ When you save a .js file, the js tests run,
 When you save a .py file, the python tests run.
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 from subprocess import Popen
 from sniffer.api import runnable, select_runnable, file_validator
@@ -16,10 +17,10 @@ from sniffer.api import runnable, select_runnable, file_validator
 @file_validator
 def python_test_files(filename):
     return (
-        filename.endswith('.py') or
-        filename.endswith('.json') or
-        filename.endswith('.xml') and
-        not os.path.basename(filename).startswith('.')
+        (filename.endswith('.py') or
+         filename.endswith('.json') or
+         filename.endswith('.xml'))
+        and not os.path.basename(filename).startswith('.')
     )
 
 

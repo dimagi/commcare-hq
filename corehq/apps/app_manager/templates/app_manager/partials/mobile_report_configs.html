@@ -63,19 +63,34 @@
                     <tr class="row"
                         data-bind="attr: {'data-order': _sortableOrder}">
                         <td>
-                            <i class="grip sortable-handle" data-bind="css: hqImport('hqwebapp/js/main').icons.GRIP, style: {cursor: 'move'}"></i>
+                            <i class="grip sortable-handle fa fa-arrows-v"></i>
                         </td>
                         <td>
                             <select class="form-control"
                                     data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId">
                             </select>
-                            <label>Report UUID to use in custom expressions: </label>
-                            <span data-bind="text: uuid"></span>
+                            <a href="#" data-bind="click: toggleCodes">
+                                <i class="fa fa-exclamation-circle"></i>
+                                <span data-bind="visible: !showCodes()">{% trans "Display codes" %}</span>
+                                <span data-bind="visible: showCodes">{% trans "Hide codes" %}</span>
+                            </a>
+                            <div data-bind="visible: showCodes">
+                                <label>{% trans "UUID:" %}</label>
+                                <span data-bind="text: uuid"></span>
+                                <div class="form-inline"
+                                     data-bind="css: { 'has-error': $root.validateSlug(instanceId()) },
+                                                visible: $root.supportCustomUcrSlug">
+                                    <label>{% trans "Custom alias:" %}</label>
+                                    <input type="text" class="form-control" data-bind="value: instanceId">
+                                    <p class="help-block" data-bind="text: $root.validateSlug(instanceId())"></p>
+                                </div>
+                            </div>
                             {% include 'app_manager/partials/filter_configs.html' %}
                             {% include 'app_manager/partials/graph_configs.html' %}
                         </td>
-                        <td>
+                        <td data-bind="css: { 'has-error': validateDisplay }">
                             <input type="text" class="form-control" data-bind="value: display">
+                            <p class="help-block" data-bind="text: validateDisplay"></p>
                         </td>
                         <td>
                             <input type="text" class="form-control"
@@ -110,10 +125,7 @@
                         </td>
                         <td>
                             <i title="{% trans 'Delete' %}" style="cursor: pointer;"
-                               data-bind="
-                                click: $root.removeReport,
-                                css: hqImport('hqwebapp/js/main').icons.DELETE
-                            "></i>
+                               class="fa fa-remove" data-bind="click: $root.removeReport"></i>
                         </td>
                     </tr>
                 </tbody>

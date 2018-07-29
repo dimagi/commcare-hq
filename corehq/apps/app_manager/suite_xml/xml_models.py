@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from eulxml.xmlmap import (
     IntegerField, NodeField, NodeListField,
     SimpleBooleanField, StringField, XmlObject,
@@ -35,11 +36,24 @@ class IdNode(XmlObject):
     id = StringField('@id')
 
 
+class CalculatedPropertyXpathVariable(XmlObject):
+    ROOT_NAME = 'variable'
+    name = StringField('@name')
+    locale_id = StringField('locale/@id')
+
+
+class CalculatedPropertyXpath(XmlObject):
+    ROOT_NAME = 'xpath'
+    function = XPathField('@function')
+    variables = NodeListField('variable', CalculatedPropertyXpathVariable)
+
+
 class XpathVariable(XmlObject):
     ROOT_NAME = 'variable'
     name = StringField('@name')
 
     locale_id = StringField('locale/@id')
+    xpath = NodeField('xpath', CalculatedPropertyXpath)
 
 
 class Xpath(XmlObject):
@@ -147,6 +161,10 @@ class AbstractResource(OrderedXmlObject):
 
 class XFormResource(AbstractResource):
     ROOT_NAME = 'xform'
+
+
+class ReleaseInfoXFormResource(AbstractResource):
+    ROOT_NAME = 'xform-update-info'
 
 
 class LocaleResource(AbstractResource):
@@ -424,7 +442,7 @@ class Entry(OrderedXmlObject, XmlObject):
         for instance_id in instance_ids:
             if instance_id not in covered_ids:
                 raise UnknownInstanceError(
-                    u"Instance reference not recognized: {} in xpath \"{}\""
+                    "Instance reference not recognized: {} in xpath \"{}\""
                     # to get xpath context to show in this error message
                     # make instance_id a unicode subclass with an xpath property
                     .format(instance_id, getattr(instance_id, 'xpath', "(Xpath Unknown)")))
@@ -783,6 +801,10 @@ class Detail(OrderedXmlObject, IdNode):
             else:
                 result.add(field.header.text.xpath_function)
                 result.add(field.template.text.xpath_function)
+                if field.template.text.xpath:
+                    for variable in field.template.text.xpath.variables:
+                        if variable.xpath:
+                            result.add(six.text_type(variable.xpath.function))
 
         for detail in self.details:
             result.update(detail.get_all_xpaths())
@@ -834,6 +856,7 @@ class Suite(OrderedXmlObject):
     descriptor = StringField('@descriptor')
 
     xform_resources = NodeListField('xform', XFormResource)
+    # releases_xform_resources = NodeListField('xform-update-info', ReleaseInfoXFormResource)
     locale_resources = NodeListField('locale', LocaleResource)
     media_resources = NodeListField('locale', MediaResource)
     practice_user_restore_resources = NodeListField('user-restore', PracticeUserRestoreResource)

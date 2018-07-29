@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 
 from crispy_forms.layout import Submit
@@ -15,11 +16,11 @@ from crispy_forms.bootstrap import StrictButton
 
 from corehq.apps.hqwebapp.widgets import Select2Ajax
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.commtrack.util import generate_code
-from corehq.apps.custom_data_fields import CustomDataEditor
-from corehq.apps.custom_data_fields.edit_entity import get_prefixed, CUSTOM_DATA_FIELD_PREFIX
+from corehq.apps.custom_data_fields.edit_entity import (
+    CustomDataEditor, get_prefixed, CUSTOM_DATA_FIELD_PREFIX)
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
@@ -28,10 +29,39 @@ from corehq.apps.users.forms import NewMobileWorkerForm, generate_strong_passwor
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.util.quickcache import quickcache
 
 from .models import SQLLocation, LocationType, LocationFixtureConfiguration
 from .permissions import user_can_access_location_id
 from .signals import location_edited
+
+
+class LocationSelectWidget(forms.Widget):
+
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
+        super(LocationSelectWidget, self).__init__(attrs)
+        self.domain = domain
+        self.id = id
+        self.multiselect = multiselect
+        if query_url:
+            self.query_url = query_url
+        else:
+            self.query_url = reverse('child_locations_for_select2', args=[self.domain])
+
+    def render(self, name, value, attrs=None):
+        location_ids = value.split(',') if value else []
+        locations = list(SQLLocation.active_objects
+                         .filter(domain=self.domain, location_id__in=location_ids))
+        initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
+
+        return get_template('locations/manage/partials/autocomplete_select_widget.html').render({
+            'id': self.id,
+            'name': name,
+            'value': ','.join(loc.location_id for loc in locations),
+            'query_url': self.query_url,
+            'multiselect': self.multiselect,
+            'initial_data': initial_data,
+        })
 
 
 class ParentLocWidget(forms.Widget):
@@ -491,7 +521,7 @@ class LocationFormSet(object):
 
 class UsersAtLocationForm(forms.Form):
     selected_ids = forms.Field(
-        label=ugettext_lazy("Group Membership"),
+        label=ugettext_lazy("Workers at Location"),
         required=False,
         widget=Select2Ajax(multiple=True),
     )
@@ -499,21 +529,16 @@ class UsersAtLocationForm(forms.Form):
     def __init__(self, domain_object, location, *args, **kwargs):
         self.domain_object = domain_object
         self.location = location
-        fieldset_title = kwargs.pop('fieldset_title',
-                                    ugettext_lazy("Edit Group Membership"))
-        submit_label = kwargs.pop('submit_label',
-                                  ugettext_lazy("Update Membership"))
-
         super(UsersAtLocationForm, self).__init__(
-            initial={'selected_ids': self.users_at_location},
-            *args, **kwargs
+            initial={'selected_ids': self.get_users_at_location()},
+            prefix="users", *args, **kwargs
         )
 
         from corehq.apps.reports.filters.api import MobileWorkersOptionsView
         self.fields['selected_ids'].widget.set_url(
             reverse(MobileWorkersOptionsView.urlname, args=(self.domain_object.name,))
         )
-        self.fields['selected_ids'].widget.set_initial(self.users_at_location)
+        self.fields['selected_ids'].widget.set_initial(self.get_users_at_location())
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
@@ -521,19 +546,20 @@ class UsersAtLocationForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                fieldset_title,
+                _("Specify Workers at this Location"),
                 crispy.Field('selected_ids'),
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    Submit('submit', submit_label)
+                    Submit('submit', ugettext_lazy("Update Location Membership"))
                 )
             )
         )
 
-    @property
+    # Adding a 5 second timeout because that is the elasticsearch refresh interval.
     @memoized
-    def users_at_location(self):
+    @quickcache(['self.domain_object.name', 'self.location.location_id'], memoize_timeout=0, timeout=5)
+    def get_users_at_location(self):
         user_query = UserES().domain(
             self.domain_object.name
         ).mobile_users().location(
@@ -556,15 +582,24 @@ class UsersAtLocationForm(forms.Form):
 
     def save(self):
         selected_users = set(self.cleaned_data['selected_ids'].split(','))
-        previous_users = set([u['id'] for u in self.users_at_location])
+        previous_users = set([u['id'] for u in self.get_users_at_location()])
         to_remove = previous_users - selected_users
         to_add = selected_users - previous_users
         self.unassign_users(to_remove)
         self.assign_users(to_add)
+        self.cache_users_at_location(selected_users)
+
+    def cache_users_at_location(self, selected_users):
+        user_cache_list = []
+        for doc in iter_docs(CommCareUser.get_db(), selected_users):
+            display_username = user_display_string(
+                doc['username'], doc.get('first_name', ''), doc.get('last_name', ''))
+            user_cache_list.append({'text': display_username, 'id': doc['_id']})
+        self.get_users_at_location.set_cached_value(self).to(user_cache_list)
 
 
 class LocationFixtureForm(forms.ModelForm):
-    class Meta:
+    class Meta(object):
         model = LocationFixtureConfiguration
         fields = ['sync_flat_fixture', 'sync_hierarchical_fixture']
 

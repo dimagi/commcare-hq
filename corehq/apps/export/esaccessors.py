@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from elasticsearch import ElasticsearchException
 
 from corehq.apps.es import CaseES, GroupES, LedgerES

@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.management import BaseCommand
 from django_countries.data import COUNTRIES
 from corehq.apps.change_feed import topics

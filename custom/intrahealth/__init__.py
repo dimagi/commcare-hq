@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import six
 INTRAHEALTH_DOMAINS = ('ipm-senegal', 'testing-ipm-senegal', 'ct-apr')
 
@@ -15,23 +16,27 @@ COMMANDE_XMLNSES = (
 
 RAPTURE_XMLNSES = (
     'http://openrosa.org/formdesigner/AD88DE3E-6AFC-48A5-8BEC-092419C1D45A',
+    'http://openrosa.org/formdesigner/6EB9B915-2560-4B93-B1DF-EA778322F418',
 )
 
-LIVRAISON_XMLNSES = ("http://openrosa.org/formdesigner/182649A1-A3BB-4F56-988C-2C103DBAA6D7", )
+LIVRAISON_XMLNSES = (
+    "http://openrosa.org/formdesigner/182649A1-A3BB-4F56-988C-2C103DBAA6D7",
+    "http://openrosa.org/formdesigner/F3757334-02D8-4AE0-A4EF-1E7189D9B505",
+)
 
 RECOUVREMENT_XMLNSES = ('http://openrosa.org/formdesigner/61478ca7d20e8e1fa2fd110b1b2b4d46bb5b6b9c',
                         'http://openrosa.org/formdesigner/c03317d26979ba4b656fac23ef1f03dfe4337b1d')
 
 _PRODUCT_NAMES = {
-    u'diu': [u"diu"],
-    u'jadelle': [u"jadelle"],
-    u'depo-provera': [u"d\xe9po-provera", u"depo-provera"],
-    u'microlut/ovrette': [u"microlut/ovrette"],
-    u'microgynon/lof.': [u"microgynon/lof."],
-    u'preservatif masculin': [u"pr\xe9servatif masculin", u"preservatif masculin", u"preservatif_masculin"],
-    u'preservatif feminin': [u"pr\xe9servatif f\xe9minin", u"preservatif feminin", u"preservatif_feminin"],
-    u'cu': [u"cu"],
-    u'collier': [u"collier"]
+    'diu': ["diu"],
+    'jadelle': ["jadelle"],
+    'depo-provera': ["d\xe9po-provera", "depo-provera"],
+    'microlut/ovrette': ["microlut/ovrette"],
+    'microgynon/lof.': ["microgynon/lof."],
+    'preservatif masculin': ["pr\xe9servatif masculin", "preservatif masculin", "preservatif_masculin"],
+    'preservatif feminin': ["pr\xe9servatif f\xe9minin", "preservatif feminin", "preservatif_feminin"],
+    'cu': ["cu"],
+    'collier': ["collier"]
 }
 
 PRODUCT_NAMES = {v: k for k, values in six.iteritems(_PRODUCT_NAMES) for v in values}

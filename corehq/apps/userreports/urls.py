@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.conf.urls import url
+from django.conf.urls import url, include
 
 from corehq.apps.userreports.reports.view import DownloadUCRStatusView, ucr_download_job_poll
 from corehq.apps.userreports.views import (
@@ -25,6 +25,7 @@ from corehq.apps.userreports.views import (
     choice_list_api,
     ExpressionDebuggerView,
     evaluate_expression,
+    update_report_description,
     undelete_data_source, undelete_report, DataSourceDebuggerView, evaluate_data_source)
 
 urlpatterns = [
@@ -75,9 +76,15 @@ urlpatterns = [
     url(r'^export_job_poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
         ucr_download_job_poll, name='ucr_download_job_poll'),
 
+    # Update Report Description
+    url(r'^builder/update_report_description/(?P<report_id>[\w-]+)', update_report_description,
+        name='update_report_description'),
+
     # apis
     url(r'^api/choice_list/(?P<report_id>[\w-]+)/(?P<filter_id>[\w-]+)/$',
         choice_list_api, name='choice_list_api'),
     url(r'^expression_evaluator/$', evaluate_expression, name='expression_evaluator'),
     url(r'^data_source_evaluator/$', evaluate_data_source, name='data_source_evaluator'),
+    url(r'^aggregate/', include('corehq.apps.aggregate_ucrs.urls')),
+
 ]

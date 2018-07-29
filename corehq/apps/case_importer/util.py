@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from contextlib import contextmanager
 import json
 from collections import defaultdict, namedtuple
@@ -6,6 +7,8 @@ from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 
 from corehq.apps.case_importer.const import LookupErrors, ImportErrors
+from corehq.apps.export.models import CaseExportDataSchema
+from corehq.apps.export.models.new import MAIN_TABLE
 from corehq.apps.groups.models import Group
 from corehq.apps.case_importer.exceptions import (
     ImporterExcelFileEncrypted,
@@ -251,7 +254,7 @@ def parse_search_id(config, columns, row):
         # float(x) is more lenient in conversion from string so both
         # are used
         search_id = int(float(search_id))
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, OverflowError):
         # if it's not a number that's okay too
         pass
 
@@ -405,26 +408,6 @@ def get_id_from_name(name, domain, cache):
     id = get_from_user(name) or get_from_group(name) or get_from_location(name)
     cache[name] = id
     return id
-
-
-def get_case_properties_for_case_type(domain, case_type):
-    # todo: seems like poor boundaries for this function care about the backend
-    # todo: get_case_properties just always return the right answer,
-    # todo: possibly by moving this there.
-    if should_use_sql_backend(domain):
-        from corehq.apps.export.models import CaseExportDataSchema
-        from corehq.apps.export.models.new import MAIN_TABLE
-        schema = CaseExportDataSchema.generate_schema_from_builds(
-            domain,
-            None,
-            case_type,
-        )
-        group_schemas = [gs for gs in schema.group_schemas if gs.path == MAIN_TABLE]
-        if group_schemas:
-            return sorted(set([item.path[0].name for item in group_schemas[0].items]))
-    else:
-        from corehq.apps.hqcase.dbaccessors import get_case_properties
-        return get_case_properties(domain, case_type)
 
 
 def get_importer_error_message(e):

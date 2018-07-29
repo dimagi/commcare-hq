@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from custom.enikshay.management.commands.utils import BaseEnikshayCaseMigration
 from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import DRUG_MAP, get_drtb_type
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors

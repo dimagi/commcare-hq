@@ -21,10 +21,6 @@ from corehq.apps.smsbillables.management.commands.bootstrap_test_gateway import 
     bootstrap_test_gateway
 from corehq.apps.smsbillables.management.commands.bootstrap_tropo_gateway import \
     bootstrap_tropo_gateway
-from corehq.apps.smsbillables.management.commands.bootstrap_twilio_gateway import \
-    bootstrap_twilio_gateway
-from corehq.apps.smsbillables.management.commands.bootstrap_twilio_gateway_incoming import \
-    bootstrap_twilio_gateway_incoming
 from corehq.apps.smsbillables.management.commands.bootstrap_unicel_gateway import \
     bootstrap_unicel_gateway
 from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import \
@@ -52,16 +48,11 @@ def bootstrap_sms(apps, schema_editor):
     bootstrap_grapevine_gateway(apps)
     bootstrap_mach_gateway(apps)
     bootstrap_tropo_gateway(apps)
-    bootstrap_twilio_gateway(
-        apps,
-        'corehq/apps/smsbillables/management/commands/pricing_data/twilio-rates-2015_10_06.csv'
-    )
     bootstrap_unicel_gateway(apps)
     bootstrap_usage_fees(apps)
     bootstrap_moz_gateway(apps)
     bootstrap_test_gateway(apps)
     bootstrap_telerivet_gateway(apps)
-    bootstrap_twilio_gateway_incoming(apps)
     bootstrap_yo_gateway(apps)
     add_moz_zero_charge(apps)
     bootstrap_grapevine_gateway_update(apps)

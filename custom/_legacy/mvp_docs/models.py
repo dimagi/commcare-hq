@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import dateutil
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.loading import get_db
@@ -55,7 +56,7 @@ class IndicatorDocument(object):
 
 class IndicatorXForm(IndicatorDocument, XFormInstance):
 
-    class Meta:
+    class Meta(object):
         app_label = 'mvp_docs'
 
     def save(self, **kwargs):
@@ -70,7 +71,7 @@ class IndicatorXForm(IndicatorDocument, XFormInstance):
 
 class IndicatorCase(IndicatorDocument, CommCareCase):
 
-    class Meta:
+    class Meta(object):
         app_label = 'mvp_docs'
 
     def save(self, **kwargs):

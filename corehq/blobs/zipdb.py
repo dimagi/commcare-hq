@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from os.path import commonprefix, join, sep
 import zipfile
 
@@ -56,10 +57,10 @@ class ZipBlobDB(AbstractBlobDB):
 
 def safejoin(root, subpath):
     if not SAFENAME.match(subpath):
-        raise BadName(u"unsafe path name: %r" % subpath)
+        raise BadName("unsafe path name: %r" % subpath)
     path = join(root, subpath)
     if commonprefix([root + sep, path]) != root + sep:
-        raise BadName(u"invalid relative path: %r" % subpath)
+        raise BadName("invalid relative path: %r" % subpath)
     return path
 
 

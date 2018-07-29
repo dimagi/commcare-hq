@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.util.exceptions import AccessRestricted
 from django.db import models
 
@@ -108,7 +109,7 @@ class PartitionedModel(models.Model):
         assert self.partition_value, 'Partitioned model must have a partition value'
         return RequireDBManager.get_db(self.partition_value)
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def save(self, *args, **kwargs):

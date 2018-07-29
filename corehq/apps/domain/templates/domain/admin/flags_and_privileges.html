@@ -119,6 +119,10 @@
                     <th class="checkmark-column">{% trans "Enabled for domain?" %}</th>
                 </thead>
                 <tbody>
+                    <tr class="{% if use_sql_backend %}success{% else %}info{% endif %}">
+                        <td>Using new SQL/scale backend</td>
+                        <td class="checkmark-column">{% if use_sql_backend %}<i class="fa fa-check"></i>{% endif %}</td>
+                    </tr>
                     <tr class="{% if request|tzmigration_status == "complete" %}success{% elif enabled_for_user %}info{% endif %}">
                         <td>Using new correct timezone behavior</td>
                         <td class="checkmark-column">{% if request|tzmigration_status == "complete" %}<i class="fa fa-check"></i>{% endif %}</td>

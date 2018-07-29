@@ -2,6 +2,7 @@
 Create a template app from ODM-formatted OpenClinica study metadata
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from lxml import etree
 from django.core.management.base import BaseCommand
 from corehq.apps.app_manager.models import (
@@ -23,6 +24,7 @@ from custom.openclinica.const import (
     CC_ENROLLMENT_DATE,
 )
 from custom.openclinica.utils import odm_nsmap, quote_nan
+from io import open
 
 
 # Map ODM data types to ODK XForm data types
@@ -65,7 +67,7 @@ def get_odm_child(node, child_node):
     Return a child node in ODM namespace. Assumes only one child node with that name, and that it will be there.
 
     >>> from lxml import etree
-    >>> foo_node = etree.fromstring('''<?xml version="1.0" encoding="UTF-8"?>
+    >>> foo_node = etree.fromstring(b'''<?xml version="1.0" encoding="UTF-8"?>
     ... <foo xmlns="http://www.cdisc.org/ns/odm/v1.3">
     ...   <bar>baz</bar>
     ... </foo>''')
@@ -451,7 +453,7 @@ class Item(StudyObject):
         Returns a CommCare validation condition given a CDISC ODM comparator and a list of values
 
         >>> Item.get_condition('LT', ['5'])
-        '. < 5'
+        u'. < 5'
 
         """
 
@@ -513,7 +515,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def get_study(odm_filename):
-        with open(odm_filename) as odm_file:
+        with open(odm_filename, encoding='utf-8') as odm_file:
             odm = etree.parse(odm_file)
         meta = odm.xpath('./odm:Study/odm:MetaDataVersion', namespaces=odm_nsmap)[0]
         study_def = odm.xpath('./odm:Study', namespaces=odm_nsmap)[0]

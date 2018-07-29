@@ -74,6 +74,7 @@ hqDefine('app_manager/js/supported_languages', function () {
                     data: ko.toJSON({
                         langs: langs,
                         rename: rename,
+                        smart_lang_display: self.smartLangDisplay,
                     }),
                     success: function (data) {
                         var i;
@@ -95,6 +96,9 @@ hqDefine('app_manager/js/supported_languages', function () {
         var changeSaveButton = function () {
             self.saveButton.fire('change');
         };
+        var smartLangDisplayEnabled = hqImport("hqwebapp/js/initial_page_data").get("smart_lang_display_enabled");
+        this.smartLangDisplay = ko.observable(smartLangDisplayEnabled);
+        this.smartLangDisplay.subscribe(changeSaveButton);
 
         this.languages = ko.observableArray([]);
         this.removedLanguages = ko.observableArray([]);
@@ -164,6 +168,10 @@ hqDefine('app_manager/js/supported_languages', function () {
             language.show_error(message);
             return message;
         };
+
+        this.showSmartLangDisplayOption = ko.computed(function() {
+            return self.languages().length > 2;
+        });
     }
     return {SupportedLanguages: SupportedLanguages};
 });

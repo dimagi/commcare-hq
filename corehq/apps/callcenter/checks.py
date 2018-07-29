@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import namedtuple
 
 from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain

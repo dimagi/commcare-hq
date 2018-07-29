@@ -6,6 +6,7 @@ Add `from dev_settings import *` to the top of your localsettings file to use.
 You can then override or append to any of these settings there.
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 
 LOCAL_APPS = (
@@ -33,17 +34,17 @@ TEST_NON_SERIALIZED_APPS = ['corehq.form_processor']
 SHELL_PLUS_POST_IMPORTS = (
     # Models
     ('datetime'),
-    ('corehq.apps.app_manager.models', 'Application'),
-    ('corehq.apps.domain.models', 'Domain'),
-    ('corehq.apps.groups.models', 'Group'),
-    ('corehq.apps.users.models', ('CouchUser', 'WebUser', 'CommCareUser')),
-    ('casexml.apps.case.models', 'CommCareCase'),
-    ('corehq.form_processor.interfaces.dbaccessors', 'CaseAccessors'),
-    ('couchforms.models', 'XFormInstance'),
+    ('corehq.apps.app_manager.models', b'Application'),
+    ('corehq.apps.domain.models', b'Domain'),
+    ('corehq.apps.groups.models', b'Group'),
+    ('corehq.apps.users.models', (b'CouchUser', b'WebUser', b'CommCareUser')),
+    ('casexml.apps.case.models', b'CommCareCase'),
+    ('corehq.form_processor.interfaces.dbaccessors', (b'CaseAccessors', b'FormAccessors')),
+    ('couchforms.models', b'XFormInstance'),
 
     # Data querying utils
-    ('dimagi.utils.couch.database', 'get_db'),
-    ('corehq.apps.es', '*'),
+    ('dimagi.utils.couch.database', b'get_db'),
+    ('corehq.apps', b'es'),
 )
 
 INTERNAL_IPS = ['127.0.0.1']
@@ -113,3 +114,5 @@ ELASTICSEARCH_DEBUG_HOSTS = {
     'staging': 'hqes0-staging.internal-va.commcarehq.org',
     'india': '10.162.36.221',
 }
+
+FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"

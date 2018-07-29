@@ -3,7 +3,8 @@
         "enikshay"
     ],
     "server_environment": [
-        "enikshay"
+        "enikshay",
+        "softlayer"
     ],
     "data_source_table": "voucher_v5",
     "report_id": "drug_voucher",

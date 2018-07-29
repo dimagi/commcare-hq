@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit.exceptions import ResourceNotFound
 from tastypie.exceptions import NotFound
 
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_4 import XFormInstanceResource, BaseApplicationResource
 from corehq.apps.api.resources.v0_5 import DoesNothingPaginator
-from corehq.apps.case_importer.util import get_case_properties_for_case_type
+from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties_for_case_type
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES
 from corehq.apps.zapier.util import remove_advanced_fields
 from corehq.apps.app_manager.models import Application
@@ -146,6 +147,7 @@ CASE_PROPERTIES = {
     "properties__owner_id": "Owner ID",
     "properties__date_opened": "Date opened",
     "properties__external_id": "External ID",
+    "properties__type": "Type",
 }
 
 
@@ -163,7 +165,8 @@ class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
         if not domain or not case_type:
             return []
 
-        for prop in get_case_properties_for_case_type(domain, case_type):
+        props = get_all_case_properties_for_case_type(domain, case_type)
+        for prop in props:
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',
@@ -218,7 +221,7 @@ class ZapierCustomActionFieldCaseResource(BaseZapierCustomFieldResource):
                 )
             ))
 
-        for prop in get_case_properties_for_case_type(domain, case_type):
+        for prop in get_all_case_properties_for_case_type(domain, case_type):
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import io
 from copy import copy
 from collections import namedtuple
@@ -140,12 +141,12 @@ def _get_name_map(app):
 
 def _translate_name(names, language):
     if not names:
-        return u"[{}]".format(_("Unknown"))
+        return "[{}]".format(_("Unknown"))
     try:
         return names[language]
     except KeyError:
         first_name = next(six.iteritems(names))
-        return u"{} [{}]".format(first_name[1], first_name[0])
+        return "{} [{}]".format(first_name[1], first_name[0])
 
 
 def _get_translated_form_name(app, form_id, language):
@@ -176,7 +177,7 @@ AppSummaryRow.__new__.__defaults__ = (None, ) * len(APP_SUMMARY_EXPORT_HEADER_NA
 
 class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     urlname = 'download_app_summary'
-    http_method_names = [u'get']
+    http_method_names = ['get']
 
     def get(self, request, domain, app_id):
         language = request.GET.get('lang', 'en')
@@ -214,13 +215,13 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             for form in module.get_forms():
                 post_form_workflow = form.post_form_workflow
                 if form.post_form_workflow == WORKFLOW_FORM:
-                    post_form_workflow = u"form:\n{}".format(
-                        u"\n".join(
-                            [u"{form}: {xpath} [{datums}]".format(
+                    post_form_workflow = "form:\n{}".format(
+                        "\n".join(
+                            ["{form}: {xpath} [{datums}]".format(
                                 form=_get_translated_form_name(self.app, link.form_id, language),
                                 xpath=link.xpath,
-                                datums=u", ".join(
-                                    u"{}: {}".format(
+                                datums=", ".join(
+                                    "{}: {}".format(
                                         datum.name, datum.xpath
                                     ) for datum in link.datums)
                             ) for link in form.form_links]
@@ -248,7 +249,7 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         return export_response(
             export_string,
             Format.XLS_2007,
-            u'{app_name} v.{app_version} - App Summary ({lang})'.format(
+            '{app_name} v.{app_version} - App Summary ({lang})'.format(
                 app_name=self.app.name,
                 app_version=self.app.version,
                 lang=language
@@ -281,12 +282,14 @@ FORM_SUMMARY_EXPORT_HEADER_NAMES = [
     "type",
     "repeat",
     "group",
-    "options",
+    "option_labels",
+    "option_values",
     "calculate",
     "relevant",
     "constraint",
     "required",
     "comment",
+    "default_value",
 ]
 FormSummaryRow = namedtuple('FormSummaryRow', FORM_SUMMARY_EXPORT_HEADER_NAMES)
 FormSummaryRow.__new__.__defaults__ = (None, ) * len(FORM_SUMMARY_EXPORT_HEADER_NAMES)
@@ -294,7 +297,7 @@ FormSummaryRow.__new__.__defaults__ = (None, ) * len(FORM_SUMMARY_EXPORT_HEADER_
 
 class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     urlname = 'download_form_summary'
-    http_method_names = [u'get']
+    http_method_names = ['get']
 
     def get(self, request, domain, app_id):
         language = request.GET.get('lang', 'en')
@@ -317,7 +320,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         return export_response(
             export_string,
             Format.XLS_2007,
-            u'{app_name} v.{app_version} - Form Summary ({lang})'.format(
+            '{app_name} v.{app_version} - Form Summary ({lang})'.format(
                 app_name=self.app.name,
                 app_version=self.app.version,
                 lang=language
@@ -341,21 +344,22 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     type=question_response.type,
                     repeat=question_response.repeat,
                     group=question_response.group,
-                    options="\n".join(
-                        [u"{} - {}".format(_translate_name(option.translations, language), option.value)
-                         for option in question_response.options]
+                    option_labels="\n".join(
+                        [_translate_name(option.translations, language) for option in question_response.options]
                     ),
+                    option_values=", ".join([option.value for option in question_response.options]),
                     calculate=question_response.calculate,
                     relevant=question_response.relevant,
                     constraint=question_response.constraint,
                     required="true" if question_response.required else "false",
                     comment=question_response.comment,
+                    default_value=question_response.setvalue,
                 )
             )
         return tuple(form_summary_rows)
 
     def _get_form_sheet_name(self, module, form, language):
-        return u"{} - {}".format(
+        return "{} - {}".format(
             _get_translated_module_name(self.app, module.unique_id, language),
             _get_translated_form_name(self.app, form.get_unique_id(), language),
         )
@@ -382,7 +386,7 @@ PropertyRow = namedtuple('PropertyRow', CASE_SUMMARY_EXPORT_HEADER_NAMES)
 
 class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     urlname = 'download_case_summary'
-    http_method_names = [u'get']
+    http_method_names = ['get']
 
     def get(self, request, domain, app_id):
         case_metadata = self.app.get_case_metadata()
@@ -413,7 +417,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         return export_response(
             export_string,
             Format.XLS_2007,
-            u'{app_name} v.{app_version} - Case Summary ({lang})'.format(
+            '{app_name} v.{app_version} - Case Summary ({lang})'.format(
                 app_name=self.app.name,
                 app_version=self.app.version,
                 lang=language

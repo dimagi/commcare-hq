@@ -40,7 +40,7 @@ hqDefine("app_manager/js/app_view", function() {
         });
 
         // Multimedia content
-        var MultimediaTab = function () {
+        var multimediaTabModel = function () {
             var self = {};
             self.load_state = ko.observable(null);
             self.multimedia_page_html = ko.observable('');
@@ -53,8 +53,13 @@ hqDefine("app_manager/js/app_view", function() {
                             self.load_state('loaded');
                             self.multimedia_page_html(content);
                         },
-                        error: function() {
-                            alert(gettext('Oops, there was a problem loading this section. Please try again.'));
+                        error: function(data) {
+                            if (data.hasOwnProperty('responseJSON')){
+                                alert(data.responseJSON.message);
+                            }
+                            else{
+                                alert(gettext('Oops, there was a problem loading this section. Please try again.'));
+                            }
                             self.load_state('error');
                         },
                     });
@@ -63,7 +68,7 @@ hqDefine("app_manager/js/app_view", function() {
             return self;
         };
         if ($('#multimedia-tab').length) {
-            var multimediaTab = new MultimediaTab();
+            var multimediaTab = new multimediaTabModel();
             $("#multimedia-tab").koApplyBindings(multimediaTab);
             $('[href="#multimedia-tab"]').on('shown.bs.tab', function () {
                 if (multimediaTab.load_state() === null) {

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 from auditcare.models import AccessAudit, ModelActionAudit
 
@@ -30,7 +31,7 @@ class Command(BaseCommand):
         for model, count in model_dict.items():
             #for each model type, query ALL audit instances.
             print("### %s" % (model))
-            model_counts = db.view('auditcare/model_actions_by_id', group=True, startkey=[model, u''], endkey=[model, u'z']).all()
+            model_counts = db.view('auditcare/model_actions_by_id', group=True, startkey=[model, ''], endkey=[model, 'z']).all()
             #within a given model, query ALL instances
 
             #sort the models by id, then by rev descending

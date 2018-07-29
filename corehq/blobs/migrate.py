@@ -67,6 +67,7 @@ That's it, you're done!
 """
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import os
 import traceback
@@ -79,6 +80,8 @@ from tempfile import mkdtemp
 from django.conf import settings
 
 from corehq.apps.accounting.models import InvoicePdf
+from corehq.apps.builds.models import CommCareBuild
+from corehq.apps.domain.models import Domain
 from corehq.apps.export import models as exports
 from corehq.apps.ota.models import DemoUserRestore
 from corehq.blobs import get_blob_db, DEFAULT_BUCKET, BlobInfo
@@ -110,6 +113,7 @@ from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
 from couchexport.models import SavedBasicExport
 import corehq.form_processor.models as sql_xform
 import six
+from io import open
 
 MIGRATION_INSTRUCTIONS = """
 There are {total} documents that may have attachments, and they must be
@@ -646,36 +650,6 @@ class SqlModelMigrator(Migrator):
 
 
 MIGRATIONS = {m.slug: m for m in [
-    Migrator('invoice_pdfs', [InvoicePdf], CouchAttachmentMigrator),
-    Migrator("saved_exports", [SavedBasicExport], CouchAttachmentMigrator),
-    Migrator("applications", [
-        apps.Application,
-        apps.RemoteApp,
-        ("Application-Deleted", apps.Application),
-        ("RemoteApp-Deleted", apps.RemoteApp),
-    ], CouchAttachmentMigrator),
-    Migrator("multimedia", [
-        hqmedia.CommCareAudio,
-        hqmedia.CommCareImage,
-        hqmedia.CommCareVideo,
-        hqmedia.CommCareMultimedia,
-    ], CouchAttachmentMigrator),
-    Migrator("xforms", [
-        xform.XFormInstance,
-        ("XFormInstance-Deleted", xform.XFormInstance),
-        xform.XFormArchived,
-        xform.XFormDeprecated,
-        xform.XFormDuplicate,
-        xform.XFormError,
-        xform.SubmissionErrorLog,
-        ("HQSubmission", xform.XFormInstance),
-    ], CouchAttachmentMigrator),
-    Migrator("cases", [
-        cases.CommCareCase,
-        ('CommCareCase-deleted', cases.CommCareCase),
-        ('CommCareCase-Deleted', cases.CommCareCase),
-        ('CommCareCase-Deleted-Deleted', cases.CommCareCase),
-    ], CouchAttachmentMigrator),
     MultiDbMigrator("migrate_backend",
         couch_types=[
             apps.Application,

@@ -12,6 +12,8 @@
 # serve to show the default.
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
+import django
 import sys, os
 from mock import MagicMock
 import sphinx_rtd_theme
@@ -21,18 +23,14 @@ from ..manage import init_hq_python_path
 
 init_hq_python_path()
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+django.setup()
 
 # -- Custom configuration -----------------------------------------------------
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return Mock()
 
 # mock out stubborn modules that are hard to pip install
 # https://docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
 MOCK_MODULES = ["PIL.Image", "PIL"]
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
 
 
 # -- General configuration -----------------------------------------------------
@@ -42,7 +40,7 @@ sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinxcontrib_django']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -57,8 +55,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'CommCareHQ'
-copyright = u'2014, Dimagi'
+project = 'CommCareHQ'
+copyright = '2014, Dimagi'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -142,7 +140,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -205,8 +203,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'CommCareHQ.tex', u'CommCareHQ Documentation',
-   u'Dimagi', 'manual'),
+  ('index', 'CommCareHQ.tex', 'CommCareHQ Documentation',
+   'Dimagi', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -235,8 +233,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'commcarehq', u'CommCareHQ Documentation',
-     [u'Dimagi'], 1)
+    ('index', 'commcarehq', 'CommCareHQ Documentation',
+     ['Dimagi'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -249,8 +247,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'CommCareHQ', u'CommCareHQ Documentation',
-   u'Dimagi', 'CommCareHQ', 'One line description of project.',
+  ('index', 'CommCareHQ', 'CommCareHQ Documentation',
+   'Dimagi', 'CommCareHQ', 'One line description of project.',
    'Miscellaneous'),
 ]
 

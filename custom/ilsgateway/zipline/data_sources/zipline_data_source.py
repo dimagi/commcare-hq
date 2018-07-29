@@ -1,8 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.shortcuts import get_object_or_404
 
 from corehq.apps.locations.models import SQLLocation
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class ZiplineDataSource(object):

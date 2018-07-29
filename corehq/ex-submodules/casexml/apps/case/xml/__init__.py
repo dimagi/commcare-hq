@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from casexml.apps.phone.exceptions import BadVersionException
 
 V1 = "1.0"

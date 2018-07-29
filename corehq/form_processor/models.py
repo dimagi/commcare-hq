@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import mimetypes
 import os
@@ -34,8 +35,8 @@ from dimagi.ext import jsonobject
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.decorators.memoized import memoized
-from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
+from memoized import memoized
+from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, IsImageMixin
 from .exceptions import AttachmentNotFound
 import six
 from six.moves import map
@@ -207,6 +208,12 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     # for compatability with corehq.blobs.mixin.DeferredBlobMixin interface
     persistent_blobs = None
+
+    # form meta properties
+    time_end = models.DateTimeField(null=True, blank=True)
+    time_start = models.DateTimeField(null=True, blank=True)
+    commcare_version = models.CharField(max_length=8, blank=True, null=True)
+    app_version = models.PositiveIntegerField(null=True, blank=True)
 
     def __init__(self, *args, **kwargs):
         super(XFormInstanceSQL, self).__init__(*args, **kwargs)
@@ -414,7 +421,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             "domain='{f.domain}')"
         ).format(f=self)
 
-    class Meta:
+    class Meta(object):
         db_table = XFormInstanceSQL_DB_TABLE
         app_label = "form_processor"
         index_together = [
@@ -429,6 +436,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
     content_length = models.IntegerField(null=True)
     blob_id = models.CharField(max_length=255, default=None)
     blob_bucket = models.CharField(max_length=255, null=True, default=None)
+    name = models.CharField(max_length=255, default=None)
 
     # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255, default=None)
@@ -449,10 +457,13 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             content_readable = StringIO(content)
         elif isinstance(content, six.binary_type):
             content_readable = BytesIO(content)
-
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        info = db.put(content_readable, get_short_identifier(), bucket=bucket)
+        if self.blob_id:
+            # Overwrite and rewrite the existing entry in the database with this identifier
+            info = db.put(content_readable, self.blob_id, bucket=bucket)
+        else:
+            info = db.put(content_readable, get_short_identifier(), bucket=bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier
@@ -499,7 +510,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
         return os.path.join(self._attachment_prefix, self.attachment_id.hex)
 
-    class Meta:
+    class Meta(object):
         abstract = True
         app_label = "form_processor"
 
@@ -509,7 +520,6 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'form'
 
-    name = models.CharField(max_length=255, default=None)
     form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_id', db_index=False,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
@@ -529,7 +539,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
             "properties='{a.properties}', "
         ).format(a=self)
 
-    class Meta:
+    class Meta(object):
         db_table = XFormAttachmentSQL_DB_TABLE
         app_label = "form_processor"
         index_together = [
@@ -545,11 +555,12 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     UNARCHIVE = 'unarchive'
     EDIT = 'edit'
     UUID_DATA_FIX = 'uuid_data_fix'
+    GDPR_SCRUB = 'gdpr_scrub'
 
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255, default=None)
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(null=False)
 
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
@@ -560,7 +571,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     def user(self):
         return self.user_id
 
-    class Meta:
+    class Meta(object):
         app_label = "form_processor"
         db_table = XFormOperationSQL_DB_TABLE
 
@@ -781,9 +792,9 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
-    def _get_attachment_from_db(self, identifier):
+    def _get_attachment_from_db(self, name):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachment_by_identifier(self.case_id, identifier)
+        return CaseAccessorSQL.get_attachment_by_name(self.case_id, name)
 
     def _get_attachments_from_db(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -819,7 +830,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def case_attachments(self):
-        return {attachment.identifier: attachment for attachment in self.get_attachments()}
+        return {attachment.name: attachment for attachment in self.get_attachments()}
 
     @property
     @memoized
@@ -935,7 +946,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             "server_modified_on='{c.server_modified_on}')"
         ).format(c=self)
 
-    class Meta:
+    class Meta(object):
         index_together = [
             ["owner_id", "server_modified_on"],
             ["domain", "owner_id", "closed"],
@@ -945,26 +956,24 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         db_table = CommCareCaseSQL_DB_TABLE
 
 
-class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
+class CaseAttachmentSQL(AbstractAttachment, IsImageMixin):
     partition_attr = 'case_id'
     objects = RestrictedManager()
     _attachment_prefix = 'case'
 
-    name = models.CharField(max_length=255, default=None)
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
         on_delete=models.CASCADE,
     )
-    identifier = models.CharField(max_length=255, default=None)
-    attachment_src = models.TextField(null=True)
-    attachment_from = models.TextField(null=True)
 
-    def from_form_attachment(self, attachment):
+    def from_form_attachment(self, attachment, attachment_src):
         """
         Update fields in this attachment with fields from another attachment
 
-        :param attachment: XFormAttachmentSQL or CaseAttachmentSQL object
+        :param attachment: XFormAttachmentSQL object.
+        :param attachment_src: Attachment file name. Used for content type
+        guessing if the form attachment has no content type.
         """
         self.content_length = attachment.content_length
         self.blob_id = attachment.blob_id
@@ -973,29 +982,14 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         self.content_type = attachment.content_type
         self.properties = attachment.properties
 
-        if not self.content_type and self.attachment_src:
-            guessed = mimetypes.guess_type(self.attachment_src)
+        if not self.content_type and attachment_src:
+            guessed = mimetypes.guess_type(attachment_src)
             if len(guessed) > 0 and guessed[0] is not None:
                 self.content_type = guessed[0]
 
-        if isinstance(attachment, CaseAttachmentSQL):
-            assert self.identifier == attachment.identifier
-            self.attachment_src = attachment.attachment_src
-            self.attachment_from = attachment.attachment_from
-
     @classmethod
-    def from_case_update(cls, attachment):
-        if attachment.attachment_src:
-            ret = cls(
-                attachment_id=uuid.uuid4(),
-                name=attachment.attachment_name or attachment.identifier,
-                identifier=attachment.identifier,
-                attachment_src=attachment.attachment_src,
-                attachment_from=attachment.attachment_from
-            )
-        else:
-            ret = cls(name=attachment.identifier, identifier=attachment.identifier)
-        return ret
+    def new(cls, name):
+        return cls(name=name, attachment_id=uuid.uuid4())
 
     def __unicode__(self):
         return six.text_type(
@@ -1007,17 +1001,14 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
             "content_length='{a.content_length}', "
             "md5='{a.md5}', "
             "blob_id='{a.blob_id}', "
-            "properties='{a.properties}', "
-            "identifier='{a.identifier}', "
-            "attachment_src='{a.attachment_src}', "
-            "attachment_from='{a.attachment_from}')"
+            "properties='{a.properties}')"
         ).format(a=self)
 
-    class Meta:
+    class Meta(object):
         app_label = "form_processor"
         db_table = CaseAttachmentSQL_DB_TABLE
         index_together = [
-            ["case", "identifier"],
+            ["case", "name"],
         ]
 
 
@@ -1095,7 +1086,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             "relationship='{i.relationship})"
         ).format(i=self)
 
-    class Meta:
+    class Meta(object):
         index_together = [
             ["domain", "case"],
             ["domain", "referenced_id"],
@@ -1320,7 +1311,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             "revoked='{self.revoked}')"
         ).format(self=self)
 
-    class Meta:
+    class Meta(object):
         unique_together = ("case", "form_id", "type")
         ordering = ['server_date']
         db_table = CaseTransaction_DB_TABLE
@@ -1427,10 +1418,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     @memoized
     def location(self):
         from corehq.apps.locations.models import SQLLocation
-        try:
-            return SQLLocation.objects.get(supply_point_id=self.case_id)
-        except SQLLocation.DoesNotExist:
-            return None
+        return SQLLocation.objects.get_or_None(supply_point_id=self.case_id)
 
     @property
     def location_id(self):
@@ -1448,7 +1436,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
                "entry_id={s.entry_id}, " \
                "balance={s.balance}".format(s=self)
 
-    class Meta:
+    class Meta(object):
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
         unique_together = ("case", "section_id", "entry_id")
@@ -1550,7 +1538,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
             "updated_balance='{self.updated_balance}')"
         ).format(self=self)
 
-    class Meta:
+    class Meta(object):
         db_table = LedgerTransaction_DB_TABLE
         app_label = "form_processor"
         # note: can't put a unique constraint here (case_id, form_id, section_id, entry_id)

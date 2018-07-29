@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs
 from .interface import DocumentStore

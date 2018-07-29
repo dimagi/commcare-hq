@@ -1,12 +1,14 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import collections
 import logging
 from abc import ABCMeta, abstractmethod
 
 import six as six
-from couchdbkit import ResourceNotFound
 
-from dimagi.utils.decorators.memoized import memoized
+from casexml.apps.phone.exceptions import MissingSyncLog
+
+from memoized import memoized
 from couchforms import const
 
 
@@ -124,7 +126,7 @@ class AbstractXFormInstance(object):
         if self.last_sync_token:
             try:
                 return get_properly_wrapped_sync_log(self.last_sync_token)
-            except ResourceNotFound:
+            except MissingSyncLog:
                 pass
         return None
 
@@ -228,10 +230,26 @@ class AbstractCommCareCase(CaseToXMLMixin):
                 host._resolve_case_property(property_name[5:], result)
             return
 
-        result.append(CasePropertyResult(
-            self,
-            self.to_json().get(property_name)
-        ))
+        from corehq.form_processor.models import CommCareCaseSQL
+        if isinstance(self, CommCareCaseSQL):
+            if property_name == '_id':
+                property_name = 'case_id'
+
+            # Use .get_case_property() for the CommCareCaseSQL because
+            # using .to_json() makes a lot of unnecessary db calls to find
+            # things like case indices and case actions which we don't need here
+            result.append(CasePropertyResult(
+                self,
+                self.get_case_property(property_name)
+            ))
+        else:
+            # Use .to_json() for the couch CommCareCase because if we used
+            # get_case_property() then dynamic case properties might end
+            # up being coerced into data types other than string
+            result.append(CasePropertyResult(
+                self,
+                self.to_json().get(property_name)
+            ))
 
     def resolve_case_property(self, property_name):
         """
@@ -270,12 +288,13 @@ class AbstractCommCareCase(CaseToXMLMixin):
 
     @memoized
     def get_attachment_map(self):
-        return dict([
-            (name, {
+        return {
+            name: {
                 'url': self.get_attachment_server_url(att.identifier),
-                'mime': att.attachment_from
-            }) for name, att in self.case_attachments.items()
-        ])
+                'content_type': att.content_type,
+            }
+            for name, att in self.case_attachments.items()
+        }
 
     def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import cElementTree as ElementTree
@@ -289,18 +308,18 @@ class AbstractCommCareCase(CaseToXMLMixin):
             elem = get_case_element(self, ('create', 'update'), version)
         return ElementTree.tostring(elem)
 
-    def get_attachment_server_url(self, identifier):
+    def get_attachment_server_url(self, name):
         """
         A server specific URL for remote clients to access case attachment resources async.
         """
-        if identifier in self.case_attachments:
+        if name in self.case_attachments:
             from dimagi.utils import web
             from django.urls import reverse
             return "%s%s" % (web.get_url_base(),
                  reverse("api_case_attachment", kwargs={
                      "domain": self.domain,
                      "case_id": self.case_id,
-                     "attachment_id": identifier,
+                     "attachment_id": name,
                  })
             )
         else:
@@ -327,16 +346,3 @@ class IsImageMixin(object):
         if self.content_type is None:
             return None
         return True if self.content_type.startswith('image/') else False
-
-
-class CaseAttachmentMixin(IsImageMixin):
-
-    @property
-    def is_present(self):
-        """
-        Helper method to see if this is a delete vs. update
-        """
-        if self.identifier and (self.attachment_src == self.attachment_from is None):
-            return False
-        else:
-            return True

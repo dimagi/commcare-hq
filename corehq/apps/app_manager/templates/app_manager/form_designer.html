@@ -26,6 +26,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'moment/moment.js' %}"></script>
+    {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
     <script>
         /*
             When r.js optimizes the bundle.js files, one thing it does is add a call to `define` the module.
@@ -37,15 +38,14 @@
         define = undefined;
     </script>
     {% compress js %}
-    <script src="{% static 'requirejs/require.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
-    <script src="{% static 'js/ws4redis.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
+        <script src="{% static 'js/ws4redis.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
-{% block title %}✎ {{ form.name|clean_trans:langs }} - {% trans 'Edit Form' %}{% endblock %}
+{% block title %}{# controlled by app_manager/js/form_designer.js #}{% endblock %}
 
 {% block form-view %}
     {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
@@ -53,12 +53,16 @@
     {% initial_page_data 'form_name' form.name|trans:app.langs %}
     {% initial_page_data 'form_comment' form.comment %}
     {% initial_page_data 'form_uses_cases' form.uses_cases %}
+    {% initial_page_data 'is_registration_form' form.is_registration_form %}
+    {% initial_page_data 'is_survey' module.is_surveys %}
     {% initial_page_data 'notification_options' notification_options %}
     {% initial_page_data 'requirejs_args' requirejs_args %}
     {% initial_page_data 'requirejs_url' requirejs_url|static %}
     {% initial_page_data 'vellum_debug' vellum_debug %}
     {% initial_page_data 'vellum_options' vellum_options %}
     {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
+    {% initial_page_data 'requirejs_static_url' 'requirejs/require.js'|static %}
+
     <div id="formdesigner" class="clearfix loading"></div>
 
     <script type="text/html" id="js-fd-manage-case">
@@ -151,7 +155,7 @@
               </form>
           </div>
       </div>
-</div>
+  </div>
 {% endblock %}
 
 {% block footer %}{% endblock %}

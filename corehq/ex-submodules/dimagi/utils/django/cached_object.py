@@ -1,9 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import hashlib
 import logging
 import os
 import simplejson
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 import io
 

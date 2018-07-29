@@ -11,9 +11,12 @@
     "airsbenin",
     "airsmozambique",
     "airskenya",
-    "airs-testing"
+    "airs-testing",
+    "vectorlink-benin",
+    "vectorlink-uganda"
   ],
-  "data_source_table": "supervisory-005",
+  "server_environment": ["production"],
+  "data_source_table": "supervisory-006",
   "report_id": "incident-report",
   "custom_configurable_report": "custom.abt.reports.views.FormattedSupervisoryReport",
   "config": {

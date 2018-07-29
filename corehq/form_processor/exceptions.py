@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -10,6 +11,10 @@ class CaseNotFound(ResourceNotFound, ObjectDoesNotExist):
 
 
 class XFormNotFound(ResourceNotFound, ObjectDoesNotExist):
+    pass
+
+
+class XFormQuestionValueNotFound(Exception):
     pass
 
 
@@ -51,4 +56,8 @@ class UnknownActionType(Exception):
 
 
 class PostSaveError(Exception):
+    pass
+
+
+class KafkaPublishingError(Exception):
     pass

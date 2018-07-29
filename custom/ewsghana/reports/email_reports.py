@@ -13,7 +13,7 @@ from custom.ewsghana.filters import EWSDateFilter, EWSRestrictionLocationFilter
 from custom.ewsghana.reports import EWSData, MultiReport
 from django.utils.translation import ugettext as _
 from custom.ewsghana.utils import get_descendants, get_country_id, ews_date_format
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 

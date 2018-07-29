@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 import logging
 import operator
@@ -14,8 +15,7 @@ import fluff
 from fluff.filters import ORFilter
 from fluff.pillow import get_multi_fluff_pillow
 from corehq.fluff.calculators.xform import FormPropertyFilter
-from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
-from corehq.apps.change_feed.topics import get_topic
+from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from custom.m4change.user_calcs import anc_hmis_report_calcs, ld_hmis_report_calcs, immunization_hmis_report_calcs,\
     all_hmis_report_calcs, project_indicators_report_calcs, mcct_monthly_aggregate_report_calcs, \
     form_passes_filter_date_delivery
@@ -66,7 +66,7 @@ class BaseM4ChangeCaseFluff(fluff.IndicatorDocument):
     document_filter = ORFilter(_get_all_m4change_forms())
     domains = M4CHANGE_DOMAINS
 
-    class Meta:
+    class Meta(object):
         app_label = 'm4change'
 
 
@@ -90,7 +90,7 @@ class AncHmisCaseFluff(BaseM4ChangeCaseFluff):
     postnatal_clinic_visit_lte_3_days = anc_hmis_report_calcs.PostnatalClinicVisitWithin3DaysOfDeliveryCalculator()
     postnatal_clinic_visit_gte_7_days = anc_hmis_report_calcs.PostnatalClinicVisitGreaterEqual7DaysOfDeliveryCalculator()
 
-    class Meta:
+    class Meta(object):
         app_label = 'm4change'
 
 
@@ -270,7 +270,7 @@ class LdHmisCaseFluff(BaseM4ChangeCaseFluff):
     #     {"": ""}, BOOKED_AND_UNBOOKED_DELIVERY_FORMS, _form_passes_filter_date_delivery
     # )
 
-    class Meta:
+    class Meta(object):
         app_label = 'm4change'
 
 
@@ -301,7 +301,7 @@ class ImmunizationHmisCaseFluff(BaseM4ChangeCaseFluff):
     measles_2 = immunization_hmis_report_calcs.PncImmunizationCalculator("measles_2")
     conjugate_csm = immunization_hmis_report_calcs.PncImmunizationCalculator("conjugate_csm")
 
-    class Meta:
+    class Meta(object):
         app_label = 'm4change'
 
 
@@ -337,7 +337,7 @@ class ProjectIndicatorsCaseFluff(BaseM4ChangeCaseFluff):
     mno_glo = project_indicators_report_calcs.MnoCalculator('glo')
     mno_airtel = project_indicators_report_calcs.MnoCalculator('airtel')
 
-    class Meta:
+    class Meta(object):
         app_label = 'm4change'
 
 
@@ -354,7 +354,7 @@ class McctStatus(models.Model):
     modified_on = models.DateTimeField(auto_now=True)
     user = models.CharField(max_length=255, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'm4change'
 
     def update_status(self, new_status, reason, user):
@@ -385,7 +385,7 @@ class McctMonthlyAggregateFormFluff(BaseM4ChangeCaseFluff):
     location_id = fluff.FlatField(_get_form_location_id)
     status = mcct_monthly_aggregate_report_calcs.StatusCalculator()
 
-    class Meta:
+    class Meta(object):
         app_label = 'm4change'
 
 
@@ -492,7 +492,7 @@ class AllHmisCaseFluff(BaseM4ChangeCaseFluff):
         [("commenced_drugs", operator.contains, "infant_nvp")], PMTCT_CLIENTS_FORM
     )
 
-    class Meta:
+    class Meta(object):
         app_label = 'm4change'
 
 
@@ -507,7 +507,7 @@ def M4ChangeFormFluffPillow(delete_filtered=False):
             AllHmisCaseFluff,
         ],
         name='M4ChangeFormFluff',
-        kafka_topic=get_topic(get_doc_meta_object_from_document(XFormInstance().to_json())),
+        kafka_topic=get_topic_for_doc_type(XFormInstance().to_json()['doc_type']),
         delete_filtered=delete_filtered
     )
 
@@ -521,7 +521,7 @@ class FixtureReportResult(Document, QueryMixin):
     rows = DictProperty()
     name = StringProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = "m4change"
 
     @classmethod

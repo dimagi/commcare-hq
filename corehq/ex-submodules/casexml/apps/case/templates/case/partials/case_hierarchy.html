@@ -1,6 +1,10 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% comment %}
+    Depends on case/js/case_hierarchy.js and jquery-treetable/jquery.treetable.js
+{% endcomment %}
+
 <link rel="stylesheet" type="text/css" href="{% static "jquery-treetable/css/jquery.treetable.css" %}">
 <link rel="stylesheet" type="text/css" href="{% static "case/css/jquery.treetable.css" %}">
 
@@ -34,21 +38,6 @@
         max-width: 750px;
     }
 </style>
-
-<script>
-    $.when(
-        $.getScript('{% static "jquery-treetable/jquery.treetable.js" %}')
-    ).done(function () {
-        var tree = $("#related_cases").treetable({
-            expandable: true,
-            initialState: "expanded"
-        });
-
-        $(".case-closed").each(function () {
-            tree.treetable('collapseNode', ($(this).data('tt-id')));
-        });
-    });
-</script>
 
 <table id="related_cases" class="table table-striped case_history">
     <thead>
@@ -122,8 +111,8 @@
                 {% if case.edit_data.description %}
                 <br>
                 <span class="indenter" style="line-height:0; padding: 0 {{ case.edit_data.indent_px }}px"></span>
-                <div style="display:inline-block" class="case-tree-description muted">
-                    <span class="muted">{{ case.edit_data.description }}</span>
+                <div style="display:inline-block" class="case-tree-description">
+                    <span class="text-muted">{{ case.edit_data.description }}</span>
                 </div>
                 {% endif %}
 

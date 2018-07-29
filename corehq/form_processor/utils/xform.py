@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
+from lxml import etree
 
 import iso8601
 import pytz
@@ -7,7 +9,9 @@ import six
 
 import xml2json
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
+from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.models import Attachment
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
 
@@ -16,7 +20,7 @@ from dimagi.utils.parsing import json_format_datetime
 SIMPLE_FORM = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="{form_name}" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns="{xmlns}">
-    <dalmation_count>yes</dalmation_count>
+    {form_properties}
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>{device_id}</n1:deviceID>
         <n1:timeStart>{time_start}</n1:timeStart>
@@ -44,26 +48,71 @@ class TestFormMetadata(jsonobject.JsonObject):
     received_on = jsonobject.DateTimeProperty(default=datetime.utcnow)
 
 
-def get_simple_form_xml(form_id, case_id=None, metadata=None):
+class FormSubmissionBuilder(object):
+    """
+    Utility/helper object for building a form submission
+    """
+
+    def __init__(self, form_id, metadata=None, case_blocks=None, form_properties=None, form_template=SIMPLE_FORM):
+        self.form_id = form_id
+        self.metadata = metadata or TestFormMetadata()
+        self.case_blocks = case_blocks or []
+        self.form_template = form_template
+        self.form_properties = form_properties or {}
+
+    def as_xml_string(self):
+        case_block_xml = ''.join(cb.as_string() for cb in self.case_blocks)
+        form_properties_xml = build_form_xml_from_property_dict(self.form_properties)
+        form_xml = self.form_template.format(
+            uuid=self.form_id, form_properties=form_properties_xml, case_block=case_block_xml,
+            **self.metadata.to_json()
+        )
+        if not self.metadata.user_id:
+            form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(self.metadata.user_id), '')
+        return form_xml
+
+
+def _build_node_list_from_dict(form_properties, separator=''):
+    elements = []
+
+    for key, values in form_properties.items():
+        if not isinstance(values, list):
+            values = [values]
+
+        for value in values:
+            node = etree.Element(key)
+            if isinstance(value, dict):
+                children = _build_node_list_from_dict(value, separator=separator)
+                for child in children:
+                    node.append(child)
+            else:
+                node.text = value
+            elements.append(node)
+
+    return elements
+
+
+def build_form_xml_from_property_dict(form_properties, separator=''):
+    return separator.join(etree.tostring(e) for e in _build_node_list_from_dict(form_properties, separator))
+
+
+def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
     from casexml.apps.case.mock import CaseBlock
 
-    metadata = metadata or TestFormMetadata()
-    case_block = ''
-    if case_id:
-        case_block = CaseBlock(create=True, case_id=case_id).as_string()
-    form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block, **metadata.to_json())
-
-    if not metadata.user_id:
-        form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(metadata.user_id), '')
-
-    return form_xml
+    case_blocks = [CaseBlock(create=True, case_id=case_id)] if case_id else []
+    return FormSubmissionBuilder(
+        form_id=form_id,
+        metadata=metadata,
+        case_blocks=case_blocks,
+        form_template=simple_form,
+    ).as_xml_string()
 
 
-def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True):
+def get_simple_wrapped_form(form_id, metadata=None, save=True, simple_form=SIMPLE_FORM):
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
     metadata = metadata or TestFormMetadata()
-    xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
+    xml = get_simple_form_xml(form_id=form_id, metadata=metadata, simple_form=simple_form)
     form_json = convert_xform_to_json(xml)
     interface = FormProcessorInterface(domain=metadata.domain)
     wrapped_form = interface.new_xform(form_json)
@@ -117,20 +166,20 @@ def convert_xform_to_json(xml_string):
         name, json_form = xml2json.xml2json(xml_string)
     except xml2json.XMLSyntaxError as e:
         from couchforms import XMLSyntaxError
-        raise XMLSyntaxError(u'Invalid XML: %s' % e)
+        raise XMLSyntaxError('Invalid XML: %s' % e)
     json_form['#type'] = name
     return json_form
 
 
-def adjust_text_to_datetime(text):
+def adjust_text_to_datetime(text, process_timezones=None):
     matching_datetime = iso8601.parse_date(text)
-    if phone_timezones_should_be_processed():
+    if process_timezones or phone_timezones_should_be_processed():
         return matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
     else:
         return matching_datetime.replace(tzinfo=None)
 
 
-def adjust_datetimes(data, parent=None, key=None):
+def adjust_datetimes(data, parent=None, key=None, process_timezones=None):
     """
     find all datetime-like strings within data (deserialized json)
     and format them uniformly, in place.
@@ -144,21 +193,22 @@ def adjust_datetimes(data, parent=None, key=None):
     >>> with force_phone_timezones_should_be_processed():
     >>>     adjust_datetimes(form_json)
     """
+    process_timezones = process_timezones or phone_timezones_should_be_processed()
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
     if isinstance(data, six.string_types) and jsonobject.re_loose_datetime.match(data):
         try:
             parent[key] = six.text_type(json_format_datetime(
-                adjust_text_to_datetime(data)
+                adjust_text_to_datetime(data, process_timezones=process_timezones)
             ))
         except iso8601.ParseError:
             pass
     elif isinstance(data, dict):
         for key, value in data.items():
-            adjust_datetimes(value, parent=data, key=key)
+            adjust_datetimes(value, parent=data, key=key, process_timezones=process_timezones)
     elif isinstance(data, list):
         for i, value in enumerate(data):
-            adjust_datetimes(value, parent=data, key=i)
+            adjust_datetimes(value, parent=data, key=i, process_timezones=process_timezones)
 
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
@@ -173,3 +223,38 @@ def resave_form(domain, form):
         publish_form_saved(form)
     else:
         XFormInstance.get_db().save_doc(form.to_json())
+
+
+def get_node(root, question, xmlns=''):
+    '''
+    Given an xml element, find the node corresponding to a question path.
+    See XFormQuestionValueIterator for question path format.
+    Throws XFormQuestionValueNotFound if question is not present.
+    '''
+
+    def _next_node(node, xmlns, id, index=None):
+        try:
+            return node.findall("{{{}}}{}".format(xmlns, id))[index or 0]
+        except (IndexError, KeyError):
+            raise XFormQuestionValueNotFound()
+
+    node = root
+    i = XFormQuestionValueIterator(question)
+    for (qid, index) in i:
+        node = _next_node(node, xmlns, qid, index)
+    node = _next_node(node, xmlns, i.last())
+    if node is None:
+        raise XFormQuestionValueNotFound()
+    return node
+
+
+def update_response(root, question, response, xmlns=None):
+    '''
+    Given a form submission's xml root, updates the response for an individual question.
+    Question and response are both strings; see XFormQuestionValueIterator for question format.
+    '''
+    node = get_node(root, question, xmlns)
+    if node.text != response:
+        node.text = response
+        return True
+    return False

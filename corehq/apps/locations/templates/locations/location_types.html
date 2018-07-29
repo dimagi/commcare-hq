@@ -2,9 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'locations/js/location_types.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'locations/js/location_types' %}
 
 {% block page_content %}
     {% initial_page_data 'location_types' location_types %}
@@ -14,12 +12,12 @@
             <h2>{% trans "Organization Levels" %}</h2>
             <p>
                 {% blocktrans %}
-                    Organization Levels allow you to configure the different types of 
-                    locations within your project (districts, facilities, front line 
-                    workers, etc.). Locations can own data and cases, view child 
-                    location's data or simply be used for aggregation. Once you've 
-                    defined your organization structure types, you'll be able to define 
-                    the organization structure for your project. Learn more about 
+                    Organization Levels allow you to configure the different types of
+                    locations within your project (districts, facilities, front line
+                    workers, etc.). Locations can own data and cases, view child
+                    location's data or simply be used for aggregation. Once you've
+                    defined your organization structure types, you'll be able to define
+                    the organization structure for your project. Learn more about
                     Organizations on our <a href="https://help.commcarehq.org/display/commcarepublic/Organizations">Help Site</a>.
                 {% endblocktrans %}
             </p>

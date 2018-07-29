@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from datetime import datetime
 from mock.mock import MagicMock
 
@@ -32,13 +33,13 @@ class TestFicheConsommation(ReportTestCase):
             rows,
             [
                 [
-                    u'PPS 1',
+                    'PPS 1',
                     {'sort_key': 10, 'html': 10}, {'sort_key': 5, 'html': 5}, {'sort_key': 5, 'html': 5},
                     {'sort_key': 2, 'html': 2}, {'sort_key': 2, 'html': 2}, {'sort_key': 0, 'html': 0},
                     {'sort_key': 6, 'html': 6}, {'sort_key': 4, 'html': 4}, {'sort_key': 2, 'html': 2}
                 ],
                 [
-                    u'PPS 2',
+                    'PPS 2',
                     {'sort_key': 13, 'html': 13}, {'sort_key': 11, 'html': 11}, {'sort_key': 2, 'html': 2},
                     {'sort_key': 0, 'html': 0}, {'sort_key': 0, 'html': 0}, {'sort_key': 0, 'html': 0},
                     {'sort_key': 150, 'html': 150}, {'sort_key': 11, 'html': 11}, {'sort_key': 139, 'html': 139}

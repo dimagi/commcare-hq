@@ -2747,6 +2747,15 @@
         ]
       }
     ],
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "month",
+          "subtype": "date",
+          "constraint": "month"
+        }
+      ]
+    },
     "disable_destructive_rebuild": true
   }
 }

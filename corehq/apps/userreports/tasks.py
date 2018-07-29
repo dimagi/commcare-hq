@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import logging
 
 from botocore.vendored.requests.exceptions import ReadTimeout
@@ -16,19 +16,17 @@ from django.db import transaction
 from django.db.models import Count, Min
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
-from restkit import RequestError
 
-from couchexport.export import export_from_tables
 from couchexport.models import Format
 from soil.util import get_download_file_path, expose_download
 
 from corehq import toggles
-from corehq.apps.reports.util import send_report_download_email
+from corehq.apps.reports.util import send_report_download_email, DatatablesParams
 from corehq.apps.userreports.const import (
-    UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
+    UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
 )
-from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import StaticDataSourceConfigurationNotFoundError
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.specs import EvaluationContext
@@ -39,7 +37,7 @@ from corehq.apps.userreports.models import (
     id_is_static,
     get_report_config,
 )
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
@@ -50,7 +48,6 @@ from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
 from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 import six
 
@@ -108,6 +105,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
         if not id_is_static(indicator_config_id):
             config.meta.build.initiated_in_place = datetime.utcnow()
             config.meta.build.finished_in_place = False
+            config.meta.build.rebuilt_asynchronously = False
             config.save()
 
         adapter.build_table()
@@ -140,7 +138,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 
     for case_type_or_xmlns in case_type_or_xmlns_list:
         relevant_ids = []
-        document_store = get_document_store(
+        document_store = get_document_store_for_doc_type(
             config.domain, config.referenced_doc_type, case_type_or_xmlns=case_type_or_xmlns
         )
 
@@ -183,8 +181,12 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
-    def _run_report(backend_to_use):
-        data_source = ReportFactory.from_spec(spec, include_prefilters=True, backend=backend_to_use)
+    new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
+    if new_report_config_id is None:
+        return
+
+    def _run_report(spec):
+        data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True)
         data_source.set_filter_values(filter_values)
         if sort_column:
             data_source.set_order_by(
@@ -208,18 +210,20 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
             json_response["total_row"] = total_row
         return json_response
 
-    spec, is_static = get_report_config(report_config_id, domain)
+    old_spec, unused = get_report_config(report_config_id, domain)
+    new_spec, unused = get_report_config(new_report_config_id, domain)
     experiment_context = {
         "domain": domain,
         "report_config_id": report_config_id,
+        "new_report_config_id": new_report_config_id,
         "filter_values": filter_values,
     }
     experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
     with experiment.control() as c:
-        c.record(_run_report(UCR_SQL_BACKEND))
+        c.record(_run_report(old_spec))
 
     with experiment.candidate() as c:
-        c.record(_run_report(UCR_ES_BACKEND))
+        c.record(_run_report(new_spec))
 
     objects = experiment.run()
     return objects
@@ -300,12 +304,6 @@ def _queue_indicators(indicators):
         _queue_chunk(to_queue)
 
 
-@quickcache(['config_id'])
-def _get_config(config_id):
-    # performance optimization for save_document. don't use elsewhere
-    return _get_config_by_id(config_id)
-
-
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def save_document(doc_ids):
     lock_keys = []
@@ -328,7 +326,7 @@ def save_document(doc_ids):
             assert i.doc_type == first_indicator.doc_type
 
         indicator_by_doc_id = {i.doc_id: i for i in indicators}
-        doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
+        doc_store = get_document_store_for_doc_type(first_indicator.domain, first_indicator.doc_type)
         indicator_config_ids = first_indicator.indicator_config_ids
         related_docs_to_rebuild = set()
 
@@ -375,7 +373,7 @@ def _save_document_helper(indicator, doc):
     configs = dict()
     for config_id in indicator.indicator_config_ids:
         try:
-            configs[config_id] = _get_config(config_id)
+            configs[config_id] = _get_config_by_id(config_id)
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
             configs_to_remove.append(config_id)
@@ -393,9 +391,6 @@ def _save_document_helper(indicator, doc):
             eval_context.reset_iteration()
         except (ProtocolError, ReadTimeout):
             celery_task_logger.info("Riak error when saving config: {}".format(config_id))
-            something_failed = True
-        except RequestError:
-            celery_task_logger.info("Couch error when saving config: {}".format(config_id))
             something_failed = True
         except (ESError, ConnectionTimeout):
             # a database had an issue so log it and go on to the next document
@@ -487,12 +482,15 @@ def _indicator_metrics(date_created=None):
 
 
 @task
-def export_ucr_async(export_table, download_id, title, user):
+def export_ucr_async(report_export, download_id, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    filename = '{}.xlsx'.format(title.replace('/', '?'))
+    ascii_title = report_export.title.encode('ascii', 'replace')
+    filename = '{}.xlsx'.format(ascii_title.replace('/', '?'))
     file_path = get_download_file_path(use_transfer, filename)
-    export_from_tables(export_table, file_path, Format.XLS_2007)
+
+    report_export.create_export(file_path, Format.XLS_2007)
+
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
     link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
 
-    send_report_download_email(title, user, link)
+    send_report_download_email(report_export.title, user, link)

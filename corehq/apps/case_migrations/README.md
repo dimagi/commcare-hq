@@ -10,7 +10,7 @@ This feature allows technical users to handle their own case migrations using xf
 ## TODOs
 
 * WebApps component to run a migration
-  * `send_migration_to_nimbus` should do what it says
+  * `send_migration_to_formplayer` should do what it says
   * Web apps can then send each case ID to
     `/a/<domain>/case_migrations/restore/<case_id>/`
     to get a restore containing that case's network.

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
@@ -20,7 +21,7 @@ from corehq.apps.indicators.models import (
 from corehq.apps.indicators.utils import get_namespaces, get_namespace_name, get_indicator_domains
 from corehq.apps.users.models import Permissions
 from crispy_forms.helper import FormHelper
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class BaseIndicatorDefinitionForm(BaseAdminCRUDForm):

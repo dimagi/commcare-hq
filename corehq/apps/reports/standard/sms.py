@@ -1,16 +1,18 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 import cgi
 from django.db.models import Q, Count
 from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect
-from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.views import EditLocationView
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import OptionalAsyncLocationFilter
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
@@ -21,17 +23,19 @@ from corehq.apps.sms.filters import (
     PhoneNumberReportFilter
 )
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.dbaccessors import get_user_id_and_doc_type_by_domain
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from casexml.apps.case.models import CommCareCase
 from datetime import datetime
 from django.conf import settings
+from django.utils.functional import cached_property
+from django.utils.html import escape
 from corehq.apps.hqwebapp.doc_info import (get_doc_info, get_doc_info_by_id,
     get_object_info, DomainMismatchException)
 from corehq.apps.sms.mixin import apply_leniency
@@ -50,11 +54,22 @@ from corehq.apps.sms.models import (
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reminders.models import CaseReminderHandler
+from corehq.apps.users.views import EditWebUserView
+from corehq.apps.users.views.mobile import EditCommCareUserView, EditGroupMembersView
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.scheduling.filters import ScheduleInstanceFilter
 from corehq.messaging.scheduling.models import ScheduledBroadcast, ImmediateBroadcast
 from corehq.messaging.scheduling.views import EditScheduleView, EditConditionalAlertView
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    AlertScheduleInstance,
+    TimedScheduleInstance,
+    CaseAlertScheduleInstance,
+    CaseTimedScheduleInstance,
+)
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from django.core.exceptions import ObjectDoesNotExist
 import six
 
@@ -194,7 +209,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         couch_object = None
         sql_object = None
 
-        if recipient_id:
+        if recipient_id and recipient_doc_type:
             try:
                 if recipient_doc_type.startswith('CommCareCaseGroup'):
                     couch_object = CommCareCaseGroup.get(recipient_id)
@@ -261,6 +276,10 @@ class MessageLogReport(BaseCommConnectLogReport):
     ajax_pagination = True
 
     exportable = True
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
 
     def get_message_type_filter(self):
         filtered_types = MessageTypeFilter.get_value(self.request, self.domain)
@@ -716,6 +735,10 @@ class MessagingEventsReport(BaseMessagingEventReport):
         PhoneNumberFilter,
     ]
     ajax_pagination = True
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
 
     @property
     def headers(self):
@@ -1364,3 +1387,281 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     @property
     def export_rows(self):
         return self._get_rows(paginate=False, link_user=False)
+
+
+class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport):
+    name = ugettext_lazy('Scheduled Messaging Events')
+    slug = 'scheduled_messaging_events'
+    fields = [
+        ScheduleInstanceFilter,
+    ]
+    ajax_pagination = True
+    sortable = False
+
+    @property
+    def max_pages_reached(self):
+        # This means that we don't allow going past page 1000 when viewing
+        # the max per page (100), because it gets computationally harder as
+        # the pages go up to produce the right page of results.
+        return self.pagination.start >= 100000
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_("Next Event Due")),
+            DataTablesColumn(_("Scheduling Configuration")),
+            DataTablesColumn(_("Recipient")),
+            DataTablesColumn(_("Triggering Case")),
+        )
+
+    @property
+    def total_records(self):
+        return sum(qs.count() for qs in self.get_querysets())
+
+    @cached_property
+    def show_active_instances(self):
+        """
+        The `active` parameter is only used for debugging.
+
+        To use it, just pass active=false into the URL and the report will then only show
+        inactive schedule instances.
+
+        This shouldn't be made part of the user-facing filters because an inactive schedule
+        instance might show a next event due timestamp that looks confusing. For example,
+        for a one-time reminder that sends today at 9am, after it sends it will show as inactive and
+        have a next event due timestamp for tomorrow at 9am because it has moved past the last event
+        in the schedule and that's what deactivated it. That's normal behavior but would look
+        confusing to a user.
+
+        This can be a useful tool for developers when debugging.
+        """
+        return (self.configuration_filter_value['active'] or '').lower() != 'false'
+
+    @cached_property
+    def case_id(self):
+        """
+        The `case_id` parameter is only used for debugging.
+
+        To use it, just pass case_id=... into the URL and the report will then only show
+        case schedule instances that were triggered for that case.
+        """
+        return self.configuration_filter_value.get('case_id')
+
+    @cached_property
+    def configuration_filter_value(self):
+        return ScheduleInstanceFilter.get_value(self.request, self.domain)
+
+    @cached_property
+    def configuration_type(self):
+        return self.configuration_filter_value['configuration_type']
+
+    @cached_property
+    def rule_id(self):
+        return self.configuration_filter_value['rule_id']
+
+    @cached_property
+    def date_selector_type(self):
+        return self.configuration_filter_value['date_selector_type']
+
+    @cached_property
+    def next_event_due_after(self):
+        return self.configuration_filter_value['next_event_due_after']
+
+    @cached_property
+    def next_event_due_after_timestamp(self):
+        if self.date_selector_type != ScheduleInstanceFilter.SHOW_EVENTS_AFTER_DATE:
+            return None
+
+        try:
+            timestamp = datetime.strptime(self.next_event_due_after, '%Y-%m-%d')
+        except (TypeError, ValueError):
+            return None
+
+        return UserTime(timestamp, self.timezone).server_time().done().replace(tzinfo=None)
+
+    def get_utc_timestamp_display(self, timestamp):
+        return ServerTime(timestamp).user_time(self.timezone).done().strftime('%Y-%m-%d %H:%M:%S')
+
+    def get_link_display(self, href, text):
+        return '<a target="_blank" href="%s">%s</a>' % (href, escape(text))
+
+    def get_case_display(self, case):
+        from corehq.apps.reports.views import CaseDataView
+
+        return self.get_link_display(
+            reverse(CaseDataView.urlname, args=[self.domain, case.case_id]),
+            case.name or '-'
+        )
+
+    @memoized
+    def get_rule_display(self, rule_id):
+        try:
+            rule = AutomaticUpdateRule.objects.get(domain=self.domain, pk=rule_id,
+                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        except AutomaticUpdateRule.DoesNotExist:
+            return '-'
+
+        if rule.deleted:
+            return _("(Deleted Conditional Alert)")
+        else:
+            return self.get_link_display(
+                reverse(EditConditionalAlertView.urlname, args=[self.domain, rule_id]),
+                rule.name,
+            )
+
+    def get_broadcast_display(self, schedule_instance):
+        if isinstance(schedule_instance, AlertScheduleInstance):
+            cls = ImmediateBroadcast
+            schedule_id = schedule_instance.alert_schedule_id
+            broadcast_type = EditScheduleView.IMMEDIATE_BROADCAST
+        elif isinstance(schedule_instance, TimedScheduleInstance):
+            cls = ScheduledBroadcast
+            schedule_id = schedule_instance.timed_schedule_id
+            broadcast_type = EditScheduleView.SCHEDULED_BROADCAST
+        else:
+            raise TypeError("Expected AlertScheduleInstance or TimedScheduleInstance")
+
+        try:
+            broadcast = cls.objects.get(domain=self.domain, schedule_id=schedule_id)
+        except cls.DoesNotExist:
+            return '-'
+
+        if broadcast.deleted:
+            return _("(Deleted Broadcast)")
+        else:
+            return self.get_link_display(
+                reverse(EditScheduleView.urlname, args=[self.domain, broadcast_type, broadcast.pk]),
+                broadcast.name,
+            )
+
+    def get_recipient_display(self, recipient):
+        if recipient is None:
+            return _("(no recipient)")
+        elif isinstance(recipient, (list, tuple)):
+            # There should never be lists of lists in recipient, so this should
+            # always be a list of objects
+            return ", ".join([self.get_recipient_display(r) for r in recipient])
+        elif is_commcarecase(recipient):
+            return self.get_case_display(recipient)
+        elif isinstance(recipient, CommCareUser):
+            return self.get_link_display(
+                reverse(EditCommCareUserView.urlname, args=[self.domain, recipient.get_id]),
+                recipient.username
+            )
+        elif isinstance(recipient, WebUser):
+            return self.get_link_display(
+                reverse(EditWebUserView.urlname, args=[self.domain, recipient.get_id]),
+                recipient.username
+            )
+        elif isinstance(recipient, Group):
+            return self.get_link_display(
+                reverse(EditGroupMembersView.urlname, args=[self.domain, recipient.get_id]),
+                recipient.name
+            )
+        elif isinstance(recipient, CommCareCaseGroup):
+            return self.get_link_display(
+                reverse(CaseGroupCaseManagementView.urlname, args=[self.domain, recipient.get_id]),
+                recipient.name
+            )
+        elif isinstance(recipient, SQLLocation):
+            return self.get_link_display(
+                reverse(EditLocationView.urlname, args=[self.domain, recipient.location_id]),
+                recipient.name
+            )
+        else:
+            return _("(unknown)")
+
+    def get_querysets(self):
+        if self.configuration_type == ScheduleInstanceFilter.TYPE_CONDITIONAL_ALERT:
+            classes = (CaseAlertScheduleInstance, CaseTimedScheduleInstance)
+        else:
+            classes = (AlertScheduleInstance, TimedScheduleInstance)
+
+        for db_alias in get_db_aliases_for_partitioned_query():
+            for cls in classes:
+                qs = cls.objects.using(db_alias).filter(
+                    domain=self.domain,
+                    active=self.show_active_instances,
+                ).order_by('next_event_due', 'schedule_instance_id')
+
+                if self.next_event_due_after_timestamp:
+                    qs = qs.filter(next_event_due__gte=self.next_event_due_after_timestamp)
+
+                if self.configuration_type == ScheduleInstanceFilter.TYPE_CONDITIONAL_ALERT:
+                    if self.rule_id:
+                        qs = qs.filter(rule_id=self.rule_id)
+
+                    if self.case_id:
+                        qs = qs.filter(case_id=self.case_id)
+
+                yield qs
+
+    def get_current_page_records(self):
+        result = []
+
+        for qs in self.get_querysets():
+            result.extend(qs[:self.pagination.start + self.pagination.count])
+
+        result.sort(key=lambda record: (record.next_event_due, record.schedule_instance_id))
+
+        return result[self.pagination.start:self.pagination.start + self.pagination.count]
+
+    def get_schedule_instance_display(self, schedule_instance):
+        if isinstance(schedule_instance, (AlertScheduleInstance, TimedScheduleInstance)):
+            return [
+                self.get_utc_timestamp_display(schedule_instance.next_event_due),
+                self.get_broadcast_display(schedule_instance),
+                self.get_recipient_display(schedule_instance.recipient),
+                '-',
+            ]
+        elif isinstance(schedule_instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance)):
+            return [
+                self.get_utc_timestamp_display(schedule_instance.next_event_due),
+                self.get_rule_display(schedule_instance.rule_id),
+                self.get_recipient_display(schedule_instance.recipient),
+                self.get_case_display(schedule_instance.case) if schedule_instance.case else '-',
+            ]
+        else:
+            raise TypeError("Unexpected type: %s" % type(schedule_instance))
+
+    @property
+    def rows(self):
+        if self.max_pages_reached:
+            return [[
+                _("You have requested a page number which is too high to process. "
+                  "Please update the filter criteria above to reduce the number "
+                  "of pages in the report."),
+                "", "", "", "",
+            ]]
+
+        return [
+            self.get_schedule_instance_display(schedule_instance)
+            for schedule_instance in self.get_current_page_records()
+        ]
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+            return False
+
+        return (
+            (user and toggles.NEW_REMINDERS_MIGRATOR.enabled(user.username)) or
+            (project and project.uses_new_reminders)
+        )
+
+    @property
+    def shared_pagination_GET_params(self):
+        result = [
+            {'name': 'date_selector_type', 'value': self.date_selector_type},
+            {'name': 'next_event_due_after', 'value': self.next_event_due_after},
+            {'name': 'configuration_type', 'value': self.configuration_type},
+            {'name': 'rule_id', 'value': self.rule_id},
+        ]
+
+        if not self.show_active_instances:
+            result.append({'name': 'active', 'value': 'false'})
+
+        if self.case_id:
+            result.append({'name': 'case_id', 'value': self.case_id})
+
+        return result

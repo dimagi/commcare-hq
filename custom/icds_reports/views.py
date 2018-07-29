@@ -1,37 +1,56 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
+
+from collections import OrderedDict
+from wsgiref.util import FileWrapper
+
 import requests
 
 from datetime import datetime, date
-
+from memoized import memoized
 from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
-from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, Http404
+from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, StreamingHttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.views.generic.base import View, TemplateView
+from django.views.generic.base import View, TemplateView, RedirectView
+from django.utils.translation import ugettext as _, ugettext_lazy
+from django.conf import settings
 
-import settings
 from corehq import toggles
-from corehq.apps.cloudcare.utils import webapps_url
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.cloudcare.utils import webapps_module
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import UserRole, Permissions
+from corehq.blobs.exceptions import NotFound
+from corehq.form_processor.exceptions import AttachmentNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.files import safe_filename_header
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
+from custom.icds.tasks import (
+    push_translation_files_to_transifex,
+    pull_translation_files_from_transifex,
+    delete_resources_on_transifex,
+)
+from custom.icds.translations.integrations.exceptions import ResourceMissing
+from custom.icds.translations.integrations.transifex import Transifex
+from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
-from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
-    ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
-    TableauLocationFilter, ICDSYearFilter
+from custom.icds_reports.forms import AppTranslationsForm
+from custom.icds_reports.models.helper import IcdsFile
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -60,6 +79,7 @@ from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_m
     get_enrolled_women_sector_data, get_enrolled_women_data_chart
 from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_chart, \
     get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_sector_data
+from custom.icds_reports.reports.fact_sheets import FactSheetsReport
 from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_chart,\
     get_functional_toilet_data_map, get_functional_toilet_sector_data
 from custom.icds_reports.reports.immunization_coverage_data import get_immunization_coverage_data_chart, \
@@ -83,72 +103,28 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
-
-from custom.icds_reports.sqldata import ChildrenExport, FactSheetsReport, PregnantWomenExport, \
-    DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
-    prepare_issnip_monthly_register_reports
+    prepare_issnip_monthly_register_reports, prepare_excel_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
-    get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features
+    get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
+    current_month_stunting_column, current_month_wasting_column
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
+from couchexport.shortcuts import export_response
+from couchexport.export import Format
 
 
 @location_safe
-@method_decorator([toggles.ICDS_REPORTS.required_decorator(), login_and_domain_required], name='dispatch')
-class TableauView(TemplateView):
+@method_decorator([login_and_domain_required], name='dispatch')
+class TableauView(RedirectView):
 
-    template_name = 'icds_reports/tableau.html'
+    permanent = True
+    pattern_name = 'icds_dashboard'
 
-    filters = [
-        ICDSMonthFilter,
-        ICDSYearFilter,
-        TableauLocationFilter,
-        CasteFilter,
-        MinorityFilter,
-        DisabledFilter,
-        ResidentFilter,
-        MaternalStatusFilter,
-        ChildAgeFilter,
-        THRBeneficiaryType
-    ]
-
-    @property
-    def domain(self):
-        return self.kwargs['domain']
-
-    @property
-    def couch_user(self):
-        return self.request.couch_user
-
-    def get_context_data(self, **kwargs):
-        location_type_code, user_location_id, state_id, district_id, block_id = _get_user_location(
-            self.couch_user, self.domain
-        )
-        client_ip = self.request.META.get('X-Forwarded-For', '')
-        tableau_access_url = get_tableau_trusted_url(client_ip)
-
-        kwargs.update({
-            'report_workbook': self.kwargs.get('workbook'),
-            'report_worksheet': self.kwargs.get('worksheet'),
-            'debug': self.request.GET.get('debug', False),
-            'view_by': location_type_code,
-            'view_by_value': user_location_id,
-            'state_id': state_id,
-            'district_id': district_id,
-            'block_id': block_id,
-            'tableau_access_url': tableau_access_url,
-            'filters': [
-                {
-                    'html': view_filter(request=self.request, domain=self.domain).render(),
-                    'slug': view_filter(request=self.request, domain=self.domain).slug
-                }
-                for view_filter in self.filters
-            ]
-        })
-        return super(TableauView, self).get_context_data(**kwargs)
+    def get_redirect_url(self, domain=None, **kwargs):
+        return reverse('icds_dashboard', args=[domain])
 
 
 def _get_user_location(user, domain):
@@ -248,15 +224,20 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
-        kwargs['have_access'] = icds_pre_release_features(self.couch_user)
-
+        kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
+            self.kwargs['domain']
+        ).location_ids())
+        kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
+        kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
+            self.domain, 'access_all_locations'
+        )
         is_commcare_user = self.couch_user.is_commcare_user()
 
         if self.couch_user.is_web_user():
             kwargs['is_web_user'] = True
         elif is_commcare_user and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
-            kwargs['report_an_issue_url'] = webapps_url(
+            kwargs['report_an_issue_url'] = webapps_module(
                 domain=self.domain,
                 app_id=build_id,
                 module_id=0,
@@ -310,7 +291,9 @@ class ProgramSummaryView(BaseReportView):
 
         data = {}
         if step == 'maternal_child':
-            data = get_maternal_child_data(domain, config, include_test)
+            data = get_maternal_child_data(
+                domain, config, include_test, icds_pre_release_features(self.request.couch_user)
+            )
         elif step == 'icds_cas_reach':
             data = get_cas_reach_data(
                 domain,
@@ -378,10 +361,16 @@ class LocationView(View):
 
     def get(self, request, *args, **kwargs):
         location_id = request.GET.get('location_id')
+        user_locations_with_parents = SQLLocation.objects.get_queryset_ancestors(
+            self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
+        ).distinct()
+        parent_ids = [loc.location_id for loc in user_locations_with_parents]
         if location_id == 'null' or location_id == 'undefined':
             location_id = None
         if location_id:
-            if not user_can_access_location_id(self.kwargs['domain'], request.couch_user, location_id):
+            if not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, location_id
+            ) and location_id not in parent_ids:
                 return JsonResponse({})
             location = get_object_or_404(
                 SQLLocation,
@@ -392,12 +381,16 @@ class LocationView(View):
             map_location_name = location.name
             if 'map_location_name' in location.metadata and location.metadata['map_location_name']:
                 map_location_name = location.metadata['map_location_name']
-
             return JsonResponse({
                 'name': location.name,
                 'map_location_name': map_location_name,
                 'location_type': location.location_type.code,
-                'location_type_name': location.location_type_name
+                'location_type_name': location.location_type_name,
+                'user_have_access': user_can_access_location_id(
+                    self.kwargs['domain'],
+                    request.couch_user, location.location_id
+                ),
+                'user_have_access_to_parent': location.location_id in parent_ids
             })
 
         parent_id = request.GET.get('parent_id')
@@ -407,9 +400,12 @@ class LocationView(View):
 
         locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
         if not parent_id:
-            locations = SQLLocation.objects.filter(domain=self.kwargs['domain'], parent_id__isnull=True)
+            locations = locations.filter(parent_id__isnull=True)
         else:
             locations = locations.filter(parent__location_id=parent_id)
+
+        if locations.count() == 0:
+            locations = user_locations_with_parents.filter(parent__location_id=parent_id)
 
         if name:
             locations = locations.filter(name__iexact=name)
@@ -422,6 +418,11 @@ class LocationView(View):
                     'name': loc.name,
                     'parent_id': parent_id,
                     'location_type_name': loc.location_type_name,
+                    'user_have_access': user_can_access_location_id(
+                        self.kwargs['domain'],
+                        request.couch_user, loc.location_id
+                    ),
+                    'user_have_access_to_parent': loc.location_id in parent_ids
                 }
                 for loc in locations if show_test or loc.metadata.get('is_test_location', 'real') != 'test'
             ]
@@ -441,11 +442,13 @@ class LocationAncestorsView(View):
             self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
         ).distinct()) + list(selected_location.get_ancestors())
         parent_ids = [x.pk for x in parents]
+        parent_locations_ids = [loc.location_id for loc in parents]
         locations = SQLLocation.objects.accessible_to_user(
             domain=self.kwargs['domain'], user=self.request.couch_user
         ).filter(
             ~Q(pk__in=parent_ids) & (Q(parent_id__in=parent_ids) | Q(parent_id__isnull=True))
         ).select_related('parent').distinct().order_by('name')
+
         return JsonResponse(data={
             'locations': [
                 {
@@ -453,15 +456,25 @@ class LocationAncestorsView(View):
                     'name': location.name,
                     'parent_id': location.parent.location_id if location.parent else None,
                     'location_type_name': location.location_type_name,
+                    'user_have_access': user_can_access_location_id(
+                        self.kwargs['domain'],
+                        request.couch_user, location.location_id
+                    ),
+                    'user_have_access_to_parent': location.location_id in parent_locations_ids
                 }
-                for location in set(list(locations) + list(parents))
+                for location in list(OrderedDict.fromkeys(list(locations) + list(parents)))
                 if show_test or location.metadata.get('is_test_location', 'real') != 'test'
             ],
             'selected_location': {
                 'location_type_name': selected_location.location_type_name,
                 'location_id': selected_location.location_id,
                 'name': selected_location.name,
-                'parent_id': selected_location.parent.location_id if selected_location.parent else None
+                'parent_id': selected_location.parent.location_id if selected_location.parent else None,
+                'user_have_access': user_can_access_location_id(
+                    self.kwargs['domain'],
+                    request.couch_user, selected_location.location_id
+                ),
+                'user_have_access_to_parent': selected_location.location_id in parent_locations_ids
             }
         })
 
@@ -474,9 +487,9 @@ class AWCLocationView(View):
         if location_id == 'null' or location_id == 'undefined':
             location_id = None
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
-        awcs = selected_location.get_descendants().filter(
-            location_type__code=AWC_LOCATION_TYPE_CODE
-        ).order_by('name')
+        awcs = SQLLocation.objects.accessible_to_user(
+            domain=self.kwargs['domain'], user=self.request.couch_user
+        ).filter(parent_id=selected_location.pk).order_by('name')
         return JsonResponse(data={
             'locations': [
                 {
@@ -485,6 +498,20 @@ class AWCLocationView(View):
                 }
                 for location in awcs
             ]
+        })
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class HaveAccessToLocation(View):
+    def get(self, request, *args, **kwargs):
+        location_id = request.GET.get('location_id')
+        have_access = user_can_access_location_id(
+            self.kwargs['domain'],
+            request.couch_user, location_id
+        )
+        return JsonResponse(data={
+            'haveAccess': have_access
         })
 
 
@@ -540,7 +567,8 @@ class AwcReportsView(BaseReportView):
                 config,
                 tuple(current_month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
-                include_test
+                include_test,
+                icds_pre_release_features(self.request.couch_user)
             )
         elif step == 'demographics':
             data = get_awc_report_demographics(
@@ -563,12 +591,18 @@ class AwcReportsView(BaseReportView):
                 start = int(request.GET.get('start', 0))
                 length = int(request.GET.get('length', 10))
                 draw = int(request.GET.get('draw', 0))
-
+                icds_features_flag = icds_pre_release_features(self.request.couch_user)
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
                 order_dir = request.GET.get('order[0][dir]', 'asc')
                 if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
                     order_by_name_column = 'dob'
+                elif order_by_name_column == 'current_month_nutrition_status':
+                    order_by_name_column = 'current_month_nutrition_status_sort'
+                elif order_by_name_column == 'current_month_stunting':
+                    order_by_name_column = '{}_sort'.format(current_month_stunting_column(icds_features_flag))
+                elif order_by_name_column == 'current_month_wasting':
+                    order_by_name_column = '{}_sort'.format(current_month_wasting_column(icds_features_flag))
                 order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
 
                 data = get_awc_report_beneficiary(
@@ -579,10 +613,13 @@ class AwcReportsView(BaseReportView):
                     config['awc_id'],
                     tuple(current_month.timetuple())[:3],
                     tuple(two_before.timetuple())[:3],
+                    icds_features_flag
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
-                self.request.GET.get('case_id')
+                self.request.GET.get('case_id'),
+                config['awc_id'],
+                tuple(current_month.timetuple())[:3]
             )
         return JsonResponse(data=data)
 
@@ -613,7 +650,7 @@ class ExportIndicatorView(View):
 
         sql_location = None
 
-        if location:
+        if location and indicator != ISSNIP_MONTHLY_REGISTER_PDF:
             try:
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
                 locations = sql_location.get_ancestors(include_self=True)
@@ -628,62 +665,40 @@ class ExportIndicatorView(View):
             except SQLLocation.DoesNotExist:
                 pass
 
-        if indicator == CHILDREN_EXPORT:
-            return ChildrenExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test
-            ).to_export(export_format, location)
-        elif indicator == PREGNANT_WOMEN_EXPORT:
-            return PregnantWomenExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test
-            ).to_export(export_format, location)
-        elif indicator == DEMOGRAPHICS_EXPORT:
-            return DemographicsExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test,
-                beta=icds_pre_release_features(request.user)
-            ).to_export(export_format, location)
-        elif indicator == SYSTEM_USAGE_EXPORT:
-            return SystemUsageExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test
-            ).to_export(export_format, location)
-        elif indicator == AWC_INFRASTRUCTURE_EXPORT:
-            return AWCInfrastructureExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test
-            ).to_export(export_format, location)
-        elif indicator == BENEFICIARY_LIST_EXPORT:
-            if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
-                return HttpResponseBadRequest()
-            return BeneficiaryExport(
-                config=beneficiary_config,
-                loc_level=aggregation_level,
-                show_test=include_test
-            ).to_export('csv', location)
-        elif indicator == ISSNIP_MONTHLY_REGISTER_PDF:
+        if indicator == ISSNIP_MONTHLY_REGISTER_PDF:
             awcs = request.POST.get('selected_awcs').split(',')
             location = request.POST.get('location', '')
             if 'all' in awcs and location:
-                awcs = SQLLocation.objects.get(
+                awcs = list(SQLLocation.objects.get(
                     location_id=location
                 ).get_descendants().filter(
                     location_type__code=AWC_LOCATION_TYPE_CODE
-                ).location_ids()
+                ).location_ids())
             pdf_format = request.POST.get('pdfformat')
             task = prepare_issnip_monthly_register_reports.delay(
                 self.kwargs['domain'],
-                self.request.couch_user,
                 awcs,
                 pdf_format,
                 month,
-                year
+                year,
+                request.couch_user
+            )
+            task_id = task.task_id
+            return JsonResponse(data={'task_id': task_id})
+        if indicator == BENEFICIARY_LIST_EXPORT:
+            if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
+                return HttpResponseBadRequest()
+        if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
+                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT):
+            task = prepare_excel_reports.delay(
+                config,
+                aggregation_level,
+                include_test,
+                icds_pre_release_features(self.request.couch_user),
+                location,
+                self.kwargs['domain'],
+                export_format,
+                indicator
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})
@@ -742,18 +757,23 @@ class PrevalenceOfSevereView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+        icds_futures_flag = icds_pre_release_features(self.request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_severe_sector_data(domain, config, loc_level, location, include_test)
+                data = get_prevalence_of_severe_sector_data(
+                    domain, config, loc_level, location, include_test, icds_futures_flag
+                )
             else:
-                data = get_prevalence_of_severe_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_prevalence_of_severe_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_futures_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_severe_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_futures_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test)
+            data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test, icds_futures_flag)
 
         return JsonResponse(data={
             'report_data': data,
@@ -783,18 +803,26 @@ class PrevalenceOfStuntingView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+
+        icds_futures_flag = icds_pre_release_features(self.request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_stunting_sector_data(domain, config, loc_level, location, include_test)
+                data = get_prevalence_of_stunting_sector_data(
+                    domain, config, loc_level, location, include_test, icds_futures_flag
+                )
             else:
-                data = get_prevalence_of_stunting_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_prevalence_of_stunting_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_futures_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_stunting_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_futures_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_prevalence_of_stunting_data_chart(domain, config, loc_level, include_test)
+            data = get_prevalence_of_stunting_data_chart(
+                domain, config, loc_level, include_test, icds_futures_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,
@@ -1497,36 +1525,196 @@ class ICDSBugReportView(BugReportView):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
+class DownloadExportReport(View):
+    def get(self, request, *args, **kwargs):
+        uuid = self.request.GET.get('uuid', None)
+        file_format = self.request.GET.get('file_format', 'xlsx')
+        content_type = Format.from_format(file_format)
+        data_type = self.request.GET.get('data_type', 'beneficiary_list')
+        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type=data_type)
+        response = HttpResponse(
+            icds_file.get_file_from_blobdb().read(),
+            content_type=content_type.mimetype
+        )
+        response['Content-Disposition'] = safe_filename_header(data_type, content_type.extension)
+        return response
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
 class DownloadPDFReport(View):
     def get(self, request, *args, **kwargs):
         uuid = self.request.GET.get('uuid', None)
         format = self.request.GET.get('format', None)
-        client = get_redis_client()
+        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type='issnip_monthly')
         if format == 'one':
-            response = HttpResponse(client.get(uuid), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register_cumulative.pdf"'
+            response = HttpResponse(icds_file.get_file_from_blobdb().read(), content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register_cumulative.pdf"'
             return response
         else:
-            response = HttpResponse(client.get(uuid), content_type='application/zip')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register.zip"'
+            response = HttpResponse(icds_file.get_file_from_blobdb().read(), content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register.zip"'
             return response
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class CheckPDFReportStatus(View):
+class CheckExportReportStatus(View):
     def get(self, request, *args, **kwargs):
         task_id = self.request.GET.get('task_id', None)
-
         res = AsyncResult(task_id)
         status = res.ready()
 
         if status:
-            task_result = prepare_issnip_monthly_register_reports.AsyncResult(task_id)
-            result = task_result.get()
             return JsonResponse(
                 {
                     'task_ready': status,
-                    'task_result': result
+                    'task_result': res.result
                 }
             )
         return JsonResponse({'task_ready': status})
+
+
+@location_safe
+class ICDSImagesAccessorAPI(View):
+    @method_decorator(api_auth)
+    @method_decorator(require_permission(
+        Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport'))
+    def get(self, request, domain, form_id=None, attachment_id=None):
+        if not form_id or not attachment_id:
+            raise Http404
+        try:
+            content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
+        except AttachmentNotFound:
+            raise Http404
+        if 'image' not in content.content_type:
+            raise Http404
+        return StreamingHttpResponse(
+            streaming_content=FileWrapper(content.content_stream),
+            content_type=content.content_type
+        )
+
+
+@location_safe
+@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
+class ICDSAppTranslations(BaseDomainView):
+    page_title = ugettext_lazy('ICDS App Translations')
+    urlname = 'icds_app_translations'
+    template_name = 'icds_reports/icds_app/app_translations.html'
+
+    @property
+    @memoized
+    def translations_form(self):
+        if self.request.POST:
+            return AppTranslationsForm(self.domain, self.request.POST)
+        else:
+            return AppTranslationsForm(self.domain)
+
+    @property
+    def page_context(self):
+        transifex_details_available = transifex_details_available_for_domain(self.domain)
+        context = {'integration_available': transifex_details_available}
+        if transifex_details_available:
+            context['translations_form'] = self.translations_form
+        return context
+
+    def section_url(self):
+        return
+
+    def transifex(self, domain, form_data):
+        transifex_project_slug = form_data.get('transifex_project_slug')
+        source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
+        return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
+                         form_data['version'])
+
+    def perform_push_request(self, request, form_data):
+        if form_data['target_lang']:
+            if not self.ensure_resources_present(request):
+                return False
+        push_translation_files_to_transifex.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to submit files for translations'))
+        return True
+
+    def resources_translated(self, request):
+        resource_pending_translations = (self._transifex.
+                                         resources_pending_translations(break_if_true=True))
+        if resource_pending_translations:
+            messages.error(
+                request,
+                _("Resources yet to be completely translated, for ex: {}".format(
+                    resource_pending_translations)))
+            return False
+        return True
+
+    def ensure_resources_present(self, request):
+        if not self._transifex.resource_slugs:
+            messages.error(request, _('Resources not found for this project and version.'))
+            return False
+        return True
+
+    def perform_pull_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
+            return False
+        if form_data['perform_translated_check']:
+            if not self.resources_translated(request):
+                return False
+        if form_data['lock_translations']:
+            if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+                messages.error(request, _('Resources yet to be completely translated for all languages. '
+                                          'Hence, the request for locking resources can not be performed.'))
+                return False
+        pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to pull for translations. '
+                                    'You should receive an email shortly'))
+        return True
+
+    def perform_delete_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
+            return False
+        if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+            messages.error(request, _('Resources yet to be completely translated for all languages. '
+                                      'Hence, the request for deleting resources can not be performed.'))
+            return False
+        delete_resources_on_transifex.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to delete resources.'))
+        return True
+
+    def perform_request(self, request, form_data):
+        self._transifex = self.transifex(request.domain, form_data)
+        if not self._transifex.source_lang_is(form_data.get('source_lang')):
+            messages.error(request, _('Source lang selected not available for the project'))
+            return False
+        else:
+            if form_data['action'] == 'push':
+                return self.perform_push_request(request, form_data)
+            elif form_data['action'] == 'pull':
+                return self.perform_pull_request(request, form_data)
+            elif form_data['action'] == 'delete':
+                return self.perform_delete_request(request, form_data)
+
+    def post(self, request, *args, **kwargs):
+        if not transifex_details_available_for_domain(self.domain):
+            messages.error(request, _('Transifex account not set up for this environment'))
+        else:
+            form = self.translations_form
+            if form.is_valid():
+                form_data = form.cleaned_data
+                try:
+                    if self.perform_request(request, form_data):
+                        return redirect(self.urlname, domain=self.domain)
+                except ResourceMissing as e:
+                    messages.error(request, e)
+        return self.get(request, *args, **kwargs)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class InactiveAWW(View):
+    def get(self, request, *args, **kwargs):
+        sync_date = request.GET.get('date', None)
+        if sync_date:
+            sync = IcdsFile.objects.filter(file_added=sync_date).first()
+        else:
+            sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
+        zip_name = 'inactive_awws_%s' % sync.file_added.strftime('%Y-%m-%d')
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
+        except NotFound:
+            raise Http404

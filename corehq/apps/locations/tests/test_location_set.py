@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.fixtures import LocationSet

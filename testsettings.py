@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from settings import *
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
@@ -10,7 +11,6 @@ INSTALLED_APPS = (
     'testapps.test_elasticsearch',
     'testapps.test_pillowtop',
 ) + tuple(INSTALLED_APPS)
-assert not TEST_APPS, "TEST_APPS is deprecated; use LOCAL_APPS instead"
 
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
@@ -43,10 +43,6 @@ for key, value in {
 
     'NOSE_EXCLUDE_DIRS': ';'.join([
         'scripts',
-
-        # strange error:
-        # TypeError: Attribute setup of <module 'touchforms.backend' ...> is not a python function.
-        'submodules/touchforms-src/touchforms/backend',
     ]),
 }.items():
     os.environ.setdefault(key, value)

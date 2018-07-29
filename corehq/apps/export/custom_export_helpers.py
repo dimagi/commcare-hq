@@ -1,14 +1,13 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django_prbac.utils import has_privilege
 from corehq import privileges
 from corehq.apps.export.exceptions import BadExportConfiguration
-from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
-from corehq.apps.reports.standard.export import DeidExportReport
 from couchexport.models import ExportTable, ExportSchema, ExportColumn, display_column_types, SplitColumn
 from django.utils.translation import ugettext as _, ugettext_lazy
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.commtrack.models import StockExportColumn
 from corehq.apps.domain.models import Domain
 from six.moves import filter
@@ -165,7 +164,6 @@ class CustomExportHelper(object):
         self.update_custom_params()
         self.custom_export.custom_validate()
         self.custom_export.save()
-        touch_exports(self.domain)
 
         if self.presave:
             HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export.get_id)
@@ -184,7 +182,6 @@ class CustomExportHelper(object):
             'column_type_options': ColumnTypesOptions.json_options,
             'presave': self.presave,
             'export_stock': self.export_stock,
-            'DeidExportReport_name': DeidExportReport.name,
             'table_configuration': table_configuration,
             'domain': self.domain,
             'commtrack_domain': Domain.get_by_name(self.domain).commtrack_enabled,

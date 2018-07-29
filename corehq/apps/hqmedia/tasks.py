@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from io import open
 import os
 import tempfile
 from wsgiref.util import FileWrapper
@@ -109,7 +111,8 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
 @task
 def build_application_zip(include_multimedia_files, include_index_files, app,
-                          download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip"):
+                          download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
+                          download_targeted_version=False):
     from corehq.apps.hqmedia.views import iter_app_files
 
     DownloadBase.set_progress(build_application_zip, 0, 100)
@@ -126,11 +129,16 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
             app.version,
             build_profile_id
         ))
+        if download_targeted_version:
+            fpath += '-targeted'
     else:
         _, fpath = tempfile.mkstemp()
 
     if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
-        files, errors = iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id)
+        files, errors = iter_app_files(
+            app, include_multimedia_files, include_index_files, build_profile_id,
+            download_targeted_version=download_targeted_version,
+        )
         with open(fpath, 'wb') as tmp:
             with zipfile.ZipFile(tmp, "w") as z:
                 for path, data in files:
@@ -142,7 +150,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
     common_kwargs = dict(
         mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
         content_disposition='attachment; filename="{fname}"'.format(fname=filename),
-        download_id=download_id,
+        download_id=download_id, expiry=(1 * 60 * 60)
     )
     if use_transfer:
         expose_file_download(
@@ -152,8 +160,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         )
     else:
         expose_cached_download(
-            FileWrapper(open(fpath)),
-            expiry=(1 * 60 * 60),
+            FileWrapper(open(fpath, 'rb')),
             file_extension=file_extention_from_filename(filename),
             **common_kwargs
         )

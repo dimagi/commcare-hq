@@ -1,0 +1,115 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "icds-cas"
+  ],
+  "server_environment": [
+    "softlayer",
+    "icds-new"
+  ],
+  "config": {
+    "table_id": "static-thr_forms_v2",
+    "display_name": "Forms - Take Home Ration (Partitioned by month) (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "type": "boolean_expression",
+      "property_value": "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
+    },
+    "configured_indicators": [
+      {
+        "display_name": "AWC ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "awc_id",
+        "expression": {
+          "type": "named",
+          "name": "user_location_id"
+        }
+      },
+      {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "create_index": true,
+        "column_id": "supervisor_id",
+        "expression": {
+          "location_id_expression": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "type": "location_parent_id"
+        }
+      },
+      {
+        "display_name": "Submission Date",
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "submitted_on",
+        "expression": {
+          "datatype": "date",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        }
+      },
+      {
+        "display_name": "Count",
+        "column_id": "count",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "constant",
+          "constant": 1
+        }
+      }
+    ],
+    "named_expressions": {
+      "user_location_id": {
+        "type": "icds_user_location",
+        "user_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      }
+    },
+    "named_filters": {},
+    "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "submitted_on",
+          "subtype": "date",
+          "constraint": "month"
+        }
+      ]
+    },
+    "disable_destructive_rebuild": true
+  }
+}

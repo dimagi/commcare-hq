@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -100,18 +101,3 @@ class UserIDProvider(BaseIDProvider):
                 domain, include_web_users=True, include_mobile_users=False
             )
             yield WebUser, list(user_ids)
-
-
-class SyncLogIDProvider(BaseIDProvider):
-    def get_doc_ids(self, domain):
-        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
-        from casexml.apps.phone.models import SyncLog
-        for user_id in get_all_user_ids_by_domain(domain):
-            rows = SyncLog.view(
-                "phone/sync_logs_by_user",
-                startkey=[user_id],
-                endkey=[user_id, {}],
-                reduce=False,
-                include_docs=False,
-            )
-            yield SyncLog, [row['id'] for row in rows]

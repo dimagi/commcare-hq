@@ -1,7 +1,7 @@
 describe('NotificationsService Unit Tests', function() {
     var fakeRMIUrl = '/fake/rmi',
         viewModel,
-        FakePromise = function (options) {
+        FakePromise = function () {
             var self = this;
             self.successCallback = function () {};
             self.errorCallback = function () {};
@@ -20,7 +20,7 @@ describe('NotificationsService Unit Tests', function() {
         };
 
     var fakePromise = new FakePromise({});
-    sinon.stub(jQuery, 'ajax', fakePromise.mock);
+    sinon.stub($, 'ajax', fakePromise.mock);
 
     it('Initialization', function () {
         var notifications = hqImport('notifications/js/notifications_service');

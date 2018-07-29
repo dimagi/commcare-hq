@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 
 from django.utils import translation
@@ -31,7 +32,7 @@ from custom.ilsgateway.tanzania.reminders import (
 )
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, ILSTestScript
 from custom.ilsgateway.utils import get_sql_locations_by_domain_and_group
-from custom.logistics.tests.utils import bootstrap_user
+from custom.ilsgateway.tests.utils import bootstrap_user
 from custom.zipline.models import EmergencyOrder
 import six
 
@@ -1086,7 +1087,7 @@ class TestHandlers(ILSTestScript):
                 self.en_user1.get_id,
                 '5551235',
                 self.en_user1.sql_location.site_code,
-                {'dp': {'quantity': u'100'}, 'fs': {'quantity': u'50'}}
+                {'dp': {'quantity': '100'}, 'fs': {'quantity': '50'}}
             ]
         )
 
@@ -1117,7 +1118,7 @@ class TestHandlers(ILSTestScript):
     def test_unicode_characters(self):
         with localize('sw'):
             response = _(SOH_CONFIRM)
-        script = u"""
+        script = """
             5551235 > Hmk Id 400 \u0660Dp 569 Ip 678
             5551235 < %(soh_confirm)s
         """ % {"soh_confirm": response}

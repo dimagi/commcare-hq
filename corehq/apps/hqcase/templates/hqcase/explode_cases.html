@@ -1,40 +1,11 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
-{% block js-inline %} {{  block.super }}
-    <script>
-     $(function(){
-         $('#explode').koApplyBindings({
-             factor: ko.observable(''),
-             user_id: ko.observable(''),
-         });
-         $('#explode-user_id').select2({
-             ajax: {
-                 url: "{% url 'users_select2_options' domain %}",
-                 type: 'POST',
-                 datatype: 'json',
-                 quietMills: 250,
-                 data: function (term, page) {
-                     return {
-                         q: term,
-                         page: page,
-                     };
-                 },
-                 results: function (data, page) {
-                     if (data.success) {
-                         var limit = data.limit;
-                         var hasMore = (page * limit) < data.total;
-                         return {
-                             results: data.items,
-                             more: hasMore,
-                         };
-                     }
-                 }
-             }
-         });
-     });
-    </script>
-{% endblock %}
+
+{% requirejs_main 'hqcase/js/explode_cases' %}
+
 {% block page_content %}
+    {% registerurl "users_select2_options" domain %}
+
     <div id="explode">
         <h1>Explode Cases 💣</h1>
         <h2><small>Use at your own risk 🙃</small></h2>

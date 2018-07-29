@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import namedtuple
 from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
-
+from corehq import toggles
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
@@ -41,8 +42,9 @@ class SmsGatewayFeeCriteria(models.Model):
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     country_code = models.IntegerField(null=True, blank=True, db_index=True)
     prefix = models.CharField(max_length=10, blank=True, default="", db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'smsbillables'
 
     @classmethod
@@ -55,7 +57,11 @@ class SmsGatewayFeeCriteria(models.Model):
         - backend_instance (optional)
         - country_code and prefix (optional)
         """
-        all_possible_criteria = cls.objects.filter(backend_api_id=backend_api_id, direction=direction)
+        all_possible_criteria = cls.objects.filter(
+            backend_api_id=backend_api_id,
+            direction=direction,
+            is_active=True,
+        )
 
         if all_possible_criteria.count() == 0:
             return None
@@ -115,7 +121,7 @@ class SmsGatewayFee(models.Model):
     currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
     date_created = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'smsbillables'
 
     @classmethod
@@ -183,7 +189,7 @@ class SmsUsageFeeCriteria(models.Model):
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     domain = models.CharField(max_length=25, db_index=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'smsbillables'
 
     @classmethod
@@ -224,7 +230,7 @@ class SmsUsageFee(models.Model):
     amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
     date_created = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'smsbillables'
 
     @classmethod
@@ -277,10 +283,10 @@ class SmsBillable(models.Model):
     is_valid = models.BooleanField(default=True, db_index=True)
     domain = models.CharField(max_length=100, db_index=True)
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
-    date_sent = models.DateTimeField()
+    date_sent = models.DateTimeField(db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'smsbillables'
 
     @property
@@ -329,7 +335,7 @@ class SmsBillable(models.Model):
 
         gateway_charge_info = cls._get_gateway_fee(
             message_log.backend_api, message_log.backend_id, phone_number, direction, log_id,
-            message_log.backend_message_id
+            message_log.backend_message_id, domain
         )
         billable.gateway_fee = gateway_charge_info.gateway_fee
         billable.gateway_fee_conversion_rate = gateway_charge_info.conversion_rate
@@ -358,9 +364,10 @@ class SmsBillable(models.Model):
 
     @classmethod
     def _get_gateway_fee(cls, backend_api_id, backend_instance,
-                         phone_number, direction, couch_id, backend_message_id):
+                         phone_number, direction, couch_id, backend_message_id, domain):
         country_code, national_number = get_country_code_and_national_number(phone_number)
-        is_gateway_billable = backend_instance is None or _sms_backend_is_global(backend_instance)
+        is_gateway_billable = backend_instance is None or _sms_backend_is_global(
+            backend_instance) or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
 
         if is_gateway_billable:
             is_twilio_message = backend_api_id == SQLTwilioBackend.get_api_id()

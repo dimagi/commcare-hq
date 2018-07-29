@@ -28,13 +28,12 @@
             </p>
         {% endif %}
         <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">{% csrf_token %}
-            <input type="hidden" name="dropbox-next" value="" />
             <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
                 <i class="fa fa-download"></i>
                 {% trans "Download File Now" %}
             </a>
             {% if allow_dropbox_sync %}
-                <button type="submit" class="btn" id="dropbox-sync-submit">
+                <button type="submit" class="btn btn-default disable-on-submit" id="dropbox-sync-submit">
                     <i class="fa fa-envelope"></i> {% trans 'Sync to Dropbox' %}
                 </button>
             {% endif %}
@@ -50,15 +49,6 @@
         {% endfor %}
         </ul>
     {% endif %}
-    <script>
-        $("#export-download-status .loading-indicator").addClass('hide');
-        {% if allow_dropbox_sync %}
-            $(".download-form").submit(function() {
-                $("#dropbox-sync-submit").prop('disabled', true);
-            });
-            $('input[name="dropbox-next"]').attr('value', window.location.href);
-        {% endif %}
-    </script>
     </div>
 {% else %}
     {% include 'soil/partials/download_in_progress.html' %}

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from dimagi.utils.decorators.memoized import memoized
+from __future__ import unicode_literals
+from memoized import memoized
 
 from ..utils import should_use_sql_backend
 

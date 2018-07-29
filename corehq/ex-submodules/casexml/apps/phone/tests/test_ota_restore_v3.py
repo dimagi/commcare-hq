@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
@@ -60,7 +61,7 @@ class TestRestoreContent(SimpleTestCase):
         }
 
     def test_no_items(self):
-        user = u'user1'
+        user = 'user1'
         body = b'<elem>data0</elem>'
         expected = self._expected(user, body, items=None)
         with RestoreContent(user, False) as response:
@@ -69,7 +70,7 @@ class TestRestoreContent(SimpleTestCase):
                 self.assertEqual(expected, fileobj.read())
 
     def test_items(self):
-        user = u'user1'
+        user = 'user1'
         body = b'<elem>data0</elem>'
         expected = self._expected(user, body, items=2)
         with RestoreContent(user, True) as response:

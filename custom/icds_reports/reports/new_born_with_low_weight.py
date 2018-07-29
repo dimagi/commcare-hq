@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division
 
+from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -59,11 +60,11 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
         "rightLegend": {
             "average": average,
             "info": _((
-                "Percentage of newborns with born with birth weight less than 2500 grams."
+                "Of all the children born in the current month and enrolled for Anganwadi services, the "
+                "percentage that had a birth weight less than 2500 grams. "
                 "<br/><br/>"
-                "Newborns with Low Birth Weight are closely associated with foetal and neonatal "
-                "mortality and morbidity, inhibited growth and cognitive development, and chronic "
-                "diseases later in life"
+                "Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality "
+                "and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. "
             )),
             "extended_info": [
                 {
@@ -75,14 +76,22 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
                     'value': indian_formatted_number(low_birth_total)
                 },
                 {
+                    'indicator': 'Total Number of children born and weight in given month{}:'.format(
+                        chosen_filters
+                    ),
+                    'value': indian_formatted_number(in_month_total)
+                },
+                {
                     'indicator': '% newborns with LBW in given month{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (
-                        low_birth_total * 100 / float(in_month_total or 1))
+                    'value': '%.2f%%' % (low_birth_total * 100 / float(in_month_total or 1))
+                },
+                {
+                    'indicator': '% of children with weight in normal{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % ((in_month_total - low_birth_total) * 100 / float(in_month_total or 1))
                 },
                 {
                     'indicator': '% Unweighted{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (
-                        in_month_total * 100 / float(total or 1))
+                    'value': '%.2f%%' % ((total - in_month_total) * 100 / float(total or 1))
                 }
             ]
 
@@ -227,11 +236,11 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_i
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of newborns with born with birth weight less than 2500 grams."
+            "Of all the children born in the current month and enrolled for Anganwadi services, the percentage "
+            "that had a birth weight less than 2500 grams. "
             "<br/><br/>"
-            "Newborns with Low Birth Weight are closely associated with foetal and neonatal "
-            "mortality and morbidity, inhibited growth and cognitive development, and chronic "
-            "diseases later in life"
+            "Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality and "
+            "morbidity, inhibited growth and cognitive development, and chronic diseases later in life. "
         )),
         "chart_data": [
             {

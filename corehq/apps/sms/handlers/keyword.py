@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.api import (
     MessageMetadata,
@@ -11,7 +12,7 @@ from corehq.apps.smsforms.app import get_responses, start_session
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, MessagingEvent, Keyword, KeywordAction
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.handlers.form_session import validate_answer
-from corehq.apps.sms.util import touchforms_error_is_config_error
+from corehq.apps.sms.util import touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.apps.reminders.models import (
@@ -23,7 +24,7 @@ from corehq.apps.reminders.util import create_immediate_reminder
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
-from touchforms.formplayer.api import current_question, TouchformsError
+from corehq.apps.formplayer_api.smsforms.api import current_question, TouchformsError
 from corehq.apps.app_manager.models import Form
 from corehq.form_processor.utils import is_commcarecase
 from six.moves import filter
@@ -153,7 +154,7 @@ def global_keyword_current(v, text, msg, text_words, open_sessions):
             xforms_session_couch_id=session._id,
         )
         
-        resp = current_question(session.session_id)
+        resp = current_question(session.session_id, v.domain)
         send_sms_to_verified_number(v, resp.event.text_prompt,
             metadata=outbound_metadata)
     return True
@@ -374,11 +375,11 @@ def start_session_for_structured_sms(domain, contact, phone_number, app, module,
             logged_subevent.save()
         return (session, responses, False, None)
     except TouchformsError as e:
-        human_readable_message = e.response_data.get('human_readable_message', None)
+        human_readable_message = get_formplayer_exception(domain, e)
         logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
             additional_error_text=human_readable_message)
 
-        if touchforms_error_is_config_error(e):
+        if touchforms_error_is_config_error(domain, e):
             error_code = MSG_FORM_ERROR
         else:
             notify_exception(None, message=('Could not process structured sms for'

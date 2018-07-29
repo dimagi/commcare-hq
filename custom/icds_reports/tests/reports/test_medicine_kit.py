@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_map, get_medicine_kit_data_chart, \
@@ -8,9 +9,8 @@ from django.test import TestCase
 from custom.icds_reports.const import ChartColors, MapColors
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestMedicineKit(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_medicine_kit_data_map(
@@ -79,7 +79,8 @@ class TestMedicineKit(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of AWCs that reported having a Medicine Kit"
+            "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs "
+            "that reported having a Medicine Kit"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -345,7 +346,8 @@ class TestMedicineKit(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs that reported having a Medicine Kit",
+                "info": "Of the AWCs that have submitted an Infrastructure Details form, "
+                        "the percentage of AWCs that reported having a Medicine Kit",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 2,

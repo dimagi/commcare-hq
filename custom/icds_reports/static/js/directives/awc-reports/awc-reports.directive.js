@@ -1697,7 +1697,7 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
     vm.data = {};
     vm.label = "AWC Report";
@@ -1732,8 +1732,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge).withClass('medium-col'),
         DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate).withClass('medium-col'),
         DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status (in Month)').renderWith(renderWeightForAgeStatus).withClass('medium-col'),
-        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
-        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
         DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
     ];
 
@@ -1768,14 +1768,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     function renderHeightForAgeStatus(data, type, full) {
         return '<span ng-class="row.stunning.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
             + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
-            + '\', \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + '\', \'height\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
             + full.current_month_stunting.value + '</span>';
     }
 
     function renderWeightForHeightStatus(data, type, full) {
         return '<span ng-class="row.wasting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
             + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
-            + '\', \'height\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + '\', \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
             + full.current_month_wasting.value + '</span>';
     }
 
@@ -1861,21 +1861,25 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         vm.getDataForStep(vm.step);
     });
 
-    vm.getPopoverContent = function (recorded_weight, recorded_height, age_in_months, type) {
+    vm.getPopoverContent = function (weightRecorded, heightRecorded, ageInMonths, type) {
         var html = '';
 
         var recordedWeight = 'Data not Entered';
         var recordedHeight = 'Data not Entered';
         var age = 'Data not Entered';
 
-        if (recorded_weight) {
-            recordedWeight = d3.format(".2f")(recorded_weight) + ' kg';
+        if (weightRecorded) {
+            recordedWeight = d3.format(".2f")(weightRecorded) + ' kg';
         }
-        if (recorded_height) {
-            recordedHeight = d3.format(".2f")(recorded_height) + ' cm';
+        if (heightRecorded && parseInt(heightRecorded) !== 0) {
+            if (parseInt(heightRecorded) <= 45 || parseInt(heightRecorded) >= 120) {
+                recordedHeight = 'Data Not Valid';
+            } else {
+                recordedHeight = d3.format(".2f")(heightRecorded) + ' cm';
+            }
         }
-        if (age_in_months) {
-            age = age_in_months + ' months';
+        if (ageInMonths) {
+            age = ageInMonths + ' months';
         }
 
         if (type === 'weight' || type === 'both') {
@@ -1908,7 +1912,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             showValues: true,
             showControls: false,
             useInteractiveGuideline: true,
-            clipVoronoi: false,
+            showLegend: false,
             duration: 500,
             xAxis: {
                 axisLabel: '',
@@ -1923,10 +1927,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             yAxis: {
                 axisLabel: '',
             },
-            tooltip: function (x, y, value) {
-                return '<strong>Total number of children between ' + y + ':</strong> ' + value;
+            interactiveLayer: {
+                tooltip: {
+                    contentGenerator: function (key) {
+                        return 'Total number of children between <strong>' + key.series[0].data[0] + ':</strong> ' + key.series[0].data[1];
+                    },
+                },
             },
-
         },
     };
 
@@ -2015,13 +2022,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 tooltip.contentGenerator(function (d) {
 
                     var day = _.find(vm.data.charts[1][0].values, function (num) {
-                        return d3.time.format('%d/%m/%Y')(new Date(num['x'])) === d.value;
+                        return num['x'] === d.value;
                     });
 
                     var attended = day ? day.attended : '0';
                     var eligible = day ? day.eligible : '0';
 
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
+                    var tooltip_content = "<p><strong>" + d3.time.format('%b %Y')(new Date(d.value)) + "</strong></p><br/>";
                     tooltip_content += "<div>Number of children who attended PSE: <strong>" + attended + "</strong></div>";
                     tooltip_content += "<div>Number of children who were eligible to attend PSE: <strong>" + eligible + "</strong></div>";
 
@@ -2086,8 +2093,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html;
                 });
-                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function (key) {
-                    if (key.__data__.y !== null) key.classList.add('chart-dot');
+                window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
+                    if (key.__data__[0].y !== null) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2146,9 +2153,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html;
                 });
-
-                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function (key) {
-                    if (key.__data__.y !== null) key.classList.add('chart-dot');
+                window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
+                    if (key.__data__[0].y !== null) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2206,9 +2212,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     html += "<p>Height: <strong>" + d.value + "</strong> cm</p>";
                     return html;
                 });
-
-                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function (key) {
-                    if (key.__data__.y !== null) key.classList.add('chart-dot');
+                window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
+                    if (key.__data__[0].y !== null) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2394,11 +2399,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     vm.getDisableIndex = function () {
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
         return i;
     };
 
@@ -2435,7 +2442,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('awcReports', function () {
     return {

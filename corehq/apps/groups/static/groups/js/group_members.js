@@ -65,7 +65,7 @@ hqDefine("groups/js/group_members", function() {
                     message = django.gettext('Failed to save ') + name.toLowerCase() + '.';
                 }
                 $(id).find(':button').enableButton();
-                $('#save-alert').removeClass('alert-error alert-success alert-info').addClass(alertClass);
+                $('#save-alert').removeClass('alert-danger alert-success alert-info').addClass(alertClass);
                 $('#save-alert').html(message).show();
                 $('#editGroupSettings').modal('hide');
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from casexml.apps.phone import xml
 from casexml.apps.phone.fixtures import generator
 
@@ -58,7 +59,7 @@ class FixtureElementProvider(RestoreDataProvider):
             version=restore_state.version,
         )
         for provider in providers:
-            with self.timing_context(provider.__class__.__name__):
+            with self.timing_context('fixture:{}'.format(provider.id)):
                 elements = provider(restore_state)
                 for element in elements:
                     yield element

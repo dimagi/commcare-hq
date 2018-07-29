@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 import re
 import requests
@@ -24,7 +25,7 @@ in HTML, or use an email client that supports HTML emails.
 
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=None, bcc=None, ga_track=False, ga_tracking_info=None):
+                    file_attachments=None, bcc=None):
 
     recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
 
@@ -37,23 +38,6 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     elif not isinstance(text_content, six.text_type):
         text_content = text_content.decode('utf-8')
 
-
-    if ga_track and settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'):
-        ga_data = {
-            'v': 1,
-            'tid': settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'),
-            'cid': uuid.uuid4().hex,
-            'dt': subject.encode('utf-8'),
-            't': 'event',
-            'ec': 'email'
-        }
-        extra_data = ga_tracking_info if ga_tracking_info else {}
-        ga_data.update(extra_data)
-        post_data = urlencode(ga_data)
-        url = "https://www.google-analytics.com/collect?" + post_data
-        new_content = '<img src="{url}&ea=open"/>\n</body>'.format(url=url)
-        html_content, count = re.subn(r'(.*)</body>', r'\1'+new_content, html_content)
-        assert count != 0, 'Attempted to add tracking to HTML Email with no closing body tag'
 
     from_header = {'From': email_from}  # From-header
     connection = get_connection()
@@ -94,14 +78,3 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             bcc=bcc,
         )
         error_msg.send()
-
-    if ga_track and settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'):
-        try:
-            try:
-                requests.get(url + "&ea=send")
-            except SSLError:
-                # if we get an ssl error try without verification
-                requests.get(url + "&ea=send", verify=False)
-        except Exception as e:
-            # never fail hard on analytics
-            logging.exception(u'Unable to send google analytics request for tracked email: {}'.format(e))

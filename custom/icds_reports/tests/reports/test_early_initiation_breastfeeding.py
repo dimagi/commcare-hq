@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -7,9 +8,8 @@ from custom.icds_reports.reports.early_initiation_breastfeeding import get_early
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestEarlyInitiationBreastFeeding(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_early_initiation_breastfeeding_map(
@@ -78,10 +78,11 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of children who were put to the breast within one hour of birth."
-            "<br/><br/>Early initiation of breastfeeding ensure the newborn "
-            "recieves the 'first milk' rich in nutrients"
-            " and encourages exclusive breastfeeding practice"
+            "Of the children born in the last month and enrolled for Anganwadi services, the percentage whose "
+            "breastfeeding was initiated within 1 hour of delivery."
+            "<br/><br/>"
+            "Early initiation of breastfeeding ensure the newborn recieves the \"first milk\" rich in "
+            "nutrients and encourages exclusive breastfeeding practice"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -294,9 +295,11 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children who were put to the breast within one hour of birth."
-                        "<br/><br/>Early initiation of breastfeeding ensure the newborn recieves the 'first milk'"
-                        " rich in nutrients and encourages exclusive breastfeeding practice",
+                "info": "Of the children born in the last month and enrolled for Anganwadi services, the "
+                        "percentage whose breastfeeding was initiated within 1 hour of delivery."
+                        "<br/><br/>"
+                        "Early initiation of breastfeeding ensure the newborn recieves the \"first milk\" rich "
+                        "in nutrients and encourages exclusive breastfeeding practice",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 0,

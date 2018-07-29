@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf.urls import url
 
 from corehq.apps.registration.views import (
@@ -9,6 +10,7 @@ from corehq.apps.registration.views import (
     confirm_domain,
     resend_confirmation,
     eula_agreement,
+    send_mobile_reminder,
 )
 
 
@@ -21,6 +23,8 @@ urlpatterns = [
     url(r'^domain/$', RegisterDomainView.as_view(), name='registration_domain'),
     url(r'^domain/confirm(?:/(?P<guid>\w+))?/$', confirm_domain,
         name='registration_confirm_domain'),
+    url(r'^mobile_reminder/', send_mobile_reminder,
+        name="send_mobile_reminder"),
     url(r'^resend/$', resend_confirmation,
         name='registration_resend_domain_confirmation'),
     url(r'^eula_agreement/$', eula_agreement, name="agree_to_eula"),

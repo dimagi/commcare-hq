@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
 import hashlib
 import hmac
@@ -7,6 +8,7 @@ from django.conf import settings
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from corehq.apps.users.models import CommCareUser
+from corehq.util.hmac_request import get_hmac_digest
 from corehq.util.test_utils import softer_assert
 
 
@@ -27,12 +29,12 @@ class SessionDetailsViewTest(TestCase):
         cls.url = reverse('session_details')
 
         cls.expected_response = {
-            u'username': cls.sql_user.username,
-            u'djangoUserId': cls.sql_user.pk,
-            u'superUser': cls.sql_user.is_superuser,
-            u'authToken': None,
-            u'domains': [u'toyland'],
-            u'anonymous': False
+            'username': cls.sql_user.username,
+            'djangoUserId': cls.sql_user.pk,
+            'superUser': cls.sql_user.is_superuser,
+            'authToken': None,
+            'domains': ['toyland'],
+            'anonymous': False
         }
 
     @classmethod
@@ -52,7 +54,7 @@ class SessionDetailsViewTest(TestCase):
     def test_with_hmac_signing(self):
         assert not settings.DEBUG
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
-        header_value = base64.b64encode(hmac.new('123abc', data, hashlib.sha256).digest())
+        header_value = get_hmac_digest(b'123abc', data)
         response = Client().post(
             self.url,
             data,

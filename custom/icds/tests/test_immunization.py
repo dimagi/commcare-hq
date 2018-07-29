@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import Product
@@ -74,6 +75,11 @@ class ImmunizationUtilTestCase(BaseICDSTest):
             get_single_balance_block(cls.lone_tasks_case.case_id, cls.dpt2.get_id, 17400, section_id='immuns'),
             cls.domain
         )
+
+    def tearDown(self):
+        super(ImmunizationUtilTestCase, self).tearDown()
+        get_immunization_products.clear(self.domain, 'pregnancy')
+        get_immunization_products.clear(self.domain, 'child')
 
     @classmethod
     def create_product(cls, code, schedule, valid, expires, predecessor_id='', days_after_previous='',

@@ -79,7 +79,13 @@
                                                         </span>
                                                     </label>
                                                 </div>
-                                                {% endif %}
+                                            {% endif %}
+                                                <div class="checkbox">
+                                                    <label data-bind="visible: has_commcare_flavor_target">
+                                                        <input type="checkbox" data-bind="checked: download_targeted_version">
+                                                        {% trans "Download Targeted Version" %}
+                                                    </label>
+                                                </div>
                                                 <p>
                                                     {% blocktrans %}
                                                     Open the app on your Android and use one of the following installation methods:
@@ -174,7 +180,7 @@
                         </div>
                     </div>
                 </div>
-                {% if can_view_cloudcare %}
+                {% if can_view_cloudcare and app.cloudcare_enabled %}
                     <div class="panel panel-appmanager">
                         <div class="panel-heading">
                             <h4 class="panel-title">
@@ -183,7 +189,7 @@
                                    data-category="App Manager"
                                    data-action="Deploy Type"
                                    data-label="Open in Web Apps"
-                                   data-bind="attr: {href: $root.webAppsUrl(id)}">
+                                   data-bind="attr: {href: $root.webAppsUrl(id, '{{ app.id }}')}">
                                     <i class="fa fa-desktop"></i>
                                     {% trans 'Open in Web Apps' %}
                                 </a>
@@ -257,7 +263,10 @@
                     </div>
                     <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_sms'}">
                         <div class="panel-body">
-                            <div data-bind="bootstrapTabs: true">
+                            <div data-bind="if: !reveal_java_download()">
+                                {% include 'app_manager/partials/releases_deploy_modal_sms.html' with is_odk=True %}
+                            </div>
+                            <div data-bind="if: reveal_java_download(), bootstrapTabs: true">
                                 <div class="tabbable">
                                     <ul class="nav nav-pills">
                                         <li class="active">
@@ -267,41 +276,11 @@
                                             <a data-bind="click: function(){ generate_short_url('short_odk_url'); }">{% trans "Send Android app" %}</a>
                                         </li>
                                     </ul>
-                                    <div class="tab-content" data-bind="foreach: ['java_phone', 'android'] ">
-                                        <div class="tab-pane">
-                                            <div data-bind="visible: $parent.sms_url($index()) && !$parent.generating_url()">
-                                                <div class="checkbox">
-                                                    <label data-bind="visible: $parent.allow_media_install && $index() === 1">
-                                                        <input type="checkbox" data-bind="checked: $parent.include_media, enable: $parent.mm_supported()">
-                                                        {% trans "Include Multimedia" %}
-                                                        <span data-bind="visible: !$parent.mm_supported()" class="label label-default">
-                                                            {% trans "Only supported for versions made after 2013-10-15" %}
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                                <form method="post" action="{% url "send_to_recipients" domain %}">{% csrf_token %}
-                                                    <div class="form-group">
-                                                        <label>{% trans "Send to" %}</label>
-                                                        <input type="text" name="recipients" value="" class="form-control"
-                                                               data-bind="multiTypeahead: $root.recipients" />
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <textarea class="bitly form-control" name="message"
-                                                                  data-bind="text: 'Update to CommCare: ' + $parent.sms_url($index()) + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'">
-                                                        </textarea>
-                                                    </div>
-                                                    <input type="submit" class="btn btn-default" value="{% trans "Send" %}"/>
-                                                </form>
-                                            </div>
-                                            <div data-bind="visible: $parent.generating_url()">
-                                                <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}"/>
-                                            </div>
-                                            <div data-bind="visible: !$parent.sms_url($index()) && !$parent.generating_url()">
-                                                <span class="label label-danger">
-                                                  {% trans "No URL was found for this app, try rebuilding." %}
-                                                </span>
-                                            </div>
-                                        </div>
+                                    <div class="tab-content">
+                                        {% include 'app_manager/partials/releases_deploy_modal_sms.html' with is_odk=False %}
+                                    </div>
+                                    <div class="tab-content">
+                                        {% include 'app_manager/partials/releases_deploy_modal_sms.html' with is_odk=True %}
                                     </div>
                                 </div>
                             </div>
@@ -335,7 +314,7 @@
                         </div>
                     </div>
                 {% endif %}
-                {% if request.user.is_superuser %}
+                {% if request|toggle_enabled:"SUPPORT" %}
                     <div class="panel panel-appmanager">
                         <div class="panel-heading">
                             <h4 class="panel-title">

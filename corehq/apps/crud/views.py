@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import inspect
 from django.http import HttpResponseBadRequest, HttpResponse
 from django.utils.decorators import method_decorator

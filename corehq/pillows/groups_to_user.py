@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
@@ -38,7 +39,7 @@ def get_group_to_user_pillow(pillow_id='GroupToUserPillow', num_processes=1, pro
         change_feed=change_feed,
         processor=processor,
         change_processed_event_handler=KafkaCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
+            checkpoint=checkpoint, checkpoint_frequency=10, change_feed=change_feed
         ),
     )
 

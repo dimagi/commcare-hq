@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.sms.forms import BackendForm
 from dimagi.utils.django.fields import TrimmedCharField

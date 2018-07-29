@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 from datetime import datetime, timedelta
 import json
@@ -8,14 +9,14 @@ from django.urls import reverse
 from auditcare.models import NavigationEventAudit
 from auditcare.utils.export import navigation_event_ids_by_user
 from corehq.apps.builds.utils import get_all_versions
-from corehq.apps.es import FormES, filters
+from corehq.apps.es import FormES, filters, UserES
 from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm, SumAggregation
 from corehq.apps.hqwebapp.decorators import (
     use_nvd3,
 )
 from corehq.apps.reports.standard import DatespanMixin
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
 )
@@ -570,7 +571,7 @@ class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
 
     base_template = "hqadmin/faceted_report.html"
-    report_template_path = "reports/async/tabular.html"
+    report_template_path = "reports/tabular.html"
     section_name = ugettext_noop("ADMINREPORT")
     default_params = {}
     is_admin_report = True
@@ -807,7 +808,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
 
         def format_bool(val):
             if isinstance(val, bool):
-                return u"{}".format(val)
+                return "{}".format(val)
             return _('No info')
 
         for dom in domains:
@@ -994,30 +995,38 @@ class AdminUserReport(AdminFacetedReport):
         return headers
 
     @property
+    def export_rows(self):
+        query = UserES().remove_default_filters()
+        for u in query.scroll():
+            yield self._format_row(u)
+
+    @property
     def rows(self):
         users = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
-
-        def format_date(dstr, default):
-            # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
-            return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
-
-        def get_domains(user):
-            if user.get('doc_type') == "WebUser":
-                return ", ".join([dm['domain'] for dm in user.get('domain_memberships', [])])
-            return user.get('domain_membership', {}).get('domain', _('No Domain Data'))
-
-        user_lookup_url = reverse('web_user_lookup')
         for u in users:
-            yield [
-                '<a href="%(url)s?q=%(username)s">%(username)s</a>' % {
-                    'url': user_lookup_url, 'username': u.get('username')
-                },
-                get_domains(u),
-                format_date(u.get('date_joined'), _('No date')),
-                format_date(u.get('last_login'), _('No date')),
-                u.get('doc_type'),
-                u.get('is_superuser'),
-            ]
+            yield self._format_row(u)
+
+    def _format_row(self, user):
+        user_lookup_url = reverse('web_user_lookup')
+        return [
+            '<a href="%(url)s?q=%(username)s">%(username)s</a>' % {
+                'url': user_lookup_url, 'username': user.get('username')
+            },
+            self._get_domains(user),
+            self._format_date(user.get('date_joined'), _('No date')),
+            self._format_date(user.get('last_login'), _('No date')),
+            user.get('doc_type'),
+            user.get('is_superuser'),
+        ]
+
+    def _format_date(self, dstr, default):
+        # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
+        return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
+
+    def _get_domains(self, user):
+        if user.get('doc_type') == "WebUser":
+                return ", ".join([dm['domain'] for dm in user.get('domain_memberships', [])])
+        return user.get('domain_membership', {}).get('domain', _('No Domain Data'))
 
 
 def create_mapping_from_list(l, name="", expand_outer=False, expand_inner=False, name_change_fn=None):
@@ -1215,12 +1224,12 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
     @property
     def selected_domain(self):
         selected_domain = self.request.GET.get('domain', None)
-        return selected_domain if selected_domain != u'' else None
+        return selected_domain if selected_domain != '' else None
 
     @property
     def selected_commcare_version(self):
         commcare_version = self.request.GET.get('commcare_version', None)
-        return commcare_version if commcare_version != u'' else None
+        return commcare_version if commcare_version != '' else None
 
     @property
     def headers(self):
@@ -1373,7 +1382,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
     @property
     def selected_domain(self):
         selected_domain = self.request.GET.get('domain_name', None)
-        return selected_domain if selected_domain != u'' else None
+        return selected_domain if selected_domain != '' else None
 
     @property
     def selected_user(self):

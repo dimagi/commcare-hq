@@ -230,7 +230,7 @@ hqDefine('hqadmin/js/project_map', function () {
             layer.on({
                 mouseover: highlightFeature,
                 mouseout: resetHighlight,
-                click: function(e) {
+                click: function() {
                     if (dataController.getCount(feature.properties.name)){
                         selectionModel.selectedCountry(feature.properties.name);
                         modalController.showProjectsTable(selectionModel.selectedCountry());
@@ -272,7 +272,7 @@ hqDefine('hqadmin/js/project_map', function () {
     
         // info control
         var info = L.control();
-        info.onAdd = function (map) {
+        info.onAdd = function () {
             this._div = L.DomUtil.create('div', 'map-info');
             this.update();
             return this._div;
@@ -293,7 +293,7 @@ hqDefine('hqadmin/js/project_map', function () {
         // add a legend
         var legend = L.control({position: 'bottomleft'});
     
-        legend.onAdd = function (map) {
+        legend.onAdd = function () {
             var div = L.DomUtil.create('div', 'info legend');
             var thresholds;
             div.innerHTML += '<i style="background:' + 'black' + '"></i> ' + '0' + '<br>';
@@ -325,7 +325,7 @@ hqDefine('hqadmin/js/project_map', function () {
     
         var stats = L.control({position: 'bottomright'});
     
-        stats.onAdd = function (map) {
+        stats.onAdd = function () {
             var div = L.DomUtil.create('div', 'info legend');
             div.innerHTML += '<p><b>Statistics</b></p>';
             div.innerHTML += '<p>Number of Active Countries: ' + dataController.getNumActiveCountries() +  '</p>';

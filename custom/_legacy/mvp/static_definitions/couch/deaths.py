@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 DEATH_INDICATORS = dict(
     app="mvp_deaths",
     indicators=dict(

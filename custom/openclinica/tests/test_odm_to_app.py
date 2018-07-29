@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import doctest
 import os
 import re
@@ -24,8 +25,8 @@ class OdmToAppTest(TestCase, TestXmlMixin):
 
     def assertXmlEqual(self, expected, actual, normalize=True):
         super(OdmToAppTest, self).assertXmlEqual(
-            replace_uuids(expected),
-            replace_uuids(actual),
+            replace_uuids(expected).encode('utf-8'),
+            replace_uuids(actual).encode('utf-8'),
             normalize
         )
 

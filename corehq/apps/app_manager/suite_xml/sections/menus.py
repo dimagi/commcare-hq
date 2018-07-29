@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import (ScheduleError, CaseXPathValidationError,
     UserCaseXPathValidationError)
@@ -8,12 +9,12 @@ from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_c
     xpath_references_user_case)
 from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
     QualifiedScheduleFormXPath)
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class MenuContributor(SuiteContributorByModule):
 
-    def get_module_contributions(self, module):
+    def get_module_contributions(self, module, training_menu):
         def get_commands(excluded_form_ids):
             @memoized
             def module_uses_case():
@@ -100,7 +101,9 @@ class MenuContributor(SuiteContributorByModule):
                 for root_module in root_modules:
                     menu_kwargs = {}
                     suffix = ""
-                    if root_module:
+                    if id_module.is_training_module:
+                        menu_kwargs.update({'root': 'training-root'})
+                    elif root_module:
                         menu_kwargs.update({'root': id_strings.menu_id(root_module)})
                         suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
                     menu_kwargs.update({'id': id_strings.menu_id(id_module, suffix)})
@@ -137,7 +140,12 @@ class MenuContributor(SuiteContributorByModule):
                         excluded_form_ids = root_module.excluded_form_ids
                     if id_module and isinstance(id_module, ShadowModule):
                         excluded_form_ids = id_module.excluded_form_ids
-                    menu.commands.extend(get_commands(excluded_form_ids))
+
+                    commands = get_commands(excluded_form_ids)
+                    if module.is_training_module and module.put_in_root and training_menu:
+                        training_menu.commands.extend(commands)
+                    else:
+                        menu.commands.extend(commands)
 
                     if len(menu.commands):
                         menus.append(menu)

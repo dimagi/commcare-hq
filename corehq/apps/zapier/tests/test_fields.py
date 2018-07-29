@@ -1,12 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.testcases import TestCase, SimpleTestCase
 from django.test.client import Client
 from tastypie.resources import Resource
 
-from casexml.apps.case.mock import CaseFactory
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.zapier.api.v0_5 import ZapierCustomFieldCaseResource
 from corehq.apps.zapier.util import remove_advanced_fields
-from six.moves import range
 
 
 class TestRemoveAdvancedFields(SimpleTestCase):
@@ -119,6 +119,16 @@ class TestZapierCustomFields(TestCase):
         super(TestZapierCustomFields, cls).setUpClass()
         cls.test_url = "http://commcarehq.org/?domain=joto&case_type=teddiursa"
 
+    def setUp(self):
+        self.domain = "joto"
+        self.case_type = 'teddiursa'
+        app_factory = AppFactory(self.domain)
+        m, f = app_factory.new_basic_module('m', self.case_type)
+        app_factory.form_requires_case(f, case_type=self.case_type, update={
+            'prop1': '/data/prop1', 'move_type': '/data/move_type', 'mood': '/data/mood', 'level': '/data/level'
+        })
+        app_factory.app.save()
+
     def test_case_fields(self):
 
         expected_fields = [
@@ -126,8 +136,6 @@ class TestZapierCustomFields(TestCase):
             {"help_text": "", "key": "properties__mood", "label": "Mood", "type": "unicode"},
             {"help_text": "", "key": "properties__move_type", "label": "Move type", "type": "unicode"},
             {"help_text": "", "key": "properties__name", "label": "Name", "type": "unicode"},
-            {"help_text": "", "key": "properties__opened_on", "label": "Opened on", "type": "unicode"},
-            {"help_text": "", "key": "properties__owner_id", "label": "Owner id", "type": "unicode"},
             {"help_text": "", "key": "properties__prop1", "label": "Prop1", "type": "unicode"},
             {"help_text": "", "key": "properties__type", "label": "Type", "type": "unicode"},
             {"help_text": "", "key": "date_closed", "label": "Date closed", "type": "unicode"},
@@ -146,14 +154,5 @@ class TestZapierCustomFields(TestCase):
         request = Client().get(self.test_url).wsgi_request
         bundle = Resource().build_bundle(data={}, request=request)
 
-        factory = CaseFactory(domain="joto")
-        factory.create_case(
-            case_type='teddiursa',
-            owner_id='owner1',
-            case_name='dre',
-            update={'prop1': 'blah', 'move_type': 'scratch', 'mood': 'happy', 'level': '100'}
-        )
-
-        actual_fields = ZapierCustomFieldCaseResource().obj_get_list(bundle)
-        for i in range(len(actual_fields)):
-            self.assertEqual(expected_fields[i], actual_fields[i].get_content())
+        actual_fields = [field.get_content() for field in ZapierCustomFieldCaseResource().obj_get_list(bundle)]
+        self.assertItemsEqual(expected_fields, actual_fields)

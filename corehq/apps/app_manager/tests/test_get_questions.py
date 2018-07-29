@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import uuid
 
@@ -15,10 +16,10 @@ QUESTIONS = [
         'group': None,
         'value': '/data/question1',
         'hashtagValue': '#form/question1',
-        'label': u'label en ____ label en',
+        'label': 'label en ____ label en',
         'translations': {
-            'en': u'label en ____ label en',
-            'es': u'label es ____\n____\n____',
+            'en': 'label en ____ label en',
+            'es': 'label es ____\n____\n____',
         },
         'type': 'Text',
         'required': False,
@@ -30,6 +31,7 @@ QUESTIONS = [
                      "]/parent_property_1"),
         'constraint': "1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1",
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'input',
@@ -37,13 +39,14 @@ QUESTIONS = [
         'group': None,
         'value': '/data/question2',
         'hashtagValue': '#form/question2',
-        'label': u'label en ____ label en',
-        'translations': {'en': u'label en ____ label en'},
+        'label': 'label en ____ label en',
+        'translations': {'en': 'label en ____ label en'},
         'type': 'Text',
         'required': False,
         'relevant': None,
         'constraint': None,
         'comment': "This is a comment",
+        'setvalue': None,
     },
     {
         'tag': 'input',
@@ -51,13 +54,14 @@ QUESTIONS = [
         'group': None,
         'value': '/data/question3',
         'hashtagValue': '#form/question3',
-        'label': u'no references here!',
-        'translations': {'en': u'no references here!'},
+        'label': 'no references here!',
+        'translations': {'en': 'no references here!'},
         'type': 'Text',
         'required': False,
         'relevant': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'trigger',
@@ -66,12 +70,13 @@ QUESTIONS = [
         'value': '/data/hi',
         'hashtagValue': '#form/hi',
         'label': 'woo',
-        'translations': {'en': u'woo'},
+        'translations': {'en': 'woo'},
         'type': 'Trigger',
         'required': False,
         'relevant': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'input',
@@ -86,6 +91,7 @@ QUESTIONS = [
         'relevant': None,
         'constraint': '1',
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'select1',
@@ -107,6 +113,7 @@ QUESTIONS = [
         'relevant': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'input',
@@ -121,6 +128,7 @@ QUESTIONS = [
         'relevant': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'input',
@@ -135,6 +143,7 @@ QUESTIONS = [
         'relevant': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'hidden',

@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from custom.intrahealth.filters import LocationFilter
-from custom.intrahealth.reports import IntraHealtMixin
+from custom.intrahealth.reports.utils import IntraHealtMixin
 from custom.intrahealth.sqldata import *
 
 

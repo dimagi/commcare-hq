@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 
 from django.conf import settings
@@ -15,6 +16,7 @@ import os
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
 import six
+from io import open
 
 
 class SubmissionTest(TestCase):

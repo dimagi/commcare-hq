@@ -1,8 +1,13 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
+import pytz
 from django.conf import settings
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
 
+
+INDIA_TIMEZONE = pytz.timezone('Asia/Kolkata')
 
 TABLEAU_TICKET_URL = settings.TABLEAU_URL_ROOT + "trusted/"
 TABLEAU_VIEW_URL = settings.TABLEAU_URL_ROOT + "#/views/"
@@ -66,3 +71,12 @@ SYSTEM_USAGE_EXPORT = 4
 AWC_INFRASTRUCTURE_EXPORT = 5
 BENEFICIARY_LIST_EXPORT = 6
 ISSNIP_MONTHLY_REGISTER_PDF = 7
+
+AGG_COMP_FEEDING_TABLE = 'icds_dashboard_comp_feed_form'
+AGG_CCS_RECORD_PNC_TABLE = 'icds_dashboard_ccs_record_postnatal_forms'
+AGG_CHILD_HEALTH_PNC_TABLE = 'icds_dashboard_child_health_postnatal_forms'
+AGG_CHILD_HEALTH_THR_TABLE = 'icds_dashboard_child_health_thr_forms'
+AGG_DAILY_FEEDING_TABLE = 'icds_dashboard_daily_feeding_forms'
+AGG_GROWTH_MONITORING_TABLE = 'icds_dashboard_growth_monitoring_forms'
+
+DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'softlayer' else 'icds-cas'

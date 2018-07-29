@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from celery.task import task
 from corehq.messaging.scheduling.models import (
     ImmediateBroadcast,
@@ -11,6 +12,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     TimedScheduleInstance,
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
+    CaseScheduleInstanceMixin,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_alert_schedule_instance,
@@ -28,6 +30,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_case_schedule_instance,
     delete_alert_schedule_instances_for_schedule,
     delete_timed_schedule_instances_for_schedule,
+    delete_schedule_instances_by_case_id,
 )
 from corehq.util.celery_utils import no_result_task
 from datetime import datetime
@@ -422,11 +425,25 @@ def _handle_schedule_instance(instance, save_function):
     """
     :return: True if the event was handled, otherwise False
     """
-    if instance.memoized_schedule.deleted:
+    if (
+        instance.memoized_schedule.deleted or
+        (isinstance(instance, CaseScheduleInstanceMixin) and (instance.case is None or instance.case.is_deleted))
+    ):
         instance.delete()
         return False
 
     if instance.active and instance.next_event_due < datetime.utcnow():
+        # We have to call check_active_flag_against_schedule before processing
+        # in case the schedule was deactivated and the task which deactivates
+        # instances hasn't finished yet. We also have to call it after processing
+        # to handle the other checks whose result might change based on next_event_due
+        # changing.
+        instance.check_active_flag_against_schedule()
+        if not instance.active:
+            # The instance was just deactivated
+            save_function(instance)
+            return False
+
         instance.handle_current_event()
         instance.check_active_flag_against_schedule()
         save_function(instance)
@@ -483,3 +500,9 @@ def handle_case_timed_schedule_instance(case_id, schedule_instance_id):
             return
 
         _handle_schedule_instance(instance, save_case_schedule_instance)
+
+
+@no_result_task(queue='background_queue', acks_late=True)
+def delete_schedule_instances_for_cases(domain, case_ids):
+    for case_id in case_ids:
+        delete_schedule_instances_by_case_id(domain, case_id)

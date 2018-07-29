@@ -2,28 +2,19 @@
 https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/edit
 """
 from __future__ import absolute_import
-import datetime
+from __future__ import unicode_literals
 import json
 
 from dateutil import parser as date_parser
-from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
 from dimagi.ext import jsonobject
 from jsonobject.exceptions import BadValueError
 
-from corehq import toggles
-from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.resources.v0_5 import LocationResource
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_EPISODE
 from .const import BETS_EVENT_IDS
-from .tasks import process_payment_confirmations
 from .utils import get_bets_location_json
 
 SUCCESS = "Success"
@@ -180,23 +171,6 @@ def _validate_updates_exist(domain, updates):
             status_code=404
         )
     return updates
-
-
-@require_POST
-@csrf_exempt
-@api_auth
-@toggles.ENIKSHAY_API.required_decorator()
-def payment_confirmation(request, domain):
-    try:
-        updates = _get_case_updates(request, domain)
-        updates = _validate_updates_exist(domain, updates)
-    except ApiError as e:
-        if not settings.UNIT_TESTING:
-            notify_exception(request, "BETS sent the eNikshay API a bad request.")
-        return json_response({"error": e.message}, status_code=e.status_code)
-
-    process_payment_confirmations.delay(domain, updates)
-    return json_response({'status': SUCCESS})
 
 
 class ChemistBETSVoucherRepeaterView(AddCaseRepeaterView):

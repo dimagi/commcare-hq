@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import pytz
 
@@ -11,7 +12,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 
 from corehq import toggles
@@ -22,6 +23,7 @@ from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.form_processor.exceptions import XFormNotFound
+from corehq.motech.repeaters.forms import EmailBulkPayload
 from corehq.util.xml_utils import indent_xml
 
 from corehq.motech.repeaters.const import (
@@ -36,6 +38,7 @@ from corehq.motech.repeaters.dbaccessors import (
     get_repeat_records_by_payload_id,
 )
 from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.utils import pformat_json
 
 
 class DomainForwardingRepeatRecords(GenericTabularReport):
@@ -47,6 +50,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     ajax_pagination = True
     asynchronous = False
     sortable = False
+    custom_filter_action_template = "domain/partials/custom_repeat_record_report.html"
 
     fields = [
         'corehq.apps.reports.filters.select.RepeaterFilter',
@@ -179,14 +183,14 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             '</a> {payload_id}'
         ).format(
             url=reverse('global_quick_find'),
-            flower=static('prelogin/images/commcare-flower.png'),
+            flower=static('hqwebapp/images/commcare-flower.png'),
             payload_id=payload_id,
         )
 
     def _make_row(self, record):
         row = [
             self._make_state_label(record),
-            record.repeater.get_url(record) if record.repeater else _(u'Unable to generate url for record'),
+            record.repeater.get_url(record) if record.repeater else _('Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             self._format_date(record.next_check) if record.next_check else '---',
             render_to_string('repeaters/partials/attempt_history.html', {'record': record}),
@@ -219,6 +223,14 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
         return DataTablesHeader(*columns)
 
+    @property
+    def report_context(self):
+        context = super(DomainForwardingRepeatRecords, self).report_context
+        context.update(
+            email_bulk_payload_form=EmailBulkPayload(domain=self.domain),
+        )
+        return context
+
 
 @method_decorator(domain_admin_required, name='dispatch')
 class RepeatRecordView(View):
@@ -246,13 +258,13 @@ class RepeatRecordView(View):
             payload = record.get_payload()
         except XFormNotFound:
             return json_response({
-                'error': u'Odd, could not find payload for: {}'.format(record.payload_id)
+                'error': 'Odd, could not find payload for: {}'.format(record.payload_id)
             }, status_code=404)
 
         if content_type == 'text/xml':
             payload = indent_xml(payload)
         elif content_type == 'application/json':
-            payload = json.dumps(json.loads(payload), indent=4)
+            payload = pformat_json(payload)
         elif content_type == 'application/soap+xml':
             # we return a payload that is a dict, which is then converted to
             # XML by the zeep library before being sent along as a SOAP request.

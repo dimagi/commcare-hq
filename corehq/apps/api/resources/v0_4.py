@@ -161,7 +161,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'form'
-        ordering = ['received_on']
+        ordering = ['received_on', 'server_modified_on']
         serializer = XFormInstanceSerializer(formats=['json'])
 
 

@@ -90,10 +90,11 @@ from corehq.privileges import (
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 from six.moves import range
 from six import unichr
+from io import open
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -403,13 +404,13 @@ class SnapshotSettingsForm(forms.Form):
 
 
 class TransferDomainFormErrors(object):
-    USER_DNE = ugettext_lazy(u'The user being transferred to does not exist')
-    DOMAIN_MISMATCH = ugettext_lazy(u'Mismatch in domains when confirming')
+    USER_DNE = ugettext_lazy('The user being transferred to does not exist')
+    DOMAIN_MISMATCH = ugettext_lazy('Mismatch in domains when confirming')
 
 
 class TransferDomainForm(forms.ModelForm):
 
-    class Meta:
+    class Meta(object):
         model = TransferDomainRequest
         fields = ['domain', 'to_username']
 
@@ -418,8 +419,8 @@ class TransferDomainForm(forms.ModelForm):
         self.current_domain = domain
         self.from_username = from_username
 
-        self.fields['domain'].label = _(u'Type the name of the project to confirm')
-        self.fields['to_username'].label = _(u'New owner\'s CommCare username')
+        self.fields['domain'].label = _('Type the name of the project to confirm')
+        self.fields['to_username'].label = _('New owner\'s CommCare username')
 
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
@@ -456,7 +457,7 @@ class TransferDomainForm(forms.ModelForm):
         return username
 
 
-class SubAreaMixin():
+class SubAreaMixin(object):
 
     def clean_sub_area(self):
         area = self.cleaned_data['area']
@@ -652,7 +653,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
                 input_image.save(tmpfilename, 'PNG')
 
-                with open(tmpfilename) as tmpfile:
+                with open(tmpfilename, 'rb') as tmpfile:
                     domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
             elif self.cleaned_data['delete_logo']:
                 domain.delete_attachment(LOGO_ATTACHMENT)
@@ -785,8 +786,7 @@ class PrivacySecurityForm(forms.Form):
     two_factor_auth = BooleanField(
         label=ugettext_lazy("Two Factor Authentication"),
         required=False,
-        help_text=ugettext_lazy("All web users on this project will be required to enable two factor "
-                                "authentication")
+        help_text=ugettext_lazy("All users on this project will be required to enable two factor authentication")
     )
     strong_mobile_passwords = BooleanField(
         label=ugettext_lazy("Require Strong Passwords for Mobile Workers"),
@@ -1050,6 +1050,24 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             "Check this box to trigger a hand-off email to the partner when this form is submitted."
         ),
     )
+    use_custom_auto_case_update_limit = forms.ChoiceField(
+        label=ugettext_lazy("Set custom auto case update rule limits"),
+        required=True,
+        choices=(
+            ('N', ugettext_lazy("No")),
+            ('Y', ugettext_lazy("Yes")),
+        ),
+    )
+    auto_case_update_limit = forms.IntegerField(
+        label=ugettext_lazy("Max allowed updates in a daily run"),
+        required=False,
+        min_value=1000,
+    )
+    granted_messaging_access = forms.BooleanField(
+        label="Enable Messaging",
+        required=False,
+        help_text="Check this box to enable messaging.",  # TODO through non-test gateways
+    )
 
     def __init__(self, domain, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -1111,6 +1129,18 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'dimagi_contact',
             ),
             crispy.Fieldset(
+                _("Project Limits"),
+                crispy.Field(
+                    'use_custom_auto_case_update_limit',
+                    data_bind='value: use_custom_auto_case_update_limit',
+                ),
+                crispy.Div(
+                    crispy.Field('auto_case_update_limit'),
+                    data_bind="visible: use_custom_auto_case_update_limit() === 'Y'",
+                ),
+                'granted_messaging_access',
+            ),
+            crispy.Fieldset(
                 _("Salesforce Details"),
                 'sf_contract_id',
                 'sf_account_id',
@@ -1124,6 +1154,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             ),
         )
 
+    @property
+    def current_values(self):
+        return {
+            'use_custom_auto_case_update_limit': self['use_custom_auto_case_update_limit'].value(),
+        }
+
     def _get_user_or_fail(self, field):
         username = self.cleaned_data[field]
         if not username:
@@ -1136,6 +1172,16 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             msg = "'{username}' is not the username of a web user in '{domain}'"
             self.add_error(field, msg.format(username=username, domain=self.domain))
         return user
+
+    def clean_auto_case_update_limit(self):
+        if self.cleaned_data.get('use_custom_auto_case_update_limit') != 'Y':
+            return None
+
+        value = self.cleaned_data.get('auto_case_update_limit')
+        if not value:
+            raise forms.ValidationError(_("This field is required"))
+
+        return value
 
     def clean(self):
         send_handoff_email = self.cleaned_data['send_handoff_email']
@@ -1167,6 +1213,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             countries=self.cleaned_data['countries'],
         )
         domain.is_test = self.cleaned_data['is_test']
+        domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
+        domain.granted_messaging_access = self.cleaned_data['granted_messaging_access']
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
@@ -1228,13 +1276,13 @@ def legacy_get_password_strength(value):
 def _get_uppercase_unicode_regexp():
     # rather than add another dependency (regex library)
     # http://stackoverflow.com/a/17065040/10840
-    uppers = [u'[']
+    uppers = ['[']
     for i in range(sys.maxunicode):
         c = unichr(i)
         if c.isupper():
             uppers.append(c)
-    uppers.append(u']')
-    upper_group = u"".join(uppers)
+    uppers.append(']')
+    upper_group = "".join(uppers)
     return re.compile(upper_group, re.UNICODE)
 
 SPECIAL = re.compile(r"\W", re.UNICODE)
@@ -1296,6 +1344,11 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
         Generates a one-use only link for resetting password and sends to the
         user.
         """
+
+        if settings.IS_SAAS_ENVIRONMENT:
+            subject_template_name = 'registration/email/password_reset_subject_hq.txt'
+            email_template_name = 'registration/email/password_reset_email_hq.html'
+
         UserModel = get_user_model()
         email = self.cleaned_data["email"]
 
@@ -1320,6 +1373,9 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
                 site_name = domain = domain_override
 
             couch_user = CouchUser.from_django_user(user)
+            if not couch_user:
+                continue
+
             if couch_user.is_web_user():
                 user_email = user.username
             elif user.email:
@@ -1339,8 +1395,15 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
             subject = render_to_string(subject_template_name, c)
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
-            email = render_to_string(email_template_name, c)
-            send_mail_async.delay(subject, email, from_email, [user_email])
+
+            message_plaintext = render_to_string('registration/password_reset_email.html', c)
+            message_html = render_to_string(email_template_name, c)
+
+            send_html_email_async.delay(
+                subject, user_email, message_html,
+                text_content=message_plaintext,
+                email_from=settings.DEFAULT_FROM_EMAIL
+            )
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
@@ -1378,7 +1441,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         help_text=BillingContactInfo._meta.get_field('email_list').help_text,
     )
 
-    class Meta:
+    class Meta(object):
         model = BillingContactInfo
         fields = ['first_name', 'last_name', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country']
@@ -1566,10 +1629,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
-                        skip_auto_downgrade=False,
                         do_not_invoice=False,
                         no_invoice_reason='',
-                        date_delay_invoicing=None,
                     )
                 else:
                     Subscription.new_domain_subscription(
@@ -1579,7 +1640,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT,
-                        skip_auto_downgrade=False,
                     )
                 return True
         except Exception as e:
@@ -1595,9 +1655,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
     plan_edition = forms.CharField(
         widget=forms.HiddenInput,
     )
-    confirm_legal = forms.BooleanField(
-        required=True,
-    )
 
     def __init__(self, account, domain, creating_user, current_subscription,
                  renewed_version, data=None, *args, **kwargs):
@@ -1609,12 +1666,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.fields['plan_edition'].initial = renewed_version.plan.edition
-        self.fields['confirm_legal'].label = mark_safe(ugettext_noop(
-            'I have read and agree to the <a href="%(pa_url)s" '
-            'target="_blank">Software Product Agreement</a>.'
-        ) % {
-            'pa_url': reverse("product_agreement"),
-        })
 
         from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
@@ -1636,10 +1687,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
-            ),
-            crispy.Fieldset(
-                _("Re-Confirm Product Agreement"),
-                'confirm_legal',
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(
@@ -1841,7 +1888,6 @@ class InternalSubscriptionManagementForm(forms.Form):
     def subscription_default_fields(self):
         return {
             'internal_change': True,
-            'skip_auto_downgrade': False,
             'web_user': self.web_user,
         }
 
@@ -1932,7 +1978,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
     )
 
     trial_length = forms.ChoiceField(
-        choices=[(days, "%d days" % days) for days in [30, 60, 90]],
+        choices=[(days, "%d days" % days) for days in [15, 30, 60, 90]],
         label="Trial Length",
     )
 
@@ -1952,12 +1998,6 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             crispy.Field('trial_length', data_bind='value: trialLength'),
             crispy.Div(
                 crispy.Div(
-                    crispy.HTML(_(
-                        '<p><i class="fa fa-info-circle"></i> The trial includes '
-                        'access to all features, 5 mobile workers, and 25 SMS.  Fees '
-                        'apply for users or SMS in excess of these limits (1 '
-                        'USD/user/month, regular SMS fees).</p>'
-                    )),
                     crispy.HTML(_(
                         '<p><i class="fa fa-info-circle"></i> The trial will begin as soon '
                         'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '

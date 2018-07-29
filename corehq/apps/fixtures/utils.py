@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from xml.etree import cElementTree as ElementTree
 
@@ -30,7 +31,7 @@ def is_identifier_invalid(name):
         return True
 
     try:
-        ElementTree.fromstring(u'<{} />'.format(name).encode('utf-8'))
+        ElementTree.fromstring('<{} />'.format(name).encode('utf-8'))
     except ElementTree.ParseError:
         return True
 

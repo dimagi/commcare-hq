@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.exceptions import InvalidProductCodeException
 from custom.ilsgateway.tanzania.handlers.generic_stock_report_handler import GenericStockReportHandler
@@ -11,7 +12,7 @@ class StockoutFormatter(Formatter):
     def format(self, text):
         content = text.split(' ', 1)[1]
         products_codes = content.split()
-        return u'soh {}'.format(u' 0 '.join(products_codes)) + ' 0'
+        return 'soh {}'.format(' 0 '.join(products_codes)) + ' 0'
 
 
 class StockoutHandler(GenericStockReportHandler):

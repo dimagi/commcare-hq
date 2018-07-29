@@ -1,5 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from functools import wraps
+from datetime import datetime, timedelta
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.http import (
@@ -7,23 +10,29 @@ from django.http import (
     HttpResponse,
     HttpResponseRedirect,
     HttpResponseBadRequest,
+    JsonResponse,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
-
 from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
 from corehq.apps.domain.models import Domain
+from corehq.apps.reminders.models import CaseReminderHandler
+from corehq.apps.reminders.views import ScheduledRemindersCalendarView
+from corehq.apps.sms.filters import EventTypeFilter, EventStatusFilter
+from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, MessagingEvent
+from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jquery_ui, use_timepicker
+from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jquery_ui, use_timepicker, use_nvd3
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.messaging.decorators import reminders_framework_permission
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler, ConditionalAlertAsyncHandler
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
@@ -37,6 +46,9 @@ from corehq.messaging.scheduling.models import (
     ImmediateBroadcast,
     ScheduledBroadcast,
 )
+from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    get_count_of_active_schedule_instances_due,
+)
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
 from corehq.messaging.tasks import initiate_messaging_rule_run
 from corehq.messaging.util import MessagingRuleProgressHelper
@@ -44,6 +56,9 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch import CriticalSection
+import six
+from six.moves import range
+from six.moves.urllib.parse import quote_plus
 
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
@@ -72,10 +87,222 @@ def _requires_new_reminder_framework():
     return decorate
 
 
+class MessagingDashboardView(BaseMessagingSectionView):
+    urlname = 'messaging_dashboard'
+    page_title = ugettext_lazy("Dashboard")
+    template_name = 'scheduling/dashboard.html'
+
+    @use_nvd3
+    def dispatch(self, *args, **kwargs):
+        return super(MessagingDashboardView, self).dispatch(*args, **kwargs)
+
+    def get_messaging_history_errors_url(self, messaging_history_url):
+        url_param_tuples = [
+            ('startdate', (self.domain_now.date() - timedelta(days=6)).strftime('%Y-%m-%d')),
+            ('enddate', self.domain_now.date().strftime('%Y-%m-%d')),
+            (EventStatusFilter.slug, MessagingEvent.STATUS_ERROR),
+        ]
+
+        for event_type, description in EventTypeFilter.options:
+            url_param_tuples.append((EventTypeFilter.slug, event_type))
+
+        url_param_list = ['%s=%s' % (quote_plus(name), quote_plus(value)) for name, value in url_param_tuples]
+        url_param_str = '&'.join(url_param_list)
+
+        return '%s?%s' % (messaging_history_url, url_param_str)
+
+    @property
+    def page_context(self):
+        from corehq.apps.reports.standard.sms import (
+            ScheduleInstanceReport,
+            MessageLogReport,
+            MessagingEventsReport,
+        )
+
+        if self.domain_object.uses_new_reminders:
+            scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
+                kwargs={'domain': self.domain, 'report_slug': ScheduleInstanceReport.slug})
+        else:
+            scheduled_events_url = reverse(ScheduledRemindersCalendarView.urlname, args=[self.domain])
+
+        context = {
+            'scheduled_events_url': scheduled_events_url,
+            'message_log_url': reverse(
+                MessageLogReport.dispatcher.name(), args=[],
+                kwargs={'domain': self.domain, 'report_slug': MessageLogReport.slug}
+            ),
+            'messaging_history_url': reverse(
+                MessagingEventsReport.dispatcher.name(), args=[],
+                kwargs={'domain': self.domain, 'report_slug': MessagingEventsReport.slug}
+            ),
+        }
+
+        context['messaging_history_errors_url'] = self.get_messaging_history_errors_url(
+            context['messaging_history_url']
+        )
+
+        return context
+
+    @cached_property
+    def timezone(self):
+        return self.domain_object.get_default_timezone()
+
+    @cached_property
+    def domain_now(self):
+        return ServerTime(datetime.utcnow()).user_time(self.timezone).done()
+
+    def add_sms_status_info(self, result):
+        if len(self.domain_object.restricted_sms_times) > 0:
+            result['uses_restricted_time_windows'] = True
+            result['within_allowed_sms_times'] = time_within_windows(
+                self.domain_now,
+                self.domain_object.restricted_sms_times
+            )
+            if not result['within_allowed_sms_times']:
+                for i in range(1, 7 * 24 * 60):
+                    # This is a very fast check so it's ok to iterate this many times.
+                    resume_time = self.domain_now + timedelta(minutes=i)
+                    if time_within_windows(resume_time, self.domain_object.restricted_sms_times):
+                        result['sms_resume_time'] = resume_time.strftime('%Y-%m-%d %H:%M')
+                        break
+        else:
+            result['uses_restricted_time_windows'] = False
+            result['within_allowed_sms_times'] = True
+
+        result.update({
+            'queued_sms_count': QueuedSMS.objects.filter(domain=self.domain).count(),
+            'outbound_sms_sent_today': OutboundDailyCounter(self.domain_object).current_usage,
+            'daily_outbound_sms_limit': self.domain_object.get_daily_outbound_sms_limit(),
+        })
+
+    def add_reminder_status_info(self, result):
+        if self.domain_object.uses_new_reminders:
+            events_pending = get_count_of_active_schedule_instances_due(self.domain, datetime.utcnow())
+        else:
+            events_pending = len(CaseReminderHandler.get_all_reminders(
+                domain=self.domain,
+                due_before=datetime.utcnow(),
+                ids_only=True
+            ))
+
+        result['events_pending'] = events_pending
+
+    def add_sms_count_info(self, result, days):
+        end_date = self.domain_now.date()
+        start_date = end_date - timedelta(days=days - 1)
+        counts = SMS.get_counts_by_date(self.domain, start_date, end_date, self.timezone.zone)
+
+        inbound_counts = {}
+        outbound_counts = {}
+
+        for row in counts:
+            if row.direction == INCOMING:
+                inbound_counts[row.date] = row.sms_count
+            elif row.direction == OUTGOING:
+                outbound_counts[row.date] = row.sms_count
+
+        inbound_values = []
+        outbound_values = []
+
+        for i in range(days):
+            dt = start_date + timedelta(days=i)
+            inbound_values.append({
+                'x': dt.strftime('%Y-%m-%d'),
+                'y': inbound_counts.get(dt, 0),
+            })
+            outbound_values.append({
+                'x': dt.strftime('%Y-%m-%d'),
+                'y': outbound_counts.get(dt, 0),
+            })
+
+        result['sms_count_data'] = [
+            {'key': _("Incoming"), 'values': inbound_values},
+            {'key': _("Outgoing"), 'values': outbound_values},
+        ]
+
+    def add_event_count_info(self, result, days):
+        end_date = self.domain_now.date()
+        start_date = end_date - timedelta(days=days - 1)
+        counts = MessagingEvent.get_counts_by_date(self.domain, start_date, end_date, self.timezone.zone)
+
+        counts_dict = {
+            row.date: {'error': row.error_count, 'total': row.total_count}
+            for row in counts
+        }
+
+        error_values = []
+        success_values = []
+
+        for i in range(days):
+            dt = start_date + timedelta(days=i)
+            error_count = counts_dict.get(dt, {}).get('error', 0)
+            total_count = counts_dict.get(dt, {}).get('total', 0)
+
+            error_values.append({
+                'x': dt.strftime('%Y-%m-%d'),
+                'y': error_count,
+            })
+            success_values.append({
+                'x': dt.strftime('%Y-%m-%d'),
+                'y': total_count - error_count,
+            })
+
+        result['event_count_data'] = [
+            {'key': _("Error"), 'values': error_values},
+            {'key': _("Success"), 'values': success_values},
+        ]
+
+    def get_error_message(self, error_code):
+        if error_code in SMS.ERROR_MESSAGES:
+            return _(SMS.ERROR_MESSAGES[error_code])
+        elif error_code in MessagingEvent.ERROR_MESSAGES:
+            return _(MessagingEvent.ERROR_MESSAGES[error_code])
+        else:
+            return _("Other")
+
+    def add_error_count_info(self, result, days):
+        end_date = self.domain_now.date()
+        start_date = end_date - timedelta(days=days - 1)
+        counts = MessagingEvent.get_counts_of_errors(self.domain, start_date, end_date, self.timezone.zone)
+
+        # Consolidate opt-out errors so they show up as one bar in the graph
+        if SMS.ERROR_PHONE_NUMBER_OPTED_OUT in counts and MessagingEvent.ERROR_PHONE_OPTED_OUT in counts:
+            counts[MessagingEvent.ERROR_PHONE_OPTED_OUT] += counts[SMS.ERROR_PHONE_NUMBER_OPTED_OUT]
+            del counts[SMS.ERROR_PHONE_NUMBER_OPTED_OUT]
+
+        sorted_counts = sorted(six.iteritems(counts), key=lambda item: item[1], reverse=True)
+        result['error_count_data'] = [
+            {
+                'values': [
+                    {'label': self.get_error_message(error), 'value': count}
+                    for error, count in sorted_counts
+                ],
+            },
+        ]
+
+    def get_ajax_response(self):
+        result = {
+            'last_refresh_time': self.domain_now.strftime('%Y-%m-%d %H:%M:%S'),
+            'project_timezone': self.timezone.zone,
+        }
+        self.add_sms_status_info(result)
+        self.add_reminder_status_info(result)
+        self.add_sms_count_info(result, 30)
+        self.add_event_count_info(result, 30)
+        self.add_error_count_info(result, 30)
+        return JsonResponse(result)
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('action') == 'raw':
+            return self.get_ajax_response()
+
+        return super(MessagingDashboardView, self).get(request, *args, **kwargs)
+
+
 class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
     template_name = 'scheduling/broadcasts_list.html'
     urlname = 'new_list_broadcasts'
-    page_title = ugettext_lazy('Schedule a Message')
+    page_title = ugettext_lazy('Broadcasts')
 
     LIST_SCHEDULED = 'list_scheduled'
     LIST_IMMEDIATE = 'list_immediate'
@@ -84,8 +311,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     ACTION_DELETE_SCHEDULED_BROADCAST = 'delete_scheduled_broadcast'
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(BroadcastListView, self).dispatch(*args, **kwargs)
@@ -194,14 +420,13 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
 class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_schedule'
-    page_title = ugettext_lazy('Schedule a Message')
+    page_title = ugettext_lazy('New Broadcast')
     template_name = 'scheduling/create_schedule.html'
     async_handlers = [MessagingRecipientHandler]
     read_only_mode = False
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
     @use_select2
@@ -268,7 +493,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
 class EditScheduleView(CreateScheduleView):
     urlname = 'edit_schedule'
-    page_title = ugettext_lazy('Edit Scheduled Message')
+    page_title = ugettext_lazy('Edit Broadcast')
 
     IMMEDIATE_BROADCAST = 'immediate'
     SCHEDULED_BROADCAST = 'scheduled'
@@ -335,19 +560,35 @@ class EditScheduleView(CreateScheduleView):
 class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
-    page_title = ugettext_lazy('Schedule a Conditional Message')
+    page_title = ugettext_lazy('Conditional Alerts')
 
     LIST_CONDITIONAL_ALERTS = 'list_conditional_alerts'
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
     ACTION_DELETE = 'delete'
+    ACTION_RESTART = 'restart'
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
+
+    @cached_property
+    def limit_rule_restarts(self):
+        # If the user is a superuser, don't limit the number of times they
+        # can restart a rule run. Also don't limit it if it's an environment
+        # that is a standalone environment.
+        return not (
+            self.request.couch_user.is_superuser or
+            settings.SERVER_ENVIRONMENT in settings.UNLIMITED_RULE_RESTART_ENVS
+        )
+
+    @property
+    def page_context(self):
+        context = super(ConditionalAlertListView, self).page_context
+        context['limit_rule_restarts'] = self.limit_rule_restarts
+        return context
 
     def get_conditional_alerts_queryset(self):
         return (
@@ -406,21 +647,35 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         """
         with transaction.atomic():
             schedule = rule.get_messaging_rule_schedule()
-            if not self.can_use_inbound_sms and schedule.memoized_uses_sms_survey:
+            if active_flag and not self.can_use_inbound_sms and schedule.memoized_uses_sms_survey:
                 return HttpResponseBadRequest(
                     "Cannot create or edit survey reminders because subscription "
                     "does not have access to inbound SMS"
+                )
+
+            if active_flag and (rule.references_parent_case or schedule.references_parent_case):
+                return HttpResponseBadRequest(
+                    "Cannot reactivate alerts that reference parent case properties"
                 )
 
             schedule.active = active_flag
             schedule.save()
             initiate_messaging_rule_run(self.domain, rule.pk)
 
-        return HttpResponse()
+        return JsonResponse({'status': 'success'})
 
     def get_delete_ajax_response(self, rule):
         rule.soft_delete()
-        return HttpResponse()
+        return JsonResponse({'status': 'success'})
+
+    def get_restart_ajax_response(self, rule):
+        helper = MessagingRuleProgressHelper(rule.pk)
+        if self.limit_rule_restarts and helper.rule_initiation_key_is_set():
+            minutes_remaining = helper.rule_initiation_key_minutes_remaining()
+            return JsonResponse({'status': 'error', 'minutes_remaining': minutes_remaining})
+
+        initiate_messaging_rule_run(rule.domain, rule.pk)
+        return JsonResponse({'status': 'success'})
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
@@ -428,7 +683,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
 
         with get_conditional_alert_edit_critical_section(rule_id):
             rule = self.get_rule(rule_id)
-            if rule.locked_for_editing:
+            if rule.locked_for_editing and action != self.ACTION_RESTART:
                 return HttpResponseBadRequest()
 
             if action == self.ACTION_ACTIVATE:
@@ -437,20 +692,21 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
                 return self.get_activate_ajax_response(False, rule)
             elif action == self.ACTION_DELETE:
                 return self.get_delete_ajax_response(rule)
+            elif action == self.ACTION_RESTART:
+                return self.get_restart_ajax_response(rule)
             else:
                 return HttpResponseBadRequest()
 
 
 class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_conditional_alert'
-    page_title = ugettext_lazy('New Conditional Message')
+    page_title = ugettext_lazy('New Conditional Alert')
     template_name = 'scheduling/conditional_alert.html'
     async_handlers = [ConditionalAlertAsyncHandler]
     read_only_mode = False
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
     @use_select2
@@ -468,14 +724,23 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @property
     def page_context(self):
-        return {
+        context = {
             'basic_info_form': self.basic_info_form,
             'criteria_form': self.criteria_form,
             'schedule_form': self.schedule_form,
             'read_only_mode': self.read_only_mode,
-            'criteria_form_active': self.criteria_form.errors or not self.schedule_form.errors,
-            'schedule_form_active': self.schedule_form.errors and not self.criteria_form.errors,
+            'is_system_admin': self.is_system_admin,
+            'criteria_form_active': True,
+            'schedule_form_active': False,
         }
+
+        if self.request.method == 'POST':
+            context.update({
+                'criteria_form_active': not self.criteria_form.is_valid() or self.schedule_form.is_valid(),
+                'schedule_form_active': not self.schedule_form.is_valid() and self.criteria_form.is_valid(),
+            })
+
+        return context
 
     @cached_property
     def schedule_form(self):
@@ -574,7 +839,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
 class EditConditionalAlertView(CreateConditionalAlertView):
     urlname = 'edit_conditional_alert'
-    page_title = ugettext_lazy('Edit Conditional Message')
+    page_title = ugettext_lazy('Edit Conditional Alert')
 
     @property
     def page_url(self):
@@ -627,5 +892,27 @@ class EditConditionalAlertView(CreateConditionalAlertView):
                     request,
                     _("This alert is not editable because it uses an SMS survey and "
                       "your current subscription does not allow use of inbound SMS.")
+                )
+            if self.rule.references_parent_case or self.schedule.references_parent_case:
+                """
+                There are no active reminders which reference parent case properties anymore.
+                Keeping reminder rules that have parent case references up-to-date with case
+                changes is tough on performance because you have to run the rules against
+                all applicable subcases when a parent case changes, so while the framework does
+                use .resolve_case_property() to handle these lookups properly, it no longer runs
+                the rules against all subcases when a parent case changes, and therefore doesn't
+                support this use case.
+
+                The form validation doesn't allow creating parent case references so trying
+                to save will cause validation to fail, but in case one of the older, inactive,
+                reminders is being edited we display this warning.
+                """
+                messages.warning(
+                    request,
+                    _("This conditional alert references parent case properties. Note that changes "
+                      "to parent cases will not be immediately reflected by the alert and will "
+                      "only be reflected once the child case is subsequently updated. For best "
+                      "results, please update your workflow to avoid referencing parent case "
+                      "properties in this alert.")
                 )
             return super(EditConditionalAlertView, self).dispatch(request, *args, **kwargs)

@@ -15,7 +15,6 @@ from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 
 
 class DocumentFormBase(forms.Form):
@@ -50,11 +49,10 @@ VISIBILITY_CHOICES = (
 )
 
 
-SOFT_ROLLOUT_HELP_TEXT = "Percentage of requests to send to ES. Only useful for Laboratory reports"
-
-
 class ConfigurableReportEditForm(DocumentFormBase):
 
+    _id = forms.CharField(required=False, disabled=True, label=_('Report ID'),
+                          help_text=help_text.REPORT_ID)
     config_id = forms.ChoiceField()  # gets overridden on instantiation
     title = forms.CharField()
     visible = forms.ChoiceField(label=_('Visible to:'), choices=VISIBILITY_CHOICES)
@@ -64,7 +62,6 @@ class ConfigurableReportEditForm(DocumentFormBase):
     columns = JsonField(expected_type=list)
     configured_charts = JsonField(expected_type=list)
     sort_expression = JsonField(expected_type=list)
-    soft_rollout = forms.DecimalField(min_value=0, max_value=1, help_text=SOFT_ROLLOUT_HELP_TEXT)
 
     def __init__(self, domain, instance=None, read_only=False, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, read_only, *args, **kwargs)
@@ -79,19 +76,24 @@ class ConfigurableReportEditForm(DocumentFormBase):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-9'
 
+        fields = [
+            'config_id',
+            'title',
+            'visible',
+            'description',
+            'aggregation_columns',
+            'filters',
+            'columns',
+            'configured_charts',
+            'sort_expression',
+        ]
+        if instance.config_id:
+            fields.append('_id')
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Report Configuration"),
-                'config_id',
-                'title',
-                'visible',
-                'description',
-                'aggregation_columns',
-                'filters',
-                'columns',
-                'configured_charts',
-                'sort_expression',
-                'soft_rollout',
+                *fields
             ),
         )
         # Restrict edit for static reports
@@ -133,16 +135,10 @@ DOC_TYPE_CHOICES = (
 )
 
 
-BACKEND_CHOICES = (
-    (UCR_SQL_BACKEND, 'Postgres'),
-    (UCR_ES_BACKEND, 'ElasticSearch'),
-    (UCR_LABORATORY_BACKEND, 'Laboratory'),
-    (UCR_ES_PRIMARY, 'ES primary'),
-)
-
-
 class ConfigurableDataSourceEditForm(DocumentFormBase):
 
+    _id = forms.CharField(required=False, disabled=True, label=_('Data Source ID'),
+                          help_text=help_text.DATA_SOURCE_ID)
     table_id = forms.CharField(label=_("Table ID"),
                                help_text=help_text.TABLE_ID)
     referenced_doc_type = forms.ChoiceField(
@@ -164,11 +160,6 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     named_filters = JsonField(required=False, expected_type=dict,
                               label=_("Named filters (optional)"),
                               help_text=help_text.NAMED_FILTER)
-    backend_id = forms.ChoiceField(
-        choices=BACKEND_CHOICES,
-        label=_("Backend"),
-        initial=UCR_SQL_BACKEND
-    )
     asynchronous = forms.BooleanField(
         initial=False,
         required=False,
@@ -178,9 +169,9 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         )
     )
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, domain, data_source_config, read_only, *args, **kwargs):
         self.domain = domain
-        super(ConfigurableDataSourceEditForm, self).__init__(*args, **kwargs)
+        super(ConfigurableDataSourceEditForm, self).__init__(data_source_config, read_only, *args, **kwargs)
 
         if toggles.LOCATIONS_IN_UCR.enabled(domain):
             choices = self.fields['referenced_doc_type'].choices
@@ -197,20 +188,25 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-9'
 
+        fields = [
+            'table_id',
+            'referenced_doc_type',
+            'display_name',
+            'description',
+            'base_item_expression',
+            'configured_filter',
+            'configured_indicators',
+            'named_expressions',
+            'named_filters',
+            'asynchronous',
+        ]
+        if data_source_config.get_id:
+            fields.append('_id')
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Edit Data Source"),
-                'table_id',
-                'referenced_doc_type',
-                'display_name',
-                'description',
-                'base_item_expression',
-                'configured_filter',
-                'configured_indicators',
-                'named_expressions',
-                'named_filters',
-                'backend_id',
-                'asynchronous',
+                *fields
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

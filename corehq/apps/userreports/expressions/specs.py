@@ -12,13 +12,14 @@ import six
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX, NAMED_EXPRESSION_PREFIX
 from corehq.apps.userreports.decorators import ucr_context_cache
-from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
 from corehq.apps.userreports.expressions.getters import transform_from_datatype, safe_recursive_lookup
-from corehq.apps.userreports.indicators.specs import DataTypeProperty
+from corehq.apps.userreports.datatypes import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -150,7 +151,7 @@ class ConditionalExpressionSpec(JsonObject):
             false=add_tabbed_text(str(self._false_expression)))
 
 
-class ArrayIndexExpressionSpec(JsonObject):
+class ArrayIndexExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('array_index')
     array_expression = DictProperty(required=True)
     index_expression = DefaultProperty(required=True)
@@ -205,7 +206,7 @@ class SwitchExpressionSpec(JsonObject):
             default=add_tabbed_text((str(self._default_expression))))
 
 
-class IteratorExpressionSpec(JsonObject):
+class IteratorExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('iterator')
     expressions = ListProperty(required=True)
     # an optional filter to test the values on - if they don't match they won't be included in the iteration
@@ -271,7 +272,7 @@ class RelatedDocExpressionSpec(JsonObject):
     @staticmethod
     @ucr_context_cache(vary_on=('related_doc_type', 'doc_id',))
     def _get_document(related_doc_type, doc_id, context):
-        document_store = get_document_store(context.root_doc['domain'], related_doc_type)
+        document_store = get_document_store_for_doc_type(context.root_doc['domain'], related_doc_type)
         try:
             doc = document_store.get_document(doc_id)
         except DocumentNotFoundError:
@@ -335,7 +336,7 @@ class DictExpressionSpec(JsonObject):
 class EvalExpressionSpec(JsonObject):
     type = TypeProperty('evaluator')
     statement = StringProperty(required=True)
-    context_variables = DictProperty(required=True)
+    context_variables = DictProperty()
     datatype = DataTypeProperty(required=False)
 
     def configure(self, context_variables):

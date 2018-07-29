@@ -63,6 +63,9 @@
                     <h4 class="panel-title panel-title-nolink">{%  trans "Advanced" %}</h4>
                 </div>
                 <div class="panel-body">
+                    {% if is_training_module %}
+                        {% include "app_manager/partials/release_notes_setting.html" %}
+                    {% endif %}
                     <div class="form-group" data-bind="visible: visible, css: {error: hasError()}">
                         {% include "app_manager/partials/form_gps_capture.html" %}
                     </div>

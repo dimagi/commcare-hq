@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.reminders.models import (Message, METHOD_SMS,
     METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
@@ -9,13 +10,13 @@ from corehq.apps.ivr.models import Call
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
-from touchforms.formplayer.api import TouchformsError
+from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
 )
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
-from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error
+from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from corehq.apps.domain.models import Domain
@@ -27,7 +28,7 @@ from corehq.apps.sms.models import (
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.templating import _get_obj_template_info
+from corehq.messaging.templating import _get_obj_template_info, _get_system_user_template_info
 from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext_noop
 from dimagi.utils.modules import to_function
@@ -107,6 +108,10 @@ def _add_owner_to_template_params(case, result):
 
 
 def _add_modified_by_to_template_params(case, result):
+    if case.modified_by == 'system':
+        result['case']['last_modified_by'] = _get_system_user_template_info()
+        return
+
     try:
         modified_by = CouchUser.get_by_user_id(case.modified_by)
     except KeyError:
@@ -212,8 +217,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
             elif isinstance(recipient, CouchUser) and unverified_number:
                 send_sms(reminder.domain, recipient, unverified_number,
                     message, metadata)
-            elif (is_commcarecase(recipient) and unverified_number and
-                    domain_obj.send_to_duplicated_case_numbers):
+            elif is_commcarecase(recipient) and unverified_number:
                 send_sms(reminder.domain, recipient, unverified_number,
                     message, metadata)
             else:
@@ -306,7 +310,6 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
 
             no_verified_number = verified_number is None
             cant_use_unverified_number = (unverified_number is None or
-                not domain_obj.send_to_duplicated_case_numbers or
                 form_requires_input(form))
             if no_verified_number and cant_use_unverified_number:
                 logged_subevent.error(MessagingEvent.ERROR_NO_TWO_WAY_PHONE_NUMBER)
@@ -375,12 +378,12 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                         case_for_case_submission=handler.force_surveys_to_use_triggered_case
                     )
                 except TouchformsError as e:
-                    human_readable_message = e.response_data.get('human_readable_message', None)
+                    human_readable_message = get_formplayer_exception(reminder.domain, e)
 
                     logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
                         additional_error_text=human_readable_message)
 
-                    if touchforms_error_is_config_error(e):
+                    if touchforms_error_is_config_error(reminder.domain, e):
                         # Don't reraise the exception because this means there are configuration
                         # issues with the form that need to be fixed
                         continue

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from django_prbac.utils import has_privilege as prbac_has_privilege
 from django.utils.translation import ugettext_lazy as _
@@ -55,6 +56,15 @@ def _uses_detail_format(module, column_format):
     return any([c.format for d in details for c in d.short.columns + d.long.columns if c.format == column_format])
 
 
+def _uses_calculated_property(module):
+    def _column_is_calculated_property(col):
+        return col.useXpathExpression
+    return hasattr(module, 'case_details') and (
+        any(_column_is_calculated_property(column) for column in module.case_details.short.columns)
+        or any(_column_is_calculated_property(column) for column in module.case_details.long.columns)
+    )
+
+
 # Apps that were created before add-ons were released get the original set of add-ons enabled
 # automatically, so they wouldn't get functionality suddenly turned off during the release.
 def _grandfathered(slug, app):
@@ -81,7 +91,8 @@ _ADD_ONS = {
     "calc_xpaths": AddOn(
         name=feature_previews.CALC_XPATHS.label,
         description=feature_previews.CALC_XPATHS.description,
-        used_in_module=lambda m: _uses_detail_format(m, 'calculate'),
+        used_in_module=_uses_calculated_property,
+        help_link=feature_previews.CALC_XPATHS.help_link,
     ),
     "case_detail_overwrite": AddOn(
         name=_("Case Detail Overwrite"),

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 
 from django.test import TestCase
@@ -71,7 +72,7 @@ class AppPillowTest(TestCase):
         self.assertEqual(app_name, app_doc['name'])
 
     def _create_app(self, name):
-        factory = AppFactory(domain=self.domain, name=name, build_version='2.11')
+        factory = AppFactory(domain=self.domain, name=name, build_version='2.11.0')
         module1, form1 = factory.new_basic_module('open_case', 'house')
         factory.form_opens_case(form1)
         app = factory.app

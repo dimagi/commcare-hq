@@ -50,24 +50,35 @@ function hqDefine(path, dependencies, moduleAccessor) {
         return hqDefine(path, [], dependencies);
     }
 
-    var thirdParty = {
-        'jquery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
-        'jQuery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
-        'knockout': typeof ko === 'undefined' ? undefined : ko,
-        'ko': typeof ko === 'undefined' ? undefined : ko,
-        'underscore': typeof _ === 'undefined' ? undefined : _,
-    };
     (function(factory) {
         if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
             define(path, dependencies, factory);
         } else {
+            var thirdPartyGlobals = {
+                    'jquery': '$',
+                    'knockout': 'ko',
+                    'underscore': '_',
+                    'clipboard/dist/clipboard': 'Clipboard',
+                    'ace-builds/src-min-noconflict/ace': 'ace',
+                },
+                thirdPartyPlugins = [
+                    'jquery-form/dist/jquery.form.min',
+                    'jquery.rmi/jquery.rmi',
+                    'jquery-ui/ui/sortable',
+                    'select2-3.5.2-legacy/select2',
+                ];
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
                 var dependency = dependencies[i];
-                if (thirdParty.hasOwnProperty(dependency)) {
-                    args[i] = thirdParty[dependency];
-                } else if (COMMCAREHQ_MODULES.hasOwnProperty(dependency)) {
+                if (COMMCAREHQ_MODULES.hasOwnProperty(dependency)) {
                     args[i] = hqImport(dependency);
+                } else if (thirdPartyGlobals.hasOwnProperty(dependency)) {
+                    args[i] = window[thirdPartyGlobals[dependency]];
+                } else if (!_.contains(thirdPartyPlugins, dependency)) {
+                    var message = "Could not find module '" + dependency + "'.";
+                    message += " Verify that its script tag appears before the script tag for '" + path + "'.";
+                    message += " If this is a third-party module, verify it appears in thirdPartyGlobals in hqModules.js.";
+                    console.warn(message);
                 }
             }
             if (!COMMCAREHQ_MODULES.hasOwnProperty(path)) {
@@ -86,10 +97,26 @@ if (typeof define === 'undefined') {
     define = hqDefine;
 }
 
+// For use only with modules that are never used in a requirejs context.
 function hqImport(path) {
     if (COMMCAREHQ_MODULES[path] === undefined) {
         throw new Error("The module '" + path + "' has not yet been defined.\n\n" +
             'Did you include <script src="' + path + '.js"></script> on your html page?');
     }
     return COMMCAREHQ_MODULES[path];
+}
+
+// Support require calls within a module. Best practice is to require all dependencies
+// at module definition time, but this function can be used when doing so would
+// introduce a circular dependency.
+function hqRequire(paths, callback) {
+    if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
+        requirejs(paths, callback);
+    } else {
+        var args = [];
+        for (var i = 0; i < paths.length; i++) {
+            args.push(hqImport(paths[i]));
+        }
+        callback.apply(undefined, args);
+    }
 }

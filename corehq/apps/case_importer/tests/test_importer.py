@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 from django.utils.dateparse import parse_datetime
 
@@ -69,11 +70,11 @@ class ImporterTest(TestCase):
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(
             ['case_id', 'age', 'sex', 'location'],
-            [u'case_id-0', u'age-0', u'sex-0', u'location-0'],
-            [u'case_id-1', u'age-1', u'sex-1', u'location-1'],
-            [u'case_id-2', u'age-2', u'sex-2', u'location-2'],
-            [u'case_id-3', u'age-3', u'sex-3', u'location-3'],
-            [u'case_id-4', u'age-4', u'sex-4', u'location-4'],
+            ['case_id-0', 'age-0', 'sex-0', 'location-0'],
+            ['case_id-1', 'age-1', 'sex-1', 'location-1'],
+            ['case_id-2', 'age-2', 'sex-2', 'location-2'],
+            ['case_id-3', 'age-3', 'sex-3', 'location-3'],
+            ['case_id-4', 'age-4', 'sex-4', 'location-4'],
         )
         res = do_import(file, config, self.domain)
         self.assertEqual(5, res['created_count'])
@@ -98,10 +99,10 @@ class ImporterTest(TestCase):
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(
             ['case_id', 'age', 'sex', 'location'],
-            [u'case_id-0', u'age-0', u'sex-0', u'location-0'],
-            [u'case_id-1', u'age-1', u'sex-1', u'location-1'],
-            [u'case_id-2', u'age-2', u'sex-2', u'location-2'],
-            [u'case_id-3', u'age-3', u'sex-3', u'location-3'],
+            ['case_id-0', 'age-0', 'sex-0', 'location-0'],
+            ['case_id-1', 'age-1', 'sex-1', 'location-1'],
+            ['case_id-2', 'age-2', 'sex-2', 'location-2'],
+            ['case_id-3', 'age-3', 'sex-3', 'location-3'],
         )
         res = do_import(file, config, self.domain)
 
@@ -110,11 +111,11 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     def testImportTrailingWhitespace(self):
-        cols = ['case_id', 'age', u'sex\xa0', 'location']
+        cols = ['case_id', 'age', 'sex\xa0', 'location']
         config = self._config(cols)
         file = make_worksheet_wrapper(
-            ['case_id', 'age', u'sex\xa0', 'location'],
-            [u'case_id-0', u'age-0', u'sex\xa0-0', u'location-0'],
+            ['case_id', 'age', 'sex\xa0', 'location'],
+            ['case_id-0', 'age-0', 'sex\xa0-0', 'location-0'],
         )
         res = do_import(file, config, self.domain)
 
@@ -248,11 +249,11 @@ class ImporterTest(TestCase):
         config = self._config(['case_id', 'age', 'sex', 'location'], create_new_cases=False)
         file = make_worksheet_wrapper(
             ['case_id', 'age', 'sex', 'location'],
-            [u'case_id-0', u'age-0', u'sex-0', u'location-0'],
-            [u'case_id-1', u'age-1', u'sex-1', u'location-1'],
-            [u'case_id-2', u'age-2', u'sex-2', u'location-2'],
-            [u'case_id-3', u'age-3', u'sex-3', u'location-3'],
-            [u'case_id-4', u'age-4', u'sex-4', u'location-4'],
+            ['case_id-0', 'age-0', 'sex-0', 'location-0'],
+            ['case_id-1', 'age-1', 'sex-1', 'location-1'],
+            ['case_id-2', 'age-2', 'sex-2', 'location-2'],
+            ['case_id-3', 'age-3', 'sex-3', 'location-3'],
+            ['case_id-4', 'age-4', 'sex-4', 'location-4'],
         )
         res = do_import(file, config, self.domain)
 
@@ -280,11 +281,11 @@ class ImporterTest(TestCase):
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(
             ['case_id', 'age', 'sex', 'location'],
-            [u'case_id-0', u'age-0', u'sex-0', u'location-0'],
-            [u'case_id-1', u'age-1', u'sex-1', u'location-1'],
-            [u'case_id-2', u'age-2', u'sex-2', u'location-2'],
-            [u'case_id-3', u'age-3', u'sex-3', u'location-3'],
-            [u'case_id-4', u'age-4', u'sex-4', u'location-4'],
+            ['case_id-0', 'age-0', 'sex-0', 'location-0'],
+            ['case_id-1', 'age-1', 'sex-1', 'location-1'],
+            ['case_id-2', 'age-2', 'sex-2', 'location-2'],
+            ['case_id-3', 'age-3', 'sex-3', 'location-3'],
+            ['case_id-4', 'age-4', 'sex-4', 'location-4'],
         )
         res = do_import(file, config, self.domain, chunksize=2)
         # 5 cases in chunks of 2 = 3 chunks
@@ -337,9 +338,9 @@ class ImporterTest(TestCase):
         )
         file_missing = make_worksheet_wrapper(
             ['parent_id', 'name', 'case_id'],
-            [u'parent_id-0', u'name-0', u'case_id-0'],
-            [u'parent_id-1', u'name-1', u'case_id-1'],
-            [u'parent_id-2', u'name-2', u'case_id-2'],
+            ['parent_id-0', 'name-0', 'case_id-0'],
+            ['parent_id-1', 'name-1', 'case_id-1'],
+            ['parent_id-2', 'name-2', 'case_id-2'],
         )
 
         # Should successfully match on `rows` cases

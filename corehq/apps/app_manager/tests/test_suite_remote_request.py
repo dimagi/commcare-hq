@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from mock import patch
 
@@ -24,7 +25,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def setUp(self):
         self.app = Application.new_app(DOMAIN, "Untitled Application")
-        self.app.build_spec = BuildSpec(version='tests', build_number=1)
+        self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
         self.app.new_form(0, "Untitled Form", None)
         self.module.case_type = 'case'
@@ -56,11 +57,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             relevant="{} and {}".format("instance('groups')/groups/group", CLAIM_DEFAULT_RELEVANT_CONDITION),
             default_properties=[
                 DefaultCaseSearchProperty(
-                    property=u'ɨŧsȺŧɍȺᵽ',
+                    property='ɨŧsȺŧɍȺᵽ',
                     defaultValue=(
-                        u"instance('casedb')/case"
-                        u"[@case_id='instance('commcaresession')/session/data/case_id']"
-                        u"/ɨŧsȺŧɍȺᵽ")
+                        "instance('casedb')/case"
+                        "[@case_id='instance('commcaresession')/session/data/case_id']"
+                        "/ɨŧsȺŧɍȺᵽ")
                 ),
                 DefaultCaseSearchProperty(
                     property='name',
@@ -133,11 +134,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.module.search_config = CaseSearch(
             default_properties=[
                 DefaultCaseSearchProperty(
-                    property=u'ɨŧsȺŧɍȺᵽ',
+                    property='ɨŧsȺŧɍȺᵽ',
                     defaultValue=(
-                        u"instance('casedb')/case"
-                        u"[@case_id='instance('commcaresession')/session/data/case_id']"
-                        u"/ɨŧsȺŧɍȺᵽ")
+                        "instance('casedb')/case"
+                        "[@case_id='instance('commcaresession')/session/data/case_id']"
+                        "/ɨŧsȺŧɍȺᵽ")
                 ),
                 DefaultCaseSearchProperty(
                     property='name',

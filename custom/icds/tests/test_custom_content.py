@@ -1,8 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.tests.util import create_user_case
 from corehq.messaging.scheduling.models import CustomContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 from custom.icds.const import (
@@ -24,6 +26,7 @@ from custom.icds.messaging.custom_content import (
     get_language_code_for_state,
     render_message,
     person_case_is_migrated_or_opted_out,
+    run_indicator_for_usercase,
 )
 from custom.icds.tests.base import BaseICDSTest
 from mock import patch
@@ -91,6 +94,16 @@ class CustomContentTest(BaseICDSTest):
 
         cls.migrated_case = cls.create_case('person', update={'migration_status': 'migrated'})
         cls.opted_out_case = cls.create_case('person', update={'registered_status': 'not_registered'})
+
+    def test_run_indicator_for_usercase(self):
+        with create_user_case(self.user1) as case:
+            with patch('custom.icds.messaging.custom_content.run_indicator_for_user') as patched:
+                run_indicator_for_usercase(case, object)
+                patched.assert_called_once()
+                call_args = patched.call_args[0]
+                self.assertTrue(isinstance(call_args[0], CommCareUser))
+                self.assertEqual(call_args[0].get_id, self.user1.get_id)
+                self.assertEqual(call_args[1], object)
 
     def test_static_negative_growth_indicator(self):
         c = CustomContent(custom_content_id='ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE')
@@ -244,23 +257,6 @@ class CustomContentTest(BaseICDSTest):
         self.assertEqual(
             c.get_list_of_messages(self.user1),
             ["Congratulations! You've done all the Complementary Feeding  Visits for Sam"],
-        )
-
-    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
-    def test_child_vaccinations_complete(self, language_code_patch):
-        c = CustomContent(custom_content_id='ICDS_CHILD_VACCINATIONS_COMPLETE')
-
-        schedule_instance = CaseTimedScheduleInstance(
-            domain=self.domain,
-            case_id=self.child_tasks_case.case_id,
-        )
-
-        c.set_context(schedule_instance=schedule_instance)
-
-        language_code_patch.return_value = ENGLISH
-        self.assertEqual(
-            c.get_list_of_messages(self.user1),
-            ["Congratulations! You've given all the vaccines to Joe"],
         )
 
     def test_get_state_code(self):

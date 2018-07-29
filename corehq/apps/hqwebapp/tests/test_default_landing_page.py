@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse
 from django.test import TestCase, Client
 from corehq.apps.app_manager.models import Application
@@ -88,7 +89,7 @@ class TestDefaultLandingPages(TestCase):
 
 @generate_cases([
     (None, DomainDashboardView.urlname),
-    ('reports_role', MySavedReportsView.urlname),
+    ('reports_role', "reports_home"),
     ('webapps_role', FormplayerMain.urlname),
 ], TestDefaultLandingPages)
 def test_web_user_landing_page(self, role, expected_urlname, extra_url_args=None):
@@ -107,7 +108,7 @@ def test_web_user_landing_page(self, role, expected_urlname, extra_url_args=None
 
 @generate_cases([
     (None, FormplayerMain.urlname),
-    ('reports_role', MySavedReportsView.urlname),
+    ('reports_role', "reports_home"),
     ('webapps_role', FormplayerMain.urlname),
 ], TestDefaultLandingPages)
 def test_mobile_worker_landing_page(self, role, expected_urlname, extra_url_args=None):

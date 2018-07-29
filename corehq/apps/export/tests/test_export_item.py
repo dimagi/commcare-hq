@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import mock
 from django.test import SimpleTestCase
 from collections import namedtuple

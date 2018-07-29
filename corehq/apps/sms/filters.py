@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from corehq.apps.es.groups import GroupES
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseSingleOptionFilter, BaseReportFilter

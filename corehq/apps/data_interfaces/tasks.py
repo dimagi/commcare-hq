@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from celery.utils.log import get_task_logger
@@ -9,16 +10,19 @@ from corehq.apps.data_interfaces.models import (
     AUTO_UPDATE_XMLNS,
 )
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.domain.models import Domain
 from corehq.util.decorators import serial_task
 from datetime import datetime, timedelta
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.utils.general import should_use_sql_backend
 from django.conf import settings
 from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms_old, archive_or_restore_forms
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
 from corehq.util.log import send_HTML_email
@@ -109,30 +113,45 @@ def check_data_migration_in_progress(domain, last_migration_check_time):
     return False, last_migration_check_time
 
 
+@task(queue='case_rule_queue')
+def run_case_update_rules_for_domain(domain, now=None):
+    now = now or datetime.utcnow()
+
+    run_record = DomainCaseRuleRun.objects.create(
+        domain=domain,
+        started_on=datetime.utcnow(),
+        status=DomainCaseRuleRun.STATUS_RUNNING,
+    )
+
+    if should_use_sql_backend(domain):
+        for db in get_db_aliases_for_partitioned_query():
+            run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, db=db)
+    else:
+        # explicitly pass db=None so that the serial task decorator has access to db in the key generation
+        run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, db=None)
+
+
 @serial_task(
-    '{domain}',
+    '{domain}-{db}',
     timeout=36 * 60 * 60,
     max_retries=0,
     queue='case_rule_queue',
 )
-def run_case_update_rules_for_domain(domain, now=None):
-    now = now or datetime.utcnow()
+def run_case_update_rules_for_domain_and_db(domain, now, run_id, db=None):
+    domain_obj = Domain.get_by_name(domain)
+    max_allowed_updates = domain_obj.auto_case_update_limit or settings.MAX_RULE_UPDATES_IN_ONE_RUN
     start_run = datetime.utcnow()
+
     last_migration_check_time = None
-    run_record = DomainCaseRuleRun.objects.create(
-        domain=domain,
-        started_on=start_run,
-        status=DomainCaseRuleRun.STATUS_RUNNING,
-    )
     cases_checked = 0
     case_update_result = CaseRuleActionResult()
 
-    all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+    all_rules = list(AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE))
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
     for case_type, rules in six.iteritems(rules_by_case_type):
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-        case_ids = list(AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date))
+        case_ids = list(AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date, db=db))
 
         for case in CaseAccessors(domain).iter_cases(case_ids):
             migration_in_progress, last_migration_check_time = check_data_migration_in_progress(domain,
@@ -141,21 +160,23 @@ def run_case_update_rules_for_domain(domain, now=None):
             time_elapsed = datetime.utcnow() - start_run
             if (
                 time_elapsed.seconds > HALT_AFTER or
-                case_update_result.total_updates >= settings.MAX_RULE_UPDATES_IN_ONE_RUN or
+                case_update_result.total_updates >= max_allowed_updates or
                 migration_in_progress
             ):
-                run_record.done(DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result)
+                DomainCaseRuleRun.done(run_id, DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result,
+                    db=db)
                 notify_error("Halting rule run for domain %s." % domain)
                 return
 
             case_update_result.add_result(run_rules_for_case(case, rules, now))
             cases_checked += 1
 
-        for rule in rules:
-            rule.last_run = now
-            rule.save()
+    run = DomainCaseRuleRun.done(run_id, DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result,
+        db=db)
 
-    run_record.done(DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result)
+    if run.status == DomainCaseRuleRun.STATUS_FINISHED:
+        for rule in all_rules:
+            AutomaticUpdateRule.objects.filter(pk=rule.pk).update(last_run=now)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)

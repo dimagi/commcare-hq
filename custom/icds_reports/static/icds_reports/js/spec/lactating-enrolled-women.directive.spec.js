@@ -1,12 +1,13 @@
-/* global module, inject, chai */
+/* global module, inject, chai, _ */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Lactating Enrolled Women Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('lactating_enrolled_women', 'lactating_enrolled_women');
@@ -14,6 +15,7 @@ describe('Lactating Enrolled Women Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -25,13 +27,20 @@ describe('Lactating Enrolled Women Directive', function () {
         $httpBackend.expectGET('lactating_enrolled_women').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<lactating_enrolled_women data='test'></lactating_enrolled_women>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('lactatingEnrolledWomen');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -78,9 +87,9 @@ describe('Lactating Enrolled Women Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 5, all: 10});
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
-            '<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>5</strong>' +
-            '<div>Total number of lactating women who are registered: <strong>10</strong>' +
-            '<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>50.00%</strong>' +
+            '<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>5</strong></div>' +
+            '<div>Total number of lactating women who are registered: <strong>10</strong></div>' +
+            '<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>' +
             '</div>';
         assert.equal(result, expected);
     });
@@ -177,7 +186,7 @@ describe('Lactating Enrolled Women Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of lactating women who are enrolled for Anganwadi Services'
+            'Of the total number of lactating women, the percentage of lactating women enrolled for Anganwadi Services'
         );
     });
 
@@ -192,5 +201,35 @@ describe('Lactating Enrolled Women Directive', function () {
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>0</strong></div>' +
+            '<div>Total number of lactating women who are registered: <strong>25</strong></div>' +
+            '<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>NaN%</strong></div>' +
+            '</div>';
+
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
+        assert.equal(expected, result);
+    });
+
+    it('tests disable locations for user', function () {
+        controller.userLocationId = 'test_id4';
+        controller.location = {name: 'name4', location_id: 'test_id4'};
+        controller.selectedLocations.push(
+            {name: 'name1', location_id: 'test_id1', user_have_access: 0},
+            {name: 'name2', location_id: 'test_id2', user_have_access: 0},
+            {name: 'name3', location_id: 'test_id3', user_have_access: 0},
+            {name: 'name4', location_id: 'test_id4', user_have_access: 1},
+            {name: 'All', location_id: 'all', user_have_access: 0},
+            null
+        );
+        var index = controller.getDisableIndex();
+        assert.equal(index, 2);
     });
 });

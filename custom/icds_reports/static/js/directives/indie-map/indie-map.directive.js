@@ -41,7 +41,6 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         storageService.setKey('search', $location.search());
     }
 
-    var location_level = parseInt($location.search()['selectedLocationLevel']);
     var location_id = $location.search().location_id;
     vm.type = '';
     vm.mapHeight = 0;
@@ -61,11 +60,21 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
         }
         if (Datamap.prototype[vm.type].objects[vm.scope] !== void(0)) {
-            vm.mapHeight = Datamap.prototype[vm.type].objects[vm.scope].height;
+            if ($location.$$path.indexOf('wasting') !== -1 && location.location_type === 'district') {
+                vm.mapHeight = 750;
+            } else {
+                vm.mapHeight = Datamap.prototype[vm.type].objects[vm.scope].height;
+            }
         }
     };
 
     var mapConfiguration = function (location) {
+
+        var location_level = -1;
+        if (location.location_type === 'state') location_level = 0;
+        else if (location.location_type === 'district') location_level = 1;
+        else if (location.location_type === 'block') location_level = 2;
+        else location_level = -1;
 
         vm.initTopoJson(location_level, location);
 
@@ -113,7 +122,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         if (vm.map.data) {
             _.extend(vm.mapPlugins, {
                 customTable: function () {
-                    if (this.options.rightLegend !== null) {
+                    if (this.options.rightLegend !== null &&
+                        d3.select(this.options.element)[0][0].lastChild.className !== 'map-kpi-outer') {
                         var html = [
                             '<div class="map-kpi" style="width: 310px;">',
                             '<div class="row no-margin">',
@@ -164,9 +174,14 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
                         html.push('</div>');
                         d3.select(this.options.element).append('div')
-                            .attr('class', '')
-                            .attr('style', 'position: absolute; top: 2%; left: 0; z-index: -1; margin-bottom: 80px')
+                            .attr('class', 'map-kpi-outer')
+                            .attr('style', 'position: absolute; top: 15px; left: 0; z-index: -1')
                             .html(html.join(''));
+                        var mapHeight = d3.select(this.options.element)[0][0].offsetHeight;
+                        var legendHeight = d3.select(this.options.element)[0][0].lastElementChild.offsetHeight;
+                        if (mapHeight < legendHeight + 15) {
+                            d3.select(this.options.element)[0][0].style.height = legendHeight + 15 + "px";
+                        }
                     }
                 },
             });

@@ -20,10 +20,10 @@
     <div class="btn-group">
         <a href="{% url 'create_schedule' domain %}" class="btn btn-success">
             <i class="fa fa-plus"></i>
-            {% trans 'Schedule a Message' %}
+            {% trans 'New Broadcast' %}
         </a>
     </div>
-    <h4>{% trans 'Scheduled Messages' %}</h4>
+    <h4>{% trans 'Scheduled Broadcasts' %}</h4>
     <div>
         <table id="scheduled-table" class="table table-striped table-bordered">
             <thead>
@@ -37,7 +37,7 @@
             </thead>
         </table>
     </div>
-    <h4 style="clear: both">{% trans 'Immediate Messages' %}</h4>
+    <h4 style="clear: both">{% trans 'Immediate Broadcasts History' %}</h4>
     <div>
         <table id="immediate-table" class="table table-striped table-bordered">
             <thead>

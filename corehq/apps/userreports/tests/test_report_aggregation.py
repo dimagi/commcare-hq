@@ -1,21 +1,17 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.conf import settings
 from django.http import HttpRequest
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
-from corehq.apps.userreports.const import UCR_BACKENDS, UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     ReportConfiguration
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
-import six
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
     """
     Integration tests for configurable report aggregation
@@ -103,7 +99,7 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         return report_config
 
     def _create_view(self, report_config):
-        view = ConfigurableReport(request=HttpRequest())
+        view = ConfigurableReportView(request=HttpRequest())
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = report_config._id
@@ -564,59 +560,6 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         )
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class TestReportAggregationES(TestReportAggregationSQL):
-    def test_total_row_with_min_column(self):
-        report_config = self._create_report(
-            aggregation_columns=['indicator_col_id_first_name'],
-            columns=[
-                {
-                    "type": "field",
-                    "display": "sum_report_column_display_number",
-                    "field": 'indicator_col_id_number',
-                    'column_id': 'sum_report_column_display_number',
-                    'aggregation': 'sum',
-                    'calculate_total': True,
-                },
-                {
-                    "type": "expanded",
-                    "display": "report_column_display_first_name",
-                    "field": 'indicator_col_id_first_name',
-                    'column_id': 'report_column_col_id_first_name',
-                    'calculate_total': True,
-                },
-                {
-                    "type": "field",
-                    "display": "min_report_column_display_number",
-                    "field": 'indicator_col_id_number',
-                    'column_id': 'min_report_column_display_number',
-                    'aggregation': 'min',
-                    'calculate_total': True,
-                },
-            ]
-        )
-        view = self._create_view(report_config)
-
-        self.assertEqual(
-            view.export_table,
-            [[
-                'foo',
-                [
-                    [
-                        'sum_report_column_display_number',
-                        'report_column_display_first_name-Ada',
-                        'report_column_display_first_name-Alan',
-                        'min_report_column_display_number',
-                    ],
-                    [3, 1, 0, 3],
-                    [6, 0, 2, 2],
-                    [9, 1, 2, 2],
-                ]
-            ]]
-        )
-
-
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
     @classmethod
     def _create_data(cls):
@@ -696,7 +639,6 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         super(TestReportMultipleAggregationsSQL, cls).tearDownClass()
 
     def _create_report(self, aggregation_columns, columns, filters=None):
-        backend_id = settings.OVERRIDE_UCR_BACKEND or UCR_SQL_BACKEND
         report_config = ReportConfiguration(
             domain=self.domain,
             config_id=self.data_source._id,
@@ -741,7 +683,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         )
 
     def _create_view(self, report_config):
-        view = ConfigurableReport(request=HttpRequest())
+        view = ConfigurableReportView(request=HttpRequest())
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = report_config._id
@@ -799,8 +741,3 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                 ]
             ]]
         )
-
-
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class TestReportMultipleAggregationsES(TestReportMultipleAggregationsSQL):
-    pass

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from casexml.apps.stock.models import ConsumptionMixin
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta

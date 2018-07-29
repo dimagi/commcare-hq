@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime
 import hashlib
@@ -17,7 +18,7 @@ from couchexport.files import ExportFiles
 from couchexport.transforms import identity
 from couchexport.util import SerializableFunctionProperty,\
     get_schema_index_view_keys, force_tag_to_list
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
 from soil import DownloadBase
@@ -225,7 +226,7 @@ class ExportColumn(DocumentSchema):
             return super(ExportColumn, self).wrap(data)
 
     def get_display(self):
-        return u'{primary}{extra}'.format(
+        return '{primary}{extra}'.format(
             primary=self.display,
             extra=" [sensitive]" if self.is_sensitive else ''
         )
@@ -288,7 +289,7 @@ class SplitColumn(ComplexExportColumn):
     ignore_extras = False
 
     def get_headers(self):
-        header = self.display if '{option}' in self.display else u"{name} | {option}"
+        header = self.display if '{option}' in self.display else "{name} | {option}"
         for option in self.options:
             yield header.format(
                 name=self.display,

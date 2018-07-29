@@ -1,15 +1,14 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from copy import copy
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from datetime import datetime, timedelta
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
-from dimagi.utils.couch.database import iter_docs
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.util.soft_assert import soft_assert
 from custom.bihar.utils import (get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES,
     groups_for_user, get_role)
@@ -22,8 +21,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from django.utils.html import format_html
 from corehq.apps.groups.models import Group
-from dimagi.utils.decorators.memoized import memoized
-from casexml.apps.case.models import CommCareCase
+from memoized import memoized
 from custom.bihar.reports.indicators.mixins import IndicatorConfigMixIn
 
 
@@ -41,7 +39,7 @@ class ConvenientBaseMixIn(object):
     # for convenience
 
     base_template_mobile = "bihar/base_template_mobile.html"
-    report_template_path = "reports/async/tabular.html"
+    report_template_path = "reports/tabular.html"
 
     hide_filters = True
     flush_layout = True
@@ -55,6 +53,11 @@ class ConvenientBaseMixIn(object):
 
     @property
     def headers(self):
+        soft_assert('czue@{}'.format('dimagi.com'))(
+            False, 'amazingly, someone ({}) is still looking at bihar reports'.format(
+                self.request.couch_user.username,
+            )
+        )
         headers = self._headers[self.mode] if isinstance(self._headers, dict) else self._headers
         return DataTablesHeader(*(DataTablesColumn(_(h)) for h in headers))
 
@@ -87,7 +90,7 @@ class ConvenientBaseMixIn(object):
 
 def list_prompt(index, value):
     # e.g. 1. Reports
-    return u"%s. %s" % (_(str(index+1)), _(value))
+    return "%s. %s" % (_(str(index+1)), _(value))
 
 
 class ReportReferenceMixIn(object):
@@ -134,27 +137,15 @@ class GroupReferenceMixIn(object):
 
     @property
     @memoized
-    def cases(self):
-        _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
-        _assert(False, "I'm surprised GroupReferenceMixIn ever gets called!")
-        case_ids = get_case_ids_in_domain_by_owner(
-            self.domain, owner_id__in=self.all_owner_ids, closed=False)
-        # really inefficient, but can't find where it's called
-        # and this is what it was doing before
-        return [CommCareCase.wrap(doc)
-                for doc in iter_docs(CommCareCase.get_db(), case_ids)]
-
-    @property
-    @memoized
     def group_display(self):
         return {
-            'supervisor': u'{group} ({awcc})',
-            'manager': u'{group}',
+            'supervisor': '{group} ({awcc})',
+            'manager': '{group}',
         }[self.mode].format(group=self.group.name, awcc=get_awcc(self.group))
 
     @property
     def rendered_report_title(self):
-        return u"{title} - {group}".format(title=_(self.name),
+        return "{title} - {group}".format(title=_(self.name),
                                            group=self.group_display)
 
 
@@ -232,7 +223,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
         def _link(g, text):
             params = copy(self.request_params)
             params["group"] = g.get_id
-            return format_html(u'<a href="{details}">{text}</a>',
+            return format_html('<a href="{details}">{text}</a>',
                 text=text,
                 details=url_and_params(self.next_report_class.get_url(domain=self.domain,
                                                                       render_as=self.render_next),
@@ -242,6 +233,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
 
 
 class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
+    # note: this is broken
     name = ugettext_noop("Main Menu")
     slug = "mainnav"
     description = ugettext_noop("Main navigation")
@@ -268,7 +260,7 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
             params = copy(self.request_params)
             params["indicators"] = indicator_set.slug
             params["next_report"] = IndicatorNav.slug
-            return format_html(u'<a href="{next}">{val}</a>',
+            return format_html('<a href="{next}">{val}</a>',
                 val=list_prompt(i, indicator_set.name),
                 next=url_and_params(
                     SubCenterSelectionReport.get_url(self.domain,
@@ -292,7 +284,7 @@ class ToolsNavReport(BiharSummaryReport):
         def _referral_link(i):
             params = copy(self.request_params)
             params["next_report"] = ReferralListReport.slug
-            return format_html(u'<a href="{next}">{val}</a>',
+            return format_html('<a href="{next}">{val}</a>',
                 val=list_prompt(i, _(ReferralListReport.name)),
                 next=url_and_params(
                     SubCenterSelectionReport.get_url(self.domain,
@@ -319,7 +311,7 @@ class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
                 "private": _("Private Facility"),
                 "transport": _("Transport")
             }[f.fields_without_attributes["type"]]
-            return format_html(u"%s: %s<br /># %s" % (title, f.fields_without_attributes.get("name", ""), f.fields_without_attributes.get("number", "")))
+            return format_html("%s: %s<br /># %s" % (title, f.fields_without_attributes.get("name", ""), f.fields_without_attributes.get("number", "")))
 
         fixtures = FixtureDataItem.by_group(self.group)
         _data = []
@@ -418,7 +410,7 @@ def default_nav_link(nav_report, i, report_cls):
                              render_as=nav_report.render_next)
     if getattr(nav_report, 'preserve_url_params', False):
         url = url_and_params(url, nav_report.request_params)
-    return format_html(u'<a href="{details}">{val}</a>',
+    return format_html('<a href="{details}">{val}</a>',
                         val=list_prompt(i, report_cls.name),
                         details=url)
 

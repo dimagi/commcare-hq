@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from contextlib import contextmanager
 from corehq.util.workbook_reading import SpreadsheetFileExtError
 from .xls import open_xls_workbook

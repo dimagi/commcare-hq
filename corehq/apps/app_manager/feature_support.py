@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from distutils.version import LooseVersion, Version
 from django.conf import settings
 import six
@@ -13,7 +14,9 @@ class CommCareFeatureSupportMixin(object):
             return False
         assert isinstance(self.build_version, Version)
         assert isinstance(minimum_version, six.string_types + (Version,))
-        return self.build_version >= minimum_version
+        if isinstance(minimum_version, six.string_types):
+            minimum_version = LooseVersion(minimum_version)
+        return self.build_version and self.build_version >= minimum_version
 
     @property
     def enable_multi_sort(self):
@@ -158,3 +161,7 @@ class CommCareFeatureSupportMixin(object):
         Enable Remote Request question type in the form builder.
         """
         return self._require_minimum_version('2.40')
+
+    @property
+    def enable_training_modules(self):
+        return self._require_minimum_version('2.43')

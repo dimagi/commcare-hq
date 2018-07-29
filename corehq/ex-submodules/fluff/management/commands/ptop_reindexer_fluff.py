@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 from django.core.management import CommandError
 from django.core.management.base import BaseCommand
@@ -20,7 +21,7 @@ class ReindexEventHandler(PaginationEventHandler):
 
     def page_start(self, total_emitted, *args, **kwargs):
         domain, doc_type = kwargs.get('startkey')[:2]
-        print (u'{} Fetching rows {}-{} from couch: domain="{}" doc_type="{}"'.format(
+        print ('{} Fetching rows {}-{} from couch: domain="{}" doc_type="{}"'.format(
             self.log_prefix,
             total_emitted,
             total_emitted + kwargs['limit'] - 1,

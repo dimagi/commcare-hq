@@ -1,8 +1,8 @@
-/* globals hqDefine */
+/* globals hqDefine, d3, nv, WS4Redis */
 hqDefine('hqadmin/js/dimagisphere_helper', function () {
     var dimagisphere = (function() {
         var self = {};
-    
+
         self.formData = {
             totalFormsByCountry: {},  // keeps track of totals per country
             recentFormsByCountry: {},  // keeps track of "active" per country - from the last second
@@ -10,7 +10,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             totalFormsByDomain: {}, // keeps track of totals per domain
             domainToCountry: {},
         };
-    
+
         self.addData = function (dataItem) {
             /**
              * Adds data to self.formData. Returns whether anything was done.
@@ -34,7 +34,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             }
             return false;
         };
-    
+
         var FAKE_DOMAINS = {
             'dimagi': 'United States of America',
             'unicef': 'Nigeria',
@@ -43,7 +43,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             'icds': 'India',
             'tula': 'Guatemala',
         };
-    
+
         self.generateRandomItem = function () {
             // just return a random item from FAKE_DOMAINS
             // http://stackoverflow.com/questions/2532218/pick-random-property-from-a-javascript-object
@@ -56,24 +56,24 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
         };
         return self;
     })();
-    
+
     $(function() {
         var filter = {},
             initial_page_data = $("body").data();
-    
+
         // courtesy of http://colorbrewer2.org/
         var COUNTRY_COLORS = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
         var COUNTRY_ACTIVE_COLORS = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
-        var ws4redis = WS4Redis({
+        WS4Redis({
             uri: initial_page_data.uri + 'form-feed?subscribe-broadcast',
             receive_message: receiveMessage,
             heartbeat_msg: initial_page_data.heartbeatMessage,
         });
-    
+
         // in tv mode we don't show domains in the graph but just countries
         var tvmode = initial_page_data.tvmode;
         var chartSourceData = tvmode ? dimagisphere.formData.totalFormsByCountry : dimagisphere.formData.totalFormsByDomain;
-    
+
         function addDataToMap(msgObj) {
             colorAll();
             // this removes from active after a bit of time
@@ -81,12 +81,12 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                 dimagisphere.formData.recentFormsByCountry[msgObj.country] -= 1;
             }, 1000);
         }
-    
+
         // receive a message though the Websocket from the server
         function receiveMessage(msg) {
             var msgObj = JSON.parse(msg);
             // var renderedMsg = '<strong>' + msgObj.username + '</strong>: ' + msgObj.message;
-    
+
             dimagisphere.addData(msgObj);
             if (msgObj.country) {
                 addDataToMap(msgObj);
@@ -94,7 +94,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             // add data to chart
             if (chart !== undefined) {
                 chartData.datum(formatChartData(chartSourceData)).call(chart);
-    
+
                 // when the bar for a domain is clicked on, we can filter on that domain
                 // isn't in use with just this one chart and the map, but maybe if there are other charts added
                 d3.selectAll(".discreteBar").on('click', function(d) {
@@ -111,7 +111,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                 }
             }
         }
-    
+
         // charts
         var chart, chartData;
         nv.addGraph(function() {
@@ -146,7 +146,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                 values: values,
             }];
         }
-    
+
         var countriesGeo;
         // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
         var map = L.map('map').setView([0, 0], 2);
@@ -156,7 +156,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             id: mapId,
             accessToken: initial_page_data.token,
         }).addTo(map);
-    
+
         function getColor(featureId) {
             var count = dimagisphere.formData.totalFormsByCountry[featureId];
             if (!count) {
@@ -166,7 +166,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             if (!activeCount) {
                 var pct = count / dimagisphere.formData.maxFormsByCountry;
                 var index = Math.min(Math.floor(pct * COUNTRY_COLORS.length), COUNTRY_COLORS.length - 1);
-    
+
                 return COUNTRY_COLORS[index];
             }
             else {
@@ -175,10 +175,10 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                 return COUNTRY_ACTIVE_COLORS[activeIndex - 1];
             }
         }
-    
+
         function getOpacity(featureId) {
             if (dimagisphere.formData.totalFormsByCountry[featureId]) {
-                if (filter.country != null) {
+                if (filter.country !== null) {
                     if (featureId === filter.country) {
                         return .9;
                     } else {
@@ -190,7 +190,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                 return 0;
             }
         }
-    
+
         function style(feature) {
             return {
                 fillColor: getColor(feature.properties.name),
@@ -201,7 +201,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                 fillOpacity: getOpacity(feature.properties.name),
             };
         }
-    
+
         // highlights
         function highlightFeature(e) {
             var layer = e.target;
@@ -215,12 +215,12 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             }
             info.update(layer.feature.properties);
         }
-    
+
         function resetHighlight(e) {
             countriesGeo.resetStyle(e.target);
             info.update();
         }
-    
+
         function onEachFeature(feature, layer) {
             layer.on({
                 mouseover: highlightFeature,
@@ -238,15 +238,15 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                 },
             });
         }
-    
+
         // info control
         var info = L.control();
-        info.onAdd = function (map) {
+        info.onAdd = function () {
             this._div = L.DomUtil.create('div', 'map-info');
             this.update();
             return this._div;
         };
-    
+
         // method that we will use to update the control based on feature properties passed in
         info.update = function (props) {
             function _getInfoContent(countryName) {
@@ -257,12 +257,12 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             this._div.innerHTML = (props ? _getInfoContent(props.name) : 'Hover over a country');
         };
         info.addTo(map);
-    
+
         // todo: should probably be getting this from somewhere else and possibly not on every page load.
         $.getJSON('https://raw.githubusercontent.com/dimagi/world.geo.json/master/countries.geo.json', function (data) {
             countriesGeo = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map);
         });
-    
+
         function colorAll() {
             if (countriesGeo !== undefined) {
                 countriesGeo.setStyle(style);
@@ -270,75 +270,75 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                 legend.addTo(map);
             }
         }
-    
+
         // update all every 5 seconds in case no activity (this is just to clear active state)
         window.setInterval(colorAll, 5000);
-    
+
         // add a legend
         var legend = L.control({position: 'bottomleft'});
-    
-        var createLegend = function (map) {
+
+        var createLegend = function () {
             var div = L.DomUtil.create('div', 'info legend');
-    
+
             var activeCountValues = COUNTRY_ACTIVE_COLORS.map(function(e, i) {
                 return i+1;
             });
-    
+
             // get the upper bounds for each bucket
             var countValues = COUNTRY_COLORS.map(function(e, i) {
                 var bound = dimagisphere.formData.maxFormsByCountry * (i+1) / COUNTRY_COLORS.length;
                 return Math.max(0, (i < COUNTRY_COLORS.length -1 && Math.floor(bound) === bound) ? bound - 1 : Math.floor(bound));
             });
-    
+
             // only include legend items that are actually used right now
             // when there is a low number of maxForms, they may not all be included
             var indicesToRemove = [];
             var colors = COUNTRY_COLORS.filter(function(elem, index) {
-                if (countValues[index] <= 0 || (index > 0 && countValues[index] == countValues[index-1])) {
+                if (countValues[index] <= 0 || (index > 0 && countValues[index] === countValues[index-1])) {
                     indicesToRemove.push(index);
                     return false;
                 } else {
                     return true;
                 }
             });
-    
+
             countValues = countValues.filter(function(elem, index) {
                 return indicesToRemove.indexOf(index) <= -1;
             });
-    
+
             div.innerHTML += '<p>Recent Forms</p>';
-    
+
             // loop through our active form values and generate a label with a colored square for each value
             for (var i = 0; i < activeCountValues.length; i++) {
                 div.innerHTML +=
                     '<i style="background:' + COUNTRY_ACTIVE_COLORS[i] + '"></i> ' +
                     activeCountValues[i] + (activeCountValues[i + 1] ? '<br>' : "+");
             }
-    
+
             div.innerHTML += '<div class="padding"></div>';
-    
+
             div.innerHTML += '<p>All Forms Since Opening</p>' +
                              '<i style="background:' + 'black' + '"></i> ' + '0' + '<br>'; 
-    
+
             // loop through our form count intervals and generate a label with a colored square for each interval
-            for (var i = 0; i < countValues.length; i++) {
-                div.innerHTML += '<i style="background:' + colors[i] + '"></i> ';
-                if (countValues[i-1] !==  undefined) {
-                    if (countValues[i-1] +1 < countValues[i]) {
-                        div.innerHTML += (countValues[i-1] + 1) + '&ndash;';
+            for (var n = 0; n < countValues.length; n++) {
+                div.innerHTML += '<i style="background:' + colors[n] + '"></i> ';
+                if (countValues[n-1] !==  undefined) {
+                    if (countValues[n-1] +1 < countValues[n]) {
+                        div.innerHTML += (countValues[n-1] + 1) + '&ndash;';
                     }
-                } else if (countValues[i] > 1) {
+                } else if (countValues[n] > 1) {
                     div.innerHTML += '1&ndash;';
                 }
-                div.innerHTML += countValues[i] + '<br>';
+                div.innerHTML += countValues[n] + '<br>';
             }
-    
+
             return div;
         };
-    
+
         legend.onAdd = createLegend;
         legend.addTo(map);
-    
+
         // simulation controls
         var simulationOn = false;
         var controlButton = $('#controlButton');

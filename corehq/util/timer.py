@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import time
 
+from memoized import memoized
 import itertools
 
 
@@ -35,6 +37,8 @@ class NestableTimer(object):
         """Get timer duration in seconds"""
         if self.beginning and self.end:
             return self.end - self.beginning
+        elif self.beginning:
+            return time.time() - self.beginning
 
     @property
     def percent_of_total(self):
@@ -60,6 +64,17 @@ class NestableTimer(object):
     @property
     def is_leaf_node(self):
         return not self.subs
+
+    @property
+    def is_root_node(self):
+        return not self.parent
+
+    @property
+    @memoized
+    def full_name(self):
+        if self.is_root_node:
+            return self.name
+        return "%s.%s" % (self.parent.full_name, self.name)
 
     def __repr__(self):
         return "NestableTimer(name='{}', beginning={}, end={}, parent='{}')".format(

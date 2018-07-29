@@ -1,12 +1,13 @@
 /* global module, inject, _, chai */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Early Initiation Breastfeeding Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('early_initiation', 'early_initiation');
@@ -19,6 +20,7 @@ describe('Early Initiation Breastfeeding Directive', function () {
             {id: 'F', name: 'Female'},
         ]);
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -30,13 +32,20 @@ describe('Early Initiation Breastfeeding Directive', function () {
         $httpBackend.expectGET('early_initiation').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<early-initiation-breastfeeding data='test'></early-initiation-breastfeeding>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('earlyInitiationBreastfeeding');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -85,7 +94,7 @@ describe('Early Initiation Breastfeeding Directive', function () {
             + '<p>test</p>'
             + '<div>Total Number of Children born in the given month: <strong>10</strong></div>'
             + '<div>Total Number of Children who were put to the breast within one hour of birth: <strong>5</strong></div>'
-            + '<div>% children who were put to the breast within one hour of birth: <strong>50.00%</strong></div>');
+            + '<div>% children who were put to the breast within one hour of birth: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -179,9 +188,9 @@ describe('Early Initiation Breastfeeding Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of children who were put to the breast within one hour of birth. \n' +
+            'Of the children born in the last month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery. \n' +
             '\n' +
-            'Early initiation of breastfeeding ensure the newborn recieves the ""first milk"" rich in nutrients and encourages exclusive breastfeeding practice'
+            'Early initiation of breastfeeding ensure the newborn recieves the "first milk" rich in nutrients and encourages exclusive breastfeeding practice'
         );
     });
 
@@ -195,6 +204,19 @@ describe('Early Initiation Breastfeeding Directive', function () {
             + '<div>% children who were put to the breast within one hour of birth: <strong>24.34%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total Number of Children born in the given month: <strong>0</strong></div>' +
+            '<div>Total Number of Children who were put to the breast within one hour of birth: <strong>0</strong></div>' +
+            '<div>% children who were put to the breast within one hour of birth: <strong>NaN%</strong></div></div>';
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
     });
 

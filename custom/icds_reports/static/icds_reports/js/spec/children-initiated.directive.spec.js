@@ -1,12 +1,13 @@
 /* global module, inject, _, chai */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Children Initiated Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('children_initiated', 'children_initiated');
@@ -20,6 +21,7 @@ describe('Children Initiated Directive', function () {
         ]);
 
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
 
     }));
 
@@ -32,13 +34,20 @@ describe('Children Initiated Directive', function () {
         $httpBackend.expectGET('children_initiated').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<children-initiated data='test'></children-initiated>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('childrenInitiated');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -87,7 +96,7 @@ describe('Children Initiated Directive', function () {
             '<p>test</p>'
             + '<div>Total number of children between age 6 - 8 months: <strong>10</strong></div>'
             + '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>5</strong></div>'
-            + '<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>50.00%</strong></div>');
+            + '<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -182,7 +191,7 @@ describe('Children Initiated Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food. \n' +
+            'Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, the percentage that was given a timely introduction to solid, semi-solid or soft food.\n' +
             '\n' +
             'Timely intiation of complementary feeding in addition to breastmilk at 6 months of age is a key feeding practice to reduce malnutrition'
         );
@@ -201,19 +210,32 @@ describe('Children Initiated Directive', function () {
         assert.equal(expected, result);
     });
 
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total number of children between age 6 - 8 months: <strong>25</strong></div>' +
+            '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>0</strong></div>' +
+            '<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>NaN%</strong></div></div>';
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
+        assert.equal(expected, result);
+    });
+
     it('tests disable locations for user', function () {
         controller.userLocationId = 'test_id4';
         controller.location = {name: 'name4', location_id: 'test_id4'};
         controller.selectedLocations.push(
-            {name: 'name1', location_id: 'test_id1'},
-            {name: 'name2', location_id: 'test_id2'},
-            {name: 'name3', location_id: 'test_id3'},
-            {name: 'name4', location_id: 'test_id4'},
-            {name: 'name5', location_id: 'test_id5'},
-            {name: 'name6', location_id: 'test_id6'}
+            {name: 'name1', location_id: 'test_id1', user_have_access: 0},
+            {name: 'name2', location_id: 'test_id2', user_have_access: 0},
+            {name: 'name3', location_id: 'test_id3', user_have_access: 0},
+            {name: 'name4', location_id: 'test_id4', user_have_access: 1},
+            {name: 'All', location_id: 'all', user_have_access: 0},
+            null
         );
         var index = controller.getDisableIndex();
-        assert.equal(index, 3);
+        assert.equal(index, 2);
     });
 
     it('tests reset additional filters', function () {

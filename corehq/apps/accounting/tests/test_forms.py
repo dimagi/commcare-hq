@@ -12,6 +12,15 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import WebUser
+from corehq.apps.accounting.tests import generator
+from corehq.apps.accounting.models import BillingAccount, Subscription, DefaultProductPlan, SoftwarePlanEdition
+from corehq.apps.accounting.forms import SubscriptionForm
+from django.core.exceptions import ValidationError
+import datetime
+
 
 class TestAdjustBalanceForm(BaseInvoiceTestCase):
 
@@ -99,3 +108,103 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
         ))
+
+
+class TestSubscriptionForm(BaseAccountingTest):
+
+    def setUp(self):
+        super(TestSubscriptionForm, self).setUp()
+
+        self.domain = Domain(
+            name="test-sub-form",
+            is_active=True
+        )
+        self.domain.save()
+        self.domain2 = Domain(
+            name="test-sub-form-2",
+            is_active=True
+        )
+        self.domain2.save()
+
+        self.web_user = WebUser.create(
+            self.domain.name, generator.create_arbitrary_web_user_name(), 'testpwd'
+        )
+
+        self.account = BillingAccount.get_or_create_account_by_domain(
+            self.domain.name, created_by=self.web_user.username
+        )[0]
+        self.account.save()
+        self.customer_account = BillingAccount.get_or_create_account_by_domain(
+            self.domain2.name, created_by=self.web_user.username
+        )[0]
+        self.customer_account.is_customer_billing_account = True
+        self.customer_account.save()
+
+        self.plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        self.customer_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        self.customer_plan.plan.is_customer_software_plan = True
+
+    def tearDown(self):
+        super(TestSubscriptionForm, self).tearDown()
+
+    def test_regular_plan_not_added_to_customer_account(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.plan,
+            account=self.account
+        )
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.account.id,
+            web_user=self.web_user,
+        )
+        subscription_form.cleaned_data = {
+            'active_accounts': self.customer_account.id,
+            'start_date': datetime.date.today(),
+            'end_date': None,
+            'do_not_invoice': None,
+            'no_invoice_reason': None,
+            'do_not_email_invoice': None,
+            'do_not_email_reminder': None,
+            'auto_generate_credits': None,
+            'skip_invoicing_if_no_feature_charges': None,
+            'salesforce_contract_id': None,
+            'service_type': None,
+            'pro_bono_status': None,
+            'funding_source': None,
+            'skip_auto_downgrade': None,
+            'skip_auto_downgrade_reason': None
+        }
+
+        self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
+
+    def test_customer_plan_not_added_to_regular_account(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.customer_plan,
+            account=self.customer_account
+        )
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.customer_plan.id,
+            web_user=self.web_user,
+        )
+        subscription_form.cleaned_data = {
+            'active_accounts': self.account.id,
+            'start_date': datetime.date.today(),
+            'end_date': None,
+            'do_not_invoice': None,
+            'no_invoice_reason': None,
+            'do_not_email_invoice': None,
+            'do_not_email_reminder': None,
+            'auto_generate_credits': None,
+            'skip_invoicing_if_no_feature_charges': None,
+            'salesforce_contract_id': None,
+            'service_type': None,
+            'pro_bono_status': None,
+            'funding_source': None,
+            'skip_auto_downgrade': None,
+            'skip_auto_downgrade_reason': None
+        }
+
+        self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())

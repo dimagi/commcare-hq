@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.case_search.models import disable_case_search, enable_case_search
 from django.test import TestCase
 from mock import call, patch

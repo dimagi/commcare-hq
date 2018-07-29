@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.conf import settings
 from django.conf.urls import url, include
 from django.contrib.auth.views import (
@@ -49,17 +50,18 @@ from corehq.apps.domain.views import (
     ManageProjectMediaView,
     PasswordResetView,
     ProBonoView,
+    RecoveryMeasuresHistory,
     SMSRatesView,
     SelectPlanView,
     SelectedEnterprisePlanView,
     SubscriptionRenewalView,
     TransferDomainView,
     WireInvoiceView,
-    autocomplete_fields,
     calculated_properties,
     select,
     set_published_snapshot,
     toggle_diff,
+    generate_repeater_payloads,
 )
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -83,7 +85,7 @@ from corehq.motech.repeaters.views import (
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
-    url(r'^domain/autocomplete/(?P<field>[\w-]+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
+    url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
     url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
@@ -165,6 +167,8 @@ domain_settings = [
     url(r'^repeat_record/', RepeatRecordView.as_view(), name=RepeatRecordView.urlname),
     url(r'^repeat_record_report/cancel/', cancel_repeat_record, name='cancel_repeat_record'),
     url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
+    url(r'^repeat_record_report/generate_repeater_payloads/', generate_repeater_payloads,
+        name='generate_repeater_payloads'),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(), {'repeater_type': 'FormRepeater'},
         name=AddFormRepeaterView.urlname),
@@ -203,7 +207,9 @@ domain_settings = [
     url(r'^flags/$', FlagsAndPrivilegesView.as_view(), name=FlagsAndPrivilegesView.urlname),
     url(r'^toggle_diff/$', toggle_diff, name='toggle_diff'),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
-    url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
+    url(r'^recovery_measures_history/$',
+        RecoveryMeasuresHistory.as_view(),
+        name=RecoveryMeasuresHistory.urlname),
 
     DomainReportDispatcher.url_pattern()
 ]

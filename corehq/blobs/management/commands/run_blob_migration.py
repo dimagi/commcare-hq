@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 import os
 import sys
@@ -8,6 +9,7 @@ from django.core.management import BaseCommand, CommandError
 from corehq.blobs.migrate import MIGRATIONS
 from corehq.util.decorators import change_log_level
 from corehq.util.teeout import tee_output
+from io import open
 
 
 USAGE = """Usage: ./manage.py run_blob_migration [options] <slug>
@@ -77,5 +79,5 @@ class Command(BaseCommand):
                 "{}-blob-migration-{}.txt".format(slug, now))
             assert not os.path.exists(summary_file), summary_file
             assert not os.path.exists(log_file), log_file
-            with open(summary_file, "w", 1) as fh, tee_output(fh):
+            with open(summary_file, "w", 1, encoding='utf-8') as fh, tee_output(fh):
                 do_migration()

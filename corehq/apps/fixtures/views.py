@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from contextlib import contextmanager
 import json
 from tempfile import NamedTemporaryFile
@@ -121,7 +122,7 @@ def update_tables(request, domain, data_type_id, test_patch=None):
 
         # validate tag and fields
         validation_errors = []
-        if is_identifier_invalid(data_tag):
+        if is_identifier_invalid("{}_list".format(data_tag)):
             validation_errors.append(data_tag)
         for field_name, options in fields_update['fields'].items():
             method = list(options.keys())
@@ -129,8 +130,10 @@ def update_tables(request, domain, data_type_id, test_patch=None):
                 field_name = options['update']
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
-        validation_errors = [_("\"%s\" cannot include special characters or "
-                                            "begin with \"xml\" or a number.") % e for e in validation_errors]
+        validation_errors = [_(
+            "\"%s\" cannot include special characters, begin or end with a space, "
+            "or begin with \"xml\" or a number") % e for e in validation_errors
+        ]
         if len(data_tag) > 31:
             validation_errors.append(_("Table ID can not be longer than 31 characters."))
 
@@ -327,7 +330,7 @@ class UploadItemLists(TemplateView):
             validate_fixture_file_format(file_ref.get_filename())
         except FixtureUploadError as e:
             messages.error(
-                request, _(u'Please fix the following formatting issues in your excel file: %s') %
+                request, _('Please fix the following formatting issues in your Excel file: %s') %
                 '<ul><li>{}</li></ul>'.format('</li><li>'.join(e.errors)),
                 extra_tags='html'
             )
@@ -380,7 +383,8 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
 def fixture_upload_job_poll(request, domain, download_id, template="fixtures/partials/fixture_upload_status.html"):
     try:
         context = get_download_context(download_id, require_result=True)
-    except TaskFailedError:
+    except TaskFailedError as e:
+        notify_exception(request, message=e.message)
         return HttpResponseServerError()
 
     return render(request, template, context)
@@ -430,7 +434,7 @@ def _upload_fixture_api(request, domain):
         except FixtureUploadError as e:
             return UploadFixtureAPIResponse(
                 'fail',
-                _(u'Please fix the following formatting issues in your excel file: %s')
+                _('Please fix the following formatting issues in your Excel file: %s')
                 % '\n'.join(e.errors))
 
         result = upload_fixture_file(domain, filename, replace=replace)
@@ -469,12 +473,12 @@ def _get_fixture_upload_args_from_request(request, domain):
             replace = False
     except Exception:
         raise FixtureAPIRequestError(
-            u"Invalid post request."
-            u"Submit the form with field 'file-to-upload' and POST parameter 'replace'")
+            "Invalid post request."
+            "Submit the form with field 'file-to-upload' and POST parameter 'replace'")
 
     if not request.couch_user.has_permission(domain, Permissions.edit_data.name):
         raise FixtureAPIRequestError(
-            u"User {} doesn't have permission to upload fixtures"
+            "User {} doesn't have permission to upload fixtures"
             .format(request.couch_user.username))
 
     return _excel_upload_file(upload_file), replace

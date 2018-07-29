@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.test.testcases import TestCase
 from django.test.client import RequestFactory
 from django.core.urlresolvers import reverse
@@ -58,9 +59,9 @@ class Base(TestCase):
         request = self.factory.get(working_reverse)
         request.user = self.user
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step=u'map', domain=u'icds-test')
+            response_june = self.view(request, step='map', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', FirstDayOfJuly):
-            response_first_of_july = self.view(request, step=u'map', domain=u'icds-test')
+            response_first_of_july = self.view(request, step='map', domain='icds-test')
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
@@ -71,9 +72,9 @@ class Base(TestCase):
         request = self.factory.get(working_reverse)
         request.user = self.user
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step=u'chart', domain=u'icds-test')
+            response_june = self.view(request, step='chart', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', FirstDayOfJuly):
-            response_first_of_july = self.view(request, step=u'chart', domain=u'icds-test')
+            response_first_of_july = self.view(request, step='chart', domain='icds-test')
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
@@ -84,9 +85,9 @@ class Base(TestCase):
         request = self.factory.get(working_reverse)
         request.user = self.user
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step=u'chart', domain=u'icds-test', location_id=u'b1')
+            response_june = self.view(request, step='chart', domain='icds-test', location_id='b1')
         with mock.patch('custom.icds_reports.views.datetime', FirstDayOfJuly):
-            response_first_of_july = self.view(request, step=u'chart', domain=u'icds-test', location_id=u'b1')
+            response_first_of_july = self.view(request, step='chart', domain='icds-test', location_id='b1')
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
@@ -97,9 +98,9 @@ class Base(TestCase):
         request = self.factory.get(working_reverse)
         request.user = self.user
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step=u'map', domain=u'icds-test')
+            response_june = self.view(request, step='map', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', SecondDayOfJuly):
-            response_first_of_july = self.view(request, step=u'map', domain=u'icds-test')
+            response_first_of_july = self.view(request, step='map', domain='icds-test')
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
@@ -110,9 +111,9 @@ class Base(TestCase):
         request = self.factory.get(working_reverse)
         request.user = self.user
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step=u'chart', domain=u'icds-test')
+            response_june = self.view(request, step='chart', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', SecondDayOfJuly):
-            response_first_of_july = self.view(request, step=u'chart', domain=u'icds-test')
+            response_first_of_july = self.view(request, step='chart', domain='icds-test')
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
@@ -123,9 +124,9 @@ class Base(TestCase):
         request = self.factory.get(working_reverse)
         request.user = self.user
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step=u'chart', domain=u'icds-test', location_id=u'b1')
+            response_june = self.view(request, step='chart', domain='icds-test', location_id='b1')
         with mock.patch('custom.icds_reports.views.datetime', SecondDayOfJuly):
-            response_first_of_july = self.view(request, step=u'chart', domain=u'icds-test', location_id=u'b1')
+            response_first_of_july = self.view(request, step='chart', domain='icds-test', location_id='b1')
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
@@ -138,9 +139,9 @@ class Base(TestCase):
         request = self.factory.get(working_reverse)
         request.user = self.user
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step=u'map', domain=u'icds-test')
+            response_june = self.view(request, step='map', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
-            response_first_of_july = self.view(request, step=u'map', domain=u'icds-test')
+            response_first_of_july = self.view(request, step='map', domain='icds-test')
 
         self.assertNotEqual(response_june.content, response_first_of_july.content)
 
@@ -153,9 +154,9 @@ class Base(TestCase):
         request = self.factory.get(working_reverse)
         request.user = self.user
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step=u'chart', domain=u'icds-test')
+            response_june = self.view(request, step='chart', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
-            response_first_of_july = self.view(request, step=u'chart', domain=u'icds-test')
+            response_first_of_july = self.view(request, step='chart', domain='icds-test')
 
         self.assertNotEqual(response_june.content, response_first_of_july.content)
 
@@ -168,9 +169,9 @@ class Base(TestCase):
         request = self.factory.get(working_reverse)
         request.user = self.user
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step=u'chart', domain=u'icds-test', location_id=u'b1')
+            response_june = self.view(request, step='chart', domain='icds-test', location_id='b1')
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
-            response_first_of_july = self.view(request, step=u'chart', domain=u'icds-test', location_id=u'b1')
+            response_first_of_july = self.view(request, step='chart', domain='icds-test', location_id='b1')
 
         self.assertNotEqual(response_june.content, response_first_of_july.content)
 

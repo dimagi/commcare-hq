@@ -1,24 +1,28 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
-from couchdbkit.ext.django.schema import *
 
+from couchdbkit.ext.django.schema import SchemaProperty, StringProperty
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
+from casexml.apps.case.xform import extract_case_blocks
 from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.repeater_generators import FormRepeaterJsonPayloadGenerator
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.toggles import OPENMRS_INTEGRATION
 from corehq.motech.repeaters.signals import create_repeat_records
 from couchforms.signals import successful_form_received
+from corehq.motech.openmrs.const import XMLNS_OPENMRS
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.handler import send_openmrs_data
 from corehq.motech.openmrs.repeater_helpers import (
-    Requests,
     get_form_question_values,
     get_relevant_case_updates_from_form_json,
+    get_case_location_ancestor_repeaters,
 )
-from dimagi.utils.decorators.memoized import memoized
+from corehq.motech.requests import Requests
+from memoized import memoized
 
 
 # it actually triggers on forms,
@@ -31,7 +35,14 @@ class OpenmrsRepeater(CaseRepeater):
     friendly_name = _("Forward to OpenMRS")
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
+    location_id = StringProperty(default='')
     openmrs_config = SchemaProperty(OpenmrsConfig)
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__) and
+            self.get_id == other.get_id
+        )
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -53,22 +64,58 @@ class OpenmrsRepeater(CaseRepeater):
         from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
         return reverse(AddOpenmrsRepeaterView.urlname, args=[domain])
 
-    def allowed_to_forward(self, case):
+    def allowed_to_forward(self, payload):
+        """
+        Forward the payload if ...
+
+        * it did not come from OpenMRS, and
+        * CaseRepeater says it's OK for the case types and users of any
+          of the payload's cases, and
+        * this repeater forwards to the right OpenMRS server for any of
+          the payload's cases.
+
+        :param payload: An XFormInstance (not a case)
+
+        """
+        if payload.xmlns == XMLNS_OPENMRS:
+            # payload came from OpenMRS. Don't send it back.
+            return False
+
+        case_blocks = extract_case_blocks(payload)
+        case_ids = [case_block['@case_id'] for case_block in case_blocks]
+        cases = CaseAccessors(payload.domain).get_cases(case_ids, ordered=True)
+        if not any(CaseRepeater.allowed_to_forward(self, case) for case in cases):
+            # If none of the case updates in the payload are allowed to
+            # be forwarded, drop it.
+            return False
+
+        repeaters = [repeater for case in cases for repeater in get_case_location_ancestor_repeaters(case)]
+        if repeaters and self not in repeaters:
+            # This repeater points to the wrong OpenMRS server for this
+            # payload. Let the right repeater handle it.
+            return False
+
         return True
 
-    def fire_for_record(self, repeat_record):
-        form_json = json.loads(self.get_payload(repeat_record))
+    def get_payload(self, repeat_record):
+        payload = super(OpenmrsRepeater, self).get_payload(repeat_record)
+        return json.loads(payload)
 
+    def send_request(self, repeat_record, payload, verify=None):
         case_trigger_infos = get_relevant_case_updates_from_form_json(
-            self.domain, form_json, case_types=self.white_listed_case_types,
-            extra_fields=[id_matcher.case_property
-                          for id_matcher in self.openmrs_config.case_config.id_matchers])
-        form_question_values = get_form_question_values(form_json)
+            self.domain, payload, case_types=self.white_listed_case_types,
+            extra_fields=[identifier.case_property
+                          for identifier in self.openmrs_config.case_config.patient_identifiers.values()])
+        form_question_values = get_form_question_values(payload)
 
-        send_openmrs_data(Requests(self.url, self.username, self.password), form_json, self.openmrs_config,
-                          case_trigger_infos, form_question_values)
-
-        return repeat_record.handle_success(None)
+        return send_openmrs_data(
+            Requests(self.domain, self.url, self.username, self.password),
+            self.domain,
+            payload,
+            self.openmrs_config,
+            case_trigger_infos,
+            form_question_values
+        )
 
 
 def create_openmrs_repeat_records(sender, xform, **kwargs):

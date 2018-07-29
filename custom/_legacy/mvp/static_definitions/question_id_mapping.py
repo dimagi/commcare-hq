@@ -3,6 +3,7 @@
 """
 
 
+from __future__ import unicode_literals
 def _make_qid(question_id, version):
     return {
         'question_id': question_id,

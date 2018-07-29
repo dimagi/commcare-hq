@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import re
 from corehq.apps.data_interfaces.models import (
@@ -18,7 +19,7 @@ from couchdbkit import ResourceNotFound
 
 from corehq.toggles import AUTO_CASE_UPDATE_ENHANCEMENTS
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.db import transaction
 from django import forms
 from crispy_forms.helper import FormHelper
@@ -600,6 +601,7 @@ class CaseRuleCriteriaForm(forms.Form):
             'MATCH_NOT_EQUAL': MatchPropertyDefinition.MATCH_NOT_EQUAL,
             'MATCH_HAS_VALUE': MatchPropertyDefinition.MATCH_HAS_VALUE,
             'MATCH_HAS_NO_VALUE': MatchPropertyDefinition.MATCH_HAS_NO_VALUE,
+            'MATCH_REGEX': MatchPropertyDefinition.MATCH_REGEX,
         }
 
     def compute_initial(self, rule):
@@ -654,6 +656,14 @@ class CaseRuleCriteriaForm(forms.Form):
     @property
     def allow_date_case_property_filter(self):
         return True
+
+    @property
+    def allow_regex_case_property_match(self):
+        # The framework allows for this, it's just historically only
+        # been an option for messaging conditonal alert rules and not
+        # case update rules. So for now the option is just hidden in
+        # the case update rule UI.
+        return False
 
     def __init__(self, domain, *args, **kwargs):
         if 'initial' in kwargs:
@@ -825,6 +835,22 @@ class CaseRuleCriteriaForm(forms.Form):
                 result.append({
                     'property_name': property_name,
                     'property_value': str(property_value),
+                    'match_type': match_type,
+                })
+            elif match_type == MatchPropertyDefinition.MATCH_REGEX:
+                property_value = obj['property_value']
+
+                if not property_value:
+                    raise ValidationError(_("Please enter a valid regular expression to match"))
+
+                try:
+                    re.compile(property_value)
+                except (re.error, ValueError, TypeError):
+                    raise ValidationError(_("Please enter a valid regular expression to match"))
+
+                result.append({
+                    'property_name': property_name,
+                    'property_value': property_value,
                     'match_type': match_type,
                 })
 

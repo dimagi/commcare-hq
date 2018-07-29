@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division
 
+from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -57,7 +58,8 @@ def get_medicine_kit_data_map(domain, config, loc_level, show_test=False):
         "rightLegend": {
             "average": average,
             "info": _((
-                "Percentage of AWCs that reported having a Medicine Kit"
+                "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs "
+                "that reported having a Medicine Kit"
             )),
             "extended_info": [
                 {
@@ -218,7 +220,8 @@ def get_medicine_kit_sector_data(domain, config, loc_level, location_id, show_te
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of AWCs that reported having a Medicine Kit"
+            "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs "
+            "that reported having a Medicine Kit"
         )),
         "chart_data": [
             {

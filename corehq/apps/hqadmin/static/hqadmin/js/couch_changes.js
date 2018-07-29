@@ -1,4 +1,4 @@
-/* globals hqDefine */
+/* globals hqDefine, d3, nv */
 hqDefine('hqadmin/js/couch_changes', function () {
     $(function () {
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,

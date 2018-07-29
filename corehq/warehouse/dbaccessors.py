@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -63,29 +64,14 @@ def _get_ids_by_last_modified(cls, doc_types, start_datetime, end_datetime):
             yield result['id']
 
 
-def get_synclog_ids_by_date(start_datetime, end_datetime):
+def get_synclogs_by_date(start_datetime, end_datetime):
     '''
-    Returns all synclog ids that have been modified within a time range. The start date is
+    Returns all synclogs that have been modified within a time range. The start date is
     exclusive while the end date is inclusive (start_datetime, end_datetime].
     '''
-    from casexml.apps.phone.models import SyncLog
-    json_start_datetime = json_format_datetime(start_datetime)
+    from casexml.apps.phone.models import SyncLogSQL
 
-    results = SyncLog.view(
-        "sync_logs_by_date/view",
-        startkey=[json_start_datetime],
-        endkey=[json_format_datetime(end_datetime)],
-        reduce=False,
-        include_docs=False
-    )
-    for result in results:
-        result_modified_datetime = result['key'][0]
-        # Skip the record if the datetime is equal to the start because this should return
-        # records with an exclusive start date.
-        if result_modified_datetime == json_start_datetime:
-            continue
-        yield result['id']
-
+    return SyncLogSQL.objects.filter(date__gt=start_datetime, date__lte=end_datetime).defer('doc')
 
 def get_forms_by_last_modified(start_datetime, end_datetime):
     '''
@@ -96,7 +82,6 @@ def get_forms_by_last_modified(start_datetime, end_datetime):
         yield form
 
     # TODO Couch forms
-
 
 def get_application_ids_by_last_modified(start_datetime, end_datetime):
     '''

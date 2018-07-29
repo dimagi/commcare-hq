@@ -1,12 +1,14 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django.test import SimpleTestCase
 import os
 
 from mock import patch
 
-from corehq.apps.app_manager.models import Application, CaseList
+from corehq.apps.app_manager.models import Application, CaseList, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from io import open
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
@@ -21,7 +23,7 @@ class BuildErrorsTest(SimpleTestCase):
                 del error['module']['unique_id']
 
     def test_subcase_errors(self, mock):
-        with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json'), encoding='utf-8') as f:
             source = json.load(f)
 
         app = Application.wrap(source)
@@ -51,7 +53,7 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(subcase_path_error, errors)
 
     def test_empty_module_errors(self, mock):
-        factory = AppFactory(build_version='2.24')
+        factory = AppFactory(build_version='2.24.0')
         app = factory.app
         m1 = factory.new_basic_module('register', 'case', with_form=False)
         factory.new_advanced_module('update', 'case', with_form=False)
@@ -64,11 +66,11 @@ class BuildErrorsTest(SimpleTestCase):
 
         standard_module_error = {
             'type': 'no forms or case list',
-            'module': {'id': 0, 'name': {'en': u'register module'}},
+            'module': {'id': 0, 'name': {'en': 'register module'}},
         }
         advanced_module_error = {
             'type': 'no forms or case list',
-            'module': {'id': 1, 'name': {'en': u'update module'}},
+            'module': {'id': 1, 'name': {'en': 'update module'}},
         }
         self._clean_unique_id(errors)
         self.assertEqual(len(errors), 2)
@@ -91,7 +93,7 @@ class BuildErrorsTest(SimpleTestCase):
     def test_case_tile_configuration_errors(self, mock):
         case_tile_error = {
             'type': "invalid tile configuration",
-            'module': {'id': 0, 'name': {u'en': u'View'}},
+            'module': {'id': 0, 'name': {'en': 'View'}},
             'reason': 'A case property must be assigned to the "sex" tile field.'
         }
         with open(os.path.join(
@@ -106,11 +108,11 @@ class BuildErrorsTest(SimpleTestCase):
     def test_case_list_form_advanced_module_different_case_config(self, mock):
         case_tile_error = {
             'type': "all forms in case list module must load the same cases",
-            'module': {'id': 1, 'name': {u'en': u'update module'}},
-            'form': {'id': 1, 'name': {u'en': u'update form 1'}},
+            'module': {'id': 1, 'name': {'en': 'update module'}},
+            'form': {'id': 1, 'name': {'en': 'update form 1'}},
         }
 
-        factory = AppFactory(build_version='2.11')
+        factory = AppFactory(build_version='2.11.0')
         m0, m0f0 = factory.new_basic_module('register', 'person')
         factory.form_opens_case(m0f0)
 
@@ -124,3 +126,32 @@ class BuildErrorsTest(SimpleTestCase):
         errors = factory.app.validate_app()
         self._clean_unique_id(errors)
         self.assertIn(case_tile_error, errors)
+
+    def test_training_module_as_parent(self, mock):
+        factory = AppFactory(build_version='2.43.0')
+        app = factory.app
+
+        training_module = Module.new_training_module('training', 'en')
+        app.add_module(training_module)
+
+        child_module, _ = factory.new_basic_module('child', 'case_type', parent_module=training_module)
+
+        self.assertIn({
+            'type': 'training module parent',
+            'module': {'id': 1, 'unique_id': 'child_module', 'name': {'en': 'child module'}}
+        }, app.validate_app())
+
+    def test_training_module_as_child(self, mock):
+        factory = AppFactory(build_version='2.43.0')
+        app = factory.app
+
+        parent_module = Module.new_module('parent', 'en')
+        app.add_module(parent_module)
+
+        training_module, _ = factory.new_basic_module('training', 'case_type', parent_module=parent_module)
+        training_module.is_training_module = True
+
+        self.assertIn({
+            'type': 'training module child',
+            'module': {'id': 1, 'unique_id': 'training_module', 'name': {'en': 'training module'}}
+        }, app.validate_app())

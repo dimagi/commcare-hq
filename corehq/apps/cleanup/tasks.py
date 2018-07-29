@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import json
 from time import time
@@ -14,6 +15,7 @@ from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
     parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
     CANT_MATCH, FORM_HAS_UNDEFINED_XMLNS
+from io import open
 
 
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
@@ -36,10 +38,11 @@ def fix_xforms_with_missing_xmlns():
     with open(log_file_path, "r") as f:
         stats = get_summary_stats_from_stream(f)
 
-    mail_admins_async.delay(
-        'Summary of fix_xforms_with_undefined_xmlns',
-        json.dumps(stats, sort_keys=True, indent=4, default=json_handler)
-    )
+    if any(stats.values()):
+        mail_admins_async.delay(
+            'Summary of fix_xforms_with_undefined_xmlns',
+            json.dumps(stats, sort_keys=True, indent=4, default=json_handler)
+        )
 
     return stats, log_file_path
 

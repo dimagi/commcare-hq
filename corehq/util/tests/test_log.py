@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
+import six
 from django.test import SimpleTestCase
 from ..log import clean_exception
 
@@ -13,11 +16,11 @@ class TestLogging(SimpleTestCase):
                 'response of type %s: %s' % (type(result), repr(result))
         except AssertionError as e:
             pass
-        self.assertIn(result, e.message)
-        self.assertNotIn(result, clean_exception(e).message)
+        self.assertIn(result, six.text_type(e))
+        self.assertNotIn(result, six.text_type(clean_exception(e)))
 
     def test_that_I_didnt_break_anything(self):
         exception = AssertionError("foo")
         cleaned_exception = clean_exception(exception)
         self.assertEqual(exception.__class__, cleaned_exception.__class__)
-        self.assertEqual(exception.message, cleaned_exception.message)
+        self.assertEqual(six.text_type(exception), six.text_type(cleaned_exception))

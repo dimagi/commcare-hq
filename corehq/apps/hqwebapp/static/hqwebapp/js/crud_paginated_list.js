@@ -154,7 +154,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                     },
                     statusCode: self.handleStatusCode,
                     success: function (data) {
-                        $("#create-item-form")[0].reset();
+                        $createForm[0].reset();
                         self.createItemForm($(data.form).html());
                         if (data.newItem) {
                             if (data.newItem.error) {

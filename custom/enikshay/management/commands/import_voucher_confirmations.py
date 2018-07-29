@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import csv
 import datetime
 from mock import MagicMock
@@ -7,7 +8,7 @@ from mock import MagicMock
 from django.core.management.base import BaseCommand
 
 from dimagi.utils.chunked import chunked
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors

@@ -44,7 +44,7 @@ just apps or just form submissions:
 
 ## Usages in our code
 
-There are only 5 usages of this view in our code. I've outlined them below.
+There are only 3 usages of this view in our code. I've outlined them below.
 
 ### With reduce
 
@@ -54,18 +54,9 @@ There are only 5 usages of this view in our code. I've outlined them below.
 - [corehq/apps/reports/display.py](https://github.com/dimagi/commcare-hq/blob/23740fd5943a82c3f5a4afeeb91860a05d852a9e/corehq/apps/reports/display.py#L85-85)
   - `key=[domain, app_id, xmlns]`
   - Get info forms in `domain` in app with `app_id` that have `xmlns`
-- [corehq/apps/reports/standard/export.py](https://github.com/dimagi/commcare-hq/blob/23740fd5943a82c3f5a4afeeb91860a05d852a9e/corehq/apps/reports/standard/export.py#L109-109)
-  - `startkey=[self.domain], endkey=[self.domain, {}]`
-  - Get a list of all "classes" of forms that are either in an app or submitted,
-    broken down by (domain, app_id, xmlns).
-    Some forms (either old or not submitted through the phone)
-    are not associated with an app; they'll have a null app_id.
 
 ### Without reduce
 
 - [corehq/apps/cleanup/views.py](https://github.com/dimagi/commcare-hq/blob/23740fd5943a82c3f5a4afeeb91860a05d852a9e/corehq/apps/cleanup/views.py#L36-36)
   - `key=['^XFormInstance', domain, app_id, xmlns]` with `include_docs`
   - Get all forms that were submitted in `domain` against `app_id` with `xmlns`
-- [corehq/apps/reports/standard/export.py](https://github.com/dimagi/commcare-hq/blob/23740fd5943a82c3f5a4afeeb91860a05d852a9e/corehq/apps/reports/standard/export.py#L130-130)
-  - `startkey=['^Application', self.domain], endkey=['^Application', self.domain, {}]`
-  - Get info for all apps in a domain

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from six.moves.urllib.parse import urlencode
 
 from django.utils import translation
@@ -7,6 +8,8 @@ from django.utils.translation import pgettext
 from twilio.rest import Client
 from django.contrib.sites.models import Site
 from django.urls import reverse
+from requests.compat import getproxies
+from twilio.http.http_client import TwilioHttpClient
 
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 
@@ -25,7 +28,12 @@ class Gateway(object):
         sid = backends[0].extra_fields['account_sid']
         token = backends[0].extra_fields['auth_token']
         self.from_number = backends[0].load_balancing_numbers[0]
-        self.client = Client(sid, token)
+        self.client = self._get_client(sid, token)
+
+    def _get_client(self, sid, token):
+        proxy_client = TwilioHttpClient()
+        proxy_client.session.proxies = getproxies()
+        return Client(sid, token, http_client=proxy_client)
 
     def send_sms(self, device, token):
         message = _('Your authentication token is %s') % token

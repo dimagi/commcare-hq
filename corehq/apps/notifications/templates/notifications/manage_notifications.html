@@ -1,16 +1,11 @@
 {% extends 'hqwebapp/base_page.html' %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
-{% block js-inline %}
-<script>
-$(function () {
-    $('#ko-alert-container').koApplyBindings({
-        alerts: {{ alerts|JSON }}
-    });
-});
-</script>
-{% endblock %}
+
+{% requirejs_main 'notifications/js/manage_notifications' %}
+
 {% block page_content %}
+{% initial_page_data 'alerts' alerts %}
     <div id="ko-alert-container">
         <div class="panel panel-default">
             <div class="panel-heading">

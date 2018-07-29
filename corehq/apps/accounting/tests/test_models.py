@@ -16,7 +16,9 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionType,
     BillingRecord,
+    CustomerBillingRecord,
     Invoice,
+    CustomerInvoice,
     SMALL_INVOICE_THRESHOLD,
     StripePaymentMethod,
 )
@@ -99,6 +101,20 @@ class TestSubscription(BaseAccountingTest):
 
     def test_no_activation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start - datetime.timedelta(30))
+        subscription = Subscription.visible_objects.get(id=self.subscription.id)
+        self.assertFalse(subscription.is_active)
+
+    def test_no_activation_date_start_equals_date_end(self):
+        self.subscription.date_end = self.subscription.date_start
+        self.subscription.save()
+        tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
+        subscription = Subscription.visible_objects.get(id=self.subscription.id)
+        self.assertFalse(subscription.is_active)
+
+    def test_no_activation_after_date_end(self):
+        with mock.patch('corehq.apps.accounting.tasks.date') as mock_date:
+            mock_date.today.return_value = self.subscription.date_end
+            tasks.activate_subscriptions()
         subscription = Subscription.visible_objects.get(id=self.subscription.id)
         self.assertFalse(subscription.is_active)
 
@@ -212,6 +228,51 @@ class TestBillingRecord(BaseAccountingTest):
 
         self.invoice.is_hidden = True
         self.assertFalse(self.billing_record.should_send_email)
+
+
+class TestCustomerBillingRecord(BaseAccountingTest):
+
+    def setUp(self):
+        super(TestCustomerBillingRecord, self).setUp()
+        self.billing_contact = generator.create_arbitrary_web_user_name()
+        self.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
+        self.domain = Domain(name='test')
+        self.domain.save()
+        self.invoice_start, self.invoice_end = get_previous_month_date_range()
+        self.currency = generator.init_default_currency()
+        self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
+        self.account.is_customer_billing_account = True
+        self.account.save()
+
+        self.subscription_length = 4  # months
+        subscription_start_date = datetime.date(2016, 2, 23)
+        subscription_end_date = add_months_to_date(subscription_start_date, self.subscription_length)
+        self.subscription = generator.generate_domain_subscription(
+            self.account,
+            self.domain,
+            date_start=subscription_start_date,
+            date_end=subscription_end_date,
+        )
+        self.invoice = CustomerInvoice(
+            account=self.account,
+            date_start=self.invoice_start,
+            date_end=self.invoice_end,
+            is_hidden=False
+        )
+        self.customer_billing_record = CustomerBillingRecord(invoice=self.invoice)
+
+    def tearDown(self):
+        self.domain.delete()
+        super(TestCustomerBillingRecord, self).tearDown()
+
+    def test_should_send_email(self):
+        self.assertTrue(self.customer_billing_record.should_send_email)
+
+    def test_should_send_email_hidden(self):
+        self.assertTrue(self.customer_billing_record.should_send_email)
+
+        self.invoice.is_hidden = True
+        self.assertFalse(self.customer_billing_record.should_send_email)
 
 
 @mock.patch.object(StripePaymentMethod, 'customer')

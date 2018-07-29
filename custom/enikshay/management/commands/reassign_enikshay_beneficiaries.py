@@ -7,7 +7,7 @@ import datetime
 from django.core.management.base import BaseCommand
 
 from dimagi.utils.chunked import chunked
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.es import CaseSearchES

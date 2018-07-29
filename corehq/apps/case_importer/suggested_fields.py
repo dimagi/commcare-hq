@@ -1,8 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 import itertools
-from corehq.apps.case_importer.util import get_case_properties_for_case_type, \
-    RESERVED_FIELDS
+from corehq.apps.case_importer.util import RESERVED_FIELDS
+from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties_for_case_type
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 from dimagi.ext import jsonobject
 
@@ -31,7 +32,7 @@ def get_suggested_case_fields(domain, case_type, exclude=None):
     special_field_specs = (field_spec for field_spec in get_special_fields(domain))
 
     dynamic_field_specs = (FieldSpec(field=field, show_in_menu=True)
-                           for field in get_case_properties_for_case_type(domain, case_type))
+                           for field in get_all_case_properties_for_case_type(domain, case_type))
 
     return _combine_field_specs(
         itertools.chain(special_field_specs, dynamic_field_specs),

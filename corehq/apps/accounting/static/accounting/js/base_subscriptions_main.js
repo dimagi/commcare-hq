@@ -10,13 +10,14 @@ hqDefine('accounting/js/base_subscriptions_main', [
     ko,
     widgets
 ) {
-    var SubscriptionInfoHandler = function() {
+    var subscriptionInfoHandlerModel = function() {
         'use strict';
-        var self = this;
-        var AsyncSelect2Handler = widgets.AsyncSelect2Handler;
-        self.domain = new AsyncSelect2Handler('domain');
-        self.account = new AsyncSelect2Handler('account');
-        self.plan_version = new AsyncSelect2Handler('plan_version');
+        var self = {};
+
+        var asyncSelect2Handler = widgets.asyncSelect2Handler;
+        self.domain = asyncSelect2Handler('domain');
+        self.account = asyncSelect2Handler('account');
+        self.plan_version = asyncSelect2Handler('plan_version');
 
         self.init = function() {
             self.domain.init();
@@ -36,12 +37,17 @@ hqDefine('accounting/js/base_subscriptions_main', [
                 $('#id_plan_edition').change(deselectPlanVersion);
             });
         };
+
+        return self;
     };
 
-    var InvoiceModel = function() {
-        var self = this;
+    var invoiceModel = function() {
+        var self = {};
         var invoice = $('#id_do_not_invoice').prop("checked");
         self.noInvoice = ko.observable(invoice);
+        var skipAutoDowngrade = $('#id_skip_auto_downgrade').prop("checked");
+        self.skipAutoDowngrade = ko.observable(skipAutoDowngrade);
+        return self;
     };
 
     $(function() {
@@ -51,17 +57,14 @@ hqDefine('accounting/js/base_subscriptions_main', [
         $("#id_end_date").datepicker({
             dateFormat: "yy-mm-dd",
         });
-        $("#id_delay_invoice_until").datepicker({
-            dateFormat: "yy-mm-dd",
-        });
 
-        var subscriptionInfoHandler = new SubscriptionInfoHandler();
+        var subscriptionInfoHandler = subscriptionInfoHandlerModel();
         subscriptionInfoHandler.init();
 
-        var invoiceModel = new InvoiceModel();
+        var invoice = invoiceModel();
         // fieldset is not unique enough a css identifier
         // historically this has taken the first one without checking
         // todo: use a more specific identifier to make less brittle
-        $('fieldset').first().koApplyBindings(invoiceModel);
+        $('fieldset').first().koApplyBindings(invoice);
     });
 });

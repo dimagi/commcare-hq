@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from django.template.loader import render_to_string
 
@@ -18,5 +19,5 @@ class FixtureUploadResult(object):
         message = render_to_string('fixtures/partials/fixture_upload_status_api.txt', {
             'result': self,
         })
-        message = u'\n'.join(re.split(r'\n*', message)).strip()
+        message = '\n'.join(re.split(r'\n*', message)).strip()
         return message

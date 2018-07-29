@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -7,7 +8,7 @@ from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.models import FixtureDataType, _id_from_doc
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext as _
 
 

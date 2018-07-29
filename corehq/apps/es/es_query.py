@@ -99,11 +99,12 @@ Language
 """
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from copy import deepcopy
 import json
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.elastic import (
     ES_META,
@@ -164,7 +165,6 @@ class ESQuery(object):
         self.debug_host = debug_host
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
-        self._source = None
         self.es_instance_alias = es_instance_alias
         self.es_query = {"query": {
             "filtered": {
@@ -390,21 +390,34 @@ class ESQuery(object):
         """pretty prints the JSON query that will be sent to elasticsearch."""
         print(self.dumps(pretty=True))
 
-    def sort(self, field, desc=False, reset_sort=True):
-        """Order the results by field."""
+    def _sort(self, sort, reset_sort):
         query = deepcopy(self)
-        sort_field = {
-            field: {'order': 'desc' if desc else 'asc'}
-        }
-
         if reset_sort:
-            query.es_query['sort'] = [sort_field]
+            query.es_query['sort'] = [sort]
         else:
             if not query.es_query.get('sort'):
                 query.es_query['sort'] = []
-            query.es_query['sort'].append(sort_field)
+            query.es_query['sort'].append(sort)
 
         return query
+
+    def sort(self, field, desc=False, reset_sort=True):
+        """Order the results by field."""
+        sort_field = {
+            field: {'order': 'desc' if desc else 'asc'}
+        }
+        return self._sort(sort_field, reset_sort)
+
+    def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True):
+        """Order results by the value of a nested field
+        """
+        sort_field = {
+            '{}.{}'.format(path, field_name): {
+                'order': 'desc' if desc else 'asc',
+                'nested_filter': nested_filter,
+            }
+        }
+        return self._sort(sort_field, reset_sort)
 
     def set_sorting_block(self, sorting_block):
         """To be used with `get_sorting_block`, which interprets datatables sorting"""
@@ -442,8 +455,14 @@ class ESQuery(object):
         return self.size(0).run().total
 
     def get_ids(self):
-        """Performs a minimal query to get the ids of the matching documents"""
+        """Performs a minimal query to get the ids of the matching documents
+
+        For very large sets of IDs, use ``scroll_ids`` instead"""
         return self.exclude_source().run().doc_ids
+
+    def scroll_ids(self):
+        """Returns a generator of all matching ids"""
+        return self.exclude_source().size(5000).scroll()
 
 
 class ESQuerySet(object):

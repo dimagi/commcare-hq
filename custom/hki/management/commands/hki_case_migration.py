@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+from __future__ import unicode_literals
 import six
 
 from django.core.management import BaseCommand
@@ -13,6 +14,7 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.util.log import with_progress_bar
 
 from dimagi.utils.chunked import chunked
+from io import open
 
 
 class Command(BaseCommand):
@@ -34,7 +36,7 @@ class Command(BaseCommand):
         household_cases = CaseES().domain(self.domain).case_type('household').count()
         member_cases = CaseES().domain(self.domain).case_type('household_member').count()
         total_cases = household_cases + member_cases
-        with open(log_file, "w") as fh:
+        with open(log_file, "w", encoding='utf-8') as fh:
             fh.write('--------Successful Form Ids----------')
             for cases in chunked(with_progress_bar(self._get_cases_to_process(), total_cases), 100):
                 cases_to_update = self._process_cases(cases, failed_updates, loc_mapping)

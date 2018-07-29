@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import calendar
 import random
 import datetime
@@ -199,6 +200,21 @@ def arbitrary_backend_ids():
         sms_backend.couch_id = backend_instance
         sms_backend.name = backend_instance
         sms_backend.is_global = True
+        sms_backend.save()
+    return backend_ids
+
+
+@unit_testing_only
+def arbitrary_non_global_backend_ids():
+    backend_ids = {}
+    for backend in _available_gateway_fee_backends():
+        backend_instance = data_gen.arbitrary_unique_name("back")
+        backend_ids[backend.get_api_id()] = backend_instance
+        sms_backend = backend()
+        sms_backend.hq_api_id = backend.get_api_id()
+        sms_backend.couch_id = backend_instance
+        sms_backend.name = backend_instance
+        sms_backend.is_global = False
         sms_backend.save()
     return backend_ids
 

@@ -7,7 +7,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
     googleAnalytics
 ) {
     var HQReportDataTables = function(options) {
-        var self = this;
+        var self = {};
         self.dataTableElem = options.dataTableElem || '.datatable';
         self.paginationType = options.paginationType || 'bs_normal';
         self.defaultRows = options.defaultRows || 10;
@@ -17,7 +17,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
         self.defaultSort = (options.defaultSort != undefined) ? options.defaultSort : true;
         self.customSort = options.customSort || null;
-        self.ajaxParams = options.ajaxParams || new Object();
+        self.ajaxParams = options.ajaxParams || {};
         self.ajaxSource = options.ajaxSource;
         self.ajaxMethod = options.ajaxMethod || 'GET';
         self.loadingText = options.loadingText || gettext("Loading") +
@@ -29,10 +29,10 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         }
         self.emptyText = options.emptyText || gettext("No data available to display. " +
                                                       "Please try changing your filters.");
-        self.errorText = options.errorText || "<span class='label label-important'>" + gettext("Sorry!") + "</span> " +
+        self.errorText = options.errorText || "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
                          gettext("There was an error with your query, it has been logged, please try another query.");
         self.badRequestErrorText = options.badRequestErrorText || options.errorText ||
-                                   "<span class='label label-important'>" + gettext("Sorry!") + "</span> " +
+                                   "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
                                    gettext("Your search query is invalid, please adjust the formatting and try again.");
         self.fixColumns = !!(options.fixColumns);
         self.fixColsNumLeft = options.fixColsNumLeft || 1;
@@ -47,7 +47,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         self.datatable = null;
         self.rendered = false;
 
-        this.render_footer_row = (function() {
+        self.render_footer_row = (function() {
             var $dataTableElem = $(self.dataTableElem);
             return function(id, row) {
                 if ($dataTableElem.find('tfoot').length === 0) {
@@ -64,7 +64,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
             };
         })();
 
-        this.render = function () {
+        self.render = function () {
             if (self.rendered) {
                 $(self.dataTableElem).each(function () {
                     if ($.fn.dataTable.versionCheck) {
@@ -108,7 +108,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                     params.aaSorting = self.aaSorting || self.customSort;
                 }
 
-                if(self.ajaxSource) {
+                if (self.ajaxSource) {
                     params.bServerSide = true;
                     params.bProcessing = true;
                     params.sAjaxSource = {
@@ -148,8 +148,11 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                                 }
                             }
                             applyBootstrapMagic();
-                            if ('context' in data){
-                                load(data['context'], ICON_PATH);
+                            if ('context' in data) {
+                                var iconPath = data['icon_path'] || $(".base-maps-data").data("icon_path");
+                                hqRequire(["reports/js/maps_utils"], function(mapsUtils) {
+                                    mapsUtils.load(data['context'], iconPath);
+                                });
                             }
                             if (self.successCallbacks) {
                                 for (i = 0; i < self.successCallbacks.length; i++) {
@@ -166,9 +169,13 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                             "error": function(jqXHR, textStatus, errorThrown) {
                                 $(".dataTables_processing").hide();
                                 if (jqXHR.status === 400) {
-                                    $(".dataTables_empty").html(self.badRequestErrorText);
+                                    var errorMessage = self.badRequestErrorText;
+                                    if (jqXHR.responseText){
+                                        errorMessage = "<p><span class='label label-danger'>" + gettext("Sorry!") + "</span> " + jqXHR.responseText + "</p>";
+                                    }
+                                    $(".dataTables_empty").html(errorMessage);
                                 } else {
-                                    $(".dataTables_empty").html(self.errorText);                                
+                                    $(".dataTables_empty").html(self.errorText);
                                 }
                                 $(".dataTables_empty").show();
                                 if (self.errorCallbacks) {
@@ -217,13 +224,6 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                 $('.dataTables_paginate a').on('click', function () {
                     datatable.fnAdjustColumnSizing();
                 });
-                // This fixes a bug in some browsers where if the first column
-                // contains a large amount of data, it will overlap with the
-                // second column. This makes sure after load, the columns are
-                // re-adjusted.
-                setTimeout( function () {
-                    datatable.fnAdjustColumnSizing();
-                }, 10);
 
                 // This fixes a display bug in some browsers where the pagination
                 // overlaps the footer when resizing from 10 to 100 or 10 to 50 rows
@@ -280,13 +280,15 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                     $(self.dataTableElem).trigger('hqreport.tabular.lengthChange', $(this).val());
                 });
             });
-        };
+        };  // end of self.render
+
+        return self;
     };
 
     $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sSortAsc": "header headerSortDown",
-        "sSortDesc": "header headerSortUp",
-        "sSortable": "header",
+        "sSortAsc": "header headerSortAsc",
+        "sSortDesc": "header headerSortDesc",
+        "sSortable": "header headerSort",
     } );
 
     // For sorting rows

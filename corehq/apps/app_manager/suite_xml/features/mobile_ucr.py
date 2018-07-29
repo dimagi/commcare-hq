@@ -1,7 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from collections import defaultdict
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager import models
 from corehq.apps.app_manager.const import MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import ReportModule, MobileSelectFilter
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
     SessionDatum, Detail, Header, Field, Template, GraphTemplate, Xpath, XpathVariable
@@ -99,7 +102,7 @@ def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
                 detail_confirm=_get_summary_detail_id(config),
                 detail_select=_get_select_detail_id(config),
                 id='report_id_{}'.format(config.uuid),
-                nodeset=datum_string.format(config.uuid),
+                nodeset=datum_string.format(config.instance_id),
                 value='./@id',
                 autoselect="true"
             ),
@@ -145,7 +148,7 @@ def get_data_path(config, domain, new_mobile_ucr_restore=False):
         data_path_string = "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
 
     return data_path_string.format(
-        config.uuid,
+        config.instance_id,
         MobileSelectFilterHelpers.get_data_filter_xpath(config, domain, new_mobile_ucr_restore)
     )
 
@@ -214,7 +217,7 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
     def _get_last_sync(report_config):
         if new_mobile_ucr_restore:
             last_sync_string = "format-date(date(instance('commcare-reports:{}')/@last_sync), '%Y-%m-%d %H:%M')"
-            last_sync_string = last_sync_string.format(report_config.uuid)
+            last_sync_string = last_sync_string.format(report_config.instance_id)
         else:
             last_sync_string = "format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
 
@@ -293,7 +296,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
     def _column_to_field(column):
         def _get_xpath(col):
             def _get_conditional(condition, if_true, if_false):
-                return u'if({condition}, {if_true}, {if_false})'.format(
+                return 'if({condition}, {if_true}, {if_false})'.format(
                     condition=condition,
                     if_true=if_true,
                     if_false=if_false,
@@ -306,7 +309,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                         "$lang = '{lang}'".format(
                             lang=lang,
                         ),
-                        u"'{translation}'".format(
+                        "'{translation}'".format(
                             translation=translation.replace("'", "''"),
                         ),
                         word_eval
@@ -331,7 +334,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                     else:
                         word_eval = _get_word_eval(translations, default_val)
                     xpath_function = _get_conditional(
-                        u"{value} = '{word}'".format(
+                        "{value} = '{word}'".format(
                             value=default_val,
                             word=word,
                         ),
@@ -393,7 +396,7 @@ class MobileSelectFilterHelpers(object):
             instance = "instance('reports')/reports/report[@id='{report_id}']"
 
         nodeset = instance + "/filters/filter[@field='{filter_slug}']/option"
-        return nodeset.format(report_id=config.uuid, filter_slug=filter_slug)
+        return nodeset.format(report_id=config.instance_id, filter_slug=filter_slug)
 
     @staticmethod
     def get_filters(config, domain):
@@ -445,3 +448,22 @@ class MobileSelectFilterHelpers(object):
 
 def is_valid_mobile_select_filter_type(ui_filter):
     return isinstance(ui_filter, DynamicChoiceListFilter) or isinstance(ui_filter, ChoiceListFilter)
+
+
+@quickcache(['domain'])
+def get_uuids_by_instance_id(domain):
+    """
+    map ReportAppConfig.uuids list to user-defined ReportAppConfig.instance_ids
+
+    This is per-domain, since registering instances (like
+    commcare_reports_fixture_instances) is per-domain
+    """
+    apps = get_apps_in_domain(domain)
+    config_ids = defaultdict(list)
+    for app in apps:
+        if app.mobile_ucr_restore_version in (MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2):
+            for module in app.modules:
+                if module.module_type == 'report':
+                    for report_config in module.report_configs:
+                        config_ids[report_config.instance_id].append(report_config.uuid)
+    return config_ids

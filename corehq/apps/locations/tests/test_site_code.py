@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import make_location, LocationType
@@ -35,7 +36,7 @@ class SiteCodeTest(TestCase):
 
     def testOtherCharacters(self):
         location = make_location(
-            name=u"Somé$ #Location (Old)",
+            name="Somé$ #Location (Old)",
             domain=self.domain,
             location_type="type"
         )

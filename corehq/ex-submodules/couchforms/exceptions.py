@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 class CouchFormException(Exception):
     """
     A custom exception for the XForms application.

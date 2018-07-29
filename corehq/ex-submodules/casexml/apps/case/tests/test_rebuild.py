@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from couchdbkit.exceptions import ResourceNotFound
 from django.test import TestCase, SimpleTestCase

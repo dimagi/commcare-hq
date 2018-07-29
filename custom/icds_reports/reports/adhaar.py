@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division
+from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -55,7 +56,8 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False, beta=False):
         "rightLegend": {
             "average": average,
             "info": _((
-                "Percentage of individuals registered using CAS whose Aadhaar identification has been captured"
+                "Of the total number of ICDS beneficiaries, the percentage whose Adhaar "
+                "identification has been captured. "
             )),
             "extended_info": [
                 {
@@ -135,7 +137,8 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of individuals registered using CAS whose Aadhaar identification has been captured"
+            "Of the total number of ICDS beneficiaries, the percentage whose Adhaar "
+            "identification has been captured. "
         )),
         "chart_data": [
             {

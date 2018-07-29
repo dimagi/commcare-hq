@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 import types
 from hashlib import md5
@@ -80,9 +81,9 @@ class DividedWeRunPlugin(Plugin):
                     desc = skip
                     name = test.context.__name__
                     if "." in name:
-                        name, skip.__name__ = name.rsplit(".", 1)
+                        name, skip.__name__ = name.rsplit(b".", 1)
                     else:
-                        skip.__name__ = "*"
+                        skip.__name__ = b"*"
                     skip.__module__ = name
             else:
                 desc = test.test.descriptor

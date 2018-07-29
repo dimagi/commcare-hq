@@ -142,11 +142,11 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
                 obj.days(initial.server_modified_boundary);
                 self.criteria.push(obj);
             }
-
             $.each(initial.property_match_definitions, function(index, value) {
                 if(
                     value.match_type === constants.MATCH_EQUAL ||
                     value.match_type === constants.MATCH_NOT_EQUAL ||
+                    value.match_type === constants.MATCH_REGEX ||
                     value.match_type === constants.MATCH_HAS_VALUE ||
                     value.match_type === constants.MATCH_HAS_NO_VALUE
                 ) {

@@ -1,11 +1,13 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse
 from django.utils import html
 from django.utils.translation import ugettext as _, ugettext_noop
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, OR, IN
-from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
+from corehq.apps.cloudcare.api import get_cloudcare_app
+from corehq.apps.cloudcare.utils import webapps_module_case_form
 from corehq.apps.reports.sqlreport import SqlTabularReport, AggregateColumn, DatabaseColumn, DataFormatter, \
     TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
@@ -16,7 +18,7 @@ from custom.succeed.reports import EMPTY_FIELD, OUTPUT_DATE_FORMAT, \
     CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
 from custom.succeed.utils import SUCCEED_CM_APPNAME, get_app_build
 from custom.utils.utils import clean_IN_filter_value
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -38,7 +40,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
 
     def get_link(self, url, field, doc_id):
         if url:
-            return html.mark_safe(u"<a class='ajax_dialog' href='{0}' target='_blank'>{1}</a>".format(
+            return html.mark_safe("<a class='ajax_dialog' href='{0}' target='_blank'>{1}</a>".format(
                 url, html.escape(field)))
         else:
             return "%s (bad ID format)" % doc_id
@@ -55,15 +57,15 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
         except IndexError:
             form_idx = None
 
-        return html.escape(get_cloudcare_form_url(domain=self.domain,
-                                                  app_build_id=app_build_id,
-                                                  module_id=module_idx,
-                                                  form_id=form_idx,
-                                                  case_id=case_id) + '/enter/')
+        return html.escape(webapps_module_case_form(domain=self.domain,
+                                                    app_id=app_build_id,
+                                                    module_id=module_idx,
+                                                    form_id=form_idx,
+                                                    case_id=case_id))
 
     def name_link(self, name, doc_id, is_closed):
         if is_closed == 0:
-            details_url = reverse('case_details', args=[self.domain, doc_id])
+            details_url = reverse('case_data', args=[self.domain, doc_id])
             url = details_url + '#!history'
         else:
             url = self.get_form_url(self.app_dict,

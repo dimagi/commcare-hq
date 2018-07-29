@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from copy import deepcopy
 
 from django.test import SimpleTestCase
@@ -149,7 +150,7 @@ class DiffTestCases(SimpleTestCase):
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         self.assertEqual(1, len(diffs))
         diffs = [
-            FormJsonDiff(diff_type=u'diff', path=('xform_ids', '[*]'), old_value=u'456', new_value=u'abc')
+            FormJsonDiff(diff_type='diff', path=('xform_ids', '[*]'), old_value='456', new_value='abc')
         ]
 
         expected_diffs = REAL_DIFFS + [
@@ -161,14 +162,14 @@ class DiffTestCases(SimpleTestCase):
     def test_filter_case_user_id(self):
         couch_case = {
             'doc_type': 'CommCareCase',
-            'user_id': u'e7ad965c70802884a7a67add763939e8',
-            '@user_id': u'e7ad965c70802884a7a67add763939e8',
-            '@case_id': u'5ac45838-da5b-49f5-b236-0675ff924e9f'
+            'user_id': 'e7ad965c70802884a7a67add763939e8',
+            '@user_id': 'e7ad965c70802884a7a67add763939e8',
+            '@case_id': '5ac45838-da5b-49f5-b236-0675ff924e9f'
         }
         sql_case = {
             'doc_type': 'CommCareCase',
-            'user_id': u'e7ad965c70802884a7a67add763939e8',
-            'case_id': u'5ac45838-da5b-49f5-b236-0675ff924e9f'
+            'user_id': 'e7ad965c70802884a7a67add763939e8',
+            'case_id': '5ac45838-da5b-49f5-b236-0675ff924e9f'
         }
 
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
@@ -296,7 +297,7 @@ class DiffTestCases(SimpleTestCase):
         expected_diffs = [
             FormJsonDiff(
                 diff_type='diff', path=('indices', '[*]', 'identifier'),
-                old_value=u'parent', new_value=u'mother')
+                old_value='parent', new_value='mother')
         ]
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered_diffs = filter_case_diffs(couch_case, sql_case, diffs)
@@ -325,7 +326,7 @@ class DiffTestCases(SimpleTestCase):
         sql_case['indices'][0]['relationship'] = 'extension'
 
         expected_diffs = [
-            FormJsonDiff(diff_type='diff', path=('indices', '[*]', 'relationship'), old_value=u'child', new_value=u'extension')
+            FormJsonDiff(diff_type='diff', path=('indices', '[*]', 'relationship'), old_value='child', new_value='extension')
         ]
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered_diffs = filter_case_diffs(couch_case, sql_case, diffs)

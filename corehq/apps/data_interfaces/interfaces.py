@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es

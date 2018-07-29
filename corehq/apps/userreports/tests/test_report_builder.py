@@ -1,40 +1,33 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import os
-import six
-from django.test import TestCase, SimpleTestCase
+
+from django.test import TestCase
 from mock import patch
 
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_FORM, DATA_SOURCE_TYPE_CASE
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.apps.userreports.reports.builder.columns import CountColumn, MultiselectQuestionColumnOption
+
+from corehq.apps.userreports.reports.builder.columns import MultiselectQuestionColumnOption
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
-)
-
-
-def read(rel_path):
-    path = os.path.join(os.path.dirname(__file__), *rel_path)
-    with open(path) as f:
-        return f.read()
-
-
-factory = AppFactory()
-module1, form1 = factory.new_basic_module('my_slug', 'my_case_type')
-form1.source = read(['data', 'forms', 'simple.xml'])
+    DataSourceBuilder)
+from corehq.apps.userreports.tests.utils import get_simple_xform
 
 
 class ReportBuilderDBTest(TestCase):
+    domain = 'domain'
+    case_type = 'report_builder_case_type'
 
     @classmethod
     def setUpClass(cls):
         super(ReportBuilderDBTest, cls).setUpClass()
-        cls.app = Application.new_app('domain', 'Untitled Application')
+        cls.app = Application.new_app(cls.domain, 'Untitled Application')
         module = cls.app.add_module(Module.new_module('Untitled Module', None))
-        cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', read(['data', 'forms', 'simple.xml']))
+        module.case_type = cls.case_type
+        cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', get_simple_xform())
         cls.app.save()
 
     @classmethod
@@ -44,6 +37,41 @@ class ReportBuilderDBTest(TestCase):
             config.delete()
         delete_all_report_configs()
         super(ReportBuilderDBTest, cls).tearDownClass()
+
+
+class DataSourceBuilderTest(ReportBuilderDBTest):
+
+    def test_builder_bad_type(self):
+        with self.assertRaises(AssertionError):
+            DataSourceBuilder(self.domain, self.app, 'invalid-type', self.form.unique_id)
+
+    def test_builder_for_forms(self):
+        builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
+        self.assertEqual('XFormInstance', builder.source_doc_type)
+        expected_filter = {
+            "operator": "eq",
+            "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+            },
+            "type": "boolean_expression",
+            "property_value": self.form.xmlns
+        }
+        self.assertEqual(expected_filter, builder.filter)
+
+    def test_builder_for_cases(self):
+        builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
+        self.assertEqual('CommCareCase', builder.source_doc_type)
+        expected_filter = {
+            "operator": "eq",
+            "expression": {
+                "type": "property_name",
+                "property_name": "type"
+            },
+            "type": "boolean_expression",
+            "property_value": self.case_type,
+        }
+        self.assertEqual(expected_filter, builder.filter)
 
 
 class ReportBuilderTest(ReportBuilderDBTest):
@@ -193,6 +221,50 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         self.assertNotEqual(report.config_id, report_two.config_id)
 
+    def test_data_source_columns(self):
+        """
+        Report Builder should create a data source that includes columns for all possible aggregations, so that if
+        the user switches between a list report and a summary report the data source has all the required columns
+
+        (FB 268655)
+        """
+        builder_form = ConfigureListReportForm(
+            "My Report",
+            self.app._id,
+            "form",
+            self.form.unique_id,
+            data={
+                'user_filters': '[]',
+                'default_filters': '[]',
+                'columns': """[
+                    {"property": "/data/first_name", "display_text": "first name"},
+                    {"property": "/data/last_name", "display_text": "last name"},
+                    {"property": "/data/children", "display_text": "children"}
+                ]""",
+            }
+        )
+        self.assertTrue(builder_form.is_valid())
+        with patch('corehq.apps.userreports.tasks.delete_data_source_task'):
+            data_source_config_id = builder_form.create_temp_data_source('admin@example.com')
+        data_source = DataSourceConfiguration.get(data_source_config_id)
+        indicators = sorted([(ind['column_id'], ind['type']) for ind in data_source.configured_indicators])
+        expected_indicators = [
+            ('count', 'boolean'),
+            ('data_children_25bd0e0d', 'expression'),           # "children" should have 2 columns because it is
+            ('data_children_25bd0e0d_decimal', 'expression'),   # numeric
+            ('data_dob_b6293169', 'expression'),
+            ('data_first_name_ac8c51a7', 'expression'),
+            ('data_last_name_ce36e9e1', 'expression'),
+            ('data_state_6e36b993', 'choice_list'),
+            ('data_state_6e36b993', 'expression'),
+            ('deviceID_a7307e7d', 'expression'),
+            ('timeEnd_09f40526', 'expression'),
+            ('timeStart_c5a1ba73', 'expression'),
+            ('userID_41e1d44e', 'expression'),
+            ('username_ea02198f', 'expression'),
+        ]
+        self.assertEqual(indicators, expected_indicators)
+
 
 class MultiselectQuestionTest(ReportBuilderDBTest):
     """
@@ -242,3 +314,23 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
         self.assertEqual(len(mselect_indicators), 1)
         mselect_indicator = mselect_indicators[0]
         self.assertEqual(set(mselect_indicator['choices']), {'MA', 'MN', 'VT'})
+
+    def test_multiselect_aggregation(self):
+        """
+        Check report column aggregation for multi-select questions set to "group by"
+        """
+        builder_form = ConfigureTableReportForm(
+            "My Report",
+            self.app._id,
+            "form",
+            self.form.unique_id,
+            data={
+                'user_filters': '[]',
+                'default_filters': '[]',
+                'columns': '[{"property": "/data/state", "display_text": "state", "calculation": "Group By"}]',
+                'chart': 'pie',
+            }
+        )
+        self.assertTrue(builder_form.is_valid())
+        report = builder_form.create_report()
+        self.assertEqual(report.columns[0]['aggregation'], 'simple')

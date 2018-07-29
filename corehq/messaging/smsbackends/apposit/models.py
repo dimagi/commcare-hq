@@ -1,9 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import requests
 from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.messaging.smsbackends.apposit.forms import AppositBackendForm
+from django.conf import settings
 
 
 ETHIOPIA_COUNTRY_CODE = '251'
@@ -15,7 +17,7 @@ class AppositException(Exception):
 
 class SQLAppositBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 
@@ -89,7 +91,8 @@ class SQLAppositBackend(SQLSMSBackend):
             self.url,
             auth=(config.application_id, config.application_token),
             data=json_payload,
-            headers={'content-type': 'application/json'}
+            headers={'content-type': 'application/json'},
+            timeout=settings.SMS_GATEWAY_TIMEOUT,
         )
 
         try:

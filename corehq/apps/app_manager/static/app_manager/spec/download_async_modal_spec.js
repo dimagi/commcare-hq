@@ -2,7 +2,7 @@
 
 describe('Async Download Modal', function() {
     var url = 'test_url';
-    var AsyncDownloader = hqImport('app_manager/js/download_async_modal').AsyncDownloader;
+    var asyncDownloader = hqImport('app_manager/js/download_async_modal').asyncDownloader;
 
     describe('#AsyncDownloader.isDone', function() {
         var downloader = null,
@@ -10,7 +10,7 @@ describe('Async Download Modal', function() {
             download_poll_id = '12345';
 
         beforeEach(function() {
-            downloader = new AsyncDownloader(modal);
+            downloader = asyncDownloader(modal);
             downloader.download_poll_id = download_poll_id;
         });
 
@@ -64,7 +64,7 @@ describe('Async Download Modal', function() {
 
         before(function() {
             clock = sinon.useFakeTimers();
-            downloader = new AsyncDownloader(modal);
+            downloader = asyncDownloader(modal);
         });
 
         after(function() {

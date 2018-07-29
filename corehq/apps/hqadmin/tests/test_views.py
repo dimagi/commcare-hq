@@ -1,9 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.http import HttpResponse
 from django.test import SimpleTestCase
 from mock import patch, Mock
 
-from corehq.apps.hqadmin.views import AdminRestoreView
+from corehq.apps.hqadmin.views.users import AdminRestoreView
 
 
 class AdminRestoreViewTests(SimpleTestCase):
@@ -17,7 +18,7 @@ class AdminRestoreViewTests(SimpleTestCase):
         request.openrosa_headers = {}
         timing_context = Mock()
         timing_context.to_list.return_value = []
-        with patch('corehq.apps.hqadmin.views.get_restore_response',
+        with patch('corehq.apps.hqadmin.views.users.get_restore_response',
                    return_value=(HttpResponse('bad response', status=500), timing_context)):
 
             view = AdminRestoreView(user=user, app_id=app_id, request=request)

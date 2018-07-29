@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 
 from django.test import SimpleTestCase
@@ -77,6 +78,7 @@ class TestUserSyncToEs(SimpleTestCase):
             is_active=True,
             first_name='user1 first name',
             last_name='user1 last name',
+            location_id='location1'
         )
         user.save()
 
@@ -103,4 +105,6 @@ class TestUserSyncToEs(SimpleTestCase):
             'first_name': user.first_name,
             'last_name': user.last_name,
             'doc_type': user.doc_type,
+            'location_id': 'location1',
+            '__group_ids': []
         })

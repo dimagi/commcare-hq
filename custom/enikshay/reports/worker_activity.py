@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from django.core.exceptions import PermissionDenied
 from corehq.apps.es import UserES
 from corehq.apps.es.users import mobile_users
@@ -14,7 +15,7 @@ from custom.enikshay.reports.filters import EnikshayLocationFilter
 
 from django.utils.translation import ugettext as _, ugettext_lazy
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 @location_safe

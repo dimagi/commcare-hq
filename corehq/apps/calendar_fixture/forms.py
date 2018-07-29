@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
@@ -8,7 +9,7 @@ from crispy_forms.bootstrap import StrictButton
 
 
 class CalendarFixtureForm(forms.ModelForm):
-    class Meta:
+    class Meta(object):
         model = CalendarFixtureSettings
         fields = ['days_before', 'days_after']
 

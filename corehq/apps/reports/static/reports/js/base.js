@@ -1,6 +1,6 @@
 hqDefine("reports/js/base", function() {
     $(function() {
-        hqImport("reports/js/filters").init();
+        hqImport("reports/js/filters/main").init();
 
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         var defaultConfig = initial_page_data('default_config') || {};
@@ -27,15 +27,6 @@ hqDefine("reports/js/base", function() {
             placement: 'right',
             html: true,
             title: gettext("You can email a saved version<br />of this report."),
-        });
-
-        $(document).on('click', '.export-action-download', function() {
-            var $modalBody = $("#export-download-status .modal-body");
-            $modalBody.text("Fetching...");
-            $("#export-download-status .modal-header h3 span").text($(this).data("formname"));
-            $.getJSON($(this).data('dlocation'), function(d) {
-                $modalBody.empty().load(d.download_url);
-            });
         });
     });
 });

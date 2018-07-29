@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from crispy_forms.bootstrap import PrependedText
 from django import forms
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy

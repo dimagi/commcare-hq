@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from jsonfield import JSONField
 from rest_framework import serializers
 
@@ -26,7 +27,7 @@ class DeletableModelSerializer(serializers.ModelSerializer):
 class XFormOperationSQLSerializer(serializers.ModelSerializer):
     user = serializers.CharField(source="user_id")
 
-    class Meta:
+    class Meta(object):
         model = XFormOperationSQL
         exclude = ('id', 'form', 'user_id')
 
@@ -34,7 +35,7 @@ class XFormOperationSQLSerializer(serializers.ModelSerializer):
 class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source="attachment_id")
 
-    class Meta:
+    class Meta(object):
         model = XFormAttachmentSQL
         fields = ('id', 'content_type', 'content_length')
 
@@ -48,9 +49,9 @@ class XFormInstanceSQLSerializer(DeletableModelSerializer):
     openrosa_headers = serializers.DictField()
     external_blobs = serializers.JSONField(source='serialized_attachments')
 
-    class Meta:
+    class Meta(object):
         model = XFormInstanceSQL
-        exclude = ('id', 'form_id')
+        exclude = ('id', 'form_id', 'time_end', 'time_start', 'commcare_version', 'app_version')
 
     def __init__(self, *args, **kwargs):
         include_attachments = kwargs.pop('include_attachments', False)
@@ -84,7 +85,7 @@ class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelS
     form = serializers.JSONField(source='form_data')
     external_blobs = serializers.JSONField(source='serialized_attachments')
 
-    class Meta:
+    class Meta(object):
         model = XFormInstanceSQL
         fields = '__all__'
 
@@ -93,7 +94,7 @@ class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
     case_id = serializers.CharField()
     relationship = serializers.CharField()
 
-    class Meta:
+    class Meta(object):
         model = CommCareCaseIndexSQL
         fields = ('case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship')
 
@@ -102,7 +103,7 @@ class CaseTransactionActionSerializer(serializers.ModelSerializer):
     xform_id = serializers.CharField(source='form_id')
     date = serializers.DateTimeField(source='server_date')
 
-    class Meta:
+    class Meta(object):
         model = CaseTransaction
         fields = ('xform_id', 'server_date', 'date', 'sync_log_id')
 
@@ -110,7 +111,7 @@ class CaseTransactionActionSerializer(serializers.ModelSerializer):
 class CaseTransactionactionRawDocSerializer(JsonFieldSerializerMixin, CaseTransactionActionSerializer):
     type = serializers.CharField(source='readable_type')
 
-    class Meta:
+    class Meta(object):
         model = CaseTransaction
         fields = ('form_id', 'server_date', 'date', 'sync_log_id', 'type', 'details')
 
@@ -119,13 +120,13 @@ class CommCareCaseSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSe
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
     transactions = CaseTransactionactionRawDocSerializer(many=True, read_only=True, source='non_revoked_transactions')
 
-    class Meta:
+    class Meta(object):
         model = CommCareCaseSQL
         fields = '__all__'
 
 
 class CaseAttachmentSQLSerializer(serializers.ModelSerializer):
-    class Meta:
+    class Meta(object):
         model = CaseAttachmentSQL
         fields = (
             'content_type',
@@ -144,7 +145,7 @@ class CommCareCaseSQLSerializer(DeletableModelSerializer):
     case_json = serializers.JSONField()
     xform_ids = serializers.ListField()
 
-    class Meta:
+    class Meta(object):
         model = CommCareCaseSQL
         exclude = ('id', 'case_json',)
 
@@ -166,7 +167,7 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
             self.fields.pop('reverse_indices')
         super(CommCareCaseSQLAPISerializer, self).__init__(*args, **kwargs)
 
-    class Meta:
+    class Meta(object):
         model = CommCareCaseSQL
         fields = (
             'domain',
@@ -195,7 +196,7 @@ class LedgerValueSerializer(serializers.ModelSerializer):
             self.fields.pop('location_id')
         super(LedgerValueSerializer, self).__init__(*args, **kwargs)
 
-    class Meta:
+    class Meta(object):
         model = LedgerValue
         exclude = ('id', 'case')
 
@@ -208,7 +209,7 @@ class StockStateSerializer(serializers.ModelSerializer):
     last_modified = serializers.DateTimeField(source='last_modified_date')
     domain = serializers.CharField()
 
-    class Meta:
+    class Meta(object):
         model = StockState
         exclude = (
             'id',

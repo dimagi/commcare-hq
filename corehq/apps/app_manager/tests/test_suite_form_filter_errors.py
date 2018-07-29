@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.exceptions import CaseXPathValidationError
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -15,7 +16,7 @@ class FormFilterErrorTests(SimpleTestCase, TestXmlMixin):
             'corehq.apps.app_manager.suite_xml.sections.menus.is_usercase_in_use'
         )
         self.suite_xml_is_usercase_in_use_mock = self.suite_xml_is_usercase_in_use_patch.start()
-        self.factory = AppFactory(build_version='2.9')
+        self.factory = AppFactory(build_version='2.9.0')
 
     def tearDown(self):
         self.suite_xml_is_usercase_in_use_patch.stop()

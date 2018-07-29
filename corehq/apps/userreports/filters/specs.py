@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base import DefaultProperty
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -14,7 +16,7 @@ class BaseFilterSpec(JsonObject):
     comment = StringProperty()
 
 
-class BooleanExpressionFilterSpec(BaseFilterSpec):
+class BooleanExpressionFilterSpec(NoPropertyTypeCoercionMixIn, BaseFilterSpec):
     type = TypeProperty('boolean_expression')
     operator = StringProperty(choices=list(OPERATORS), required=True)
     property_value = DefaultProperty()

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
@@ -18,7 +19,7 @@ from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, String
 from corehq.apps.groups.models import Group
 from corehq.util.xml_utils import serialize
 from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.locations.models import SQLLocation
 import six
 

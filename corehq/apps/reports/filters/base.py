@@ -1,7 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import pytz
 from django.template.loader import render_to_string
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 # For translations
 from django.utils.translation import ugettext_noop
 from corehq.apps.reports.util import (
@@ -216,7 +217,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             ]
         """
         raise NotImplementedError("drilldown_map must be implemented")
-    
+
     @classmethod
     def get_labels(cls):
         """

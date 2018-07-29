@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 
 from couchdbkit import ResourceNotFound
@@ -10,7 +11,7 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.pillows.utils import get_deleted_doc_types
 from couchforms.models import XFormInstance
 from dimagi.utils.couch import LockManager
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from mvp_docs.models import IndicatorXForm, IndicatorCase
 from pillowtop.checkpoints.manager import PillowCheckpoint, \
     PillowCheckpointEventHandler
@@ -232,7 +233,6 @@ def get_mvp_case_indicator_pillow(pillow_id='MVPCaseIndicatorPillow'):
 def _get_mvp_indicator_pillow(pillow_id, processor):
     feed = CouchChangeFeed(
         XFormInstance.get_db(),
-        include_docs=True,
         couch_filter='hqadmin/domains_and_doc_types',
         extra_couch_view_params={
             'domains': ' '.join(processor.domains),

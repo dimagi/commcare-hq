@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.apps import AppConfig
 
 from corehq.apps.data_interfaces.signals import case_changed_receiver

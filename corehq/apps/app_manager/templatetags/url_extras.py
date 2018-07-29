@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django import template
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import six

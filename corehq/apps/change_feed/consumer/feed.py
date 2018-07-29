@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from copy import copy
 
@@ -9,7 +10,7 @@ from kafka.common import ConsumerTimeout
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import get_multi_topic_offset, validate_offsets
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
 from pillowtop.models import kafka_seq_to_str
@@ -39,7 +40,7 @@ class KafkaChangeFeed(ChangeFeed):
         self.process_num = process_num
 
     def __unicode__(self):
-        return u'KafkaChangeFeed: topics: {}, group: {}'.format(self._topics, self._group_id)
+        return 'KafkaChangeFeed: topics: {}, group: {}'.format(self._topics, self._group_id)
 
     @property
     def topics(self):

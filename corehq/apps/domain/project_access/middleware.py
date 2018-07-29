@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.deprecation import MiddlewareMixin
 from corehq.apps.domain.project_access.models import SuperuserProjectEntryRecord, ENTRY_RECORD_FREQUENCY
 from corehq.util.quickcache import quickcache

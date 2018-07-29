@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import copy
 import json
 import os
@@ -53,7 +54,7 @@ from corehq.apps.app_manager.util import (
     get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, update_linked_app
+    validate_langs, update_linked_app, clear_xmlns_app_id_cache
 from corehq.apps.app_manager.xform import (
     XFormException)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -63,6 +64,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     api_key_auth)
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
@@ -79,6 +81,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response, json_request
 from toggle.shortcuts import set_toggle
 import six
+from io import open
 
 
 @no_conflict_require_POST
@@ -95,7 +98,7 @@ def delete_app(request, domain, app_id):
     )
     app.save()
     clear_app_cache(request, domain)
-
+    clear_xmlns_app_id_cache(domain)
     return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
 
@@ -131,7 +134,8 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
-    return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
+    # GET param can be removed when APPCUES_AB_TEST is finished
+    return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]) + "?appcues=1")
 
 
 def get_app_view_context(request, app):
@@ -144,7 +148,7 @@ def get_app_view_context(request, app):
     context = {}
 
     settings_layout = copy.deepcopy(
-        get_commcare_settings_layout(request.user)[app.get_doc_type()]
+        get_commcare_settings_layout(app.get_doc_type())
     )
     for section in settings_layout:
         new_settings = []
@@ -184,7 +188,7 @@ def get_app_view_context(request, app):
 
     build_config = CommCareBuildConfig.fetch()
     options = build_config.get_menu()
-    if not request.user.is_superuser:
+    if not request.user.is_superuser and not toggles.IS_CONTRACTOR.enabled(request.user.username):
         options = [option for option in options if not option.superuser_only]
     options_map = defaultdict(lambda: {"values": [], "value_names": []})
     for option in options:
@@ -229,8 +233,8 @@ def get_app_view_context(request, app):
                               args=(app.domain, app.get_id)),
             'download_url': reverse('download_bulk_ui_translations',
                                     args=(app.domain, app.get_id)),
-            'adjective': _(u"U\u200BI translation"),
-            'plural_noun': _(u"U\u200BI translations"),
+            'adjective': _("U\u200BI translation"),
+            'plural_noun': _("U\u200BI translations"),
         },
         'bulk_app_translation_upload': {
             'action': reverse('upload_bulk_app_translations',
@@ -239,6 +243,7 @@ def get_app_view_context(request, app):
                                     args=(app.domain, app.get_id)),
             'adjective': _("app translation"),
             'plural_noun': _("app translations"),
+            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request)
         },
     })
     context.update({
@@ -248,8 +253,12 @@ def get_app_view_context(request, app):
         ),
         'bulk_app_translation_form': get_bulk_upload_form(
             context,
-            context_key="bulk_app_translation_upload"
+            context_key="bulk_app_translation_upload",
+            form_class=AppTranslationsBulkUploadForm,
         )
+    })
+    context.update({
+        'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False)
     })
     # Not used in APP_MANAGER_V2
     context['is_app_view'] = True
@@ -308,6 +317,7 @@ def get_apps_base_context(request, domain, app):
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
+            'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [
                 {"id": u['_id'], "text": u["username"]} for u in get_practice_mode_mobile_workers(domain)],
         })
@@ -346,13 +356,6 @@ def copy_app(request, domain):
                     set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
             linked = data.get('linked')
             if linked:
-                for module in app.modules:
-                    if isinstance(module, ReportModule):
-                        messages.error(request, _('This linked application uses mobile UCRs which '
-                                                  'are currently not supported. For this application to '
-                                                  'function correctly, you will need to remove those modules.'))
-                        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
                 master_version = get_latest_released_app_version(app.domain, app_id)
                 if not master_version:
                     messages.error(request, _("Creating linked app failed."
@@ -364,6 +367,7 @@ def copy_app(request, domain):
                 try:
                     update_linked_app(linked_app, request.couch_user.get_id)
                 except AppLinkError as e:
+                    linked_app.delete()
                     messages.error(request, str(e))
                     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
@@ -390,7 +394,7 @@ def export_gzip(req, domain, app_id):
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
             z.writestr('application.json', app_json.export_json())
 
-    wrapper = FileWrapper(open(fpath))
+    wrapper = FileWrapper(open(fpath, 'rb'))
     response = HttpResponse(wrapper, content_type='application/zip')
     response['Content-Length'] = os.path.getsize(fpath)
     app = Application.get(app_id)
@@ -543,6 +547,7 @@ def edit_app_langs(request, domain, app_id):
             "en": "en",
             "es": "es"
         },
+        smart_lang_display: true,
         build: ["es", "hin"]
     }
     """
@@ -573,7 +578,7 @@ def edit_app_langs(request, domain, app_id):
                 list1.pop()
             list1.extend(list2)
     replace_all(app.langs, langs)
-
+    app.smart_lang_display = json.loads(request.body)['smart_lang_display']
     app.save()
     return json_response(langs)
 
@@ -636,7 +641,6 @@ def edit_app_attr(request, domain, app_id, attr):
         'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
-        'anonymous_cloudcare_enabled',
         'case_sharing',
         'translation_strategy',
         'auto_gps_capture',
@@ -664,7 +668,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('practice_mobile_worker_id', None),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
-        ('anonymous_cloudcare_enabled', None),
         ('manage_urls', None),
         ('name', None),
         ('platform', None),
@@ -676,6 +679,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('auto_gps_capture', None),
         ('use_grid_menus', None),
         ('grid_form_menus', None),
+        ('target_commcare_flavor', None),
         ('comment', None),
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
@@ -717,12 +721,6 @@ def edit_app_attr(request, domain, app_id, attr):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
         if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
-
-    if should_edit("anonymous_cloudcare_enabled"):
-        if app.get_doc_type() not in ("Application",):
-            raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
-        if not has_privilege(request, privileges.CLOUDCARE):
-            app.anonymous_cloudcare_enabled = False
 
     def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):
@@ -845,42 +843,3 @@ def update_linked_whitelist(request, domain, app_id):
     app.linked_whitelist = new_whitelist
     app.save()
     return HttpResponse()
-
-
-@method_decorator(csrf_exempt, name='dispatch')
-@method_decorator(api_key_auth, name='dispatch')
-@method_decorator(no_conflict, name='dispatch')
-@method_decorator(require_can_edit_apps, name='dispatch')
-class PatchLinkedAppWhitelist(View):
-    urlname = 'patch_linked_app_whitelist'
-
-    def patch(self, request, domain, app_id):
-        app, item = self._get_app_and_item(app_id, domain, request)
-        if not item:
-            return HttpResponseBadRequest()
-
-        if item not in app.linked_whitelist:
-            app.linked_whitelist.append(item)
-            app.save()
-
-        return HttpResponse()
-
-    def delete(self, request, domain, app_id):
-        app, item = self._get_app_and_item(app_id, domain, request)
-        try:
-            app.linked_whitelist.remove(item)
-            app.save()
-        except ValueError:
-            return HttpResponseBadRequest()
-
-        return HttpResponse()
-
-    def _get_app_and_item(self, app_id, domain, request):
-        try:
-            app = get_current_app(domain, app_id)
-        except ResourceNotFound:
-            raise Http404
-        item = request.GET.get('whitelist_item')
-        if not item:
-            item = QueryDict(request.body).get('whitelist_item')
-        return app, item

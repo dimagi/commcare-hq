@@ -1,4 +1,12 @@
-hqDefine("domain/js/add_form_repeater", function() {
+hqDefine("repeaters/js/add_form_repeater", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/widgets',          // case repeaters use .ko-select2
+    'locations/js/widgets_main',    // openmrs repeaters use the LocationSelectWidget
+], function(
+    $,
+    initialPageData
+) {
     $(function() {
         var $testLinkButton = $('#test-forward-link'),
             $testResult = $('#test-forward-result');
@@ -43,7 +51,7 @@ hqDefine("domain/js/add_form_repeater", function() {
             var data = {
                 url: $('#id_url').val(),
                 format: $('#id_format').val(),
-                repeater_type: hqImport("hqwebapp/js/initial_page_data").get("repeater_type"),
+                repeater_type: initialPageData.get("repeater_type"),
                 auth_type: $('#id_auth_type').val(),
                 username: $('#id_username').val(),
                 password: $('#id_password').val(),
@@ -51,12 +59,13 @@ hqDefine("domain/js/add_form_repeater", function() {
             $testLinkButton.disableButton();
 
             $.post({
-                url: hqImport("hqwebapp/js/initial_page_data").reverse("test_repeater"),
+                url: initialPageData.reverse("test_repeater"),
                 data: data,
                 success: handleSuccess,
                 error: handleFailure,
             });
         });
+
         $('#id_url').change(function () {
             if ($(this).val()) {
                 $testLinkButton.removeClass('disabled');
@@ -64,5 +73,8 @@ hqDefine("domain/js/add_form_repeater", function() {
                 $testLinkButton.addClass('disabled');
             }
         });
+
+        // Set initial button state
+        $('#id_url').trigger('change');
     });
 });

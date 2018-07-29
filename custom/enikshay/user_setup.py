@@ -1,14 +1,15 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import math
 import uuid
 from crispy_forms import layout as crispy
 from django import forms
 from django.core.validators import RegexValidator
 from django.utils.translation import ugettext as _
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq import toggles
-from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
 from corehq.apps.locations.models import LocationType
 from corehq.apps.users.forms import clean_mobile_worker_username

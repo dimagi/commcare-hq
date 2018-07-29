@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
@@ -94,10 +95,12 @@ def bulk_download_users_async(domain, download_id, user_filters):
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.apps.reminders.tasks import delete_reminders_for_cases
+    from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
     CaseAccessors(domain).soft_delete_cases(list(case_ids), deletion_date, deletion_id)
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
     delete_reminders_for_cases.delay(domain, case_ids)
+    delete_schedule_instances_for_cases.delay(domain, case_ids)
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
@@ -289,14 +292,3 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 def remove_unused_custom_fields_from_users_task(domain):
     from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
     remove_unused_custom_fields_from_users(domain)
-
-
-@task
-def bulk_deactivate_users(domain):
-    from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
-    users = get_all_commcare_users_by_domain(domain.name)
-    for user in users:
-        if not user.is_active:
-            continue
-        user.is_active = False
-        user.save()

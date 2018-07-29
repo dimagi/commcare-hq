@@ -4,6 +4,7 @@ Shortcuts for working with domains and users.
 
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 def create_domain(name, active=True):
     """Create domain without secure submissions for tests"""
     return Domain.get_or_create_with_name(name=name, is_active=active,
@@ -24,6 +25,9 @@ def create_user(username, password, is_staff=False, is_superuser=False, is_activ
     else:
         user.password = password
 
+    # at this stage in the process there is no couch user so it's pointless
+    # trying to update it.
+    user.DO_NOT_SAVE_COUCH_USER = True
     user.save()
     return user
 

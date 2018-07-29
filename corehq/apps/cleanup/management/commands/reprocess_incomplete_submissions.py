@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 
 from django.core.management.base import BaseCommand, CommandError
@@ -33,7 +34,7 @@ logger = logging.getLogger('reprocess')
 
 def confirm():
     confirm = input(
-        u"""
+        """
         Continue processing next batch? [y/N]
         """
     )

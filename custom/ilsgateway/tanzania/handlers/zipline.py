@@ -1,8 +1,13 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
+import six
+
 from corehq.apps.products.models import SQLProduct
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import INVALID_PRODUCT_CODE
 from custom.zipline.api import ProductQuantity
+
 from six.moves import zip
 
 
@@ -57,7 +62,7 @@ class ZiplineGenericHandler(KeywordHandler):
         try:
             parsed_report = self.parse_message(content)
         except ParseError as e:
-            self.respond(e.message)
+            self.respond(six.text_type(e))
             return True
 
         for product_code, quantity in parsed_report:

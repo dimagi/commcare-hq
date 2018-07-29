@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop
 
 
@@ -54,7 +55,9 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Choose to label the login buttons with Icons or Text'),
     ugettext_noop('Choose whether or not mobile workers can view previously submitted forms.'),
     ugettext_noop('Choose whether or not to display the \'Incomplete\' button on the ODK home screen'),
+    ugettext_noop('CommCare'),
     ugettext_noop('CommCare Home Screen Logo'),
+    ugettext_noop('CommCare LTS'),
     ugettext_noop('CommCare Sense'),
     ugettext_noop('CommCare Version'),
     ugettext_noop('Configure for low-literate users, J2ME only'),
@@ -160,6 +163,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Purge Frequency'),
     ugettext_noop('Push Only'),
     ugettext_noop('Required'),
+    ugettext_noop('Restrict this app to the selected CommCare flavor'),
     ugettext_noop('Roman'),
     ugettext_noop('Saved Forms'),
     ugettext_noop('Select the mobile worker to use as a practice user for this application'),
@@ -173,8 +177,10 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Skip'),
     ugettext_noop('Strict'),
     ugettext_noop('Sync Mode'),
+    ugettext_noop('Target CommCare Flavor'),
     ugettext_noop('Text Input'),
     ugettext_noop('Text'),
+    ugettext_noop("The kind of Java phone you want to run the application on"),
     ugettext_noop('This value will set whether the login screen uses customizable icons for login and demo mode options or uses the standard buttons with labels.'),
     ugettext_noop('This will determine how images you select for your questions will be resized to fit the screen. Horizontal will stretch/compress the image to fit perfectly horizontally while scaling to height to maintain the aspect ratio. Full Resize will try to be clever and find the ideal vertical/horizontal scaling for the screen. Half Resize will do the same but with half the area.'),
     ugettext_noop('This will set the amount of time you will remain logged in before automatically being logged out.'),
@@ -202,6 +208,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Web App'),
     ugettext_noop('Weekly Log Sending Frequency'),
     ugettext_noop('Weekly'),
+    ugettext_noop("What characters to allow users to input"),
     ugettext_noop('What kind of log transmission the phone should attempt on a daily basis (submitted to PostURL)'),
     ugettext_noop('What kind of log transmission the phone should attempt on a weekly basis (submitted to PostURL)'),
     ugettext_noop('What the \'Extra Key\' (# on Nokia Phones) does when pressed'),

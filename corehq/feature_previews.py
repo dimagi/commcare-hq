@@ -4,6 +4,7 @@ a feature preview, you shouldn't need to migrate the data, as long as the
 slug is kept intact.
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
@@ -65,6 +66,7 @@ CALC_XPATHS = FeaturePreview(
     description=_(
         "Specify a custom xpath expression to calculate a value "
         "in the case list or case detail screen."),
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Calculations+in+the+Case+List+and+Details'
 )
 
 ENUM_IMAGE = FeaturePreview(
@@ -83,7 +85,7 @@ CONDITIONAL_ENUM = FeaturePreview(
     label=_('Conditional ID Mapping in Case List'),
     description=_(
         "Specify a custom xpath expression to calculate a lookup key in the case list, case detail screen or "
-        "case tile enum columns"
+        "case tile enum columns."
     ),
 )
 

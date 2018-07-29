@@ -1,11 +1,11 @@
 """Filesystem database for large binary data objects (blobs)
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
-import errno
 import os
 import shutil
-import sys
+from collections import namedtuple
 from hashlib import md5
 from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath, sep
 
@@ -14,6 +14,7 @@ from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 from corehq.blobs.util import set_blob_expire_object
 from corehq.util.datadog.gauges import datadog_counter
+from io import open
 
 CHUNK_SIZE = 4096
 
@@ -33,7 +34,7 @@ class FilesystemBlobDB(AbstractBlobDB):
             os.makedirs(dirpath)
         length = 0
         digest = md5()
-        with openfile(path, "xb") as fh:
+        with open(path, "wb") as fh:
             while True:
                 chunk = content.read(CHUNK_SIZE)
                 if not chunk:
@@ -44,6 +45,8 @@ class FilesystemBlobDB(AbstractBlobDB):
         b64digest = base64.b64encode(digest.digest())
         if timeout is not None:
             set_blob_expire_object(bucket, identifier, length, timeout)
+        datadog_counter('commcare.blobs.added.count')
+        datadog_counter('commcare.blobs.added.bytes', value=length)
         return BlobInfo(identifier, length, "md5-" + b64digest)
 
     def get(self, identifier, bucket=DEFAULT_BUCKET):
@@ -58,7 +61,7 @@ class FilesystemBlobDB(AbstractBlobDB):
         if not exists(path):
             datadog_counter('commcare.blobdb.notfound')
             raise NotFound(identifier, bucket)
-        return os.path.getsize(path)
+        return _count_size(path).size
 
     def exists(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
@@ -74,16 +77,26 @@ class FilesystemBlobDB(AbstractBlobDB):
             remove = os.remove
         if not exists(path):
             return False
+        cs = _count_size(path)
+        datadog_counter('commcare.blobs.deleted.count', value=cs.count)
+        datadog_counter('commcare.blobs.deleted.bytes', value=cs.size)
         remove(path)
         return True
 
     def bulk_delete(self, paths):
         success = True
+        deleted_count = 0
+        deleted_bytes = 0
         for path in paths:
             if not exists(path):
                 success = False
             else:
+                cs = _count_size(path)
+                deleted_count += cs.count
+                deleted_bytes += cs.size
                 os.remove(path)
+        datadog_counter('commcare.blobs.deleted.count', value=deleted_count)
+        datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
         return success
 
     def copy_blob(self, content, info, bucket):
@@ -91,7 +104,7 @@ class FilesystemBlobDB(AbstractBlobDB):
         dirpath = dirname(path)
         if not isdir(dirpath):
             os.makedirs(dirpath)
-        with openfile(path, "xb") as fh:
+        with open(path, "wb") as fh:
             while True:
                 chunk = content.read(CHUNK_SIZE)
                 if not chunk:
@@ -110,37 +123,24 @@ def safejoin(root, subpath):
     """
     root = realpath(root)
     if not SAFENAME.match(subpath):
-        raise BadName(u"unsafe path name: %r" % subpath)
+        raise BadName("unsafe path name: %r" % subpath)
     path = realpath(join(root, subpath))
     if commonprefix([root + sep, path]) != root + sep:
-        raise BadName(u"invalid relative path: %r" % subpath)
+        raise BadName("invalid relative path: %r" % subpath)
     return path
 
 
-def openfile(path, mode="r", *args, **kw):
-    """Open file
-
-    Aside from the normal modes accepted by `open()`, this function
-    accepts an `x` mode that causes the file to be opened for exclusive-
-    write, which means that an exception (`FileExists`) will be raised
-    if the file being opened already exists.
-    """
-    if "x" not in mode or sys.version_info > (3, 0):
-        return open(path, mode, *args, **kw)
-    # http://stackoverflow.com/a/10979569/10840
-    # O_EXCL is only supported on NFS when using NFSv3 or later on kernel 2.6 or later.
-    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
-    try:
-        handle = os.open(path, flags)
-    except OSError as err:
-        if err.errno == errno.EEXIST:
-            raise FileExists(path)
-        raise
-    return os.fdopen(handle, mode.replace("x", "w"), *args, **kw)
+def _count_size(path):
+    if isdir(path):
+        count = 0
+        size = 0
+        for root, dirs, files in os.walk(path):
+            count += len(files)
+            size += sum(os.path.getsize(join(root, name)) for name in files)
+    else:
+        count = 1
+        size = os.path.getsize(path)
+    return _CountSize(count, size)
 
 
-try:
-    FileExists = FileExistsError
-except NameError:
-    class FileExists(Exception):
-        pass
+_CountSize = namedtuple("_CountSize", "count size")

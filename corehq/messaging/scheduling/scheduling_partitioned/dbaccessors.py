@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.sql_db.util import (
     run_query_across_partitioned_databases,
     get_db_aliases_for_partitioned_query,
@@ -63,6 +64,29 @@ def delete_timed_schedule_instance(instance):
     _validate_class(instance, TimedScheduleInstance)
     _validate_uuid(instance.schedule_instance_id)
     instance.delete()
+
+
+def get_count_of_active_schedule_instances_due(domain, due_before):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        AlertScheduleInstance,
+        TimedScheduleInstance,
+        CaseAlertScheduleInstance,
+        CaseTimedScheduleInstance,
+    )
+
+    classes = (AlertScheduleInstance, TimedScheduleInstance, CaseAlertScheduleInstance, CaseTimedScheduleInstance)
+
+    result = 0
+
+    for db_alias in get_db_aliases_for_partitioned_query():
+        for cls in classes:
+            result += cls.objects.using(db_alias).filter(
+                domain=domain,
+                active=True,
+                next_event_due__lt=due_before
+            ).count()
+
+    return result
 
 
 def get_active_schedule_instance_ids(cls, due_before, due_after=None):
@@ -233,3 +257,14 @@ def delete_timed_schedule_instances_for_schedule(cls, schedule_id):
 
     for db_name in get_db_aliases_for_partitioned_query():
         cls.objects.using(db_name).filter(timed_schedule_id=schedule_id).delete()
+
+
+def delete_schedule_instances_by_case_id(domain, case_id):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        CaseTimedScheduleInstance,
+        CaseAlertScheduleInstance,
+    )
+
+    for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+        for db_name in get_db_aliases_for_partitioned_query():
+            cls.objects.using(db_name).filter(domain=domain, case_id=case_id).delete()

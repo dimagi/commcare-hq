@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division
 
+from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -56,7 +57,8 @@ def get_functional_toilet_data_map(domain, config, loc_level, show_test=False):
         "rightLegend": {
             "average": average,
             "info": _((
-                "Percentage of AWCs that reported having a functional toilet"
+                "Of the AWCs that submitted an Infrastructure Details form, the percentage of AWCs that "
+                "reported having a functional toilet"
             )),
             "extended_info": [
                 {
@@ -217,7 +219,8 @@ def get_functional_toilet_sector_data(domain, config, loc_level, location_id, sh
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of AWCs that reported having a functional toilet"
+            "Of the AWCs that submitted an Infrastructure Details form, the percentage of AWCs "
+            "that reported having a functional toilet"
         )),
         "chart_data": [
             {

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import pytz
 import requests
 from datetime import datetime
@@ -8,12 +9,13 @@ from corehq.messaging.smsbackends.ivory_coast_mtn.forms import IvoryCoastMTNBack
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.util import strip_plus
 from corehq.util.timezones.conversions import ServerTime
+from django.conf import settings
 from lxml import etree
 
 
 class IvoryCoastMTNBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 
@@ -76,6 +78,7 @@ class IvoryCoastMTNBackend(SQLSMSBackend):
         response = requests.get(
             'http://smspro.mtn.ci/smspro/soap/messenger.asmx/HTTP_SendSms',
             params=self.get_params(msg_obj),
+            timeout=settings.SMS_GATEWAY_TIMEOUT,
         )
         self.handle_response(msg_obj, response.status_code, response.text)
 

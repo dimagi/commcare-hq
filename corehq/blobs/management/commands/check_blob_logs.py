@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import json
 import logging
 
@@ -13,6 +14,7 @@ from corehq.apps.export import models as exports
 from corehq.blobs import get_blob_db
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.util.decorators import change_log_level
+from io import open
 
 
 USAGE = "Usage: ./manage.py check_blob_logs [options] FILE [FILE [FILE]]"
@@ -58,7 +60,7 @@ class Command(BaseCommand):
         old_db = blob_db.old_db
         new_db = blob_db.new_db
         for filepath in files:
-            with open(filepath) as fh:
+            with open(filepath, encoding='utf-8') as fh:
                 for line in fh:
                     if not line:
                         continue

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf.urls import include, url
-from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher, EditDataInterfaceDispatcher
+from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
 from corehq.apps.data_interfaces.views import (
     CaseGroupListView,
     CaseGroupCaseManagementView,
@@ -47,5 +48,4 @@ urlpatterns = [
     url(r'^$', default, name="data_interfaces_default"),
     url(r'^edit/', include(edit_data_urls)),
     url(r'^export/', include('corehq.apps.export.urls')),
-    DataInterfaceDispatcher.url_pattern(),
 ]

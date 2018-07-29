@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
 
 import datetime
@@ -137,7 +138,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     build_id = StringProperty()
     export_tag = DefaultProperty(name='#export_tag')
 
-    class Meta:
+    class Meta(object):
         app_label = 'couchforms'
 
     @classmethod
@@ -222,6 +223,23 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
         if const.TAG_META in self.form:
             return Metadata.wrap(clean_metadata(self.to_json()[const.TAG_FORM][const.TAG_META]))
 
+        return None
+
+    @property
+    def time_start(self):
+        # Will be addressed in https://github.com/dimagi/commcare-hq/pull/19391/
+        return None
+
+    @property
+    def time_end(self):
+        return None
+
+    @property
+    def commcare_version(self):
+        return str(self.metadata.commcare_version)
+
+    @property
+    def app_version(self):
         return None
 
     def __unicode__(self):
@@ -437,7 +455,7 @@ class SubmissionErrorLog(XFormError):
     md5 = StringProperty()
 
     def __unicode__(self):
-        return u"Doc id: %s, Error %s" % (self.get_id, self.problem)
+        return "Doc id: %s, Error %s" % (self.get_id, self.problem)
 
     def get_xml(self):
         return self.fetch_attachment(ATTACHMENT_NAME)
@@ -489,5 +507,5 @@ class UnfinishedSubmissionStub(models.Model):
             "domain={s.domain})"
         ).format(s=self)
 
-    class Meta:
+    class Meta(object):
         app_label = 'couchforms'

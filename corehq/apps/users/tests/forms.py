@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from django.contrib.auth import get_user_model
 from django.test import TestCase

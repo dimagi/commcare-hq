@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from ..models import LocationType, SQLLocation
 from .util import LocationHierarchyTestCase
 
@@ -58,3 +59,7 @@ class TestGetLocationsAndChildren(MassachusettsTestCase):
             [loc.name for loc in result],
             ['Middlesex', 'Cambridge', 'Somerville', 'Boston']
         )
+
+    def test_get_locations_and_children_with_empty_list(self):
+        result = SQLLocation.objects.get_locations_and_children([])
+        self.assertItemsEqual(list(result), [])

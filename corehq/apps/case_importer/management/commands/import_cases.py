@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from datetime import datetime
 from django.core.management import BaseCommand, CommandError
@@ -7,6 +8,7 @@ from dimagi.utils.web import json_handler
 from corehq.apps.case_importer.tasks import do_import
 from corehq.apps.case_importer.util import ImporterConfig, get_spreadsheet
 from corehq.apps.users.models import WebUser
+from io import open
 
 
 class Command(BaseCommand):
@@ -28,7 +30,7 @@ class Command(BaseCommand):
         if not user.is_member_of(domain):
             raise CommandError("%s can't access %s" % (user, domain))
 
-        with open(config_file, 'r') as f:
+        with open(config_file, 'r', encoding='utf-8') as f:
             config = ImporterConfig.from_json(f.read())
 
         config.couch_user_id = user._id

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import timedelta
 
 from django.db import connection
@@ -6,7 +7,7 @@ from django.db import connection
 from corehq.apps.locations.models import SQLLocation
 from custom.ilsgateway.models import DeliveryGroups
 from dimagi.utils.dates import get_business_day_of_month
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class DashboardConfig(object):

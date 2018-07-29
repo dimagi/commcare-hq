@@ -1,4 +1,5 @@
 hqDefine('case_importer/js/excel_fields', function () {
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     function ExcelFieldRows(excelFields, caseFieldSpecs) {
         var self = {
             excelFields: excelFields,
@@ -97,13 +98,56 @@ hqDefine('case_importer/js/excel_fields', function () {
         // space to underscore
         value = value.replace(/\s/g, "_");
         // remove other symbols
-        value = value.replace(/[^a-zA-Z0-9_\-]/g, "");
-        // remove xml from beginning of string. todo: why (36cafb01)?
+        value = value.replace(/[^a-zA-Z0-9_\-]/g, "");  // eslint-disable-line no-useless-escape
+        // remove xml from beginning of string, which would be an invalid xml identifier
         value = value.replace(/^xml/i, "");
         return value;
     };
-    return {
-        ExcelFieldRows: ExcelFieldRows,
-        sanitizeCaseField: sanitizeCaseField,
-    };
+
+    $(function() {
+        var excelFields = initialPageData.get('excel_fields');
+        var caseFieldSpecs = initialPageData.get('case_field_specs');
+        var excelFieldRows = ExcelFieldRows(excelFields, caseFieldSpecs);
+        $('#excel-field-rows').koApplyBindings(excelFieldRows);
+
+        function autofillProperties() {
+            excelFieldRows.autoFill();
+        }
+
+        $('#js-add-mapping').click(function(e) {
+            excelFieldRows.addRow();
+            e.preventDefault();
+        });
+
+        $('.custom_field').on('change, keypress, keydown, keyup', function() {
+            var original_value = $(this).val();
+            var value = sanitizeCaseField(original_value);
+            if (value !== original_value) {
+                $(this).val(value);
+            }
+        });
+
+        $('#field_form').submit(function() {
+            $('[disabled]').each(function() {
+                $(this).prop('disabled', false);
+            });
+
+            return true;
+        });
+
+        $('#back_button').click(function() {
+            history.back();
+            return false;
+        });
+
+        $('#autofill').click(autofillProperties);
+
+        $('#back_breadcrumb').click(function(e) {
+            e.preventDefault();
+            history.back();
+            return false;
+        });
+    });
+
+    return { sanitizeCaseField: sanitizeCaseField };
 });

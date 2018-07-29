@@ -1,4 +1,5 @@
 # how cases/referrals are tagged in the xform/couch
+from __future__ import unicode_literals
 CASE_TAG = "case"
 REFERRAL_TAG = "referral"
 

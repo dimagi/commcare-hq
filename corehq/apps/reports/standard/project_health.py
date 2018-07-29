@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -10,7 +11,7 @@ from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.users.util import raw_username
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.es.groups import GroupES
 from corehq.apps.es.users import UserES
 from itertools import chain
@@ -281,7 +282,6 @@ class ProjectHealthDashboard(ProjectReport):
 
     exportable = True
     emailable = True
-    js_scripts = ['reports/js/project_health_dashboard.js']
 
     @property
     @memoized

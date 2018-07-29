@@ -104,6 +104,12 @@
                             <i class="fa fa-quote-left" ng-class="showComments ? 'hq-icon' : ''"></i>
                             &nbsp;{% trans "Comments" %}
                         </button>
+                        <button type="button" class="btn btn-default"
+                                ng-click="showDefaultValues = !showDefaultValues"
+                                ng-class="{ 'active': showDefaultValues }">
+                            <i class="fa fa-home" ng-class="showDefaultValues ? 'hq-icon' : ''"></i>
+                            &nbsp;{% trans "Default Values" %}
+                        </button>
                     </div>
                     <a class="btn btn-primary" href="{{ formDownloadURL }}?lang={{ lang }}">
                         <i class="fa fa-download"></i>
@@ -180,6 +186,11 @@
                                 <ul class="fa-ul" ng-if="question.constraint" ng-show="showConstraints">
                                     <li>
                                         <i class="fa-li fa fa-ban text-muted"></i> {{ question.constraint }}
+                                    </li>
+                                </ul>
+                                <ul class="fa-ul" ng-if="question.setvalue" ng-show="showDefaultValues">
+                                    <li>
+                                        <i class="fa-li fa fa-home text-muted"></i> {{ question.setvalue }}
                                     </li>
                                 </ul>
                             </li>

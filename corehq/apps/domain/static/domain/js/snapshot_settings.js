@@ -1,38 +1,51 @@
-/* globals hqDefine */
-hqDefine("domain/js/snapshot_settings", function() {
+hqDefine("domain/js/snapshot_settings", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/google',
+], function(
+    $,
+    _,
+    initialPageData,
+    googleAnalytics
+) {
     function view_on_exchange(version_name) {
-        hqImport('analytix/js/google').track.click($('#view-on-exchange'), 'Exchange', 'View on exchange', version_name);
+        googleAnalytics.track.click($('#view-on-exchange'), 'Exchange', 'View on exchange', version_name);
         return false;
     }
-    
+
     $(function() {
         $("#contentDistributionAgreement").on("show.bs.modal", function() {
-            $(this).find(".modal-body").load(hqImport('hqwebapp/js/initial_page_data').reverse('cda_basic'));
+            $(this).find(".modal-body").load(initialPageData.reverse('cda_basic'));
         });
-    
+
         $('[data-target="#contentDistributionAgreement"]').click(function() {
             var new_action = $(this).attr('data-action');
             $('#cda-agree').attr('action', new_action);
         });
-    
+
         $('#toggle-snapshots').click(function() {
             if ($(this).text() === 'Show previous versions') {
                 $('#snapshots').show(500);
-                $(this).text(django.gettext('Hide previous versions'));
+                $(this).text(gettext('Hide previous versions'));
             }
             else {
                 $('#snapshots').hide(500);
-                $(this).text(django.gettext('Show previous versions'));
+                $(this).text(gettext('Show previous versions'));
             }
         });
-    
-        _.each(hqImport('hqwebapp/js/initial_page_data').get('snapshots'), function(snapshot) {
+
+        _.each(initialPageData.get('snapshots'), function(snapshot) {
             $('#publish_' + snapshot.name).click(function() {
-                hqImport('analytix/js/google').track.event('Exchange', 'Publish Previous Version', snapshot.name);
+                googleAnalytics.track.event('Exchange', 'Publish Previous Version', snapshot.name);
             });
             $('#view_' + snapshot.name).click(function() {
-                hqImport('analytix/js/google').track.click($('#view_' + snapshot.name), 'Exchange', 'View', snapshot.name);
+                googleAnalytics.track.click($('#view_' + snapshot.name), 'Exchange', 'View', snapshot.name);
             });
         });
     });
+
+    return {
+        view_on_exchange: view_on_exchange,
+    };
 });

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from .system import shell_exec
 
 def get_revision(vcs, reporoot, dirtyfunc=lambda rev, **kw: rev + '*'):

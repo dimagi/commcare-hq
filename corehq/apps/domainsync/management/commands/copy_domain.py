@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from multiprocessing import Process, Queue
 import sys
 import os
@@ -21,6 +22,7 @@ from corehq.apps.domainsync.config import DocumentTransform, save
 from dimagi.utils.parsing import json_format_date
 from six.moves import range
 import six
+from io import open
 
 DEFAULT_EXCLUDE_TYPES = [
     'ReportNotification',
@@ -239,7 +241,7 @@ class Command(BaseCommand):
                                                                 endkey=endkey, reduce=False)]
         total = len(doc_ids)
         count = 0
-        msg = u"Found %s matching documents in domain: %s" % (total, domain)
+        msg = "Found %s matching documents in domain: %s" % (total, domain)
         msg += " of type: %s" % (doc_type) if doc_type else ""
         msg += " since: %s" % (since) if since else ""
         print(msg)
@@ -295,7 +297,7 @@ class Command(BaseCommand):
         for i in range(1000):  # arbitrarily large number
             candidate = name % i
             if not os.path.isfile(candidate):
-                return open(candidate, 'a', buffering=1)
+                return open(candidate, 'a', buffering=1, encoding='utf-8')
 
 
 class Worker(Process):

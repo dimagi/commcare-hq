@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load compress %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 {% block stylesheets %}
 <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"
 />{% endblock stylesheets %}
@@ -64,4 +65,21 @@
         </div>
     </div>
 
+    <!-- Modal for "Bulk payload" -->
+    <div class="modal fade" id="bulkEmailModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close" data-bind="click: resetModal">
+                        <span aria-hidden="true">&times;</span></button>
+                    <form id="bulk-payload-form" class="form-horizontal"
+                        enctype="multipart/form-data" method="post"
+                        action="{% url "generate_repeater_payloads" domain %}">
+                        {% crispy email_bulk_payload_form %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock modals %}

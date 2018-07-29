@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import gzip
 import os
 import zipfile
@@ -14,6 +15,7 @@ from corehq.apps.dump_reload.sql import SqlDataDumper
 
 
 class Command(BaseCommand):
+    # This doesn't include SyncLog data
     help = "Dump a domain's data to disk."
 
     def add_arguments(self, parser):

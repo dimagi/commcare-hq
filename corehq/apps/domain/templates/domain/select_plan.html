@@ -55,7 +55,7 @@
             {% endif %}
             <input type="hidden" name="plan_edition" data-bind="value: selected_edition">
 
-            {% include 'prelogin/_sections/software_services/shared_pricing_table.html' with postlogin=True %}
+            {% include 'accounting/partials/pricing_table.html' %}
 
 
             <div class="form-actions" data-bind="visible: isSubmitVisible">

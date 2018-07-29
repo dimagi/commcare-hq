@@ -100,9 +100,9 @@ describe('Month Modal Controller', function () {
     });
 
     it('tests initiate years', function () {
-        assert.equal(checkIfObjectExist(controller.years, 2014), true);
-        assert.equal(checkIfObjectExist(controller.years, 2015), true);
-        assert.equal(checkIfObjectExist(controller.years, 2016), true);
+        assert.equal(checkIfObjectExist(controller.years, 2014), false);
+        assert.equal(checkIfObjectExist(controller.years, 2015), false);
+        assert.equal(checkIfObjectExist(controller.years, 2016), false);
         assert.equal(checkIfObjectExist(controller.years, 2017), true);
     });
 

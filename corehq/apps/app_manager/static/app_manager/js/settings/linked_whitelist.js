@@ -1,9 +1,9 @@
 /* globals hqDefine, ko */
 hqDefine('app_manager/js/settings/linked_whitelist', function () {
-    function LinkedWhitelist(domains, saveUrl) {
-        var self = this;
-        this.linkedDomains = ko.observableArray(domains);
-        this.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+    function linkedWhitelistModel(domains, saveUrl) {
+        var self = {};
+        self.linkedDomains = ko.observableArray(domains);
+        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your whitelist"),
             save: function () {
                 self.saveButton.ajax({
@@ -19,10 +19,11 @@ hqDefine('app_manager/js/settings/linked_whitelist', function () {
         var changeSaveButton = function () {
             self.saveButton.fire('change');
         };
-        this.linkedDomains.subscribe(changeSaveButton);
-        this.removeDomain = function(domain) {
+        self.linkedDomains.subscribe(changeSaveButton);
+        self.removeDomain = function(domain) {
             self.linkedDomains.remove(domain);
         };
+        return self;
     }
 
     $(function () {
@@ -30,7 +31,7 @@ hqDefine('app_manager/js/settings/linked_whitelist', function () {
         if ($whitelistTab.length) {
             var domains = hqImport("hqwebapp/js/initial_page_data").get("linked_whitelist");
             var save = hqImport("hqwebapp/js/initial_page_data").reverse("update_linked_whitelist");
-            var linkedWhitelist = new LinkedWhitelist(domains, save);
+            var linkedWhitelist = linkedWhitelistModel(domains, save);
             $whitelistTab.koApplyBindings(linkedWhitelist);
         }
     });

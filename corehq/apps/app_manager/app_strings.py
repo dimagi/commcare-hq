@@ -1,10 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import functools
+from distutils.version import LooseVersion
 
 from django.utils.translation import ugettext
 
 from corehq.apps.app_manager import id_strings
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.app_manager.util import module_offers_search,\
     create_temp_sort_column, get_sort_and_sort_only_columns
 import langcodes
@@ -42,7 +44,7 @@ def _create_custom_app_strings(app, lang, for_default=False):
         return clean_trans(d, langs)
 
     def maybe_add_index(text):
-        if app.build_version >= '2.8':
+        if app.build_version and app.build_version >= LooseVersion('2.8'):
             numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
             if app.profile.get('features', {}).get('sense') == 'true' or numeric_nav_on:
                 text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
@@ -52,8 +54,8 @@ def _create_custom_app_strings(app, lang, for_default=False):
     yield id_strings.homescreen_title(), app.name
     yield id_strings.app_display_name(), app.name
 
-    yield 'cchq.case', "Case"
-    yield 'cchq.referral', "Referral"
+    for id, value in id_strings.REGEX_DEFAULT_VALUES.items():
+        yield id, value
 
     if for_default:
         # include language code names and current language
@@ -116,11 +118,6 @@ def _create_custom_app_strings(app, lang, for_default=False):
             yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, module=module)
 
         if hasattr(module, 'report_configs'):
-            yield id_strings.report_menu(), 'Reports'
-            yield id_strings.report_name_header(), 'Report Name'
-            yield id_strings.report_description_header(), 'Report Description'
-            yield id_strings.report_last_sync(), 'Last Sync'
-            yield id_strings.report_data_table(), 'Data Table'
             for config in module.report_configs:
                 yield id_strings.report_command(config.uuid), trans(config.header)
                 yield id_strings.report_name(config.uuid), trans(config.header)
@@ -194,7 +191,10 @@ class AppStringsBase(object):
 
     @memoized
     def get_default_translations(self, lang, commcare_version):
-        return self._load_translations(lang, commcare_version=commcare_version)
+        translations = self._load_translations(lang, commcare_version=commcare_version)
+        for id, value in id_strings.REGEX_DEFAULT_VALUES.items():
+            translations[id] = value
+        return translations
 
     def create_custom_app_strings(self, app, lang, for_default=False):
         custom = dict(_create_custom_app_strings(app, lang, for_default=for_default))
@@ -229,18 +229,18 @@ class AppStringsBase(object):
 
         if 'case_sharing.exactly_one_group' not in messages:
             messages['case_sharing.exactly_one_group'] = \
-                (u'The case sharing settings for your user are incorrect. '
-                 u'This user must be in exactly one case sharing group. Please contact your supervisor.')
+                ('The case sharing settings for your user are incorrect. '
+                 'This user must be in exactly one case sharing group. Please contact your supervisor.')
 
         if 'case_autoload.fixture.exactly_one_fixture' not in messages:
             messages['case_autoload.fixture.exactly_one_fixture'] = \
-                (u'The lookup table settings for your user are incorrect. '
-                    u'This user must have access to exactly one lookup table row for the table: ${0}')
+                ('The lookup table settings for your user are incorrect. '
+                    'This user must have access to exactly one lookup table row for the table: ${0}')
 
         if 'case_autoload.usercase.case_missing' not in messages:
             messages['usercase.missing_id'] = \
-                (u'This form affects the user case, but no user case id was found. '
-                    u'Please contact your supervisor.')
+                ('This form affects the user case, but no user case id was found. '
+                    'Please contact your supervisor.')
 
         from corehq.apps.app_manager.models import (
             AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
@@ -248,27 +248,27 @@ class AppStringsBase(object):
         )
 
         mode_text = {
-            AUTO_SELECT_FIXTURE: u'lookup table field',
-            AUTO_SELECT_USER: u'user data key',
-            AUTO_SELECT_CASE: u'case index',
-            AUTO_SELECT_USERCASE: u'user case',
-            AUTO_SELECT_RAW: u'custom xpath expression',
+            AUTO_SELECT_FIXTURE: 'lookup table field',
+            AUTO_SELECT_USER: 'user data key',
+            AUTO_SELECT_CASE: 'case index',
+            AUTO_SELECT_USERCASE: 'user case',
+            AUTO_SELECT_RAW: 'custom xpath expression',
         }
 
         for mode, text in mode_text.items():
             key = 'case_autoload.{0}.property_missing'.format(mode)
             if key not in messages:
-                messages[key] = (u'The {} specified for case auto-selecting '
-                                 u'could not be found: ${{0}}').format(text)
+                messages[key] = ('The {} specified for case auto-selecting '
+                                 'could not be found: ${{0}}').format(text)
             key = 'case_autoload.{0}.case_missing'.format(mode)
             if key not in messages:
-                messages[key] = u'Unable to find case referenced by auto-select case ID.'
+                messages[key] = 'Unable to find case referenced by auto-select case ID.'
 
         key = 'case_autoload.{0}.property_missing'.format(AUTO_SELECT_LOCATION)
-        messages[key] = (u"This form requires access to the user's location, "
+        messages[key] = ("This form requires access to the user's location, "
                          "but none was found.")
         key = 'case_autoload.{0}.case_missing'.format(AUTO_SELECT_LOCATION)
-        messages[key] = (u"This form requires the user's location to be "
+        messages[key] = ("This form requires the user's location to be "
                          "marked as 'Tracks Stock'.")
 
         return commcare_translations.dumps(messages).encode('utf-8')

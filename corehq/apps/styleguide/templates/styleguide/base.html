@@ -6,45 +6,14 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
         {% if less_debug %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.debug.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.debug.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
                   href="{% static 'hqwebapp/less/docs-style.debug.less' %}" />
         {% else %}
         {% compress css %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"

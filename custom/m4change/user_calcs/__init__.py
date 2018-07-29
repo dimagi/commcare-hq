@@ -1,4 +1,5 @@
 
+from __future__ import unicode_literals
 def is_valid_user_by_case(case):
     if hasattr(case, "user_id"):
         return (hasattr(case, "user_id") and case.user_id not in [None, "", "demo_user"])

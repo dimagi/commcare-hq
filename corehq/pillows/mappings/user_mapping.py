@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.util.elastic import es_index
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
@@ -57,7 +58,6 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                                      'location_id': {'index': 'not_analyzed',
                                                                      'type': 'string'}},
                                       'type': 'object'},
-                'email_opt_out': {'type': 'boolean'},
                 'analytics_enabled': {'type': 'boolean'},
                 'eulas': {'dynamic': False,
                           'properties': {'date': {'format': DATE_FORMATS_STRING,
@@ -161,6 +161,30 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                         'app_meta': {
                             'dynamic': False,
                             'type': 'nested',
+                            'properties': {
+                                'app_id': {'type': 'string', 'index': 'not_analyzed'},
+                                'build_id': {'type': 'string', 'index': 'not_analyzed'},
+                                'build_version': {'type': 'integer'},
+                                'last_request': {'type': 'date', 'format': DATE_FORMATS_STRING},
+                                'last_submission': {'type': 'date', 'format': DATE_FORMATS_STRING},
+                                'last_sync': {'type': 'date', 'format': DATE_FORMATS_STRING},
+                                'last_heartbeat': {'type': 'date', 'format': DATE_FORMATS_STRING},
+                                'num_unsent_forms': {'type': 'integer'},
+                                'num_quarantined_forms': {'type': 'integer'},
+                            }
+                        },
+                    }
+                },
+                'last_device': {
+                    'dynamic': False,
+                    'type': 'object',
+                    'properties': {
+                        'device_id': {'type': 'string', 'index': 'not_analyzed'},
+                        'last_used': {'type': 'date', 'format': DATE_FORMATS_STRING},
+                        'commcare_version': {'type': 'string'},
+                        'app_meta': {
+                            'dynamic': False,
+                            'type': 'object',
                             'properties': {
                                 'app_id': {'type': 'string', 'index': 'not_analyzed'},
                                 'build_id': {'type': 'string', 'index': 'not_analyzed'},

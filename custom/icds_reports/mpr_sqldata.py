@@ -1,13 +1,15 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from operator import mul, div, sub
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 
 from django.utils.translation import ugettext as _
-
-from custom.icds_reports.sqldata import BaseIdentification, BaseOperationalization, BasePopulation
+from custom.icds_reports.sqldata.base_identification import BaseIdentification
+from custom.icds_reports.sqldata.base_operationalization import BaseOperationalization
+from custom.icds_reports.sqldata.base_populations import BasePopulation
 from custom.icds_reports.utils import ICDSMixin, MPRData, ICDSDataTableColumn
 
 

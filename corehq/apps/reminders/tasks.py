@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -7,6 +8,7 @@ from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder,
     CASE_CRITERIA, REMINDER_TYPE_DEFAULT)
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
 from django.conf import settings
@@ -86,14 +88,18 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
     send_immediately):
     try:
         handler.process_rule(schedule_changed, prev_definition, send_immediately)
+        handler.save(unlock=True)
     except Exception:
         notify_exception(None,
             message="Error processing reminder rule for handler %s" % handler._id)
-    handler.save(unlock=True)
 
 
 @no_result_task(queue=CELERY_REMINDERS_QUEUE, acks_late=True)
 def fire_reminder(reminder_id, domain):
+    if REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain):
+        fire_reminder.apply_async([reminder_id, domain], countdown=60)
+        return
+
     try:
         if settings.ENTERPRISE_MODE or reminder_rate_limiter.can_perform_action(domain):
             _fire_reminder(reminder_id)

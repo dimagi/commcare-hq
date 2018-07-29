@@ -218,6 +218,24 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         self.assertFalse(filter_with_date({'visit_date': '2015-05-04'}))
         self.assertTrue(filter_with_date({'visit_date': '2015-05-06'}))
 
+    def test_date_conversion_nested(self):
+        filter_with_date = FilterFactory.from_spec({
+            "type": "boolean_expression",
+            "expression": {
+                "datatype": "date",
+                "property_name": "visit_date",
+                "type": "property_name"
+            },
+            "operator": "gt",
+            "property_value": {
+                "type": "constant",
+                "datatype": "date",
+                "constant": "2015-05-05",
+            }
+        })
+        self.assertFalse(filter_with_date({'visit_date': '2015-05-04'}))
+        self.assertTrue(filter_with_date({'visit_date': '2015-05-06'}))
+
     def test_literal_in_expression(self):
         filter_with_literal = FilterFactory.from_spec({
             'type': 'boolean_expression',

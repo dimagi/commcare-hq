@@ -1,0 +1,45 @@
+{% extends "registration/email/_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block preview_text %}
+  {% blocktrans %}
+    Dear {{ full_name }}, please visit your CommCare HQ Account on a desktop!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_headline %}
+  {% blocktrans %}
+    A reminder to visit on your desktop:
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_url %}{{ url }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Visit CommCare HQ
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    This email has been sent as a reminder for you to visit your
+    CommCare HQ project space on a laptop or desktop computer.
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}
+  {% blocktrans %}
+    Thanks for signing up for CommCare. Your new project space is
+    waiting for you!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block content %}{% endblock %}
+
+{% block reason_for_email %}
+  {% blocktrans %}
+    You received this message because we received a reminder request
+  {% endblocktrans %}
+{% endblock %}

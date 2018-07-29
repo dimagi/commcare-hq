@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from collections import namedtuple
 from datetime import datetime
@@ -54,7 +55,7 @@ class PillowCheckpoint(object):
         checkpoint = get_or_create_checkpoint(self.checkpoint_id, self.sequence_format)
         if (verify_unchanged and self._last_checkpoint and
                 str(checkpoint.sequence) != str(self._last_checkpoint.sequence)):
-            raise PillowtopCheckpointReset(u'Checkpoint {} expected seq {} but found {} in database.'.format(
+            raise PillowtopCheckpointReset('Checkpoint {} expected seq {} but found {} in database.'.format(
                 self.checkpoint_id, self._last_checkpoint.sequence, checkpoint.sequence,
             ))
 
@@ -224,5 +225,5 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
 
 
 def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics):
-    checkpoint_id = u'{}-{}'.format(pillow_id, index_info.index)
+    checkpoint_id = '{}-{}'.format(pillow_id, index_info.index)
     return KafkaPillowCheckpoint(checkpoint_id, topics)

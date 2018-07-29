@@ -1,5 +1,8 @@
 from __future__ import absolute_import, division
+from __future__ import unicode_literals
+from corehq import toggles
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from django.conf import settings
 
 
 class MessagingRuleProgressHelper(object):
@@ -9,8 +12,8 @@ class MessagingRuleProgressHelper(object):
         self.client = get_redis_client()
 
     @property
-    def in_progress_key(self):
-        return 'messaging-rule-processing-in-progress-%s' % self.rule_id
+    def key_expiry(self):
+        return 48 * 60 * 60
 
     @property
     def current_key(self):
@@ -20,22 +23,42 @@ class MessagingRuleProgressHelper(object):
     def total_key(self):
         return 'messaging-rule-case-count-total-%s' % self.rule_id
 
+    @property
+    def rule_initiation_key(self):
+        return 'messaging-rule-run-initiated-%s' % self.rule_id
+
+    def set_rule_initiation_key(self):
+        self.client.set(self.rule_initiation_key, 1, timeout=2 * 60 * 60)
+
+    def clear_rule_initiation_key(self):
+        self.client.delete(self.rule_initiation_key)
+
+    def rule_initiation_key_is_set(self):
+        return self.client.get(self.rule_initiation_key) is not None
+
+    def rule_initiation_key_minutes_remaining(self):
+        return (self.client.ttl(self.rule_initiation_key) // 60) or 1
+
     def set_initial_progress(self):
         self.client.set(self.current_key, 0)
         self.client.set(self.total_key, 0)
-        self.client.set(self.in_progress_key, 1)
-        self.client.expire(self.current_key, 48 * 60 * 60)
-        self.client.expire(self.total_key, 48 * 60 * 60)
-        self.client.expire(self.in_progress_key, 48 * 60 * 60)
+        self.client.expire(self.current_key, self.key_expiry)
+        self.client.expire(self.total_key, self.key_expiry)
+        self.set_rule_initiation_key()
 
     def set_rule_complete(self):
-        self.client.set(self.in_progress_key, 0)
+        self.clear_rule_initiation_key()
 
-    def increment_current_case_count(self):
-        self.client.incr(self.current_key)
+    def increment_current_case_count(self, fail_hard=False):
+        try:
+            self.client.incr(self.current_key)
+        except:
+            if fail_hard:
+                raise
 
     def set_total_case_count(self, value):
         self.client.set(self.total_key, value)
+        self.client.expire(self.total_key, self.key_expiry)
 
     @staticmethod
     def _int_or_zero(value):
@@ -55,3 +78,18 @@ class MessagingRuleProgressHelper(object):
             return 100
 
         return int(round(100.0 * current / total, 0))
+
+
+def use_phone_entries():
+    """
+    Phone entries are not used in ICDS because they're not needed and
+    it helps performance to avoid keeping them up to date.
+    """
+    return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
+
+
+def show_messaging_dashboard(domain, couch_user):
+    return (
+        not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(domain) or
+        couch_user.is_superuser
+    )

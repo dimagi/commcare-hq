@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import os
 import random
@@ -26,6 +27,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 from six.moves import range
+from io import open
 
 
 class CouchDumpLoadTest(TestCase):
@@ -142,7 +144,7 @@ class CouchDumpLoadTest(TestCase):
     def test_multimedia(self):
         from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage, CommCareVideo
         image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', 'commcare-hq-logo.png')
-        with open(image_path, 'r') as f:
+        with open(image_path, 'rb') as f:
             image_data = f.read()
 
         image = CommCareImage.get_by_data(image_data)
@@ -192,40 +194,6 @@ class CouchDumpLoadTest(TestCase):
         self.addCleanup(other_user.delete)
 
         self._dump_and_load([web_user], [other_user])
-
-    def test_sync_log(self):
-        from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog
-        from corehq.apps.users.models import WebUser, CommCareUser
-        from casexml.apps.phone.models import get_sync_log_class_by_format
-
-        web_user = WebUser.create(
-            domain=self.domain_name,
-            username='webuser_4',
-            password='secret',
-            email='webuser1@example.com',
-        )
-        mobile_user = CommCareUser.create(
-            self.domain_name, 'mobile_user1', 'secret'
-        )
-        other_user = CommCareUser.create(
-            'other_domain', 'mobile_user2', 'secret'
-        )
-        self.addCleanup(other_user.delete)
-
-        l1 = SyncLog(user_id=web_user._id)
-        l1.save()
-        l2 = SimplifiedSyncLog(user_id=mobile_user._id)
-        l2.save()
-        other_log = SyncLog(user_id=other_user._id)
-        other_log.save()
-
-        def _synclog_to_class(doc):
-            if doc['doc_type'] == 'SyncLog':
-                return get_sync_log_class_by_format(doc.get('log_format'))
-
-        expected_docs = [web_user, mobile_user, l1, l2]
-        not_expected_docs = [other_user, other_log]
-        self._dump_and_load(expected_docs, not_expected_docs, doc_to_doc_class=_synclog_to_class)
 
 
 class TestDumpLoadToggles(SimpleTestCase):

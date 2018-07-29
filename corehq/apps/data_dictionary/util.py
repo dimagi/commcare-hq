@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext
 
 from corehq import toggles
 from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
@@ -13,8 +15,6 @@ class OldExportsEnabledException(Exception):
 
 
 def generate_data_dictionary(domain):
-    if toggles.OLD_EXPORTS.enabled(domain):
-        raise OldExportsEnabledException()
     properties = get_all_case_properties(domain)
     _create_properties_for_case_types(domain, properties)
     CaseType.objects.filter(domain=domain, name__in=list(properties)).update(fully_generated=True)
@@ -35,12 +35,20 @@ def get_all_case_properties(domain, case_types=None):
     for case_type in case_types:
         properties = set()
         schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case_type)
-        for group_schema in schema.group_schemas:
-            for item in group_schema.items:
-                if item.tag:
-                    name = item.tag
-                else:
-                    name = '/'.join([p.name for p in item.path])
+
+        # only the first schema contains case properties. The others contain meta info
+        group_schema = schema.group_schemas[0]
+        for item in group_schema.items:
+            if len(item.path) > 1:
+                continue
+
+            if item.tag:
+                name = item.tag
+            else:
+                name = item.path[-1].name
+
+            if '/' not in name:
+                # Filter out index and parent properties as some are stored as parent/prop in item.path
                 properties.add(name)
 
         case_type_props_from_app = case_properties_from_apps.get(case_type, {})
@@ -122,6 +130,9 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     """
     Takes a case property to update and returns an error if there was one
     """
+    if not name:
+        return ugettext('Case property must have a name')
+
     prop = CaseProperty.get_or_create(
         name=name, case_type=case_type, domain=domain
     )

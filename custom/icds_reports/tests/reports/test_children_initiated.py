@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -7,9 +8,8 @@ from custom.icds_reports.reports.children_initiated_data import get_children_ini
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestChildrenInitiated(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_children_initiated_data_map(
@@ -78,8 +78,11 @@ class TestChildrenInitiated(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of children between 6 - 8 months"
-            " given timely introduction to solid, semi-solid or soft food."
+            "Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, "
+            "the percentage that was given a timely introduction to solid, semi-solid or soft food."
+            "<br/><br/>"
+            "Timely intiation of complementary feeding in addition to breastmilk at 6 months of age is a key "
+            "feeding practice to reduce malnutrition"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -295,8 +298,11 @@ class TestChildrenInitiated(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children between 6 - 8 months "
-                        "given timely introduction to solid, semi-solid or soft food.",
+                "info": "Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, "
+                        "the percentage that was given a timely introduction to solid, semi-solid or soft food."
+                        "<br/><br/>"
+                        "Timely intiation of complementary feeding in addition to breastmilk at 6 months "
+                        "of age is a key feeding practice to reduce malnutrition",
                 "tooltips_data": {
                     "s2": {
                         "all": 7,

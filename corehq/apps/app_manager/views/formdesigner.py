@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import json
 import logging
 
@@ -45,7 +46,7 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.templatetags.xforms_extras import translate
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_FORM_BUILDER_FORM_ID
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
 from corehq.util.context_processors import websockets_override
@@ -115,7 +116,7 @@ def _get_form_designer_view(request, domain, app, module, form):
     context.update(locals())
 
     vellum_options = _get_base_vellum_options(request, domain, app, context['lang'])
-    vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form)
+    vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form, context['lang'])
     vellum_options['plugins'] = _get_vellum_plugins(domain, form, module)
     vellum_options['features'] = _get_vellum_features(request, domain, app)
     context['vellum_options'] = vellum_options
@@ -132,6 +133,7 @@ def _get_form_designer_view(request, domain, app, module, form):
             app,
             request.couch_user.username,
         ),
+        'show_ui_notification_to_hide_translations': (len(app.langs) > 2),
     })
     context.update(_get_requirejs_context())
     context['current_app_version_url'] = reverse(
@@ -209,6 +211,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
         'javaRosa': {
             'langs': app.langs,
             'displayLanguage': displayLang,
+            'showOnlyCurrentLang': (app.smart_lang_display and (len(app.langs) > 2)),
         },
         'uploader': {
             'uploadUrls': {
@@ -223,7 +226,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
     }
 
 
-def _get_vellum_core_context(request, domain, app, module, form):
+def _get_vellum_core_context(request, domain, app, module, form, lang):
     """
     Returns the core context that will be passed into vellum when it is
     initialized.
@@ -234,7 +237,7 @@ def _get_vellum_core_context(request, domain, app, module, form):
                                                'form_unique_id': form.get_unique_id()}),
         'form': form.source,
         'formId': form.get_unique_id(),
-        'formName': trans(form.name, app.langs),
+        'formName': translate(form.name, lang, app.langs),
         'saveType': 'patch',
         'saveUrl': reverse('edit_form_attr',
                            args=[domain, app.id, form.get_unique_id(),
@@ -354,7 +357,7 @@ def _get_core_context_scheduler_data_nodes(module, form):
             SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
         ]
         scheduler_data_nodes.extend([
-            u"next_{}".format(f.schedule_form_id)
+            "next_{}".format(f.schedule_form_id)
             for f in form.get_phase().get_forms()
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])

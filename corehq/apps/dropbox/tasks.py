@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import os
 from celery.task import task
 from dropbox import Dropbox
@@ -43,13 +44,13 @@ def upload(dropbox_helper_id, access_token, size, max_retries):
         context = {
             'share_url': path_link_metadata.url,
             'path': os.path.join(
-                u'Apps',
+                'Apps',
                 settings.DROPBOX_APP_NAME,
                 path_link_metadata.name,
             )
         }
         with localize(couch_user.get_language_code()):
-            subject = _(u'{} has been uploaded to dropbox!'.format(helper.dest))
+            subject = _('{} has been uploaded to dropbox!'.format(helper.dest))
             html_content = render_to_string('dropbox/emails/upload_success.html', context)
             text_content = render_to_string('dropbox/emails/upload_success.txt', context)
     else:
@@ -58,7 +59,7 @@ def upload(dropbox_helper_id, access_token, size, max_retries):
             'path': helper.dest
         }
         with localize(couch_user.get_language_code()):
-            subject = _(u'{} has failed to upload to dropbox'.format(helper.dest))
+            subject = _('{} has failed to upload to dropbox'.format(helper.dest))
             html_content = render_to_string('dropbox/emails/upload_error.html', context)
             text_content = render_to_string('dropbox/emails/upload_error.txt', context)
 

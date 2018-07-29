@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import re
 from django.contrib import messages
@@ -18,7 +19,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import get_url_base
 from pillow_retry.models import PillowError
@@ -241,7 +242,7 @@ class EditPillowError(BasePageView):
         message = render_to_string('hqpillow_retry/fb.txt', context)
         subject = 'PillowTop error: {} - {}'.format(error.pillow, error.error_type)
 
-        reply_to = u'"{}" <{}>'.format(couch_user.full_name, couch_user.get_email())
+        reply_to = '"{}" <{}>'.format(couch_user.full_name, couch_user.get_email())
         email = EmailMessage(
             subject=subject,
             body=message,

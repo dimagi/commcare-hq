@@ -20,6 +20,7 @@ seem to be a good fit.
 
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 import uuid
 from lxml import etree
@@ -167,15 +168,15 @@ class XFormBuilder(object):
         Builds a text node "id" parameter
 
         >>> XFormBuilder.get_text_id('foo')
-        'foo-label'
+        u'foo-label'
         >>> XFormBuilder.get_text_id('foo', ['bar'])
-        'bar/foo-label'
+        u'bar/foo-label'
         >>> XFormBuilder.get_text_id('foo', ['bar', 'baz'])
-        'bar/baz/foo-label'
+        u'bar/baz/foo-label'
         >>> XFormBuilder.get_text_id('foo', ['bar', 'baz'], 'choice1')
-        'bar/baz/foo-choice1-label'
+        u'bar/baz/foo-choice1-label'
         >>> XFormBuilder.get_text_id('foo', is_hint=True)
-        'foo-hint'
+        u'foo-hint'
 
         """
         text_id = []
@@ -193,11 +194,11 @@ class XFormBuilder(object):
         Returns the reference to the data node of the given question
 
         >>> XFormBuilder.get_data_ref('foo')
-        '/data/foo'
+        u'/data/foo'
         >>> XFormBuilder.get_data_ref('foo', ['bar'])
-        '/data/bar/foo'
+        u'/data/bar/foo'
         >>> XFormBuilder.get_data_ref('foo', ['bar', 'baz'])
-        '/data/bar/baz/foo'
+        u'/data/bar/baz/foo'
 
         """
         if groups is None:
@@ -210,9 +211,9 @@ class XFormBuilder(object):
 
         >>> xform = XFormBuilder()
         >>> xform.get_namespaced('jr:constraintMsg')
-        '{http://openrosa.org/javarosa}constraintMsg'
+        u'{http://openrosa.org/javarosa}constraintMsg'
         >>> xform.get_namespaced('constraint')
-        'constraint'
+        u'constraint'
 
         """
         has_namespace = re.compile(r'(\w+):(\w+)')

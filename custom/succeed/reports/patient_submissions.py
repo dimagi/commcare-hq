@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ

@@ -1,4 +1,5 @@
 
+from __future__ import unicode_literals
 def filter_by(fn):
     fn._fluff_filter = True
     return fn

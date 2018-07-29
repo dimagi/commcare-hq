@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import six
 import uuid
 from dateutil import parser
@@ -7,7 +8,7 @@ from pytz import timezone
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, UNOWNED_EXTENSION_OWNER_ID
 from corehq.form_processor.exceptions import CaseNotFound
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.modules import to_function
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex

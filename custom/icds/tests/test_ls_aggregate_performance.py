@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
+import six
 from django.test import SimpleTestCase, TestCase
 from mock import patch, Mock
 
@@ -11,8 +14,9 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.models import CommCareUser
-
+from custom.icds.messaging.custom_content import run_indicator_for_user
 from custom.icds.messaging.indicators import (
+    IndicatorError,
     LSAggregatePerformanceIndicator,
     AWWAggregatePerformanceIndicator,
 )
@@ -73,8 +77,7 @@ class TestLSAggregatePerformanceIndicator(BaseAggregatePerformanceTestCase):
         weighed.return_value = etree.fromstring(self.get_xml('weighed_fixture'))
         thr.return_value = etree.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = etree.fromstring(self.get_xml('visit_fixture'))
-        indicator = LSAggregatePerformanceIndicator(self.domain, self.ls)
-        message = indicator.get_messages(language_code='en')[0]
+        [message] = run_indicator_for_user(self.ls, LSAggregatePerformanceIndicator, language_code='en')
         self.assertIn('Number of visits / Number of desired visits: 45 / 195', message)
         self.assertIn('Number of visits on time / Number of visits: 16 / 45', message)
         self.assertIn('THR Distribution: 19 / 34', message)
@@ -93,8 +96,7 @@ class TestAWWAggregatePerformanceIndicator(BaseAggregatePerformanceTestCase):
         weighed.return_value = etree.fromstring(self.get_xml('weighed_fixture'))
         thr.return_value = etree.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = etree.fromstring(self.get_xml('visit_fixture'))
-        indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
-        message = indicator.get_messages(language_code='en')[0]
+        [message] = run_indicator_for_user(self.aww, AWWAggregatePerformanceIndicator, language_code='en')
         self.assertIn('Number of visits / Number of desired visits: 6 / 65', message)
         self.assertIn('Number of visits on time / Number of visits: 2 / 6', message)
         self.assertIn('THR Distribution: 1 / 2', message)
@@ -112,8 +114,7 @@ class TestAWWAggregatePerformanceIndicator(BaseAggregatePerformanceTestCase):
         weighed.return_value = etree.fromstring(self.get_xml('weighed_fixture'))
         thr.return_value = etree.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = etree.fromstring(self.get_xml('visit_fixture'))
-        indicator = AWWAggregatePerformanceIndicator(self.domain, aww3)
-        message = indicator.get_messages(language_code='en')[0]
+        [message] = run_indicator_for_user(aww3, AWWAggregatePerformanceIndicator, language_code='en')
         self.assertIn('Number of visits / Number of desired visits: 0 / 65', message)
         self.assertIn('Number of visits on time / Number of visits: 0 / 0', message)
         self.assertIn('THR Distribution: 0 / 0', message)
@@ -129,7 +130,6 @@ class TestAWWAggregatePerformanceIndicator(BaseAggregatePerformanceTestCase):
         weighed.return_value = etree.fromstring(self.get_xml('weighed_fixture'))
         thr.return_value = etree.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = etree.fromstring(self.get_xml('visit_fixture'))
-        indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
-        with self.assertRaises(Exception) as e:
-            indicator.get_messages(language_code='en')
-        self.assertIn('Attribute awc_opened_count not found in restore for AWC AWC1', e.exception.message)
+        with self.assertRaises(IndicatorError) as e:
+            run_indicator_for_user(self.aww, AWWAggregatePerformanceIndicator, language_code='en')
+        self.assertIn('Attribute awc_opened_count not found in restore for AWC AWC1', six.text_type(e.exception))

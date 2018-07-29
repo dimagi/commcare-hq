@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -7,7 +8,7 @@ from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_wit
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestNewBornWithLowWeight(TestCase):
 
     def test_map_data_keys(self):
@@ -79,10 +80,11 @@ class TestNewBornWithLowWeight(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of newborns with born with birth weight less than 2500 grams."
-            "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal "
-            "and neonatal mortality and morbidity, inhibited growth and cognitive development,"
-            " and chronic diseases later in life"
+            "Of all the children born in the current month and enrolled for Anganwadi services, the percentage "
+            "that had a birth weight less than 2500 grams. "
+            "<br/><br/>"
+            "Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality and "
+            "morbidity, inhibited growth and cognitive development, and chronic diseases later in life. "
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -111,8 +113,10 @@ class TestNewBornWithLowWeight(TestCase):
             [
                 {'indicator': 'Total Number of Newborns born in given month:', 'value': "7"},
                 {'indicator': 'Number of Newborns with LBW in given month:', 'value': "2"},
+                {'indicator': 'Total Number of children born and weight in given month:', 'value': '4'},
                 {'indicator': '% newborns with LBW in given month:', 'value': '50.00%'},
-                {'indicator': '% Unweighted:', 'value': '57.14%'}
+                {'indicator': '% of children with weight in normal:', 'value': '50.00%'},
+                {'indicator': '% Unweighted:', 'value': '42.86%'},
             ]
         )
 
@@ -372,10 +376,11 @@ class TestNewBornWithLowWeight(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Percentage of newborns with born with birth weight less than 2500 grams."
-            "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal"
-            " and neonatal mortality and morbidity, inhibited growth and cognitive development,"
-            " and chronic diseases later in life",
+            "Of all the children born in the current month and enrolled for Anganwadi services, the percentage "
+            "that had a birth weight less than 2500 grams. "
+            "<br/><br/>"
+            "Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality "
+            "and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. ",
         )
 
     def test_sector_data_tooltips_data(self):

@@ -1,12 +1,12 @@
 from __future__ import print_function
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.linked_domain.models import RemoteLinkDetails
-from corehq.apps.linked_domain.remote_accessors import whilelist_app_on_remote
 
 
 class Command(BaseCommand):

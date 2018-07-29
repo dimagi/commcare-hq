@@ -90,7 +90,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                         }
                     }
                     function isInArray(array, search) {
-                        return (array.indexOf(search) >= 0) ? true : false;
+                        return (array.indexOf(search) >= 0);
                     }
                     if (results && results.length > 0) {
                         if (isInArray(results, true)) {
@@ -397,27 +397,6 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         });
     };
 
-    CommcareSettings.widgets.share_link = function (self) {
-        CommcareSettings.widgets.bool(self);
-        self.selectText = function(obj, e) {
-            e.currentTarget.select();
-        };
-        self.copyUrl = function(obj, e) {
-            var $btn = $(e.currentTarget);
-            var clipboard = new Clipboard($btn[0], {
-                target: function () {
-                    return $('.js-anonymous-link')[0];
-                },
-            });
-            $btn.tooltip({ title: gettext('Copied!') });
-            clipboard.on('success', function() {
-                $btn.tooltip('show');
-                window.setTimeout(function() { $btn.tooltip('hide'); }, 1000);
-            });
-            clipboard.onClick(e);
-        };
-    };
-
     CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
         var app_manager = hqImport('app_manager/js/app_manager');
         function update(appVersion) {
@@ -478,6 +457,10 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
 
     // text_input has the same behavior as a select widget but uses a different template
     CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
+
+    $(function() {
+        hqImport('app_manager/js/app_manager').setPrependedPageTitle(gettext("Settings"));
+    });
 
     return {
         CommcareSettings: CommcareSettings,

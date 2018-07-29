@@ -17,6 +17,7 @@
     <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
     <script src="{% static 'userreports/js/report_config.js' %}"></script>
     <script src="{% static 'userreports/js/utils.js' %}"></script>
+    <script src="{% static 'userreports/js/configure_report.js' %}"></script>
 {% endblock %}
 
 {% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
@@ -29,6 +30,29 @@
 {% block at_report_limit_warning %}
   <div class="spacer"></div>
   {{ block.super }}
+{% endblock %}
+
+{% block additional_initial_page_data %}{{ block.super }}
+    {% initial_page_data 'column_options' column_options %}
+    {% initial_page_data 'initial_columns' initial_columns %}
+    {% initial_page_data 'application' application %}
+    {% initial_page_data 'source_id' source_id %}
+    {% initial_page_data 'source_type' source_type %}
+    {% initial_page_data 'report_preview_url' report_preview_url %}
+    {% initial_page_data 'preview_datasource_id' preview_datasource_id %}
+    {% initial_page_data 'existing_report_type' existing_report_type %}
+    {% initial_page_data 'report_title' report_title %}
+    {% initial_page_data 'report_description' report_description %}
+    {% initial_page_data 'data_source_properties' data_source_properties %}
+    {% initial_page_data 'initial_default_filters' initial_default_filters %}
+    {% initial_page_data 'initial_user_filters' initial_user_filters %}
+    {% initial_page_data 'initial_location' initial_location %}
+    {% initial_page_data 'initial_chart_type' initial_chart_type %}
+    {% initial_page_data 'MAPBOX_ACCESS_TOKEN' MAPBOX_ACCESS_TOKEN %}
+    {% initial_page_data 'date_range_options' date_range_options %}
+    {% initial_page_data 'has_report_builder_access' has_report_builder_access %}
+    {% initial_page_data 'at_report_limit' at_report_limit %}
+    {% initial_page_data 'existing_report' existing_report %}
 {% endblock %}
 
 {% block page_content %}
@@ -65,6 +89,9 @@
         <inline-edit params="
           value: reportDescription,
           id: 'report-description',
+	  {% if existing_report.get_id %}
+          url: '{% url "update_report_description" domain existing_report.get_id %}',
+	  {% endif %}
           placeholder: '{% trans "Enter report description here"|escapejs %}',
           readOnlyClass: 'app-comment',
           cols: 50,
@@ -289,48 +316,4 @@
 
 
   </div>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-<script>
-
-    var ReportBuilder = {
-      Constants: hqImport("userreports/js/constants"),
-    };
-
-    $(document).ready(function() {
-        var reportConfig = new reportBuilder.ReportConfig({
-            "columnOptions": {{ column_options|JSON }},
-            "initialColumns": {{ initial_columns|JSON }},
-            "app": {{ application|JSON }},
-            "sourceId": {{ source_id|JSON }},
-            "sourceType": "{{ source_type }}",
-            "reportPreviewUrl": "{{ report_preview_url }}",
-            "previewDatasourceId": "{{ preview_datasource_id }}",
-            "existingReport": {% if existing_report %}{{ existing_report.get_id|JSON }}{% else %}null{% endif %},
-            "existingReportType": {{ existing_report_type|JSON }},
-            "reportTitle": "{{ report_title|escapejs }}",
-            "reportDescription": {% if report_description %}"{{ report_description|escapejs }}"{% else %}null{% endif %},
-            "dataSourceProperties": {{ data_source_properties|JSON }},
-            "initialDefaultFilters": {{ initial_default_filters|JSON }},
-            "initialUserFilters": {{ initial_user_filters|JSON }},
-            "initialLocation": {{ initial_location|JSON }},
-            "initialChartType": {{ initial_chart_type|JSON }},
-            "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
-            "dateRangeOptions": {{ date_range_options|JSON }},
-            // In previewMode, report can't be saved.
-            "previewMode":
-              {# equivalent to: not has_report_builder_access or (at_report_limit and not existing_report) #}
-              {% if not has_report_builder_access or at_report_limit and not existing_report %}
-                true
-              {% else %}
-                false
-              {% endif %}
-            ,
-
-        });
-        $("#reportConfig").koApplyBindings(reportConfig);
-        window._bindingsApplied = true;
-    });
-</script>
 {% endblock %}

@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 
 <table class="table table-striped table-bordered">
     <thead>
@@ -8,34 +9,8 @@
             <th></th>
         </tr>
     </thead>
-    <tbody id="id_{{ name }}"></tbody>
+    <tbody id="id_{{ name }}" class="record-list-widget" data-value="{% html_attr value %}" data-name="{{ name }}"></tbody>
 </table>
 <button type="button" id="id_add_{{ name }}" class="btn btn-success">
     <i class="icon-plus"></i> {% trans "Add Parameter" %}
 </button>
-
-<script>
-    var param_counter = 0;
-
-    function add_param(nm, val) {
-        $("#id_{{ name }}").append('<tr> \
-                <td><input type="text" name="additional_params.'+param_counter+'.name" value="'+nm+'" /></td> \
-                <td><input type="text" name="additional_params.'+param_counter+'.value" value="'+val+'" /></td> \
-                <td><span id="id_remove_record_'+param_counter+'" class="btn btn-danger"><i class="icon-remove"></i> {% trans "Remove" %}</span></td> \
-            </tr>');
-        $("#id_remove_record_"+param_counter).click(function(){
-            $(this).parent().parent().remove();
-        });
-        param_counter++;
-    }
-
-    $(function(){
-        {% for pair in value %}
-        add_param("{{ pair.name }}", "{{ pair.value }}");
-        {% endfor %}
-
-        $("#id_add_{{ name }}").click(function() {
-            add_param("", "");
-        });
-    });
-</script>

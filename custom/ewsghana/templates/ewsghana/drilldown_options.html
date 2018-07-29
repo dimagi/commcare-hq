@@ -31,9 +31,9 @@
 </div>
 
 {% block filter_js %}
-<script type="text/javascript">
+<script>
     $.when(
-        $.getScript("{% static 'reports/js/report_filter.drilldown_options.js' %}"),
+        $.getScript("{% static 'reports/js/filters/drilldown_options.js' %}"),
         $.getScript("{% static 'ewsghana/ko/ews_filter.drilldown_options.js' %}")
     ).done(function () {
        $('#{{ css_id }}').ewsdrilldownOptionFilter({

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse, NoReverseMatch
 from django.views import View
 
@@ -12,7 +13,7 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.reprocess import ReprocessingError
 from corehq.util.timezones.conversions import ServerTime
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.apps.reports.display import xmlns_to_name
 from django.utils.translation import ugettext_noop, ugettext as _
@@ -35,16 +36,17 @@ class SubmissionErrorReport(DeploymentsReport):
     fields = ['corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter']
 
     @property
+    @memoized
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(_("View Form")),
-                                   DataTablesColumn(_("Username")),
-                                   DataTablesColumn(_("Submit Time")),
-                                   DataTablesColumn(_("Form Type")),
-                                   DataTablesColumn(_("Error Type")),
-                                   DataTablesColumn(_("Error Message")))
+        headers = DataTablesHeader(DataTablesColumn(_("View Form"), sortable=False),
+                                   DataTablesColumn(_("Username"), prop_name="username"),
+                                   DataTablesColumn(_("Submit Time"), prop_name="received_on"),
+                                   DataTablesColumn(_("Form Type"), sortable=False),
+                                   DataTablesColumn(_("Error Type"), sortable=False),
+                                   DataTablesColumn(_("Error Message"), sortable=False))
         if self.support_toggle_enabled:
             headers.add_column(DataTablesColumn(_("Re-process Form")))
-        headers.no_sort = True
+        headers.custom_sort = [[2, "desc"]]
         return headers
 
     _submitfilter = None
@@ -56,12 +58,23 @@ class SubmissionErrorReport(DeploymentsReport):
         return self._submitfilter
 
     @property
+    def sort_params(self):
+        sort_col_idx = int(self.request.GET['iSortCol_0'])
+        col = self.headers.header[sort_col_idx]
+        sort_prop = hasattr(col, "prop_name") and col.prop_name
+        desc = self.request.GET.get('sSortDir_0') == 'desc'
+        return sort_prop, desc
+
+    @property
     @memoized
     def paged_result(self):
         doc_types = [filter_.doc_type for filter_ in [filter_ for filter_ in self.submitfilter if filter_.show]]
+        sort_col, desc = self.sort_params
         return get_paged_forms_by_type(
             self.domain,
             doc_types,
+            sort_col=sort_col,
+            desc=desc,
             start=self.pagination.start,
             size=self.pagination.count,
         )

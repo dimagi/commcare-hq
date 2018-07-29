@@ -27,31 +27,6 @@ hqDefine("userreports/js/configurable_report", function() {
             hqImport('userreports/js/report_analytix').track.event.apply(this, e);
         });
 
-        // Poll the status of the data source
-        if (!initial_page_data("is_static")) {
-            var retrying = false;
-            (function poll() {
-                $.ajax({
-                    url: hqImport("hqwebapp/js/initial_page_data").reverse('configurable_data_source_status'),
-                    dataType: 'json',
-                    success: function(data) {
-                        if (data.isBuilt){
-                            $('#built-warning').addClass('hide');
-                            if (retrying){
-                                location.reload();
-                            } else if ($('#report-filters').find('.control-label').length === 0) {
-                                $('#report-filters').submit();
-                            }
-                        } else {
-                            retrying = true;
-                            $('#built-warning').removeClass('hide');
-                            setTimeout(poll, 5000);
-                        }
-                    },
-                });
-            })();
-        }
-
         var urlSerialize = hqImport('reports/js/reports.util').urlSerialize;
         var reportOptions = {
             domain: initial_page_data('domain'),

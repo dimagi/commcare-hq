@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 import logging
 
@@ -23,7 +24,7 @@ from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
-from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
@@ -50,7 +51,8 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role', 'User IMEIs (read only)',
+    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role',
+    'User IMEIs (read only)', 'registered_on (read only)',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -641,6 +643,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
             'User IMEIs (read only)': _get_devices(user),
             'location_code': location_codes,
             'role': role.name if role else '',
+            'registered_on (read only)': user.created_on.strftime('%Y-%m-%d %H:%M:%S') if user.created_on else ''
         }
 
     unrecognized_user_data_keys = set()
@@ -658,7 +661,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
         'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
-    ]
+        'registered_on (read only)']
 
     user_data_fields = [f.slug for f in user_data_model.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))
@@ -729,7 +732,7 @@ def dump_users_and_groups(domain, download_id, user_filters):
 
         return group_memoizer
 
-    writer = Excel2007ExportWriter()
+    writer = Excel2007ExportWriter(format_as_text=True)
     group_memoizer = _load_memoizer(domain)
     location_cache = LocationIdToSiteCodeCache(domain)
 
@@ -757,7 +760,7 @@ def dump_users_and_groups(domain, download_id, user_filters):
     ]
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    filename = "user_export_{}_{}.xlsx".format(domain, uuid.uuid4().hex)
+    filename = "{}_users_{}.xlsx".format(domain, uuid.uuid4().hex)
     file_path = get_download_file_path(use_transfer, filename)
     writer.open(
         header_table=headers,

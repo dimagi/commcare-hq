@@ -1,8 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
-####### Database config. This assumes Postgres ####### 
 
 INTERNAL_IPS = ['127.0.0.1']
+
+####### Database config. This assumes Postgres #######
 
 DATABASES = {
     'default': {
@@ -17,6 +19,8 @@ DATABASES = {
         },
     }
 }
+
+SYNCLOGS_SQL_DB_ALIAS = 'default'
 
 USE_PARTITIONED_DATABASE = False
 
@@ -72,11 +76,15 @@ if USE_PARTITIONED_DATABASE:
     })
 
 ####### Couch Config ######
-COUCH_HTTPS = False # recommended production value is True if enabling https
-COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
-COUCH_USERNAME = 'commcarehq'
-COUCH_PASSWORD = 'commcarehq'
-COUCH_DATABASE_NAME = 'commcarehq'
+COUCH_DATABASES = {
+    'default': {
+        'COUCH_HTTPS': False,
+        'COUCH_SERVER_ROOT': '127.0.0.1:5984',
+        'COUCH_USERNAME': 'commcarehq',
+        'COUCH_PASSWORD': '',
+        'COUCH_DATABASE_NAME': 'commcarehq',
+    },
+}
 
 ### Public / Pre-login Site information
 ENABLE_PRELOGIN_SITE = False
@@ -115,9 +123,11 @@ CELERY_SEND_TASK_ERROR_EMAILS = True
 CELERY_PERIODIC_QUEUE = 'celery' # change this to something else if you want a different queue for periodic tasks
 CELERY_FLOWER_URL = 'http://127.0.0.1:5555'
 
-####### Django Compressor ########
+####### Less/Django Compressor ########
 
-COMPRESS_ENABLED = False  # this will allow less.js to compile less files on the client side
+LESS_DEBUG = True
+COMPRESS_ENABLED = False
+COMPRESS_OFFLINE = False
 
 ####### Bitly ########
 

@@ -1,29 +1,7 @@
 # coding=utf-8
-"""
-Application terminology
-
-For any given application, there are a number of different documents.
-
-The primary application document is an instance of Application.  This
-document id is what you'll see in the URL on most app manager pages. Primary
-application documents should have `copy_of == None` and `is_released ==
-False`. When an application is saved, the field `version` is incremented.
-
-When a user makes a build of an application, a copy of the primary
-application document is made. These documents are the "versions" you see on
-the deploy page. Each build document will have a different id, and the
-`copy_of` field will be set to the ID of the primary application document.
-Additionally, some attachments such as `profile.xml` and `suite.xml` will be
-created and saved to the build doc (see `create_all_files`).
-
-When a build is starred, this is called "releasing" the build.  The parameter
-`is_released` will be set to True on the build document.
-
-You might also run in to remote applications and applications copied to be
-published on the exchange, but those are quite infrequent.
-"""
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -52,7 +30,7 @@ from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
+from corehq.apps.app_manager.app_schemas.case_properties import get_parent_type_map
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -63,45 +41,61 @@ from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    FloatProperty,
+    IntegerProperty,
+    ListProperty,
+    SchemaDictProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
+)
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 from django.template.loader import render_to_string
-from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
+from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.xpath import (
     dot_interpolate,
     interpolate_xpath,
     LocationXpath,
 )
-from corehq.apps.builds import get_default_build_spec
+from corehq.apps.builds.utils import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
 from corehq.util import bitly
 from corehq.util import view_utils
-from corehq.util.string_utils import random_string
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
-from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
@@ -156,6 +150,7 @@ import six
 from six.moves import filter
 from six.moves import range
 from six.moves import map
+from io import open
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
 WORKFLOW_ROOT = 'root'  # go to the module select screen
@@ -234,14 +229,11 @@ def _rename_key(dct, old, new):
 
 @memoized
 def load_case_reserved_words():
-    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
+    with open(
+        os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json'),
+        encoding='utf-8'
+    ) as f:
         return json.load(f)
-
-
-@memoized
-def load_form_template(filename):
-    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
-        return f.read()
 
 
 class IndexedSchema(DocumentSchema):
@@ -934,6 +926,8 @@ class FormBase(DocumentSchema):
     schedule_form_id = StringProperty()
     custom_instances = SchemaListProperty(CustomInstance)
     case_references_data = SchemaProperty(CaseReferences)
+    is_release_notes_form = BooleanProperty(default=False)
+    enable_release_notes = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -971,6 +965,20 @@ class FormBase(DocumentSchema):
 
     def clear_validation_cache(self):
         self.set_validation_cache(None)
+
+    def is_allowed_to_be_release_notes_form(self):
+        # checks if this form can be marked as a release_notes form
+        #   based on whether it belongs to a training_module
+        #   and if no other form is already marked as release_notes form
+        module = self.get_module()
+        if not module or not module.is_training_module:
+            return False
+
+        forms = module.get_forms()
+        for form in forms:
+            if form.is_release_notes_form and form.unique_id != self.unique_id:
+                return False
+        return True
 
     @property
     def uses_cases(self):
@@ -1047,6 +1055,9 @@ class FormBase(DocumentSchema):
                 self.clear_validation_cache()
                 return self.validate_form()
         return self
+
+    def is_a_disabled_release_form(self):
+        return self.is_release_notes_form and not self.enable_release_notes
 
     def validate_for_build(self, validate_module=True):
         errors = []
@@ -1179,7 +1190,7 @@ class FormBase(DocumentSchema):
                 include_translations=include_translations,
             )
         except XFormException as e:
-            raise XFormException(u"Error in form {}".format(self.full_path_name), e)
+            raise XFormException("Error in form {}".format(self.full_path_name), e)
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1197,7 +1208,7 @@ class FormBase(DocumentSchema):
 
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
-                return u"{}{}".format(ATTACHMENT_PREFIX, key)
+                return "{}{}".format(ATTACHMENT_PREFIX, key)
             return key
         return format_key
 
@@ -1230,7 +1241,7 @@ class FormBase(DocumentSchema):
 
     @property
     def full_path_name(self):
-        return u"%(app_name)s > %(module_name)s > %(form_name)s" % {
+        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
             'app_name': self.get_app().name,
             'module_name': self.get_module().default_name(),
             'form_name': self.default_name()
@@ -1273,15 +1284,15 @@ class FormBase(DocumentSchema):
     def is_case_list_form(self):
         return bool(self.case_list_modules)
 
-    def get_save_to_case_updates(self, case_type):
+    def get_save_to_case_updates(self):
         """
         Get a flat list of case property names from save to case questions
         """
-        updates = set()
+        updates_by_case_type = defaultdict(set)
         for save_to_case_update in self.case_references_data.get_save_references():
-            if save_to_case_update.case_type == case_type:
-                updates |= set(save_to_case_update.properties)
-        return updates
+            case_type = save_to_case_update.case_type
+            updates_by_case_type[case_type].update(save_to_case_update.properties)
+        return updates_by_case_type
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
@@ -1408,13 +1419,48 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
                 "%s is not a valid question" % question_path
             )
 
+    def get_all_case_updates(self):
+        """
+        Collate contributed case updates from all sources within the form
+
+        Subclass must have helper methods defined:
+
+        - get_case_updates
+        - get_all_contributed_subcase_properties
+        - get_save_to_case_updates
+
+        :return: collated {<case_type>: set([<property>])}
+
+        """
+        updates_by_case_type = defaultdict(set)
+
+        for case_type, updates in self.get_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_all_contributed_subcase_properties().items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_save_to_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
+
+        return updates_by_case_type
+
+    def get_case_updates_for_case_type(self, case_type):
+        """
+        Like get_case_updates filtered by a single case type
+
+        subclass must implement `get_case_updates`
+
+        """
+        return self.get_case_updates().get(case_type, [])
+
 
 class JRResourceProperty(StringProperty):
 
     def validate(self, value, required=True):
         super(JRResourceProperty, self).validate(value, required)
         if value is not None and not value.startswith('jr://'):
-            raise BadValueError("JR Resources must start with 'jr://")
+            raise BadValueError("JR Resources must start with 'jr://': {!r}".format(value))
         return value
 
 
@@ -1435,20 +1481,37 @@ class NavMenuItemMediaMixin(DocumentSchema):
         Language-specific icon and audio.
         Properties are map of lang-code to filepath
     """
-    media_image = SchemaDictProperty(JRResourceProperty)
-    media_audio = SchemaDictProperty(JRResourceProperty)
-    custom_icons = SchemaListProperty(CustomIcon)
+
+    # These were originally DictProperty(JRResourceProperty),
+    # but jsonobject<0.9.0 didn't properly support passing in a property to a container type
+    # so it was actually wrapping as a StringPropery
+    # too late to retroactively apply that validation,
+    # so now these are DictProperty(StringProperty)
+    media_image = DictProperty(StringProperty)
+    media_audio = DictProperty(StringProperty)
+    custom_icons = ListProperty(CustomIcon)
 
     @classmethod
     def wrap(cls, data):
-        # ToDo - Remove after migration
+        # Lazy migration from single-language media to localizable media
         for media_attr in ('media_image', 'media_audio'):
             old_media = data.get(media_attr, None)
-            if old_media and isinstance(old_media, six.string_types):
-                new_media = {'default': old_media}
-                data[media_attr] = new_media
+            if old_media:
+                # Single-language media was stored in a plain string.
+                # Convert this to a dict, using a dummy key because we
+                # don't know the app's supported or default lang yet.
+                if isinstance(old_media, six.string_types):
+                    new_media = {'default': old_media}
+                    data[media_attr] = new_media
+                elif isinstance(old_media, dict):
+                    # Once the media has localized data, discard the dummy key
+                    if 'default' in old_media and len(old_media) > 1:
+                        old_media.pop('default')
 
         return super(NavMenuItemMediaMixin, cls).wrap(data)
+
+    def get_app(self):
+        raise NotImplementedError
 
     def _get_media_by_language(self, media_attr, lang, strict=False):
         """
@@ -1477,13 +1540,27 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     @property
     def default_media_image(self):
-        # For older apps that were migrated
-        return self.icon_by_language('default')
+        # For older apps that were migrated: just return the first available item
+        self._assert_unexpected_default_media_call('media_image')
+        return self.icon_by_language('')
 
     @property
     def default_media_audio(self):
-        # For older apps that were migrated
-        return self.audio_by_language('default')
+        # For older apps that were migrated: just return the first available item
+        self._assert_unexpected_default_media_call('media_audio')
+        return self.audio_by_language('')
+
+    def _assert_unexpected_default_media_call(self, media_attr):
+        assert media_attr in ('media_image', 'media_audio')
+        media = getattr(self, media_attr)
+        if isinstance(media, dict) and list(media) == ['default']:
+            from corehq.util.view_utils import get_request
+            request = get_request()
+            url = ''
+            if request:
+                url = request.META.get('HTTP_REFERER')
+            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+            _assert(False, 'Called default_media_image on app with localized media: {}'.format(url))
 
     def icon_by_language(self, lang, strict=False):
         return self._get_media_by_language('media_image', lang, strict=strict)
@@ -1506,8 +1583,19 @@ class NavMenuItemMediaMixin(DocumentSchema):
         assert media_attr in ('media_image', 'media_audio')
 
         media_dict = getattr(self, media_attr) or {}
+        old_value = media_dict.get(lang)
         media_dict[lang] = media_path or ''
         setattr(self, media_attr, media_dict)
+        # remove the entry from app multimedia mappings if media is being removed now
+        # This does not remove the multimedia but just it's reference in mapping
+        # Added it here to ensure it's always set instead of getting it only when needed
+        app = self.get_app()
+        if old_value and not media_path:
+            # expire all_media_paths before checking for media path used in Application
+            app.all_media.reset_cache(app)
+            app.all_media_paths.reset_cache(app)
+            if old_value not in app.all_media_paths():
+                app.multimedia_map.pop(old_value, None)
 
     def set_icon(self, lang, icon_path):
         self._set_media('media_image', lang, icon_path)
@@ -1770,16 +1858,20 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
         return errors
 
-    def get_case_updates(self, case_type):
+    def get_case_updates(self):
         # This method is used by both get_all_case_properties and
         # get_usercase_properties. In the case of usercase properties, use
         # the usercase_update action, and for normal cases, use the
         # update_case action
-        if case_type == self.get_module().case_type or case_type == USERCASE_TYPE:
-            format_key = self.get_case_property_name_formatter()
-            action = self.actions.usercase_update if case_type == USERCASE_TYPE else self.actions.update_case
-            return [format_key(*item) for item in action.update.items()]
-        return []
+        case_type = self.get_module().case_type
+        format_key = self.get_case_property_name_formatter()
+
+        return {
+            case_type: {
+                format_key(*item) for item in self.actions.update_case.update.items()},
+            USERCASE_TYPE: {
+                format_key(*item) for item in self.actions.usercase_update.update.items()}
+        }
 
     @memoized
     def get_subcase_types(self):
@@ -1811,20 +1903,25 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             self.actions.load_from_form = PreloadAction()
 
     @memoized
-    def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
-        parent_types = set()
-        case_properties = set()
+    def get_all_contributed_subcase_properties(self):
+        case_properties = defaultdict(set)
         for subcase in self.actions.subcases:
-            if subcase.case_type == case_type:
-                case_properties.update(
-                    list(subcase.case_properties.keys())
-                )
-                if case_type != module_case_type and (
-                        self.actions.open_case.is_active() or
-                        self.actions.update_case.is_active() or
-                        self.actions.close_case.is_active()):
-                    parent_types.add((module_case_type, subcase.reference_id or 'parent'))
-        return parent_types, case_properties
+            case_properties[subcase.case_type].update(list(subcase.case_properties.keys()))
+        return case_properties
+
+    @memoized
+    def get_contributed_case_relationships(self):
+        case_relationships_by_child_type = defaultdict(set)
+        parent_case_type = self.get_module().case_type
+        for subcase in self.actions.subcases:
+            child_case_type = subcase.case_type
+            if child_case_type != parent_case_type and (
+                    self.actions.open_case.is_active() or
+                    self.actions.update_case.is_active() or
+                    self.actions.close_case.is_active()):
+                case_relationships_by_child_type[child_case_type].add(
+                    (parent_case_type, subcase.reference_id or 'parent'))
+        return case_relationships_by_child_type
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
@@ -1942,16 +2039,16 @@ class MappingItem(DocumentSchema):
         numeral, which is illegal.
         """
         if re.search(r'\W', self.key) or self.treat_as_expression:
-            return u'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
+            return 'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
         else:
-            return u'k{key}'.format(key=self.key)
+            return 'k{key}'.format(key=self.key)
 
     def key_as_condition(self, property):
         if self.treat_as_expression:
             condition = dot_interpolate(self.key, property)
-            return u"{condition}".format(condition=condition)
+            return "{condition}".format(condition=condition)
         else:
-            return u"{property} = '{key}'".format(
+            return "{property} = '{key}'".format(
                 property=property,
                 key=self.key
             )
@@ -2232,6 +2329,8 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
+    def get_app(self):
+        return self._module.get_app()
 
 class CaseSearchProperty(DocumentSchema):
     """
@@ -2309,6 +2408,9 @@ class CaseListForm(NavMenuItemMediaMixin):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
+    def get_app(self):
+        return self._module.get_app()
+
 
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(six.text_type)
@@ -2319,10 +2421,21 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
+    is_training_module = BooleanProperty(default=False)
+
+    def __init__(self, *args, **kwargs):
+        super(ModuleBase, self).__init__(*args, **kwargs)
+        self.assign_references()
 
     @property
     def is_surveys(self):
         return self.case_type == ""
+
+    def assign_references(self):
+        if hasattr(self, 'case_list'):
+            self.case_list._module = self
+        if hasattr(self, 'case_list_form'):
+            self.case_list_form._module = self
 
     @classmethod
     def wrap(cls, data):
@@ -2357,7 +2470,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
     get_forms = IndexedSchema.Getter('forms')
 
-    get_suite_forms = IndexedSchema.Getter('forms')
+    def get_suite_forms(self):
+        return [f for f in self.get_forms() if not f.is_a_disabled_release_form()]
 
     @parse_int([1])
     def get_form(self, i):
@@ -2518,7 +2632,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         raise IncompatibleFormTypeException()
 
 
-class ModuleDetailsMixin():
+class ModuleDetailsMixin(object):
 
     @classmethod
     def wrap_details(cls, data):
@@ -2680,9 +2794,10 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 header={(lang or 'en'): ugettext("Name")},
                 field='name',
                 model='case',
+                hasAutocomplete=True,
             )]
         )
-        module = Module(
+        module = cls(
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
@@ -2692,6 +2807,12 @@ class Module(ModuleBase, ModuleDetailsMixin):
             ),
         )
         module.get_or_create_unique_id()
+        return module
+
+    @classmethod
+    def new_training_module(cls, name, lang):
+        module = cls.new_module(name, lang)
+        module.is_training_module = True
         return module
 
     def new_form(self, name, lang, attachment=Ellipsis):
@@ -2744,6 +2865,18 @@ class Module(ModuleBase, ModuleDetailsMixin):
         if module_case_hierarchy_has_circular_reference(self):
             errors.append({
                 'type': 'circular case hierarchy',
+                'module': self.get_module_info(),
+            })
+
+        if self.root_module and self.root_module.is_training_module:
+            errors.append({
+                'type': 'training module parent',
+                'module': self.get_module_info(),
+            })
+
+        if self.root_module and self.is_training_module:
+            errors.append({
+                'type': 'training module child',
                 'module': self.get_module_info(),
             })
 
@@ -2819,7 +2952,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             by_type[action_meta.get('type')].append(action_tag)
 
         for type, tag_list in six.iteritems(by_type):
-            action_type.append(u'{} ({})'.format(type, ', '.join(filter(None, tag_list))))
+            action_type.append('{} ({})'.format(type, ', '.join(filter(None, tag_list))))
 
         return ' '.join(action_type)
 
@@ -2994,9 +3127,14 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             ))
 
         if self.form_filter:
+            # Replace any dots with #case, which doesn't make for valid xpath
+            # but will trigger any appropriate validation errors
+            interpolated_form_filter = interpolate_xpath(self.form_filter, case_xpath="#case",
+                    module=self.get_module(), form=self)
+
             form_filter_references_case = (
-                xpath_references_case(self.form_filter) or
-                xpath_references_user_case(self.form_filter)
+                xpath_references_case(interpolated_form_filter) or
+                xpath_references_user_case(interpolated_form_filter)
             )
 
             if form_filter_references_case:
@@ -3035,37 +3173,43 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return errors
 
-    def get_case_updates(self, case_type):
-        updates = set()
+    def get_case_updates(self):
+        updates_by_case_type = defaultdict(set)
         format_key = self.get_case_property_name_formatter()
         for action in self.actions.get_all_actions():
-            if action.case_type == case_type:
-                updates.update(format_key(*item)
-                               for item in six.iteritems(action.case_properties))
+            case_type = action.case_type
+            updates_by_case_type[case_type].update(
+                format_key(*item) for item in six.iteritems(action.case_properties))
         if self.schedule and self.schedule.enabled and self.source:
             xform = self.wrapped_xform()
             self.add_stuff_to_xform(xform)
-            scheduler_updates = xform.get_scheduler_case_updates()[case_type]
+            scheduler_updates = xform.get_scheduler_case_updates()
         else:
-            scheduler_updates = set()
+            scheduler_updates = {}
 
-        return updates.union(scheduler_updates)
+        for case_type, updates in scheduler_updates.items():
+            updates_by_case_type[case_type].update(updates)
+
+        return updates_by_case_type
 
     @memoized
-    def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
-        parent_types = set()
-        case_properties = set()
+    def get_all_contributed_subcase_properties(self):
+        case_properties = defaultdict(set)
         for subcase in self.actions.get_subcase_actions():
-            if subcase.case_type == case_type:
-                case_properties.update(
-                    list(subcase.case_properties.keys())
-                )
-                for case_index in subcase.case_indices:
-                    parent = self.actions.get_action_from_tag(case_index.tag)
-                    if parent:
-                        parent_types.add((parent.case_type, case_index.reference_id or 'parent'))
+            case_properties[subcase.case_type].update(list(subcase.case_properties.keys()))
+        return case_properties
 
-        return parent_types, case_properties
+    @memoized
+    def get_contributed_case_relationships(self):
+        case_relationships_by_child_type = defaultdict(set)
+        for subcase in self.actions.get_subcase_actions():
+            child_case_type = subcase.case_type
+            for case_index in subcase.case_indices:
+                parent = self.actions.get_action_from_tag(case_index.tag)
+                if parent:
+                    case_relationships_by_child_type[child_case_type].add(
+                        (parent.case_type, case_index.reference_id or 'parent'))
+        return case_relationships_by_child_type
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
@@ -3177,7 +3321,7 @@ class ShadowForm(AdvancedForm):
 
     def get_shadow_parent_options(self):
         options = [
-            (form.get_unique_id(), u'{} / {}'.format(form.get_module().default_name(), form.default_name()))
+            (form.get_unique_id(), '{} / {}'.format(form.get_module().default_name(), form.default_name()))
             for form in self.get_app().get_forms() if form.form_type == "advanced_form"
         ]
         if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
@@ -3461,8 +3605,8 @@ class AdvancedModule(ModuleBase):
                 )
 
                 if from_module.parent_select.active:
-                    app = self.get_app()
-                    select_chain = get_select_chain(app, from_module, include_self=False)
+                    from_app = from_module.get_app()  # A form can be copied from a module in a different app.
+                    select_chain = get_select_chain(from_app, from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
                         new_form.actions.load_update_cases.append(LoadUpdateAction(
@@ -4014,6 +4158,7 @@ class ReportAppConfig(DocumentSchema):
     """
     Class for configuring how a user configurable report shows up in an app
     """
+    # ID of the ReportConfiguration
     report_id = StringProperty(required=True)
     header = DictProperty()
     localized_description = DictProperty()
@@ -4023,7 +4168,9 @@ class ReportAppConfig(DocumentSchema):
     complete_graph_configs = DictProperty(GraphConfiguration)
 
     filters = SchemaDictProperty(ReportAppFilter)
+    # Unique ID of this mobile report config
     uuid = StringProperty(required=True)
+    report_slug = StringProperty(required=False)  # optional, user-provided
     sync_delay = DecimalProperty(default=0.0)  # in hours
 
     _report = None
@@ -4052,6 +4199,10 @@ class ReportAppConfig(DocumentSchema):
             from corehq.apps.userreports.models import get_report_config
             self._report = get_report_config(self.report_id, domain)[0]
         return self._report
+
+    @property
+    def instance_id(self):
+        return self.report_slug or self.uuid
 
 
 class ReportModule(ModuleBase):
@@ -4130,6 +4281,16 @@ class ReportModule(ModuleBase):
             valid_report_configs=valid_report_configs
         )
 
+    def has_duplicate_instance_ids(self):
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+        duplicate_instance_ids = {
+            instance_id
+            for instance_id, uuids in get_uuids_by_instance_id(self.get_app().domain).items()
+            if len(uuids) > 1
+        }
+        return any(report_config.instance_id in duplicate_instance_ids
+                   for report_config in self.report_configs)
+
     def validate_for_build(self):
         errors = super(ReportModule, self).validate_for_build()
         if not self.check_report_validity().is_valid:
@@ -4140,6 +4301,11 @@ class ReportModule(ModuleBase):
         elif not self.reports:
             errors.append({
                 'type': 'no reports',
+                'module': self.get_module_info(),
+            })
+        if self.has_duplicate_instance_ids():
+            errors.append({
+                'type': 'report config id duplicated',
                 'module': self.get_module_info(),
             })
         return errors
@@ -4311,7 +4477,7 @@ class LazyBlobDoc(BlobMixin):
         return self
 
     def __attachment_cache_key(self, name):
-        return u'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
+        return 'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
     def __set_cached_attachment(self, name, content, timeout=60*60*24):
         cache.set(self.__attachment_cache_key(name), content, timeout=timeout)
@@ -4615,6 +4781,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     build_comment = StringProperty()
     comment_from = StringProperty()
     build_broken = BooleanProperty(default=False)
+    is_auto_generated = BooleanProperty(default=False)
     # not used yet, but nice for tagging/debugging
     # currently only canonical value is 'incomplete-build',
     # for when build resources aren't found where they should be
@@ -4679,6 +4846,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     media_language_map = SchemaDictProperty(MediaList)
 
     use_j2me_endpoint = BooleanProperty(default=False)
+
+    target_commcare_flavor = StringProperty(
+        default='none',
+        choices=['none', TARGET_COMMCARE, TARGET_COMMCARE_LTS]
+    )
 
     # Whether or not the Application has had any forms submitted against it
     has_submissions = BooleanProperty(default=False)
@@ -4870,6 +5042,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def jar_url(self):
         return reverse('download_jar', args=[self.domain, self._id])
 
+    @absolute_url_property
+    def recovery_measures_url(self):
+        return reverse('recovery_measures', args=[self.domain, self._id])
+
     def get_jar_path(self):
         spec = {
             'nokia/s40': 'Nokia/S40',
@@ -4957,7 +5133,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
         }
-        if self.build_version < '2.8':
+        if not self.build_version or self.build_version < LooseVersion('2.8'):
             settings['Build-Number'] = self.version
         return settings
 
@@ -4985,7 +5161,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     self.lazy_fetch_attachment('CommCare.jad'),
                     self.lazy_fetch_attachment('CommCare.jar'),
                 )
-            except (ResourceError, KeyError):
+            except (ResourceNotFound, KeyError):
                 all_files = {
                     filename[len('files/'):]: self.lazy_fetch_attachment(filename)
                     for filename in self.blobs if filename.startswith('files/')
@@ -5045,8 +5221,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
             # this is much less useful/actionable without a URL
             # so make sure to include the request
-            logging.error('Unexpected error building app', exc_info=True,
-                          extra={'request': view_utils.get_request()})
+            notify_exception(view_utils.get_request(), "Unexpected error building app")
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -5058,17 +5233,23 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def odk_media_profile_url(self):
         return reverse('download_odk_media_profile', args=[self.domain, self._id])
 
-    def get_odk_qr_code(self, with_media=False, build_profile_id=None):
+    def get_odk_qr_code(self, with_media=False, build_profile_id=None, download_target_version=False):
         """Returns a QR code, as a PNG to install on CC-ODK"""
+        filename = 'qrcode.png' if not download_target_version else 'qrcode-targeted.png'
         try:
-            return self.lazy_fetch_attachment("qrcode.png")
+            return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
             from pygooglechart import QRChart
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
+            kwargs = []
             if build_profile_id is not None:
-                url += '?profile={profile_id}'.format(profile_id=build_profile_id)
+                kwargs.append('profile={profile_id}'.format(profile_id=build_profile_id))
+            if download_target_version:
+                kwargs.append('download_target_version=true')
+            url += '?' + '&'.join(kwargs)
+
             code.add_data(url)
 
             # "Level L" error correction with a 0 pixel margin
@@ -5078,7 +5259,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             os.close(f)
             with open(fname, "rb") as f:
                 png_data = f.read()
-                self.lazy_put_attachment(png_data, "qrcode.png",
+                self.lazy_put_attachment(png_data, filename,
                                          content_type="image/png")
             return png_data
 
@@ -5150,15 +5331,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         copy.build_comment = comment
         copy.comment_from = user_id
-        if user_id:
-            user = CouchUser.get(user_id)
-            if not user.has_built_app:
-                user.has_built_app = True
-                user.save()
         copy.is_released = False
 
         if not copy.is_remote_app():
             copy.update_mm_map()
+
+        prune_auto_generated_builds.delay(self.domain, self._id)
 
         return copy
 
@@ -5259,7 +5437,6 @@ def validate_detail_screen_field(field):
 
 
 class SavedAppBuild(ApplicationBase):
-
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
         for key in ('modules', 'user_registration', 'external_blobs',
@@ -5298,9 +5475,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
 
-    anonymous_cloudcare_enabled = BooleanProperty(default=False)
-    anonymous_cloudcare_hash = StringProperty(default=random_string)
-
     translation_strategy = StringProperty(default='select-known',
                                           choices=list(app_strings.CHOICES.keys()))
     auto_gps_capture = BooleanProperty(default=False)
@@ -5310,18 +5484,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
     add_ons = DictProperty()
+    smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
-
-    @property
-    def anonymous_cloudcare_url(self):
-        from corehq.apps.cloudcare.views import SingleAppLandingPageView
-
-        return view_utils.absolute_reverse(SingleAppLandingPageView.urlname, args=[
-            self.domain,
-            self.anonymous_cloudcare_hash
-        ])
 
     @property
     @memoized
@@ -5497,7 +5663,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return s
 
     def create_profile(self, is_odk=False, with_media=False,
-                       template='app_manager/profile.xml', build_profile_id=None):
+                       template='app_manager/profile.xml', build_profile_id=None, target_commcare_flavor=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -5535,6 +5701,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     'value': self.logo_refs[logo_name]['path'],
                 }
 
+        if toggles.MOBILE_RECOVERY_MEASURES.enabled(self.domain):
+            app_profile['properties']['recovery-measures-url'] = {
+                'force': True,
+                'value': self.recovery_measures_url,
+            }
+
         if with_media:
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
         else:
@@ -5545,6 +5717,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         apk_heartbeat_url = self.heartbeat_url
         locale = self.get_build_langs(build_profile_id)[0]
+        target_package_id = {
+            TARGET_COMMCARE: 'org.commcare.dalvik',
+            TARGET_COMMCARE_LTS: 'org.commcare.lts',
+        }.get(target_commcare_flavor)
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -5554,10 +5730,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'include_media_suite': with_media,
             'uniqueid': self.master_id,
             'name': self.name,
-            'descriptor': u"Profile File",
+            'descriptor': "Profile File",
             'build_profile_id': build_profile_id,
             'locale': locale,
             'apk_heartbeat_url': apk_heartbeat_url,
+            'target_package_id': target_package_id,
         }).encode('utf-8')
 
     @property
@@ -5669,6 +5846,29 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
+        if self.target_commcare_flavor != 'none':
+            files['{}profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=False,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}media_profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=False,
+                with_media=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}media_profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=True,
+                with_media=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
 
         practice_user_restore = self.create_practice_user_restore(build_profile_id)
         if practice_user_restore:
@@ -5681,7 +5881,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             files["{prefix}{lang}/app_strings.txt".format(
                 prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
         for form_stuff in self.get_forms(bare=False):
-            if not isinstance(form_stuff['form'], ShadowForm):
+            def exclude_form(form):
+                return isinstance(form, ShadowForm) or form.is_a_disabled_release_form()
+
+            if not exclude_form(form_stuff['form']):
                 filename = prefix + self.get_form_filename(**form_stuff)
                 form = form_stuff['form']
                 try:
@@ -5709,7 +5912,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _(u"Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+            error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
                 app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
@@ -5850,30 +6053,28 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         source = update_form_unique_ids(source)
         return update_report_module_ids(source)
 
-    def copy_form(self, module_id, form_id, to_module_id):
+    def copy_form(self, from_module, form, to_module, rename=False):
         """
         The case type of the two modules conflict,
         copying (confusingly) is still allowed.
         This is intentional.
 
         """
-        from_module = self.get_module(module_id)
-        form = from_module.get_form(form_id)
-        to_module = self.get_module(to_module_id)
-        return self._copy_form(from_module, form, to_module, rename=True)
-
-    def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         copy_source = deepcopy(form.to_json())
+        # only one form can be a release notes form, so set them to False explicitly when copying
+        copy_source['is_release_notes_form'] = False
+        copy_source['enable_release_notes'] = False
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
 
-        if 'rename' in kwargs and kwargs['rename']:
+        if rename:
             for lang, name in six.iteritems(copy_source['name']):
                 with override(lang):
                     copy_source['name'][lang] = _('Copy of {name}').format(name=name)
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
-        save_xform(self, copy_form, form.source)
+        to_app = to_module.get_app()
+        save_xform(to_app, copy_form, form.source)
 
         return copy_form
 
@@ -5978,7 +6179,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             except ModuleNotFoundException as ex:
                 errors.append({
                     "type": "missing module",
-                    "message": ex.message
+                    "message": six.text_type(ex)
                 })
 
         for form in self.get_forms():
@@ -6062,7 +6263,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 setting = contingent["value"]
         if setting is not None:
             return setting
-        if self.build_version < yaml_setting.get("since", "0"):
+        if not self.build_version or self.build_version < LooseVersion(yaml_setting.get("since", "0")):
             setting = yaml_setting.get("disabled_default", None)
             if setting is not None:
                 return setting
@@ -6071,8 +6272,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
-        builder = ParentCasePropertyBuilder(self)
-        case_relationships = builder.get_parent_type_map(self.get_case_types())
+        # todo: fix this to expect a list of parent types
+        # todo: and get rid of if_multiple_parents_arbitrarily_pick_one arg
+        case_relationships = get_parent_type_map(self, if_multiple_parents_arbitrarily_pick_one=True)
         meta = AppCaseMetadata()
         descriptions_dict = get_case_property_description_dict(self.domain)
 
@@ -6135,7 +6337,7 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
-    
+
     def is_remote_app(self):
         return True
 

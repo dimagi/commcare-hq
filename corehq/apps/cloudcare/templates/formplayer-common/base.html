@@ -9,27 +9,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="HandheldFriendly" content="True">
 
+        {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
         {% if less_debug %}
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.debug.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
                   href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.debug.less' %}" />
             <link type="text/css"
                   rel="stylesheet"
                   media="all"
@@ -43,23 +28,7 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
                   href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.less' %}" />
             <link type="text/css"
                   rel="stylesheet"
                   media="all"
@@ -92,6 +61,7 @@
 
 
         {% if less_debug %}
+        {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
         <script>
             less = {
                 env: "development",
@@ -140,6 +110,14 @@
         {% include 'formplayer/dependencies.html' %}
         {% include 'formplayer/query_view.html' %}
 
+        {% block js %}{% endblock %}
+        {% block js-inline %}{% endblock %}
+
+        <div class="initial-page-data" class="hide">
+        {% block initial_page_data %}
+            {# do not override this block, use initial_page_data template tag to populate #}
+        {% endblock %}
+        </div>
         <div class="commcarehq-urls" class="hide">
         {% block registered_urls %}
             {# do not override this block, use registerurl template tag to populate #}
@@ -156,9 +134,6 @@
             {# do not override this block, use analytics_ab_test template tag to populate #}
         {% endblock %}
         </div>
-
-        {% block js %}{% endblock %}
-        {% block js-inline %}{% endblock %}
     </body>
 </html>
 

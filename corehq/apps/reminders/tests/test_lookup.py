@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import time
 from django.test import TestCase
 from corehq.apps.reminders.models import CaseReminderHandler, MATCH_EXACT, REPEAT_SCHEDULE_INDEFINITELY

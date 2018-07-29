@@ -31,6 +31,12 @@ hqDefine("hqwebapp/js/hq.helpers", [
     $(document).on('submit', 'form.disable-on-submit', function (ev) {
         $(ev.target).find('[type="submit"]').disableButton();
     });
+    $(document).on('reset', 'form', function (ev) {
+        $(ev.target).find('.disable-on-submit').enableButton();
+    });
+    $(document).on('reset', 'form.disable-on-submit', function (ev) {
+        $(ev.target).enableButton();
+    });
     $(document).on('click', '.add-spinner-on-click', function(ev) {
         $(ev.target).addSpinnerToButton();
     });
@@ -40,13 +46,6 @@ hqDefine("hqwebapp/js/hq.helpers", [
         var post_url = $(this).data('url');
         $.post(post_url, {note_id: note_id});
         $(this).parents('.alert').hide(150);
-    });
-
-    // Initialize common widgets
-    $(function() {
-        _.each($(".ko-select2"), function(element) {
-            $(element).select2();
-        });
     });
 
     if ($.timeago) {
@@ -125,7 +124,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
 
 
     $.fn.removeSpinnerFromButton = function () {
-        $(this).find('i').remove();
+        $(this).find('i.fa-spin').remove();
     };
 
 

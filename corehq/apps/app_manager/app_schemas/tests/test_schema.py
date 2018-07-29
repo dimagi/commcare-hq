@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import re
 from django.test import SimpleTestCase
@@ -121,7 +122,7 @@ class SchemaTest(SimpleTestCase):
             "key": "@case_id",
         }})
         self.assertEqual(subsets["case"]["structure"]["case_name"], {"description": ""})
-        #self.assertEqual(subsets["parent"]["structure"]["has_well"], {}) TODO
+        self.assertEqual(subsets["parent"]["structure"]["has_well"], {"description": ""})
         self.assertNotIn("parent/has_well", subsets["case"]["structure"])
 
     def test_get_session_schema_for_module_with_no_case_type(self):

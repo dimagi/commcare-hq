@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 import random
 import string
 from django.conf import settings
 from django.core.exceptions import ValidationError
-
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.apps.users.models import CommCareUser, WebUser
 
@@ -38,6 +39,10 @@ REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 
 
 class BackendAuthorizationException(Exception):
+    pass
+
+
+class DelayProcessing(Exception):
     pass
 
 
@@ -340,6 +345,9 @@ def process_pre_registration(msg):
     if not invitation:
         return False
 
+    if any_migrations_in_progress(invitation.domain):
+        raise DelayProcessing()
+
     domain = Domain.get_by_name(invitation.domain, strict=True)
     if not domain.sms_mobile_worker_registration_enabled:
         return False
@@ -408,7 +416,13 @@ def process_sms_registration(msg):
     keyword4 = text_words[3] if len(text_words) > 3 else ""
     cleaned_phone_number = strip_plus(msg.phone_number)
     if is_registration_text(msg.text) and keyword2 != "":
-        domain = Domain.get_by_name(keyword2, strict=True)
+        domain_name = keyword2
+
+        if any_migrations_in_progress(domain_name):
+            raise DelayProcessing()
+
+        domain = Domain.get_by_name(domain_name, strict=True)
+
         if domain is not None:
             if domain_has_privilege(domain, privileges.INBOUND_SMS):
                 if keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS and domain.sms_mobile_worker_registration_enabled:
@@ -514,7 +528,8 @@ def get_opt_keywords(msg):
     backend_class = get_sms_backend_classes().get(msg.backend_api, SQLSMSBackend)
     return (
         backend_class.get_opt_in_keywords(),
-        backend_class.get_opt_out_keywords()
+        backend_class.get_opt_out_keywords(),
+        backend_class.get_pass_through_opt_in_keywords(),
     )
 
 
@@ -559,16 +574,22 @@ def process_incoming(msg):
     v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
 
     if v:
+        if any_migrations_in_progress(v.domain):
+            raise DelayProcessing()
+
         msg.couch_recipient_doc_type = v.owner_doc_type
         msg.couch_recipient = v.owner_id
         msg.domain = v.domain
         msg.location_id = get_location_id_by_verified_number(v)
         msg.save()
     elif msg.domain_scope:
+        if any_migrations_in_progress(msg.domain_scope):
+            raise DelayProcessing()
+
         msg.domain = msg.domain_scope
         msg.save()
 
-    opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
+    opt_in_keywords, opt_out_keywords, pass_through_opt_in_keywords = get_opt_keywords(msg)
     domain = v.domain if v else None
 
     if is_opt_message(msg.text, opt_out_keywords):
@@ -591,6 +612,10 @@ def process_incoming(msg):
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
     else:
+        if is_opt_message(msg.text, pass_through_opt_in_keywords):
+            # Opt the phone number in, and then process the message normally
+            PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain)
+
         handled = False
         is_two_way = v is not None and v.is_two_way
 

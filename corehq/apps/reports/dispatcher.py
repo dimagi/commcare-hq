@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from django.conf import settings
 from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
@@ -17,7 +19,6 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.util.quickcache import quickcache
@@ -35,16 +36,9 @@ _ = lambda message: ugettext(message) if message is not None else None
 
 class ReportDispatcher(View):
     """
-        The ReportDispatcher is responsible for dispatching the correct reports or interfaces
-        based on a REPORT_MAP or INTERFACE_MAP specified in settings.
+        The ReportDispatcher is responsible for dispatching the correct reports or interfaces.
 
-        The mapping should be structured as follows.
-
-        REPORT_MAP = {
-            "Section Name" : [
-                'app.path.to.report.ReportClass',
-            ]
-        }
+        To get a new report to show up, add it to one of the lists in `corehq.reports`
 
         It is intended that you subclass this dispatcher and specify the map_name settings attribute
         and a unique prefix (like project in project_report_dispatcher).
@@ -93,11 +87,11 @@ class ReportDispatcher(View):
 
         corehq_reports = process(getattr(reports, attr_name, ()))
 
-        module_name = get_domain_module_map().get(domain)
+        module_name = settings.DOMAIN_MODULE_MAP.get(domain)
         if module_name is None:
             custom_reports = ()
         else:
-            module = __import__(module_name, fromlist=['reports'])
+            module = __import__(module_name, fromlist=[b'reports'])
             if hasattr(module, 'reports'):
                 reports = getattr(module, 'reports')
                 custom_reports = process(getattr(reports, attr_name, ()))

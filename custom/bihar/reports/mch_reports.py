@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.standard.cases.basic import CaseListReport
@@ -7,7 +8,7 @@ from corehq.apps.api.es import CaseES
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.util.timezones.conversions import PhoneTime
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.elastic import stream_es_query
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 from custom.bihar.utils import get_all_owner_ids_from_group

@@ -1,8 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
+from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from crispy_forms.helper import FormHelper
@@ -13,7 +16,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.users.util import raw_username
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from .models import BASIC_AUTH, DIGEST_AUTH
 
@@ -197,6 +200,25 @@ class CaseRepeaterForm(GenericRepeaterForm):
         return cleaned_data
 
 
+class OpenmrsRepeaterForm(CaseRepeaterForm):
+    location_id = forms.CharField(
+        label=_("Location"),
+        required=False,
+        help_text=_(
+            'Cases at this location and below will be forwarded. '
+            'Leave empty if this is the only OpenMRS Forwarder'
+        )
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(OpenmrsRepeaterForm, self).__init__(*args, **kwargs)
+        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id')
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()
+        return ['location_id'] + fields
+
+
 class SOAPCaseRepeaterForm(CaseRepeaterForm):
     operation = forms.CharField(
         required=False,
@@ -217,3 +239,42 @@ class SOAPLocationRepeaterForm(GenericRepeaterForm):
     def get_ordered_crispy_form_fields(self):
         fields = super(SOAPLocationRepeaterForm, self).get_ordered_crispy_form_fields()
         return fields + ['operation']
+
+
+class EmailBulkPayload(forms.Form):
+    repeater_id = forms.ChoiceField(label=_("Repeater"))
+    payload_ids_file = forms.FileField(
+        label=_("Payload IDs"),
+        required=True,
+    )
+    email_id = forms.EmailField(
+        label=_("Email ID"),
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        super(EmailBulkPayload, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-10'
+        self.helper.offset_class = 'col-sm-offset-3 col-md-offset-2'
+        self.fields['repeater_id'].choices = \
+            [(repeater.get_id, '{}: {}'.format(
+                repeater.doc_type,
+                repeater.url,
+            )) for repeater in get_repeaters_by_domain(self.domain)]
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Email Bulk Payload"),
+                crispy.Field('repeater_id'),
+                crispy.Field('payload_ids_file'),
+                crispy.Field('email_id'),
+                twbscrispy.StrictButton(
+                    _("Email Payloads"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )

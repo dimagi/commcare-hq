@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from unittest import expectedFailure
 from corehq.apps.reports.generic import GenericTabularReport
 from django.test import SimpleTestCase
@@ -18,9 +19,9 @@ class GenericTabularReportTests(SimpleTestCase):
         """
         _strip_tags should strip HTML tags from Unicode
         """
-        value = u'<blink>182</blink>'
+        value = '<blink>182</blink>'
         value = GenericTabularReport._strip_tags(value)
-        self.assertEqual(value, u'182')
+        self.assertEqual(value, '182')
 
     def test_strip_tags_passthru(self):
         """

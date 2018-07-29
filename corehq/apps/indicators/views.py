@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django.contrib import messages
 from django.urls import reverse
@@ -22,7 +23,7 @@ from corehq.apps.indicators.models import (
 )
 from corehq.apps.indicators.utils import get_indicator_domains, get_namespaces
 from corehq.apps.hqwebapp.decorators import use_multiselect
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.modules import to_function
 
 
@@ -50,7 +51,6 @@ def default_admin(request, domain, template="reports/base_template.html", **kwar
 
 class IndicatorAdminCRUDFormView(BaseCRUDFormView):
     base_loc = "corehq.apps.indicators.admin.forms"
-    template_name = "indicators/forms/crud.add_indicator.html"
     form_request_manager = IndicatorCRUDFormRequestManager
 
     @method_decorator(require_edit_indicators)
@@ -170,8 +170,8 @@ class BulkImportIndicatorsView(BaseSectionPageView, DomainViewMixin):
         if upload and self.import_form.is_valid():
             data = json.loads(upload.read())
             for (view_type, indicator_class) in [
-                (u'indicator_definitions', IndicatorDefinition),
-                (u'dynamic_indicator_definitions', DynamicIndicatorDefinition),
+                ('indicator_definitions', IndicatorDefinition),
+                ('dynamic_indicator_definitions', DynamicIndicatorDefinition),
             ]:
                 for doc in data[view_type]:
                     copied = indicator_class.copy_to_domain(

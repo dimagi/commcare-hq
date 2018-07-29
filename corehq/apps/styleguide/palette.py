@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 class PaletteColorGroup(object):
     """This defines a group of palette colors that fall under
     the same classification"""

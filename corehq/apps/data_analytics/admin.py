@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.contrib import admin
 from dimagi.utils.django.management import export_as_csv_action
 from .models import MALTRow

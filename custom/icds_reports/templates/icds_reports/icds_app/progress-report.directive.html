@@ -1,6 +1,6 @@
 {% load static %}
 
-<div class="progress-report-directive">
+<div class="progress-report-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
     <div class="row no-margin fixes-filters">
         <div class="col-md-5">
             <div class="row">
@@ -21,7 +21,7 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
-    <div class="report-content" cg-busy="$ctrl.myPromise">
+    <div class="report-content">
         <div ng-if="$ctrl.data === void(0)">
             <h2>No Data</h2>
         </div>
@@ -71,6 +71,9 @@
         <div ng-if="$ctrl.report">
             <div class="alert alert-info" ng-show="$ctrl.showWarning">
                 <strong>Info!</strong> "You are viewing data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be completed until the end of the month."
+            </div>
+            <div class="alert alert-info" ng-show="$ctrl.showPreviousMonthWarning">
+                <strong>Info!</strong> "You are viewing data for {$ $ctrl.previousMonth $}. Data for {$ $ctrl.currentMonth $} will be displayed beginning 3rd {$ $ctrl.currentMonth $}."
             </div>
             <div class="row">
                 <button class="btn btn-info btn-sm right" ng-click="$ctrl.goBack()">Back</button>

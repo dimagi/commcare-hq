@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from datetime import timedelta
 from corehq.apps.sms.util import strip_plus
@@ -78,7 +79,7 @@ class SQLXFormsSession(models.Model):
     # If False, any case changes will be removed from the submission.
     include_case_updates_in_partial_submissions = models.NullBooleanField()
 
-    class Meta:
+    class Meta(object):
         app_label = 'smsforms'
         index_together = [
             ['session_is_open', 'current_action_due'],

@@ -1,6 +1,13 @@
 """
-This module contains utils which can be used for dealing with immunizations
-in the AWW app.
+NOTE: This module was added in September 2017 to provide utils for dealing
+with immunization information in the AWW app, for the purpose of sending SMS
+alerts related to immunizations. The immunization SMS alerts never ended up
+being used, but I'm leaving these utils here in case it will be useful at
+some later point. If you use these utils, you'll want to make sure the
+AWW app still matches up with what is being done here in case there have
+been changes since this was written, but this should at least
+provide a base to start from. If a year goes by and no one uses this, it
+can probably be removed along with the associated tests for it.
 
 Each immunization is represented by a CommCare Supply product. When an
 immunization is applied, it is recorded using a LedgerValue, where the entry_id
@@ -20,17 +27,16 @@ These utils can be used to calculate when immunizations are due for a given
 """
 
 from __future__ import absolute_import
-import pytz
-import re
+from __future__ import unicode_literals
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.util.quickcache import quickcache
-from corehq.util.timezones.conversions import ServerTime
 from custom.icds.case_relationships import (
     child_person_case_from_tasks_case,
     ccs_record_case_from_tasks_case,
 )
+from custom.icds.rules.util import get_date, todays_date
 from datetime import datetime, date, timedelta
 import six
 
@@ -65,22 +71,6 @@ def get_tasks_case_immunization_ledger_values(tasks_case):
 
 def get_immunization_date(ledger_value):
     return date(1970, 1, 1) + timedelta(days=ledger_value.balance)
-
-
-def get_date(value):
-    if isinstance(value, date):
-        if isinstance(value, datetime):
-            return value.date()
-
-        return value
-
-    if not isinstance(value, six.string_types):
-        raise TypeError("Expected date, datetime, or string")
-
-    if not re.match('^\d{4}-\d{2}-\d{2}', value):
-        raise ValueError("Expected a date string")
-
-    return datetime.strptime(value, '%Y-%m-%d').date()
 
 
 def get_immunization_anchor_date(tasks_case):
@@ -141,10 +131,6 @@ def calculate_immunization_window(tasks_case, anchor_date, immunization_product,
     return (start_date, end_date)
 
 
-def todays_date():
-    return ServerTime(datetime.utcnow()).user_time(pytz.timezone('Asia/Kolkata')).done().date()
-
-
 def immunization_is_due(tasks_case, anchor_date, immunization_product, all_immunization_products, ledger_values):
     """
     :param tasks_case: the CommCareCaseSQL with case type 'tasks'
@@ -172,7 +158,7 @@ def immunization_is_due(tasks_case, anchor_date, immunization_product, all_immun
             return False
 
     # If all of the above checks pass, check that today's date falls within the immunization window
-    today = todays_date()
+    today = todays_date(datetime.utcnow())
 
     start_date, end_date = calculate_immunization_window(
         tasks_case,

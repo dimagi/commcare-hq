@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 
 from django.conf import settings
@@ -388,14 +389,12 @@ def related_dates_changed(case):
 
 @receiver(post_save, sender=SQLLocation, dispatch_uid="create_nikshay_he_repeat_records")
 def create_location_repeat_records(sender, raw=False, **kwargs):
-    if raw or settings.SERVER_ENVIRONMENT != "enikshay":
+    if raw:
         return
     create_repeat_records(NikshayHealthEstablishmentRepeater, kwargs['instance'])
 
 
 def create_nikshay_case_repeat_records(sender, case, **kwargs):
-    if settings.SERVER_ENVIRONMENT != "enikshay":
-        return
     create_repeat_records(NikshayRegisterPatientRepeater, case)
     create_repeat_records(NikshayTreatmentOutcomeRepeater, case)
     create_repeat_records(NikshayFollowupRepeater, case)

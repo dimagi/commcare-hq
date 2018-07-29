@@ -1,7 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.locations.permissions import location_safe
 from .users import ExpandedMobileWorkerFilter, EmwfUtils

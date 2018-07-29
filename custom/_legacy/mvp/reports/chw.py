@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 import logging
@@ -9,7 +10,7 @@ from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCo
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.html import format_html
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
@@ -29,7 +30,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     @memoized
     def template_report(self):
         if self.is_rendered_as_email:
-            self.report_template_path = "reports/async/tabular.html"
+            self.report_template_path = "reports/tabular.html"
         return super(CHWManagerReport, self).template_report
 
     @property

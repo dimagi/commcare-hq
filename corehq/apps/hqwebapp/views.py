@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import json
 import logging
 import os
@@ -19,15 +20,17 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
 from django.core.mail.message import EmailMessage
-from django.http import HttpResponseRedirect, HttpResponse, Http404,\
-    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
-    HttpResponseForbidden
+from django.http import HttpResponseRedirect, HttpResponse, Http404, \
+    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest, \
+    HttpResponseForbidden, HttpResponsePermanentRedirect
 from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, LANGUAGE_SESSION_KEY
+
+
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
@@ -39,12 +42,16 @@ from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
+from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
+from corehq.apps.users.models import CouchUser
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
+
+from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
@@ -54,19 +61,18 @@ from soil import views as soil_views
 
 from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
+from corehq.apps.domain.decorators import require_superuser, login_and_domain_required, two_factor_exempt
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
 from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress, DropboxInvalidToken
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN, DropboxAuthInitiate
-from corehq.apps.hqadmin import service_checks as checks
 from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name, update_session_language
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
@@ -76,7 +82,7 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 import six
@@ -97,10 +103,17 @@ def format_traceback_the_way_python_does(type, exc, tb):
     NameError: name 'name' is not defined
     """
 
-    return u'Traceback (most recent call last):\n{}{}: {}'.format(
+    if six.PY3:
+        exc_message = six.text_type(exc)
+    else:
+        exc_message = exc.message
+        if isinstance(exc_message, six.binary_type):
+            exc_message = exc_message.decode('utf-8')
+
+    return 'Traceback (most recent call last):\n{}{}: {}'.format(
         ''.join(traceback.format_tb(tb)),
         type.__name__,
-        six.text_type(exc)
+        exc_message
     )
 
 
@@ -151,15 +164,7 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            if settings.ENABLE_PRELOGIN_SITE:
-                try:
-                    from corehq.apps.prelogin.views import HomePublicView
-                    url = reverse(HomePublicView.urlname)
-                except ImportError:
-                    # this happens when the prelogin app is not included.
-                    url = reverse('login')
-            else:
-                url = reverse('login')
+            url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
@@ -243,62 +248,49 @@ def password_change(req):
 
 
 def server_up(req):
-    '''
-    Hit serverup.txt to check any of the below item with always_check: True
-    Hit serverup.txt?celery (or heartbeat) to check a specific service
-    View that just returns "success", which can be hooked into server monitoring tools like: pingdom
-    '''
+    """
+    Health check view which can be hooked into server monitoring tools like 'pingdom'
 
-    checkers = {
-        "heartbeat": {
-            "always_check": False,
-            "check_func": checks.check_heartbeat,
-        },
-        "celery": {
-            "always_check": True,
-            "check_func": checks.check_celery,
-        },
-        "postgres": {
-            "always_check": True,
-            "check_func": checks.check_postgres,
-        },
-        "couch": {
-            "always_check": True,
-            "check_func": checks.check_couch,
-        },
-        "redis": {
-            "always_check": True,
-            "check_func": checks.check_redis,
-        },
-        "formplayer": {
-            "always_check": True,
-            "check_func": checks.check_formplayer,
-        },
-        "elasticsearch": {
-            "always_check": True,
-            "check_func": checks.check_elasticsearch,
-        },
-    }
+    Returns:
+        HttpResponse("success", status_code=200)
+        HttpResponse(error_message, status_code=500)
 
-    failed = False
-    message = ['Problems with HQ (%s):' % os.uname()[1]]
-    for check, check_info in checkers.items():
-        if check_info['always_check'] or req.GET.get(check, None) is not None:
-            try:
-                status = check_info['check_func']()
-            except Exception:
-                # Don't display the exception message
-                status = checks.ServiceStatus(False, "{} has issues".format(check))
-            if not status.success:
-                failed = True
-                message.append(status.msg)
+    Hit serverup.txt to check all the default enabled services (always_check=True)
+    Hit serverup.txt?only={check_name} to only check a specific service
+    Hit serverup.txt?{check_name} to include a non-default check (currently only ``heartbeat``)
+    """
+    only = req.GET.get('only', None)
+    if only and only in CHECKS:
+        checks_to_do = [only]
+    else:
+        checks_to_do = [
+            check
+            for check, check_info in CHECKS.items()
+            if check_info['always_check'] or req.GET.get(check, None) is not None
+        ]
 
-    if failed and not is_deploy_in_progress():
+    statuses = run_checks(checks_to_do)
+    failed_checks = [(check, status) for check, status in statuses if not status.success]
+
+    tags = [
+        'status:{}'.format('failed' if failed_checks else 'ok'),
+    ]
+    for check_name, status in statuses:
+        datadog_gauge('commcare.serverup.check', status.duration, tags=tags + [
+            'check:{}'.format(check_name)
+        ])
+
+    if failed_checks and not is_deploy_in_progress():
+        status_messages = [
+            '{}: {}'.format(check, status.msg)
+            for check, status in failed_checks
+        ]
         create_datadog_event(
-            'Serverup check failed', '\n'.join(message),
+            'Serverup check failed', '\n'.join(status_messages),
             alert_type='error', aggregation_key='serverup',
         )
-        return HttpResponse('<br>'.join(message), status=500)
+        status_messages.insert(0, 'Failed Checks (%s):' % os.uname()[1])
+        return HttpResponse('<br>'.join(status_messages), status=500)
     else:
         return HttpResponse("success")
 
@@ -350,9 +342,15 @@ def _login(req, domain_name, template_name):
             return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
     if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
-        req.POST._mutable = True
-        req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
-        req.POST._mutable = False
+        with mutable_querydict(req.POST):
+            req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
+
+    if 'auth-username' in req.POST:
+        couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
+        if couch_user:
+            new_lang = couch_user.language
+            old_lang = req.session.get(LANGUAGE_SESSION_KEY)
+            update_session_language(req, old_lang, new_lang)
 
     req.base_template = settings.BASE_TEMPLATE
 
@@ -379,11 +377,10 @@ def _login(req, domain_name, template_name):
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
+@two_factor_exempt
 @sensitive_post_parameters('auth-password')
 def login(req):
-    # this view, and the one below, is overridden because
-    # we need to set the base template to use somewhere
-    # somewhere that the login page can access it.
+    # This is a wrapper around the _login view
 
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
@@ -396,6 +393,7 @@ def login(req):
 
 @location_safe
 def domain_login(req, domain, template_name="login_and_password/login.html"):
+    # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
         raise Http404
@@ -430,11 +428,7 @@ class CloudCareLoginView(HQLoginView):
     ]
 
 
-def is_mobile_url(url):
-    # Minor hack
-    return ('reports/custom/mobile' in url)
-
-
+@two_factor_exempt
 def logout(req):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
@@ -442,11 +436,7 @@ def logout(req):
     # we don't actually do anything with the response here:
     django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
 
-    if referer and domain and is_mobile_url(referer):
-        mobile_mainnav_url = reverse('custom_project_report_dispatcher', args=[domain, 'mobile/mainnav'])
-        mobile_login_url = reverse('domain_mobile_login', kwargs={'domain': domain})
-        return HttpResponseRedirect('%s?next=%s' % (mobile_login_url, mobile_mainnav_url))
-    elif referer and domain:
+    if referer and domain:
         domain_login_url = reverse('domain_login', kwargs={'domain': domain})
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
@@ -461,7 +451,7 @@ def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file
 
 
 def dropbox_next_url(request, download_id):
-    return request.POST.get('dropbox-next', None) or request.META.get('HTTP_REFERER', '/')
+    return request.META.get('HTTP_REFERER', '/')
 
 
 @login_required
@@ -491,7 +481,7 @@ def dropbox_upload(request, download_id):
             uploader = DropboxUploadHelper.objects.get(download_id=download_id)
             messages.warning(
                 request,
-                u'The file is in the process of being synced to dropbox! It is {0:.2f}% '
+                'The file is in the process of being synced to dropbox! It is {0:.2f}% '
                 'complete.'.format(uploader.progress * 100)
             )
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
@@ -500,7 +490,7 @@ def dropbox_upload(request, download_id):
 
         messages.success(
             request,
-            _(u"Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
+            _("Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
                 " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
         )
 
@@ -543,12 +533,12 @@ def jserror(request):
             browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
 
     datadog_counter(JSERROR_COUNT, tags=[
-        u'os:{}'.format(os),
-        u'browser_version:{}'.format(browser_version),
-        u'browser_name:{}'.format(browser_name),
-        u'url:{}'.format(sanitize_url(request.POST.get('page', None))),
-        u'file:{}'.format(request.POST.get('filename')),
-        u'bot:{}'.format(bot),
+        'os:{}'.format(os),
+        'browser_version:{}'.format(browser_version),
+        'browser_name:{}'.format(browser_name),
+        'url:{}'.format(sanitize_url(request.POST.get('page', None))),
+        'file:{}'.format(request.POST.get('filename')),
+        'bot:{}'.format(bot),
     ])
 
     return HttpResponse('')
@@ -579,9 +569,6 @@ class BugReportView(View):
             'sentry_id',
         )])
 
-        report['user_agent'] = req.META['HTTP_USER_AGENT']
-        report['datetime'] = datetime.utcnow()
-
         try:
             couch_user = req.couch_user
             full_name = couch_user.full_name
@@ -604,15 +591,21 @@ class BugReportView(View):
             domain = "<no domain>"
 
         message = (
-            u"username: {username}\n"
-            u"full name: {full_name}\n"
-            u"domain: {domain}\n"
-            u"url: {url}\n"
-            u"datetime: {datetime}\n"
-            u"User Agent: {user_agent}\n"
+            "username: {username}\n"
+            "full name: {full_name}\n"
+            "domain: {domain}\n"
+            "url: {url}\n"
         ).format(**report)
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
+        debug_context = {
+            'datetime': datetime.utcnow(),
+            'self_started': '<unknown>',
+            'scale_backend': '<unknown>',
+            'has_handoff_info': '<unknown>',
+            'project_description': '<unknown>',
+            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+        }
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
             new_project_description = req.POST.get('project_description')
@@ -622,42 +615,24 @@ class BugReportView(View):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
-            matching_subscriptions = Subscription.visible_objects.filter(
-                is_active=True,
-                subscriber__domain=domain,
-            )
-            if len(matching_subscriptions) >= 1:
-                software_plan = matching_subscriptions[0].plan_version
-            else:
-                software_plan = u'domain has no active subscription'
-
             message += ((
-                u"software plan: {software_plan}\n"
-                u"Is self start: {self_started}\n"
-                u"Feature Flags: {feature_flags}\n"
-                u"Feature Previews: {feature_previews}\n"
-                u"Is scale backend: {scale_backend}\n"
-                u"Has Support Hand-off Info: {has_handoff_info}\n"
-                u"Internal Project Information: {internal_info_link}\n"
-                u"Project description: {project_description}\n"
-                u"Sentry Error: {sentry_error}\n"
+                "software plan: {software_plan}\n"
             ).format(
-                software_plan=software_plan,
-                self_started=domain_object.internal.self_started,
-                feature_flags=list(toggles.toggles_dict(username=report['username'], domain=domain)),
-                feature_previews=list(feature_previews.previews_dict(domain)),
-                scale_backend=should_use_sql_backend(domain),
-                has_handoff_info=bool(domain_object.internal.partner_contact),
-                internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),
-                project_description=domain_object.project_description,
-                sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+                software_plan=Subscription.get_subscribed_plan_by_domain(domain),
             ))
 
-        subject = u'{subject} ({domain})'.format(subject=report['subject'], domain=domain)
+            debug_context.update({
+                'self_started': domain_object.internal.self_started,
+                'scale_backend': should_use_sql_backend(domain),
+                'has_handoff_info': bool(domain_object.internal.partner_contact),
+                'project_description': domain_object.project_description,
+            })
+
+        subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
         cc = [el for el in report['cc'].strip().split(",") if el]
 
         if full_name and not any([c in full_name for c in '<>"']):
-            reply_to = u'"{full_name}" <{email}>'.format(**report)
+            reply_to = '"{full_name}" <{email}>'.format(**report)
         else:
             reply_to = report['email']
 
@@ -666,13 +641,21 @@ class BugReportView(View):
         if settings.HQ_ACCOUNT_ROOT in reply_to:
             reply_to = settings.SERVER_EMAIL
 
-        message += u"Message:\n\n{message}\n".format(message=report['message'])
+        message += "Message:\n\n{message}\n".format(message=report['message'])
         if req.POST.get('five-hundred-report'):
-            extra_message = ("This messge was reported from a 500 error page! "
+            extra_message = ("This message was reported from a 500 error page! "
                              "Please fix this ASAP (as if you wouldn't anyway)...")
+            extra_debug_info = (
+                "datetime: {datetime}\n"
+                "Is self start: {self_started}\n"
+                "Is scale backend: {scale_backend}\n"
+                "Has Support Hand-off Info: {has_handoff_info}\n"
+                "Project description: {project_description}\n"
+                "Sentry Error: {sentry_error}\n"
+            ).format(**debug_context)
             traceback_info = cache.cache.get(report['500traceback'])
             cache.cache.delete(report['500traceback'])
-            message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
+            message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
 
         email = EmailMessage(
             subject=subject,
@@ -714,10 +697,6 @@ def render_static(request, template, page_name):
                   {'tmpl': template, 'page_name': page_name})
 
 
-def eula(request):
-    return render_static(request, "eula.html", _("End User License Agreement"))
-
-
 def cda(request):
     return render_static(request, "cda.html", _("Content Distribution Agreement"))
 
@@ -728,23 +707,6 @@ def apache_license(request):
 
 def bsd_license(request):
     return render_static(request, "bsd_license.html", _("BSD License"))
-
-
-def product_agreement(request):
-    return render_static(request, "product_agreement.html", _("Product Subscription Agreement"))
-
-
-def unsubscribe(request, user_id):
-    # todo in the future we should not require a user to be logged in to unsubscribe.
-    from django.contrib import messages
-    from corehq.apps.settings.views import MyAccountSettingsView
-    messages.info(request,
-                  _('Check "Opt out of emails about new features '
-                    'and other CommCare updates" in your account '
-                    'settings and then click "Update Information" '
-                    'if you do not want to receive future emails '
-                    'from us.'))
-    return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
 
 
 class BasePageView(TemplateView):
@@ -1184,10 +1146,10 @@ class MaintenanceAlertsView(BasePageView):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
         return {
             'alerts': [{
-            'created': six.text_type(alert.created),
-            'active': alert.active,
-            'html': alert.html,
-            'id': alert.id,
+                'created': six.text_type(alert.created),
+                'active': alert.active,
+                'html': alert.html,
+                'id': alert.id,
             } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
         }
 
@@ -1285,3 +1247,28 @@ class HQJSONResponseMixin(JSONResponseMixin):
         from djangular.templatetags.djangular_tags import djng_current_rmi
         context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
         return context
+
+
+def redirect_to_dimagi(endpoint):
+    def _redirect(request, lang_code=None):
+        if settings.SERVER_ENVIRONMENT in [
+            'production',
+            'softlayer',
+            'staging',
+            'changeme',
+            'localdev',
+        ]:
+            return HttpResponsePermanentRedirect(
+                "https://www.dimagi.com/{}{}".format(
+                    endpoint,
+                    "?lang={}".format(lang_code) if lang_code else "",
+                )
+            )
+        return redirect_to_default(request)
+    return _redirect
+
+
+def temporary_google_verify(request):
+    # will remove once google search console verify process completes
+    # BMB 4/20/18
+    return render(request, "google9633af922b8b0064.html")

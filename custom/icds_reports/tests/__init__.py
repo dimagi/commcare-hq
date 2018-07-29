@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import os
 from datetime import datetime
 
@@ -16,7 +17,10 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
-from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
+from custom.icds_reports.tasks import (
+    move_ucr_data_into_aggregation_tables,
+    _aggregate_child_health_pnc_forms)
+from io import open
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
@@ -28,9 +32,16 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'infrastructure': 'config_report_icds-cas_static-infrastructure_form_05fe0f1a',
     'location_ucr': 'config_report_icds-cas_static-awc_location_88b3f9c3',
     'person_cases': 'config_report_icds-cas_static-person_cases_v2_b4b5d57a',
-    'ucr_table_name_mapping': 'ucr_table_name_mapping',
     'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',
-    'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58'
+    'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
+    'complementary_feeding': 'config_report_icds-cas_static-complementary_feeding_fo_4676987e',
+    'aww_user': 'config_report_icds-cas_static-commcare_user_cases_85763310',
+    'child_tasks': 'config_report_icds-cas_static-child_tasks_cases_3548e54b',
+    'pregnant_tasks': 'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
+    'thr_form': 'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
+    'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
+    'pnc_forms': 'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
+    'dashboard_daily_feeding': 'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
 }
 
 
@@ -56,6 +67,17 @@ def setUpModule():
         location_type=location_type
     )
 
+    state_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='state',
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='st1',
+        location_id='st1',
+        location_type=state_location_type
+    )
+
     awc_location_type = LocationType.objects.create(
         domain=domain.name,
         name='awc',
@@ -67,14 +89,15 @@ def setUpModule():
         location_type=awc_location_type
     )
 
-    with override_settings(SERVER_ENVIRONMENT='icds'):
+    with override_settings(SERVER_ENVIRONMENT='icds-new'):
         configs = StaticDataSourceConfiguration.by_domain('icds-cas')
         adapters = [get_indicator_adapter(config) for config in configs]
 
         for adapter in adapters:
-            if adapter.config.table_id == 'static-child_health_cases':
-                # hack because this is in a migration
-                continue
+            try:
+                adapter.drop_table()
+            except Exception:
+                pass
             adapter.build_table()
 
         engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
@@ -82,16 +105,28 @@ def setUpModule():
         metadata.reflect(bind=engine, extend_existing=True)
         path = os.path.join(os.path.dirname(__file__), 'fixtures')
         for file_name in os.listdir(path):
-            with open(os.path.join(path, file_name)) as f:
+            with open(os.path.join(path, file_name), encoding='utf-8') as f:
                 table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
                 table = metadata.tables[table_name]
-                postgres_copy.copy_from(f, table, engine, format='csv', null='', header=True)
+                if not table_name.startswith('icds_dashboard_'):
+                    postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
+
+        _aggregate_child_health_pnc_forms('st1', datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
-        except AssertionError:
-            pass
-    _call_center_domain_mock.stop()
+        except AssertionError as e:
+            # we always use soft assert to email when the aggregation has completed
+            if "Aggregation completed" not in str(e):
+                print(e)
+                tearDownModule()
+                raise
+        except Exception as e:
+            print(e)
+            tearDownModule()
+            raise
+        finally:
+            _call_center_domain_mock.stop()
 
 
 def tearDownModule():
@@ -102,7 +137,7 @@ def tearDownModule():
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
-    with override_settings(SERVER_ENVIRONMENT='icds'):
+    with override_settings(SERVER_ENVIRONMENT='icds-new'):
         configs = StaticDataSourceConfiguration.by_domain('icds-cas')
         adapters = [get_indicator_adapter(config) for config in configs]
         for adapter in adapters:

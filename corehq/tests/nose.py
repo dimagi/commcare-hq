@@ -11,6 +11,8 @@ Adapted from testrunner.TwoStageTestRunner
 Based on http://www.caktusgroup.com/blog/2013/10/02/skipping-test-db-creation/
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from __future__ import print_function
 import logging
 import os
 import sys
@@ -48,7 +50,6 @@ class HqTestFinderPlugin(Plugin):
         "submodules/dimagi-utils-src",
         "submodules/django-digest-src",
         "submodules/toggle",
-        "submodules/touchforms-src",
     ]
 
     def options(self, parser, env):
@@ -206,9 +207,9 @@ class HqdbContext(DatabaseContext):
         if self.reuse_db == "reset":
             self.delete_couch_databases()
 
-        sys.__stdout__.write("\n")  # newline for creating database message
+        print("", file=sys.__stdout__)  # newline for creating database message
         if self.reuse_db:
-            sys.__stdout__.write("REUSE_DB={} ".format(self.reuse_db))
+            print("REUSE_DB={} ".format(self.reuse_db), file=sys.__stdout__, end="")
         super(HqdbContext, self).setup()
 
     def _databases_ok(self):
@@ -219,11 +220,12 @@ class HqdbContext(DatabaseContext):
             assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
             try:
                 connection.ensure_connection()
-            except OperationalError:
+            except OperationalError as e:
+                print(str(e), file=sys.__stderr__)
                 return False
             old_names.append((connection, db["NAME"], True))
 
-        self.old_names = old_names, []
+        self.old_names = old_names
         return True
 
     def delete_couch_databases(self):
@@ -260,7 +262,7 @@ def print_imports_until_thread_change():
     (often caused by an import when running tests --with-doctest).
     """
     main = threading.current_thread()
-    sys.__stdout__.write("setting up import hook on %s\n" % main)
+    print("setting up import hook on %s" % main, file=sys.__stdout__)
 
     class InfoImporter(object):
 
@@ -269,7 +271,7 @@ def print_imports_until_thread_change():
             # add code here to check for other things happening on import
             #if name == 'gevent':
             #    sys.exit()
-            sys.__stdout__.write("%s %s\n" % (thread, name))
+            print("%s %s" % (thread, name), file=sys.__stdout__)
             if thread is not main:
                 sys.exit()
             return None
@@ -295,7 +297,7 @@ def flush_databases():
     Useful when you break a test and it doesn't clean up properly. This took
     about 5 seconds to run when trying it out.
     """
-    sys.__stdout__.write("Flushing test databases, check yourself before you wreck yourself!\n")
+    print("Flushing test databases, check yourself before you wreck yourself!", file=sys.__stdout__)
     for db in get_all_test_dbs():
         try:
             db.flush()

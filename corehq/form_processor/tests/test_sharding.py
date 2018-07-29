@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import defaultdict
 from unittest import skipUnless, SkipTest
 from uuid import uuid4, UUID

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import INCOMING
 from corehq.form_processor.tests.utils import run_with_all_backends

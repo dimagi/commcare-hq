@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div id="{{ css_id }}">
+<div class="report-filter-phone-number" data-initial-value='{{ initial_value|JSON }}' data-groups='{{ groups|JSON }}'>
   <div class="form-group">
     <label class="control-label {{ css_label_class }}">{% trans "Filter Type" %}</label>
     <div class="{{ css_field_class }}">
@@ -69,15 +69,3 @@
     </div>
   </div>
 </div>
-
-<script type="text/javascript">
-$.getScript("{% static 'sms/js/phone_number_filter.js' %}", function() {
-  var initial_value = {{ initial_value|JSON }},
-  model = new SMSPhoneNumberFilterViewModel(initial_value, {{ groups|JSON }});
-  $('#{{ css_id }}').koApplyBindings(model);
-  $('[name=selected_group]').select2({
-      allowClear: true,
-      placeholder: '{% trans "Select a group" %}',
-  });
-});
-</script>

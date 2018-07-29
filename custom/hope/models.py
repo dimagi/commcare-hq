@@ -1,7 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
 from custom.hope.const import MOTHER_OTHER_PROPERTIES, CHILD_OTHER_PROPERTIES, CHILD_EVENTS_ATTRIBUTES, MOTHER_EVENTS_ATTRIBUTES

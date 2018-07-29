@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from dimagi.utils.decorators.log_exception import log_exception
+from io import open
 
 
 class Command(BaseCommand):
@@ -24,7 +25,7 @@ class Command(BaseCommand):
 
     @log_exception()
     def handle(self, filename, **options):
-        with open(filename) as f:
+        with open(filename, encoding='utf-8') as f:
             body = json.loads(f.read())
 
             # intentionally fails hard if bad or missing doc_type

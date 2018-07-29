@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from couchdbkit.exceptions import BulkSaveError
 from django.test import TestCase, SimpleTestCase
@@ -8,7 +9,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
+from corehq.apps.reports.view_helpers import get_case_hierarchy
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.hqcase.utils import submit_case_blocks

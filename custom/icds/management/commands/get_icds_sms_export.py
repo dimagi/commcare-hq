@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import pytz
 from collections import defaultdict
 from corehq.apps.sms.models import SMS
@@ -10,8 +11,9 @@ from corehq.util.argparse_types import date_type
 from corehq.util.timezones.conversions import UserTime, ServerTime
 from couchexport.export import export_raw
 from datetime import datetime, timedelta, time
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.core.management.base import BaseCommand
+from io import open
 
 
 class BaseICDSSMSExportCommand(BaseCommand):

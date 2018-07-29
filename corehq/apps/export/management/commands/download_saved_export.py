@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import shutil
 from datetime import datetime
 from django.conf import settings
@@ -7,6 +8,7 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.util.files import safe_filename
+from io import open
 
 
 def download_saved_export(export_id, dest_dir=None):
@@ -20,7 +22,7 @@ def download_saved_export(export_id, dest_dir=None):
     )
     payload = export_instance.get_payload(stream=True)
     print("Downloading Export to {}".format(export_archive_path))
-    with open(export_archive_path, 'w') as download:
+    with open(export_archive_path, 'wb') as download:
         shutil.copyfileobj(payload, download)
     print("Download Finished!")
 

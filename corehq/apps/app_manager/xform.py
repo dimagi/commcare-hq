@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
@@ -8,16 +9,17 @@ from django.utils.translation import ugettext_lazy as _
 
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from corehq.apps import nimbus_api
+from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE)
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE,
+)
 from lxml import etree as ET
 
-from corehq.apps.nimbus_api.exceptions import NimbusAPIException
+from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
 from corehq.util.view_utils import get_request
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
 import collections
@@ -36,7 +38,7 @@ def parse_xml(string):
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
     except ET.ParseError as e:
-        raise XFormException(_(u"Error parsing XML: {}").format(e))
+        raise XFormException(_("Error parsing XML: {}").format(e))
 
 
 namespaces = dict(
@@ -250,7 +252,7 @@ class ItextNodeGroup(object):
 
     def add_node(self, node):
         if self.nodes.get(node.lang):
-            raise XFormException(_(u"Group already has node for lang: {0}").format(node.lang))
+            raise XFormException(_("Group already has node for lang: {0}").format(node.lang))
         else:
             self.nodes[node.lang] = node
 
@@ -573,8 +575,8 @@ def validate_xform(domain, source):
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
     try:
-        validation_results = nimbus_api.validate_form(source)
-    except NimbusAPIException:
+        validation_results = formplayer_api.validate_form(source)
+    except FormplayerAPIException:
         raise XFormValidationFailed("Unable to validate form")
 
     if not validation_results.success:
@@ -761,7 +763,7 @@ class XForm(WrappedNode):
 
         for dup in duplicates:
             for group in dup[1:]:
-                itext_ref = u'{{f}}text[@id="{0}"]'.format(group.id)
+                itext_ref = '{{f}}text[@id="{0}"]'.format(group.id)
                 for lang in group.nodes.keys():
                     translation = translations[lang]
                     node = translation.find(itext_ref)
@@ -775,10 +777,10 @@ class XForm(WrappedNode):
         xf_string = self.render()
         for dup in duplicates:
             reference = dup[0]
-            new_ref = u"jr:itext('{0}')".format(reference.id)
+            new_ref = "jr:itext('{0}')".format(reference.id)
 
             for group in dup[1:]:
-                old_ref = u'jr:itext(\'{0}\')'.format(group.id)
+                old_ref = 'jr:itext(\'{0}\')'.format(group.id)
                 xf_string = replace_ref_s(xf_string, old_ref, new_ref)
 
         self.xml = parse_xml(xf_string)
@@ -820,9 +822,9 @@ class XForm(WrappedNode):
         duplicate_node = self.translations().get(new_code)
 
         if not trans_node or not trans_node.exists():
-            raise XFormException(_(u"There's no language called '{}'").format(old_code))
+            raise XFormException(_("There's no language called '{}'").format(old_code))
         if duplicate_node and duplicate_node.exists():
-            raise XFormException(_(u"There's already a language called '{}'").format(new_code))
+            raise XFormException(_("There's already a language called '{}'").format(new_code))
         trans_node.attrib['lang'] = new_code
 
         self._reset_translations_cache()
@@ -835,7 +837,7 @@ class XForm(WrappedNode):
                 changes = True
 
         if changes and not len(self.itext_node):
-            raise XFormException(_(u"Form does not contain any translations for any of the build languages"))
+            raise XFormException(_("Form does not contain any translations for any of the build languages"))
 
         if changes:
             self._reset_translations_cache()
@@ -873,11 +875,11 @@ class XForm(WrappedNode):
             for f in text_node.values_by_form.keys():
                 if f not in VALID_VALUE_FORMS + (None,):
                     raise XFormException(_(
-                        u'Unrecognized value of "form" attribute in \'<value form="{}">\'. '
-                        u'"form" attribute is optional. Valid values are: "{}".').format(
-                            f, u'", "'.join(VALID_VALUE_FORMS)
+                        'Unrecognized value of "form" attribute in \'<value form="{}">\'. '
+                        '"form" attribute is optional. Valid values are: "{}".').format(
+                            f, '", "'.join(VALID_VALUE_FORMS)
                     ))
-            raise XFormException(_(u'<translation lang="{lang}"><text id="{id}"> node has no <value>').format(
+            raise XFormException(_('<translation lang="{lang}"><text id="{id}"> node has no <value>').format(
                 lang=lang, id=id
             ))
 
@@ -988,6 +990,7 @@ class XForm(WrappedNode):
                 "constraint": cnode.constraint,
                 "comment": self._get_comment(leaf_data_nodes, path),
                 "hashtagValue": self.hashtag_path(path),
+                "setvalue": self.get_setvalue(path),
             }
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
@@ -999,7 +1002,7 @@ class XForm(WrappedNode):
                     try:
                         value = item.findtext('{f}value').strip()
                     except AttributeError:
-                        raise XFormException(_(u"<item> ({}) has no <value>").format(translation))
+                        raise XFormException(_("<item> ({}) has no <value>").format(translation))
                     option = {
                         'label': translation,
                         'value': value
@@ -1191,6 +1194,12 @@ class XForm(WrappedNode):
         except KeyError:
             return None
 
+    def get_setvalue(self, path):
+        try:
+            return self.model_node.find('{f}setvalue[@ref="%s"]' % path).attrib['value']
+        except (KeyError, AttributeError):
+            return None
+
     def get_path(self, node):
         path = None
         if 'nodeset' in node.attrib:
@@ -1208,7 +1217,7 @@ class XForm(WrappedNode):
         elif node.tag_name == "repeat":
             path = node.attrib['nodeset']
         else:
-            raise XFormException(_(u"Node <{}> has no 'ref' or 'bind'").format(node.tag_name))
+            raise XFormException(_("Node <{}> has no 'ref' or 'bind'").format(node.tag_name))
         return path
 
     def get_leaf_data_nodes(self):
@@ -1290,7 +1299,7 @@ class XForm(WrappedNode):
 
     def add_meta_2(self, form):
         case_parent = self.data_node
-
+        app = form.get_app()
         # Test all of the possibilities so that we don't end up with two "meta" blocks
         for meta in self.already_has_meta():
             case_parent.remove(meta.xml)
@@ -1309,6 +1318,7 @@ class XForm(WrappedNode):
             '{orx}userID',
             '{orx}instanceID',
             '{cc}appVersion',
+            '{orx}drift',
         )
         if form.get_auto_gps_capture():
             tags += ('{cc}location',)
@@ -1348,9 +1358,15 @@ class XForm(WrappedNode):
             ref="meta/appVersion",
             value="instance('commcaresession')/session/context/appversion"
         )
+        self.add_setvalue(
+            ref="meta/drift",
+            event="xforms-revalidate",
+            value="if(count(instance('commcaresession')/session/context/drift) = 1, "
+                  "instance('commcaresession')/session/context/drift, '')",
+        )
 
         # never add pollsensor to a pre-2.14 app
-        if form.get_app().enable_auto_gps:
+        if app.enable_auto_gps:
             if form.get_auto_gps_capture():
                 self.add_pollsensor(ref=self.resolve_path("meta/location"))
             elif self.model_node.findall("{f}bind[@type='geopoint']"):
@@ -1423,11 +1439,11 @@ class XForm(WrappedNode):
             return 'true()'
         elif condition.type == 'if':
             if condition.operator == 'selected':
-                template = u"selected({path}, '{answer}')"
+                template = "selected({path}, '{answer}')"
             elif condition.operator == 'boolean_true':
-                template = u"{path}"
+                template = "{path}"
             else:
-                template = u"{path} = '{answer}'"
+                template = "{path} = '{answer}'"
             return template.format(
                 path=self.resolve_path(condition.question),
                 answer=condition.answer
@@ -1600,35 +1616,35 @@ class XForm(WrappedNode):
         forms_due = []
         for form in forms:
             form_xpath = QualifiedScheduleFormXPath(form, form.get_phase(), form.get_module(), case)
-            name = u"next_{}".format(form.schedule_form_id)
-            forms_due.append(u"/data/{}".format(name))
+            name = "next_{}".format(form.schedule_form_id)
+            forms_due.append("/data/{}".format(name))
 
             self.add_instance(
                 form_xpath.fixture_id,
-                u'jr://fixture/{}'.format(form_xpath.fixture_id)
+                'jr://fixture/{}'.format(form_xpath.fixture_id)
             )
 
             if form.get_phase().id == 1:
                 self.add_bind(
-                    nodeset=u'/data/{}'.format(name),
+                    nodeset='/data/{}'.format(name),
                     calculate=form_xpath.first_visit_phase_set
                 )
             else:
                 self.add_bind(
-                    nodeset=u'/data/{}'.format(name),
+                    nodeset='/data/{}'.format(name),
                     calculate=form_xpath.xpath_phase_set
                 )
 
             self.data_node.append(_make_elem(name))
 
         self.add_bind(
-            nodeset=u'/data/{}'.format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE),
-            calculate=u'date(min({}))'.format(','.join(forms_due))
+            nodeset='/data/{}'.format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE),
+            calculate='date(min({}))'.format(','.join(forms_due))
         )
         self.data_node.append(_make_elem(SCHEDULE_GLOBAL_NEXT_VISIT_DATE))
 
         self.add_bind(
-            nodeset=u'/data/{}'.format(SCHEDULE_NEXT_DUE),
+            nodeset='/data/{}'.format(SCHEDULE_NEXT_DUE),
             calculate=QualifiedScheduleFormXPath.next_visit_date(forms, case)
         )
         self.data_node.append(_make_elem(SCHEDULE_NEXT_DUE))
@@ -1646,11 +1662,11 @@ class XForm(WrappedNode):
 
             self.add_instance(
                 schedule_form_xpath.fixture_id,
-                u'jr://fixture/{}'.format(schedule_form_xpath.fixture_id)
+                'jr://fixture/{}'.format(schedule_form_xpath.fixture_id)
             )
 
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(action.form_element_name, SCHEDULE_PHASE),
+                nodeset='{}/case/update/{}'.format(action.form_element_name, SCHEDULE_PHASE),
                 type="xs:integer",
                 calculate=schedule_form_xpath.current_schedule_phase_calculation(
                     self.action_relevance(form.schedule.termination_condition),
@@ -1661,32 +1677,32 @@ class XForm(WrappedNode):
             self._add_scheduler_case_update(action.case_type, SCHEDULE_PHASE)
 
             self.add_bind(
-                nodeset=u'/data/{}'.format(SCHEDULE_CURRENT_VISIT_NUMBER),
+                nodeset='/data/{}'.format(SCHEDULE_CURRENT_VISIT_NUMBER),
                 calculate=schedule_form_xpath.next_visit_due_num
             )
             self.data_node.append(_make_elem(SCHEDULE_CURRENT_VISIT_NUMBER))
 
             self.add_bind(
-                nodeset=u'/data/{}'.format(SCHEDULE_UNSCHEDULED_VISIT),
+                nodeset='/data/{}'.format(SCHEDULE_UNSCHEDULED_VISIT),
                 calculate=schedule_form_xpath.is_unscheduled_visit,
             )
             self.data_node.append(_make_elem(SCHEDULE_UNSCHEDULED_VISIT))
 
             last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(action.form_element_name, last_visit_num),
-                relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
-                calculate=u"/data/{}".format(SCHEDULE_CURRENT_VISIT_NUMBER),
+                nodeset='{}/case/update/{}'.format(action.form_element_name, last_visit_num),
+                relevant="not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
+                calculate="/data/{}".format(SCHEDULE_CURRENT_VISIT_NUMBER),
             )
             update_block.append(make_case_elem(last_visit_num))
             self._add_scheduler_case_update(action.case_type, last_visit_num)
 
             last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(action.form_element_name, last_visit_date),
+                nodeset='{}/case/update/{}'.format(action.form_element_name, last_visit_date),
                 type="xsd:dateTime",
                 calculate=self.resolve_path("meta/timeEnd"),
-                relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
+                relevant="not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
             )
             update_block.append(make_case_elem(last_visit_date))
             self._add_scheduler_case_update(action.case_type, last_visit_date)
@@ -1919,137 +1935,129 @@ VELLUM_TYPES = {
     "AndroidIntent": {
         'tag': 'input',
         'type': 'intent',
-        'icon': 'icon-vellum-android-intent',
-        'icon_bs3': 'fcc fcc-fd-android-intent',
+        'icon': 'fcc fcc-fd-android-intent',
+        'editable': True,
     },
     "Audio": {
         'tag': 'upload',
         'media': 'audio/*',
         'type': 'binary',
-        'icon': 'icon-vellum-audio-capture',
-        'icon_bs3': 'fcc fcc-fd-audio-capture',
+        'icon': 'fcc fcc-fd-audio-capture',
     },
     "Barcode": {
         'tag': 'input',
         'type': 'barcode',
-        'icon': 'icon-vellum-android-intent',
-        'icon_bs3': 'fcc fcc-fd-android-intent',
+        'icon': 'fcc fcc-fd-android-intent',
+        'editable': True,
     },
     "DataBindOnly": {
-        'icon': 'icon-vellum-variable',
-        'icon_bs3': 'fcc fcc-fd-variable',
+        'icon': 'fcc fcc-fd-variable',
+        'editable': True,
     },
     "Date": {
         'tag': 'input',
         'type': 'xsd:date',
-        'icon': 'icon-calendar',
-        'icon_bs3': 'fa fa-calendar',
+        'icon': 'fa fa-calendar',
+        'editable': True,
     },
     "DateTime": {
         'tag': 'input',
         'type': 'xsd:dateTime',
-        'icon': 'icon-vellum-datetime',
-        'icon_bs3': 'fcc fcc-fd-datetime',
+        'icon': 'fcc fcc-fd-datetime',
+        'editable': True,
     },
     "Double": {
         'tag': 'input',
         'type': 'xsd:double',
-        'icon': 'icon-vellum-decimal',
-        'icon_bs3': 'fcc fcc-fd-decimal',
+        'icon': 'fcc fcc-fd-decimal',
+        'editable': True,
     },
     "FieldList": {
         'tag': 'group',
         'appearance': 'field-list',
-        'icon': 'icon-reorder',
-        'icon_bs3': 'fa fa-bars',
+        'icon': 'fa fa-bars',
     },
     "Geopoint": {
         'tag': 'input',
         'type': 'geopoint',
-        'icon': 'icon-map-marker',
-        'icon_bs3': 'fa fa-map-marker',
+        'icon': 'fa fa-map-marker',
+        'editable': True,
     },
     "Group": {
         'tag': 'group',
-        'icon': 'icon-folder-open',
-        'icon_bs3': 'fa fa-folder-open',
+        'icon': 'fa fa-folder-open',
     },
     "Image": {
         'tag': 'upload',
         'media': 'image/*',
         'type': 'binary',
-        'icon': 'icon-camera',
-        'icon_bs3': 'fa fa-camera',
+        'icon': 'fa fa-camera',
     },
     "Int": {
         'tag': 'input',
         'type': ('xsd:int', 'xsd:integer'),
-        'icon': 'icon-vellum-numeric',
-        'icon_bs3': 'fcc fcc-fd-numeric',
+        'icon': 'fcc fcc-fd-numeric',
+        'editable': True,
     },
     "Long": {
         'tag': 'input',
         'type': 'xsd:long',
-        'icon': 'icon-vellum-long',
-        'icon_bs3': 'fcc fcc-fd-long',
+        'icon': 'fcc fcc-fd-long',
+        'editable': True,
     },
     "MSelect": {
         'tag': 'select',
-        'icon': 'icon-vellum-multi-select',
-        'icon_bs3': 'fcc fcc-fd-multi-select',
+        'icon': 'fcc fcc-fd-multi-select',
+        'editable': True,
     },
     "PhoneNumber": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'appearance': 'numeric',
-        'icon': 'icon-signal',
-        'icon_bs3': 'fa fa-signal',
+        'icon': 'fa fa-signal',
+        'editable': True,
     },
     "Repeat": {
         'tag': 'repeat',
-        'icon': 'icon-retweet',
-        'icon_bs3': 'fa fa-retweet',
+        'icon': 'fa fa-retweet',
     },
     "SaveToCase": {
         'tag': 'save_to_case',
-        'icon': 'icon-save',
-        'icon_bs3': 'fa fa-save',
+        'icon': 'fa fa-save',
     },
 
     "Secret": {
         'tag': 'secret',
         'type': ('xsd:string', None),
-        'icon': 'icon-key',
-        'icon_bs3': 'fa fa-key',
+        'icon': 'fa fa-key',
+        'editable': True,
     },
     "Select": {
         'tag': 'select1',
-        'icon': 'icon-vellum-single-select',
-        'icon_bs3': 'fcc fcc-fd-single-select',
+        'icon': 'fcc fcc-fd-single-select',
+        'editable': True,
     },
     "Text": {
         'tag': 'input',
         'type': ('xsd:string', None),
-        'icon': "icon-vellum-text",
-        'icon_bs3': 'fcc fcc-fd-text',
+        'icon': 'fcc fcc-fd-text',
+        'editable': True,
     },
     "Time": {
         'tag': 'input',
         'type': 'xsd:time',
-        'icon': 'icon-time',
-        'icon_bs3': 'a fa-clock-o',
+        'icon': 'fa fa-clock-o',
+        'editable': True,
     },
     "Trigger": {
         'tag': 'trigger',
-        'icon': 'icon-tag',
-        'icon_bs3': 'fa fa-tag',
+        'icon': 'fa fa-tag',
     },
     "Video": {
         'tag': 'upload',
         'media': 'video/*',
         'type': 'binary',
-        'icon': 'icon-facetime-video',
-        'icon_bs3': 'fa fa-video-camera',
+        'icon': 'fa fa-video-camera',
     },
 }
 

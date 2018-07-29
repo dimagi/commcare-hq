@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.app_manager.exceptions import XFormException, XFormValidationError
 from corehq.apps.app_manager.models import (
     AdvancedForm,
@@ -591,3 +592,14 @@ class TestXForm(SimpleTestCase, TestXmlMixin):
     def test_set_name_on_empty_form(self):
         form = self.construct_form()
         form.wrapped_xform().set_name("Passes if there is no exception")
+
+
+class TestFormMeta(BaseIndexTest):
+    def test_meta_drift(self):
+        self.assertTrue(
+            """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
+value="if(count(instance('commcaresession')/session/context/drift) = 1, \
+instance('commcaresession')/session/context/drift, '')"/>""" in
+            self.form.render_xform()
+        )
+        self.assertTrue("<orx:drift/>" in self.form.render_xform())

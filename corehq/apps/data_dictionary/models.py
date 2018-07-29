@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.db import models
 from django.utils.translation import ugettext as _
 
@@ -24,7 +25,7 @@ class CaseType(models.Model):
     description = models.TextField(default='', blank=True)
     fully_generated = models.BooleanField(default=False)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('domain', 'name')
 
     @classmethod
@@ -58,7 +59,7 @@ class CaseProperty(models.Model):
     )
     group = models.TextField(default='', blank=True)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('case_type', 'name')
 
     @classmethod

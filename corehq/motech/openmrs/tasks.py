@@ -5,6 +5,7 @@ its Atom Feed (daily or more) to track changes.
 """
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import uuid
 from collections import namedtuple
 from datetime import datetime
@@ -23,11 +24,11 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser
-from corehq.motech.openmrs.const import IMPORT_FREQUENCY_WEEKLY, IMPORT_FREQUENCY_MONTHLY
+from corehq.motech.openmrs.const import IMPORT_FREQUENCY_WEEKLY, IMPORT_FREQUENCY_MONTHLY, XMLNS_OPENMRS
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.models import POSIX_MILLISECONDS
-from corehq.motech.openmrs.repeater_helpers import Requests
+from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 from toggle.shortcuts import find_domains_with_toggle_enabled
 import six
@@ -145,6 +146,7 @@ def import_patients_of_owner(requests, importer, domain_name, owner, location=No
         domain_name,
         username=owner.username,
         user_id=owner.user_id,
+        xmlns=XMLNS_OPENMRS,
     )
 
 
@@ -191,7 +193,7 @@ def import_patients_to_domain(domain_name, force=False):
         # TODO: ^^^ Make those configurable
 
         password = b64_aes_decrypt(importer.password)
-        requests = Requests(importer.server_url, importer.username, password)
+        requests = Requests(domain_name, importer.server_url, importer.username, password)
         if importer.location_type_name:
             try:
                 location_type = LocationType.objects.get(domain=domain_name, name=importer.location_type_name)

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 OVER5_HEALTH_INDICATORS = dict(
     app="mvp_over5",
     indicators=dict(

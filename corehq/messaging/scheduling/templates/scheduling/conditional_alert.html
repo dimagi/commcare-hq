@@ -26,6 +26,27 @@
 
 {% block page_content %}{{ block.super }}
 {% initial_page_data 'read_only_mode' read_only_mode %}
+
+<p class="help-block">
+    <i class="fa fa-info-circle"></i>
+    {% blocktrans %}
+    For information on Conditional Alerts, see the
+    <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">Conditional Alerts</a>
+    help page.
+    {% endblocktrans %}
+</p>
+
+{% if is_system_admin %}
+<p class="help-block">
+    <i class="fa fa-info-circle"></i>
+    {% blocktrans %}
+    Since you are a Superuser, you will see additional options. See
+    <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts+-+Superuser+Options">Superuser Options</a>
+    for more information.
+    {% endblocktrans %}
+</p>
+{% endif %}
+
 {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
 
 <div class="row">
@@ -37,7 +58,7 @@
             </p>
             {% endif %}
         {% endif %}
-
+        {% include 'scheduling/partial/custom_event_templates.html' %}
         <form id="conditional-alert-form" class="form form-horizontal main-form" method="POST" action="#">
             {% crispy basic_info_form %}
             <ul class="nav nav-tabs">
@@ -58,14 +79,12 @@
                 </div>
                 <div class="tab-pane {% if schedule_form_active %}active{% endif %}" id="schedule">
                     <div class="row">
-                        <div id="create-schedule-form" class="col-sm-12">
-                            {% crispy schedule_form %}
-                        </div>
+                        {% include 'scheduling/partial/schedule_form.html' %}
                     </div>
                 </div>
             </div>
             <div class="col-xs-1">
-                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
             </div>
         </form>
     </div>

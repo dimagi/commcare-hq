@@ -1,8 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import jsonfield
 import re
 import requests
 from dimagi.utils.logging import notify_exception
+from django.conf import settings
 from django.db import models
 from django.db import IntegrityError
 from corehq.apps.sms.models import SQLSMSBackend
@@ -39,7 +41,7 @@ class StartEnterpriseDeliveryReceipt(models.Model):
 
 
 class StartEnterpriseBackend(SQLSMSBackend):
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 
@@ -95,7 +97,8 @@ class StartEnterpriseBackend(SQLSMSBackend):
 
         response = requests.get(
             SINGLE_SMS_URL,
-            params=self.get_params(msg_obj)
+            params=self.get_params(msg_obj),
+            timeout=settings.SMS_GATEWAY_TIMEOUT,
         )
         self.handle_response(msg_obj, response.status_code, response.text)
 

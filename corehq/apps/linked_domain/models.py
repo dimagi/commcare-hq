@@ -57,7 +57,7 @@ class DomainLink(models.Model):
 
     @property
     def is_remote(self):
-        return bool(self.remote_base_url)
+        return bool(self.remote_base_url) or 'http' in self.linked_domain
 
     @atomic
     def update_last_pull(self, model, user_id, date=None, model_details=None):
@@ -112,7 +112,7 @@ class DomainLinkHistory(models.Model):
         if self.model_detail:
             return wrap_detail(self.model, self.model_detail)
 
-    class Meta:
+    class Meta(object):
         ordering = ("-date",)
 
 

@@ -1,6 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-<div class="modal fade" id="dailySavedExportNotifier">
+<div class="modal" id="dailySavedExportNotifier">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -21,10 +21,3 @@
         </div>
     </div>
 </div>
-{% addtoblock js-inline %}
-<script>
-    $(window).on('load', function(){
-        $('#dailySavedExportNotifier').modal('show');
-    });
-</script>
-{% endaddtoblock %}

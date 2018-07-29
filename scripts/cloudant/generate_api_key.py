@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from manage_cloudant import authenticate_cloudant_instance, run_ask_runs
 
 if __name__ == '__main__':

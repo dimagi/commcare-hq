@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from copy import copy
 import datetime
 import time
 from mock import patch
@@ -98,6 +97,150 @@ class DataSourceConfigurationTest(SimpleTestCase):
         bad_config.configured_indicators.append(bad_config.configured_indicators[-1])
         with self.assertRaises(BadSpecError):
             bad_config.validate()
+
+
+class DataSourceFilterInterpolationTest(SimpleTestCase):
+    def _setup_config(self, doc_type, filter_):
+        return DataSourceConfiguration(
+            domain='test',
+            referenced_doc_type=doc_type,
+            table_id='blah',
+            configured_filter=filter_
+        )
+
+    def _case_config(self, filter_):
+        return self._setup_config('CommCareCase', filter_)
+
+    def _form_config(self, filter_):
+        return self._setup_config('XFormInstance', filter_)
+
+    def _test_helper(self, data_source, expected_filter):
+        self.assertEqual(
+            data_source.get_case_type_or_xmlns_filter(),
+            expected_filter
+        )
+
+    def test_one_case_type(self):
+        self._test_helper(
+            self._case_config({
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                },
+                "operator": "eq",
+                "property_value": "ticket"
+            }),
+            ['ticket']
+        )
+
+    def test_multiple_case_type(self):
+        self._test_helper(
+            self._case_config({
+                "type": "boolean_expression",
+                "operator": "in",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                },
+                "property_value": ["ticket", "task"]
+            }),
+            ["ticket", "task"]
+        )
+
+    def test_one_xmlns(self):
+        self._test_helper(
+            self._form_config({
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "xmlns"
+                },
+                "property_value": "xmlns"
+            }),
+            ['xmlns']
+        )
+
+    def test_multiple_xmlns(self):
+        self._test_helper(
+            self._form_config({
+                "type": "boolean_expression",
+                "operator": "in",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "xmlns"
+                },
+                "property_value": ["xmlns1", "xmlns2"]
+            }),
+            ["xmlns1", "xmlns2"]
+        )
+
+    def test_xmlns_with_and(self):
+        self._test_helper(
+            self._form_config({
+                "type": "and",
+                "filters": [
+                    {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "xmlns"
+                        },
+                        "property_value": "xmlns"
+                    }
+                ]
+            }),
+            ["xmlns"]
+        )
+
+    def test_case_type_with_and(self):
+        self._test_helper(
+            self._case_config({
+                "type": "and",
+                "filters": [
+                    {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "type"
+                        },
+                        "property_value": "ticket"
+                    }
+                ]
+            }),
+            ["ticket"]
+        )
+
+    def test_case_type_with_and_other_filter(self):
+        self._test_helper(
+            self._case_config({
+                "type": "and",
+                "filters": [
+                    {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "type"
+                        },
+                        "property_value": "ticket"
+                    },
+                    {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "other_property"
+                        },
+                        "property_value": "not_ticket"
+                    }
+                ]
+            }),
+            ["ticket"]
+        )
 
 
 class DataSourceConfigurationDbTest(TestCase):

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 
 from django.db import models
@@ -87,5 +88,5 @@ class HistoricalPillowCheckpoint(models.Model):
         except IndexError:
             return None
 
-    class Meta:
+    class Meta(object):
         ordering = ['-date_updated']

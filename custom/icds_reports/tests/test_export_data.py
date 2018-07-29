@@ -1,14 +1,20 @@
 from __future__ import absolute_import
 
-from datetime import date
+from __future__ import unicode_literals
+from datetime import date, datetime
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
 import mock
 
-from custom.icds_reports.sqldata import ChildrenExport, PregnantWomenExport, ExportableMixin, DemographicsExport, \
-    SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
+from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
+from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
+from custom.icds_reports.sqldata.exports.children import ChildrenExport
+from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
+from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
+from custom.icds_reports.utils.mixins import ExportableMixin
 
 
 class TestExportData(TestCase):
@@ -114,7 +120,7 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.42 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",
@@ -148,7 +154,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 '67.39 %',
-                '1.42 %',
+                '1.40 %',
                 317,
                 '2.60 %',
                 '23.21 %',
@@ -182,7 +188,7 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.42 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",
@@ -216,7 +222,7 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.42 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",
@@ -250,7 +256,7 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.42 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",
@@ -284,7 +290,7 @@ class TestExportData(TestCase):
             [
                 "st2",
                 "70.45 %",
-                "3.04 %",
+                "2.99 %",
                 307,
                 "2.46 %",
                 "18.85 %",
@@ -318,7 +324,7 @@ class TestExportData(TestCase):
             [
                 "st2",
                 "70.45 %",
-                "3.04 %",
+                "2.99 %",
                 307,
                 "2.46 %",
                 "18.85 %",
@@ -352,7 +358,7 @@ class TestExportData(TestCase):
             [
                 "st2",
                 "70.45 %",
-                "3.04 %",
+                "2.99 %",
                 307,
                 "2.46 %",
                 "18.85 %",
@@ -386,7 +392,7 @@ class TestExportData(TestCase):
             [
                 "st2",
                 "70.45 %",
-                "3.04 %",
+                "2.99 %",
                 307,
                 "2.46 %",
                 "18.85 %",
@@ -420,7 +426,7 @@ class TestExportData(TestCase):
             [
                 "st2",
                 "70.45 %",
-                "3.04 %",
+                "2.99 %",
                 307,
                 "2.46 %",
                 "18.85 %",
@@ -673,9 +679,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            127,
-                            437,
-                            "29.06 %",
+                            369,
+                            1518,
+                            "24.31 %",
                             120,
                             120,
                             171,
@@ -693,9 +699,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            127,
-                            437,
-                            "29.06 %",
+                            369,
+                            1518,
+                            "24.31 %",
                             120,
                             120,
                             171,
@@ -713,9 +719,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            127,
-                            437,
-                            "29.06 %",
+                            369,
+                            1518,
+                            "24.31 %",
                             120,
                             120,
                             171,
@@ -733,9 +739,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            127,
-                            437,
-                            "29.06 %",
+                            369,
+                            1518,
+                            "24.31 %",
                             120,
                             120,
                             171,
@@ -753,9 +759,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            127,
-                            437,
-                            "29.06 %",
+                            369,
+                            1518,
+                            "24.31 %",
                             120,
                             120,
                             171,
@@ -773,9 +779,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            125,
-                            547,
-                            "22.85 %",
+                            275,
+                            1615,
+                            "17.03 %",
                             139,
                             139,
                             154,
@@ -793,9 +799,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            125,
-                            547,
-                            "22.85 %",
+                            275,
+                            1615,
+                            "17.03 %",
                             139,
                             139,
                             154,
@@ -813,9 +819,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            125,
-                            547,
-                            "22.85 %",
+                            275,
+                            1615,
+                            "17.03 %",
                             139,
                             139,
                             154,
@@ -833,9 +839,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            125,
-                            547,
-                            "22.85 %",
+                            275,
+                            1615,
+                            "17.03 %",
                             139,
                             139,
                             154,
@@ -853,9 +859,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            125,
-                            547,
-                            "22.85 %",
+                            275,
+                            1615,
+                            "17.03 %",
                             139,
                             139,
                             154,
@@ -888,197 +894,344 @@ class TestExportData(TestCase):
             ]
         )
 
-    def test_system_usage_export(self):
+    def test_demographics_export_flags_being_passed(self):
         self.assertListEqual(
-            SystemUsageExport(
+            DemographicsExport(
                 config={
                     'domain': 'icds-cas'
-                }
-            ).get_excel_data('b1'),
+                },
+                beta=True
+            ).get_excel_data('st1'),
             [
                 [
-                    "System Usage",
+                    'Demographics',
                     [
                         [
-                            "State",
-                            "Number of days AWC was open in the given month",
-                            "Number of launched AWCs (ever submitted at least one HH reg form)",
-                            "Number of household registration forms",
-                            "Number of add pregnancy forms",
-                            "Number of birth preparedness forms",
-                            "Number of delivery forms",
-                            "Number of PNC forms",
-                            "Number of exclusive breastfeeding forms",
-                            "Number of complementary feeding forms",
-                            "Number of growth monitoring forms",
-                            "Number of take home rations forms",
-                            "Number of due list forms"
+                            'State', 'Number of households',
+                            'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
+                            'old, alive and seeking services) who have an aadhaar ID',
+                            'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
+                            'old, alive and seeking services)',
+                            'Percent Aadhaar-seeded beneficaries', 'Number of pregnant women',
+                            'Number of pregnant women enrolled for services', 'Number of lactating women',
+                            'Number of lactating women enrolled for services',
+                            'Number of children 0-6 years old',
+                            'Number of children 0-6 years old enrolled for services',
+                            'Number of children 0-6 months old enrolled for services',
+                            'Number of children 6 months to 3 years old enrolled for services',
+                            'Number of children 3 to 6 years old enrolled for services',
+                            'Number of adolescent girls 11 to 14 years old',
+                            'Number of adolescent girls 15 to 18 years old',
+                            'Number of adolescent girls 11 to 14 years old that are enrolled for services',
+                            'Number of adolescent girls 15 to 18 years old that are enrolled for services'
                         ],
                         [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
+                            'st1',
+                            7266,
+                            369,
+                            1518,
+                            '24.31 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
                             12,
-                            14,
-                            47,
-                            5
+                            36,
+                            12
                         ],
                         [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
+                            'st1',
+                            7266,
+                            369,
+                            1518,
+                            '24.31 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
                             12,
-                            14,
-                            47,
-                            5
+                            36,
+                            12
                         ],
                         [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
+                            'st1',
+                            7266,
+                            369,
+                            1518,
+                            '24.31 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
                             12,
-                            14,
-                            47,
-                            5
+                            36,
+                            12
                         ],
                         [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
+                            'st1',
+                            7266,
+                            369,
+                            1518,
+                            '24.31 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
                             12,
-                            14,
-                            47,
-                            5
+                            36,
+                            12
                         ],
                         [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
+                            'st1',
+                            7266,
+                            369,
+                            1518,
+                            '24.31 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
                             12,
-                            14,
-                            47,
-                            5
+                            36,
+                            12
                         ],
                         [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
+                            'st2',
+                            6662,
+                            275,
+                            1615,
+                            '17.03 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
                             20,
-                            65,
-                            17
+                            36,
+                            20
                         ],
                         [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
+                            'st2',
+                            6662,
+                            275,
+                            1615,
+                            '17.03 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
                             20,
-                            65,
-                            17
+                            36,
+                            20
                         ],
                         [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
+                            'st2',
+                            6662,
+                            275,
+                            1615,
+                            '17.03 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
                             20,
-                            65,
-                            17
+                            36,
+                            20
                         ],
                         [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
+                            'st2',
+                            6662,
+                            275,
+                            1615,
+                            '17.03 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
                             20,
-                            65,
-                            17
+                            36,
+                            20
                         ],
                         [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
+                            'st2',
+                            6662,
+                            275,
+                            1615,
+                            '17.03 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
                             20,
-                            65,
-                            17
+                            36,
+                            20
                         ]
                     ]
                 ],
                 [
-                    "Export Info",
+                    'Export Info',
                     [
                         [
-                            "Generated at",
-                            "16:21:11 15 November 2017"
+                            'Generated at',
+                            '16:21:11 15 November 2017'
                         ],
                         [
-                            "Block",
-                            "b1"
+                            'State',
+                            'st1'
                         ]
                     ]
                 ]
+            ]
+        )
+
+    def test_system_usage_export(self):
+        self.assertListEqual(
+            SystemUsageExport(
+                config={
+                    'domain': 'icds-cas',
+                    'month': datetime(2017, 5, 1)
+                }
+            ).get_excel_data('b1'),
+            [
+                ['System Usage', [
+                    [
+                        'State',
+                        'Number of days AWC was open in the given month',
+                        'Number of launched AWCs (ever submitted at least one HH reg form)',
+                        'Number of household registration forms', 'Number of add pregnancy forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms'
+                    ],
+                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17]
+                ]],
+                ['Export Info', [
+                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['Block', 'b1'],
+                    ['Month', 'May'],
+                    ['Year', 2017]
+                ]]
+            ]
+        )
+
+    def test_system_usage_export_for_awc_level(self):
+        self.assertListEqual(
+            SystemUsageExport(
+                config={
+                    'domain': 'icds-cas',
+                    'block_id': 'b1',
+                    'aggregation_level': 5,
+                    'month': datetime(2017, 5, 1)
+                },
+                loc_level=5,
+            ).get_excel_data('b1'),
+            [
+                ['System Usage', [
+                    [
+                        'State',
+                        'District',
+                        'Block',
+                        'Supervisor',
+                        'AWC',
+                        'Number of days AWC was open in the given month',
+                        'Number of launched AWCs (ever submitted at least one HH reg form)',
+                        'Number of household registration forms', 'Number of add pregnancy forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms'
+                    ],
+                    ['st1', 'd1', 'b1', 's1', 'a1', 18, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's1', 'a17', 11, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's1', 'a25', 13, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's1', 'a33', 12, 'Data Not Entered', 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+                    ['st1', 'd1', 'b1', 's1', 'a41', 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+                    ['st1', 'd1', 'b1', 's1', 'a49', 14, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's1', 'a9', 18, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a10', 8, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a18', 17, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a2', 10, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a26', 12, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a34', 4, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a42', 7, 'Data Not Entered', 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a50', 19, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ]],
+                ['Export Info', [
+                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['Block', 'b1'],
+                    ['Grouped By', 'AWC'],
+                    ['Month', 'May'],
+                    ['Year', 2017]
+                ]],
             ]
         )
 
@@ -1217,6 +1370,10 @@ class TestExportData(TestCase):
                     "Child Beneficiary",
                     [
                         [
+                            "AWC Name",
+                            "AWC Site Code",
+                            "Supervisor Name",
+                            "Block Name",
                             "Child Name",
                             "Date of Birth",
                             "Current Age (as of 2017-05-01)",
@@ -1231,9 +1388,13 @@ class TestExportData(TestCase):
                             "Days attended PSE (as of 2017-05-01)"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1783",
-                            "2013-06-06",
-                            "3 years 11 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1245,9 +1406,13 @@ class TestExportData(TestCase):
                             23
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1788",
-                            "2012-12-03",
-                            "4 years 5 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1259,9 +1424,13 @@ class TestExportData(TestCase):
                             19
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1790",
-                            "2012-12-15",
-                            "4 years 5 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1273,9 +1442,13 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1795",
-                            "2014-01-20",
-                            "3 years 4 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1287,9 +1460,13 @@ class TestExportData(TestCase):
                             17
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1797",
-                            "2012-05-12",
-                            "5 years ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1301,9 +1478,13 @@ class TestExportData(TestCase):
                             23
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1814",
-                            "2017-01-28",
-                            "4 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1315,9 +1496,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1832",
-                            "2015-09-14",
-                            "1 year 8 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1329,9 +1514,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1876",
-                            "2016-01-11",
-                            "1 year 4 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "Yes",
                             "2017-05-01",
@@ -1343,9 +1532,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2027",
-                            "2016-12-15",
-                            "5 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1357,9 +1550,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2054",
-                            "2016-05-26",
-                            "1 year ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1371,9 +1568,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2056",
-                            "2014-11-29",
-                            "2 years 6 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1385,9 +1586,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2060",
-                            "2015-10-10",
-                            "1 year 7 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "Yes",
                             "2017-05-01",
@@ -1399,9 +1604,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2073",
-                            "2015-08-10",
-                            "1 year 9 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1413,9 +1622,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2094",
-                            "2014-12-04",
-                            "2 years 5 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1427,9 +1640,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2117",
-                            "2015-11-18",
-                            "1 year 6 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "Yes",
                             "2017-05-01",
@@ -1441,9 +1658,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2134",
-                            "2015-12-12",
-                            "1 year 5 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "Yes",
                             "2017-05-01",
@@ -1455,9 +1676,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2141",
-                            "2015-03-05",
-                            "2 years 2 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1469,9 +1694,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2171",
-                            "2016-08-27",
-                            "9 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1483,9 +1712,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2173",
-                            "2015-05-24",
-                            "2 years ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1497,9 +1730,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2182",
-                            "2014-12-12",
-                            "2 years 5 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1511,9 +1748,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2188",
-                            "2014-08-16",
-                            "2 years 9 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1525,9 +1766,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2192",
-                            "2015-10-07",
-                            "1 year 7 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "Yes",
                             "2017-05-01",
@@ -1539,9 +1784,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2207",
-                            "2016-01-21",
-                            "1 year 4 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1553,9 +1802,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2210",
-                            "2015-05-18",
-                            "2 years ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1567,9 +1820,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2241",
-                            "2012-10-14",
-                            "4 years 7 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1581,9 +1838,13 @@ class TestExportData(TestCase):
                             21
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2250",
-                            "2014-06-10",
-                            "2 years 11 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1595,9 +1856,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2254",
-                            "2013-01-28",
-                            "4 years 4 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1609,9 +1874,13 @@ class TestExportData(TestCase):
                             18
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2263",
-                            "2016-09-08",
-                            "8 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1623,9 +1892,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2265",
-                            "2014-02-16",
-                            "3 years 3 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1637,9 +1910,13 @@ class TestExportData(TestCase):
                             18
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2266",
-                            "2014-03-13",
-                            "3 years 2 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1651,9 +1928,13 @@ class TestExportData(TestCase):
                             22
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2267",
-                            "2012-12-25",
-                            "4 years 5 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1665,9 +1946,13 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2271",
-                            "2013-05-13",
-                            "4 years ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1679,9 +1964,13 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2276",
-                            "2012-07-22",
-                            "4 years 10 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1693,9 +1982,13 @@ class TestExportData(TestCase):
                             22
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2330",
-                            "2013-06-29",
-                            "3 years 11 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1707,9 +2000,13 @@ class TestExportData(TestCase):
                             21
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2331",
-                            "2013-05-09",
-                            "4 years ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1721,9 +2018,13 @@ class TestExportData(TestCase):
                             19
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2333",
-                            "2014-06-05",
-                            "2 years 11 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1735,9 +2036,13 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2335",
-                            "2013-10-14",
-                            "3 years 7 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1749,9 +2054,13 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2337",
-                            "2013-12-04",
-                            "3 years 5 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1763,9 +2072,13 @@ class TestExportData(TestCase):
                             26
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2338",
-                            "2013-07-03",
-                            "3 years 10 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1777,9 +2090,13 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2339",
-                            "2013-11-29",
-                            "3 years 6 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1791,9 +2108,13 @@ class TestExportData(TestCase):
                             27
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2340",
-                            "2013-07-25",
-                            "3 years 10 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1805,9 +2126,13 @@ class TestExportData(TestCase):
                             17
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2341",
-                            "2012-08-07",
-                            "4 years 9 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1819,9 +2144,13 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2342",
-                            "2013-09-24",
-                            "3 years 8 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",
@@ -1833,9 +2162,13 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2344",
-                            "2013-03-09",
-                            "4 years 2 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "M",
                             "No",
                             "2017-05-01",
@@ -1847,9 +2180,13 @@ class TestExportData(TestCase):
                             22
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2346",
-                            "2014-01-20",
-                            "3 years 4 months ",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "F",
                             "No",
                             "2017-05-01",

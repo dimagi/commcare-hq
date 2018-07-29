@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.models import XFormInstanceSQL
@@ -9,15 +12,18 @@ from custom.icds.case_relationships import (
     mother_person_case_from_ccs_record_case,
 )
 from custom.icds.const import (STATE_TYPE_CODE, ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE,
-    HINDI, TELUGU, MARATHI)
+    HINDI, TELUGU, MARATHI, AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE)
 from custom.icds.exceptions import CaseRelationshipError
-from custom.icds.messaging.indicators import DEFAULT_LANGUAGE
-from custom.icds.rules.immunization import (
-    get_immunization_products,
-    get_immunization_anchor_date,
-    get_tasks_case_immunization_ledger_values,
-    get_map,
-    immunization_is_due,
+from custom.icds.messaging.custom_recipients import skip_notifying_missing_ccs_record_parent
+from custom.icds.messaging.indicators import (
+    DEFAULT_LANGUAGE,
+    AWWIndicator,
+    LSIndicator,
+    AWWSubmissionPerformanceIndicator,
+    AWWAggregatePerformanceIndicator,
+    LSAggregatePerformanceIndicator,
+    LSVHNDSurveyIndicator,
+    LSSubmissionPerformanceIndicator,
 )
 from decimal import Decimal, InvalidOperation
 from dimagi.utils.logging import notify_exception
@@ -27,11 +33,16 @@ from django.template.loader import render_to_string
 GROWTH_MONITORING_XMLNS = 'http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75'
 
 
-def notify_exception_and_return_empty_list():
-    notify_exception(
-        None,
-        message="Error with ICDS custom content handler",
-    )
+def notify_exception_and_return_empty_list(e):
+    if not (
+        isinstance(e, CaseRelationshipError) and
+        skip_notifying_missing_ccs_record_parent(e)
+    ):
+        notify_exception(
+            None,
+            message="Error with ICDS custom content handler",
+        )
+
     return []
 
 
@@ -101,18 +112,18 @@ def static_negative_growth_indicator(recipient, schedule_instance):
 
     try:
         child_person_case = child_person_case_from_child_health_case(schedule_instance.case)
-    except CaseRelationshipError:
-        return notify_exception_and_return_empty_list()
+    except CaseRelationshipError as e:
+        return notify_exception_and_return_empty_list(e)
 
     try:
         weight_prev = Decimal(form.form_data.get('weight_prev'))
-    except (InvalidOperation, TypeError):
-        return notify_exception_and_return_empty_list()
+    except (InvalidOperation, TypeError) as e:
+        return notify_exception_and_return_empty_list(e)
 
     try:
         weight_child = Decimal(form.form_data.get('weight_child'))
-    except (InvalidOperation, TypeError):
-        return notify_exception_and_return_empty_list()
+    except (InvalidOperation, TypeError) as e:
+        return notify_exception_and_return_empty_list(e)
 
     if weight_child > weight_prev:
         return []
@@ -127,9 +138,21 @@ def static_negative_growth_indicator(recipient, schedule_instance):
     return [render_message(language_code, template, context)]
 
 
-def render_content_for_user(user, template, context):
+def get_user_from_usercase(usercase):
+    user = get_wrapped_owner(get_owner_id(usercase))
+    if not isinstance(user, CommCareUser):
+        return None
+
+    return user
+
+
+def get_language_code_for_user(user):
     state_code = get_state_code(user.location)
-    language_code = get_language_code_for_state(state_code)
+    return get_language_code_for_state(state_code)
+
+
+def render_content_for_user(user, template, context):
+    language_code = get_language_code_for_user(user)
     return render_message(language_code, template, context)
 
 
@@ -159,8 +182,8 @@ def render_missed_visit_message(recipient, case_schedule_instance, template):
 
     try:
         mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
-    except CaseRelationshipError:
-        return notify_exception_and_return_empty_list()
+    except CaseRelationshipError as e:
+        return notify_exception_and_return_empty_list(e)
 
     if person_case_is_migrated_or_opted_out(mother_case):
         return []
@@ -208,8 +231,8 @@ def cf_visits_complete(recipient, case_schedule_instance):
 
     try:
         mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
-    except CaseRelationshipError:
-        return notify_exception_and_return_empty_list()
+    except CaseRelationshipError as e:
+        return notify_exception_and_return_empty_list(e)
 
     context = {
         'beneficiary': mother_case.name,
@@ -217,53 +240,50 @@ def cf_visits_complete(recipient, case_schedule_instance):
     return [render_content_for_user(recipient, 'cf_visits_complete.txt', context)]
 
 
-def dpt3_and_measles_are_due(recipient, case_schedule_instance):
-    """
-    Check if the DPT3 and Measles vaccinations are both due, and if so return the
-    reminder message.
-    """
-    case = case_schedule_instance.case
-    if case.type != 'tasks':
-        raise ValueError("Expected 'tasks' case")
+def validate_user_location_and_indicator(user, indicator_class):
+    if issubclass(indicator_class, AWWIndicator):
+        if user.location.location_type.code != AWC_LOCATION_TYPE_CODE:
+            raise TypeError("Expected AWWIndicator to be called for an AWW, got %s instead" % user.get_id)
+    elif issubclass(indicator_class, LSIndicator):
+        if user.location.location_type.code != SUPERVISOR_LOCATION_TYPE_CODE:
+            raise TypeError("Expected LSIndicator to be called for an LS, got %s instead" % user.get_id)
+    else:
+        raise TypeError("Expected AWWIndicator or LSIndicator")
 
-    if case.get_case_property('tasks_type') != 'child':
-        raise ValueError("Expected 'tasks_type' of 'child'")
 
-    products = get_immunization_products(case_schedule_instance.domain, 'child')
-    product_code_to_product = get_map(products, 'code')
-    dpt3_product = product_code_to_product['3g_dpt_3']
-    measles_product = product_code_to_product['4g_measles']
+def run_indicator_for_user(user, indicator_class, language_code=None):
+    validate_user_location_and_indicator(user, indicator_class)
+    language_code = language_code or get_language_code_for_user(user)
+    indicator = indicator_class(user.domain, user)
+    return indicator.get_messages(language_code=language_code)
 
-    ledger_values = get_tasks_case_immunization_ledger_values(case)
-    anchor_date = get_immunization_anchor_date(case)
-    if (
-        immunization_is_due(case, anchor_date, dpt3_product, products, ledger_values) and
-        immunization_is_due(case, anchor_date, measles_product, products, ledger_values)
-    ):
-        child_person_case = child_person_case_from_tasks_case(case)
 
-        if person_case_is_migrated_or_opted_out(child_person_case):
-            return []
+def run_indicator_for_usercase(usercase, indicator_class):
+    if usercase.type != USERCASE_TYPE:
+        raise ValueError("Expected '%s' case" % USERCASE_TYPE)
 
-        context = {
-            'child_name': child_person_case.name,
-        }
-        return [render_content_for_user(recipient, 'dpt3_and_measles_due.txt', context)]
+    user = get_user_from_usercase(usercase)
+    if user and user.location:
+        return run_indicator_for_user(user, indicator_class)
 
     return []
 
 
-def child_vaccinations_complete(recipient, case_schedule_instance):
-    case = case_schedule_instance.case
-    if case.type != 'tasks':
-        raise ValueError("Expected 'tasks' case")
+def aww_1(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, AWWSubmissionPerformanceIndicator)
 
-    try:
-        child_person_case = child_person_case_from_tasks_case(case)
-    except CaseRelationshipError:
-        return notify_exception_and_return_empty_list()
 
-    context = {
-        'child_name': child_person_case.name,
-    }
-    return [render_content_for_user(recipient, 'child_vaccinations_complete.txt', context)]
+def aww_2(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, AWWAggregatePerformanceIndicator)
+
+
+def ls_1(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, LSAggregatePerformanceIndicator)
+
+
+def ls_2(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, LSVHNDSurveyIndicator)
+
+
+def ls_6(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, LSSubmissionPerformanceIndicator)

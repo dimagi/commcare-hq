@@ -1,0 +1,15 @@
+Dear {{ full_name }},
+
+This email has been sent as a reminder for you to visit your CommCare HQ project space on a laptop or desktop computer.
+
+{{ url }}
+
+Cheers,
+The CommCare Team
+
+Dimagi, Inc.
+585 Massachusetts Ave, Suite 4
+Cambridge, MA 02139 United States
+
+You received this message because we received a reminder request from
+www.commcarehq.org with your email address.

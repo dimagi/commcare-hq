@@ -1,100 +1,10 @@
-{% extends 'reports/async/tabular.html' %}
+{% extends 'reports/tabular.html' %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-    function updateFormCounts() {
-        var selectedCount = $('#form-management').find('input.xform-checkbox:checked').length;
-        $(".selectedCount").text(selectedCount);
-        enable_disable_button(selectedCount);
-    }
-
-    function enable_disable_button(count){
-        if (count == 0) {
-            $("#submitForms").prop('disabled', true);
-        }
-        else {
-            $("#submitForms").prop('disabled', false);
-        }
-    }
-
-    (function () {
-        function applyCheckboxBindings() {
-            var $XFormManagement = $('#form-management');
-            var $allFormsButton = $XFormManagement.find('input[name="select_all"]');
-            var $checkboxes = $XFormManagement.find('input.xform-checkbox');
-            var $indicator = $('#count_indicator');
-
-            // bindings for 'all' button
-            $XFormManagement.find('a.select-visible').click(function () {
-                $allFormsButton.prop('checked', false);
-                $checkboxes.prop('checked', true).change();
-                return false;
-            });
-
-            // bindings for 'none' button
-            $XFormManagement.find('a.select-none').click(function(){
-                selectNone(); return false;
-            });
-            function selectNone() {
-                $XFormManagement.find('input.xform-checkbox:checked').prop('checked', false).change();
-                $allFormsButton.prop('checked', false);
-            }
-
-            // bindings for form checkboxes
-            $checkboxes.on('change', function(){
-                // updates text like '3 of 5 selected'
-                updateFormCounts();
-                $indicator.show();
-            });
-            $checkboxes.on('click', function(){
-                $allFormsButton.prop('checked', false);
-            });
-
-            // bindings for 'Select all' checkboxe
-            $allFormsButton.on('click', function(){
-                if (this.checked) {
-                    $checkboxes.prop('checked', true).change();
-                    $indicator.hide();
-                    enable_disable_button(1);
-                    $(".selectedCount").text({{ total_xForms }});
-                }
-                else {
-                    $indicator.show();
-                    $(".selectedCount").text(0);
-                    $XFormManagement.find('a.select-none').click();
-                    enable_disable_button(0);
-                }
-            });
-
-            $('#submitForms').click(function() {
-                if ($allFormsButton[0].checked) {
-                    hqImport('analytix/js/google').track.event('Bulk Archive', 'All', 'Checkbox');
-                } else {
-                    hqImport('analytix/js/google').track.event('Bulk Archive', 'All', 'Selected Forms');
-                }
-            })
-
-            $XFormManagement.find('.dataTables_paginate a').mouseup(selectNone);
-            $XFormManagement.find('.dataTables_length select').change(selectNone);
-        }
-
-        var keepTrying = setInterval(function () {
-            if (window.reportTables !== undefined) {
-                clearInterval(keepTrying);
-                applyCheckboxBindings();
-                window.reportTables.fnDrawCallback = applyCheckboxBindings;
-            }
-        }, 1000);
-
-    }());
-    </script>
-{% endblock %}
-
 {% block reportcontent %}
-    <div id="form-management">
+    <div id="data-interfaces-archive-forms">
         <p class="alert fade in hide page-level-alert alert-danger" id="errorMessage">
             {% blocktrans %}
                 Something went wrong! There was an error. If you see this error repeatedly please report it as issue.

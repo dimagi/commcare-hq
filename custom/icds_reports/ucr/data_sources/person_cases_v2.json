@@ -133,7 +133,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": true,
+        "create_index": false,
         "column_id": "state_id",
         "expression": {
           "location_id_expression": {
@@ -174,7 +174,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "closed_on",
-        "create_index": true,
+        "create_index": false,
         "type": "raw",
         "property_name": "closed_on"
       },
@@ -195,7 +195,7 @@
         "datatype": "date",
         "is_primary_key": false,
         "column_id": "dob",
-        "create_index": true,
+        "create_index": false,
         "is_nullable": true,
         "type": "raw",
         "property_name": "dob"
@@ -206,7 +206,7 @@
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "age_at_reg",
-        "create_index": true,
+        "create_index": false,
         "is_nullable": true,
         "type": "raw",
         "property_name": "age_at_reg"
@@ -2357,6 +2357,41 @@
             "property_name": "no_exist"
           }
         }
+      },
+      {
+        "column_id": "age_marriage",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "age_marriage"
+        }
+      },
+      {
+        "column_id": "marital_status",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "marital_status"
+          },
+          "cases": {
+            "married": {
+              "type": "constant",
+              "constant": 1
+            },
+            "other": {
+              "type": "constant",
+              "constant": 0
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
       }
     ],
     "named_expressions": {},
@@ -2733,16 +2768,19 @@
       }
     },
     "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "state_id",
+          "subtype": "string_lastchars",
+          "constraint": "3"
+        }
+      ]
+    },
     "sql_column_indexes": [
       {
         "column_ids": [
           "block_id",
-          "dob"
-        ]
-      },
-      {
-        "column_ids": [
-          "district_id",
           "dob"
         ]
       },

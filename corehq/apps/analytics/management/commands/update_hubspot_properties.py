@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date, timedelta
 import json
 
@@ -31,7 +32,7 @@ class Command(BaseCommand):
 
         print("Sending data to Hubspot")
         batch_track_on_hubspot(json_data)
-        print("Update success!")
+        print("Update success.")
 
     @classmethod
     def get_active_users(cls):

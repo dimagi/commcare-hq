@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -10,7 +11,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
         """
         Confirms that style="grid" is added to the root menu
         """
-        factory = AppFactory(build_version='2.24')
+        factory = AppFactory(build_version='2.24.0')
         factory.app.use_grid_menus = True
         factory.new_basic_module('registration', 'patient registration')
         factory.app.get_module(0).put_in_root = True
@@ -42,7 +43,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
         Confirms that a menu is added with id="root" and style="grid"
         when the app normally wouldn't have a menu with id="root".
         """
-        factory = AppFactory(build_version='2.24')
+        factory = AppFactory(build_version='2.24.0')
         factory.app.use_grid_menus = True
         factory.new_basic_module('registration', 'patient')
 
@@ -59,7 +60,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
         """
         Confirms that style="grid" is not added to any menus when use_grid_menus is False.
         """
-        factory = AppFactory(build_version='2.24')
+        factory = AppFactory(build_version='2.24.0')
         factory.app.use_grid_menus = False
         factory.new_basic_module('registration', 'patient')
 

@@ -21,8 +21,9 @@
                 <label class="control-label col-sm-3" for="file">
                     {% trans "Select a file to upload" %}
                 </label>
-                <div class="col-sm-6">
-                    <input class="form-control" name="file" id="file" type="file" />
+                <!-- unorthodox use of .control-label to vertically align the file input with the actual label -->
+                <div class="col-sm-6 control-label">
+                    <input name="file" id="file" type="file" />
                 </div>
             </div>
         </fieldset>

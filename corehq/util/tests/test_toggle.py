@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict
 import uuid
 from django.test import SimpleTestCase
@@ -32,7 +33,7 @@ class DeterministicRandomTestCase(SimpleTestCase):
             seen.add(converted_rand)
 
     def test_unicode(self):
-        unicode_string = u'टूटना{}'.format(self._random_string())
+        unicode_string = 'टूटना{}'.format(self._random_string())
         value = deterministic_random(unicode_string)
         self.assertEqual(value, deterministic_random(unicode_string))
 

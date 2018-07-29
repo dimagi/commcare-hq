@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import logging
 import calendar
 import copy
@@ -15,7 +16,7 @@ from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
         BaseDynamicIndicatorCRUDManager, CombinedCouchIndicatorCRUDManager)
 from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, add_months, months_between
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.couch.cache import cache_core
 import six
@@ -51,8 +52,8 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         self.class_path = self._class_path
 
     def __str__(self):
-        return u"\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, domain: %(domain)s," \
-            u" version: %(version)s, namespace: %(namespace)s. ID: %(indicator_id)s." % {
+        return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, domain: %(domain)s," \
+            " version: %(version)s, namespace: %(namespace)s. ID: %(indicator_id)s." % {
                 'class_name': self.__class__.__name__,
                 'slug': self.slug,
                 'domain': self.domain,

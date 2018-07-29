@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couch_helpers import paginate_view
@@ -91,6 +92,7 @@ def get_docs_in_domain_by_class(domain, doc_class):
         'PerformanceConfiguration',
         'ReportConfiguration',
         'CaseReminderHandler',
+        'LinkedApplication',
     ]
     doc_type = doc_class.__name__
     assert doc_type in whitelist

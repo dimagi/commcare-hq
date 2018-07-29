@@ -2,23 +2,12 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js-inline %}{{ block.super }}
-    {% include 'domain/admin/partials/case_search_templates.html' %}
-    <script src="{% static 'domain/js/case-search-config.js' %}"></script>
-    <script>
-     (function () {
-         var CaseSearchConfig = hqImport('domain/js/case-search-config').CaseSearchConfig;
-         var viewModel = new CaseSearchConfig({
-             values: {{ values|JSON }},
-             caseTypes: {{ case_types|JSON }},
-         });
-         $('#case-search-config').koApplyBindings(viewModel);
-         $('#case-search-config').on('change', viewModel.change).on('click', ':button', viewModel.change);
-     }());
-    </script>
-{% endblock %}
+{% requirejs_main 'domain/js/case_search_main' %}
 
 {% block page_content %}
+    {% include 'domain/admin/partials/case_search_templates.html' %}
+    {% initial_page_data 'case_types' case_types %}
+    {% initial_page_data 'values' values %}
     {% registerurl 'case_search_config' request.domain %}
     <h1>{% trans "Enable Case Search" %}</h1>
 

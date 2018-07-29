@@ -1,7 +1,8 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.management import BaseCommand
-from corehq.apps.hqadmin.service_checks import CHECKS
+from corehq.apps.hqadmin.service_checks import CHECKS, run_checks, UnknownCheckException
 
 
 class Command(BaseCommand):
@@ -12,31 +13,30 @@ class Command(BaseCommand):
         parser.add_argument(
             'service_name',
             nargs='?',
+            choices=list(CHECKS)
         )
 
     def handle(self, service_name, **options):
-        if service_name:
-            if service_name not in CHECKS:
-                print("Services available are:")
-                for service_name in CHECKS.keys():
-                    print("- {}".format(service_name))
-            else:
-                service_check = CHECKS[service_name]
-                self.perform_check(service_name, service_check)
+        checks_to_do = [service_name] if service_name else list(CHECKS)
+
+        try:
+            statuses = run_checks(checks_to_do)
+        except UnknownCheckException:
+            print("Services available are:")
+            for service_name in CHECKS.keys():
+                print("- {}".format(service_name))
         else:
-            for service_name, service_check in CHECKS.items():
-                self.perform_check(service_name, service_check)
+            self.print_results(statuses)
 
     @staticmethod
-    def perform_check(service_name, service_check):
-        try:
-            status = service_check()
-        except Exception as e:
-            print("\033[91mEXCEPTION\033[0m {}: Service check '{}' errored with exception '{}'".format(
-                service_name,
-                service_check.__name__,
-                repr(e)
-            ))
-        else:
-            print("\033[92mSUCCESS\033[0m" if status.success else "\033[91mFAILURE\033[0m", end=' ')
-            print("{}: {}".format(service_name, status.msg))
+    def print_results(results):
+        for service_name, status in results:
+            if status.exception:
+                print("\033[91mEXCEPTION\033[0m (Took {:6.2f}s) {:15}:".format(
+                    status.duration,
+                    service_name,
+                ), end=' ')
+                print("Service check errored with exception '{}'".format(repr(status.exception)))
+            else:
+                print("\033[92mSUCCESS\033[0m" if status.success else "\033[91mFAILURE\033[0m", end=' ')
+                print("(Took {:6.2f}s) {:15}: {}".format(status.duration, service_name, status.msg))

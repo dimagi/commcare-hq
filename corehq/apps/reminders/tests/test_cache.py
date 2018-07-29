@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.reminders.models import (CaseReminderHandler,
     REMINDER_TYPE_DEFAULT, REMINDER_TYPE_ONE_TIME)
 from django.test import TestCase

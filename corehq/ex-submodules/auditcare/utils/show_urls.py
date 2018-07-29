@@ -2,6 +2,7 @@
 # prints a tree of all the urls in the project
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from types import FunctionType
 
 

@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import multiprocessing
 import os
 import re
@@ -18,6 +19,7 @@ from corehq.apps.export.multiprocess import (
     UNPROCESSED_PAGES_DIR, _add_compressed_page_to_zip)
 from corehq.util.files import safe_filename
 from six.moves import input
+from io import open
 
 
 class Command(BaseCommand):
@@ -55,7 +57,7 @@ class Command(BaseCommand):
 
         if not export_archive_path or not os.path.exists(export_archive_path):
             confirm = input(
-                u"""
+                """
                 No export archive provided. Do you want to download the latest one? [y/N]
                 """
             )
@@ -97,7 +99,7 @@ class Command(BaseCommand):
             datetime.utcnow().isoformat()
         )
         payload = export_instance.get_payload(stream=True)
-        with open(export_archive_path, 'w') as download:
+        with open(export_archive_path, 'wb') as download:
             shutil.copyfileobj(payload, download)
         return export_archive_path
 

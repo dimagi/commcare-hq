@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from django.conf.urls import url
+from __future__ import unicode_literals
+from django.conf.urls import url, include
 
 from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, \
     PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView, \
@@ -9,11 +10,18 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, \
     LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
     FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
-    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckPDFReportStatus
+    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI, \
+    HaveAccessToLocation, ICDSAppTranslations, InactiveAWW, DownloadExportReport
+
+dashboardurls = [
+    url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
+        ICDSImagesAccessorAPI.as_view(), name='icds_image_accessor'),
+    url('^', DashboardView.as_view(), name='icds_dashboard')
+]
 
 urlpatterns = [
     url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
-    url(r'^icds_dashboard/', DashboardView.as_view(), name='icds_dashboard'),
+    url(r'^icds_dashboard/', include(dashboardurls)),
     url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
     url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
     url(r'^awc_reports/(?P<step>[\w-]+)/', AwcReportsView.as_view(), name='awc_reports'),
@@ -113,5 +121,9 @@ urlpatterns = [
     url(r'^bug_report/', ICDSBugReportView.as_view(), name='icds_bug_report'),
     url(r'^awc_locations/', AWCLocationView.as_view(), name='awc_locations'),
     url(r'^download_pdf/', DownloadPDFReport.as_view(), name='icds_download_pdf'),
-    url(r'^issnip_pdf_status/', CheckPDFReportStatus.as_view(), name='issnip_pdf_status')
+    url(r'^download_excel/', DownloadExportReport.as_view(), name='icds_download_excel'),
+    url(r'^issnip_pdf_status/', CheckExportReportStatus.as_view(), name='issnip_pdf_status'),
+    url(r'^have_access_to_location/', HaveAccessToLocation.as_view(), name='have_access_to_location'),
+    url(r'^app_translations/', ICDSAppTranslations.as_view(), name='icds_app_translations'),
+    url(r'^inactive_aww', InactiveAWW.as_view(), name='inactive_aww')
 ]

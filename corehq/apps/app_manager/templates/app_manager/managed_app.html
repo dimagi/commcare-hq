@@ -80,6 +80,30 @@
       {% endif %}
     </nav>
   {% endif %}
+  {% if show_ui_notification_to_hide_translations %}
+    {% if request|ui_notify_enabled:"ABILITY_TO_HIDE_TRANSLATIONS" %}
+      <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
+         data-slug="{{ 'ABILITY_TO_HIDE_TRANSLATIONS'|ui_notify_slug }}"
+         role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <p class="lead">{% trans 'New setting to hide translations' %}</p>
+        <p>
+            {% blocktrans %}
+                Working with multiple languages but want to just focus on app building?
+            {% endblocktrans %}
+        </p>
+        <p>
+          <a class="btn btn-primary-dark"
+             target="_blank"
+             href="https://confluence.dimagi.com/display/commcarepublic/Hide+languages+in+forms">
+            {% trans "Learn More" %}
+          </a>
+        </p>
+      </div>
+    {% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block pre_page_content %}
@@ -138,6 +162,14 @@
             </button>
           </div>
         {% endif %}
+        {% if show_training_modules %}
+          <div class="pull-left">
+            <button type="button" class="popover-additem-option new-module" data-type="training">
+              <i class="fa fa-graduation-cap"></i> {% trans "Training" %}
+              <p>{% blocktrans %}Content for training users.{% endblocktrans %}</p>
+            </button>
+          </div>
+        {% endif %}
       </div>
     </script>
 
@@ -148,6 +180,14 @@
                   <button type="button" class="popover-additem-option js-new-form appnav-responsive"
                           data-case-action="none" data-type="survey" data-form-type="form">
                       <i class="fa fa-file-o"></i> {% trans "Survey" %}
+                  </button>
+              </div>
+          <% } %>
+          <% if (showTraining) { %>
+              <div class="pull-left">
+                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                          data-case-action="none" data-type="lesson" data-form-type="form">
+                      <i class="fa fa-file-o"></i> {% trans "Lesson" %}
                   </button>
               </div>
           <% } %>
@@ -192,4 +232,5 @@
 
 {% block modals %}{{ block.super }}
     {% include "hqwebapp/rollout_revert_modal.html" %}
+    {% include 'app_manager/partials/confirm_delete_app.html' %}
 {% endblock %}

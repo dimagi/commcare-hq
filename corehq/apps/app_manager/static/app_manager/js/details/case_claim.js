@@ -1,11 +1,11 @@
 hqDefine("app_manager/js/details/case_claim", function() {
     var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
         searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
-        var self = this,
+        var self = {},
             DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
-        var SearchProperty = function (name, label) {
-            var self = this;
+        var searchProperty = function (name, label) {
+            var self = {};
             self.name = ko.observable(name);
             self.label = ko.observable(label);
 
@@ -15,10 +15,12 @@ hqDefine("app_manager/js/details/case_claim", function() {
             self.label.subscribe(function () {
                 saveButton.fire('change');
             });
+
+            return self;
         };
 
-        var DefaultProperty = function (property, defaultValue) {
-            var self = this;
+        var defaultProperty = function (property, defaultValue) {
+            var self = {};
             self.property = ko.observable(property);
             self.defaultValue = ko.observable(defaultValue);
 
@@ -28,6 +30,8 @@ hqDefine("app_manager/js/details/case_claim", function() {
             self.defaultValue.subscribe(function () {
                 saveButton.fire('change');
             });
+
+            return self;
         };
 
         self.searchButtonDisplayCondition = ko.observable(searchButtonDisplayCondition);
@@ -42,17 +46,17 @@ hqDefine("app_manager/js/details/case_claim", function() {
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels come in keyed by lang.
                 var label = searchProperties[i].label[lang];
-                self.searchProperties.push(new SearchProperty(
+                self.searchProperties.push(searchProperty(
                     searchProperties[i].name,
                     label
                 ));
             }
         } else {
-            self.searchProperties.push(new SearchProperty('', ''));
+            self.searchProperties.push(searchProperty('', ''));
         }
 
         self.addProperty = function () {
-            self.searchProperties.push(new SearchProperty('', ''));
+            self.searchProperties.push(searchProperty('', ''));
         };
         self.removeProperty = function (property) {
             self.searchProperties.remove(property);
@@ -75,16 +79,16 @@ hqDefine("app_manager/js/details/case_claim", function() {
 
         if (defaultProperties.length > 0) {
             for (var k = 0; k < defaultProperties.length; k++) {
-                self.defaultProperties.push(new DefaultProperty(
+                self.defaultProperties.push(defaultProperty(
                     defaultProperties[k].property,
                     defaultProperties[k].defaultValue
                 ));
             }
         } else {
-            self.defaultProperties.push(new DefaultProperty('', ''));
+            self.defaultProperties.push(defaultProperty('', ''));
         }
         self.addDefaultProperty = function () {
-            self.defaultProperties.push(new DefaultProperty('',''));
+            self.defaultProperties.push(defaultProperty('',''));
         };
         self.removeDefaultProperty = function (property) {
             self.defaultProperties.remove(property);
@@ -143,16 +147,11 @@ hqDefine("app_manager/js/details/case_claim", function() {
         self.blacklistedOwnerIdsExpression.subscribe(function () {
             saveButton.fire('change');
         });
-    };
 
-    var createSearchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
-        searchButtonDisplayCondition, blacklistedOwnerIdsExpression,
-        saveButton) {
-        return new searchViewModel(searchProperties, includeClosed, defaultProperties, lang,
-            searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton);
+        return self;
     };
 
     return {
-        searchViewModel: createSearchViewModel,
+        searchViewModel: searchViewModel,
     };
 });

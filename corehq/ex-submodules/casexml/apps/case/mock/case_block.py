@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 import numbers
 from datetime import datetime, date
@@ -53,7 +54,7 @@ class CaseBlock(object):
     def _check_for_duplicate_properties(self):
         for property_name, passed_value in self._updatable_built_ins():
             if passed_value is not CaseBlock.undefined and property_name in self.update:
-                raise CaseBlockError("Key {!r} specified twice".format(property_name))
+                raise CaseBlockError("Key '{}' specified twice".format(property_name))
 
     @staticmethod
     def _make_index_attrs(value):

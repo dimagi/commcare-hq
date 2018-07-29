@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import logging
 import os
 import shutil
 import tempfile
+import uuid
 from io import BytesIO
 from uuid import uuid4
 from distutils.version import LooseVersion
@@ -14,30 +16,28 @@ from xml.etree import cElementTree as ElementTree
 import six
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
-from couchdbkit import ResourceNotFound
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
+from django.utils.text import slugify
 
 from casexml.apps.phone.data_providers import get_element_providers, get_async_providers
 from casexml.apps.phone.exceptions import (
-    MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
+    InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException
 )
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.utils import get_cached_items_with_count
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC, ICDS_LIVEQUERY, NAMESPACE_USER
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import json_format_datetime
+from memoized import memoized
 from casexml.apps.phone.models import (
     get_properly_wrapped_sync_log,
     LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
     SimplifiedSyncLog,
-    SyncLog,
 )
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
@@ -339,10 +339,7 @@ class RestoreState(object):
         self._last_sync_log = Ellipsis
 
         if case_sync is None:
-            username = self.restore_user.username
             if LIVEQUERY_SYNC.enabled(self.domain):
-                case_sync = LIVEQUERY
-            elif self.domain == 'icds-cas' and ICDS_LIVEQUERY.enabled(username, namespace=NAMESPACE_USER):
                 case_sync = LIVEQUERY
             else:
                 case_sync = DEFAULT_CASE_SYNC
@@ -377,13 +374,11 @@ class RestoreState(object):
     def last_sync_log(self):
         if self._last_sync_log is Ellipsis:
             if self.params.sync_log_id:
-                try:
-                    sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
-                except ResourceNotFound:
-                    # if we are in loose mode, return an HTTP 412 so that the phone will
-                    # just force a fresh sync
-                    raise MissingSyncLog('No sync log with ID {} found'.format(self.params.sync_log_id))
-                if sync_log.doc_type != 'SyncLog':
+                # if we are in loose mode, return an HTTP 412 so that the phone will
+                # just force a fresh sync
+                # This raises MissingSyncLog exception if synclog not found
+                sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
+                if sync_log.doc_type not in ('SyncLog', 'SimplifiedSyncLog'):
                     raise InvalidSyncLogException('Bad sync log doc type for {}'.format(self.params.sync_log_id))
                 elif sync_log.user_id != self.restore_user.user_id:
                     raise SyncLogUserMismatch('Sync log {} does not match user id {} (was {})'.format(
@@ -439,19 +434,16 @@ class RestoreState(object):
 
     def _new_sync_log(self):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
-        previous_log_rev = None if self.is_initial else self.last_sync_log._rev
-        last_seq = str(get_db().info()["update_seq"])
         new_synclog = SimplifiedSyncLog(
-            _id=SyncLog.get_db().server.next_uuid(),
+            _id=uuid.uuid1().hex.lower(),
             domain=self.restore_user.domain,
             build_id=self.params.app_id,
             user_id=self.restore_user.user_id,
-            last_seq=last_seq,
             owner_ids_on_phone=set(self.owner_ids),
             date=datetime.utcnow(),
             previous_log_id=previous_log_id,
-            previous_log_rev=previous_log_rev,
             extensions_checked=True,
+            device_id=self.params.device_id,
         )
         if self.is_livequery:
             new_synclog.log_format = LOG_FORMAT_LIVEQUERY
@@ -558,8 +550,8 @@ class RestoreConfig(object):
 
         cached_response = self.get_cached_response()
         tags = [
-            u'domain:{}'.format(self.domain),
-            u'is_initial:{}'.format(not bool(self.sync_log)),
+            'domain:{}'.format(self.domain),
+            'is_initial:{}'.format(not bool(self.sync_log)),
         ]
         if cached_response:
             datadog_counter('commcare.restores.cache_hits.count', tags=tags)
@@ -712,12 +704,12 @@ class RestoreConfig(object):
             )
         is_webapps = device_id and device_id.startswith("WebAppsLogin")
         tags = [
-            u'status_code:{}'.format(status),
-            u'device_type:{}'.format('webapps' if is_webapps else 'other'),
+            'status_code:{}'.format(status),
+            'device_type:{}'.format('webapps' if is_webapps else 'other'),
         ]
         env = settings.SERVER_ENVIRONMENT
         if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:
-            tags.append(u'domain:{}'.format(self.domain))
+            tags.append('domain:{}'.format(self.domain))
         if timing is not None:
             timer_buckets = (5, 20, 60, 120)
             for timer in timing.to_list(exclude_root=True):
@@ -728,7 +720,21 @@ class RestoreConfig(object):
                         'commcare.restores.{}'.format(segment),
                         tags=tags + ['duration:%s' % bucket],
                     )
+                elif timer.name.startswith('fixture:'):
+                    bucket = bucket_value(timer.duration, timer_buckets, 's')
+                    datadog_counter(
+                        'commcare.restores.fixture',
+                        tags=tags + [
+                            'duration:%s' % bucket,
+                            timer.name,
+                        ],
+                    )
             tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
+
+        if settings.ENTERPRISE_MODE and self.params.app and self.params.app.copy_of:
+            app_name = slugify(self.params.app.name)
+            tags.append('app:{}-{}'.format(app_name, self.params.app.version))
+
         datadog_counter('commcare.restores.count', tags=tags)
 
 
@@ -739,7 +745,7 @@ RESTORE_SEGMENTS = {
 }
 
 
-class NoClose:
+class NoClose(object):
     """HACK file object with no-op `close()` to avoid close by S3Transfer
 
     https://github.com/boto/s3transfer/issues/80

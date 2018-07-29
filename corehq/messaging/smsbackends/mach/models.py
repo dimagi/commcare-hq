@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from django.conf import settings
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
@@ -15,7 +16,7 @@ class SyniverseException(Exception):
 
 class SQLMachBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

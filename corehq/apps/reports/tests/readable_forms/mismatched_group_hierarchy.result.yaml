@@ -1,6 +1,6 @@
 - calculate: null
   comment: null
-  constraint: "1=2"
+  constraint: 1=2
   group: null
   hashtagValue: '#form/need_facility_trigger'
   label: You first need to log a facility before you can record information.
@@ -10,6 +10,7 @@
   repeat: null
   required: true
   response: null
+  setvalue: null
   tag: select1
   type: Select
   value: /data/need_facility_trigger
@@ -17,7 +18,7 @@
   children:
   - calculate: null
     comment: null
-    constraint: ". = '1'"
+    constraint: . = '1'
     group: /data/whole_form
     hashtagValue: '#form/current_site_confirm'
     label: 'Registering birth at facility: ____ (____)'
@@ -28,18 +29,21 @@
     repeat: null
     required: true
     response: '1'
+    setvalue: null
     tag: select1
     type: Select
     value: /data/current_site_confirm
-  - {calculate: null, comment: null, group: /data/whole_form, hashtagValue: '#form/fada_yearly_number',
-    label: Yearly Number, relevant: null, repeat: null, required: true, response: '7',
-    constraint: ". >= 0 and .<= 99999", tag: input, type: Int, value: /data/fada_yearly_number}
-  - {calculate: null, comment: null, group: /data/whole_form, hashtagValue: '#form/fada_monthly_number',
-    label: Monthly Number, relevant: null, repeat: null, required: true, response: '36',
-    constraint: ". >= 0 and .<= 99999", tag: input, type: Int, value: /data/fada_monthly_number}
+  - {calculate: null, comment: null, constraint: . >= 0 and .<= 99999, group: /data/whole_form,
+    hashtagValue: '#form/fada_yearly_number', label: Yearly Number, relevant: null,
+    repeat: null, required: true, response: '7', setvalue: null, tag: input, type: Int,
+    value: /data/fada_yearly_number}
+  - {calculate: null, comment: null, constraint: . >= 0 and .<= 99999, group: /data/whole_form,
+    hashtagValue: '#form/fada_monthly_number', label: Monthly Number, relevant: null,
+    repeat: null, required: true, response: '36', setvalue: null, tag: input, type: Int,
+    value: /data/fada_monthly_number}
   - calculate: null
     comment: null
-    constraint: ". = '1'"
+    constraint: . = '1'
     group: /data/whole_form
     hashtagValue: '#form/already_registered'
     label: "A patient with this ID (____) has already been registered.\_ Are you sure\
@@ -52,12 +56,14 @@
     repeat: null
     required: true
     response: null
+    setvalue: null
     tag: select1
     type: Select
     value: /data/already_registered
-  - {calculate: null, comment: null, group: /data/whole_form, hashtagValue: '#form/fada_date_admission',
-    label: Date of Admission, relevant: null, repeat: null, required: true, response: '2014-01-01',
-    constraint: ". <= today()", tag: input, type: Date, value: /data/fada_date_admission}
+  - {calculate: null, comment: null, constraint: . <= today(), group: /data/whole_form,
+    hashtagValue: '#form/fada_date_admission', label: Date of Admission, relevant: null,
+    repeat: null, required: true, response: '2014-01-01', setvalue: null, tag: input,
+    type: Date, value: /data/fada_date_admission}
   - calculate: null
     comment: null
     constraint: null
@@ -73,6 +79,7 @@
     repeat: null
     required: true
     response: 1 2 3 4
+    setvalue: null
     tag: select
     type: MSelect
     value: /data/fada_observation_points_observed
@@ -90,6 +97,7 @@
     repeat: null
     required: true
     response: '1'
+    setvalue: null
     tag: select1
     type: Select
     value: /data/fada_mother_referred
@@ -106,6 +114,7 @@
     repeat: null
     required: true
     response: '0'
+    setvalue: null
     tag: select1
     type: Select
     value: /data/fada_maternal_death
@@ -122,6 +131,7 @@
     repeat: null
     required: true
     response: '2'
+    setvalue: null
     tag: select1
     type: Select
     value: /data/fada_stillbirth_neonatal_death
@@ -138,6 +148,7 @@
     repeat: null
     required: true
     response: '4'
+    setvalue: null
     tag: select1
     type: Select
     value: /data/fada_csection
@@ -154,6 +165,7 @@
     repeat: null
     required: true
     response: '3'
+    setvalue: null
     tag: select1
     type: Select
     value: /data/fada_healthworker_assent
@@ -174,6 +186,7 @@
       repeat: null
       required: true
       response: '0'
+      setvalue: null
       tag: select
       type: MSelect
       value: /data/fada_obv1/fada_assisted_by_obv1
@@ -190,6 +203,7 @@
       repeat: null
       required: true
       response: '0'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_maternal_temp
@@ -206,6 +220,7 @@
       repeat: null
       required: true
       response: '0'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_maternal_bp
@@ -222,6 +237,7 @@
       repeat: null
       required: true
       response: '0'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_partograph
@@ -238,6 +254,7 @@
       repeat: null
       required: true
       response: '0'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_checklist_picked_up_obv1
@@ -254,6 +271,7 @@
       repeat: null
       required: true
       response: '0'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_checklist_used_after_care_obv1
@@ -270,6 +288,7 @@
       repeat: null
       required: true
       response: 'yes'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_checklist_poster_used_obv1
@@ -286,6 +305,7 @@
       repeat: null
       required: true
       response: '0'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_birth_companion_present_obv1
@@ -298,6 +318,7 @@
     repeat: null
     required: false
     response: true
+    setvalue: null
     tag: group
     type: Group
     value: /data/fada_obv1
@@ -318,6 +339,7 @@
       repeat: null
       required: true
       response: 1 1
+      setvalue: null
       tag: select
       type: MSelect
       value: /data/fada_obv2/fada_assisted_by_obv2
@@ -334,6 +356,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_oxycotin_administered_obv2
@@ -350,6 +373,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_oxycotin_administration_location
@@ -366,6 +390,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_water_usage
@@ -382,6 +407,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_soap_usage
@@ -398,6 +424,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_alcohol_rub
@@ -414,6 +441,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_clean_gloves
@@ -430,6 +458,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_clean_towel
@@ -446,6 +475,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_scissors_blade
@@ -462,6 +492,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_cord_tie
@@ -478,6 +509,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_mucus_extractor
@@ -494,6 +526,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_neonatal_bag
@@ -510,6 +543,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_pads
@@ -526,6 +560,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_checklist_picked_up_obv2
@@ -542,6 +577,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_checklist_used_after_care_obv2
@@ -558,6 +594,7 @@
       repeat: null
       required: true
       response: 'yes'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_checklist_poster_used_obv2
@@ -570,6 +607,7 @@
     repeat: null
     required: false
     response: true
+    setvalue: null
     tag: group
     type: Group
     value: /data/fada_obv2
@@ -590,6 +628,7 @@
       repeat: null
       required: true
       response: 1 1
+      setvalue: null
       tag: select
       type: MSelect
       value: /data/fada_obv3/fada_assisted_by_obv3
@@ -606,6 +645,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv3/fada_oxycotin_administered_obv3
@@ -622,6 +662,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv3/fada_neonatal_bag_usage
@@ -638,6 +679,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv3/fada_birth_companion_present_obv3
@@ -650,6 +692,7 @@
     repeat: null
     required: false
     response: true
+    setvalue: null
     tag: group
     type: Group
     value: /data/fada_obv3
@@ -670,6 +713,7 @@
       repeat: null
       required: true
       response: 1 1
+      setvalue: null
       tag: select
       type: MSelect
       value: /data/fada_obv4/fada_assisted_by_obv4
@@ -686,6 +730,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_baby_wt
@@ -702,6 +747,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_baby_temp
@@ -718,6 +764,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_baby_skin_to_skin
@@ -734,6 +781,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_baby_skin_to_skin_for_1_hour
@@ -750,6 +798,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_breastfeeding
@@ -766,6 +815,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_checklist_picked_up_obv4
@@ -782,6 +832,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_checklist_used_after_care_obv4
@@ -798,6 +849,7 @@
       repeat: null
       required: true
       response: 'yes'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_checklist_poster_used_obv4
@@ -810,6 +862,7 @@
     repeat: null
     required: false
     response: true
+    setvalue: null
     tag: group
     type: Group
     value: /data/fada_obv4
@@ -828,6 +881,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_maternal_temp_anytime
@@ -844,6 +898,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_maternal_bp_anytime
@@ -860,6 +915,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_magnesium
@@ -876,6 +932,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_ab_mother
@@ -892,6 +949,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_ab_baby
@@ -908,6 +966,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_arv_mother
@@ -924,6 +983,7 @@
       repeat: null
       required: true
       response: '1'
+      setvalue: null
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_arv_baby
@@ -936,6 +996,7 @@
     repeat: null
     required: false
     response: true
+    setvalue: null
     tag: group
     type: FieldList
     value: /data/fada_other_observations
@@ -952,17 +1013,16 @@
     repeat: null
     required: true
     response: 'no'
+    setvalue: null
     tag: select1
     type: Select
     value: /data/fada_highlight_record
-  - {calculate: null, comment: null, group: /data/whole_form, hashtagValue: '#form/fada_highlight_comment',
+  - {calculate: null, comment: null, constraint: null, group: /data/whole_form, hashtagValue: '#form/fada_highlight_comment',
     label: Comment to supervisor, relevant: /data/fada_highlight_record = 'yes', repeat: null,
-    required: true, response: null, tag: input, type: Text, value: /data/fada_highlight_comment,
-    constraint: null}
-  - {calculate: null, comment: null, group: /data/whole_form, hashtagValue: '#form/fada_gps_location',
+    required: true, response: null, setvalue: null, tag: input, type: Text, value: /data/fada_highlight_comment}
+  - {calculate: null, comment: null, constraint: null, group: /data/whole_form, hashtagValue: '#form/fada_gps_location',
     label: GPS Capture, relevant: null, repeat: null, required: false, response: 8.8888888
-      -9.9999999 0.0 30.000, tag: input, type: Geopoint, value: /data/fada_gps_location,
-      constraint: null}
+      -9.9999999 0.0 30.000, setvalue: null, tag: input, type: Geopoint, value: /data/fada_gps_location}
   comment: null
   constraint: null
   group: null
@@ -972,33 +1032,40 @@
   repeat: null
   required: false
   response: true
+  setvalue: null
   tag: group
   type: Group
   value: /data/whole_form
 - {calculate: 'instance(''casedb'')/casedb/case[@case_type=''facility''][@status=''open''][facility_id
-    = /data/fada_facility_id]/number_usage', comment: null, group: null, hashtagValue: '#form/facility_number_usage',
-  label: '#form/facility_number_usage', relevant: /data/fada_facility_id != '', repeat: null, required: null,
-  response: '1', tag: hidden, type: DataBindOnly, value: /data/facility_number_usage, constraint: null}
+    = /data/fada_facility_id]/number_usage', comment: null, constraint: null, group: null,
+  hashtagValue: '#form/facility_number_usage', label: '#form/facility_number_usage',
+  relevant: /data/fada_facility_id != '', repeat: null, required: null, response: '1',
+  setvalue: null, tag: hidden, type: DataBindOnly, value: /data/facility_number_usage}
 - {calculate: 'instance(''casedb'')/casedb/case[@case_type=''current_user_data'']/facility_id',
-  comment: null, group: null, hashtagValue: '#form/fada_facility_id', label: '#form/fada_facility_id',
-  relevant: 'count(instance(''casedb'')/casedb/case[@case_type=''current_user_data'']) = 1', constraint: null,
-  repeat: null, required: null, response: '600', tag: hidden, type: DataBindOnly, value: /data/fada_facility_id}
+  comment: null, constraint: null, group: null, hashtagValue: '#form/fada_facility_id',
+  label: '#form/fada_facility_id', relevant: 'count(instance(''casedb'')/casedb/case[@case_type=''current_user_data''])
+    = 1', repeat: null, required: null, response: '600', setvalue: null, tag: hidden,
+  type: DataBindOnly, value: /data/fada_facility_id}
 - {calculate: 'concat(/data/fada_facility_id, format-date(/data/fada_date_admission,
-    ''%Y%m''), /data/patient_number_padded)', comment: null, group: null, hashtagValue: '#form/fada_patient_id',
-  label: '#form/fada_patient_id', relevant: /data/fada_facility_id != '', repeat: null, required: null, response: '2093402934',
-  tag: hidden, type: DataBindOnly, value: /data/fada_patient_id, constraint: null}
+    ''%Y%m''), /data/patient_number_padded)', comment: null, constraint: null, group: null,
+  hashtagValue: '#form/fada_patient_id', label: '#form/fada_patient_id', relevant: /data/fada_facility_id
+    != '', repeat: null, required: null, response: '2093402934', setvalue: null, tag: hidden,
+  type: DataBindOnly, value: /data/fada_patient_id}
 - {calculate: 'instance(''casedb'')/casedb/case[@case_type=''facility''][@status=''open''][facility_id
-    = /data/fada_facility_id]/owner_id', comment: null, group: null, hashtagValue: '#form/facility_owner_id',
-  label: '#form/facility_owner_id', relevant: /data/fada_facility_id != '', repeat: null, required: null,
-  response: '', tag: hidden, type: DataBindOnly, value: /data/facility_owner_id, constraint: null}
+    = /data/fada_facility_id]/owner_id', comment: null, constraint: null, group: null,
+  hashtagValue: '#form/facility_owner_id', label: '#form/facility_owner_id', relevant: /data/fada_facility_id
+    != '', repeat: null, required: null, response: '', setvalue: null, tag: hidden,
+  type: DataBindOnly, value: /data/facility_owner_id}
 - {calculate: 'if(/data/patient_number >= 10000, string(/data/patient_number), if(/data/patient_number
     >= 1000, concat(''0'', string(/data/patient_number)), if(/data/patient_number
     >= 100, concat(''00'', string(/data/patient_number)), if(/data/patient_number
     >= 10, concat(''000'', string(/data/patient_number)), concat(''0000'', string(/data/patient_number))))))',
-  comment: null, group: null, hashtagValue: '#form/patient_number_padded', label: '#form/patient_number_padded',
-  relevant: /data/fada_facility_id != '', repeat: null, required: null, response: '01225', tag: hidden, type: DataBindOnly,
-  value: /data/patient_number_padded, constraint: null}
+  comment: null, constraint: null, group: null, hashtagValue: '#form/patient_number_padded',
+  label: '#form/patient_number_padded', relevant: /data/fada_facility_id != '', repeat: null,
+  required: null, response: '01225', setvalue: null, tag: hidden, type: DataBindOnly,
+  value: /data/patient_number_padded}
 - {calculate: 'if(/data/facility_number_usage = 1, /data/fada_monthly_number, /data/fada_yearly_number)',
-  comment: null, group: null, hashtagValue: '#form/patient_number', label: '#form/patient_number',
-  relevant: /data/fada_facility_id != '', repeat: null, required: null, response: '1234', tag: hidden, type: DataBindOnly,
-  value: /data/patient_number, constraint: null}
+  comment: null, constraint: null, group: null, hashtagValue: '#form/patient_number',
+  label: '#form/patient_number', relevant: /data/fada_facility_id != '', repeat: null,
+  required: null, response: '1234', setvalue: null, tag: hidden, type: DataBindOnly,
+  value: /data/patient_number}

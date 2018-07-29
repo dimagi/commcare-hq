@@ -10,16 +10,20 @@ from corehq.apps.userreports.indicators import (
     BooleanIndicator,
     Column,
     CompoundIndicator,
+    DueListDateIndicator,
     LedgerBalancesIndicator,
     RawIndicator,
+    SmallBooleanIndicator,
 )
 from corehq.apps.userreports.indicators.specs import (
     BooleanIndicatorSpec,
     ChoiceListIndicatorSpec,
+    DueListDateIndicatorSpec,
     ExpressionIndicatorSpec,
     IndicatorSpecBase,
     LedgerBalancesIndicatorSpec,
     RawIndicatorSpec,
+    SmallBooleanIndicatorSpec,
 )
 
 
@@ -67,6 +71,16 @@ def _build_expression_indicator(spec, context):
     )
 
 
+def _build_small_boolean_indicator(spec, context):
+    wrapped = SmallBooleanIndicatorSpec.wrap(spec)
+    return SmallBooleanIndicator(
+        wrapped.display_name,
+        wrapped.column_id,
+        FilterFactory.from_spec(wrapped.filter, context),
+        wrapped_spec=wrapped,
+    )
+
+
 def _build_boolean_indicator(spec, context):
     wrapped = BooleanIndicatorSpec.wrap(spec)
     return BooleanIndicator(
@@ -107,6 +121,11 @@ def _build_ledger_balances_indicator(spec, context):
     return LedgerBalancesIndicator(wrapped_spec)
 
 
+def _build_due_list_date_indicator(spec, context):
+    wrapped_spec = DueListDateIndicatorSpec.wrap(spec)
+    return DueListDateIndicator(wrapped_spec)
+
+
 def _build_repeat_iteration_indicator(spec, context):
     return RawIndicator(
         "base document iteration",
@@ -137,8 +156,10 @@ def _build_inserted_at(spec, context):
 
 class IndicatorFactory(object):
     constructor_map = {
+        'small_boolean': _build_small_boolean_indicator,
         'boolean': _build_boolean_indicator,
         'choice_list': _build_choice_list_indicator,
+        'due_list_date': _build_due_list_date_indicator,
         'count': _build_count_indicator,
         'expression': _build_expression_indicator,
         'inserted_at': _build_inserted_at,

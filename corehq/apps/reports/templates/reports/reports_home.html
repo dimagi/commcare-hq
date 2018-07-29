@@ -9,7 +9,13 @@
 {% initial_page_data 'configs' configs %}
 <ul class="nav nav-tabs" style="margin-bottom: 10px;">
     <li class="active"><a href="#ko-report-config-list" data-toggle="tab">{% trans "My Saved Reports" %}</a></li>
-    <li><a href="#scheduled-reports" data-toggle="tab">{% trans "My Scheduled Reports" %}</a></li>
+    <li><a href="#scheduled-reports" data-toggle="tab">
+        {% if others_scheduled_reports %}
+            {% trans "Scheduled Reports" %}
+        {% else %}
+            {% trans "My Scheduled Reports" %}
+        {% endif %}
+    </a></li>
 </ul>
 <div class="tab-content">
     <div class="tab-pane active" id="ko-report-config-list">
@@ -80,19 +86,22 @@
             {% trans "Create a New Scheduled Report" %}
         </a></p>
         {% if scheduled_reports or others_scheduled_reports %}
-        {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True scheduled_reports=scheduled_reports %}
-        {% if others_scheduled_reports %}
-        <h3>Other Scheduled Reports (managed by others)</h3>
-        {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False scheduled_reports=others_scheduled_reports %}
-        {% endif %}
+            {% if others_scheduled_reports %}
+                <h3>{% trans "My Scheduled Reports" %}</h3>
+            {% endif %}
+            {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True scheduled_reports=scheduled_reports %}
+            {% if others_scheduled_reports %}
+                <h3>{% trans "Other Scheduled Reports" %}</h3>
+                {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False scheduled_reports=others_scheduled_reports %}
+            {% endif %}
         {% else %}
-        <div class="alert alert-info">
-            {% blocktrans %}
-                You don't have any scheduled reports.  You can create a scheduled
-                report based on a saved report to have a report delivered by email
-                on a regular basis.
-            {% endblocktrans %}
-        </div>
+            <div class="alert alert-info">
+                {% blocktrans %}
+                    You don't have any scheduled reports.  You can create a scheduled
+                    report based on a saved report to have a report delivered by email
+                    on a regular basis.
+                {% endblocktrans %}
+            </div>
         {% endif %}
     </div>
     {% endif %}

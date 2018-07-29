@@ -1,6 +1,13 @@
 {% extends "reports/async/default.html" %}
 {% load i18n %}
 {% load case_tags %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
+    <script src="{% static "case/js/case_hierarchy.js" %}"></script>
+{% endblock %}
+
 {% block reportcontent %}
     {% block patient_header %}
             <div>
@@ -14,18 +21,8 @@
 
     {% block patient_content %}
         <div class="col-sm-11">
-            <script>
-                // have to do this here too because this page is loaded asynchronously
-                $(function () {
-                    $(".timeago").timeago();
-                });
-            </script>
-
             <div class="row">
-                {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
-                {# import error on the case details page: http://manage.dimagi.com/default.asp?223100 #}
-                {% include 'cloudcare/includes/formplayer-inline.html' %}
-                {% render_case_hierarchy case case_hierarchy_options %}
+                {% include "case/partials/case_hierarchy.html" %}
             </div>
         </div>
     {% endblock patient_content %}

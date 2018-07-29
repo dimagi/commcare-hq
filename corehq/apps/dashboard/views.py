@@ -1,10 +1,10 @@
 from __future__ import absolute_import, division
+from __future__ import unicode_literals
 from django.conf import settings
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.http.response import Http404
 from django.utils.translation import ugettext_noop, ugettext as _
-from djangular.views.mixins import allow_remote_invocation
 
 import math
 
@@ -25,7 +25,6 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
-from corehq.apps.hqwebapp.decorators import use_angular_js
 from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
 

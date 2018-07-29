@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf.urls import include, url
 
 from corehq.apps.styleguide.views import (
@@ -15,8 +16,6 @@ doc_urlpatterns = [
     url(r'^$', default, name='sg_examples_default'),
     url(r'^simple_crispy/',
         include('corehq.apps.styleguide.examples.simple_crispy_form.urls')),
-    url(r'^controls_demo/',
-        include('corehq.apps.styleguide.examples.controls_demo.urls')),
 ]
 
 urlpatterns = [

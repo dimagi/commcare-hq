@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import requests
 from django.test import SimpleTestCase, RequestFactory
 from ..auth import (
@@ -165,7 +166,7 @@ class TestDetermineAuthTypeFromRequest(SimpleTestCase):
     def get_django_request(self, auth=None, headers=None):
         def to_django_header(header_key):
             # python simple_server.WSGIRequestHandler does basically this:
-            return u'HTTP_' + header_key.upper().replace('-', '_')
+            return 'HTTP_' + header_key.upper().replace('-', '_')
 
         req = (requests.Request(
             'GET',
@@ -188,13 +189,6 @@ class TestDetermineAuthTypeFromRequest(SimpleTestCase):
     def test_digest_auth(self):
         request = self.get_django_request(auth=requests.auth.HTTPDigestAuth('foo', 'bar'))
         self.assertEqual('digest', determine_authtype_from_request(request))
-
-    def test_token_auth(self):
-        # http://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
-        request = self.get_django_request(headers={
-            'Authorization': 'Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b'
-        })
-        self.assertEqual('token', determine_authtype_from_request(request))
 
     def test_api_auth(self):
         # http://django-tastypie.readthedocs.io/en/latest/authentication.html#apikeyauthentication

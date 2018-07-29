@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 from __future__ import division
-import csv
+from __future__ import unicode_literals
+import csv342 as csv
 import io
 import json
 import uuid
+
+import six
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
@@ -17,7 +20,6 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
-from corehq.apps.locations.permissions import location_safe
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports, can_download_data_files
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
@@ -37,7 +39,7 @@ from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, HQJSONResponseMixin, PaginatedItemException
 from corehq.apps.data_interfaces.dispatcher import (
     EditDataInterfaceDispatcher,
     require_can_edit_data,
@@ -52,7 +54,7 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, HttpResponseBadRequest
 from django.shortcuts import render
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -237,7 +239,7 @@ class ArchiveFormView(DataInterfaceSection):
         try:
             bulk_file = self.request.FILES['bulk_upload_file']
             if bulk_file.size > self.MAX_SIZE:
-                raise BulkUploadCasesException(_(u"File size too large. "
+                raise BulkUploadCasesException(_("File size too large. "
                                                  "Please upload file less than"
                                                  " {size} Megabytes").format(size=self.MAX_SIZE // self.ONE_MB))
 
@@ -267,7 +269,7 @@ class ArchiveFormView(DataInterfaceSection):
             messages.success(self.request, _("We received your file and are processing it. "
                                              "You will receive an email when it has finished."))
         except BulkUploadCasesException as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, six.text_type(e))
         return None
 
     def post(self, request, *args, **kwargs):
@@ -430,7 +432,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def _get_item_data(self, case):
         return {
             'id': case.case_id,
-            'detailsUrl': reverse('case_details', args=[self.domain, case.case_id]),
+            'detailsUrl': reverse('case_data', args=[self.domain, case.case_id]),
             'name': case.name,
             'externalId': case.external_id if case.external_id else '--',
             'phoneNumber': case.get_case_property('contact_phone_number') or '--',
@@ -533,6 +535,7 @@ class XFormManagementView(DataInterfaceSection):
             import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
             form_query_string = six.moves.urllib.parse.unquote(self.request.POST.get('select_all'))
             from django.http import HttpRequest, QueryDict
+            from django_otp.middleware import OTPMiddleware
 
             _request = HttpRequest()
             _request.couch_user = request.couch_user
@@ -541,8 +544,11 @@ class XFormManagementView(DataInterfaceSection):
             _request.couch_user.current_domain = self.domain
             _request.can_access_all_locations = request.couch_user.has_permission(self.domain,
                                                                                   'access_all_locations')
+            _request.session = request.session
 
             _request.GET = QueryDict(form_query_string)
+            OTPMiddleware().process_request(_request)
+
             dispatcher = EditDataInterfaceDispatcher()
             xform_ids = dispatcher.dispatch(
                 _request,
@@ -606,7 +612,7 @@ def xform_management_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
-class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
+class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
     page_title = ugettext_lazy("Automatically Close Cases")
@@ -728,7 +734,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         }
 
 
-class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
+class AddAutomaticUpdateRuleView(HQJSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/add_automatic_update_rule.html'
     urlname = 'add_automatic_update_rule'
     page_title = ugettext_lazy("Add Automatic Case Close Rule")
@@ -763,8 +769,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
 
     @allow_remote_invocation
     def get_case_property_map(self):
-        data = all_case_properties_by_domain(self.domain,
-            include_parent_properties=False)
+        data = all_case_properties_by_domain(self.domain, include_parent_properties=False)
         return {
             'data': data,
             'success': True,

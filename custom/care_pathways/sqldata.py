@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SimpleColumn

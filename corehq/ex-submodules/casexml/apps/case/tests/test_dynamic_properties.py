@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from dimagi.ext.jsonobject import StringProperty
 from casexml.apps.case.models import CommCareCase
@@ -17,7 +18,7 @@ class DynamicPropertiesTest(SimpleTestCase):
         class CaseWithNewProperty(CommCareCase):
             new_property = StringProperty()
 
-            class Meta:
+            class Meta(object):
                 # For some reason this is necessary for travis
                 app_label = "case"
 

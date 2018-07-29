@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from mimetypes import guess_all_extensions, guess_type
 import uuid
 import zipfile
@@ -20,6 +21,8 @@ from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResp
 from django.shortcuts import render
 import shutil
 from corehq import privileges
+from corehq.apps.app_manager.const import TARGET_COMMCARE, TARGET_COMMCARE_LTS
+from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
@@ -29,6 +32,7 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.decorators import safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
 from corehq.apps.hqmedia.controller import (
     MultimediaBulkUploadController,
@@ -36,12 +40,11 @@ from corehq.apps.hqmedia.controller import (
     MultimediaAudioUploadController,
     MultimediaVideoUploadController
 )
-from corehq.apps.hqmedia.decorators import login_with_permission_from_post
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from soil.util import expose_cached_download
 from django.utils.translation import ugettext as _
 from django_prbac.decorators import requires_privilege_raise404
@@ -50,7 +53,7 @@ import six
 
 class BaseMultimediaView(ApplicationViewMixin, View):
 
-    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_with_permission_from_post()))
+    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_and_domain_required))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseMultimediaView, self).dispatch(request, *args, **kwargs)
 
@@ -133,10 +136,6 @@ class BulkUploadMultimediaView(BaseMultimediaUploaderView):
                                                                        args=[self.domain, self.app_id]))]
 
 
-class BadMediaFileException(Exception):
-    pass
-
-
 class BaseProcessUploadedView(BaseMultimediaView):
 
     @property
@@ -173,7 +172,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
         except Exception as e:
             raise BadMediaFileException("There was an error fetching the MIME type of your file. Error: %s" % e)
 
-    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_with_permission_from_post()))
+    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_and_domain_required))
     # YUI js uploader library doesn't support csrf
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
@@ -501,7 +500,7 @@ def iter_media_files(media_objects):
     return _media_files(), errors
 
 
-def iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id=None):
+def iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id=None, download_targeted_version=False):
     file_iterator = []
     errors = []
     if include_multimedia_files:
@@ -511,7 +510,9 @@ def iter_app_files(app, include_multimedia_files, include_index_files, build_pro
             languages = app.build_profiles[build_profile_id].langs
         file_iterator, errors = iter_media_files(app.get_media_objects(languages=languages))
     if include_index_files:
-        index_files, index_file_errors = iter_index_files(app, build_profile_id=build_profile_id)
+        index_files, index_file_errors = iter_index_files(
+            app, build_profile_id=build_profile_id, download_targeted_version=download_targeted_version
+        )
         if index_file_errors:
             errors.extend(index_file_errors)
         file_iterator = itertools.chain(file_iterator, index_files)
@@ -562,6 +563,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         build_profile_id = None
         if domain_has_privilege(request.domain, privileges.BUILD_PROFILES):
             build_profile_id = request.GET.get('profile')
+        download_targeted_version = request.GET.get('download_targeted_version') == 'true'
         download.set_task(build_application_zip.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
@@ -569,8 +571,9 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
             download_id=download.download_id,
             compress_zip=self.compress_zip,
             filename=self.zip_name,
-            build_profile_id=build_profile_id)
-        )
+            build_profile_id=build_profile_id,
+            download_targeted_version=download_targeted_version,
+        ))
         return download.get_start_response()
 
     @method_decorator(safe_cached_download)
@@ -658,22 +661,35 @@ class ViewMultimediaFile(View):
         return response
 
 
-def iter_index_files(app, build_profile_id=None):
+def iter_index_files(app, build_profile_id=None, download_targeted_version=False):
     from corehq.apps.app_manager.views.download import download_index_files
     from dimagi.utils.logging import notify_exception
-    skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
+    skip_files = [
+        text_format.format(suffix)
+        for text_format in ['profile{}.xml', 'profile{}.ccpr', 'media_profile{}.xml']
+        for suffix in ['', '-' + TARGET_COMMCARE, '-' + TARGET_COMMCARE_LTS]
+    ]
     text_extensions = ('.xml', '.ccpr', '.txt')
     files = []
     errors = []
 
     def _get_name(f):
-        return {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
+        return {
+            'media_profile{}.ccpr'.format(suffix): 'profile.ccpr'
+            for suffix in ['', '-' + TARGET_COMMCARE, '-' + TARGET_COMMCARE_LTS]
+        }.get(f, f)
 
     def _encode_if_unicode(s):
         return s.encode('utf-8') if isinstance(s, six.text_type) else s
 
     def _files(files):
         for name, f in files:
+            if download_targeted_version and name == 'media_profile.ccpr':
+                continue
+            elif not download_targeted_version and name in [
+                'media_profile-{}.ccpr'.format(suffix) for suffix in [TARGET_COMMCARE, TARGET_COMMCARE_LTS]
+            ]:
+                continue
             if build_profile_id is not None:
                 name = name.replace(build_profile_id + '/', '')
             if name not in skip_files:

@@ -1,11 +1,14 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from itertools import chain
 
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
+
 from corehq.util.quickcache import quickcache
 from django.http import Http404
+from django.core.cache import cache
 
 from corehq.apps.es import AppES
 from dimagi.utils.couch.database import iter_docs
@@ -127,6 +130,22 @@ def get_current_app_doc(domain, app_id):
 
 def get_current_app(domain, app_id):
     return wrap_app(get_current_app_doc(domain, app_id))
+
+
+def get_app_cached(domain, app_id):
+    """Cached version of ``get_app`` for use in phone
+    api calls where most requests will be for app builds
+    which are read-only.
+
+    This only caches app builds."""
+    key = 'app_build_cache_{}_{}'.format(domain, app_id)
+    app = cache.get(key)
+    if not app:
+        app = get_app(domain, app_id)
+        if app.copy_of:
+            cache.set(key, app, 24 * 3600)
+
+    return app
 
 
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
@@ -309,6 +328,21 @@ def get_built_app_ids_with_submissions_for_app_ids_and_versions(domain, app_ids_
     return results
 
 
+def get_auto_generated_built_apps(domain, app_id):
+    """
+    Returns all the built apps that were automatically generated for an application id.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'saved_apps_auto_generated/view',
+        startkey=[domain, app_id],
+        endkey=[domain, app_id, {}],
+        reduce=False,
+        include_docs=False,
+    ).all()
+    return [doc['value'] for doc in results]
+
+
 def get_latest_app_ids_and_versions(domain, app_id=None):
     """
     Returns all the latest app_ids and versions in a dictionary.
@@ -407,8 +441,17 @@ def get_all_built_app_results(domain, app_id=None):
         'app_manager/saved_app',
         startkey=startkey,
         endkey=endkey,
-        include_docs=True,
+        include_docs=False,
     ).all()
+
+
+def get_available_versions_for_app(domain, app_id):
+    from .models import Application
+    result = Application.get_db().view('app_manager/saved_app',
+                                       startkey=[domain, app_id, {}],
+                                       endkey=[domain, app_id],
+                                       descending=True)
+    return [doc['value']['version'] for doc in result]
 
 
 def get_case_types_from_apps(domain):

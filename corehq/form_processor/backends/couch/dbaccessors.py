@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
@@ -13,6 +14,7 @@ from casexml.apps.case.dbaccessors import (
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids, iter_cases
 from casexml.apps.stock.models import StockTransaction
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_in_domain,
@@ -39,7 +41,7 @@ from couchforms.dbaccessors import (
     get_form_ids_by_type,
     get_form_ids_by_xmlns,
 )
-from couchforms.models import XFormInstance, doc_types
+from couchforms.models import XFormInstance, doc_types, XFormOperation
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
 import six
@@ -77,7 +79,7 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def get_with_attachments(form_id):
-        doc = XFormInstance.get_db().get(form_id, attachments=True)
+        doc = XFormInstance.get_db().get(form_id)
         doc = doc_types()[doc['doc_type']].wrap(doc)
         if doc.external_blobs:
             for name, meta in six.iteritems(doc.external_blobs):
@@ -124,6 +126,17 @@ class FormAccessorCouch(AbstractFormAccessor):
         def _form_undelete(doc):
             doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
         return _soft_undelete(XFormInstance.get_db(), form_ids, _form_undelete)
+
+    @staticmethod
+    def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml, new_username):
+        # Update XML
+        form_data.put_attachment(form_attachment_new_xml, name="form.xml", content_type='text/xml')
+        operation = XFormOperation(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
+                                   operation='gdpr_scrub')
+        form_data.history.append(operation)
+        # Update metadata
+        form_data.form['meta']['username'] = new_username
+        form_data.save()
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):

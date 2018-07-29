@@ -1,6 +1,8 @@
 # encoding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
+import os
 from io import BytesIO
 
 from botocore.response import StreamingBody
@@ -27,17 +29,20 @@ from corehq.apps.export.views import (
     EditNewCustomFormExportView,
 )
 from corehq.blobs import _db
+from corehq.util.test_utils import generate_cases
+from io import open
 
 
 class FakeDB(object):
 
-    @staticmethod
-    def get(blob_id):
-        content = 'foo\n'
+    def __init__(self, blobs):
+        self.blobs = blobs
+
+    def get(self, blob_id):
+        content = self.blobs[blob_id]
         return StreamingBody(BytesIO(content), len(content))
 
-    @staticmethod
-    def delete(blob_id):
+    def delete(self, blob_id):
         pass
 
 
@@ -70,14 +75,17 @@ class DataFileDownloadDetailTest(ViewTestCase):
     @classmethod
     def setUpClass(cls):
         super(DataFileDownloadDetailTest, cls).setUpClass()
-        _db.append(FakeDB)
+        with open(os.path.abspath(__file__), 'rb') as f:
+            cls.content = f.read()
+
+        _db.append(FakeDB({'abc': cls.content}))
         cls.data_file = DataFile(
-            domain=cls.domain,
+            domain=cls.domain.name,
             filename='foo.txt',
             description='all of the foo',
             content_type='text/plain',
-            blob_id='fake',
-            content_length=4,
+            blob_id='abc',
+            content_length=len(cls.content)
         )
         cls.data_file.save()
 
@@ -89,12 +97,41 @@ class DataFileDownloadDetailTest(ViewTestCase):
 
     def test_data_file_download(self):
         data_file_url = reverse(DataFileDownloadDetail.urlname, kwargs={
-            'domain': self.domain, 'pk': self.data_file.pk, 'filename': 'foo.txt'
+            'domain': self.domain.name, 'pk': self.data_file.pk, 'filename': 'foo.txt'
         })
         try:
-            self.client.get(data_file_url)
+            resp = self.client.get(data_file_url)
         except TypeError as err:
             self.fail('Getting a data file raised a TypeError: {}'.format(err))
+        self.assertEqual(resp.getvalue(), self.content)
+
+
+@generate_cases([
+    (0, 999),
+    (1000, 1999),
+    (12000, None)
+], DataFileDownloadDetailTest)
+def test_data_file_download_partial(self, start, end):
+    data_file_url = reverse(DataFileDownloadDetail.urlname, kwargs={
+        'domain': self.domain, 'pk': self.data_file.pk, 'filename': 'foo.txt'
+    })
+    content_length = len(self.content)
+    if end:
+        range = '{}-{}'.format(start, end)
+    else:
+        range = '{}-'.format(start)
+
+    resp = self.client.get(data_file_url, HTTP_RANGE='bytes={}'.format(range))
+    self.assertEqual(resp.status_code, 206)
+    expected_range_header = 'bytes {}-{}/{}'.format(start, end or (content_length - 1), content_length)
+    self.assertEqual(resp['Content-Range'], expected_range_header)
+    if end:
+        expected_content = self.content[start:end + 1]
+    else:
+        expected_content = self.content[start:]
+
+    self.assertEqual(resp['Content-Length'], '{}'.format(len(expected_content)))
+    self.assertEqual(resp.getvalue(), expected_content)
 
 
 class ExportViewTest(ViewTestCase):

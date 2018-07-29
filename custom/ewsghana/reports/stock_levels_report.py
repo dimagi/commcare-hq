@@ -24,7 +24,7 @@ from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
 from custom.ewsghana.utils import has_input_stock_permissions, ews_date_format
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import get_location, SQLLocation

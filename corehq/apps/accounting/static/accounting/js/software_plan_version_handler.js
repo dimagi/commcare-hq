@@ -16,7 +16,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
     multiselectUtils
 ) {
     $(function() {
-        var planVersionFormHandler = new SoftwarePlanVersionFormHandler(
+        var planVersionFormHandler = softwarePlanVersionFormHandler(
             initialPageData.get('role'),
             initialPageData.get('feature_rates'),
             initialPageData.get('product_rates')
@@ -25,24 +25,26 @@ hqDefine("accounting/js/software_plan_version_handler", [
         planVersionFormHandler.init();
     });
 
-    var SoftwarePlanVersionFormHandler = function (role, featureRates, productRates) {
+    var softwarePlanVersionFormHandler = function (role, featureRates, productRates) {
         'use strict';
-        var self = this;
+        var self = {};
 
-        self.role = new PermissionsManager(role);
-        self.featureRates = new RateAsyncManager(FeatureRate, featureRates);
-        self.productRates = new RateAsyncManager(ProductRate, productRates);
+        self.role = permissionsManager(role);
+        self.featureRates = rateAsyncManager(featureRate, featureRates);
+        self.productRates = rateAsyncManager(productRate, productRates);
 
         self.init = function () {
             self.role.init();
             self.featureRates.init();
             self.productRates.init();
         };
+
+        return self;
     };
 
-    var RateAsyncManager = function (objClass, options) {
+    var rateAsyncManager = function (objClass, options) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.handlerSlug = options.handlerSlug;
 
@@ -65,13 +67,13 @@ hqDefine("accounting/js/software_plan_version_handler", [
             });
         });
 
-        self.select2 = new Select2RateHandler(options.select2Options, self.rateNames);
+        self.select2 = select2RateHandler(options.select2Options, self.rateNames);
 
         self.init = function () {
             self.select2.init();
             var currentValue = JSON.parse(options.currentValue || '[]');
             self.rates(_.map(currentValue, function (data) {
-                return new self.objClass(data);
+                return self.objClass(data);
             }));
 
         };
@@ -92,7 +94,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
         };
 
         self.addRate = function (data) {
-            self.rates.push(new self.objClass(data));
+            self.rates.push(self.objClass(data));
         };
 
         self.removeRate = function (rate) {
@@ -123,11 +125,13 @@ hqDefine("accounting/js/software_plan_version_handler", [
                 });
             },
         };
+
+        return self;
     };
 
-    var PermissionsManager = function (options) {
+    var permissionsManager = function (options) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.existingRoles = ko.observableArray();
         self.roleType = ko.observable(options.roleType);
@@ -138,8 +142,8 @@ hqDefine("accounting/js/software_plan_version_handler", [
             return self.roleType() === 'existing';
         });
 
-        self.new = new NewRoleManager(self.existingRoles, options.newPrivileges);
-        self.existing = new ExistingRoleManager(self.existingRoles, options.currentRoleSlug);
+        self.new = newRoleManager(self.existingRoles, options.newPrivileges);
+        self.existing = existingRoleManager(self.existingRoles, options.currentRoleSlug);
 
         self.init = function () {
             if (options.multiSelectField) {
@@ -151,7 +155,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
                 );
             }
             self.existingRoles(_.map(options.existingRoles, function (data) {
-                return new Role(data);
+                return role(data);
             }));
             $('#id_new_role_slug').on('keyup change', function (event) {
                 var c = String.fromCharCode(event.keyCode);
@@ -168,11 +172,13 @@ hqDefine("accounting/js/software_plan_version_handler", [
                 }
             });
         };
+
+        return self;
     };
 
-    var NewRoleManager = function (existingRoles, newPrivileges) {
+    var newRoleManager = function (existingRoles, newPrivileges) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.existingRoles = existingRoles;
 
@@ -202,12 +208,14 @@ hqDefine("accounting/js/software_plan_version_handler", [
         self.hasMatchingRole = ko.computed(function () {
             return !_.isNull(self.matchingRole());
         });
+
+        return self;
     };
 
 
-    var ExistingRoleManager = function (existingRoles, currentRoleSlug) {
+    var existingRoleManager = function (existingRoles, currentRoleSlug) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.existingRoles = existingRoles;
 
@@ -230,15 +238,16 @@ hqDefine("accounting/js/software_plan_version_handler", [
         self.hasNoPrivileges = ko.computed(function () {
             return _.isEmpty(self.selectedPrivileges());
         });
+
+        return self;
     };
 
 
-    var BaseSelect2Handler = select2Handler.BaseSelect2Handler;
-    var Select2RateHandler = function (options, currentValue) {
+    var baseSelect2Handler = select2Handler.baseSelect2Handler;
+    var select2RateHandler = function (options, currentValue) {
         'use strict';
-        BaseSelect2Handler.call(this, options);
+        var self = baseSelect2Handler(options);
 
-        var self = this;
         self.currentValue = currentValue;
         self.isNew = ko.observable(false);
         self.isExisting = ko.observable(false);
@@ -300,18 +309,20 @@ hqDefine("accounting/js/software_plan_version_handler", [
                 self.isExisting(false);
             }
         };
+
+        return self;
     };
 
-    Select2RateHandler.prototype = Object.create( BaseSelect2Handler.prototype );
-    Select2RateHandler.prototype.constructor = Select2RateHandler;
+    select2RateHandler.prototype = Object.create(baseSelect2Handler.prototype);
+    select2RateHandler.prototype.constructor = select2RateHandler;
 
 
-    var Role = function (data) {
+    var role = function (data) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.privileges = ko.observableArray(_.map(data.privileges, function (priv) {
-            return new Privilege(priv);
+            return privilege(priv);
         }));
         self.privilegeSlugs = ko.computed(function () {
             return _.map(self.privileges(), function (priv) {
@@ -322,20 +333,23 @@ hqDefine("accounting/js/software_plan_version_handler", [
         self.slug = ko.observable(data.slug);
         self.name = ko.observable(data.name);
         self.description = ko.observable(data.description);
+
+        return self;
     };
 
 
-    var Privilege = function (data) {
+    var privilege = function (data) {
         'use strict';
-        var self = this;
+        var self = {};
         self.slug = ko.observable(data[0]);
         self.name = ko.observable(data[1]);
+        return self;
     };
 
 
-    var FeatureRate = function (data) {
+    var featureRate = function (data) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.name = ko.observable(data.name);
         self.feature_type = ko.observable(data.feature_type);
@@ -357,12 +371,14 @@ hqDefine("accounting/js/software_plan_version_handler", [
             });
             return result;
         };
+
+        return self;
     };
 
 
-    var ProductRate = function (data) {
+    var productRate = function (data) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.name = ko.observable(data.name);
         self.product_rate_id = ko.observable(data.product_rate_id);
@@ -376,5 +392,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
             });
             return result;
         };
+
+        return self;
     };
 });

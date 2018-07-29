@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import uuid
 from django.conf import settings
@@ -17,7 +18,7 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
@@ -139,7 +140,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
 
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()
-        case_name = u'प्रसव'
+        case_name = 'प्रसव'
         _submit_case_block(
             True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
             case_name=case_name, date_modified=modified_on, update={
@@ -409,11 +410,11 @@ class FundamentalCaseTests(FundamentalBaseTests):
             submit_form_locally(
                 xml, domain=DOMAIN
             )
-        with self.assertRaisesMessage(AssertionError, 'Case created without create block in CC version >= 2.39'):
-            _submit_form_with_cc_version("2.39")
+        with self.assertRaisesMessage(AssertionError, 'Case created without create block in CC version >= 2.44'):
+            _submit_form_with_cc_version("2.44")
 
         with self.assertRaisesMessage(AssertionError, 'Case created without create block'):
-            _submit_form_with_cc_version("2.38")
+            _submit_form_with_cc_version("2.43")
 
     def test_globally_unique_form_id(self):
         form_id = uuid.uuid4().hex
@@ -481,3 +482,14 @@ def _submit_case_block(create, case_id, **kwargs):
             ).as_xml()
         ], domain=domain
     )
+
+
+class IteratorTests(TestCase):
+    def test_iterator(self):
+        i = XFormQuestionValueIterator("/data/a-group/repeat_group[2]/question_id")
+        self.assertIsNone(i.last())
+        self.assertEqual(next(i), ('a-group', None))
+        self.assertEqual(next(i), ('repeat_group', 1))
+        with self.assertRaises(StopIteration):
+            next(i)
+        self.assertEqual(i.last(), 'question_id')

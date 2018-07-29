@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.contrib import admin
 from corehq.apps.data_interfaces.models import DomainCaseRuleRun, CaseRuleSubmission
 
@@ -15,6 +16,7 @@ class DomainCaseRuleRunAdmin(admin.ModelAdmin):
         'num_closes',
         'num_related_updates',
         'num_related_closes',
+        'dbs_completed',
     ]
 
     search_fields = [
@@ -36,6 +38,7 @@ class CaseRuleSubmissionAdmin(admin.ModelAdmin):
 
     search_fields = [
         'domain',
+        'form_id',
     ]
 
     ordering = ['-created_on']

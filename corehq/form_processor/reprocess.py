@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from collections import namedtuple
 from datetime import datetime
@@ -38,9 +39,11 @@ def reprocess_unfinished_stub(stub, save=True):
     try:
         form = FormAccessors(stub.domain).get_form(form_id)
     except XFormNotFound:
-        # form doesn't exist which means the failure probably happend during saving so
-        # let mobile handle re-submitting it
-        logger.error('Form not found: %s', form_id)
+        if stub.saved:
+            logger.error("Form not found for reprocessing", extra={
+                'form_id': form_id,
+                'domain': stub.domain
+            })
         save and stub.delete()
         return
 
@@ -55,10 +58,11 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
     if stub.saved:
         complete_ = (form.is_normal, form.initial_processing_complete)
         assert all(complete_), complete_
-        return _perfom_post_save_actions(form, save)
+        result = _perfom_post_save_actions(form, save)
+    else:
+        result = reprocess_form(form, save, lock_form=lock)
 
-    result = reprocess_form(form, save, lock_form=lock)
-    save and stub.delete()
+    save and not result.error and stub.delete()
     return result
 
 
@@ -69,12 +73,23 @@ def _perfom_post_save_actions(form, save=True):
     )
     with cache as casedb:
         case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
+        case_models = case_stock_result.case_models
+
+        if interface.use_sql_domain:
+            forms = ProcessedForms(form, None)
+            stock_result = case_stock_result.stock_result
+            try:
+                FormProcessorSQL.publish_changes_to_kafka(forms, case_models, stock_result)
+            except Exception:
+                error_message = "Error publishing to kafka"
+                return ReprocessingResult(form, None, None, error_message)
+
         try:
             save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
         except PostSaveError:
             error_message = "Error performing post save operations"
             return ReprocessingResult(form, None, None, error_message)
-        return ReprocessingResult(form, case_stock_result.case_models, None, None)
+        return ReprocessingResult(form, case_models, None, None)
 
 
 def reprocess_xform_error(form):
@@ -146,7 +161,7 @@ def reprocess_form(form, save=True, lock_form=True):
                         CaseAccessorSQL.save_case(case)
                     LedgerAccessorSQL.save_ledger_values(ledgers)
                     FormAccessorSQL.update_form_problem_and_state(form)
-                    FormProcessorSQL._publish_changes(ProcessedForms(form, None), cases, stock_result)
+                    FormProcessorSQL.publish_changes_to_kafka(ProcessedForms(form, None), cases, stock_result)
 
                 # rebuild cases and ledgers that were affected
                 for case in cases:

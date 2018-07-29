@@ -1,6 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from elasticsearch import TransportError
 
 from corehq.apps.locations.dbaccessors import (
@@ -11,7 +12,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.es import filters, users as user_es, cases as case_es
 from corehq.apps.es.es_query import HQESQuery
@@ -41,9 +42,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     case_filter = {}
     ajax_pagination = True
     asynchronous = True
+    search_class = case_es.CaseES
 
     def _build_query(self):
-        query = (case_es.CaseES()
+        query = (self.search_class()
                  .domain(self.domain)
                  .size(self.pagination.count)
                  .start(self.pagination.start))
@@ -254,7 +256,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     # point is the decouple generating the raw report data from the report view/django
     # request. but currently these are too tightly bound to decouple
 
-    name = ugettext_noop('Case List')
+    name = ugettext_lazy('Case List')
     slug = 'case_list'
 
     @classmethod
@@ -314,7 +316,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn(_("Case Type"), prop_name="type.exact"),
-            DataTablesColumn(_("Name"), prop_name="name.exact"),
+            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link"),
             DataTablesColumn(_("Owner"), prop_name="owner_display", sortable=False),
             DataTablesColumn(_("Created Date"), prop_name="opened_on"),
             DataTablesColumn(_("Created By"), prop_name="opened_by_display", sortable=False),

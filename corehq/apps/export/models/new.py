@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from copy import copy
 from datetime import datetime
@@ -20,6 +21,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import ParentCaseProper
     get_case_properties
 
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.userreports.app_manager.data_source_meta import get_form_indicator_data_type
 from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import NotFound
@@ -32,7 +34,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_domain
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
 from corehq import feature_previews
@@ -87,7 +89,9 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
-    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM)
+    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM,
+    SharingOption,
+)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -155,6 +159,8 @@ class ExportItem(DocumentSchema):
     tag = StringProperty()
     last_occurrences = DictProperty()
     transform = StringProperty(choices=list(TRANSFORM_FUNCTIONS))
+    # this is not used by exports, but other things that use this schema (e.g. app-based UCRs)
+    datatype = StringProperty()
 
     # True if this item was inferred from different actions in HQ (i.e. case upload)
     # False if the item was found in the application structure
@@ -205,6 +211,7 @@ class ExportItem(DocumentSchema):
             path=_question_path_to_path_nodes(question['value'], repeats),
             label=question['label'],
             last_occurrences={app_id: app_version},
+            datatype=get_form_indicator_data_type(question['type'])
         )
 
     @classmethod
@@ -330,7 +337,7 @@ class ExportColumn(DocumentSchema):
             column = SplitExportColumn(**constructor_args)
         elif isinstance(item, CaseIndexItem):
             column = CaseIndexExportColumn(
-                help_text=_(u'The ID of the associated {} case type').format(item.case_type),
+                help_text=_('The ID of the associated {} case type').format(item.case_type),
                 **constructor_args
             )
         elif get_request_domain() and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request_domain()):
@@ -376,7 +383,7 @@ class ExportColumn(DocumentSchema):
 
     def get_headers(self, split_column=False):
         if self.is_deidentifed:
-            return [u"{} {}".format(self.label, "[sensitive]")]
+            return ["{} {}".format(self.label, "[sensitive]")]
         else:
             return [self.label]
 
@@ -542,10 +549,6 @@ class TableConfiguration(DocumentSchema):
             if isinstance(doc, dict):
                 next_doc = doc.get(path_name, {})
             else:
-                # https://manage.dimagi.com/default.asp?264884
-                _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-                _soft_assert(False, "doc {} - is actually string {} - expected path {}".format(
-                    document_id, doc, path_name))
                 next_doc = {}
             if path[0].is_repeat:
                 if type(next_doc) != list:
@@ -598,15 +601,16 @@ class ExportInstanceFilters(DocumentSchema):
         """
         Return True if the couch_user of the given request has permission to export data with this filter.
         """
-        if self.can_access_all_locations and not request.can_access_all_locations:
+        if request.couch_user.has_permission(
+                request.domain, 'access_all_locations'):
+            return True
+        elif self.can_access_all_locations:
             return False
-        elif not self.can_access_all_locations:
+        else:  # It can be restricted by location
             users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(
                 request.domain, request.couch_user
             )
-            if not set(self.accessible_location_ids).issubset(users_accessible_locations):
-                return False
-        return True
+            return set(self.accessible_location_ids).issubset(users_accessible_locations)
 
 
 class CaseExportInstanceFilters(ExportInstanceFilters):
@@ -654,7 +658,12 @@ class ExportInstance(BlobMixin, Document):
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
 
-    class Meta:
+    description = StringProperty(default='')
+
+    sharing = StringProperty(default=SharingOption.EDIT_AND_EXPORT, choices=SharingOption.CHOICES)
+    owner_id = StringProperty(default=None)
+
+    class Meta(object):
         app_label = 'export'
 
     @property
@@ -762,6 +771,15 @@ class ExportInstance(BlobMixin, Document):
                 instance.tables.append(table)
 
         return instance
+
+    def can_view(self, user_id):
+        return self.owner_id is None or self.sharing != SharingOption.PRIVATE or self.owner_id == user_id
+
+    def can_edit(self, user):
+        return self.owner_id is None or self.owner_id == user.get_id or (
+            self.sharing == SharingOption.EDIT_AND_EXPORT
+            and user.can_edit_shared_exports(self.domain)
+        )
 
     @classmethod
     def _move_selected_columns_to_top(cls, columns):
@@ -940,7 +958,7 @@ class ExportInstance(BlobMixin, Document):
     def copy_export(self):
         export_json = self.to_json()
         del export_json['_id']
-        export_json['name'] = u'{} - Copy'.format(self.name)
+        export_json['name'] = '{} - Copy'.format(self.name)
         new_export = self.__class__.wrap(export_json)
         return new_export
 
@@ -1102,9 +1120,9 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return u'{} ({})'.format(
-            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id, separator=" - "),
-            datetime.now().strftime('%Y-%m-%d')
+        return _('{name} (created {date})').format(
+            name=xmlns_to_name(schema.domain, schema.xmlns, schema.app_id, separator=" - "),
+            date=datetime.now().strftime('%Y-%m-%d')
         )
 
     @staticmethod
@@ -1137,7 +1155,10 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return u'{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%m-%d'))
+        return _('{name} (created {date})').format(
+            name=schema.case_type,
+            date=datetime.now().strftime('%Y-%m-%d')
+        )
 
 
 class SMSExportInstanceDefaults(ExportInstanceDefaults):
@@ -1150,7 +1171,7 @@ class SMSExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return u'Messages: {}'.format(datetime.now().strftime('%Y-%m-%d'))
+        return _('Messages (created {date})').format(date=datetime.now().strftime('%Y-%m-%d'))
 
 
 class ExportRow(object):
@@ -1318,7 +1339,7 @@ class InferredSchema(Document):
     # that all schema duck types have this property.
     last_app_versions = DictProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     def put_group_schema(self, path):
@@ -1377,7 +1398,7 @@ class ExportDataSchema(Document):
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
     last_app_versions = DictProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     def get_number_of_apps_to_process(self):
@@ -1666,7 +1687,7 @@ class FormExportDataSchema(ExportDataSchema):
 
         case_updates = OrderedSet()
         for form in forms:
-            for update in form.get_case_updates(form.get_module().case_type):
+            for update in form.get_case_updates_for_case_type(form.get_module().case_type):
                 case_updates.add(update)
 
         for form in forms:
@@ -1767,19 +1788,20 @@ class FormExportDataSchema(ExportDataSchema):
     @classmethod
     def _add_export_items_for_case(cls, group_schema, root_path, case_properties, label_prefix,
                                    repeat_context, repeats, case_indices=None, create=True, close=False):
-        def _add_to_group_schema(path, label, transform=None):
+        def _add_to_group_schema(path, label, transform=None, datatype=None):
             group_schema.items.append(ExportItem(
                 path=_question_path_to_path_nodes(path, repeats),
-                label=u'{}.{}'.format(label_prefix, label),
+                label='{}.{}'.format(label_prefix, label),
                 last_occurrences=group_schema.last_occurrences,
                 tag=PROPERTY_TAG_CASE,
-                transform=transform
+                transform=transform,
+                datatype=datatype
             ))
 
         # Add case attributes
-        for case_attribute in CASE_ATTRIBUTES:
-            path = u'{}/case/{}'.format(root_path, case_attribute)
-            _add_to_group_schema(path, case_attribute)
+        for case_attribute, datatype in CASE_ATTRIBUTES.items():
+            path = '{}/case/{}'.format(root_path, case_attribute)
+            _add_to_group_schema(path, case_attribute, datatype=datatype)
 
         # Add case updates
         for case_property, case_path in six.iteritems(case_properties):
@@ -1795,18 +1817,18 @@ class FormExportDataSchema(ExportDataSchema):
                 path_suffix = case_path[len(repeat_context) + 1:]
             else:
                 path_suffix = case_property
-            path = u'{}/case/update/{}'.format(root_path, path_suffix)
-            _add_to_group_schema(path, u'update.{}'.format(case_property))
+            path = '{}/case/update/{}'.format(root_path, path_suffix)
+            _add_to_group_schema(path, 'update.{}'.format(case_property))
 
         # Add case create properties
         if create:
             for case_create_element in CASE_CREATE_ELEMENTS:
-                path = u'{}/case/create/{}'.format(root_path, case_create_element)
-                _add_to_group_schema(path, u'create.{}'.format(case_create_element))
+                path = '{}/case/create/{}'.format(root_path, case_create_element)
+                _add_to_group_schema(path, 'create.{}'.format(case_create_element), datatype='string')
 
         if close:
-            path = u'{}/case/close'.format(root_path)
-            _add_to_group_schema(path, u'close', transform=CASE_CLOSE_TO_BOOLEAN)
+            path = '{}/case/close'.format(root_path)
+            _add_to_group_schema(path, 'close', transform=CASE_CLOSE_TO_BOOLEAN)
 
         # Add case index information
         if case_indices:
@@ -1816,8 +1838,8 @@ class FormExportDataSchema(ExportDataSchema):
                     props = props + ('@relationship',)
                 for prop in props:
                     identifier = index.reference_id or 'parent'
-                    path = u'{}/case/index/{}/{}'.format(root_path, identifier, prop)
-                    _add_to_group_schema(path, u'index.{}'.format(prop))
+                    path = '{}/case/index/{}/{}'.format(root_path, identifier, prop)
+                    _add_to_group_schema(path, 'index.{}'.format(prop))
 
     @classmethod
     def _generate_schema_from_repeat_subcases(cls, xform, repeats_with_subcases, langs, app_id, app_version):
@@ -1981,10 +2003,7 @@ class CaseExportDataSchema(ExportDataSchema):
             [case_type],
             include_parent_properties=False
         )
-        parent_types, _ = (
-            ParentCasePropertyBuilder(app)
-            .get_parent_types_and_contributed_properties(case_type)
-        )
+        parent_types = ParentCasePropertyBuilder(app).get_case_relationships_for_case_type(case_type)
         case_schemas = []
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
@@ -2258,7 +2277,7 @@ class SplitUserDefinedExportColumn(ExportColumn):
         if self.split_type == PLAIN_USER_DEFINED_SPLIT_TYPE:
             return super(SplitUserDefinedExportColumn, self).get_headers()
         header = self.label
-        header_template = header if '{option}' in header else u"{name} | {option}"
+        header_template = header if '{option}' in header else "{name} | {option}"
         headers = []
         for option in self.user_defined_options:
             headers.append(
@@ -2291,7 +2310,7 @@ class MultiMediaExportColumn(ExportColumn):
 
         download_url = absolute_reverse('api_form_attachment', args=(domain, doc_id, value))
         if transform_dates:
-            download_url = u'=HYPERLINK("{}")'.format(download_url)
+            download_url = '=HYPERLINK("{}")'.format(download_url)
 
         return download_url
 
@@ -2304,10 +2323,10 @@ class SplitGPSExportColumn(ExportColumn):
             return super(SplitGPSExportColumn, self).get_headers()
         header = self.label
         header_templates = [
-            _(u'{}: latitude (degrees)'),
-            _(u'{}: longitude (degrees)'),
-            _(u'{}: altitude (meters)'),
-            _(u'{}: accuracy (meters)'),
+            _('{}: latitude (degrees)'),
+            _('{}: longitude (degrees)'),
+            _('{}: altitude (meters)'),
+            _('{}: accuracy (meters)'),
         ]
         return [header_template.format(header) for header_template in header_templates]
 
@@ -2393,7 +2412,7 @@ class SplitExportColumn(ExportColumn):
         if not split_column:
             return super(SplitExportColumn, self).get_headers()
         header = self.label
-        header_template = header if '{option}' in header else u"{name} | {option}"
+        header_template = header if '{option}' in header else "{name} | {option}"
         headers = []
         for option in self.item.options:
             headers.append(
@@ -2540,7 +2559,7 @@ class StockExportColumn(ExportColumn):
 
     def get_headers(self, **kwargs):
         for product_id, section in self._column_tuples:
-            yield u"{product} ({section})".format(
+            yield "{product} ({section})".format(
                 product=self._get_product_name(product_id),
                 section=section
             )
@@ -2590,23 +2609,12 @@ class ExportMigrationMeta(Document):
 
     is_remote_app_migration = BooleanProperty(default=False)
 
+    has_case_history = BooleanProperty(default=False)
+
     migration_date = DateTimeProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
-
-    @property
-    def old_export_url(self):
-        from corehq.apps.export.views import EditCustomCaseExportView, EditCustomFormExportView
-        if self.export_type == FORM_EXPORT:
-            view_cls = EditCustomFormExportView
-        else:
-            view_cls = EditCustomCaseExportView
-
-        return '{}{}'.format(get_url_base(), reverse(
-            view_cls.urlname,
-            args=[self.domain, self.saved_export_id],
-        ))
 
 
 class DailySavedExportNotification(models.Model):
@@ -2627,10 +2635,7 @@ class DailySavedExportNotification(models.Model):
 
     @classmethod
     def user_to_be_notified(cls, domain, user):
-        from corehq.apps.export.views import use_new_daily_saved_exports_ui
-
         return (
-            use_new_daily_saved_exports_ui(domain) and
             cls.user_added_before_feature_release(user.created_on) and
             not DailySavedExportNotification.notified(user.user_id, domain) and
             (

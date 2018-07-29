@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from dateutil.parser import parse
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml.parser import CaseUpdateAction

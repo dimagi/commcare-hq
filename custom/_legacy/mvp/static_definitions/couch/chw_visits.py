@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 APP_NAME = "mvp_chw_visits"
 
 CHW_VISIT_ACTIVE_CASES_INDICATORS = dict(

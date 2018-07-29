@@ -1,4 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
+from distutils.version import LooseVersion
+
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 
 from django.urls import reverse
@@ -18,14 +22,14 @@ from corehq.apps.app_manager.suite_xml.sections.resources import(
 )
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowHelper
 from corehq.apps.app_manager.suite_xml.sections.remote_requests import RemoteRequestContributor
-from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource
+from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource, LocalizedMenu, Text
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.util import split_path
 from corehq.apps.hqmedia.models import HQMediaMapItem
 
 
 class SuiteGenerator(object):
-    descriptor = u"Suite File"
+    descriptor = "Suite File"
 
     def __init__(self, app, build_profile_id=None):
         self.app = app
@@ -58,14 +62,24 @@ class SuiteGenerator(object):
         entries = EntriesContributor(self.suite, self.app, self.modules)
         menus = MenuContributor(self.suite, self.app, self.modules)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
+
+        if any(module.is_training_module for module in self.modules):
+            training_menu = LocalizedMenu(id='training-root')
+            training_menu.text = Text(locale_id=id_strings.training_module_locale())
+        else:
+            training_menu = None
+
         for module in self.modules:
             self.suite.entries.extend(entries.get_module_contributions(module))
 
             self.suite.menus.extend(
-                menus.get_module_contributions(module)
+                menus.get_module_contributions(module, training_menu)
             )
 
             self.suite.remote_requests.extend(remote_requests.get_module_contributions(module))
+
+        if training_menu:
+            self.suite.menus.append(training_menu)
 
         self._add_sections([
             FixtureContributor(self.suite, self.app, self.modules),
@@ -83,7 +97,7 @@ class SuiteGenerator(object):
 
 
 class MediaSuiteGenerator(object):
-    descriptor = u"Media Suite File"
+    descriptor = "Media Suite File"
 
     def __init__(self, app, build_profile_id=None):
         self.app = app
@@ -124,20 +138,20 @@ class MediaSuiteGenerator(object):
             # which is an alias to jr://file/commcare/media/
             # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
-            install_path = u'../../{}'.format(path)
-            local_path = u'./{}/{}'.format(path, name)
+            install_path = '../../{}'.format(path)
+            local_path = './{}/{}'.format(path, name)
 
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
                 m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
 
             descriptor = None
-            if self.app.build_version >= '2.9':
+            if self.app.build_version and self.app.build_version >= LooseVersion('2.9'):
                 type_mapping = {"CommCareImage": "Image",
                                 "CommCareAudio": "Audio",
                                 "CommCareVideo": "Video",
                                 "CommCareMultimedia": "Text"}
-                descriptor = u"{filetype} File: {name}".format(
+                descriptor = "{filetype} File: {name}".format(
                     filetype=type_mapping.get(m.media_type, "Media"),
                     name=name
                 )

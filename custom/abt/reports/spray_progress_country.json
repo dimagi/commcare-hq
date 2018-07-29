@@ -11,8 +11,23 @@
         "airsbenin",
         "airsmozambique",
         "airskenya",
-        "airs-testing"
+        "airs-testing",
+        "vectorlink-benin",
+        "vectorlink-burkina-faso",
+        "vectorlink-ethiopia",
+        "vectorlink-ghana",
+        "vectorlink-kenya",
+        "vectorlink-madagascar",
+        "vectorlink-malawi",
+        "vectorlink-mali",
+        "vectorlink-mozambique",
+        "vectorlink-rwanda",
+        "vectorlink-tanzania",
+        "vectorlink-uganda",
+        "vectorlink-zambia",
+        "vectorlink-zimbabwe"
     ],
+    "server_environment": ["production"],
     "data_source_table":"static-sms-indicators-001",
     "report_id":"spray-progress-report-country",
     "config": {
@@ -89,8 +104,8 @@
                 "calculate_total":false,
                 "type":"field",
                 "display":{
-                    "fra":"# Pieces Trouv\u00e9es",
-                    "en": "# Structures found",
+                    "fra":"# Structures Trouv\u00e9es",
+                    "en": "# Structures Found",
                     "por": "Estruturas encontradas"
                 },
                 "aggregation":"sum"
@@ -106,7 +121,7 @@
                 "calculate_total":false,
                 "type":"field",
                 "display":{
-                    "fra":"# Pieces Trait\u00e9es",
+                    "fra":"# Structures Trait\u00e9es",
                     "en": "# Structures Sprayed",
                     "por": "Estruturas Pulverizadas"
                 },

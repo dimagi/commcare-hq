@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import math
 from django.db import models
 from corehq.apps.products.models import SQLProduct
@@ -23,7 +24,7 @@ class StockReport(models.Model):
     def __unicode__(self):
         return '{type} on {date} ({form})'.format(type=self.type, date=self.date, form=self.form_id)
 
-    class Meta:
+    class Meta(object):
         app_label = 'stock'
 
 
@@ -120,7 +121,7 @@ class StockTransaction(models.Model, ConsumptionMixin):
             case_id=case_id, product_id=product_id, section_id=section_id
         ).order_by('-report__date', '-pk')
 
-    class Meta:
+    class Meta(object):
         app_label = 'stock'
         index_together = [
             ['case_id', 'product_id', 'section_id']
@@ -136,7 +137,7 @@ class DocDomainMapping(models.Model):
     doc_type = models.CharField(max_length=100, db_index=True)
     domain_name = models.CharField(max_length=100, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'stock'
 
 

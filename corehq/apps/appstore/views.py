@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from datetime import date
 from six.moves.urllib.parse import urlencode
@@ -15,10 +16,11 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import apply_update
 from dimagi.utils.couch.resource_conflict import retry_resource
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
 
+from corehq.apps.accounting.models import SubscriptionAdjustmentMethod
 from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
 from corehq.apps.app_manager.views.apps import clear_app_cache
 from corehq.apps.appstore.exceptions import CopiedFromDeletedException
@@ -290,7 +292,7 @@ def approve_app(request, snapshot):
 def import_app(request, snapshot):
     user = request.couch_user
     if not user.is_eula_signed():
-        messages.error(request, 'You must agree to our eula to download an app')
+        messages.error(request, 'You must agree to our terms of service to download an app')
         return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
     from_project = Domain.get(snapshot)
@@ -325,7 +327,7 @@ def import_app(request, snapshot):
 def copy_snapshot(request, snapshot):
     user = request.couch_user
     if not user.is_eula_signed():
-        messages.error(request, 'You must agree to our eula to download an app')
+        messages.error(request, 'You must agree to our terms of service to download an app')
         return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
     dom = Domain.get(snapshot)
@@ -358,7 +360,10 @@ def copy_snapshot(request, snapshot):
                                                user=user)
                     if new_domain.commtrack_enabled:
                         new_domain.convert_to_commtrack()
-                    ensure_explicit_community_subscription(new_domain.name, date.today())
+                    ensure_explicit_community_subscription(
+                        new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
+                        web_user=user.username,
+                    )
                 except NameUnavailableException:
                     messages.error(request, _("A project by that name already exists"))
                     return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))

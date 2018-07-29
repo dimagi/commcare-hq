@@ -3,14 +3,16 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import sys
 import os
 from six.moves import zip
+from io import open
 
 
 def get_stats(path, build_slug):
     perfpath = os.path.join(path, '{}-performance.txt'.format(build_slug))
-    with open(perfpath, 'r') as f:
+    with open(perfpath, 'r', encoding='utf-8') as f:
         lines = f.read().splitlines()
         stats = [line.split(',') for line in lines]
         return {line[0]: {'mem': int(line[1]), 'time': float(line[2])} for line in stats}
