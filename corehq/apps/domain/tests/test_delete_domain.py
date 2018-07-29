@@ -20,22 +20,55 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
+from corehq.apps.aggregate_ucrs.models import (
+    AggregateTableDefinition,
+    PrimaryColumn,
+    SecondaryTableDefinition,
+    SecondaryColumn,
+)
+from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
+from corehq.apps.case_importer.tracking.models import CaseUploadFormRecord, CaseUploadRecord
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     CaseSearchQueryAddition,
     FuzzyProperties,
     IgnorePatterns,
 )
+from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, TransferDomainRequest
+from corehq.apps.export.models.new import DailySavedExportNotification, DataFile, EmailExportWhenDoneRequest
 from corehq.apps.ivr.models import Call
-from corehq.apps.locations.models import make_location, LocationType, SQLLocation
+from corehq.apps.locations.models import make_location, LocationType, SQLLocation, LocationFixtureConfiguration
+from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.sms.models import (SMS, SQLLastReadMessage, ExpectedCallback,
-    PhoneNumber, MessagingEvent, MessagingSubEvent, SelfRegistrationInvitation,
-    SQLMobileBackend, SQLMobileBackendMapping, MobileBackendInvitation)
+from corehq.apps.reminders.models import EmailUsage
+from corehq.apps.reports.models import ReportsSidebarOrdering
+from corehq.apps.sms.models import (
+    DailyOutboundSMSLimitReached,
+    ExpectedCallback,
+    Keyword,
+    KeywordAction,
+    MessagingEvent,
+    MessagingSubEvent,
+    MobileBackendInvitation,
+    PhoneNumber,
+    QueuedSMS,
+    SelfRegistrationInvitation,
+    SMS,
+    SQLLastReadMessage,
+    SQLMobileBackend,
+    SQLMobileBackendMapping,
+)
+from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.users.models import DomainRequest
+from corehq.apps.zapier.consts import EventTypes
+from corehq.apps.zapier.models import ZapierSubscription
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import create_form_for_test
+from couchforms.models import UnfinishedSubmissionStub
+from dimagi.utils.make_uuid import random_hex
 from six.moves import range
 
 
@@ -104,10 +137,6 @@ class TestDeleteDomain(TestCase):
             backend=backend
         )
         MobileBackendInvitation.objects.create(domain=domain_name, backend=backend)
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestDeleteDomain, cls).setUpClass()
 
     def setUp(self):
         super(TestDeleteDomain, self).setUp()
@@ -262,6 +291,92 @@ class TestDeleteDomain(TestCase):
         for queryset in queryset_list:
             self.assertEqual(queryset.count(), count)
 
+    def _assert_aggregate_ucr_count(self, domain_name, count):
+        self._assert_queryset_count([
+            AggregateTableDefinition.objects.filter(domain=domain_name),
+            PrimaryColumn.objects.filter(table_definition__domain=domain_name),
+            SecondaryTableDefinition.objects.filter(table_definition__domain=domain_name),
+            SecondaryColumn.objects.filter(table_definition__table_definition__domain=domain_name),
+        ], count)
+
+    def test_aggregate_ucr_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            aggregate_table_definition = AggregateTableDefinition.objects.create(
+                domain=domain_name,
+                primary_data_source_id=uuid.uuid4(),
+                table_id=random_hex(),
+            )
+            secondary_table_definition = SecondaryTableDefinition.objects.create(
+                table_definition=aggregate_table_definition,
+                data_source_id=uuid.uuid4(),
+            )
+            PrimaryColumn.objects.create(table_definition=aggregate_table_definition)
+            SecondaryColumn.objects.create(table_definition=secondary_table_definition)
+            self._assert_aggregate_ucr_count(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_aggregate_ucr_count(self.domain.name, 0)
+        self._assert_aggregate_ucr_count(self.domain2.name, 1)
+
+        self.assertEqual(SecondaryTableDefinition.objects.count(), 1)
+        self.assertEqual(
+            SecondaryTableDefinition.objects.filter(table_definition__domain=self.domain2.name).count(),
+            1
+        )
+        self.assertEqual(PrimaryColumn.objects.count(), 1)
+        self.assertEqual(PrimaryColumn.objects.filter(table_definition__domain=self.domain2.name).count(), 1)
+        self.assertEqual(SecondaryColumn.objects.count(), 1)
+        self.assertEqual(
+            SecondaryColumn.objects.filter(table_definition__table_definition__domain=self.domain2.name).count(),
+            1
+        )
+
+    def _assert_calendar_fixture_count(self, domain_name, count):
+        self._assert_queryset_count([
+            CalendarFixtureSettings.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_calendar_fixture_counts(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            CalendarFixtureSettings.objects.create(domain=domain_name, days_before=3, days_after=4)
+            self._assert_calendar_fixture_count(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_calendar_fixture_count(self.domain.name, 0)
+        self._assert_calendar_fixture_count(self.domain2.name, 1)
+
+    def _assert_case_importer_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            CaseUploadFormRecord.objects.filter(case_upload_record__domain=domain_name),
+            CaseUploadRecord.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_case_importer(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            case_upload_record = CaseUploadRecord.objects.create(
+                domain=domain_name,
+                task_id=uuid.uuid4().hex,
+                upload_id=uuid.uuid4().hex,
+            )
+            CaseUploadFormRecord.objects.create(
+                case_upload_record=case_upload_record,
+                form_id=random_hex(),
+            )
+            self._assert_case_importer_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_case_importer_counts(self.domain.name, 0)
+        self._assert_case_importer_counts(self.domain2.name, 1)
+
+        self.assertEqual(CaseUploadFormRecord.objects.count(), 1)
+        self.assertEqual(
+            CaseUploadFormRecord.objects.filter(case_upload_record__domain=self.domain2.name).count(),
+            1
+        )
+
     def _assert_case_search_counts(self, domain_name, count):
         self._assert_queryset_count([
             CaseSearchConfig.objects.filter(domain=domain_name),
@@ -283,6 +398,45 @@ class TestDeleteDomain(TestCase):
         self._assert_case_search_counts(self.domain.name, 0)
         self._assert_case_search_counts(self.domain2.name, 1)
 
+    def _assert_data_analytics_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            GIRRow.objects.filter(domain_name=domain_name),
+            MALTRow.objects.filter(domain_name=domain_name),
+        ], count)
+
+    def test_data_analytics(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            GIRRow.objects.create(
+                domain_name=domain_name,
+                month=date.today(),
+                start_date=date.today(),
+                wams_current=1,
+                active_users=1,
+                using_and_performing=1,
+                not_performing=1,
+                inactive_experienced=1,
+                inactive_not_experienced=1,
+                not_experienced=1,
+                not_performing_not_experienced=1,
+                active_ever=1,
+                possibly_exp=1,
+                ever_exp=1,
+                exp_and_active_ever=1,
+                active_in_span=1,
+                eligible_forms=1,
+            )
+            MALTRow.objects.create(
+                domain_name=domain_name,
+                month=date.today(),
+                num_of_forms=1,
+            )
+            self._assert_data_analytics_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_data_analytics_counts(self.domain.name, 0)
+        self._assert_data_analytics_counts(self.domain2.name, 1)
+
     def _assert_data_dictionary_counts(self, domain_name, count):
         self._assert_queryset_count([
             CaseType.objects.filter(domain=domain_name),
@@ -299,6 +453,222 @@ class TestDeleteDomain(TestCase):
 
         self._assert_data_dictionary_counts(self.domain.name, 0)
         self._assert_data_dictionary_counts(self.domain2.name, 1)
+
+    def _assert_domain_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            TransferDomainRequest.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_delete_domain(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            TransferDomainRequest.objects.create(domain=domain_name, to_username='to', from_username='from')
+            self._assert_domain_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_domain_counts(self.domain.name, 0)
+        self._assert_domain_counts(self.domain2.name, 1)
+
+    def _assert_export_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            DailySavedExportNotification.objects.filter(domain=domain_name),
+            DataFile.objects.filter(domain=domain_name),
+            EmailExportWhenDoneRequest.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_export_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            DailySavedExportNotification.objects.create(domain=domain_name)
+            DataFile.objects.create(domain=domain_name)
+            EmailExportWhenDoneRequest.objects.create(domain=domain_name)
+            self._assert_export_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_export_counts(self.domain.name, 0)
+        self._assert_export_counts(self.domain2.name, 1)
+
+    def _assert_location_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            LocationFixtureConfiguration.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_location_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            LocationFixtureConfiguration.objects.create(domain=domain_name)
+            self._assert_location_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_location_counts(self.domain.name, 0)
+        self._assert_location_counts(self.domain2.name, 1)
+
+    def _assert_ota_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            MobileRecoveryMeasure.objects.filter(domain=domain_name),
+            SerialIdBucket.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_ota_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            MobileRecoveryMeasure.objects.create(domain=domain_name)
+            SerialIdBucket.objects.create(domain=domain_name)
+            self._assert_ota_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_ota_counts(self.domain.name, 0)
+        self._assert_ota_counts(self.domain2.name, 1)
+
+    def _assert_reports_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            ReportsSidebarOrdering.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_reports_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            ReportsSidebarOrdering.objects.create(domain=domain_name)
+            self._assert_reports_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_reports_counts(self.domain.name, 0)
+        self._assert_reports_counts(self.domain2.name, 1)
+
+    def _assert_reminders_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            EmailUsage.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_reminders_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            EmailUsage.objects.create(domain=domain_name, month=7, year=2018)
+            self._assert_reminders_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_reminders_counts(self.domain.name, 0)
+        self._assert_reminders_counts(self.domain2.name, 1)
+
+    def _assert_sms_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            DailyOutboundSMSLimitReached.objects.filter(domain=domain_name),
+            Keyword.objects.filter(domain=domain_name),
+            KeywordAction.objects.filter(keyword__domain=domain_name),
+            QueuedSMS.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_sms_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            DailyOutboundSMSLimitReached.objects.create(domain=domain_name, date=date.today())
+            keyword = Keyword.objects.create(domain=domain_name)
+            KeywordAction.objects.create(keyword=keyword)
+            QueuedSMS.objects.create(domain=domain_name)
+            self._assert_sms_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_sms_counts(self.domain.name, 0)
+        self._assert_sms_counts(self.domain2.name, 1)
+
+        self.assertEqual(KeywordAction.objects.count(), 1)
+        self.assertEqual(KeywordAction.objects.filter(keyword__domain=self.domain2.name).count(), 1)
+
+    def _assert_smsforms_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            SQLXFormsSession.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_smsforms_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            SQLXFormsSession.objects.create(
+                domain=domain_name,
+                start_time=datetime.utcnow(),
+                modified_time=datetime.utcnow(),
+                current_action_due=datetime.utcnow(),
+                expire_after=3,
+            )
+            self._assert_smsforms_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_smsforms_counts(self.domain.name, 0)
+        self._assert_smsforms_counts(self.domain2.name, 1)
+
+    def _assert_userreports_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            AsyncIndicator.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_userreports_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            AsyncIndicator.objects.create(
+                domain=domain_name,
+                doc_id=random_hex(),
+                doc_type='doc_type',
+                indicator_config_ids=[],
+            )
+            self._assert_userreports_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_userreports_counts(self.domain.name, 0)
+        self._assert_userreports_counts(self.domain2.name, 1)
+
+    def _assert_users_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            DomainRequest.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_users_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            DomainRequest.objects.create(domain=domain_name, email='user@test.com', full_name='User')
+            self._assert_users_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_users_counts(self.domain.name, 0)
+        self._assert_users_counts(self.domain2.name, 1)
+
+    def _assert_zapier_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            ZapierSubscription.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_zapier_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            ZapierSubscription.objects.create(
+                domain=domain_name,
+                case_type='case_type',
+                event_name=EventTypes.NEW_CASE,
+                url='http://%s.com' % domain_name,
+                user_id='user_id',
+            )
+            self._assert_zapier_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_zapier_counts(self.domain.name, 0)
+        self._assert_zapier_counts(self.domain2.name, 1)
+
+    def _assert_couchforms_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            UnfinishedSubmissionStub.objects.filter(domain=domain_name)
+        ], count)
+
+    def test_couchforms_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            UnfinishedSubmissionStub.objects.create(
+                domain=domain_name,
+                timestamp=datetime.utcnow(),
+                xform_id='xform_id',
+            )
+            self._assert_couchforms_counts(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_couchforms_counts(self.domain.name, 0)
+        self._assert_couchforms_counts(self.domain2.name, 1)
 
     def tearDown(self):
         self.domain2.delete()

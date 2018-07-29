@@ -8,13 +8,14 @@ from django.core.validators import validate_email
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ugettext
 
-from corehq.apps.programs.models import Program
-from corehq.apps.users.models import CouchUser
-from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.forms import clean_password, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
-from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.hqwebapp.utils import decode_password
+from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.apps.programs.models import Program
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.forms import RoleForm
 
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 from django.utils.functional import lazy
@@ -422,7 +423,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain and domain.commtrack_enabled:
             self.fields['supply_point'] = forms.CharField(label='Supply Point', required=False,
-                                                          widget=SupplyPointSelectWidget(domain.name),
+                                                          widget=LocationSelectWidget(domain.name),
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
             programs = Program.by_domain(domain.name, wrap=False)
