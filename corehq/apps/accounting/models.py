@@ -376,7 +376,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     @property
     def auto_pay_enabled(self):
-        return self.auto_pay_user is not None
+        return bool(self.auto_pay_user)
 
     @classmethod
     def get_or_create_account_by_domain(cls, domain,
@@ -449,7 +449,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         self._send_autopay_card_added_email(domain)
 
     def remove_autopay_user(self):
-        self.auto_pay_user = None
+        self.auto_pay_user = ''
         self.save()
 
     def _send_autopay_card_removed_email(self, new_user, domain):
@@ -1930,7 +1930,8 @@ class Invoice(InvoiceBase):
         invoices = cls.objects.select_related('subscription__account').filter(
             date_due=date_due,
             is_hidden=False,
-            subscription__account__auto_pay_user__isnull=False,
+        ).exclude(
+            subscription__account__auto_pay_user='',
         )
         return invoices
 
@@ -2030,7 +2031,8 @@ class CustomerInvoice(InvoiceBase):
         invoices = cls.objects.select_related('account').filter(
             date_due=date_due,
             is_hidden=False,
-            account__auto_pay_user__isnull=False
+        ).exclude(
+            account__auto_pay_user='',
         )
         return invoices
 

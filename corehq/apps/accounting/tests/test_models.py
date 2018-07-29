@@ -297,7 +297,7 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
     def test_set_autopay(self, fake_customer):
         fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
-        self.assertEqual(self.billing_account.auto_pay_user, None)
+        self.assertEqual(self.billing_account.auto_pay_user, '')
         self.assertFalse(self.billing_account.auto_pay_enabled)
 
         self.payment_method.set_autopay(self.fake_card, self.billing_account, None)
