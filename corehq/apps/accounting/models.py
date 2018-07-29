@@ -338,7 +338,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         null=True,
         help_text="This is how we link to the salesforce account",
     )
-    created_by = models.CharField(max_length=80, blank=True)
+    created_by = models.EmailField(blank=True)
     created_by_domain = models.CharField(max_length=256, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     dimagi_contact = models.EmailField(blank=True)
@@ -358,7 +358,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         default=EntryPoint.NOT_SET,
         choices=EntryPoint.CHOICES,
     )
-    auto_pay_user = models.CharField(max_length=80, null=True, blank=True)
+    auto_pay_user = models.EmailField(blank=True, default='')
     last_modified = models.DateTimeField(auto_now=True)
     last_payment_method = models.CharField(
         max_length=25,
