@@ -80,9 +80,13 @@ def open_for_json_write(path):
 
 
 class Command(BaseCommand):
+    help = "Export conditional alerts to file."
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
+        parser.add_argument(
+            'domain',
+            help="The project space from which to export conditional alerts.",
+        )
 
     def get_json_rule(self, rule):
         json_rule = SimpleSchedulingRule(

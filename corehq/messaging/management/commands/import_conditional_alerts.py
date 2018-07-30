@@ -39,10 +39,17 @@ def open_for_json_read(path):
 
 
 class Command(BaseCommand):
+    help = "Import conditional alerts from file."
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
-        parser.add_argument('filename')
+        parser.add_argument(
+            'domain',
+            help="The conditional alerts will be imported into this project space.",
+        )
+        parser.add_argument(
+            'filename',
+            help="The name of the file which holds the exported conditional alerts.",
+        )
 
     def handle(self, domain, filename, **options):
         domain_obj = Domain.get_by_name(domain)
