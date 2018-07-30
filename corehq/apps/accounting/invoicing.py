@@ -232,8 +232,8 @@ class DomainInvoiceFactory(object):
         total_balance = sum(invoice.balance for invoice in visible_domain_invoices)
 
         should_set_date_due = (
-                total_balance > SMALL_INVOICE_THRESHOLD or
-                (invoice.account.auto_pay_enabled and total_balance > Decimal(0))
+            total_balance > SMALL_INVOICE_THRESHOLD or
+            (invoice.account.auto_pay_enabled and total_balance > Decimal(0))
         )
         if should_set_date_due:
             days_until_due = DEFAULT_DAYS_UNTIL_DUE
