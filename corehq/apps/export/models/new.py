@@ -1378,6 +1378,11 @@ class CaseInferredSchema(InferredSchema):
 
 
 class FormInferredSchema(InferredSchema):
+    """This was used during the migratoin from the old models to capture
+    export items that could not be found in the current apps.
+
+    See https://github.com/dimagi/commcare-hq/blob/34a9459462271cf2dcd7562b36cc86e300d343b8/corehq/apps/export/utils.py#L246-L265
+    """
     xmlns = StringProperty(required=True)
     app_id = StringProperty()
 
