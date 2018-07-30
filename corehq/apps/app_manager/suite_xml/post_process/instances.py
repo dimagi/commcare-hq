@@ -179,9 +179,9 @@ def location_fixture_instances(domain, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
-@register_factory('location_groups')
-def location_groups_fixture_instances(domain, instance_name):
-    if instance_name == 'location_groups' and toggles.LOCATION_GROUPS.enabled(domain):
+@register_factory('related_locations')
+def related_locations_fixture_instances(domain, instance_name):
+    if instance_name == 'related_locations' and toggles.RELATED_LOCATIONS.enabled(domain):
         return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 

@@ -714,8 +714,8 @@ class SQLLocation(AdjListModel):
 
     @property
     def related_location_ids(self):
-        a = LocationGroup.objects.filter(location_a=self.location_id).values_list('location_b', flat=True)
-        b = LocationGroup.objects.filter(location_b=self.location_id).values_list('location_a', flat=True)
+        a = LocationRelation.objects.filter(location_a=self.location_id).values_list('location_b', flat=True)
+        b = LocationRelation.objects.filter(location_b=self.location_id).values_list('location_a', flat=True)
 
         return set(a).union(set(b))
 
@@ -809,7 +809,7 @@ def _unassign_users_from_location(domain, location_id):
             user.unset_location_by_id(location_id, fall_back_to_next=True)
 
 
-class LocationGroup(models.Model):
+class LocationRelation(models.Model):
     """Implements a many-to-many mapping between locations.
 
     Assumptions:

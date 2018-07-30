@@ -214,18 +214,18 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
-class LocationGroupFixtureProvider(FixtureProvider):
+class RelatedLocationsFixtureProvider(FixtureProvider):
     """This fixture is under active development for REACH, and is expected to change.
 
-    - Connections do not nest. Meaning that a location needs a direct connection
+    - Relations do not nest. Meaning that a location needs a direct relation
       to another location for it be included in this fixture.
-    - Only the user's primary location will get its group synced
+    - Only the user's primary location will get its related locations synced
     """
-    id = 'location_groups'
+    id = 'related_locations'
     serializer = FlatLocationSerializer()
 
     def __call__(self, restore_state):
-        if not toggles.LOCATION_GROUPS.enabled(restore_state.domain):
+        if not toggles.RELATED_LOCATIONS.enabled(restore_state.domain):
             return []
 
         restore_user = restore_state.restore_user
@@ -240,7 +240,7 @@ class LocationGroupFixtureProvider(FixtureProvider):
         return self.serializer.get_xml_nodes(self.id, restore_user, locations_queryset, data_fields)
 
 
-location_group_fixture_generator = LocationGroupFixtureProvider()
+related_locations_fixture_generator = RelatedLocationsFixtureProvider()
 
 
 int_field = IntegerField()

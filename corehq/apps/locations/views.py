@@ -55,7 +55,7 @@ from .permissions import (
     can_edit_any_location,
 )
 from .models import LocationType, SQLLocation, filter_for_archived
-from .forms import LocationFormSet, UsersAtLocationForm, LocationGroupForm
+from .forms import LocationFormSet, UsersAtLocationForm, RelatedLocationForm
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config
 import six
@@ -712,11 +712,11 @@ class EditLocationView(NewLocationView):
 
     @property
     @memoized
-    def group_form(self):
-        if not toggles.LOCATION_GROUPS.enabled(self.request.domain):
+    def related_location_form(self):
+        if not toggles.RELATED_LOCATIONS.enabled(self.request.domain):
             return None
 
-        return LocationGroupForm(
+        return RelatedLocationForm(
             self.domain, self.location,
             data=self.request.POST if self.request.method == "POST" else None,
         )
@@ -742,7 +742,7 @@ class EditLocationView(NewLocationView):
         context.update({
             'products_per_location_form': self.products_form,
             'users_per_location_form': self.users_form,
-            'location_group_form': self.group_form,
+            'related_location_form': self.related_location_form,
         })
         return context
 
@@ -763,13 +763,13 @@ class EditLocationView(NewLocationView):
         self.location.save()
         return self.form_valid()
 
-    def group_form_post(self, request, *args, **kwargs):
-        if self.group_form.is_valid():
-            self.group_form.save()
+    def related_location_form_post(self, request, *args, **kwargs):
+        if self.related_location_form.is_valid():
+            self.related_location_form.save()
             return self.form_valid()
         else:
             self.request.method = "GET"
-            self.form_tab = 'groups'
+            self.form_tab = 'related_location'
             return self.get(request, *args, **kwargs)
 
     @method_decorator(lock_locations)
@@ -781,9 +781,9 @@ class EditLocationView(NewLocationView):
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
-        elif (self.request.POST['form_type'] == "location-groups"
-              and toggles.LOCATION_GROUPS.enabled(request.domain)):
-            return self.group_form_post(request, *args, **kwargs)
+        elif (self.request.POST['form_type'] == "related_location"
+              and toggles.RELATED_LOCATIONS.enabled(request.domain)):
+            return self.related_location_form_post(request, *args, **kwargs)
         else:
             raise Http404()
 

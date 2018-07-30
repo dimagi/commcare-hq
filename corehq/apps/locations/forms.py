@@ -31,7 +31,7 @@ from corehq.apps.users.util import user_display_string
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.util.quickcache import quickcache
 
-from .models import SQLLocation, LocationType, LocationFixtureConfiguration, LocationGroup
+from .models import SQLLocation, LocationType, LocationFixtureConfiguration, LocationRelation
 from .permissions import user_can_access_location_id
 from .signals import location_edited
 
@@ -624,7 +624,7 @@ class LocationFixtureForm(forms.ModelForm):
         )
 
 
-class LocationGroupForm(forms.Form):
+class RelatedLocationForm(forms.Form):
     related_locations = forms.CharField(
         label=ugettext_lazy("Related Locations"),
         required=False,
@@ -635,7 +635,7 @@ class LocationGroupForm(forms.Form):
         kwargs['initial'] = {
             'related_locations': ','.join(location.related_location_ids)
         }
-        super(LocationGroupForm, self).__init__(*args, **kwargs)
+        super(RelatedLocationForm, self).__init__(*args, **kwargs)
 
         self.fields['related_locations'].widget = LocationSelectWidget(
             domain, id='id_related_locations', multiselect=True
@@ -657,12 +657,12 @@ class LocationGroupForm(forms.Form):
         locations_to_remove = previous_locations - selected_location_ids
 
         for location_id in locations_to_add:
-            LocationGroup.objects.get_or_create(
+            LocationRelation.objects.get_or_create(
                 location_a=self.location,
                 location_b=SQLLocation.objects.get(location_id=location_id)
             )
 
-        LocationGroup.objects.filter(
+        LocationRelation.objects.filter(
             location_a=self.location, location_b__location_id__in=locations_to_remove).delete()
-        LocationGroup.objects.filter(
+        LocationRelation.objects.filter(
             location_b=self.location, location_a__location_id__in=locations_to_remove).delete()
