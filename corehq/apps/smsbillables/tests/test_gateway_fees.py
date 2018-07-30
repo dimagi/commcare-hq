@@ -239,7 +239,7 @@ class TestGatewayFee(TestCase):
         private_backend_ids = generator.arbitrary_non_global_backend_ids()
         messages = generator.arbitrary_messages_by_backend_and_direction(
             private_backend_ids)
-        arbitrary_message = messages[randint(0, len(messages)-1)]
+        arbitrary_message = messages[randint(0, len(messages) - 1)]
 
         toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.set(
             arbitrary_message.domain, True, toggles.NAMESPACE_DOMAIN)
