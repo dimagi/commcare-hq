@@ -1805,18 +1805,7 @@ class FormExportDataSchema(ExportDataSchema):
 
         # Add case updates
         for case_property, case_path in six.iteritems(case_properties):
-            if repeat_context:
-                # This removes the repeat part of the path. For example, if inside
-                # a repeat group that has the following path:
-                #
-                # /data/repeat/other_group/question
-                #
-                # We want to create a path that looks like:
-                #
-                # /data/repeat/case/update/other_group/question
-                path_suffix = case_path[len(repeat_context) + 1:]
-            else:
-                path_suffix = case_property
+            path_suffix = case_property
             path = '{}/case/update/{}'.format(root_path, path_suffix)
             _add_to_group_schema(path, 'update.{}'.format(case_property))
 
