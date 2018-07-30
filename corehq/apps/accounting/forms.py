@@ -286,10 +286,21 @@ class BillingAccountBasicForm(forms.Form):
             return []
 
     def clean_enterprise_restricted_signup_domains(self):
-        # Do not return a list with an empty string
         if self.cleaned_data['enterprise_restricted_signup_domains']:
-            return [e.strip() for e in self.cleaned_data['enterprise_restricted_signup_domains'].split(r',')]
+            # Check that no other account has claimed these domains, or we won't know which message to display
+            errors = []
+            accounts = BillingAccount.get_enterprise_restricted_signup_accounts()
+            domains = [e.strip() for e in self.cleaned_data['enterprise_restricted_signup_domains'].split(r',')]
+            for domain in domains:
+                for account in accounts:
+                    if domain in account.enterprise_restricted_signup_domains and account.id != self.account.id:
+                        errors.append("{} is restricted by {}".format(domain, account.name))
+            if errors:
+                raise ValidationError("The following domains are already restricted by another account: " +
+                                      ", ".join(errors))
+            return domains
         else:
+            # Do not return a list with an empty string
             return []
 
     def clean_active_accounts(self):
