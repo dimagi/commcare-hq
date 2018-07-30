@@ -2,19 +2,16 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import logging
-import os
-import sys
 from datetime import date
-from io import open
 
 from django.apps import apps
-from django.conf import settings
 from django.db import connection, transaction
 from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
+from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.views.mobile import UserFieldsView
@@ -127,13 +124,6 @@ def _terminate_subscriptions(domain_name):
         ).update(is_hidden_to_ops=True)
 
 
-def silence_during_tests():
-    if settings.UNIT_TESTING:
-        return open(os.devnull, 'w')
-    else:
-        return sys.stdout
-
-
 def _delete_all_cases(domain_name):
     logger.info('Deleting cases...')
     case_accessor = CaseAccessors(domain_name)
@@ -207,6 +197,14 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain'),
+    ModelDeletion('data_interfaces', 'AutomaticUpdateAction', 'rule__domain'),
+    ModelDeletion('data_interfaces', 'AutomaticUpdateRuleCriteria', 'rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseRuleAction', 'rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseRuleCriteria', 'rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'domain'),  # TODO
+    ModelDeletion('data_interfaces', 'AutomaticUpdateRule', 'domain'),
+    ModelDeletion('data_interfaces', 'DomainCaseRuleRun', 'domain'),
     ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
     ModelDeletion('export', 'DailySavedExportNotification', 'domain'),
     ModelDeletion('export', 'DataFile', 'domain'),
@@ -214,12 +212,15 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
+    ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),
+    ModelDeletion('phone', 'SyncLogSQL', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
+    ModelDeletion('motech', 'RequestLog', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     CustomDeletion('custom_data_fields', _delete_custom_data_fields),
 ]
