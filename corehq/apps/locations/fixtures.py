@@ -253,13 +253,13 @@ def get_location_fixture_queryset(user):
     return _location_queryset_helper(user.domain, list(user_locations.order_by().values_list("id", flat=True)))
 
 
-def _location_queryset_helper(domain, location_ids):
+def _location_queryset_helper(domain, location_pks):
     fixture_ids = With(raw_cte_sql(
         """
         SELECT "id", "path", "depth"
         FROM get_location_fixture_ids(%s::TEXT, %s)
         """,
-        [domain, location_ids],
+        [domain, location_pks],
         {"id": int_field, "path": int_array, "depth": int_field},
     ))
 
