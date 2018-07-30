@@ -27,6 +27,7 @@ from corehq.motech.openmrs.const import (
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.serializers import to_timestamp
 from corehq.motech.openmrs.workflow import WorkflowTask
+from corehq.motech.value_source import CaseTriggerInfo
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
 
@@ -616,10 +617,6 @@ class UpdatePersonPropertiesTask(WorkflowTask):
                 json=serialize(properties),
                 raise_for_status=True,
             )
-
-
-CaseTriggerInfo = namedtuple('CaseTriggerInfo',
-                             ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])
 
 
 def get_form_question_values(form_json):

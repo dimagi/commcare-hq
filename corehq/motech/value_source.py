@@ -1,11 +1,17 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
+from collections import namedtuple
+
 from couchdbkit.ext.django.schema import DocumentSchema
 from dimagi.ext.couchdbkit import (
     DictProperty,
     StringProperty
 )
+
+
+CaseTriggerInfo = namedtuple('CaseTriggerInfo',
+                             ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])
 
 
 def recurse_subclasses(cls):
