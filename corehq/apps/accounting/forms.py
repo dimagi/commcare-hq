@@ -202,6 +202,7 @@ class BillingAccountBasicForm(forms.Form):
                         'enterprise_restricted_signup_domains',
                         css_class='input-xxlarge',
                     ),
+                    data_bind='visible: is_customer_billing_account'
                 ),
             )
             if account.subscription_set.count() > 0:
