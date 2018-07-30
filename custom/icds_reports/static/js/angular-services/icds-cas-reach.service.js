@@ -24,7 +24,7 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
                     icdsCasReachServiceEventCategory.event(
                         'Fetching data failed', 'Awc Daily Status', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getAwcsCoveredData: function(step, params) {
@@ -47,7 +47,7 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
                     icdsCasReachServiceEventCategory.event(
                         'Fetching data failed', 'Awcs Covered', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
     };

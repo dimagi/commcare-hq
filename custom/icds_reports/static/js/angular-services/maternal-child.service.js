@@ -24,7 +24,7 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                     maternalChildServiceEventCategory.event(
                         'Fetching data failed', 'Underweight Children', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getPrevalenceOfSevereData: function(step, params) {
@@ -47,7 +47,7 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                     maternalChildServiceEventCategory.event(
                         'Fetching data failed', 'Prevalence Of Severe', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getPrevalenceOfStuntingData: function(step, params) {
@@ -70,7 +70,7 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                     maternalChildServiceEventCategory.event(
                         'Fetching data failed', 'Prevalence Of Stunting', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getNewbornLowBirthData: function(step, params) {
@@ -93,7 +93,7 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                     maternalChildServiceEventCategory.event(
                         'Fetching data failed', 'Newborn Low Birth', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         earlyInitiationBreastfeeding: function(step, params) {
@@ -117,7 +117,7 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                     maternalChildServiceEventCategory.event(
                         'Fetching data failed', 'Early Initiation Breastfeeding', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getExclusiveBreastfeedingData: function(step, params) {
@@ -140,7 +140,7 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                     maternalChildServiceEventCategory.event(
                         'Fetching data failed', 'Exclusive Breastfeeding', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getChildrenInitiatedData: function(step, params) {
@@ -163,7 +163,7 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                     maternalChildServiceEventCategory.event(
                         'Fetching data failed', 'Children Initiated', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getInstitutionalDeliveriesData: function(step, params) {
@@ -186,7 +186,7 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                     maternalChildServiceEventCategory.event(
                         'Fetching data failed', 'Institutional Deliveries', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getImmunizationCoverageData: function(step, params) {
@@ -209,7 +209,7 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                     maternalChildServiceEventCategory.event(
                         'Fetching data failed', 'Immunization Coverage', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
     };

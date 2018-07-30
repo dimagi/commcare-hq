@@ -22,7 +22,7 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
                     issnipServiceEventCategory.event(
                         'Fetching data failed', 'Creating Task', {'data': data}
                     );
-                },
+                }
             );
         },
         getStatus: function(task_id) {
@@ -42,7 +42,7 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
                     issnipServiceEventCategory.event(
                         'Fetching data failed', 'Checking Status', {'task_id': task_id}
                     );
-                },
+                }
             );
         },
     };

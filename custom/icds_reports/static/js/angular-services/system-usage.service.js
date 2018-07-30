@@ -24,7 +24,7 @@ window.angular.module('icdsApp').factory('systemUsageService', ['$http', functio
                     systemUsageServiceEventCategory.event(
                         'Fetching data failed', 'getAwcOpenedData', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
     };

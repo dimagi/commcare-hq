@@ -24,7 +24,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                     demographicsServiceEventCategory.event(
                         'Fetching data failed', 'Registered Household', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getEnrolledChildrenData: function(step, params) {
@@ -47,7 +47,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                     demographicsServiceEventCategory.event(
                         'Fetching data failed', 'Enrolled Children', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getEnrolledWomenData: function(step, params) {
@@ -70,7 +70,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                     demographicsServiceEventCategory.event(
                         'Fetching data failed', 'Enrolled Women', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getLactatingEnrolledWomenData: function(step, params) {
@@ -93,7 +93,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                     demographicsServiceEventCategory.event(
                         'Fetching data failed', 'Lactating Enrolled Women', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getAdolescentGirlsData: function(step, params) {
@@ -116,7 +116,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                     demographicsServiceEventCategory.event(
                         'Fetching data failed', 'Adolescent Girls', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getAdhaarData: function(step, params) {
@@ -139,7 +139,7 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                     demographicsServiceEventCategory.event(
                         'Fetching data failed', 'Adhaar Beneficiaries', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
     };

@@ -24,7 +24,7 @@ window.angular.module('icdsApp').factory('progressReportService', ['$http', func
                     progressReportServiceEventCategory.event(
                         'Fetching data failed', 'getData', {'params': params}
                     );
-                },
+                }
             );
         },
     };

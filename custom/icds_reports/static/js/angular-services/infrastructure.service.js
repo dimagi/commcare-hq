@@ -24,7 +24,7 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                     infrastuctureServiceEventCategory.event(
                         'Fetching data failed', 'Clean Water', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getFunctionalToiletData: function(step, params) {
@@ -47,7 +47,7 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                     infrastuctureServiceEventCategory.event(
                         'Fetching data failed', 'Functional Toilet', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getMedicineKitData: function(step, params) {
@@ -70,7 +70,7 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                     infrastuctureServiceEventCategory.event(
                         'Fetching data failed', 'Medicine Kit', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getInfantsWeightScaleData: function(step, params) {
@@ -93,7 +93,7 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                     infrastuctureServiceEventCategory.event(
                         'Fetching data failed', 'Infants Weight Scale', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
         getAdultWeightScaleData: function(step, params) {
@@ -116,7 +116,7 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                     infrastuctureServiceEventCategory.event(
                         'Fetching data failed', 'Adult Weight Scale', {'step': step, 'params': params}
                     );
-                },
+                }
             );
         },
     };
