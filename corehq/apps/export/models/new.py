@@ -145,7 +145,13 @@ class PathNode(DocumentSchema):
         return hash(self.__key())
 
 
-class ExportItem(DocumentSchema):
+class ReadablePathMixin(object):
+    @property
+    def readable_path(self):
+        return '.'.join([node.name for node in self.path])
+
+
+class ExportItem(DocumentSchema, ReadablePathMixin):
     """
     An item for export.
     path: A question path like [PathNode(name=("my_group"), PathNode(name="q1")]
@@ -222,10 +228,6 @@ class ExportItem(DocumentSchema):
         item.inferred = one.inferred or two.inferred
         item.inferred_from |= two.inferred_from
         return item
-
-    @property
-    def readable_path(self):
-        return '.'.join([node.name for node in self.path])
 
 
 class ExportColumn(DocumentSchema):
@@ -1277,7 +1279,7 @@ class MultipleChoiceItem(ExportItem):
         return item
 
 
-class ExportGroupSchema(DocumentSchema):
+class ExportGroupSchema(DocumentSchema, ReadablePathMixin):
     """
     An object representing the `ExportItem`s that would appear in a single export table, such as all the
     questions in a particular repeat group, or all the questions not in any repeat group.

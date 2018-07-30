@@ -169,19 +169,23 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         self.assertEqual(len(schema.group_schemas), 2)
 
-        group_schema = schema.group_schemas[0]
+        self._check_subcase_repeat_group_schema(schema.group_schemas[0], {'weight'}, 'form.repeat')
+        self._check_subcase_repeat_group_schema(schema.group_schemas[1], {'age'}, 'form.repeat.nested_repeat')
+
+    def _check_subcase_repeat_group_schema(self, group_schema, case_properties, repeat_path):
+        self.assertEqual(group_schema.readable_path, repeat_path)
         attribute_items = [item for item in group_schema.items if item.path[-1].name in CASE_ATTRIBUTES]
 
         self.assertEqual(len(attribute_items), len(CASE_ATTRIBUTES))
         self.assertTrue(all(map(
-            lambda item: item.readable_path.startswith('form.repeat.case'),
+            lambda item: item.readable_path.startswith('{}.case'.format(repeat_path)),
             attribute_items,
         )))
 
         create_items = [item for item in group_schema.items if item.path[-1].name in CASE_CREATE_ELEMENTS]
         self.assertEqual(len(create_items), len(CASE_CREATE_ELEMENTS))
         self.assertTrue(all(map(
-            lambda item: item.readable_path.startswith('form.repeat.case.create'),
+            lambda item: item.readable_path.startswith('{}.case.create'.format(repeat_path)),
             create_items,
         )))
 
@@ -189,8 +193,16 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(index_items), 2)
 
         update_items = list(set(group_schema.items) - set(create_items) - set(attribute_items) - set(index_items))
-        self.assertEqual(len(update_items), 1)
-        self.assertEqual(update_items[0].readable_path, 'form.repeat.case.update.weight')
+        self.assertEqual(len(update_items), len(case_properties))
+        for item in update_items:
+            self.assertTrue(item.readable_path.startswith('{}.case'.format(repeat_path)))
+            try:
+                case_properties.remove(item.path[-1].name)
+            except (ValueError, KeyError):
+                self.fail("Unexpected case property: {}".format(item.readable_path))
+
+        if case_properties:
+            self.fail("Missing case properties: {}".format(case_properties))
 
     def test_xform_parsing_with_stock_questions(self):
         form_xml = self.get_xml('stock_form')
