@@ -193,7 +193,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         update_items = list(set(group_schema.items) - set(create_items) - set(attribute_items) - set(index_items))
         self.assertEqual(len(update_items), 1)
-        self.assertEqual(update_items[0].readable_path, 'form.repeat.case.update.group.weight')
+        self.assertEqual(update_items[0].readable_path, 'form.repeat.case.update.weight')
 
     def test_xform_parsing_with_stock_questions(self):
         form_xml = self.get_xml('stock_form')
