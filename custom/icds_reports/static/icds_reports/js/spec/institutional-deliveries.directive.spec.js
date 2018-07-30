@@ -184,7 +184,7 @@ describe('Institutional Deliveries Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of pregnant women who delivered in a public or private medical facility in the last month. \n' +
+            'Of the total number of women enrolled for Anganwadi services who gave birth in the last month, the percentage who delivered in a public or private medical facility.\n' +
             '\n' +
             'Delivery in medical instituitions is associated with a decrease in maternal mortality rate'
         );

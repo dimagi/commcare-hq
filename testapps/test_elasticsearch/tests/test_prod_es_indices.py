@@ -27,8 +27,20 @@ class ProdIndexManagementTest(SimpleTestCase):
             # for now don't test this property, just ensure it exist
             self.assertTrue(info['mapping'])
             del info['mapping']
-        found_prod_indices = sorted(found_prod_indices, key=lambda info: info['index'])
-        self.assertEqual(EXPECTED_PROD_INDICES, found_prod_indices)
+
+        def alias(info):
+            return info['alias']
+
+        found_prod_indices = sorted(found_prod_indices, key=alias)
+        expected_prod_indices = sorted(EXPECTED_PROD_INDICES, key=alias)
+        # compare aliases to make it easier to spot the difference
+        # when an index is added or removed
+        self.assertEqual(
+            [alias(info) for info in expected_prod_indices],
+            [alias(info) for info in found_prod_indices],
+        )
+        # do full comparison once we know the index aliases are the same
+        self.assertEqual(expected_prod_indices, found_prod_indices)
 
 
 EXPECTED_PROD_INDICES = [

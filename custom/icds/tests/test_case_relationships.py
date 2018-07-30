@@ -10,6 +10,7 @@ from custom.icds.case_relationships import (
     child_person_case_from_tasks_case,
 )
 from custom.icds.exceptions import CaseRelationshipError
+from custom.icds.messaging.custom_recipients import skip_notifying_missing_mother_person_case
 from custom.icds.tests.base import BaseICDSTest
 
 
@@ -75,8 +76,10 @@ class CaseRelationshipTest(BaseICDSTest):
         with self.assertRaises(CaseRelationshipError):
             child_person_case_from_child_health_case(self.lone_child_health_case)
 
-        with self.assertRaises(CaseRelationshipError):
+        with self.assertRaises(CaseRelationshipError) as raises:
             mother_person_case_from_child_person_case(self.lone_child_person_case)
+
+        self.assertTrue(skip_notifying_missing_mother_person_case(raises.exception))
 
         with self.assertRaises(CaseRelationshipError):
             mother_person_case_from_ccs_record_case(self.lone_ccs_record_case)

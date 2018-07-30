@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
+from memoized import memoized
 from corehq.apps.hqwebapp.crispy import FormActions, FieldWithHelpBubble
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -31,29 +32,26 @@ class BrokenBuildsForm(forms.Form):
 
 class AuthenticateAsForm(forms.Form):
     username = forms.CharField(max_length=255)
-    domain = forms.CharField(label="Domain (used for mobile workers)", max_length=255, required=False)
+    domain = forms.CharField(label="Domain", max_length=255, required=False)
+
+    @property
+    @memoized
+    def full_username(self):
+        domain = self.cleaned_data['domain']
+        if domain:
+            return "{}@{}.commcarehq.org".format(self.cleaned_data['username'], domain)
+        else:
+            return self.cleaned_data['username']
 
     def clean(self):
-        username = self.cleaned_data['username']
-        domain = self.cleaned_data['domain']
-
-        # Ensure that the username exists either as the raw input or with fully qualified name
-        if domain:
-            extended_username = "{}@{}.commcarehq.org".format(username, domain)
-            user = CommCareUser.get_by_username(username=extended_username)
-            self.cleaned_data['username'] = extended_username
-            if user is None:
-                raise forms.ValidationError(
-                    "Cannot find user '{}' for domain '{}'".format(username, domain)
-                )
-        else:
-            user = CommCareUser.get_by_username(username=username)
-            if user is None:
-                raise forms.ValidationError("Cannot find user '{}'".format(username))
-
+        user = CommCareUser.get_by_username(username=self.full_username)
+        if user is None:
+            raise forms.ValidationError("Cannot find user '{}'".format(self.full_username))
+        # Allowed only login as mobile user
+        # web user would need stronger checks
+        # https://github.com/dimagi/commcare-hq/pull/6940#issuecomment-108765585
         if not user.is_commcare_user():
-            raise forms.ValidationError("User '{}' is not a CommCareUser".format(username))
-
+            raise forms.ValidationError("User '{}' is not a CommCareUser".format(self.full_username))
         return self.cleaned_data
 
     def __init__(self, *args, **kwargs):
@@ -154,7 +152,7 @@ class SuperuserManagementForm(forms.Form):
 
         if can_toggle_is_staff:
             self.fields['privileges'].choices.append(
-                ('is_staff', 'mark as developer')
+                ('is_staff', 'Mark as developer')
             )
 
         self.helper = FormHelper()

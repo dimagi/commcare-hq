@@ -6,7 +6,7 @@ from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.messaging.scheduling.util import utcnow
 from corehq.util.celery_utils import no_result_task
-from touchforms.formplayer.api import current_question
+from corehq.apps.formplayer_api.smsforms.api import current_question
 
 
 @no_result_task(queue='reminder_queue')

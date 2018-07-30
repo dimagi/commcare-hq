@@ -41,6 +41,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'thr_form': 'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
     'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
     'pnc_forms': 'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
+    'dashboard_daily_feeding': 'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
 }
 
 
@@ -99,6 +100,10 @@ def setUpModule():
         adapters = [get_indicator_adapter(config) for config in configs]
 
         for adapter in adapters:
+            try:
+                adapter.drop_table()
+            except Exception:
+                pass
             adapter.build_table()
 
         engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
@@ -116,9 +121,18 @@ def setUpModule():
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
-        except AssertionError:
-            pass
-    _call_center_domain_mock.stop()
+        except AssertionError as e:
+            # we always use soft assert to email when the aggregation has completed
+            if "Aggregation completed" not in str(e):
+                print(e)
+                tearDownModule()
+                raise
+        except Exception as e:
+            print(e)
+            tearDownModule()
+            raise
+        finally:
+            _call_center_domain_mock.stop()
 
 
 def tearDownModule():

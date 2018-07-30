@@ -59,9 +59,10 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
         "rightLegend": {
             "average": average,
             "info": _((
-                "Percentage of children who were put to the breast within one hour of birth."
+                "Of the children born in the last month and enrolled for Anganwadi services, the percentage "
+                "whose breastfeeding was initiated within 1 hour of delivery."
                 "<br/><br/>"
-                "Early initiation of breastfeeding ensure the newborn receives the 'first milk' rich in "
+                "Early initiation of breastfeeding ensure the newborn recieves the \"first milk\" rich in "
                 "nutrients and encourages exclusive breastfeeding practice"
             )),
             "extended_info": [
@@ -217,10 +218,11 @@ def get_early_initiation_breastfeeding_data(domain, config, loc_level, location_
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of children who were put to the breast within one hour of birth."
+            "Of the children born in the last month and enrolled for Anganwadi services, the percentage whose "
+            "breastfeeding was initiated within 1 hour of delivery."
             "<br/><br/>"
-            "Early initiation of breastfeeding ensure the newborn receives the 'first milk' rich in "
-            "nutrients and encourages exclusive breastfeeding practice"
+            "Early initiation of breastfeeding ensure the newborn recieves the \"first milk\" rich in nutrients "
+            "and encourages exclusive breastfeeding practice"
         )),
         "chart_data": [
             {

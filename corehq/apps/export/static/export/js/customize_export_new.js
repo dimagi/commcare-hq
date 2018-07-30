@@ -9,6 +9,7 @@ hqDefine('export/js/customize_export_new', function() {
                 hasExcelDashboardAccess: initialPageData.get('has_excel_dashboard_access'),
                 hasDailySavedAccess: initialPageData.get('has_daily_saved_export_access'),
                 formatOptions: initialPageData.get('format_options'),
+                sharingOptions: initialPageData.get('sharing_options'),
                 numberOfAppsToProcess: initialPageData.get('number_of_apps_to_process'),
             }
         );

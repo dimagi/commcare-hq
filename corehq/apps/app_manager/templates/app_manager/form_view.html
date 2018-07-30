@@ -7,7 +7,6 @@
 {% block title %}{# controlled by app_manager/js/form_view.js #}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
     <style>
         .nodeset {
             min-width: 400px;
@@ -21,9 +20,6 @@
 
 {% block js %}{{ block.super }}
     {% compress js %}
-    <script src="{% static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
-    <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
-    <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
     {% endcompress %}
@@ -36,7 +32,9 @@
     {% endcompress %}
     {% if module.doc_type == 'AdvancedModule' %}
         {% compress js %}
-        <script src="{% static 'app_manager/js/forms/case_config_ui_advanced.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/advanced/case_properties.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/advanced/actions.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/advanced/case_config_ui.js' %}"></script>
         <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
         {% endcompress %}
     {% else %}

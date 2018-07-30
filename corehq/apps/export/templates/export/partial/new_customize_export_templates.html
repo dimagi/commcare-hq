@@ -43,7 +43,19 @@
             <!-- /ko -->
             <h4>{% trans "Choose the fields you want to export." %}</h4>
             <div class="help-block">
-                {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
+                {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
+                    {% blocktrans %}
+                        <p>You can drag and drop fields to reorder them.</p>
+                        <ul>
+                            <li>To drag multiple fields, select by clicking while holding the CTRL key on a PC, or the Command key on a Mac.</li>
+                            <li>To select a range of fields hold the Shift key and select the first and last field in the range.</li>
+                            <li>To unselect a field hold the CTRL key on a PC, or the Command key on a Mac, and click.</li>
+                        </ul>
+                        <p>You can also rename fields, which will update the headers in the export file.</p>
+                    {% endblocktrans %}
+                {% else %}
+                    {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
+                {% endif %}
             </div>
 
             <table class="table table-bordered table-striped table-condensed" id="field-select">
@@ -170,7 +182,7 @@
                     <tr data-bind="
                         visible: column.isVisible($parent),
                         attr: {'data-order': _sortableOrder},
-                        css: { isSelectedForExport: column.selected }
+                        css: { success: column.selectedForSort, 'selected-for-sort': column.selectedForSort }
                         "
                         {% if request|toggle_enabled:"EXPORT_MULTISORT" %}style="cursor:pointer"{% endif %}
                     >
@@ -186,7 +198,7 @@
                             <!--/ko-->
                             <!--ko ifnot: ($root.is_deidentified() && column.item.isCaseName()) -->
                             <input type="checkbox"
-                                   class="field-include"
+                                   class="field-include export-table-checkbox"
                                    data-bind="checked: column.selected" />
                             <!--/ko-->
                             <!-- ko if: column.isEditable() -->
@@ -204,14 +216,14 @@
                         {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
                         <td class="text-center">
                             <span class="send-to-bottom">
-                                <button type="button">
+                                <button class="btn btn-default btn-sm">
                                     <i class="fa fa-angle-double-down"></i>
                                 </button>
                             </span>
                         </td>
                         <td class="text-center">
                             <span class="send-to-top">
-                                <button type="button">
+                                <button class="btn btn-default btn-sm">
                                     <i class="fa fa-angle-double-up"></i>
                                 </button>
                             </span>

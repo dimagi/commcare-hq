@@ -186,7 +186,7 @@ describe('Lactating Enrolled Women Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of lactating women who are enrolled for Anganwadi Services'
+            'Of the total number of lactating women, the percentage of lactating women enrolled for Anganwadi Services'
         );
     });
 

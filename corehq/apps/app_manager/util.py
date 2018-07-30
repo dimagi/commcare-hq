@@ -1,18 +1,25 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import namedtuple, OrderedDict
-from copy import deepcopy, copy
-from couchdbkit import ResourceNotFound
+
 import json
 import os
 import uuid
 import re
 import logging
-
 import yaml
-from django.urls import reverse
+import six
+from collections import namedtuple, OrderedDict
+from copy import deepcopy, copy
+from io import open
+
+
+from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
+from memoized import memoized
+
+from django.urls import reverse
 from django.core.cache import cache
+from django.http import Http404
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
@@ -34,17 +41,10 @@ from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
-import six
-from io import open
 
 
 logger = logging.getLogger(__name__)
-
-CASE_XPATH_PATTERN_MATCHES = [
-    DOT_INTERPOLATE_PATTERN
-]
 
 CASE_XPATH_SUBSTRING_MATCHES = [
     "instance('casedb')",
@@ -53,9 +53,6 @@ CASE_XPATH_SUBSTRING_MATCHES = [
     "#parent",
     "#host",
 ]
-
-
-USER_CASE_XPATH_PATTERN_MATCHES = []
 
 USER_CASE_XPATH_SUBSTRING_MATCHES = [
     "#user",
@@ -99,21 +96,21 @@ def xpath_references_case(xpath):
     # We want to determine here if the xpath references any cases other
     # than the user case. To determine if the xpath references the user
     # case, see xpath_references_user_case()
+    # Assumes xpath has already been dot interpolated as needed.
     for substring in USER_CASE_XPATH_SUBSTRING_MATCHES:
         xpath = xpath.replace(substring, '')
 
     return _check_xpath_for_matches(
         xpath,
         substring_matches=CASE_XPATH_SUBSTRING_MATCHES,
-        pattern_matches=CASE_XPATH_PATTERN_MATCHES
     )
 
 
 def xpath_references_user_case(xpath):
+    # Assumes xpath has already been dot interpolated as needed.
     return _check_xpath_for_matches(
         xpath,
         substring_matches=USER_CASE_XPATH_SUBSTRING_MATCHES,
-        pattern_matches=USER_CASE_XPATH_PATTERN_MATCHES,
     )
 
 
@@ -670,7 +667,10 @@ def get_form_source_download_url(xform):
     if not xform.build_id:
         return None
 
-    app = get_app(xform.domain, xform.build_id)
+    try:
+        app = get_app(xform.domain, xform.build_id)
+    except Http404:
+        return None
     if app.is_remote_app():
         return None
 

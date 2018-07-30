@@ -46,7 +46,7 @@ from corehq.apps.cloudcare.api import (
     get_filtered_cases,
     get_filters_from_request_params,
 )
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.models import ApplicationAccess
@@ -260,40 +260,6 @@ class PreviewAppView(TemplateView):
         })
 
 
-class SingleAppLandingPageView(TemplateView):
-    '''
-    This View renders a landing page for anonymous users to
-    land on and enter Web Apps without a login.
-    '''
-
-    template_name = 'landing_page/base.html'
-    urlname = 'home'
-
-    @use_legacy_jquery
-    def get(self, request, *args, **kwargs):
-        app_id = get_app_id_from_hash(request.domain, kwargs.pop('app_hash'))
-
-        if not app_id:
-            raise Http404()
-
-        app_doc = get_latest_released_app_doc(request.domain, app_id)
-
-        if not app_doc:
-            raise Http404()
-
-        app = Application.wrap(app_doc)
-
-        if not app.anonymous_cloudcare_enabled:
-            raise Http404()
-
-        return self.render_to_response({
-            'app': app,
-            'formplayer_url': settings.FORMPLAYER_URL,
-            "maps_api_key": settings.GMAPS_API_KEY,
-            "environment": WEB_APPS_ENVIRONMENT,
-        })
-
-
 @location_safe
 class LoginAsUsers(View):
 
@@ -420,68 +386,6 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
-
-
-@cloudcare_api
-def get_cases(request, domain):
-    request_params = request.GET
-
-    if request.couch_user.is_commcare_user():
-        user_id = request.couch_user.get_id
-    else:
-        user_id = request_params.get("user_id", "")
-
-    if not user_id and not request.couch_user.is_web_user():
-        return HttpResponseBadRequest("Must specify user_id!")
-
-    ids_only = string_to_boolean(request_params.get("ids_only", "false"))
-    case_id = request_params.get("case_id", "")
-    footprint = string_to_boolean(request_params.get("footprint", "false"))
-    accessor = CaseAccessors(domain)
-
-    if case_id and not footprint:
-        # short circuit everything else and just return the case
-        # NOTE: this allows any user in the domain to access any case given
-        # they know its ID, which is slightly different from the previous
-        # behavior (can only access things you own + footprint). If we want to
-        # change this contract we would need to update this to check the
-        # owned case list + footprint
-        case = accessor.get_case(case_id)
-        assert case.domain == domain
-        cases = [CaseAPIResult(domain=domain, id=case_id, couch_doc=case, id_only=ids_only)]
-    else:
-        filters = get_filters_from_request_params(request_params)
-        status = api_closed_to_status(request_params.get('closed', 'false'))
-        case_type = filters.get('properties/case_type', None)
-        cases = get_filtered_cases(domain, status=status, case_type=case_type,
-                                   user_id=user_id, filters=filters,
-                                   footprint=footprint, ids_only=ids_only,
-                                   strip_history=True)
-    return json_response(cases)
-
-
-@cloudcare_api
-@cache_page(60 * 30)
-def get_fixtures(request, domain, user_id, fixture_id):
-    try:
-        user = CommCareUser.get_by_user_id(user_id)
-    except CouchUser.AccountTypeError:
-        err = ("You can't use case sharing or fixtures as a %s. "
-               "Login as a mobile worker and try again.") % settings.WEB_USER_TERM,
-        return HttpResponse(err, status=412, content_type="text/plain")
-
-    if not user:
-        raise Http404
-
-    assert user.is_member_of(domain)
-    restore_user = user.to_ota_restore_user()
-    fixture = generator.get_fixture_by_id(fixture_id, restore_user)
-    if not fixture:
-        raise Http404
-    assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
-        fixture_id, len(fixture.getchildren())
-    )
-    return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
 
 
 class ReadableQuestions(View):

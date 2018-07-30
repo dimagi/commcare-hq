@@ -69,7 +69,7 @@ class TransifexApiClient(object):
         :param resource_name: resource name, mostly same as resource slug itself
         """
         url = "https://www.transifex.com/api/2/project/{}/resources".format(self.project)
-        content = open(path_to_pofile, 'r').read()
+        content = open(path_to_pofile, 'r', encoding="utf-8").read()
         if resource_name is None:
             __, filename = os.path.split(path_to_pofile)
             resource_name = filename
@@ -93,7 +93,7 @@ class TransifexApiClient(object):
         target_lang_code = self.transifex_lang_code(hq_lang_code)
         url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}".format(
             self.project, resource_name, target_lang_code)
-        content = open(path_to_pofile, 'r').read()
+        content = open(path_to_pofile, 'r', encoding="utf-8").read()
         headers = {'content-type': 'application/json'}
         data = {
             'name': resource_name, 'slug': resource_slug, 'content': content,
@@ -159,8 +159,8 @@ class TransifexApiClient(object):
         if response.status_code != 200:
             return response
         temp_file = tempfile.NamedTemporaryFile()
-        with open(temp_file.name, 'w') as f:
-            f.write(response.content)
+        with open(temp_file.name, 'w', encoding='utf-8') as f:
+            f.write(response.content.decode(encoding='utf-8'))
         if lock_resource:
             self.lock_resource(resource_slug)
         return polib.pofile(temp_file.name)

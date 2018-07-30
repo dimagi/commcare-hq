@@ -16,10 +16,10 @@ from corehq.messaging.scheduling import util
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.sql_db.models import PartitionedModel
-from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from couchdbkit.exceptions import ResourceNotFound
-from datetime import tzinfo, timedelta
+from datetime import timedelta, date, datetime, time
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from memoized import memoized
 from dimagi.utils.modules import to_function
@@ -69,7 +69,7 @@ class ScheduleInstance(PartitionedModel):
         if self.recipient_type == self.RECIPIENT_TYPE_CASE:
             try:
                 case = CaseAccessors(self.domain).get_case(self.recipient_id)
-            except (CaseNotFound, ResourceNotFound):
+            except CaseNotFound:
                 return None
 
             if case.domain != self.domain:
@@ -219,6 +219,31 @@ class ScheduleInstance(PartitionedModel):
         else:
             raise UnknownRecipientType(recipient.__class__.__name__)
 
+    def convert_to_set(self, value):
+        if isinstance(value, (list, tuple)):
+            return set(value)
+
+        return set([value])
+
+    def passes_user_data_filter(self, contact):
+        if not isinstance(contact, CouchUser):
+            return True
+
+        if not self.memoized_schedule.user_data_filter:
+            return True
+
+        for key, value in six.iteritems(self.memoized_schedule.user_data_filter):
+            if key not in contact.user_data:
+                return False
+
+            allowed_values_set = self.convert_to_set(value)
+            actual_values_set = self.convert_to_set(contact.user_data[key])
+
+            if actual_values_set.isdisjoint(allowed_values_set):
+                return False
+
+        return True
+
     def expand_recipients(self):
         """
         Can be used as a generator to iterate over all individual contacts who
@@ -230,7 +255,8 @@ class ScheduleInstance(PartitionedModel):
 
         for member in recipient_list:
             for contact in self._expand_recipient(member):
-                yield contact
+                if self.passes_user_data_filter(contact):
+                    yield contact
 
     def get_content_send_lock(self, client, recipient):
         if is_commcarecase(recipient):
@@ -325,16 +351,30 @@ class ScheduleInstance(PartitionedModel):
         """
         return self.schedule
 
+    def additional_deactivation_condition_reached(self):
+        """
+        Subclasses can override this to provide additional checks under
+        which a ScheduleInstance should be deactivated, which will be checked
+        when the ScheduleInstances are being refreshed as well as right before
+        and after processing them, through check_active_flag_against_schedule().
+        """
+        return False
+
+    def should_be_active(self):
+        return self.memoized_schedule.active and not self.additional_deactivation_condition_reached()
+
     def check_active_flag_against_schedule(self):
         """
         Returns True if the active flag was changed and the schedule instance should be saved.
         Returns False if nothing changed.
         """
-        if self.active and not self.memoized_schedule.active:
+        should_be_active = self.should_be_active()
+
+        if self.active and not should_be_active:
             self.active = False
             return True
 
-        if not self.active and self.memoized_schedule.active:
+        if not self.active and should_be_active:
             if self.memoized_schedule.total_iterations_complete(self):
                 return False
 
@@ -461,7 +501,7 @@ class CaseScheduleInstanceMixin(object):
     def case(self):
         try:
             return CaseAccessors(self.domain).get_case(self.case_id)
-        except (CaseNotFound, ResourceNotFound):
+        except CaseNotFound:
             return None
 
     @property
@@ -471,6 +511,36 @@ class CaseScheduleInstanceMixin(object):
             return get_wrapped_owner(get_owner_id(self.case))
 
         return None
+
+    def additional_deactivation_condition_reached(self):
+        from corehq.apps.data_interfaces.models import _try_date_conversion
+
+        if self.memoized_schedule.stop_date_case_property_name and self.case:
+            values = self.case.resolve_case_property(self.memoized_schedule.stop_date_case_property_name)
+            values = [element.value for element in values]
+
+            timezone = pytz.UTC if self.memoized_schedule.use_utc_as_default_timezone else self.domain_timezone
+
+            for stop_date in values:
+                if isinstance(stop_date, datetime):
+                    pass
+                elif isinstance(stop_date, date):
+                    stop_date = datetime.combine(stop_date, time(0, 0))
+                else:
+                    stop_date = _try_date_conversion(stop_date)
+
+                if not isinstance(stop_date, datetime):
+                    continue
+
+                if stop_date.tzinfo:
+                    stop_date = stop_date.astimezone(pytz.UTC).replace(tzinfo=None)
+                else:
+                    stop_date = UserTime(stop_date, timezone).server_time().done()
+
+                if self.next_event_due >= stop_date:
+                    return True
+
+        return False
 
     @property
     @memoized

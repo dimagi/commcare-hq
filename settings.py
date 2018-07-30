@@ -188,7 +188,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'rest_framework.authtoken',
     'djcelery',
     'django_prbac',
     'djangular',
@@ -303,6 +302,7 @@ HQ_APPS = (
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
+    'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
@@ -321,7 +321,6 @@ HQ_APPS = (
     'fluff.fluff_filter',
     'soil',
     'toggle',
-    'touchforms.formplayer',
     'phonelog',
     'pillowtop',
     'pillow_retry',
@@ -351,7 +350,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
-    'custom.logistics',
     'custom.ilsgateway',
     'custom.zipline',
     'custom.ewsghana',
@@ -360,7 +358,6 @@ HQ_APPS = (
     'custom.ucla',
 
     'custom.intrahealth',
-    'custom.world_vision',
     'custom.up_nrhm',
 
     'custom.care_pathways',
@@ -496,8 +493,11 @@ SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
+ENABLE_SOFT_ASSERT_EMAILS = True
+
 SERVER_ENVIRONMENT = 'localdev'
 ICDS_ENVS = ('icds', 'icds-new')
+UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
 USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
@@ -514,30 +514,21 @@ PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
 # OTA restore fixture generators
-FIXTURE_GENERATORS = {
-    # fixtures that may be sent to the phone independent of cases
-    'standalone': [
-        # core
-        "corehq.apps.users.fixturegenerators.user_groups",
-        "corehq.apps.fixtures.fixturegenerators.item_lists",
-        "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
-        "corehq.apps.products.fixtures.product_fixture_generator",
-        "corehq.apps.programs.fixtures.program_fixture_generator",
-        "corehq.apps.app_manager.fixtures.report_fixture_generator",
-        "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
-        "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
-        # custom
-        "custom.bihar.reports.indicators.fixtures.generator",
-        "custom.m4change.fixtures.report_fixtures.generator",
-        "custom.m4change.fixtures.location_fixtures.generator",
-
-    ],
-    # fixtures that must be sent along with the phones cases
-    'case': [
-        "corehq.apps.locations.fixtures.location_fixture_generator",
-        "corehq.apps.locations.fixtures.flat_location_fixture_generator",
-    ]
-}
+FIXTURE_GENERATORS = [
+    "corehq.apps.users.fixturegenerators.user_groups",
+    "corehq.apps.fixtures.fixturegenerators.item_lists",
+    "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
+    "corehq.apps.products.fixtures.product_fixture_generator",
+    "corehq.apps.programs.fixtures.program_fixture_generator",
+    "corehq.apps.app_manager.fixtures.report_fixture_generator",
+    "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
+    "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
+    "corehq.apps.locations.fixtures.location_fixture_generator",
+    "corehq.apps.locations.fixtures.flat_location_fixture_generator",
+    "custom.bihar.reports.indicators.fixtures.generator",
+    "custom.m4change.fixtures.report_fixtures.generator",
+    "custom.m4change.fixtures.location_fixtures.generator",
+]
 
 ### Shared drive settings ###
 # Also see section after localsettings import
@@ -705,7 +696,7 @@ ANALYTICS_CONFIG = {
 
 GREENHOUSE_API_KEY = ''
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
@@ -906,6 +897,8 @@ ASYNC_INDICATORS_TO_QUEUE = 10000
 ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 
+UCR_COMPARISONS = {}
+
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 # Example:
 # TRANSIFEX_DETAILS = {
@@ -1026,7 +1019,9 @@ TEMPLATES = [
                 'corehq.util.context_processors.base_template',
                 'corehq.util.context_processors.current_url_name',
                 'corehq.util.context_processors.domain',
+                'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
+                'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
@@ -1632,6 +1627,12 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
          "ICDS: Supervisor Location from AWC Owner"],
+    'HOST_CASE_OWNER_LOCATION':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
+    'HOST_CASE_OWNER_LOCATION_PARENT':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location_parent',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
     'CASE_OWNER_LOCATION_PARENT':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
          "Abt: The case owner's location's parent location"],
@@ -1784,9 +1785,6 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
-        'custom.world_vision.models.WorldVisionMotherFluffPillow',
-        'custom.world_vision.models.WorldVisionChildFluffPillow',
-        'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
@@ -1874,6 +1872,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile_mpr_2a_deaths.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_sql_mpr_2a_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
@@ -1886,10 +1885,13 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_ccs_record_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_5_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_6ac_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_6b_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_7_growth_monitoring_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_8_tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_9_vhnd_forms.json'),
@@ -1931,6 +1933,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'diagnostic_register.json'),
 
+    os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
+
 ]
 
 
@@ -1960,6 +1964,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
@@ -2014,14 +2019,17 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_v1.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_v2.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_v1.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_v2.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'livraison_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'rapture_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'recouvrement_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json')
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
+
+    os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2184,7 +2192,6 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
-    'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',

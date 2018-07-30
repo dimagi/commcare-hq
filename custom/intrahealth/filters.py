@@ -106,6 +106,14 @@ class YeksiNaaLocationFilter(AsyncLocationFilter):
         }
 
 
+class YeksiNaaLocationFilter2(LocationFilter):
+    template = 'yeksi_naa/location_filter.html'
+
+
+class FicheLocationFilter2(YeksiNaaLocationFilter2):
+    required = 1
+
+
 class MonthsDateFilter(BaseReportFilter):
     template = "yeksi_naa/months_datespan.html"
     slug = 'datespan'

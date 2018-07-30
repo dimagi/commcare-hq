@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import partitioned
+from corehq.form_processor.tests.utils import partitioned, run_with_all_backends
+from corehq.apps.hqcase.utils import update_case
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     save_alert_schedule_instance,
     save_timed_schedule_instance,
@@ -16,6 +18,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
     TimedScheduleInstance,
+    CaseTimedScheduleInstance,
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -206,6 +209,162 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
             self.assertTimedScheduleInstance(instance, 0, 3, datetime(2017, 3, 18, 16, 0), False,
                 date(2017, 3, 16), self.user1)
             self.assertEqual(send_patch.call_count, 0)
+
+
+class StopDateCasePropertyTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(StopDateCasePropertyTest, cls).setUpClass()
+        cls.domain = 'stop-date-case-property-test'
+        cls.domain_obj = Domain(name=cls.domain, default_timezone='America/New_York')
+        cls.domain_obj.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(StopDateCasePropertyTest, cls).tearDownClass()
+
+    @run_with_all_backends
+    def test_condition_reached_when_not_enabled(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent(),
+        )
+        self.addCleanup(schedule.delete)
+
+        with create_case(self.domain, 'person') as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                timed_schedule_id=schedule.schedule_id,
+                case_id=case.case_id,
+                next_event_due=datetime(2018, 7, 1),
+            )
+            self.assertFalse(instance.additional_deactivation_condition_reached())
+
+    @run_with_all_backends
+    def test_condition_reached_when_case_property_not_a_date(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent(),
+            extra_options={'stop_date_case_property_name': 'stop_date'},
+        )
+        self.addCleanup(schedule.delete)
+
+        with create_case(self.domain, 'person') as case:
+            # case property stop_date does not exist
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                timed_schedule_id=schedule.schedule_id,
+                case_id=case.case_id,
+                next_event_due=datetime(2018, 7, 1),
+            )
+            self.assertFalse(instance.additional_deactivation_condition_reached())
+
+            # case property stop_date is not a date
+            update_case(self.domain, case.case_id, case_properties={'stop_date': 'xyz'})
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                timed_schedule_id=schedule.schedule_id,
+                case_id=case.case_id,
+                next_event_due=datetime(2018, 7, 1),
+            )
+            self.assertFalse(instance.additional_deactivation_condition_reached())
+
+    @run_with_all_backends
+    def test_condition_reached_with_domain_timezone(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent(),
+            extra_options={'stop_date_case_property_name': 'stop_date'},
+        )
+        self.addCleanup(schedule.delete)
+
+        with create_case(self.domain, 'person') as case:
+            update_case(self.domain, case.case_id, case_properties={'stop_date': '2018-07-01'})
+            for (next_event_due, expected_result) in (
+                (datetime(2018, 6, 1, 12, 0), False),
+                (datetime(2018, 6, 30, 12, 0), False),
+                (datetime(2018, 7, 1, 3, 59), False),
+                (datetime(2018, 7, 1, 4, 0), True),
+                (datetime(2018, 7, 1, 4, 1), True),
+                (datetime(2018, 7, 2, 12, 0), True),
+                (datetime(2018, 8, 1, 12, 0), True),
+            ):
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    timed_schedule_id=schedule.schedule_id,
+                    case_id=case.case_id,
+                    next_event_due=next_event_due,
+                )
+                self.assertEqual(instance.additional_deactivation_condition_reached(), expected_result,
+                    msg="Failed with %s" % next_event_due)
+
+    @run_with_all_backends
+    def test_condition_reached_with_utc_option(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent(),
+            extra_options={
+                'stop_date_case_property_name': 'stop_date',
+                'use_utc_as_default_timezone': True,
+            },
+        )
+        self.addCleanup(schedule.delete)
+
+        with create_case(self.domain, 'person') as case:
+            update_case(self.domain, case.case_id, case_properties={'stop_date': '2018-07-01'})
+            for (next_event_due, expected_result) in (
+                (datetime(2018, 6, 1, 12, 0), False),
+                (datetime(2018, 6, 30, 12, 0), False),
+                (datetime(2018, 6, 30, 23, 59), False),
+                (datetime(2018, 7, 1, 0, 0), True),
+                (datetime(2018, 7, 1, 0, 1), True),
+                (datetime(2018, 7, 2, 12, 0), True),
+                (datetime(2018, 8, 1, 12, 0), True),
+            ):
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    timed_schedule_id=schedule.schedule_id,
+                    case_id=case.case_id,
+                    next_event_due=next_event_due,
+                )
+                self.assertEqual(instance.additional_deactivation_condition_reached(), expected_result,
+                    msg="Failed with %s" % next_event_due)
+
+    @run_with_all_backends
+    def test_condition_reached_with_timezone_from_timestamp(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent(),
+            extra_options={'stop_date_case_property_name': 'stop_date'},
+        )
+        self.addCleanup(schedule.delete)
+
+        with create_case(self.domain, 'person') as case:
+            update_case(self.domain, case.case_id, case_properties={'stop_date': '2018-07-01T00:00:00-07:00'})
+            for (next_event_due, expected_result) in (
+                (datetime(2018, 6, 1, 12, 0), False),
+                (datetime(2018, 6, 30, 12, 0), False),
+                (datetime(2018, 7, 1, 6, 59), False),
+                (datetime(2018, 7, 1, 7, 0), True),
+                (datetime(2018, 7, 1, 7, 1), True),
+                (datetime(2018, 7, 2, 12, 0), True),
+                (datetime(2018, 8, 1, 12, 0), True),
+            ):
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    timed_schedule_id=schedule.schedule_id,
+                    case_id=case.case_id,
+                    next_event_due=next_event_due,
+                )
+                self.assertEqual(instance.additional_deactivation_condition_reached(), expected_result,
+                    msg="Failed with %s" % next_event_due)
 
 
 @partitioned

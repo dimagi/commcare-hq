@@ -67,7 +67,10 @@ def _try_date_conversion(date_or_string):
         isinstance(date_or_string, six.string_types) and
         ALLOWED_DATE_REGEX.match(date_or_string)
     ):
-        date_or_string = parse(date_or_string)
+        try:
+            return parse(date_or_string)
+        except ValueError:
+            pass
 
     return date_or_string
 
@@ -212,6 +215,10 @@ class AutomaticUpdateRule(models.Model):
             deleted=False,
             **additional_filters
         )
+
+    @classmethod
+    def domain_has_conditional_alerts(cls, domain):
+        return cls.by_domain(domain, cls.WORKFLOW_SCHEDULING, active_only=False).exists()
 
     @classmethod
     @quickcache(['domain', 'workflow', 'active_only'], timeout=30 * 60)

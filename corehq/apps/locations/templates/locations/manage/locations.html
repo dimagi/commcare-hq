@@ -2,11 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'locations/js/utils.js' %}"></script>
-    <script src="{% static 'locations/js/location_tree.js' %}"></script>
-    <script src="{% static 'locations/js/locations.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'locations/js/locations' %}
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'locations/css/manage.css' %}">
@@ -61,10 +57,12 @@
     </div>
 </header>
 
-{% if not show_inactive and request.can_access_all_locations %}
+{% if not show_inactive %}
 <div class="row">
     <div class="col-sm-12">
         <div class="btn-toolbar">
+
+            {% if request.can_access_all_locations %}
             <a class="btn btn-info"
                {% if not has_location_types or not can_edit_any_location %}
                    disabled
@@ -74,6 +72,8 @@
             >
                 <i class="fa fa-cloud-download"></i> {% trans 'Download Organization Structure' %}
             </a>
+            {% endif %}
+
             <a class="btn btn-default"
                {% if not has_location_types or not can_edit_any_location %}
                    disabled
@@ -83,6 +83,8 @@
             >
                 <i class="fa fa-cloud-upload"></i> {% trans 'Bulk Upload' %}
             </a>
+
+            {% if request.can_access_all_locations %}
             <a class="btn btn-default track-usage-link" href="{% url "location_types" domain %}"
                data-category="Organization Structure" data-action="Edit Organization Levels">
                 {% trans "Edit Organization Levels" %}
@@ -91,6 +93,8 @@
                data-category="Organization Structure" data-action="Edit Location Fields">
                 {% trans "Edit Location Fields" %}
             </a>
+            {% endif %}
+
         </div>
     </div>
 </div>
