@@ -11,7 +11,6 @@ from dimagi.ext.couchdbkit import (
     DocumentSchema,
     SchemaDictProperty,
     SchemaProperty,
-    StringProperty,
 )
 
 
