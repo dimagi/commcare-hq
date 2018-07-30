@@ -17,6 +17,7 @@ import sys
 from django.views.generic.base import TemplateView, View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
@@ -158,8 +159,24 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         email = data['email'].strip()
         duplicate = CouchUser.get_by_username(email)
         is_existing = User.objects.filter(username__iexact=email).count() > 0 or duplicate
+
+        message = None
+        if is_existing:
+            message = _("There is already a user with this email.")
+        else:
+            domain = email[email.find("@") + 1:]
+            for account in BillingAccount.get_enterprise_restricted_signup_accounts():
+                if domain in account.enterprise_restricted_signup_domains:
+                    message = account.restrict_signup_message
+                    message += _("""
+                        <br>Please contact <a href='mailto:{}?subject={}'>{}</a> to register for an account.
+                    """).format(account.restrict_signup_email,
+                                _("CommCareHQ account request"),
+                                account.restrict_signup_email)
+                    break
         return {
-            'isValid': not is_existing,
+            'isValid': message is None,
+            'message': message,
         }
 
 
