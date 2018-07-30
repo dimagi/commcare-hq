@@ -24,7 +24,7 @@ from corehq.messaging.scheduling.models import (
 from corehq.messaging.tasks import initiate_messaging_rule_run
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from io import open as io_open
+from io import open
 import json
 import six
 
@@ -35,7 +35,7 @@ def open_for_json_read(path):
     if six.PY2:
         return open(path, 'rb')
 
-    return io_open(path, 'r', encoding='utf-8')
+    return open(path, 'r', encoding='utf-8')
 
 
 class Command(BaseCommand):

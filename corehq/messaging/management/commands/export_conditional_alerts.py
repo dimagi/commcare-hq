@@ -16,7 +16,7 @@ from corehq.messaging.scheduling.models import (
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
 from django.core.management.base import BaseCommand, CommandError
-from io import open as io_open
+from io import open
 import copy
 import json
 import jsonobject
@@ -76,7 +76,7 @@ def open_for_json_write(path):
     if six.PY2:
         return open(path, 'wb')
 
-    return io_open(path, 'w', encoding='utf-8')
+    return open(path, 'w', encoding='utf-8')
 
 
 class Command(BaseCommand):
