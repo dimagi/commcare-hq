@@ -351,7 +351,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         choices=BillingAccountType.CHOICES,
     )
     is_active = models.BooleanField(default=True)
-    is_customer_billing_account = models.BooleanField(default=False)
+    is_customer_billing_account = models.BooleanField(default=False, db_index=True)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     enterprise_restricted_signup_domains = ArrayField(models.CharField(max_length=128), default=list, blank=True)
     entry_point = models.CharField(
@@ -374,7 +374,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     # Settings visible to external users
     restrict_domain_creation = models.BooleanField(default=False)
-    restrict_signup = models.BooleanField(default=False)
+    restrict_signup = models.BooleanField(default=False, db_index=True)
     restrict_signup_message = models.CharField(max_length=128, null=True, blank=True)
     restrict_signup_email = models.CharField(max_length=128, null=True, blank=True)
 
