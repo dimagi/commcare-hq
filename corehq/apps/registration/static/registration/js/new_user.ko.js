@@ -124,7 +124,7 @@ hqDefine('registration/js/new_user.ko', function () {
             });
         self.emailDelayed = ko.pureComputed(self.email)
             .extend(_rateLimit)
-            .extend( {
+            .extend({
                 validation: {
                     async: true,
                     validator: function (val, params, callback) {
@@ -134,7 +134,10 @@ hqDefine('registration/js/new_user.ko', function () {
                                 {email: val},
                                 {
                                     success: function (result) {
-                                        callback(result.isValid);
+                                        callback({
+                                            isValid: result.isValid,
+                                            message: result.message,
+                                        });
                                     },
                                 }
                             );
@@ -142,7 +145,6 @@ hqDefine('registration/js/new_user.ko', function () {
                             _private.resetEmailFeedback(false);
                         }
                     },
-                    message: django.gettext("There is already a user with this email."),
                 },
             });
         if (defaults.email) {
