@@ -20,7 +20,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Module,
     AdvancedOpenCaseAction,
-    CaseReferences, CaseIndex)
+    CaseReferences, CaseIndex, Form)
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -142,15 +142,15 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(form_items[1].options[1].value, 'choice2')
 
     def test_repeat_subcases_schema_generation(self):
-        form_xml = self.get_xml('nested_repeat_form')
-        repeats_with_subcases = [
+        module = Module(case_type='child', _parent=Application())
+        form = Form().with_id(0, module)
+        form.actions.subcases = [
             OpenSubCaseAction(
                 repeat_context='/data/repeat',
                 case_properties={
                     'weight': '/data/repeat/group/weight',
                 },
                 subcase_index=0,
-                nest=False,
             ).with_id(0, None),
             OpenSubCaseAction(
                 repeat_context='/data/repeat/nested_repeat',
@@ -158,17 +158,14 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
                     'age': '/data/repeat/nested_repeat/age',
                 },
                 subcase_index=1,
-                nest=False,  # would normally get added by caller
             ).with_id(1, None),
         ]
 
-        schema = FormExportDataSchema._generate_schema_from_repeat_subcases(
-            XForm(form_xml),
-            repeats_with_subcases,
-            ['en'],
-            self.app_id,
-            1,
-        )
+        schema = FormExportDataSchema._add_export_items_for_cases(
+            ExportGroupSchema(path=MAIN_TABLE),
+            [form],
+            ['/data/repeat', '/data/nested_repeat'],
+        )[0]
 
         self.assertEqual(len(schema.group_schemas), 2)
 
