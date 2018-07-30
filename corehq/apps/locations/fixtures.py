@@ -229,7 +229,7 @@ class LocationGroupFixtureProvider(FixtureProvider):
             SQLLocation.objects.filter(location_id__in=related_location_ids)
             .values_list('pk', flat=True)
         )
-        locations_queryset = _location_queryset_helper(restore_user.domain, related_location_pks)
+        locations_queryset = _location_queryset_helper(restore_user.domain, list(related_location_pks))
         data_fields = _get_location_data_fields(restore_user.domain)
         return self.serializer.get_xml_nodes(self.id, restore_user, locations_queryset, data_fields)
 
