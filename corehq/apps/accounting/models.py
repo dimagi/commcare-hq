@@ -440,6 +440,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
             return cls.objects.filter(created_by_domain=domain).latest('date_created')
         return None
 
+    @classmethod
+    @quickcache([], timeout=60 * 60)
+    def get_enterprise_restricted_signup_accounts(cls):
+        return BillingAccount.objects.filter(is_customer_billing_account=True, restrict_signup=True)
+
     @property
     def autopay_card(self):
         if not self.auto_pay_enabled:
