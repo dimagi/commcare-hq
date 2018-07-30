@@ -304,15 +304,16 @@ class DemographicsExport(ExportableMixin):
             },
             {
                 'header': (
-                    'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
-                    'old, alive and seeking services) who have an aadhaar ID'
+                    'Total number of beneficiaries (Children under 6 years old, adolescent girls between 11 and '
+                    '14 years old, pregnant women and lactating women, alive and seeking services) who have an '
+                    'aadhaar ID'
                 ),
                 'slug': 'person_has_aadhaar'
             },
             {
                 'header': (
-                    'Total number of beneficiaries (under 6 years old and women '
-                    'between 11 and 49 years old, alive and seeking services)'),
+                    'Total number of beneficiaries (Children under 6 years old, adolescent girls between 11 and '
+                    '14 years old, pregnant women and lactating women, alive and seeking services)'),
                 'slug': 'beneficiary_persons'
             },
             {

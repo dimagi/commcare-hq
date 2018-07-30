@@ -657,10 +657,11 @@ class TestExportData(TestCase):
                         [
                             "State",
                             "Number of households",
-                            "Total number of beneficiaries (under 6 years old and women between"
-                            " 11 and 49 years old, alive and seeking services) who have an aadhaar ID",
-                            "Total number of beneficiaries (under 6 years old and women between "
-                            "11 and 49 years old, alive and seeking services)",
+                            "Total number of beneficiaries (Children under 6 years old, adolescent girls between "
+                            "11 and 14 years old, pregnant women and lactating women, alive and seeking services) "
+                            "who have an aadhaar ID",
+                            "Total number of beneficiaries (Children under 6 years old, adolescent girls between "
+                            "11 and 14 years old, pregnant women and lactating women, alive and seeking services)",
                             "Percent Aadhaar-seeded beneficaries",
                             "Number of pregnant women",
                             "Number of pregnant women enrolled for services",
@@ -908,10 +909,11 @@ class TestExportData(TestCase):
                     [
                         [
                             'State', 'Number of households',
-                            'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
-                            'old, alive and seeking services) who have an aadhaar ID',
-                            'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
-                            'old, alive and seeking services)',
+                            'Total number of beneficiaries (Children under 6 years old, adolescent girls between '
+                            '11 and 14 years old, pregnant women and lactating women, alive and seeking services) '
+                            'who have an aadhaar ID',
+                            'Total number of beneficiaries (Children under 6 years old, adolescent girls between '
+                            '11 and 14 years old, pregnant women and lactating women, alive and seeking services)',
                             'Percent Aadhaar-seeded beneficaries', 'Number of pregnant women',
                             'Number of pregnant women enrolled for services', 'Number of lactating women',
                             'Number of lactating women enrolled for services',
