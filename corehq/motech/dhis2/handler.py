@@ -6,8 +6,7 @@ from collections import namedtuple
 
 from corehq.apps.users.models import CouchUser
 from corehq.motech.dhis2.const import LOCATION_DHIS_ID, DHIS2_API_VERSION
-from corehq.motech.openmrs.repeater_helpers import get_form_question_values
-from corehq.motech.value_source import CaseTriggerInfo
+from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 from dimagi.utils.dates import force_to_datetime
 
 

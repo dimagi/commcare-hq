@@ -19,13 +19,12 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, XMLNS_OPENMRS
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.value_source import CaseTriggerInfo
+from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 from corehq.util.test_utils import TestFileMixin, _create_case
 import corehq.motech.openmrs.repeater_helpers
 from corehq.motech.openmrs.repeater_helpers import (
     get_case_location,
     get_case_location_ancestor_repeaters,
-    get_form_question_values,
     get_openmrs_location_uuid,
     get_patient_by_identifier,
     get_patient_by_uuid,
