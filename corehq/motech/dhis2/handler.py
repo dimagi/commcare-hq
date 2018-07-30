@@ -7,18 +7,18 @@ from dimagi.utils.dates import force_to_datetime
 
 from corehq.apps.users.models import CouchUser
 from corehq.motech.dhis2.const import LOCATION_DHIS_ID, DHIS2_API_VERSION
-from corehq.motech.openmrs.repeater_helpers import get_form_question_values
+from corehq.motech.openmrs.repeater_helpers import get_form_question_values, CaseTriggerInfo
 import logging
 
 logger = logging.getLogger('dhis2')
 Dhis2Response = namedtuple('Dhis2Response', 'status_code reason content')
 
 
-def _get_program(config, form_data=None, payload=None):
+def _get_program(config, case_trigger_info=None, payload=None):
     return {'program': config.program_id}
 
 
-def _get_org_unit(config, form_data=None, payload=None):
+def _get_org_unit(config, case_trigger_info=None, payload=None):
     org_unit_id = config.org_unit_id
     if not org_unit_id:
         user_id = payload.get('@user_id')
@@ -31,33 +31,33 @@ def _get_org_unit(config, form_data=None, payload=None):
     return {'orgUnit': org_unit_id}
 
 
-def _get_event_date(config, form_data=None, payload=None):
+def _get_event_date(config, case_trigger_info=None, payload=None):
     event_date_spec = config.event_date
-    event_date = event_date_spec.get_value(form_data)
+    event_date = event_date_spec.get_value(case_trigger_info)
     if not event_date:
         event_date = payload.get('received_on')
     event_date = force_to_datetime(event_date)
     return {'eventDate': event_date.strftime("%Y-%m-%d")}
 
 
-def _get_event_status(config, form_data=None, payload=None):
+def _get_event_status(config, case_trigger_info=None, payload=None):
     return {'status': config.event_status}
 
 
-def _get_datavalues(config, form_data=None, payload=None):
+def _get_datavalues(config, case_trigger_info=None, payload=None):
     values = []
     for data_value in config.datavalue_maps:
         values.append(
             {
                 'dataElement': data_value.data_element_id,
-                'value': data_value.value.get_value(form_data)
+                'value': data_value.value.get_value(case_trigger_info)
             }
         )
     return {'dataValues': values}
 
 
 def _to_dhis_format(config, payload):
-    form_data = get_form_question_values(payload)
+    info = CaseTriggerInfo(None, None, None, None, None, form_question_values=get_form_question_values(payload))
     dhis_format = {}
 
     to_dhis_format_functions = [
@@ -69,7 +69,7 @@ def _to_dhis_format(config, payload):
     ]
 
     for func in to_dhis_format_functions:
-        dhis_format.update(func(config, form_data, payload))
+        dhis_format.update(func(config, info, payload))
 
     return dhis_format
 
