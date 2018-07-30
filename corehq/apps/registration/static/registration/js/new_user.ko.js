@@ -54,6 +54,13 @@ hqDefine('registration/js/new_user.ko', function () {
             _kissmetrics.identify(data.email);
             _kissmetrics.identifyTraits(appcuesData);
             _kissmetrics.track.event(appcuesEvent, appcuesData);
+
+            if (data.deniedEmail) {
+                _kissmetrics.track.event("Created account after previous denial due to enterprise restricting signups", {
+                    email: data.email,
+                    previousAttempt: data.deniedEmail,
+                });
+            }
         };
     });
 
@@ -122,6 +129,7 @@ hqDefine('registration/js/new_user.ko', function () {
             .extend({
                 emailRFC2822: true,
             });
+        self.deniedEmail = ko.observable('');
         self.emailDelayed = ko.pureComputed(self.email)
             .extend(_rateLimit)
             .extend({
@@ -134,6 +142,10 @@ hqDefine('registration/js/new_user.ko', function () {
                                 {email: val},
                                 {
                                     success: function (result) {
+                                        if (result.restrictedByDomain) {
+                                            _kissmetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
+                                            self.deniedEmail(val);
+                                        }
                                         callback({
                                             isValid: result.isValid,
                                             message: result.message,
@@ -381,6 +393,7 @@ hqDefine('registration/js/new_user.ko', function () {
                             self.isSubmitSuccess(true);
                             _private.submitSuccessAnalytics(_.extend({}, submitData, {
                                 email: self.email(),
+                                deniedEmail: self.deniedEmail(),
                                 appcuesAbTest: response.appcues_ab_test ? 'On' : 'Off',
                             }));
                         }

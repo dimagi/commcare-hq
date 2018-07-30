@@ -161,12 +161,14 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         is_existing = User.objects.filter(username__iexact=email).count() > 0 or duplicate
 
         message = None
+        restricted_by_domain = None
         if is_existing:
             message = _("There is already a user with this email.")
         else:
             domain = email[email.find("@") + 1:]
             for account in BillingAccount.get_enterprise_restricted_signup_accounts():
                 if domain in account.enterprise_restricted_signup_domains:
+                    restricted_by_domain = domain
                     message = account.restrict_signup_message
                     message += _("""
                         <br>Please contact <a href='mailto:{}?subject={}'>{}</a> to register for an account.
@@ -176,6 +178,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     break
         return {
             'isValid': message is None,
+            'restrictedByDomain': restricted_by_domain,
             'message': message,
         }
 
