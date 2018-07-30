@@ -30,7 +30,7 @@ datadog==0.15.0
 decorator==4.0.11
 defusedxml==0.4.1
 diff-match-patch==20120106
-dimagi-memoized==1.0.1
+dimagi-memoized==1.1.1
 django-angular==0.7.16
 django-appconf==1.0.2     # via django-compressor, django-statici18n
 django-braces==1.8.1
