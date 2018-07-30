@@ -151,14 +151,24 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
                     'weight': '/data/repeat/group/weight',
                 },
                 subcase_index=0,
+                _nest=True
             ).with_id(0, None),
+            OpenSubCaseAction(
+                repeat_context='/data/repeat',
+                case_properties={
+                    'height': '/data/repeat/height',
+                },
+                subcase_index=1,
+                _nest=True
+            ).with_id(1, None),
             OpenSubCaseAction(
                 repeat_context='/data/repeat/nested_repeat',
                 case_properties={
                     'age': '/data/repeat/nested_repeat/age',
                 },
-                subcase_index=1,
-            ).with_id(1, None),
+                subcase_index=2,
+                _nest=False
+            ).with_id(2, None),
         ]
 
         schema = FormExportDataSchema._add_export_items_for_cases(
@@ -167,35 +177,35 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             ['/data/repeat', '/data/nested_repeat'],
         )[0]
 
-        self.assertEqual(len(schema.group_schemas), 2)
+        self.assertEqual(len(schema.group_schemas), len(form.actions.subcases))
+        for group_schema, action in zip(schema.group_schemas, form.actions.subcases):
+            base_path = 'form.{}'.format(action.repeat_context[6:].replace('/', '.'))
+            if action._nest:
+                base_path += '.{}'.format(action.form_element_name)
+            self._check_subcase_repeat_group_schema(group_schema, list(action.case_properties), base_path)
 
-        self._check_subcase_repeat_group_schema(schema.group_schemas[0], {'weight'}, 'form.repeat')
-        self._check_subcase_repeat_group_schema(schema.group_schemas[1], {'age'}, 'form.repeat.nested_repeat')
+    def _check_subcase_repeat_group_schema(self, group_schema, case_properties, base_path):
+        def _check_base_path(items, count, suffix):
+            self.assertEqual(len(items), count)
+            self.assertTrue(all(map(
+                lambda item: item.readable_path.startswith('{}{}'.format(base_path, suffix)),
+                items,
+            )))
 
-    def _check_subcase_repeat_group_schema(self, group_schema, case_properties, repeat_path):
-        self.assertEqual(group_schema.readable_path, repeat_path)
+        self.assertEqual(group_schema.readable_path, base_path)
         attribute_items = [item for item in group_schema.items if item.path[-1].name in CASE_ATTRIBUTES]
-
-        self.assertEqual(len(attribute_items), len(CASE_ATTRIBUTES))
-        self.assertTrue(all(map(
-            lambda item: item.readable_path.startswith('{}.case'.format(repeat_path)),
-            attribute_items,
-        )))
+        _check_base_path(attribute_items, len(CASE_ATTRIBUTES), '.case')
 
         create_items = [item for item in group_schema.items if item.path[-1].name in CASE_CREATE_ELEMENTS]
-        self.assertEqual(len(create_items), len(CASE_CREATE_ELEMENTS))
-        self.assertTrue(all(map(
-            lambda item: item.readable_path.startswith('{}.case.create'.format(repeat_path)),
-            create_items,
-        )))
+        _check_base_path(create_items, len(CASE_CREATE_ELEMENTS), '.case.create')
 
         index_items = [item for item in group_schema.items if 'case.index.parent' in item.readable_path]
-        self.assertEqual(len(index_items), 2)
+        _check_base_path(index_items, 2, '.case.index.parent')
 
         update_items = list(set(group_schema.items) - set(create_items) - set(attribute_items) - set(index_items))
         self.assertEqual(len(update_items), len(case_properties))
         for item in update_items:
-            self.assertTrue(item.readable_path.startswith('{}.case'.format(repeat_path)))
+            self.assertTrue(item.readable_path.startswith('{}.case'.format(base_path)))
             try:
                 case_properties.remove(item.path[-1].name)
             except (ValueError, KeyError):
