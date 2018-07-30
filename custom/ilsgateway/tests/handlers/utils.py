@@ -2,8 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import CommtrackActionConfig
-from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
-from corehq.apps.custom_data_fields.models import CustomDataField
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct

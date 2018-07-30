@@ -356,13 +356,6 @@ def copy_app(request, domain):
                     set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
             linked = data.get('linked')
             if linked:
-                for module in app.modules:
-                    if isinstance(module, ReportModule):
-                        messages.error(request, _('This linked application uses mobile UCRs which '
-                                                  'are currently not supported. For this application to '
-                                                  'function correctly, you will need to remove those modules.'))
-                        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
                 master_version = get_latest_released_app_version(app.domain, app_id)
                 if not master_version:
                     messages.error(request, _("Creating linked app failed."
@@ -374,6 +367,7 @@ def copy_app(request, domain):
                 try:
                     update_linked_app(linked_app, request.couch_user.get_id)
                 except AppLinkError as e:
+                    linked_app.delete()
                     messages.error(request, str(e))
                     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 

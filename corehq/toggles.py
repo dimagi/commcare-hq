@@ -79,6 +79,7 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
+
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -497,6 +498,13 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
 DHIS2_INTEGRATION = StaticToggle(
     'dhis2_integration',
     'DHIS2 Integration',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN]
+)
+
+DHIS2_REPEATER_INTEGRATION = StaticToggle(
+    'dhis2_repeater_integration',
+    'DHIS2 Repeater Integration (Needed DHIS2 Integration enabled)',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN]
 )
@@ -1052,6 +1060,13 @@ EWS_INVALID_REPORT_RESPONSE = StaticToggle(
 USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     'use_sms_with_inactive_contacts',
     'Use SMS with inactive contacts',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
+    'enable_include_sms_gateway_charging',
+    'Enable include SMS gateway charging',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
