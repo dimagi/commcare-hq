@@ -819,6 +819,7 @@ class LocationRelation(models.Model):
         SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
     location_b = models.ForeignKey(
         SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
+    distance = models.PositiveSmallIntegerField(null=True)
 
     @classmethod
     def from_locations(cls, locations):
