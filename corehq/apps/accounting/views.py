@@ -1208,12 +1208,16 @@ def enterprise_dashboard_email(request, domain, slug):
 def enterprise_settings(request, domain):
     account = _get_account_or_404(request, domain)
 
-    form = EnterpriseSettingsForm(domain=domain, account=account)
+    if request.method == 'POST':
+        form = EnterpriseSettingsForm(request.POST, domain=domain, account=account)
+    else:
+        form = EnterpriseSettingsForm(domain=domain, account=account)
 
     context = {
         'account': account,
         'accounts_email': settings.ACCOUNTS_EMAIL,
         'domain': domain,
+        'restrict_signup': request.POST.get('restrict_signup', account.restrict_signup),
         'current_page': {
             'title': _('Enterprise Settings'),
             'page_name': _('Enterprise Settings'),
@@ -1233,6 +1237,6 @@ def edit_enterprise_settings(request, domain):
         form.save(account)
         messages.success(request, "Account successfully updated.")
     else:
-        messages.error(request, "Error updating account.")
+        return enterprise_settings(request, domain)
 
     return HttpResponseRedirect(reverse('enterprise_settings', args=[domain]))
