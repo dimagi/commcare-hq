@@ -11,7 +11,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestPrevalenceOfUndernutrition(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_prevalence_of_undernutrition_data_map(
@@ -82,11 +81,10 @@ class TestPrevalenceOfUndernutrition(TestCase):
             loc_level='state'
         )
         expected = (
-            'Percentage of children between 0 - 5 years enrolled for Anganwadi Services'
-            ' with weight-for-age less than -2 standard deviations'
-            ' of the WHO Child Growth Standards median.'
-            ' <br/><br/>Children who are moderately or severely underweight'
-            ' have a higher risk of mortality'
+            'Of the total children enrolled for Anganwadi services and weighed, the percentage of children '
+            'between 0 - 5 years years who were moderately/severely underweight in the current month. '
+            '<br/><br/>'
+            'Children who are moderately or severely underweight have a higher risk of mortality.'
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -452,10 +450,10 @@ class TestPrevalenceOfUndernutrition(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Percentage of children between 0-5 years enrolled for Anganwadi Services with weight-for-age"
-            " less than -2 standard deviations of the WHO Child Growth Standards median."
-            " <br/><br/>Children who are moderately "
-            "or severely underweight have a higher risk of mortality"
+            "Of the total children enrolled for Anganwadi services and weighed, the percentage of children "
+            "between 0-5 years who were moderately/severely underweight in the current month. "
+            "<br/><br/>"
+            "Children who are moderately or severely underweight have a higher risk of mortality. "
         )
 
     def test_sector_data_tooltips_data(self):

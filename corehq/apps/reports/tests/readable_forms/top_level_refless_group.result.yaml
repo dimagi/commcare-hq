@@ -758,33 +758,33 @@
   value: ''
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/userID,
   label: meta/userID, relevant: null, repeat: null, required: null, response: null,
-  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/userID}
+  setvalue: 'instance(''commcaresession'')/session/context/userid', tag: hidden, type: DataBindOnly, value: /progress_note/meta/userID}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/timeStart,
   label: meta/timeStart, relevant: null, repeat: null, required: null, response: null,
-  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/timeStart}
+  setvalue: "now()", tag: hidden, type: DataBindOnly, value: /progress_note/meta/timeStart}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/timeEnd,
   label: meta/timeEnd, relevant: null, repeat: null, required: null, response: null,
-  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/timeEnd}
+  setvalue: "now()", tag: hidden, type: DataBindOnly, value: /progress_note/meta/timeEnd}
 - {calculate: 'instance(''casedb'')/casedb/case[@case_id= /progress_note/case/@case_id]/pactid',
   comment: null, constraint: null, group: null, hashtagValue: /progress_note/note/pact_id,
   label: note/pact_id, relevant: null, repeat: null, required: null, response: '111',
   setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/note/pact_id}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/username,
   label: meta/username, relevant: null, repeat: null, required: null, response: null,
-  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/username}
+  setvalue: 'instance(''commcaresession'')/session/context/username', tag: hidden, type: DataBindOnly, value: /progress_note/meta/username}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/deviceID,
   label: meta/deviceID, relevant: null, repeat: null, required: null, response: null,
-  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/deviceID}
+  setvalue: 'instance(''commcaresession'')/session/context/deviceid', tag: hidden, type: DataBindOnly, value: /progress_note/meta/deviceID}
 - {calculate: /progress_note/note/encounter_date, comment: null, constraint: null,
   group: null, hashtagValue: /progress_note/case/update/last_note, label: case/update/last_note,
   relevant: null, repeat: null, required: null, response: null, setvalue: null, tag: hidden,
   type: DataBindOnly, value: /progress_note/case/update/last_note}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/instanceID,
   label: meta/instanceID, relevant: null, repeat: null, required: null, response: null,
-  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/instanceID}
+  setvalue: 'uuid()', tag: hidden, type: DataBindOnly, value: /progress_note/meta/instanceID}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/appVersion,
   label: meta/appVersion, relevant: null, repeat: null, required: null, response: null,
-  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/appVersion}
+  setvalue: 'instance(''commcaresession'')/session/context/appversion', tag: hidden, type: DataBindOnly, value: /progress_note/meta/appVersion}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/case/@case_id,
   label: case/@case_id, relevant: null, repeat: null, required: null, response: null,
   setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/case/@case_id}

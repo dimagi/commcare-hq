@@ -1,5 +1,12 @@
-/* globals hqDefine */
-hqDefine('appstore/js/project_info', function () {
+hqDefine('appstore/js/project_info', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/google',
+], function (
+    $,
+    initialPageData,
+    googleAnalytics
+) {
     function update_import_into_button() {
         var project = $('#project_select option:selected').text();
         $("#import-into-button").text("Import into " + project);
@@ -7,13 +14,13 @@ hqDefine('appstore/js/project_info', function () {
 
     $(function(){
         update_import_into_button();
-    
+
         $("#import-app-button").click(function() {
             $('#import-app').removeClass('hide');
         });
-    
+
         $('#project_select').change(update_import_into_button);
-    
+
         $('[data-target="#licenseAgreement"]').click(function() {
             var new_form = $(this).attr('data-form');
             $('#agree-button').attr('data-form', new_form);
@@ -28,15 +35,15 @@ hqDefine('appstore/js/project_info', function () {
             var form = $("#" + $(this).attr('data-form'));
             form.submit();
         });
-    
+
         // Analytics
-        var project = hqImport('hqwebapp/js/initial_page_data').get('project');
+        var project = initialPageData.get('project');
         $('#download-new-project').click(function() {
-            hqImport('analytix/js/google').track.event('Exchange', 'Download As New Project', project);
+            googleAnalytics.track.event('Exchange', 'Download As New Project', project);
         });
-    
+
         $('#import-app-button').click(function() {
-            hqImport('analytix/js/google').track.event('Exchange', 'Download to Existing Project', project);
+            googleAnalytics.track.event('Exchange', 'Download to Existing Project', project);
         });
     });
 });

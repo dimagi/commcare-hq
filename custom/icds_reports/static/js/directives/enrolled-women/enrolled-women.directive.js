@@ -17,7 +17,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     vm.filters = ['gender', 'age'];
 
     vm.rightLegend = {
-        info: 'Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
+        info: 'Of the total number of pregnant women, the percentage of pregnant women enrolled for Anganwadi Services',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -55,7 +55,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ",",
-        'captionContent': ' Total number of pregnant women who are enrolled for Anganwadi Services',
+        'captionContent': ' Of the total number of pregnant women, the percentage of pregnant women enrolled for Anganwadi Services',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;

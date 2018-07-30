@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from corehq.apps.tour.models import GuidedTour
 from corehq.apps.tour.views import EndTourView
 from corehq.util import reverse
 
@@ -27,4 +26,4 @@ class StaticGuidedTour(object):
         }
 
     def is_enabled(self, user):
-        return not GuidedTour.has_seen_tour(user, self.slug)
+        return False

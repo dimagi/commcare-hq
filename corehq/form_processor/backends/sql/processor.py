@@ -18,7 +18,7 @@ from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStra
 from corehq.form_processor.change_publishers import (
     publish_form_saved, publish_case_saved, publish_ledger_v2_saved,
     republish_all_changes_for_form)
-from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
@@ -146,10 +146,13 @@ class FormProcessorSQL(object):
                 LedgerAccessorSQL.save_ledger_values(ledgers_to_save, stock_result)
 
         if publish_to_kafka:
-            cls._publish_changes(processed_forms, cases, stock_result)
+            try:
+                cls.publish_changes_to_kafka(processed_forms, cases, stock_result)
+            except Exception as e:
+                raise KafkaPublishingError(e)
 
     @staticmethod
-    def _publish_changes(processed_forms, cases, stock_result):
+    def publish_changes_to_kafka(processed_forms, cases, stock_result):
         # todo: form deprecations?
         publish_form_saved(processed_forms.submitted)
         if processed_forms.submitted.is_duplicate:

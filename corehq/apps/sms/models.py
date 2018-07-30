@@ -178,6 +178,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_INVALID_DESTINATION_NUMBER = 'INVALID_DESTINATION_NUMBER'
     ERROR_MESSAGE_TOO_LONG = 'MESSAGE_TOO_LONG'
     ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
+    ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -194,6 +195,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
             ugettext_noop("The gateway could not process the message because it was too long."),
         ERROR_CONTACT_IS_INACTIVE:
             ugettext_noop("The recipient has been deactivated."),
+        ERROR_TRIAL_SMS_EXCEEDED:
+            ugettext_noop("The number of SMS that can be sent on a trial plan has been exceeded."),
     }
 
     UUIDS_TO_GENERATE = ['couch_id']
