@@ -91,7 +91,7 @@ json-delta==2.0
 email_validator==1.0.2
 dnspython==1.15.0
 raven==6.1.0
-quickcache==0.5.0
+quickcache==0.5.1
 zeep==1.6.0
 ethiopian-date-converter==0.1.4
 -e git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect

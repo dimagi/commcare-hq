@@ -127,7 +127,7 @@ pytz==2017.2
 pyyaml==3.12
 pyzxcvbn==0.8.0
 qrcode==4.0.4
-quickcache==0.5.0
+quickcache==0.5.1
 raven==6.1.0
 rcssmin==1.0.6            # via django-compressor
 redis==2.10.5
