@@ -62,7 +62,7 @@ stripe==1.67.0
 django-compressor==2.1
 django-angular==0.7.16
 Pycco==0.5.1
-django-cte==1.1.2
+django-cte==1.1.4
 jsonpath-rw==1.4.0
 django-transfer==0.4
 Pygments==2.0.2
