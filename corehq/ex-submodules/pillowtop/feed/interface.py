@@ -76,7 +76,7 @@ class Change(object):
     def set_document(self, document):
         self.document = document
 
-    @handle_connection_failure(get_db_aliases=get_all_db_aliases())
+    @handle_connection_failure(get_db_aliases=get_all_db_aliases)
     def get_document(self):
         if not self.document and self.document_store and not self._document_checked:
             try:
