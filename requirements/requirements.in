@@ -93,7 +93,7 @@ dnspython==1.15.0
 raven==6.1.0
 quickcache==0.5.0
 zeep==1.6.0
-ethiopian-date-converter==0.1.4
+ethiopian-date-converter==0.1.5
 -e git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect
 contextlib2==0.5.4
 hiredis==0.2.0
