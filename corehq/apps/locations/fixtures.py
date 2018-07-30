@@ -215,6 +215,12 @@ flat_location_fixture_generator = LocationFixtureProvider(
 
 
 class LocationGroupFixtureProvider(FixtureProvider):
+    """This fixture is under active development for REACH, and is expected to change.
+
+    - Connections do not nest. Meaning that a location needs a direct connection
+      to another location for it be included in this fixture.
+    - Only the user's primary location will get its group synced
+    """
     id = 'location_groups'
     serializer = FlatLocationSerializer()
 

@@ -810,6 +810,18 @@ def _unassign_users_from_location(domain, location_id):
 
 
 class LocationGroup(models.Model):
+    """Implements a many-to-many mapping between locations.
+
+    Assumptions:
+      - This is not a directed graph. i.e. a connection between
+        location_a -> location_b implies the opposite connection exists
+
+    Caveats:
+      - This is currently under active development for REACH.
+        It's expected to change, so don't rely on it for other projects.
+      - There is no cycle checking. If you attempt to go further than one step,
+        you will get an infinite loop.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     location_a = models.ForeignKey(
         SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
