@@ -75,6 +75,9 @@ Updates in a production environment should be done in two steps, so to not show 
 1. Setup a release of your branch using cchq <env> setup_limited_release:keep_days=n_days
 2. In your release directory, kick off a index using ``./mange.py ptop_preindex``
 3. Verify that the reindex has completed successfully
+   - This is a weak point in our current migration process
+   - This can be done by using ES head or the ES APIs to compare document counts to the previous index.
+   - You should also actively look for errors in the ptop_preindex command that was ran
 4. Merge your PR and deploy your latest master branch.
 
 
