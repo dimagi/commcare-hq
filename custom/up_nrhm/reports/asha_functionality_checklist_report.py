@@ -33,11 +33,11 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
 
     @property
     def ashas(self):
-        return OrderedDict(
+        return list(OrderedDict(
             (x['hv_asha_name'], x)
             for x in sorted(
                 list(self.model_data.data.values()), key=lambda x: x['completed_on'])
-        ).values()
+        ).values())
 
     @property
     def headers(self):
