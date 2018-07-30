@@ -2439,6 +2439,18 @@ class EnterpriseSettingsForm(forms.Form):
             )
         )
 
+    def clean_restrict_signup_message(self):
+        message = self.cleaned_data['restrict_signup_message']
+        if self.cleaned_data['restrict_signup'] and not message:
+            raise ValidationError(_("If restricting signups, a message is required."))
+        return message
+
+    def clean_restrict_signup_email(self):
+        email = self.cleaned_data['restrict_signup_email']
+        if self.cleaned_data['restrict_signup'] and not email:
+            raise ValidationError(_("If restricting signups, an email is required."))
+        return email
+
     def save(self, account):
         account.restrict_domain_creation = self.cleaned_data.get('restrict_domain_creation', False)
         account.restrict_signup = self.cleaned_data.get('restrict_signup', False)
