@@ -1,8 +1,11 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
+import doctest
+
 from django.test import SimpleTestCase
 
+import corehq.motech.openmrs.finders_utils
 from corehq.motech.openmrs.finders import PatientFinder, WeightedPropertyPatientFinder
 from corehq.motech.openmrs.openmrs_config import get_property_map
 
@@ -195,3 +198,10 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
         })
         score = self.finder.get_score(PATIENT, case)
         self.assertLess(score, 1)
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(corehq.motech.openmrs.finders_utils)
+        self.assertEqual(results.failed, 0)
