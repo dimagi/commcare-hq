@@ -20,7 +20,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.bootstrap import InlineField, PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from django_countries.data import COUNTRIES
@@ -103,7 +103,12 @@ class BillingAccountBasicForm(forms.Form):
     )
     enterprise_admin_emails = forms.CharField(
         label="Enterprise Admin Emails",
-        required=False
+        required=False,
+    )
+    enterprise_restricted_signup_domains = forms.CharField(
+        label="Enterprise Domains for Restricting Signups",
+        required=False,
+        help_text='ex: dimagi.com, commcarehq.org',
     )
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscriptions To"),
@@ -144,6 +149,7 @@ class BillingAccountBasicForm(forms.Form):
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
                 'enterprise_admin_emails': ','.join(account.enterprise_admin_emails),
+                'enterprise_restricted_signup_domains': ','.join(account.enterprise_restricted_signup_domains),
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
@@ -189,6 +195,15 @@ class BillingAccountBasicForm(forms.Form):
                     ),
                     data_bind='visible: is_customer_billing_account'
                 )
+            )
+            additional_fields.append(
+                crispy.Div(
+                    crispy.Field(
+                        'enterprise_restricted_signup_domains',
+                        css_class='input-xxlarge',
+                    ),
+                    data_bind='visible: is_customer_billing_account'
+                ),
             )
             if account.subscription_set.count() > 0:
                 additional_fields.append(crispy.Div(
@@ -266,8 +281,26 @@ class BillingAccountBasicForm(forms.Form):
     def clean_enterprise_admin_emails(self):
         # Do not return a list with an empty string
         if self.cleaned_data['enterprise_admin_emails']:
-            return self.cleaned_data['enterprise_admin_emails'].split(',')
+            return [e.strip() for e in self.cleaned_data['enterprise_admin_emails'].split(r',')]
         else:
+            return []
+
+    def clean_enterprise_restricted_signup_domains(self):
+        if self.cleaned_data['enterprise_restricted_signup_domains']:
+            # Check that no other account has claimed these domains, or we won't know which message to display
+            errors = []
+            accounts = BillingAccount.get_enterprise_restricted_signup_accounts()
+            domains = [e.strip() for e in self.cleaned_data['enterprise_restricted_signup_domains'].split(r',')]
+            for domain in domains:
+                for account in accounts:
+                    if domain in account.enterprise_restricted_signup_domains and account.id != self.account.id:
+                        errors.append("{} is restricted by {}".format(domain, account.name))
+            if errors:
+                raise ValidationError("The following domains are already restricted by another account: " +
+                                      ", ".join(errors))
+            return domains
+        else:
+            # Do not return a list with an empty string
             return []
 
     def clean_active_accounts(self):
@@ -319,6 +352,7 @@ class BillingAccountBasicForm(forms.Form):
         account.is_active = self.cleaned_data['is_active']
         account.is_customer_billing_account = self.cleaned_data['is_customer_billing_account']
         account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
+        account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
@@ -2348,3 +2382,90 @@ class CreateAdminForm(forms.Form):
         if not user_role.role.has_privilege(ops_role):
             Grant.objects.create(from_role=user_role.role, to_role=ops_role)
         return user
+
+
+class EnterpriseSettingsForm(forms.Form):
+    restrict_domain_creation = forms.BooleanField(
+        label=ugettext_lazy("Restrict Project Space Creation"),
+        required=False,
+        help_text=ugettext_lazy("Do not allow non-admins to create new project spaces"),
+    )
+    restrict_signup = forms.BooleanField(
+        label=ugettext_lazy("Restrict User Signups"),
+        required=False,
+        help_text=ugettext_lazy("<span data-bind='html: restrictSignupHelp'></span>"),
+    )
+    restrict_signup_message = forms.CharField(
+        label="Signup Restriction Message",
+        required=False,
+        help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
+        widget=forms.Textarea(attrs={'rows': 2}),
+    )
+    restrict_signup_email = forms.EmailField(
+        label="Signup Restriction Contact",
+        required=False,
+        help_text=ugettext_lazy("Email address that users should contact to request an account"),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain', None)
+        self.account = kwargs.pop('account', None)
+        kwargs['initial'] = {
+            "restrict_domain_creation": self.account.restrict_domain_creation,
+            "restrict_signup": self.account.restrict_signup,
+            "restrict_signup_message": self.account.restrict_signup_message,
+            "restrict_signup_email": self.account.restrict_signup_email,
+        }
+        super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_id = 'enterprise-settings-form'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = reverse("edit_enterprise_settings", args=[self.domain])
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Edit Enterprise Settings"),
+                PrependedText('restrict_domain_creation', ''),
+                crispy.Div(
+                    PrependedText('restrict_signup', '', data_bind='checked: restrictSignup'),
+                ),
+                crispy.Div(
+                    crispy.Field('restrict_signup_message'),
+                    data_bind='visible: restrictSignup',
+                ),
+                crispy.Div(
+                    crispy.Field('restrict_signup_email'),
+                    data_bind='visible: restrictSignup',
+                ),
+            )
+        )
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Enterprise Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def clean_restrict_signup_message(self):
+        message = self.cleaned_data['restrict_signup_message']
+        if self.cleaned_data['restrict_signup'] and not message:
+            raise ValidationError(_("If restricting signups, a message is required."))
+        return message
+
+    def clean_restrict_signup_email(self):
+        email = self.cleaned_data['restrict_signup_email']
+        if self.cleaned_data['restrict_signup'] and not email:
+            raise ValidationError(_("If restricting signups, an email is required."))
+        return email
+
+    def save(self, account):
+        account.restrict_domain_creation = self.cleaned_data.get('restrict_domain_creation', False)
+        account.restrict_signup = self.cleaned_data.get('restrict_signup', False)
+        account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
+        account.restrict_signup_email = self.cleaned_data.get('restrict_signup_email', '')
+        account.save()
+        return True
