@@ -98,7 +98,7 @@ ethiopian-date-converter==0.1.5
 contextlib2==0.5.4
 hiredis==0.2.0
 xlwt==1.3.0
-django-prbac==0.0.5
+django-prbac==0.0.7
 html5lib==1.0b8
 xhtml2pdf==0.0.6
 qrcode==4.0.4
