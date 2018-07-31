@@ -66,6 +66,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from corehq.messaging.tasks import initiate_messaging_rule_run
+from corehq.messaging.util import project_is_on_new_reminders
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from datetime import time, datetime, timedelta
@@ -932,7 +933,7 @@ class Command(BaseCommand):
         return handler.reminder_type in (REMINDER_TYPE_KEYWORD_INITIATED, REMINDER_TYPE_SURVEY_MANAGEMENT)
 
     def migration_already_done(self, domain_obj):
-        if domain_obj.uses_new_reminders:
+        if project_is_on_new_reminders(domain_obj):
             log("'%s' already uses new reminders, nothing to do" % domain_obj.name)
             return True
 

@@ -12,11 +12,11 @@ from corehq.motech.dhis2.repeaters import Dhis2Repeater
 import json
 
 
-class TestDhisHendler(TestCase):
+class TestDhisHandler(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestDhisHendler, cls).setUpClass()
+        super(TestDhisHandler, cls).setUpClass()
 
         domain = create_domain('dhis2')
         location_type = LocationType.objects.create(
@@ -37,7 +37,7 @@ class TestDhisHendler(TestCase):
     def tearDownClass(cls):
         cls.location.delete()
         cls.user.delete()
-        super(TestDhisHendler, cls).tearDownClass()
+        super(TestDhisHandler, cls).tearDownClass()
 
     def setUp(self):
         self.db = Dhis2Repeater.get_db()

@@ -62,7 +62,8 @@
                         }
                     },
                     "update": {
-                        "eye_color": "brown"
+                        "eye_color": "brown",
+                        "facility_name": "test"
                     }
                 },
                 "eye_color": "brown",
@@ -86,7 +87,8 @@
                         }
                     },
                     "update": {
-                        "eye_color": "blue"
+                        "eye_color": "blue",
+                        "facility_name": "test"
                     }
                 },
                 "eye_color": "blue",
@@ -102,6 +104,7 @@
                 "last_status": "fine_thanks"
             }
         },
+        "facility_name": "test",
         "how_are_you_today": "fine_thanks",
         "how_many_babies": "2",
         "is_this_a_delivery": "yes",

@@ -502,13 +502,6 @@ DHIS2_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DHIS2_REPEATER_INTEGRATION = StaticToggle(
-    'dhis2_repeater_integration',
-    'DHIS2 Repeater Integration (Needed DHIS2 Integration enabled)',
-    TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN]
-)
-
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -982,8 +975,8 @@ RETRY_SMS_INDEFINITELY = StaticToggle(
 
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
-    'FGH: Enable OpenMRS integration',
-    TAG_CUSTOM,
+    'Enable OpenMRS integration',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1610,4 +1603,13 @@ AGGREGATE_UCRS = StaticToggle(
     TAG_INTERNAL,  # this might change in the future
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['czue'],
+)
+
+
+RELATED_LOCATIONS = StaticToggle(
+    'related_locations',
+    'REACH: Enable experimental location many-to-many mappings',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    notification_emails=['jemord'],
 )

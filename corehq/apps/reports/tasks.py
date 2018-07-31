@@ -20,6 +20,7 @@ from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.const import SAVED_EXPORTS_QUEUE
+from corehq.util.log import send_HTML_email
 from corehq.apps.reports.util import send_report_download_email
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
@@ -202,8 +203,59 @@ def apps_update_calculated_properties():
         es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": props})
 
 
+@task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+def send_email_report(self, recipient_list, request, body, subject, config):
+    '''
+    Function invokes send_HTML_email to email the html text report.
+    If the report is too large to fit into email then a download link is
+    sent via email to download report
+    :Parameter recipient_list:
+            list of recipient to whom email is to be sent
+    :Parameter request:
+            request object which contains request details
+    :Parameter body:
+            body content of the email
+    :Parameter subject:
+            subject of the email
+    :Parameter config:
+            object of ReportConfig. Contains the report configuration
+            like reportslug, report_type etc
+    '''
+    try:
+        for recipient in recipient_list:
+            send_HTML_email(subject, recipient,
+                            body, email_from=settings.DEFAULT_FROM_EMAIL,
+                            smtp_exception_skip_list=[522])
+
+    except Exception as er:
+        if getattr(er, 'smtp_code', None) == 522:
+            # If the smtp server rejects the email because of its large size.
+            # Then sends the report download link in the email.
+            email_large_report(request, config, recipient_list)
+        else:
+            self.retry(exc=er)
+
+
+def email_large_report(request, config, recipient_list):
+    """
+    Function sends the requested report download link in the email.
+    This function is invoked when user tries to email very large report.
+
+    :Parameter request:
+        request object which contains request details
+    :Parameter config:
+            object of ReportConfig. Contains the report configuration
+            like reportslug, report_type etc
+    :Parameter recipient:
+            recipient to whom email is to be sent
+    """
+    report = config.report(request, domain=config.domain)
+    report.rendered_as = 'export'
+    export_all_rows_task(report.__class__, report.__getstate__(), recipient_list=recipient_list)
+
+
 @task(ignore_result=True)
-def export_all_rows_task(ReportClass, report_state):
+def export_all_rows_task(ReportClass, report_state, recipient_list=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
 
@@ -213,15 +265,20 @@ def export_all_rows_task(ReportClass, report_state):
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
     hash_id = _store_excel_in_redis(report_class, file)
-    _send_email(report.request.couch_user, report, hash_id)
+
+    if not recipient_list:
+        recipient_list = [report.request.couch_user.get_email()]
+
+    for recipient in recipient_list:
+        _send_email(report.request.couch_user, report, hash_id, recipient=recipient)
 
 
-def _send_email(user, report, hash_id):
+def _send_email(user, report, hash_id, recipient):
     domain = report.domain or user.get_domains()[0]
     link = absolute_reverse("export_report", args=[domain, str(hash_id),
                                                    report.export_format])
 
-    send_report_download_email(report.name, user, link)
+    send_report_download_email(report.name, recipient, link)
 
 
 def _store_excel_in_redis(report_class, file):

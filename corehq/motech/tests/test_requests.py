@@ -14,7 +14,7 @@ TEST_API_PASSWORD = 'district'
 TEST_DOMAIN = 'test-domain'
 
 
-class JsonApiRequestTests(SimpleTestCase):
+class RequestsTests(SimpleTestCase):
 
     def setUp(self):
         self.requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)

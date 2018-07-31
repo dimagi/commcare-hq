@@ -17,7 +17,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.motech.repeaters.views.repeaters import AddDhis2RepeaterView
 from corehq.motech.requests import Requests
 from corehq.motech.dhis2.handler import send_data_to_dhis2
-from corehq.toggles import DHIS2_INTEGRATION, DHIS2_REPEATER_INTEGRATION
+from corehq.toggles import DHIS2_INTEGRATION
 from corehq.util import reverse
 
 
@@ -53,7 +53,7 @@ class Dhis2Repeater(FormRepeater):
 
     @classmethod
     def available_for_domain(cls, domain):
-        return DHIS2_REPEATER_INTEGRATION.enabled(domain) and DHIS2_INTEGRATION.enabled(domain)
+        return DHIS2_INTEGRATION.enabled(domain)
 
     @classmethod
     def get_custom_url(cls, domain):

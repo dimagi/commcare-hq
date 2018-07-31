@@ -1,15 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from itertools import groupby
 from collections import defaultdict
+from itertools import groupby
 from xml.etree.cElementTree import Element
 
-import six
-from django.conf import settings
 from django.db.models import IntegerField
 from django.contrib.postgres.fields.array import ArrayField
 from django_cte import With
 from django_cte.raw import raw_cte_sql
+import six
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
@@ -215,6 +214,35 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
+class RelatedLocationsFixtureProvider(FixtureProvider):
+    """This fixture is under active development for REACH, and is expected to change.
+
+    - Relations do not nest. Meaning that a location needs a direct relation
+      to another location for it be included in this fixture.
+    - Only the user's primary location will get its related locations synced
+    """
+    id = 'related_locations'
+    serializer = FlatLocationSerializer()
+
+    def __call__(self, restore_state):
+        if not toggles.RELATED_LOCATIONS.enabled(restore_state.domain):
+            return []
+
+        restore_user = restore_state.restore_user
+        primary_location = restore_user.get_commtrack_location_id()
+        related_location_ids = SQLLocation.objects.get(location_id=primary_location).related_location_ids
+        related_location_pks = (
+            SQLLocation.objects.filter(location_id__in=related_location_ids)
+            .values_list('pk', flat=True)
+        )
+        locations_queryset = _location_queryset_helper(restore_user.domain, list(related_location_pks))
+        data_fields = _get_location_data_fields(restore_user.domain)
+        return self.serializer.get_xml_nodes(self.id, restore_user, locations_queryset, data_fields)
+
+
+related_locations_fixture_generator = RelatedLocationsFixtureProvider()
+
+
 int_field = IntegerField()
 int_array = ArrayField(int_field)
 
@@ -228,24 +256,26 @@ def get_location_fixture_queryset(user):
     if user_locations.query.is_empty():
         return user_locations
 
+    return _location_queryset_helper(user.domain, list(user_locations.order_by().values_list("id", flat=True)))
+
+
+def _location_queryset_helper(domain, location_pks):
     fixture_ids = With(raw_cte_sql(
         """
         SELECT "id", "path", "depth"
         FROM get_location_fixture_ids(%s::TEXT, %s)
         """,
-        [user.domain, list(user_locations.order_by().values_list("id", flat=True))],
+        [domain, location_pks],
         {"id": int_field, "path": int_array, "depth": int_field},
     ))
 
-    result = fixture_ids.join(
+    return fixture_ids.join(
         SQLLocation.objects.all(),
         id=fixture_ids.col.id,
     ).annotate(
         path=fixture_ids.col.path,
         depth=fixture_ids.col.depth,
     ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
-
-    return result
 
 
 def _append_children(node, location_db, locations, data_fields):
