@@ -1465,8 +1465,6 @@ class ConfirmSelectedPlanView(SelectPlanView):
         elif current_edition == 'Pro':
             if new_edition == "Advanced":
                 return True
-        elif current_edition == "Enterprise":
-            return True
         return False
 
     @property

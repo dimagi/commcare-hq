@@ -57,8 +57,7 @@
         <hr />
         <div class="alert alert-danger">
             {% blocktrans with current_plan.name as p %}
-            <h4>Note: Continuing will change your current subscription.</h4>
-            <p>We’re sorry to see you go! You’ll have access to the features on your
+            <p>We’re sorry to see you downgrade. You’ll have access to the features on your
             <strong>{{ p }} Software Plan </strong> through {{ current_subscription_end_date }}.</p>
             {% endblocktrans %}
         </div>
