@@ -29,6 +29,7 @@ from sqlagg.columns import (
     MonthColumn,
     SimpleColumn,
     YearColumn,
+    SumWhen
 )
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.columns import ColumnConfig, get_expanded_column_config
@@ -269,6 +270,27 @@ class AggregateDateColumn(ReportColumn):
 
     def get_query_column_ids(self):
         return [self._year_column_alias(), self._month_column_alias()]
+
+
+class FilteredCountColumn(ReportColumn):
+    type = TypeProperty('filtered_count')
+    count_filter = StringProperty(required=True)
+    sortable = BooleanProperty(default=False)
+
+    def get_column_config(self, data_source_config, lang):
+        return ColumnConfig(columns=[
+            DatabaseColumn(
+                header=self.get_header(lang),
+                agg_column=SumWhen(
+                    whens={self.count_filter: 1}, else_=0, alias=self.column_id
+                ),
+                sortable=self.sortable,
+                data_slug=self.column_id,
+                format_fn=self.get_format_fn(),
+                help_text=self.description,
+                visible=self.visible,
+            )]
+        )
 
 
 class PercentageColumn(ReportColumn):

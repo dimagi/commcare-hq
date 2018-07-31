@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.specs import PieChartSpec, \
     MultibarAggregateChartSpec, MultibarChartSpec, \
     FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn, \
-    OrderBySpec, LocationColumn, ExpressionColumn
+    OrderBySpec, LocationColumn, ExpressionColumn, FilteredCountColumn
 
 
 class ReportColumnFactory(object):
@@ -18,6 +18,7 @@ class ReportColumnFactory(object):
         'percent': PercentageColumn,
         'location': LocationColumn,
         'expression': ExpressionColumn,
+        'filtered_count': FilteredCountColumn,
     }
 
     @classmethod

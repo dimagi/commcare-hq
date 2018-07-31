@@ -9,7 +9,7 @@
   "server_environment": [
     "softlayer",
     "icds-new",
-    "icds"
+    "localdev"
   ],
   "config": {
     "table_id": "static-person_cases_v2",

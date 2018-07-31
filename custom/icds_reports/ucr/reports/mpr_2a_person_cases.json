@@ -117,14 +117,12 @@
       },
       {
         "sortable": false,
-        "description": null,
         "format": "default",
-        "aggregation": "sum",
         "column_id": "dead_F_resident_neo_count",
-        "field": "dead_F_resident_neo_count",
+        "count_filter": "closed_on IS NOT NULL AND date_death - dob <= 28 AND sex = 'F' AND resident = 'yes'",
         "transform": {},
         "calculate_total": true,
-        "type": "field",
+        "type": "filtered_count",
         "display": "dead_F_resident_neo_count"
       },
       {
