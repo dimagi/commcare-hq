@@ -49,8 +49,7 @@
 trunk: master
 name: autostaging
 branches:
-#  - nh/omrs/levenshtein  # Norman June 29
-  - nh/omrs/atom  # Norman July 31
+  - nh/omrs/atom+leven  # Norman July 31
   - es/location-upload  # Ethan July 6
   - jls/appcues-template-apps  # Jenny July 16
   - jls/requirejs-case-importer  # Jenny July 17
