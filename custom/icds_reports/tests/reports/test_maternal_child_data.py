@@ -55,8 +55,8 @@ class TestMaternalChildData(TestCase):
                              "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
                              "undernutrition usually as a consequence of insufficient food intake or a high "
                              "incidence of infectious diseases.",
-                "percent": 41.935483870967715,
-                "value": 8,
+                "percent": 'Data in the previous reporting period was 0',
+                "value": 1,
                 "label": "Wasting (Weight-for-Height)"
             }
         )
@@ -104,7 +104,7 @@ class TestMaternalChildData(TestCase):
             )['records'][1][0],
             {
                 "redirect": "stunting",
-                "color": "green",
+                "color": "red",
                 "all": 32,
                 "frequency": "month",
                 "format": "percent_and_div",
@@ -113,8 +113,8 @@ class TestMaternalChildData(TestCase):
                              "<br/><br/>"
                              "Stunting is a sign of chronic undernutrition and has long lasting harmful "
                              "consequences on the growth of a child",
-                "percent": -27.43055555555556,
-                "value": 19,
+                "percent": 'Data in the previous reporting period was 0',
+                "value": 0,
                 "label": "Stunting (Height-for-Age)"
             }
         )

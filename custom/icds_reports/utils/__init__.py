@@ -580,35 +580,35 @@ def person_is_beneficiary_column(beta):
 
 
 def wasting_moderate_column(beta):
-    return 'wasting_moderate_v2' if beta else 'wasting_moderate'
+    return 'wasting_moderate_v2'
 
 
 def wasting_severe_column(beta):
-    return 'wasting_severe_v2' if beta else 'wasting_severe'
+    return 'wasting_severe_v2'
 
 
 def wasting_normal_column(beta):
-    return 'wasting_normal_v2' if beta else 'wasting_normal'
+    return 'wasting_normal_v2'
 
 
 def stunting_moderate_column(beta):
-    return 'zscore_grading_hfa_moderate' if beta else 'stunting_moderate'
+    return 'zscore_grading_hfa_moderate'
 
 
 def stunting_severe_column(beta):
-    return 'zscore_grading_hfa_severe' if beta else 'stunting_severe'
+    return 'zscore_grading_hfa_severe'
 
 
 def stunting_normal_column(beta):
-    return 'zscore_grading_hfa_normal' if beta else 'stunting_normal'
+    return 'zscore_grading_hfa_normal'
 
 
 def current_month_stunting_column(beta):
-    return 'current_month_stunting_v2' if beta else 'current_month_stunting'
+    return 'current_month_stunting_v2'
 
 
 def current_month_wasting_column(beta):
-    return 'current_month_wasting_v2' if beta else 'current_month_wasting'
+    return 'current_month_wasting_v2'
 
 
 def hfa_recorded_in_month_column(beta):
