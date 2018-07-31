@@ -80,7 +80,7 @@ def domain_billing_context(request):
             elif has_privilege(request, privileges.ACCOUNTING_ADMIN):
                 is_domain_billing_admin = True
             if not is_domain_billing_admin:
-                restrict_domain_creation = account.restrict_domain_creation
+                restrict_domain_creation = restrict_domain_creation or account.restrict_domain_creation
     return {
         'IS_DOMAIN_BILLING_ADMIN': is_domain_billing_admin,
         'restrict_domain_creation': restrict_domain_creation,
