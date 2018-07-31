@@ -975,8 +975,8 @@ RETRY_SMS_INDEFINITELY = StaticToggle(
 
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
-    'FGH: Enable OpenMRS integration',
-    TAG_CUSTOM,
+    'Enable OpenMRS integration',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
 )
 
