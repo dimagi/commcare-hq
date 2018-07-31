@@ -1439,6 +1439,27 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return DefaultProductPlan.get_default_plan_version(self.edition)
 
     @property
+    def is_upgrade(self):
+        current_edition = self.current_subscription.plan_version.plan.edition
+        new_edition = self.edition
+
+        if current_edition == 'Community':
+            if new_edition == 'Standard' or new_edition == 'Pro' or new_edition == 'Advanced':
+                return True
+        elif current_edition == 'Standard':
+            if new_edition == 'Pro' or new_edition == 'Advanced':
+                return True
+        elif current_edition == 'Pro':
+            if new_edition == "Advanced":
+                return True
+        return False
+
+    @property
+    def next_invoice_date(self):
+        # Next invoice date is the first day of the next month
+        return datetime.date.today().replace(day=1) + dateutil.relativedelta.relativedelta(months=1)
+
+    @property
     def downgrade_messages(self):
         subscription = Subscription.get_active_subscription_by_domain(self.domain)
         downgrades = get_change_status(
@@ -1453,6 +1474,8 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     def page_context(self):
         return {
+            'is_upgrade': self.is_upgrade,
+            'next_invoice_date': self.next_invoice_date.strftime('%B %d'),
             'downgrade_messages': self.downgrade_messages,
             'current_plan': (self.current_subscription.plan_version.user_facing_description
                              if self.current_subscription is not None else None),
