@@ -30,6 +30,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'daily_feeding': 'config_report_icds-cas_static-daily_feeding_forms_85b1167f',
     'household_cases': 'config_report_icds-cas_static-household_cases_eadc276d',
     'infrastructure': 'config_report_icds-cas_static-infrastructure_form_05fe0f1a',
+    'infrastructure_v2': 'config_report_icds-cas_static-infrastructure_form_v2_36e9ebb0',
     'location_ucr': 'config_report_icds-cas_static-awc_location_88b3f9c3',
     'person_cases': 'config_report_icds-cas_static-person_cases_v2_b4b5d57a',
     'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',

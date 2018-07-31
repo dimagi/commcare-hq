@@ -9,10 +9,7 @@ from io import BytesIO
 from os.path import join
 
 import corehq.blobs.migrate as mod
-from corehq.apps.builds.models import CommCareBuild
-from corehq.apps.domain.models import Domain, LOGO_ATTACHMENT
 from corehq.blobs import get_blob_db
-from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.s3db import maybe_not_found
 from corehq.blobs.tests.util import (
     install_blob_db,
@@ -24,8 +21,6 @@ from corehq.util.doc_processor.couch import doc_type_tuples_to_dict
 from django.test import TestCase
 from testil import replattr, tempdir
 
-from corehq.apps.app_manager.models import Application, RemoteApp
-from couchexport.models import SavedBasicExport, ExportConfiguration
 from io import open
 
 NOT_SET = object()
@@ -158,368 +153,6 @@ class BaseMigrationTest(TestCase):
             print(exp)
             self.assertEqual(len(exp._attachments), num_attachments)
             self.assertEqual(len(exp.external_blobs), num_blobs)
-
-
-class TestSavedExportsMigrations(BaseMigrationTest):
-
-    slug = "saved_exports"
-
-    def test_migrate_happy_path(self):
-        saved = SavedBasicExport(configuration=_mk_config())
-        saved.save()
-        payload = b'binary data not valid utf-8 \xe4\x94'
-        name = saved.get_attachment_name()
-        super(BlobMixin, saved).put_attachment(payload, name)
-        saved.save()
-
-        self.do_migration([saved])
-
-        exp = SavedBasicExport.get(saved._id)
-        self.assertEqual(exp.get_payload(), payload)
-
-    def test_migrate_with_concurrent_modification(self):
-        saved = SavedBasicExport(configuration=_mk_config())
-        saved.save()
-        name = saved.get_attachment_name()
-        new_payload = 'something new'
-        old_payload = 'something old'
-        super(BlobMixin, saved).put_attachment(old_payload, name)
-        super(BlobMixin, saved).put_attachment(old_payload, "other")
-        saved.save()
-        self.assertEqual(len(saved._attachments), 2)
-
-        def modify(doc):
-            doc = SavedBasicExport.get(doc._id)
-            doc.set_payload(new_payload)
-            doc.save()
-
-        self.do_failed_migration({saved: (1, 1)}, modify)
-
-        exp = SavedBasicExport.get(saved._id)
-        self.assertEqual(exp.get_payload(), new_payload)
-        self.assertEqual(exp.fetch_attachment("other"), old_payload)
-
-
-class TestDomainMigrations(BaseMigrationTest):
-
-    slug = "domains"
-
-    def test_migrate_happy_path(self):
-        domain = Domain(name='test_logo_attachment')
-        domain.save()
-        domain_logo = b'logo: binary data not valid utf-8 \xe4\x94'
-        super(BlobMixin, domain).put_attachment(domain_logo, LOGO_ATTACHMENT)
-        domain.save()
-
-        self.do_migration([domain])
-
-        domain = Domain.get(domain._id)
-        self.assertEqual(domain.get_custom_logo()[0], domain_logo)
-        self.assertIsNone(domain._attachments)
-
-    def test_migrate_with_concurrent_modification(self):
-        domain = Domain(name='test_logo_attachment')
-        domain.save()
-        new_logo = b'something new'
-        old_logo = b'something old'
-        super(BlobMixin, domain).put_attachment(old_logo, LOGO_ATTACHMENT)
-        super(BlobMixin, domain).put_attachment(old_logo, 'other')
-        domain.save()
-        self.assertEqual(len(domain._attachments), 2)
-
-        def modify(domain_doc):
-            domain_doc = Domain.get(domain_doc._id)
-            domain_doc.put_attachment(new_logo, LOGO_ATTACHMENT)
-            domain_doc.save()
-
-        self.do_failed_migration({domain: (1, 1)}, modify)
-
-        domain = Domain.get(domain._id)
-        self.assertEqual(domain.get_custom_logo()[0], new_logo)
-        self.assertEqual(domain.fetch_attachment('other'), old_logo)
-
-
-class TestApplicationMigrations(BaseMigrationTest):
-
-    slug = "applications"
-    doc_type_map = {
-        "Application": Application,
-        "RemoteApp": RemoteApp,
-        "Application-Deleted": Application,
-        "RemoteApp-Deleted": RemoteApp,
-    }
-
-    def test_migrate_happy_path(self):
-        apps = {}
-        form = '<fake xform source>\u2713</fake>'
-        for doc_type, model_class in self.doc_type_map.items():
-            app = model_class()
-            app.save()
-            super(BlobMixin, app).put_attachment(form, "form.xml")
-            app.doc_type = doc_type
-            app.save()
-            apps[doc_type] = app
-
-        # add legacy attribute to make sure the migration uses doc_type.wrap()
-        app = apps["Application"]
-        db = app.get_db()
-        doc = db.get(app._id, wrapper=None)
-        doc["commtrack_enabled"] = True
-        db.save_doc(doc)
-        apps["Application"] = Application.get(app._id)  # update _rev
-
-        self.do_migration(list(apps.values()))
-
-        for app in apps.values():
-            exp = type(app).get(app._id)
-            self.assertEqual(exp.fetch_attachment("form.xml"), form)
-
-    def test_migrate_with_concurrent_modification(self):
-        apps = {}
-        new_form = 'something new'
-        old_form = 'something old'
-        for doc_type, model_class in self.doc_type_map.items():
-            app = model_class()
-            app.save()
-            super(BlobMixin, app).put_attachment(old_form, "form.xml")
-            super(BlobMixin, app).put_attachment(old_form, "other.xml")
-            app.doc_type = doc_type
-            app.save()
-            self.assertEqual(len(app._attachments), 2)
-            apps[app] = (1, 1)
-
-        def modify(app):
-            # put_attachment() calls .save()
-            type(app).get(app._id).put_attachment(new_form, "form.xml")
-
-        self.do_failed_migration(apps, modify)
-
-        for app in apps:
-            exp = type(app).get(app._id)
-            self.assertEqual(exp.fetch_attachment("form.xml"), new_form)
-            self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
-
-
-class TestMultimediaMigrations(BaseMigrationTest):
-
-    slug = "multimedia"
-    test_items = [
-        (mod.hqmedia.CommCareAudio, b"audio.mp3"),
-        (mod.hqmedia.CommCareImage, b"image.jpg"),
-        (mod.hqmedia.CommCareVideo, b"video.3gp"),
-        (mod.hqmedia.CommCareMultimedia, b"file.bin"),
-    ]
-
-    @staticmethod
-    def make_unmigrated(media_class, filename, data):
-        media = media_class.get_by_data(data)
-        if media._id:
-            media.delete()
-        media = media_class.get_by_data(data)
-        assert not media._id, media.aux_media
-
-        class OldAttachmentMedia(media_class):
-            def put_attachment(self, *args, **kw):
-                return super(BlobMixin, self).put_attachment(*args, **kw)
-
-        with replattr(media, "__class__", OldAttachmentMedia):
-            media.attach_data(data, filename)
-        return media
-
-    def test_migrate_happy_path(self):
-        data = b'binary data not valid utf-8 \xe4\x94'
-        media = {}
-        for media_class, name in self.test_items:
-            item = self.make_unmigrated(media_class, name, name + data)
-            item.save()
-            media[item] = name
-
-        self.do_migration(list(media))
-
-        for item, name in media.items():
-            exp = type(item).get(item._id)
-            self.assertEqual(exp.fetch_attachment(exp.attachment_id), name + data)
-
-    def test_migrate_with_concurrent_modification(self):
-        new_data = b'something new not valid utf-8 \xe4\x94'
-        old_data = b'something old not valid utf-8 \xe4\x94'
-        media = {}
-        for media_class, name in self.test_items:
-            item = self.make_unmigrated(media_class, name, name + old_data)
-            super(BlobMixin, item).put_attachment(old_data, "other")
-            item.save()
-            self.assertEqual(len(item._attachments), 2)
-            media[item] = name
-
-        def modify(item):
-            # put_attachment() calls .save()
-            type(item).get(item._id).put_attachment(new_data, "other")
-
-        self.do_failed_migration({item: (1, 1) for item in media}, modify)
-
-        for item, name in media.items():
-            exp = type(item).get(item._id)
-            self.assertEqual(exp.fetch_attachment(exp.attachment_id), name + old_data)
-            self.assertEqual(exp.fetch_attachment("other"), new_data)
-
-
-class TestXFormInstanceMigrations(BaseMigrationTest):
-
-    slug = "xforms"
-    doc_type_map = {
-        "XFormInstance": mod.xform.XFormInstance,
-        "XFormInstance-Deleted": mod.xform.XFormInstance,
-        "XFormArchived": mod.xform.XFormArchived,
-        "XFormDeprecated": mod.xform.XFormDeprecated,
-        "XFormDuplicate": mod.xform.XFormDuplicate,
-        "XFormError": mod.xform.XFormError,
-        "SubmissionErrorLog": mod.xform.SubmissionErrorLog,
-        "HQSubmission": mod.xform.XFormInstance,
-    }
-
-    def test_migrate_happy_path(self):
-        items = {}
-        form_name = mod.xform.ATTACHMENT_NAME
-        form = '<fake xform submission>\u2713</fake>'
-        data = b'binary data not valid utf-8 \xe4\x94'
-        for doc_type, model_class in self.doc_type_map.items():
-            item = model_class()
-            item.save()
-            super(BlobMixin, item).put_attachment(form, form_name)
-            super(BlobMixin, item).put_attachment(data, "data.bin")
-            item.doc_type = doc_type
-            item.save()
-            items[doc_type] = item
-
-        self.do_migration(list(items.values()), num_attachments=2)
-
-        for item in items.values():
-            exp = type(item).get(item._id)
-            self.assertEqual(exp.fetch_attachment(form_name), form)
-            self.assertEqual(exp.fetch_attachment("data.bin"), data)
-
-    def test_migrate_with_concurrent_modification(self):
-        items = {}
-        form_name = mod.xform.ATTACHMENT_NAME
-        new_form = 'something new'
-        old_form = 'something old'
-        for doc_type, model_class in self.doc_type_map.items():
-            item = model_class()
-            item.save()
-            super(BlobMixin, item).put_attachment(old_form, form_name)
-            super(BlobMixin, item).put_attachment(old_form, "other.xml")
-            item.doc_type = doc_type
-            item.save()
-            self.assertEqual(len(item._attachments), 2)
-            items[item] = (1, 1)
-
-        def modify(item):
-            # put_attachment() calls .save()
-            type(item).get(item._id).put_attachment(new_form, form_name)
-
-        self.do_failed_migration(items, modify)
-
-        for item in items:
-            exp = type(item).get(item._id)
-            self.assertEqual(exp.fetch_attachment(form_name), new_form)
-            self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
-
-
-class TestCommCareCaseMigrations(BaseMigrationTest):
-
-    slug = "cases"
-    doc_type_map = {
-        'CommCareCase': mod.cases.CommCareCase,
-        'CommCareCase-deleted': mod.cases.CommCareCase,
-        'CommCareCase-Deleted': mod.cases.CommCareCase,
-        'CommCareCase-Deleted-Deleted': mod.cases.CommCareCase,
-    }
-
-    def test_migrate_happy_path(self):
-        items = {}
-        name = "photo.jpg"
-        data = b'binary data not valid utf-8 \xe4\x94'
-        for doc_type, model_class in self.doc_type_map.items():
-            item = model_class()
-            item.save()
-            super(BlobMixin, item).put_attachment(data, name)
-            item.doc_type = doc_type
-            item.save()
-            items[doc_type] = item
-
-        self.do_migration(list(items.values()), num_attachments=1)
-
-        for item in items.values():
-            exp = type(item).get(item._id)
-            self.assertEqual(exp.fetch_attachment(name), data)
-
-    def test_migrate_with_concurrent_modification(self):
-        items = {}
-        name = "photo.jpg"
-        new_data = 'something new'
-        old_data = 'something old'
-        for doc_type, model_class in self.doc_type_map.items():
-            item = model_class()
-            item.save()
-            super(BlobMixin, item).put_attachment(old_data, name)
-            super(BlobMixin, item).put_attachment(old_data, "other.png")
-            item.doc_type = doc_type
-            item.save()
-            self.assertEqual(len(item._attachments), 2)
-            items[item] = (1, 1)
-
-        def modify(item):
-            # put_attachment() calls .save()
-            type(item).get(item._id).put_attachment(new_data, name)
-
-        self.do_failed_migration(items, modify)
-
-        for item in items:
-            exp = type(item).get(item._id)
-            self.assertEqual(exp.fetch_attachment(name), new_data)
-            self.assertEqual(exp.fetch_attachment("other.png"), old_data)
-
-
-class TestCommCareBuildMigrations(BaseMigrationTest):
-
-    slug = 'commcare_builds'
-
-    def test_migrate_happy_path(self):
-        commcare_build = CommCareBuild()
-        commcare_build.save()
-        payload = b'binary payload \xe4\x94'
-        payload_name = 'payload.jar'
-        super(BlobMixin, commcare_build).put_attachment(payload, payload_name)
-        commcare_build.save()
-        self.assertEqual(len(commcare_build._attachments), 1)
-
-        self.do_migration([commcare_build])
-
-        commcare_build = CommCareBuild.get(commcare_build._id)
-        self.assertEqual(commcare_build.fetch_file(payload_name), payload)
-        self.assertIsNone(commcare_build._attachments)
-
-    def test_migrate_with_concurrent_modification(self):
-        commcare_build = CommCareBuild()
-        commcare_build.save()
-        old_payload = b'old payload \xe4\x94'
-        new_payload = b'new payload \xe4\x94'
-        payload_name = 'payload.jar'
-        super(BlobMixin, commcare_build).put_attachment(old_payload, payload_name)
-        super(BlobMixin, commcare_build).put_attachment(old_payload, 'payload.jad')
-        commcare_build.save()
-        self.assertEqual(len(commcare_build._attachments), 2)
-
-        def modify(doc):
-            doc = CommCareBuild.get(doc._id)
-            doc.put_attachment(new_payload, payload_name)
-            doc.save()
-
-        self.do_failed_migration({commcare_build: (1, 1)}, modify)
-
-        commcare_build = CommCareBuild.get(commcare_build._id)
-        self.assertEqual(commcare_build.fetch_file(payload_name), new_payload)
-        self.assertEqual(commcare_build.fetch_file('payload.jad'), old_payload)
 
 
 class TestMigrateBackend(TestCase):
@@ -694,5 +327,59 @@ class TestMigrateBackend(TestCase):
                 self.assertEqual(len(data), meta.content_length)
 
 
-def _mk_config(name='some export name', index='dummy_index'):
-    return ExportConfiguration(index=index, name=name, format='xlsx')
+"""
+Tests below are commented out because they are slow and no longer relevant
+to any current envs (all envs have been migrated). Kept for reference when
+writing new migrations.
+class TestApplicationMigrations(BaseMigrationTest):
+
+    slug = "applications"
+    doc_type_map = {
+        "Application": Application,
+        "RemoteApp": RemoteApp,
+        "Application-Deleted": Application,
+        "RemoteApp-Deleted": RemoteApp,
+    }
+    def test_migrate_happy_path(self):
+        apps = {}
+        form = '<fake xform source>\u2713</fake>'
+        for doc_type, model_class in self.doc_type_map.items():
+            app = model_class(domain="test")
+            app.save()
+            super(BlobMixin, app).put_attachment(form, "form.xml")
+            app.doc_type = doc_type
+            app.save()
+            apps[doc_type] = app
+        # add legacy attribute to make sure the migration uses doc_type.wrap()
+        app = apps["Application"]
+        db = app.get_db()
+        doc = db.get(app._id, wrapper=None)
+        doc["commtrack_enabled"] = True
+        db.save_doc(doc)
+        apps["Application"] = Application.get(app._id)  # update _rev
+        self.do_migration(list(apps.values()))
+        for app in apps.values():
+            exp = type(app).get(app._id)
+            self.assertEqual(exp.fetch_attachment("form.xml"), form)
+    def test_migrate_with_concurrent_modification(self):
+        apps = {}
+        new_form = 'something new'
+        old_form = 'something old'
+        for doc_type, model_class in self.doc_type_map.items():
+            app = model_class(domain="test")
+            app.save()
+            super(BlobMixin, app).put_attachment(old_form, "form.xml")
+            super(BlobMixin, app).put_attachment(old_form, "other.xml")
+            app.doc_type = doc_type
+            app.save()
+            self.assertEqual(len(app._attachments), 2)
+            apps[app] = (1, 1)
+        def modify(app):
+            # put_attachment() calls .save()
+            type(app).get(app._id).put_attachment(new_form, "form.xml")
+        self.do_failed_migration(apps, modify)
+        for app in apps:
+            exp = type(app).get(app._id)
+            self.assertEqual(exp.fetch_attachment("form.xml"), new_form)
+            self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
+"""

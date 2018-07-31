@@ -51,6 +51,10 @@ Most events are tracked client side using `<module>.track.event`. Some are done 
 
 In addition to the event-based code, the `track_periodic_data` task runs nightly and sends a variety of aggregated data to Hubspot and Kissmetrics (form submission count, mobile worker count, etc.).
 
+We have a sandbox "site" on Kissmetrics that allows you to test and debug Kissmetrics usage if you set `ANALYTICS_IDS.KISSMETRICS_KEY` in localsettings (key is in the staging vault).
+
+You can also see events arriving almost in real time at [https://app.kissmetrics.com/live](https://app.kissmetrics.com/live).
+
 ### HubSpot
 
 Used heavily by growth team.

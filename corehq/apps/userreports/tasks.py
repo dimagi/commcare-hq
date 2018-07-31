@@ -304,12 +304,6 @@ def _queue_indicators(indicators):
         _queue_chunk(to_queue)
 
 
-@quickcache(['config_id'])
-def _get_config(config_id):
-    # performance optimization for save_document. don't use elsewhere
-    return _get_config_by_id(config_id)
-
-
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def save_document(doc_ids):
     lock_keys = []
@@ -379,7 +373,7 @@ def _save_document_helper(indicator, doc):
     configs = dict()
     for config_id in indicator.indicator_config_ids:
         try:
-            configs[config_id] = _get_config(config_id)
+            configs[config_id] = _get_config_by_id(config_id)
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
             configs_to_remove.append(config_id)
@@ -499,4 +493,4 @@ def export_ucr_async(report_export, download_id, user):
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
     link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
 
-    send_report_download_email(report_export.title, user, link)
+    send_report_download_email(report_export.title, user.get_email(), link)

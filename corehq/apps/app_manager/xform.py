@@ -1035,6 +1035,7 @@ class XForm(WrappedNode):
                     "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
                     "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
                     "comment": self._get_comment(leaf_data_nodes, path),
+                    "setvalue": self.get_setvalue(path)
                 }
 
                 # Include meta information about the stock entry

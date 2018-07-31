@@ -9,6 +9,7 @@ hqDefine("locations/js/location", [
     'locations/js/location_drilldown',
     'hqwebapp/js/select_2_ajax_widget',
     'hqwebapp/js/widgets',
+    'locations/js/widgets_main',
 ], function(
     $,
     ko,
