@@ -1604,3 +1604,12 @@ AGGREGATE_UCRS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['czue'],
 )
+
+
+RELATED_LOCATIONS = StaticToggle(
+    'related_locations',
+    'REACH: Enable experimental location many-to-many mappings',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    notification_emails=['jemord'],
+)

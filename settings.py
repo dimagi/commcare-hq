@@ -525,6 +525,7 @@ FIXTURE_GENERATORS = [
     "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
+    "corehq.apps.locations.fixtures.related_locations_fixture_generator",
     "custom.bihar.reports.indicators.fixtures.generator",
     "custom.m4change.fixtures.report_fixtures.generator",
     "custom.m4change.fixtures.location_fixtures.generator",
