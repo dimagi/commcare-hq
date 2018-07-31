@@ -624,7 +624,6 @@ def edit_app_attr(request, domain, app_id, attr):
 
     """
     app = get_app(domain, app_id)
-    lang = request.COOKIES.get('lang', (app.langs or ['en'])[0])
 
     try:
         hq_settings = json.loads(request.body)['hq']
