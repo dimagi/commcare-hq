@@ -9,7 +9,7 @@ from wsgiref.util import FileWrapper
 
 from corehq.util.download import get_download_response
 from dimagi.utils.couch import CriticalSection
-
+from corehq.apps.reports.tasks import send_email_report
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.domain.views import BaseDomainView
@@ -807,7 +807,6 @@ class AddSavedReportConfigView(View):
 @login_and_domain_required
 @datespan_default
 def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix, once=False):
-    from corehq.apps.hqwebapp.tasks import send_html_email_async
     from .forms import EmailReportForm
     user_id = request.couch_user._id
 
@@ -847,20 +846,12 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
         notes=form.cleaned_data['notes'], once=once
     )[0]
 
+    recipient_emails = set(form.cleaned_data['recipient_emails'])
     if form.cleaned_data['send_to_owner']:
-        email = request.couch_user.get_email()
-        body = render_full_report_notification(request, content).content
+        recipient_emails.add(request.couch_user.get_email())
 
-        send_html_email_async.delay(
-            subject, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL)
-
-    if form.cleaned_data['recipient_emails']:
-        for recipient in form.cleaned_data['recipient_emails']:
-            body = render_full_report_notification(request, content).content
-            send_html_email_async.delay(
-                subject, recipient, body,
-                email_from=settings.DEFAULT_FROM_EMAIL)
+    body = render_full_report_notification(request, content).content
+    send_email_report.delay(recipient_emails, request, body, subject, config)
 
     return HttpResponse()
 

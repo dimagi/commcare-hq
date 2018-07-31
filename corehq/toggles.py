@@ -62,7 +62,8 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
                  always_disabled=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None, relevant_environments=None):
+                 enabled_for_new_users_after=None, relevant_environments=None,
+                 notification_emails=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -78,10 +79,12 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
+
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
+        self.notification_emails = notification_emails
 
     def enabled(self, item, namespace=Ellipsis):
         if self.relevant_environments and not (
@@ -546,6 +549,7 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
     help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
+    notification_emails=['jemord']
 )
 
 EXPORT_NO_SORT = StaticToggle(
@@ -971,8 +975,8 @@ RETRY_SMS_INDEFINITELY = StaticToggle(
 
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
-    'FGH: Enable OpenMRS integration',
-    TAG_CUSTOM,
+    'Enable OpenMRS integration',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1049,6 +1053,13 @@ EWS_INVALID_REPORT_RESPONSE = StaticToggle(
 USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     'use_sms_with_inactive_contacts',
     'Use SMS with inactive contacts',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
+    'enable_include_sms_gateway_charging',
+    'Enable include SMS gateway charging',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
@@ -1590,5 +1601,6 @@ AGGREGATE_UCRS = StaticToggle(
     'aggregate_ucrs',
     'Enable experimental aggregate UCR support',
     TAG_INTERNAL,  # this might change in the future
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    notification_emails=['czue'],
 )

@@ -493,8 +493,11 @@ SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
+ENABLE_SOFT_ASSERT_EMAILS = True
+
 SERVER_ENVIRONMENT = 'localdev'
 ICDS_ENVS = ('icds', 'icds-new')
+UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
 USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
@@ -511,30 +514,21 @@ PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
 # OTA restore fixture generators
-FIXTURE_GENERATORS = {
-    # fixtures that may be sent to the phone independent of cases
-    'standalone': [
-        # core
-        "corehq.apps.users.fixturegenerators.user_groups",
-        "corehq.apps.fixtures.fixturegenerators.item_lists",
-        "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
-        "corehq.apps.products.fixtures.product_fixture_generator",
-        "corehq.apps.programs.fixtures.program_fixture_generator",
-        "corehq.apps.app_manager.fixtures.report_fixture_generator",
-        "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
-        "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
-        # custom
-        "custom.bihar.reports.indicators.fixtures.generator",
-        "custom.m4change.fixtures.report_fixtures.generator",
-        "custom.m4change.fixtures.location_fixtures.generator",
-
-    ],
-    # fixtures that must be sent along with the phones cases
-    'case': [
-        "corehq.apps.locations.fixtures.location_fixture_generator",
-        "corehq.apps.locations.fixtures.flat_location_fixture_generator",
-    ]
-}
+FIXTURE_GENERATORS = [
+    "corehq.apps.users.fixturegenerators.user_groups",
+    "corehq.apps.fixtures.fixturegenerators.item_lists",
+    "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
+    "corehq.apps.products.fixtures.product_fixture_generator",
+    "corehq.apps.programs.fixtures.program_fixture_generator",
+    "corehq.apps.app_manager.fixtures.report_fixture_generator",
+    "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
+    "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
+    "corehq.apps.locations.fixtures.location_fixture_generator",
+    "corehq.apps.locations.fixtures.flat_location_fixture_generator",
+    "custom.bihar.reports.indicators.fixtures.generator",
+    "custom.m4change.fixtures.report_fixtures.generator",
+    "custom.m4change.fixtures.location_fixtures.generator",
+]
 
 ### Shared drive settings ###
 # Also see section after localsettings import
@@ -1817,6 +1811,7 @@ BASE_REPEATERS = (
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
+    'corehq.motech.dhis2.repeaters.Dhis2Repeater',
 )
 
 ENIKSHAY_REPEATERS = (
@@ -1878,6 +1873,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile_mpr_2a_deaths.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_sql_mpr_2a_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
@@ -1890,10 +1886,13 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_ccs_record_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_5_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_6ac_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_6b_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_7_growth_monitoring_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_8_tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_9_vhnd_forms.json'),

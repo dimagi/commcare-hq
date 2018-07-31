@@ -78,5 +78,6 @@ AGG_CHILD_HEALTH_PNC_TABLE = 'icds_dashboard_child_health_postnatal_forms'
 AGG_CHILD_HEALTH_THR_TABLE = 'icds_dashboard_child_health_thr_forms'
 AGG_DAILY_FEEDING_TABLE = 'icds_dashboard_daily_feeding_forms'
 AGG_GROWTH_MONITORING_TABLE = 'icds_dashboard_growth_monitoring_forms'
+AGG_INFRASTRUCTURE_TABLE = 'icds_dashboard_infrastructure_forms'
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'softlayer' else 'icds-cas'

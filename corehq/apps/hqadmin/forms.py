@@ -152,7 +152,7 @@ class SuperuserManagementForm(forms.Form):
 
         if can_toggle_is_staff:
             self.fields['privileges'].choices.append(
-                ('is_staff', 'mark as developer')
+                ('is_staff', 'Mark as developer')
             )
 
         self.helper = FormHelper()

@@ -482,7 +482,8 @@
                             {
                                 "case_name": "/data/babies/whats_the_babys_name",
                                 "case_properties": {
-                                    "eye_color": "/data/babies/eye_color"
+                                    "eye_color": "/data/babies/eye_color",
+                                    "facility_name": "/data/facility_name"
                                 },
                                 "case_type": "baby",
                                 "close_condition": {

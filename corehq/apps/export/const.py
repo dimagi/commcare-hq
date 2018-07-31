@@ -68,7 +68,11 @@ PROPERTY_TAG_STOCK = 'stock'
 KNOWN_CASE_PROPERTIES = ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]
 
 # Attributes found on a case block. <case case_id="..." date_modified="..." ...>
-CASE_ATTRIBUTES = ['@case_id', '@date_modified', '@user_id']
+CASE_ATTRIBUTES = {
+    '@case_id': 'string',
+    '@date_modified': 'datetime',
+    '@user_id': 'string'
+}
 
 # Elements that are found in a case create block
 # <case>
@@ -114,3 +118,6 @@ class SharingOption(object):
         EXPORT_ONLY,
         EDIT_AND_EXPORT,
     )
+
+
+UNKNOWN_EXPORT_OWNER = 'unknown'

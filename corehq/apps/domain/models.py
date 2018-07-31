@@ -14,6 +14,7 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
@@ -235,7 +236,7 @@ class DayTimeWindow(DocumentSchema):
     end_time = TimeProperty()
 
 
-class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
+class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
@@ -319,6 +320,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
     sms_survey_date_format = StringProperty()
+
+    granted_messaging_access = BooleanProperty(default=False)
 
     # Allowed outbound SMS per day
     # If this is None, then the default is applied. See get_daily_outbound_sms_limit()
@@ -419,6 +422,10 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         # remove this after everything's hunky-dory in production.  2015-03-06
         if 'location_types' in data:
             data['obsolete_location_types'] = data.pop('location_types')
+
+        if 'granted_messaging_access' not in data:
+            # enable messaging for domains created before this flag was added
+            data['granted_messaging_access'] = True
 
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
@@ -702,6 +709,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             new_domain.creating_user = user.username if user else None
             new_domain.date_created = datetime.utcnow()
             new_domain.use_sql_backend = True
+            new_domain.granted_messaging_access = False
 
             for field in self._dirty_fields:
                 if hasattr(new_domain, field):
@@ -997,8 +1005,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     @property
     def has_custom_logo(self):
-        return (self['_attachments'] and
-                LOGO_ATTACHMENT in self['_attachments'])
+        return self.has_attachment(LOGO_ATTACHMENT)
 
     def get_custom_logo(self):
         if not self.has_custom_logo:
@@ -1006,7 +1013,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
         return (
             self.fetch_attachment(LOGO_ATTACHMENT),
-            self['_attachments'][LOGO_ATTACHMENT]['content_type']
+            self.blobs[LOGO_ATTACHMENT].content_type
         )
 
     def get_case_display(self, case):
