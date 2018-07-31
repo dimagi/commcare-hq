@@ -1027,11 +1027,9 @@ class XForm(WrappedNode):
                 bind = self.get_bind(path)
 
                 matching_repeat_context = (
-                    [rc for rc in repeat_contexts if path.startswith(rc + '/')] + [None]
-                    )[0]
+                    [rc for rc in repeat_contexts if path.startswith(rc + '/')] + [None])[0]
                 matching_group_context = (
-                    [gc for gc in group_contexts if path.startswith(gc + '/')] + [None]
-                    )[0]
+                    [gc for gc in group_contexts if path.startswith(gc + '/')] + [None])[0]
 
                 question = {
                     "tag": "hidden",
