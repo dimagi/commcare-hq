@@ -958,6 +958,7 @@ class XForm(WrappedNode):
 
         questions = []
         repeat_contexts = set()
+        group_contexts = set()
         excluded_paths = set()
 
         control_nodes = self.get_control_nodes()
@@ -971,6 +972,10 @@ class XForm(WrappedNode):
             repeat = cnode.repeat
             if repeat is not None:
                 repeat_contexts.add(repeat)
+
+            group = cnode.group
+            if group is not None:
+                group_contexts.add(group)
 
             if not cnode.is_leaf and not include_groups:
                 continue
@@ -1014,22 +1019,25 @@ class XForm(WrappedNode):
             questions.append(question)
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
+        group_contexts = sorted(group_contexts, reverse=True)
 
         save_to_case_nodes = {}
         for path, data_node in six.iteritems(leaf_data_nodes):
             if path not in excluded_paths:
                 bind = self.get_bind(path)
-                try:
-                    matching_repeat_context = [
-                        rc for rc in repeat_contexts if path.startswith(rc + '/')
-                    ][0]
-                except IndexError:
-                    matching_repeat_context = None
+
+                matching_repeat_context = (
+                    [rc for rc in repeat_contexts if path.startswith(rc + '/')] + [None]
+                    )[0]
+                matching_group_context = (
+                    [gc for gc in group_contexts if path.startswith(gc + '/')] + [None]
+                    )[0]
+
                 question = {
                     "tag": "hidden",
                     "value": path,
                     "repeat": matching_repeat_context,
-                    "group": matching_repeat_context,
+                    "group": matching_group_context,
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                     "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
