@@ -95,7 +95,7 @@ jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
 jsonobject-couchdbkit==0.9.4
-jsonobject==0.9.2
+jsonobject==0.9.3
 jsonpath-rw==1.4.0
 kafka-python==0.9.5
 kombu==3.0.37
