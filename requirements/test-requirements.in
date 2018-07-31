@@ -1,3 +1,5 @@
+-r requirements.txt
+
 beautifulsoup4>=4.4.1
 coverage
 -e git+git://github.com/millerdev/django-nose@fast-first-1.4.4#egg=django-nose
