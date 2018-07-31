@@ -13,6 +13,8 @@ providing generic domain management and form data-collection functionality.
 
 More in depth docs are available on [ReadTheDocs](http://commcare-hq.readthedocs.io/)
 
+If you are interested in managing a production CommCare HQ environment, check out [CommCare Cloud](http://dimagi.github.io/commcare-cloud/), our toolkit for deploying and maintaining CommCare servers.
+
 ### Key Components
 
 + CommCare application builder
