@@ -1542,14 +1542,6 @@ TARGET_COMMCARE_FLAVOR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-APPCUES_AB_TEST = PredictablyRandomToggle(
-    'appcues_ab_test',
-    'True if user is in variant group for Appcues AB test. Irrelevent if user is not in test.',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    randomness=0.5
-)
-
 WAREHOUSE_APP_STATUS = StaticToggle(
     'warehouse_app_status',
     "User warehouse backend for the app status report. Currently only for sql domains",
