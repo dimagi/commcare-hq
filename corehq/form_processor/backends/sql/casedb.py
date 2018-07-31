@@ -51,3 +51,6 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
     def filter_closed_extensions(self, extensions_to_close):
         # noop for SQL since the filtering already happened when we fetched the IDs
         return extensions_to_close
+
+    def post_process_case(self, case, xform):
+        self.case_update_strategy(case).reconcile_transactions_if_necessary(xform)
