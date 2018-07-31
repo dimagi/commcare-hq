@@ -47,7 +47,7 @@ django-formtools==2.0
 django-jenkins==0.14.1
 django-otp==0.3.13
 django-phonenumber-field==1.3.0
-django-prbac==0.0.5
+django-prbac==0.0.7
 django-ranged-response==0.2.0
 django-redis-sessions==0.5.6
 django-redis==4.2
@@ -67,7 +67,7 @@ elasticsearch==1.9.0
 email_validator==1.0.2
 enum34==1.1.6
 et-xmlfile==1.0.1
-ethiopian-date-converter==0.1.4
+ethiopian-date-converter==0.1.5
 eulxml==1.1.3
 faker==0.8.15
 funcsigs==1.0.2
@@ -89,8 +89,8 @@ jinja2==2.8
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.3
-jsonobject==0.9.1
+jsonobject-couchdbkit==0.9.4
+jsonobject==0.9.3
 jsonpath-rw==1.4.0
 kafka-python==0.9.5
 kombu==3.0.37
@@ -136,7 +136,7 @@ pytz==2017.2
 pyyaml==3.12
 pyzxcvbn==0.8.0
 qrcode==4.0.4
-quickcache==0.5.0
+quickcache==0.5.1
 raven==6.1.0
 rcssmin==1.0.6
 redis==2.10.5
@@ -153,7 +153,7 @@ singledispatch==3.4.0.3   # via astroid
 six==1.11.0
 smartypants==2.0.1
 socketpool==0.5.3
-sqlagg==0.9.0
+sqlagg==0.9.1
 sqlalchemy==1.2.9
 stripe==1.67.0
 suds-jurko==0.6
