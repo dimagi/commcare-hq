@@ -48,6 +48,12 @@ class AbstractBlobDB(six.with_metaclass(ABCMeta, object)):
         the blobdb. `None` means forever. There are no guarantees on the
         maximum time it may live in blob storage.
 
+        NOTE: it is important to delete any blobs saved with this method
+        if it is called within a database transaction that ends up being
+        rolled back. Otherwise those blobs will be orphaned, meaning
+        they will be stored in the blob db backend indefinitely, but
+        their metadata will be lost.
+
         :returns: A `BlobMeta` object. The returned object has a
         `key` attribute that may be used to get or delete the blob.
         """
