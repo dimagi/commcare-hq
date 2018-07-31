@@ -30,7 +30,7 @@ class SchemaTests(SimpleTestCase):
     """
 
     def test_schemas(self):
-        spam = dict(Spam.wrap({}))
-        self.assertSetEqual(set(spam.keys()), {'doc_type', 'ham_dict_prop', 'ham_prop'})  # ham is not in spam
+        spam = dict(Spam())
+        self.assertSetEqual(set(spam), {'doc_type', 'ham_dict_prop', 'ham_prop'})  # ham is not in spam
         self.assertEqual(spam['ham_prop'], Ham(doc_type='Ham', eggs=None))
         self.assertDictEqual(spam['ham_dict_prop'], {})
