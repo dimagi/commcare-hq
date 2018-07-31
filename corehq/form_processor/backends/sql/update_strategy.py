@@ -288,6 +288,13 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if not self.case.modified_on:
             self.case.modified_on = rebuild_transaction.server_date
 
+    def reconcile_transactions_if_necessary(self, xform):
+        if not self.case.check_transaction_order():
+            self.reconcile_transactions(rebuild=True, xforms={xform.form_id: xform})
+
+    def reconcile_transactions(rebuild=False, xforms=None):
+        xforms = xforms or {}
+
     def _delete_old_related_models(self, original_models_by_id, models_to_keep, key="identifier"):
         for model in models_to_keep:
             original_models_by_id.pop(getattr(model, key), None)

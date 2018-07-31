@@ -908,6 +908,21 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
+    def check_transaction_order_for_case(case_id):
+        """ Returns whether the order of transactions needs to be reconciled by client_date
+
+        True if the order is fine, False if the order is bad
+        """
+        if not case_id:
+            return False
+        with get_cursor(CaseTransaction) as cursor:
+            cursor.execute(
+                'SELECT compare_server_client_case_transaction_order(%s)',
+                [case_id])
+            result = cursor.fetchone()[0]
+            return result
+
+    @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
         with get_cursor(CommCareCaseSQL) as cursor:

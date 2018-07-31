@@ -803,6 +803,10 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
 
+    def check_transaction_order(self):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.check_transaction_order_for_case(self.case_id)
+
     @property
     def actions(self):
         """For compatability with CommCareCase. Please use transactions when possible"""
