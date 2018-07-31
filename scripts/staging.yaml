@@ -62,6 +62,7 @@ branches:
 #  - jls/requirejs-login  # Jenny July 22
   - jls/unify-tab-history  # Jenny July 10
   - np/kill-untested-functions  # NP July 30
+  - jls/enterprise-settings  # Jenny July 31
 submodules:
   submodules/django-digest-src:
     branches: []
