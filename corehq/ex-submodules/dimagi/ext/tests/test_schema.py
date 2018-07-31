@@ -16,6 +16,9 @@ class Ham(DocumentSchema):
     def __eq__(self, other):
         return self.doc_type == other.doc_type and self.eggs == other.eggs
 
+    def __hash__(self):
+        return hash(self.eggs)
+
 
 class Spam(DocumentSchema):
     ham = Ham(required=False)
