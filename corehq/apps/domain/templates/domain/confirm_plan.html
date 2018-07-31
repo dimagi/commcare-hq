@@ -31,13 +31,27 @@
     </p>
     {% endif %}
     {% if current_plan %}
-    <hr />
-    <div class="alert alert-danger">
-        {% blocktrans with current_plan.name as p %}
-        <h4>Note: Continuing will change your current subscription.</h4>
-        <p>You are currently subscribed to the <strong>{{ p }} Software Plan</strong></p>
-        {% endblocktrans %}
-    </div>
+        {% if is_upgrade %}
+        <hr />
+        <div class="alert alert-danger">
+            {% blocktrans with next_invoice_date as invoice_date %}
+            <h4>Note: Continuing will change your current subscription.</h4>
+            <p>CommCare bills on a monthly basis, and all subscriptions require a 30 day minimum commitment. You
+                should expect your first invoice on {{ invoice_date }}, or you can prepay for your subscription
+                by following the instructions
+                <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>
+            </p>
+            {% endblocktrans %}
+        </div>
+        {% else %}
+        <hr />
+        <div class="alert alert-danger">
+            {% blocktrans with current_plan.name as p %}
+            <h4>Note: Continuing will change your current subscription.</h4>
+            <p>You are currently subscribed to the <strong>{{ p }} Software Plan</strong></p>
+            {% endblocktrans %}
+        </div>
+        {% endif %}
     {% endif %}
 
     {% if downgrade_messages %}
