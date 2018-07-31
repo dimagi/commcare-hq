@@ -9,6 +9,7 @@ from corehq.sql_db.operations import HqRunSQL
 
 
 class Migration(Migration):
+    atomic = False
 
     dependencies = [
         ('form_processor', '0072_case_attachment_drops'),
