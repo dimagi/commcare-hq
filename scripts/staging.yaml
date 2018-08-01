@@ -62,6 +62,7 @@ branches:
   - dmr/fix-package-security-vulnerabilities+nh/omrs/atom+leven
   - dmr/fix-package-security-vulnerabilities  # Danny July 21
   - nh/omrs/atom+leven  # Norman July 31
+  - jls/uninstall-meld3  # Jenny Aug 1
 submodules:
   submodules/django-digest-src:
     branches: []
