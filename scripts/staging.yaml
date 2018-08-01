@@ -59,10 +59,11 @@ branches:
 #  - jls/requirejs-login  # Jenny July 22
   - jls/unify-tab-history  # Jenny July 10
   - jls/enterprise-settings  # Jenny July 31
+  - jls/uninstall-meld3+dmr/fix-package-security-vulnerabilities+nh/omrs/atom+leven
+  - jls/uninstall-meld3  # Jenny Aug 1
   - dmr/fix-package-security-vulnerabilities+nh/omrs/atom+leven
   - dmr/fix-package-security-vulnerabilities  # Danny July 21
   - nh/omrs/atom+leven  # Norman July 31
-  - jls/uninstall-meld3  # Jenny Aug 1
 submodules:
   submodules/django-digest-src:
     branches: []
