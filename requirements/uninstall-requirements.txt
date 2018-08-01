@@ -4,3 +4,4 @@ architect
 django-nose
 ddtrace
 feedparser
+meld3
