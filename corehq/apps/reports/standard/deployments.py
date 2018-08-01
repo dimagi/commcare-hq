@@ -194,8 +194,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                           .size(self.pagination.count)
                           .start(self.pagination.start))
         if self.selected_app_id:
-            # selecting reporting_metadata.last_sudmission.app_id 
-            # as filter_path to filter users by selected app_id.
+            # selecting reporting_metadata.last_sudmission.app_id
+            # as filter term to filter users by selected app_id.
             filter_path = 'reporting_metadata.last_submissions'
             filter_term = 'reporting_metadata.last_submissions.app_id'
             user_query = user_query.nested(
