@@ -346,10 +346,11 @@ class ReadableFormTest(TestCase):
         cups = builder.new_group('cups_of_tea', 'Cups of tea', data_type='repeatGroup')
         details = cups.new_group('details_of_cup', 'Details', data_type='group')
         details.new_question('kind_of_cup', 'Flavor')
+        details.new_question('secret', 'Secret', data_type=None)
         responses['cups_of_tea'] = [
-            {'details_of_cup': {'kind_of_cup': 'green'}},
-            {'details_of_cup': {'kind_of_cup': 'black'}},
-            {'details_of_cup': {'kind_of_cup': 'more green'}},
+            {'details_of_cup': {'kind_of_cup': 'green', 'secret': 'g'}},
+            {'details_of_cup': {'kind_of_cup': 'black', 'secret': 'b'}},
+            {'details_of_cup': {'kind_of_cup': 'more green', 'secret': 'mg'}},
         ]
 
         xform = XForm(builder.tostring())
@@ -366,8 +367,11 @@ class ReadableFormTest(TestCase):
             '/data/snacks[1]/kind_of_snack',
             '/data/snacks[2]/kind_of_snack',
             '/data/cups_of_tea[1]/details_of_cup/kind_of_cup',
+            '/data/cups_of_tea[1]/details_of_cup/secret',
             '/data/cups_of_tea[2]/details_of_cup/kind_of_cup',
+            '/data/cups_of_tea[2]/details_of_cup/secret',
             '/data/cups_of_tea[3]/details_of_cup/kind_of_cup',
+            '/data/cups_of_tea[3]/details_of_cup/secret',
         ]
         self.assertListEqual(ordered_question_values, expected_question_values)
 
@@ -378,8 +382,11 @@ class ReadableFormTest(TestCase):
             '/data/snacks[1]/kind_of_snack': 'samosa',
             '/data/snacks[2]/kind_of_snack': 'pakora',
             '/data/cups_of_tea[1]/details_of_cup/kind_of_cup': 'green',
+            '/data/cups_of_tea[1]/details_of_cup/secret': 'g',
             '/data/cups_of_tea[2]/details_of_cup/kind_of_cup': 'black',
+            '/data/cups_of_tea[2]/details_of_cup/secret': 'b',
             '/data/cups_of_tea[3]/details_of_cup/kind_of_cup': 'more green',
+            '/data/cups_of_tea[3]/details_of_cup/secret': 'mg',
         }
         self.assertDictEqual({k: v['value'] for k, v in question_response_map.items()}, expected_response_map)
 
