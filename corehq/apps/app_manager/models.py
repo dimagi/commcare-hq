@@ -5355,11 +5355,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
+        # If this block of code is fast, then let's do it in validate so we can cache the right files
         force_new_forms = False
         if previous_version and self.build_profiles != previous_version.build_profiles:
             force_new_forms = True
-        copy.set_form_versions(previous_version, force_new_forms)
-        copy.set_media_versions(previous_version)
+        copy.set_form_versions(previous_version, force_new_forms) # investigate
+        copy.set_media_versions(previous_version)  # investigate
         copy.create_build_files()
 
         # since this hard to put in a test
@@ -5869,7 +5870,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
 
-    def create_all_files(self, build_profile_id=None):
+    def create_all_files(self, build_profile_id=None):  # Application
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
             '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, build_profile_id=build_profile_id),
@@ -6422,7 +6423,7 @@ class RemoteApp(ApplicationBase):
     def SUITE_XPATH(self):
         return 'suite/resource/location[@authority="local"]'
 
-    def create_all_files(self, build_profile_id=None):
+    def create_all_files(self, build_profile_id=None):  # RemoteApp
         langs_for_build = self.get_build_langs()
         files = {
             'profile.xml': self.create_profile(langs=langs_for_build),
