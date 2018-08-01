@@ -194,9 +194,15 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                           .size(self.pagination.count)
                           .start(self.pagination.start))
         if self.selected_app_id:
+            # selecting reporting_metadata.last_sudmission as filter_path as this has the mapping
+            # for app_id. This will also exclude the chances of
+            # error when sorts happens by username. Because username doesn't have the
+            # app_id mapping.
+            filter_path = 'reporting_metadata.last_submissions'
+            filter_term = 'reporting_metadata.last_submissions.app_id'
             user_query = user_query.nested(
-                self.sort_base,
-                filters.term(self.sort_filter, self.selected_app_id)
+                filter_path,
+                filters.term(filter_term, self.selected_app_id)
             )
         return user_query
 
