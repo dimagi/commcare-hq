@@ -56,7 +56,6 @@ hqDefine('accounting/js/pricing_table', function () {
             var newPlan = self.capitalizeString(self.selected_edition());
             var newStartDate = self.startDateAfterMinimumSubscription;
             if (self.isDowngrade(oldPlan, newPlan) && self.subscriptionBelowMinimum) {
-                debugger;
                 var $modal = $("#modal-minimum-subscription");
                 $modal.find('.modal-body')[0].innerHTML =
                     "CommCare bills on a monthly basis. If you cancel now, your subscription will downgrade to " +
@@ -69,26 +68,10 @@ hqDefine('accounting/js/pricing_table', function () {
             }
         };
 
-        self.submitDowngrade = function(pricingTable, e) {
-            var finish = function() {
-                if (self.form) {
-                    self.form.submit();
-                }
-            };
-
-            var $button = $(e.currentTarget);
-            $button.disableButton();
-            $.ajax({
-                method: "POST",
-                url: hqImport('hqwebapp/js/initial_page_data').reverse('email_on_downgrade'),
-                data: {
-                    old_plan: self.currentEdition,
-                    new_plan: self.selected_edition(),
-                    note: $button.closest(".modal").find("textarea").val(),
-                },
-                success: finish,
-                error: finish,
-            });
+        self.submitDowngradeForm = function (pricingTable, e) {
+            if (self.form) {
+                self.form.submit();
+            }
         };
 
         self.init = function () {
