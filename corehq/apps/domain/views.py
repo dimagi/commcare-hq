@@ -1273,6 +1273,30 @@ class SelectPlanView(DomainAccountingSettings):
     lead_text = ugettext_lazy("Please select a plan below that fits your organization's needs.")
 
     @property
+    def subscription_below_minimum(self):
+        if self.current_subscription is None:
+            return False
+        elif self.current_subscription.is_trial:
+            return False
+        elif self.current_subscription.date_start <= datetime.date(2018, 7, 30): # TODO: Set this date to be the date we launch this feature
+            # Only block upgrades for subscriptions created after the date we launched the 30-Day Minimum
+            return False
+        elif self.current_subscription.date_start + datetime.timedelta(days=30) >= datetime.date.today():
+            return True
+        else:
+            return False
+
+    @property
+    def start_date_after_minimum_subscription(self):
+        if self.current_subscription is None:
+            return ""
+        elif self.current_subscription.is_trial:
+            return ""
+        else:
+            new_start_date = self.current_subscription.date_start + datetime.timedelta(days=30)
+            return new_start_date.strftime("%B %d")
+
+    @property
     def edition_name(self):
         if self.edition:
             return DESC_BY_EDITION[self.edition]['name']
@@ -1325,6 +1349,8 @@ class SelectPlanView(DomainAccountingSettings):
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
                                 else ""),
+            'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
+            'subscription_below_minimum': self.subscription_below_minimum
         }
 
 
