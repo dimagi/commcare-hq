@@ -370,13 +370,10 @@ HQ_APPS = (
     'custom.champ',
 )
 
+
 ENIKSHAY_APPS = (
     'custom.enikshay',
-    'custom.enikshay.integrations.ninetyninedots',
-    'custom.enikshay.integrations.nikshay',
-    'custom.enikshay.integrations.bets',
     'custom.enikshay.two_b_datamigration',
-    'custom.enikshay.two_b_release_1',
 )
 
 # also excludes any app starting with 'django.'
@@ -561,7 +558,6 @@ CELERY_PERIODIC_QUEUE = 'celery_periodic'
 CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
 CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
-ENIKSHAY_QUEUE = 'enikshay_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
@@ -887,9 +883,6 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = None
 
 AUTHPROXY_URL = None
 AUTHPROXY_CERT = None
-
-ENIKSHAY_PRIVATE_API_USERS = {}
-ENIKSHAY_PRIVATE_API_PASSWORD = None
 
 # number of docs for UCR to queue asynchronously at once
 # ideally # of documents it takes to process in ~30 min
@@ -1548,7 +1541,6 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "UCLA_SEXUAL_HEALTH": "custom.ucla.api.sexual_health_message_bank_content",
     "UCLA_MED_ADHERENCE": "custom.ucla.api.med_adherence_message_bank_content",
     "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
-    "ENIKSHAY_PRESCRIPTION_VOUCHER_ALERT": "custom.enikshay.messaging.custom_content.prescription_voucher_alert",
 }
 
 # Used by the new reminders framework
@@ -1599,18 +1591,6 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'CASE_OWNER_LOCATION_PARENT':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
          "Abt: The case owner's location's parent location"],
-    'TB_PERSON_CASE_FROM_VOUCHER_CASE':
-        ['custom.enikshay.messaging.custom_recipients.person_case_from_voucher_case',
-         "TB: Person case from voucher case"],
-    'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID':
-        ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
-         "TB: Agency user case from voucher_fulfilled_by_id"],
-    'TB_BENEFICIARY_REGISTRATION_RECIPIENTS':
-        ['custom.enikshay.messaging.custom_recipients.beneficiary_registration_recipients',
-         "TB: Beneficiary Registration Recipients"],
-    'TB_PRESCRIPTION_VOUCHER_ALERT_RECIPIENTS':
-        ['custom.enikshay.messaging.custom_recipients.prescription_voucher_alert_recipients',
-         "TB: Prescription Voucher Alert Recipients"],
 }
 
 # Used by the new reminders framework
@@ -1814,31 +1794,7 @@ BASE_REPEATERS = (
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
 )
 
-ENIKSHAY_REPEATERS = (
-    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
-    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
-    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
-    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
-    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUnenrollPatientRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPrivatePatientRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayHealthEstablishmentRepeater',
-    'custom.enikshay.integrations.bets.repeaters.ChemistBETSVoucherRepeater',
-    'custom.enikshay.integrations.bets.repeaters.LabBETSVoucherRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETS180TreatmentRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSDrugRefillRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSSuccessfulTreatmentRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSDiagnosisAndNotificationRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSAYUSHReferralRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSUserRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSLocationRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSBeneficiaryRepeater',
-)
-
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + ENIKSHAY_REPEATERS
+REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS
 
 
 STATIC_UCR_REPORTS = [
@@ -1919,21 +1875,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'adherence.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_2b.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_private.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_register_2b.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_patients.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'cc_outbound_call_list.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'payment_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'beneficiary_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_register_for_culture.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'drug_voucher.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_summary.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'diagnostic_register.json'),
-
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
 
 ]
@@ -1985,36 +1926,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
-
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v4.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v4.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v5.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'referral_tasklist.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_2b.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v4.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v5.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v4.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v4.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v5.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_adherence_report.json'),
-
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'test.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'voucher.json'),
 
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
@@ -2091,18 +2002,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
     ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
-    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
-    ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
-    ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
-    ('month_expression', 'custom.enikshay.expressions.month_expression'),
-    ('enikshay_referred_to', 'custom.enikshay.expressions.referred_to_expression'),
-    ('enikshay_referred_by', 'custom.enikshay.expressions.referred_by_expression'),
-    ('enikshay_date_of_referral', 'custom.enikshay.expressions.date_of_referral_expression'),
-    ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
-    ('enikshay_episode_from_person', 'custom.enikshay.expressions.episode_from_person_expression'),
-    ('enikshay_key_populations', 'custom.enikshay.expressions.key_populations_expression'),
-    ('enikshay_most_recent_referral_from_person', 'custom.enikshay.expressions.most_recent_referral_expression'),
-    ('enikshay_most_recent_episode_from_person', 'custom.enikshay.expressions.most_recent_episode_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -2111,13 +2010,9 @@ CUSTOM_UCR_EXPRESSION_LISTS = [
     ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
-CUSTOM_UCR_REPORT_FILTERS = [
-    ('enikshay_location_hierarchy', "custom.enikshay.ucr_filters._build_enikshay_location_hierarchy"),
-]
+CUSTOM_UCR_REPORT_FILTERS = []
 
-CUSTOM_UCR_REPORT_FILTER_VALUES = [
-    ("enikshay_location_hierarchy", "custom.enikshay.ucr_filters.ENikshayLocationHierarchyFilterValue"),
-]
+CUSTOM_UCR_REPORT_FILTER_VALUES = []
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
@@ -2156,37 +2051,6 @@ DOMAIN_MODULE_MAP = {
     'icds-dashboard-qa': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
-
-    'enikshay-test': 'custom.enikshay',
-    'enikshay': 'custom.enikshay',
-    'enikshay-test-2': 'custom.enikshay',
-    'enikshay-test-3': 'custom.enikshay',
-    'enikshay-nikshay-migration-test': 'custom.enikshay',
-    'enikshay-domain-copy-test': 'custom.enikshay',
-    'enikshay-aks-audit': 'custom.enikshay',
-    'np-migration-3': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-1': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-2': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-3': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-4': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-5': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-6': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-7': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-8': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-9': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-10': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-11': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-12': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-13': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-14': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-15': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-16': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-17': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-18': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-19': 'custom.enikshay',
-    'sheel-enikshay': 'custom.enikshay',
-    'enikshay-reports-qa': 'custom.enikshay',
-    'enikshay-performance-test': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -2233,7 +2097,6 @@ RESTORE_TIMING_DOMAINS = {
     # ("env", "domain"),
     ("production", "malawi-fp-study"),
     ("production", "rec"),
-    ("softlayer", "enikshay"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####
