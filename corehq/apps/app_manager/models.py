@@ -1491,6 +1491,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
     media_audio = DictProperty(StringProperty)
     custom_icons = ListProperty(CustomIcon)
 
+    # When set to true, all languages use the specific media from the default language
+    media_image_languages_linked = BooleanProperty(default=False)
+    media_audio_languages_linked = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data):
         # Lazy migration from single-language media to localizable media
@@ -1526,6 +1530,11 @@ class NavMenuItemMediaMixin(DocumentSchema):
             to return first path in sorted lang->media-path list
         """
         assert media_attr in ('media_image', 'media_audio')
+
+        if self.media_image_languages_linked and media_attr == 'media_image':
+            lang = self.get_app().default_language
+        if self.media_audio_languages_linked and media_attr == 'media_audio':
+            lang = self.get_app().default_language
 
         media_dict = getattr(self, media_attr)
         if not media_dict:
