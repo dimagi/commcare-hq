@@ -952,6 +952,7 @@ class XForm(WrappedNode):
         :param include_groups: When set will return repeats and group questions
         :param include_translations: When set to True will return all the translations for the question
         """
+        from corehq.apps.app_manager.util import first_elem
 
         if not self.exists():
             return []
@@ -1026,10 +1027,10 @@ class XForm(WrappedNode):
             if path not in excluded_paths:
                 bind = self.get_bind(path)
 
-                matching_repeat_context = (
-                    [rc for rc in repeat_contexts if path.startswith(rc + '/')] + [None])[0]
-                matching_group_context = (
-                    [gc for gc in group_contexts if path.startswith(gc + '/')] + [None])[0]
+                matching_repeat_context = first_elem([rc for rc in repeat_contexts
+                                                      if path.startswith(rc + '/')])
+                matching_group_context = first_elem([gc for gc in group_contexts
+                                                     if path.startswith(gc + '/')])
 
                 question = {
                     "tag": "hidden",
