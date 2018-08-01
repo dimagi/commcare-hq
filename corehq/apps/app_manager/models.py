@@ -4898,6 +4898,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSIONS, required=False
     )
 
+    _all_files = None
+
     @classmethod
     def wrap(cls, data):
         should_save = False
@@ -5175,7 +5177,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def create_build_files(self, build_profile_id=None):
         built_on = datetime.datetime.utcnow()
-        all_files = self.create_all_files(build_profile_id)
+        all_files = self._all_files or self.create_all_files(build_profile_id)
         self.date_created = built_on
         self.built_on = built_on
         self.built_with = BuildRecord(
@@ -5228,7 +5230,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.validate_fixtures()
             self.validate_intents()
             self.validate_practice_users()
-            self.create_all_files()
+            self._all_files = self.create_all_files()
         except CaseXPathValidationError as cve:
             errors.append({
                 'type': 'invalid case xpath reference',
