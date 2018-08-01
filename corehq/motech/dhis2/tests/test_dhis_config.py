@@ -84,7 +84,10 @@ class TestDhisConfigValidation(SimpleTestCase):
                     'form_question': '/data/event_date'
                 },
                 'event_status': 'COMPLETED',
-                'org_unit_id': 'dhis2_location_id',
+                'org_unit_id': {
+                    'doc_type': 'ConstantString',
+                    'value': 'dhis2_location_id'
+                },
                 'datavalue_maps': [
                     {}
                 ]
@@ -112,7 +115,10 @@ class TestDhisConfigValidation(SimpleTestCase):
                     'form_question': '/data/event_date'
                 },
                 'event_status': 'COMPLETED',
-                'org_unit_id': 'dhis2_location_id',
+                'org_unit_id': {
+                    'doc_type': 'ConstantString',
+                    'value': 'dhis2_location_id'
+                },
                 'datavalue_maps': [
                     {
                         'data_element_id': 'dhis2_element_id',
@@ -130,3 +136,26 @@ class TestDhisConfigValidation(SimpleTestCase):
         repeater = Dhis2Repeater()
         repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
         repeater.save()
+
+    def test_org_unit_id_migration(self):
+        config = {
+            'form_configs': json.dumps([{
+                'program_id': 'test program',
+                'org_unit_id': 'dhis2_location_id',
+                'event_date': {
+                    'doc_type': 'FormQuestion',
+                    'form_question': '/data/event_date'
+                }
+            }])
+        }
+        form = Dhis2ConfigForm(data=config)
+        self.assertTrue(form.is_valid())
+        data = form.cleaned_data
+        repeater = Dhis2Repeater()
+        repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
+        repeater.save()
+        org_unit_value_source = dict(repeater.dhis2_config.form_configs[0].org_unit_id)
+        self.assertDictEqual(org_unit_value_source, {
+            'doc_type': 'ConstantString',
+            'value': 'dhis2_location_id'
+        })
