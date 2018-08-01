@@ -48,6 +48,8 @@ from corehq.apps.app_manager.models import (
     Module,
     ModuleNotFoundException,
     ReportModule,
+    app_template_dir,
+    get_template_app_multimedia_paths,
     load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
@@ -69,6 +71,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     api_key_auth)
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -404,6 +407,21 @@ def app_from_template(request, domain, slug):
     app = import_app_util(template, domain, {
         'created_from_template': '%s' % slug,
     })
+
+    for path in get_template_app_multimedia_paths(slug):
+        media_class = None
+        with open(os.path.join(app_template_dir(slug), path), "rb") as f:
+            f.seek(0)
+            data = f.read()
+            media_class = CommCareMultimedia.get_class_by_data(data)
+            if media_class:
+                multimedia = media_class.get_by_data(data)
+                multimedia.attach_data(data,
+                                       original_filename=path.split(os.sep)[-1],
+                                       username=request.user.username)
+                multimedia.add_domain(domain, owner=True)
+                app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
+
     comment = _("A sample application you can try out in Web Apps")
     build = make_async_build(app, request.user.username, release=True, comment=comment)
     cloudcare_state = '{{"appId":"{}"}}'.format(build._id)

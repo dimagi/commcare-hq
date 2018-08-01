@@ -228,11 +228,29 @@ def _rename_key(dct, old, new):
         del dct[old]
 
 
+def app_template_dir(slug):
+    return os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'template_apps', slug)
+
+
 @memoized
 def load_app_template(slug):
-    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'template_apps')
-    with open(os.path.join(path, slug + '.json')) as f:
+    with open(os.path.join(app_template_dir(slug), 'app.json')) as f:
         return json.load(f)
+
+
+@memoized
+def get_template_app_multimedia_paths(slug):
+    paths = []
+    base_path = app_template_dir(slug)
+    for root, subdirs, files in os.walk(base_path):
+        subdir = os.path.relpath(root, base_path)
+        if subdir == '.':
+            continue
+        for file in files:
+            if file.startswith("."):
+                continue
+            paths.append(subdir + os.sep + file)
+    return paths
 
 
 @memoized
