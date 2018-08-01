@@ -66,7 +66,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
     def get(self, request, *args, **kwargs):
         raise Http404()
 
-    def _create_new_account(self, reg_form):
+    def _create_new_account(self, reg_form, additional_hubspot_data=None):
         activate_new_user(reg_form, ip=get_ip(self.request))
         new_user = authenticate(
             username=reg_form.cleaned_data['email'],
@@ -86,8 +86,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
             persona = reg_form.cleaned_data['persona']
             persona_other = reg_form.cleaned_data['persona_other']
-            appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(web_user.username,
-                                                              toggles.NAMESPACE_USER)
 
             track_workflow(email, "Requested New Account", {
                 'environment': settings.SERVER_ENVIRONMENT,
@@ -97,14 +95,16 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 'personaother': persona_other,
             })
 
+            if not additional_hubspot_data:
+                additional_hubspot_data = {}
+            additional_hubspot_data.update({
+                'buyer_persona': persona,
+                'buyer_persona_other': persona_other,
+            })
             track_web_user_registration_hubspot(
                 self.request,
                 web_user,
-                {
-                    'buyer_persona': persona,
-                    'buyer_persona_other': persona_other,
-                    "appcues_test": "On" if appcues_ab_test else "Off",
-                }
+                additional_hubspot_data
             )
             if not persona or (persona == 'Other' and not persona_other):
                 # There shouldn't be many instances of this.
@@ -121,7 +121,11 @@ class ProcessRegistrationView(JSONResponseMixin, View):
     def register_new_user(self, data):
         reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
-            self._create_new_account(reg_form)
+            ab_test = ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, self.request)
+            appcues_ab_test = ab_test.context['version'] == ab_tests.APPCUES_TEMPLATE_APP_OPTION_ON
+            self._create_new_account(reg_form, additional_hubspot_data={
+                "appcues_test": "On" if appcues_ab_test else "Off",
+            })
             try:
                 request_new_domain(
                     self.request, reg_form, is_new_user=True
@@ -138,8 +142,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 }
 
             username = reg_form.cleaned_data['email']
-            appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(username,
-                                                              toggles.NAMESPACE_USER)
 
             return {
                 'success': True,
@@ -178,7 +180,9 @@ class UserRegistrationView(BasePageView):
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")
-        return super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
+        response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
+        ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, request).update_response(response)
+        return response
 
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
@@ -377,15 +381,20 @@ def confirm_domain(request, guid=None):
 
     requested_domain = Domain.get_by_name(req.domain)
     view_name = "dashboard_default"
+    view_args = [requested_domain]
     if not domain_has_apps(req.domain):
-        view_name = "default_new_app"
+        if ab_tests.appcues_template_app_test(request):
+            view_name = "app_from_template"
+            view_args.append("appcues")
+        else:
+            view_name = "default_new_app"
 
     # Has guid already been confirmed?
     if requested_domain.is_active:
         assert(req.confirm_time is not None and req.confirm_ip is not None)
         messages.success(request, 'Your account %s has already been activated. '
             'No further validation is required.' % req.new_user_username)
-        return HttpResponseRedirect(reverse(view_name, args=[requested_domain]))
+        return HttpResponseRedirect(reverse(view_name, args=view_args))
 
     # Set confirm time and IP; activate domain and new user who is in the
     req.confirm_time = datetime.utcnow()
@@ -404,7 +413,7 @@ def confirm_domain(request, guid=None):
     track_workflow(requesting_user.email, "Confirmed new project")
     track_confirmed_account_on_hubspot.delay(requesting_user)
     request.session['CONFIRM'] = True
-    return HttpResponseRedirect(reverse(view_name, args=[requested_domain]))
+    return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 
 @retry_resource(3)
