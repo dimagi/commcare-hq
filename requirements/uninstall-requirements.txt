@@ -5,3 +5,4 @@ django-nose
 ddtrace
 feedparser
 meld3
+pycrypto
