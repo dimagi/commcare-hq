@@ -5137,21 +5137,20 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             settings['Build-Number'] = self.version
         return settings
 
-    def create_build_files(self, save=False, build_profile_id=None):
+    def create_build_files(self, build_profile_id=None):
         built_on = datetime.datetime.utcnow()
         all_files = self.create_all_files(build_profile_id)
-        if save:
-            self.date_created = built_on
-            self.built_on = built_on
-            self.built_with = BuildRecord(
-                version=self.build_spec.version,
-                build_number=self.version,
-                datetime=built_on,
-            )
+        self.date_created = built_on
+        self.built_on = built_on
+        self.built_with = BuildRecord(
+            version=self.build_spec.version,
+            build_number=self.version,
+            datetime=built_on,
+        )
 
-            for filepath in all_files:
-                self.lazy_put_attachment(all_files[filepath],
-                                         'files/%s' % filepath)
+        for filepath in all_files:
+            self.lazy_put_attachment(all_files[filepath],
+                                     'files/%s' % filepath)
 
     def create_jadjar_from_build_files(self, save=False):
         self.validate_jar_path()
@@ -5322,7 +5321,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             force_new_forms = True
         copy.set_form_versions(previous_version, force_new_forms)
         copy.set_media_versions(previous_version)
-        copy.create_build_files(save=True)
+        copy.create_build_files()
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
