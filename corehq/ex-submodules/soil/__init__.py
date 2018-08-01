@@ -256,12 +256,8 @@ class FileDownload(DownloadBase):
         return response
 
     @classmethod
-    def create(cls, path, **kwargs):
-        """
-        Create a FileDownload object from a payload, plus any
-        additional arguments to pass through to the constructor.
-        """
-        return cls(filename=path, **kwargs)
+    def create(cls, payload, **kwargs):
+        raise NotImplementedError
 
 
 class BlobDownload(DownloadBase):
@@ -309,9 +305,5 @@ class BlobDownload(DownloadBase):
         return response
 
     @classmethod
-    def create(cls, identifier, **kwargs):
-        """
-        Create a BlobDownload object from a payload, plus any
-        additional arguments to pass through to the constructor.
-        """
-        return cls(identifier=identifier, **kwargs)
+    def create(cls, payload, **kwargs):
+        raise NotImplementedError

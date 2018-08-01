@@ -45,7 +45,7 @@ def expose_file_download(path, expiry, **kwargs):
     """
     Expose a file download object that potentially uses the external drive
     """
-    ref = FileDownload.create(path, **kwargs)
+    ref = FileDownload(path, **kwargs)
     ref.save(expiry)
     return ref
 
@@ -59,7 +59,7 @@ def expose_blob_download(
     """
     Expose a blob object for download
     """
-    ref = BlobDownload.create(
+    ref = BlobDownload(
         identifier,
         mimetype=mimetype,
         content_disposition=content_disposition,
