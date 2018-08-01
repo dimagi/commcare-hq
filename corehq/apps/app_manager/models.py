@@ -5349,6 +5349,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def make_build(self, comment=None, user_id=None, previous_version=None):
         copy = super(ApplicationBase, self).make_build()
+        copy._all_files = self._all_files
         if not copy._id:
             # I expect this always to be the case
             # but check explicitly so as not to change the _id if it exists
