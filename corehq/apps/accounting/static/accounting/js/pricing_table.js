@@ -1,10 +1,13 @@
 hqDefine('accounting/js/pricing_table', function () {
-    var pricingTableModel = function (editions, current_edition, isRenewal) {
+    var pricingTableModel = function (editions, current_edition, isRenewal,
+                                      startDateAfterMinimumSubscription, subscriptionBelowMinimum) {
         'use strict';
         var self = {};
 
         self.currentEdition = current_edition;
         self.isRenewal = isRenewal;
+        self.startDateAfterMinimumSubscription = startDateAfterMinimumSubscription;
+        self.subscriptionBelowMinimum = subscriptionBelowMinimum;
         self.editions = ko.observableArray(_.map(editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
         }));
@@ -19,13 +22,47 @@ hqDefine('accounting/js/pricing_table', function () {
         self.selectCurrentPlan = function () {
             self.selected_edition(self.currentEdition);
         };
+        self.capitalizeString = function (s) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        };
+        self.isDowngrade = function (oldPlan, newPlan) {
+            if (oldPlan === 'Enterprise') {
+                if (newPlan === 'Enterprise' || newPlan === 'Pro' ||
+                    newPlan === 'Standard' || newPlan === 'Community') {
+                    return true
+                }
+            }
+            else if (oldPlan === 'Advanced') {
+                if (newPlan === 'Pro' || newPlan === 'Standard' || newPlan === 'Community') {
+                    return true
+                }
+            } else if (oldPlan === 'Pro') {
+                if (newPlan === 'Standard' || newPlan === 'Community') {
+                    return true
+                }
+            } else if (oldPlan === 'Standard') {
+                if (newPlan === 'Community') {
+                    return true
+                }
+            }
+            return false;
+        };
 
         self.form = undefined;
-        self.openDowngradeModal = function(pricingTable, e) {
-            var editionSlugs = _.map(self.editions(), function(e) { return e.slug(); });
+        self.openMinimumSubscriptionModal = function (pricingTable, e) {
             self.form = $(e.currentTarget).closest("form");
-            if (editionSlugs.indexOf(self.selected_edition()) < editionSlugs.indexOf(self.currentEdition)) {
-                var $modal = $("#modal-downgrade");
+
+            var oldPlan = self.capitalizeString(self.currentEdition);
+            var newPlan = self.capitalizeString(self.selected_edition());
+            var newStartDate = self.startDateAfterMinimumSubscription;
+            if (self.isDowngrade(oldPlan, newPlan) && self.subscriptionBelowMinimum) {
+                debugger;
+                var $modal = $("#modal-minimum-subscription");
+                $modal.find('.modal-body')[0].innerHTML =
+                    "CommCare bills on a monthly basis. If you cancel now, your subscription will downgrade to " +
+                    "the " + newPlan + " plan on " + newStartDate + ". Would you still like to schedule this " +
+                    "downgrade? You will still have full access to your " + oldPlan + " subscription until " +
+                    newStartDate + ".";
                 $modal.modal('show');
             } else {
                 self.form.submit();
@@ -101,13 +138,15 @@ hqDefine('accounting/js/pricing_table', function () {
             pricingTable = pricingTableModel(
                 initial_page_data('editions'),
                 initial_page_data('current_edition'),
-                initial_page_data('is_renewal')
+                initial_page_data('is_renewal'),
+                initial_page_data('start_date_after_minimum_subscription'),
+                initial_page_data('subscription_below_minimum')
             );
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
         $('#pricing-table').koApplyBindings(pricingTable);
-        $('#modal-downgrade').koApplyBindings(pricingTable);
+        $('#modal-minimum-subscription').koApplyBindings(pricingTable);
 
         pricingTable.init();
     }());
