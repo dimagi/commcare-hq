@@ -12,7 +12,13 @@ from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
+from corehq.form_processor.models import (
+    CommCareCaseSQL,
+    CommCareCaseIndexSQL,
+    CaseTransaction,
+    CaseAttachmentSQL,
+    RebuildWithReason
+)
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
@@ -290,10 +296,27 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
     def reconcile_transactions_if_necessary(self, xform):
         if not self.case.check_transaction_order():
-            self.reconcile_transactions(rebuild=True, xforms={xform.form_id: xform})
+            try:
+                self.reconcile_transactions(rebuild=True)
+            except ReconciliationError:
+                pass
 
-    def reconcile_transactions(rebuild=False, xforms=None):
-        xforms = xforms or {}
+    def reconcile_transactions(rebuild=False):
+        transactions = self.case.transactions
+        sorted_actions = sorted(
+            transactions,
+            key=_transaction_sort_key_function(self.case)
+        )
+        if sorted_transactions:
+            if sorted_transactions[0].type & const.CASE_ACTION_CREATE != sorted_transactions[0].type:
+                error = "Case {0} first transaction not create transaction: {1}"
+                raise ReconciliationError(
+                    error.format(self.case.case_id, sorted_transactions[0])
+                )
+        if rebuild:
+            rebuild_detail = RebuildWithReason(reason="client_date_reconciliation")
+            rebuild_transaction = CommCareCaseSQL.rebuild_transaction(self.case, rebuild_detail)
+            self.rebuild_from_transactions(sorted_transactions, rebuild_transaction)
 
     def _delete_old_related_models(self, original_models_by_id, models_to_keep, key="identifier"):
         for model in models_to_keep:
@@ -310,3 +333,48 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             filtered_updates = [u for u in case_updates if u.id == self.case.case_id]
             for case_update in filtered_updates:
                 self._apply_case_update(case_update, form)
+
+
+def _transaction_sort_key_function(case):
+    def _transaction_cmp(first_transaction, second_transaction):
+        # if the forms aren't submitted by the same user, just default to server dates
+        if first_transaction.user_id != second_transaction.user_id:
+            return cmp(first_transaction.server_date, second_transaction.server_date)
+        else:
+            form_ids = list(case.xform_ids)
+
+            if first_transaction.xform_id and first_transaction.xform_id == second_transaction.xform_id:
+                # short circuit if they are from the same form
+                return cmp(
+                    _type_sort(first_transaction.action_type),
+                    _type_sort(second_transaction.action_type)
+                )
+
+            def _sortkey(transaction):
+                if not transaction.server_date:
+                    raise MissingServerDate()
+
+                def form_cmp(form_id):
+                    return form_ids.index(form_id) if form_id in form_ids else sys.maxsize
+
+                # if the user is the same you should compare with the special logic below
+                # if the user is not the same you should compare just using received_on
+                return (
+                    # this is sneaky - it's designed to use just the date for the
+                    # server time in case the phone submits two forms quickly out of order
+                    transaction.server_date.date(),
+                    transaction.client_date,
+                    form_cmp(transaction.xform_id),
+                    _type_sort(transaction.action_type),
+                )
+
+            return cmp(_sortkey(first_transaction), _sortkey(second_transaction))
+
+    return cmp_to_key(_transaction_cmp)
+
+
+def _type_sort(action_type):
+    """
+    Consistent ordering for action types
+    """
+    return const.CASE_ACTIONS.index(action_type)
