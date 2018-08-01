@@ -1297,7 +1297,7 @@ class SelectPlanView(DomainAccountingSettings):
             return ""
         else:
             new_start_date = self.current_subscription.date_start + datetime.timedelta(days=30)
-            return new_start_date.strftime("%B %d")
+            return new_start_date.strftime(USER_DATE_FORMAT)
 
     @property
     def edition_name(self):
@@ -1484,6 +1484,24 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return False
 
     @property
+    def is_downgrade_before_minimum(self):
+        if self.is_upgrade:
+            return False
+        elif self.current_subscription is None or self.current_subscription.is_trial:
+            return False
+        elif self.current_subscription.date_start + datetime.timedelta(days=30) >= datetime.date.today():
+            return True
+        else:
+            return False
+
+    @property
+    def new_subscription_start_date(self):
+        if self.is_downgrade_before_minimum:
+            return self.current_subscription.date_start + datetime.timedelta(days=31)
+        else:
+            return datetime.date.today()
+
+    @property
     def next_invoice_date(self):
         # Next invoice date is the first day of the next month
         return datetime.date.today().replace(day=1) + dateutil.relativedelta.relativedelta(months=1)
@@ -1504,12 +1522,14 @@ class ConfirmSelectedPlanView(SelectPlanView):
     def page_context(self):
         return {
             'is_upgrade': self.is_upgrade,
-            'next_invoice_date': self.next_invoice_date.strftime('%B %d'),
+            'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'downgrade_messages': self.downgrade_messages,
             'current_plan': (self.current_subscription.plan_version.user_facing_description
                              if self.current_subscription is not None else None),
             'show_community_notice': (self.edition == SoftwarePlanEdition.COMMUNITY
                                       and self.current_subscription is None),
+            'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
+            'new_subscription_start_date': self.new_subscription_start_date.strftime(USER_DATE_FORMAT)
         }
 
     @property
