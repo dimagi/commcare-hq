@@ -711,13 +711,6 @@ class SQLLocation(AdjListModel):
         # For backwards compatability
         return self
 
-    @property
-    def related_location_ids(self):
-        a = LocationRelation.objects.filter(location_a=self.location_id).values_list('location_b', flat=True)
-        b = LocationRelation.objects.filter(location_b=self.location_id).values_list('location_a', flat=True)
-
-        return set(a).union(set(b))
-
 
 def filter_for_archived(locations, include_archive_ancestors):
     """

@@ -13,7 +13,12 @@ import six
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.fixtures.utils import get_index_schema_node
-from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
+from corehq.apps.locations.models import (
+    LocationFixtureConfiguration,
+    LocationRelation,
+    LocationType,
+    SQLLocation,
+)
 from corehq import toggles
 
 
@@ -229,8 +234,9 @@ class RelatedLocationsFixtureProvider(FixtureProvider):
             return []
 
         restore_user = restore_state.restore_user
-        primary_location = restore_user.get_commtrack_location_id()
-        related_location_ids = SQLLocation.objects.get(location_id=primary_location).related_location_ids
+        user_locations = restore_user.get_sql_locations(restore_user.domain)
+        user_location_ids = user_locations.values_list('location_id', flat=True)
+        related_location_ids = LocationRelation.to_locations(user_location_ids)
         related_location_pks = (
             SQLLocation.objects.filter(location_id__in=related_location_ids)
             .values_list('pk', flat=True)

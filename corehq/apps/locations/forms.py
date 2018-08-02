@@ -633,7 +633,9 @@ class RelatedLocationForm(forms.Form):
     def __init__(self, domain, location, *args, **kwargs):
         self.location = location
         kwargs['initial'] = {
-            'related_locations': ','.join(location.related_location_ids)
+            'related_locations': ','.join(
+                LocationRelation.to_locations([self.location.location_id])
+            )
         }
         super(RelatedLocationForm, self).__init__(*args, **kwargs)
 
@@ -651,8 +653,11 @@ class RelatedLocationForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self):
-        selected_location_ids = set(self.cleaned_data['related_locations'].split(','))
-        previous_locations = self.location.related_location_ids
+        selected_location_ids = set()
+        if self.cleaned_data['related_locations']:
+            # ''.split(',') == ['']
+            selected_location_ids = set(self.cleaned_data['related_locations'].split(','))
+        previous_locations = LocationRelation.to_locations([self.location.location_id])
         locations_to_add = selected_location_ids - previous_locations
         locations_to_remove = previous_locations - selected_location_ids
 
