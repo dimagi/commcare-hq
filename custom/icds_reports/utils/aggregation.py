@@ -1804,7 +1804,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             "start_date": self.month
         }
 
-    def rollup_query(self):
+    def rollup_query(self, aggregation_level):
         columns = (
             ('state_id', 'state_id'),
             ('district_id', lambda col: col if aggregation_level > 1 else "'All'"),
