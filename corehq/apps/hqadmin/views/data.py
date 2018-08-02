@@ -178,5 +178,4 @@ def raw_doc(request):
 
     other_couch_dbs = sorted([_f for _f in couch_config.all_dbs_by_slug if _f])
     context['all_databases'] = ['commcarehq'] + other_couch_dbs + list(_SQL_DBS)
-    context['use_code_mirror'] = request.GET.get('code_mirror', 'true').lower() == 'true'
     return render(request, "hqadmin/raw_couch.html", context)
