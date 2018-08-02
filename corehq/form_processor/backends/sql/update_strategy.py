@@ -30,7 +30,7 @@ from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
 from corehq.util.soft_assert import soft_assert
-
+reconciliation_soft_assert = soft_assert('jroth@dimagi.com', include_breadcrumbs=True)
 
 def _validate_length(length):
     def __inner(value):
@@ -301,11 +301,12 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             self.case.modified_on = rebuild_transaction.server_date
 
     def reconcile_transactions_if_necessary(self, xform):
-        if not self.case.check_transaction_order():
-            try:
-                self.reconcile_transactions()
-            except ReconciliationError:
-                pass
+        if self.case.check_transaction_order():
+            return
+        try:
+            self.reconcile_transactions()
+        except ReconciliationError as e:
+            reconciliation_soft_assert(False, e.message)
 
     def reconcile_transactions(self):
         transactions = self.case.transactions
