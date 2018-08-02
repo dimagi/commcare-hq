@@ -898,7 +898,10 @@ class Command(BaseCommand):
             return None
 
         if handler.use_today_if_start_date_is_blank and handler.active and handler.start_date:
-            return None
+            if not self.confirm(
+                "Ok to treat use_today_if_start_date_is_blank as False for %s? y/n " % handler._id
+            ):
+                return None
 
         if handler.reminder_type == REMINDER_TYPE_DEFAULT:
             for event in handler.events:
