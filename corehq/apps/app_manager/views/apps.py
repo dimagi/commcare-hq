@@ -417,7 +417,7 @@ def app_from_template(request, domain, slug):
             if media_class:
                 multimedia = media_class.get_by_data(data)
                 multimedia.attach_data(data,
-                                       original_filename=path.split(os.sep)[-1],
+                                       original_filename=os.path.basename(path),
                                        username=request.user.username)
                 multimedia.add_domain(domain, owner=True)
                 app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
