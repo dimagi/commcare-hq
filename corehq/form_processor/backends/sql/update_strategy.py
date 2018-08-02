@@ -342,13 +342,12 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
 
 def _transaction_sort_key_function(case):
+    xform_ids = list(case.xform_ids)
     def _transaction_cmp(first_transaction, second_transaction):
         # if the forms aren't submitted by the same user, just default to server dates
         if first_transaction.user_id != second_transaction.user_id:
             return cmp(first_transaction.server_date, second_transaction.server_date)
         else:
-            form_ids = list(case.xform_ids)
-
             if first_transaction.xform_id and first_transaction.xform_id == second_transaction.xform_id:
                 # short circuit if they are from the same form
                 return cmp(
@@ -361,7 +360,7 @@ def _transaction_sort_key_function(case):
                     raise MissingServerDate()
 
                 def form_cmp(form_id):
-                    return form_ids.index(form_id) if form_id in form_ids else sys.maxsize
+                    return xform_ids.index(form_id) if form_id in xform_ids else sys.maxsize
 
                 # if the user is the same you should compare with the special logic below
                 # if the user is not the same you should compare just using received_on
