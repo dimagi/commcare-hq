@@ -194,14 +194,19 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                           .size(self.pagination.count)
                           .start(self.pagination.start))
         if self.selected_app_id:
-            # selecting reporting_metadata.last_sudmission.app_id
-            # as filter term to filter users by selected app_id.
-            filter_path = 'reporting_metadata.last_submissions'
-            filter_term = 'reporting_metadata.last_submissions.app_id'
-            user_query = user_query.nested(
-                filter_path,
-                filters.term(filter_term, self.selected_app_id)
-            )
+            # adding nested filter for reporting_metadata.last_submissions.app_id
+            # and reporting_metadata.last_syncs.app_id when app is selected
+            last_submission_filter =  filters.nested('reporting_metadata.last_submissions',
+                                                     filters.term('reporting_metadata.last_submissions.app_id',
+                                                                  self.selected_app_id)
+                                                    )
+            last_sync_filter = filters.nested('reporting_metadata.last_syncs',
+                                              filters.term("reporting_metadata.last_syncs.app_id",
+                                                           self.selected_app_id)
+                                              )
+            user_query = user_query.OR(last_submission_filter,
+                                       last_sync_filter
+                                       )
         return user_query
 
     def process_rows(self, users, fmt_for_export=False):
