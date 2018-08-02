@@ -26,6 +26,7 @@ from corehq.form_processor.models import (
     CaseAttachmentSQL,
     RebuildWithReason
 )
+from corehq.form_processor.utils.sql import fetch_case_transaction_forms
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
@@ -321,6 +322,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     error.format(self.case.case_id, sorted_transactions[0])
                 )
 
+        sorted_transactions = fetch_case_transaction_forms(sorted_transactions)
         rebuild_detail = RebuildWithReason(reason="client_date_reconciliation")
         rebuild_transaction = CommCareCaseSQL.rebuild_transaction(self.case, rebuild_detail)
         self.rebuild_from_transactions(sorted_transactions, rebuild_transaction)
