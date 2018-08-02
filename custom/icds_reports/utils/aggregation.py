@@ -1712,6 +1712,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
+        self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
 
     @property
     def ccs_record_monthly_ucr_tablename(self):

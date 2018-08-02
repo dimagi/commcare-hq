@@ -31,7 +31,9 @@ from custom.icds_reports.utils.aggregation import (
     THRFormsChildHealthAggregationHelper,
     THRFormsCcsRecordAggregationHelper,
     InactiveAwwsAggregationHelper,
-    DeliveryFormsAggregationHelper
+    DeliveryFormsAggregationHelper,
+    AggCcsRecordAggregationHelper,
+    CcsRecordMonthlyAggregationHelper
 )
 from six.moves import range
 
@@ -124,6 +126,19 @@ class CcsRecordMonthly(models.Model):
     class Meta(object):
         managed = False
         db_table = 'ccs_record_monthly'
+
+    @classmethod
+    def aggregate(cls, month):
+        helper = CcsRecordMonthlyAggregationHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        index_queries = helper.indexes()
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic():
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(agg_query, agg_params)
+                for query in index_queries:
+                    cursor.execute(query)
 
 
 class AwcLocation(models.Model):
@@ -446,6 +461,23 @@ class AggCcsRecord(models.Model):
     class Meta:
         managed = False
         db_table = 'agg_ccs_record'
+
+    @classmethod
+    def aggregate(cls, month):
+        helper = AggCcsRecordAggregationHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic():
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(agg_query, agg_params)
+                for query in rollup_queries:
+                    cursor.execute(query)
+                for query in index_queries:
+                    cursor.execute(query)
 
 
 class AggChildHealth(models.Model):

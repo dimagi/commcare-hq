@@ -44,6 +44,7 @@ from custom.icds_reports.const import DASHBOARD_DOMAIN, CHILDREN_EXPORT, PREGNAN
 from custom.icds_reports.models import (
     AggChildHealth,
     AggChildHealthMonthly,
+    AggCcsRecord,
     AggregateBirthPreparednesForms,
     AggregateCcsRecordTHRForms,
     AggregateCcsRecordDeliveryForms,
@@ -54,6 +55,7 @@ from custom.icds_reports.models import (
     AggregateChildHealthPostnatalCareForms,
     AggregateChildHealthTHRForms,
     ChildHealthMonthly,
+    CcsRecordMonthly,
     UcrTableNameMapping)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
@@ -112,9 +114,7 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'insert_into_ccs_record_monthly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_ccs_record.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
@@ -407,9 +407,8 @@ def _child_health_monthly_table(day):
 def _ccs_record_monthly_table(day):
     _run_custom_sql_script([
         "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
-        "SELECT insert_into_ccs_record_monthly(%s)"
     ], day)
-
+    CcsRecordMonthly.aggregate(force_to_date(day))
 
 @track_time
 def _daily_attendance_table(day):
@@ -432,8 +431,8 @@ def _agg_child_health_table(day):
 def _agg_ccs_record_table(day):
     _run_custom_sql_script([
         "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
-        "SELECT aggregate_ccs_record(%s)"
     ], day)
+    AggCcsRecord.aggregate(force_to_date(day))
 
 
 @track_time
