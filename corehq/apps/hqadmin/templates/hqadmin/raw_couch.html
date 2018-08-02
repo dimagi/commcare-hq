@@ -12,13 +12,10 @@
 
         {% javascript_libraries %}
 
-        {% if use_code_mirror %}
         <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
         <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
         <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
         <script src="{% static 'hqadmin/js/raw_couch.js' %}"></script>
-        {% endif %}
-
     </head>
     <body>
         <div class="container-fluid">
