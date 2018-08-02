@@ -101,21 +101,19 @@ class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
 
 class CaseTransactionActionSerializer(serializers.ModelSerializer):
     xform_id = serializers.CharField(source='form_id')
-    date = serializers.DateTimeField(source='server_date')
-    client_date = serializers.DateTimeField()
+    date = serializers.DateTimeField(source='client_date')
 
     class Meta(object):
         model = CaseTransaction
-        fields = ('xform_id', 'server_date', 'client_date', 'date', 'sync_log_id')
+        fields = ('xform_id', 'server_date', 'date', 'sync_log_id')
 
 
 class CaseTransactionActionRawDocSerializer(JsonFieldSerializerMixin, CaseTransactionActionSerializer):
     type = serializers.CharField(source='readable_type')
-    client_date = serializers.DateTimeField()
 
     class Meta(object):
         model = CaseTransaction
-        fields = ('form_id', 'server_date', 'client_date', 'date', 'sync_log_id', 'type', 'details')
+        fields = ('form_id', 'server_date', 'date', 'sync_log_id', 'type', 'details')
 
 
 class CommCareCaseSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
