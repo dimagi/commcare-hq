@@ -9,6 +9,7 @@ from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.userreports.ui.fields import JsonField
@@ -78,3 +79,13 @@ class Dhis2ConfigForm(forms.Form):
         super(Dhis2ConfigForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', _('Save Changes')))
+
+    def clean_form_configs(self):
+        for form_config in self.cleaned_data['form_configs']:
+            if not form_config['datavalue_maps']:
+                raise ValidationError(
+                    '"datavalue_maps" is empty for form "{}". Please map CommCare values to OpenMRS data '
+                    'elements.'.format(form_config['xmlns'])
+                )
+
+        return self.cleaned_data['form_configs']
