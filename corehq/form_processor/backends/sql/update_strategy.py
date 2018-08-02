@@ -1,13 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
+import sys
 from collections import defaultdict
+from functools import cmp_to_key
 
 from iso8601 import iso8601
-
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
-from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported, CaseValueError
+from casexml.apps.case.exceptions import (
+    UsesReferrals,
+    VersionNotSupported,
+    CaseValueError,
+    ReconciliationError,
+    MissingServerDate
+)
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
@@ -301,9 +308,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             except ReconciliationError:
                 pass
 
-    def reconcile_transactions(rebuild=False):
+    def reconcile_transactions(self, rebuild=False):
         transactions = self.case.transactions
-        sorted_actions = sorted(
+        sorted_transactions = sorted(
             transactions,
             key=_transaction_sort_key_function(self.case)
         )
@@ -346,8 +353,8 @@ def _transaction_sort_key_function(case):
             if first_transaction.xform_id and first_transaction.xform_id == second_transaction.xform_id:
                 # short circuit if they are from the same form
                 return cmp(
-                    _type_sort(first_transaction.action_type),
-                    _type_sort(second_transaction.action_type)
+                    _type_sort(first_transaction.type),
+                    _type_sort(second_transaction.type)
                 )
 
             def _sortkey(transaction):
@@ -365,7 +372,7 @@ def _transaction_sort_key_function(case):
                     transaction.server_date.date(),
                     transaction.client_date,
                     form_cmp(transaction.xform_id),
-                    _type_sort(transaction.action_type),
+                    _type_sort(transaction.type),
                 )
 
             return cmp(_sortkey(first_transaction), _sortkey(second_transaction))
