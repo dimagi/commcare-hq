@@ -5582,14 +5582,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
                 if not force_new_version:
-                    form_version = None
                     try:
                         previous_form = previous_version.get_form(form.unique_id)
                         # take the previous version's compiled form as-is
                         # (generation code may have changed since last build)
                         previous_source = previous_version.fetch_attachment(filename)
                     except (ResourceNotFound, FormNotFoundException):
-                        pass
+                        form.version = None
                     else:
                         previous_hash = _hash(previous_source)
 
@@ -5598,10 +5597,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         previous_form_version = previous_form.get_version()
                         form.version = previous_form_version
                         my_hash = _hash(self.fetch_xform(form=form))
-                        if previous_hash == my_hash:
-                            form_version = previous_form_version
-
-                    form.version = form_version
+                        if previous_hash != my_hash:
+                            form.version = None
                 else:
                     form.version = None
 
