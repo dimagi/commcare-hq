@@ -1495,9 +1495,9 @@ class ConfirmSelectedPlanView(SelectPlanView):
             return False
 
     @property
-    def new_subscription_start_date(self):
+    def current_subscription_end_date(self):
         if self.is_downgrade_before_minimum:
-            return self.current_subscription.date_start + datetime.timedelta(days=31)
+            return self.current_subscription.date_start + datetime.timedelta(days=30)
         else:
             return datetime.date.today()
 
@@ -1529,7 +1529,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
             'show_community_notice': (self.edition == SoftwarePlanEdition.COMMUNITY
                                       and self.current_subscription is None),
             'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
-            'new_subscription_start_date': self.new_subscription_start_date.strftime(USER_DATE_FORMAT)
+            'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT)
         }
 
     @property
