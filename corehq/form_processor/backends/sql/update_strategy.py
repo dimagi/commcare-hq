@@ -86,11 +86,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     @staticmethod
     def add_transaction_for_form(case, case_update, form):
         types = [CaseTransaction.type_from_action_type_slug(a.action_type_slug) for a in case_update.actions]
-        transaction = CaseTransaction.form_transaction(case, form, types)
+        transaction = CaseTransaction.form_transaction(case, form, case_update.guess_modified_on(), types)
         for trans in case.get_tracked_models_to_create(CaseTransaction):
             if transaction == trans:
                 trans.type |= transaction.type
-                trans.client_date = case_update.guess_modified_on()
                 break
         else:
             case.track_create(transaction)

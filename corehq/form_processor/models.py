@@ -1245,7 +1245,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         return not self.__eq__(other)
 
     @classmethod
-    def form_transaction(cls, case, xform, action_types=None):
+    def form_transaction(cls, case, xform, client_date, action_types=None):
         action_types = action_types or []
 
         if any([not cls._valid_action_type(action_type) for action_type in action_types]):
@@ -1255,7 +1255,11 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
         for action_type in action_types:
             type_ |= action_type
-        return cls._from_form(case, xform, transaction_type=type_)
+
+        transaction = cls._from_form(case, xform, client_date, transaction_type=type_)
+        transaction.client_date = client_date
+
+        return transaction
 
     @classmethod
     def _valid_action_type(cls, action_type):
