@@ -61,17 +61,16 @@
             <strong>{{ p }} Software Plan </strong> through {{ current_subscription_end_date }}.</p>
             {% endblocktrans %}
         </div>
-        {% endif %}
-        {% if is_downgrade_before_minimum %}
+        {% elif is_downgrade_before_minimum %}
         <hr />
         <div class="alert alert-danger">
             {% blocktrans with current_plan.name as p %}
             <h4>Note: Continuing will change your current subscription.</h4>
             <p>We’re sorry to see you go! You’ll have access to the features on your
-                <strong>{{ p }} Software Plan </strong></p> through {{ new_subscription_start_date }}.
+                <strong>{{ p }} Software Plan </strong></p> through {{ current_subscription_end_date }}.
                 If you’d like to continue using CommCare’s paid features, you can
                 <a href="https://www.commcarehq.org/a/project-space/settings/project/subscription/change/">renew</a>
-                your subscription at any time before {{ new_subscription_start_date }}.
+                your subscription at any time before {{ current_subscription_end_date }}.
             {% endblocktrans %}
         </div>
         {% else %}
