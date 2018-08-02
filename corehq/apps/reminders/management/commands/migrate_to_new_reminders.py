@@ -704,9 +704,6 @@ class Command(BaseCommand):
         if handler.active and handler.uses_parent_case_property:
             return None
 
-        if handler.active and handler.start_date and handler.use_today_if_start_date_is_blank:
-            return None
-
         return migrate_rule
 
     def get_rule_schedule_migration_function(self, handler):
