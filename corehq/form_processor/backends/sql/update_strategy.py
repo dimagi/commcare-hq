@@ -303,11 +303,11 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def reconcile_transactions_if_necessary(self, xform):
         if not self.case.check_transaction_order():
             try:
-                self.reconcile_transactions(rebuild=True)
+                self.reconcile_transactions()
             except ReconciliationError:
                 pass
 
-    def reconcile_transactions(self, rebuild=False):
+    def reconcile_transactions(self):
         transactions = self.case.transactions
         sorted_transactions = sorted(
             transactions,
@@ -319,10 +319,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 raise ReconciliationError(
                     error.format(self.case.case_id, sorted_transactions[0])
                 )
-        if rebuild:
-            rebuild_detail = RebuildWithReason(reason="client_date_reconciliation")
-            rebuild_transaction = CommCareCaseSQL.rebuild_transaction(self.case, rebuild_detail)
-            self.rebuild_from_transactions(sorted_transactions, rebuild_transaction)
+
+        rebuild_detail = RebuildWithReason(reason="client_date_reconciliation")
+        rebuild_transaction = CommCareCaseSQL.rebuild_transaction(self.case, rebuild_detail)
+        self.rebuild_from_transactions(sorted_transactions, rebuild_transaction)
 
     def _delete_old_related_models(self, original_models_by_id, models_to_keep, key="identifier"):
         for model in models_to_keep:
