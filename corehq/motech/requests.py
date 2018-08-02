@@ -92,6 +92,9 @@ def parse_request_exception(err):
         url=err.request.url,
         body=err.request.body
     ) if err.request.body else ' '.join((err.request.method, err.request.url))
-    err_content = pformat_json(err.response.content)  # pformat_json returns non-JSON values unchanged
-    err_response = '\n\n'.join((str(err), err_content))
+    if err.response:
+        err_content = pformat_json(err.response.content)  # pformat_json returns non-JSON values unchanged
+        err_response = '\n\n'.join((str(err), err_content))
+    else:
+        err_response = str(err)
     return err_request, err_response
