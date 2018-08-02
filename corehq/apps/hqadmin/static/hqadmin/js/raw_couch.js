@@ -1,4 +1,4 @@
-/* globals CodeMirror, hqDefine */
+/* globals ace, hqDefine */
 hqDefine('hqadmin/js/raw_couch', function () {
     $(function() {
         var $element = $("#couch-document");
@@ -15,6 +15,6 @@ hqDefine('hqadmin/js/raw_couch', function () {
         );
         editor.session.setMode('ace/mode/json');
         editor.setReadOnly(true);
-        editor.session.setValue(JSON.stringify($("#couch-document").data('doc'), null, 4));
+        editor.session.setValue(JSON.stringify($element.data('doc'), null, 4));
     });
 });
