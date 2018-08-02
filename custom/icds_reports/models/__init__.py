@@ -17,7 +17,8 @@ from custom.icds_reports.models.aggregate import (
     AggregateCcsRecordTHRForms,
     AggregateCcsRecordDeliveryForms,
     AggregateBirthPreparednesForms,
-    AggregateInactiveAWW
+    AggregateInactiveAWW,
+    AggregateAwcInfrastructureForms,
 )
 from custom.icds_reports.models.views import (
     AggAwcDailyView,

@@ -58,7 +58,7 @@ from corehq.messaging.scheduling.views import (
     CreateConditionalAlertView,
     EditConditionalAlertView,
 )
-from corehq.messaging.util import show_messaging_dashboard
+from corehq.messaging.util import show_messaging_dashboard, project_is_on_new_reminders
 from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
 from corehq.motech.views import MotechLogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
@@ -966,7 +966,7 @@ class MessagingTab(UITab):
     @memoized
     def show_new_reminders_pages(self):
         return (
-            self.project.uses_new_reminders or
+            project_is_on_new_reminders(self.project) or
             toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
         )
 
@@ -974,7 +974,7 @@ class MessagingTab(UITab):
     @memoized
     def show_old_reminders_pages(self):
         return (
-            not self.project.uses_new_reminders or
+            not project_is_on_new_reminders(self.project) or
             toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
         )
 
@@ -1626,15 +1626,18 @@ def _get_integration_section(domain):
         }, {
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
-        }, {
-            'title': _(MotechLogListView.page_title),
-            'url': reverse(MotechLogListView.urlname, args=[domain])
         }])
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
         integration.append({
             'title': _(OpenmrsImporterView.page_title),
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
+        })
+
+    if toggles.DHIS2_INTEGRATION.enabled(domain) or toggles.OPENMRS_INTEGRATION.enabled(domain):
+        integration.append({
+            'title': _(MotechLogListView.page_title),
+            'url': reverse(MotechLogListView.urlname, args=[domain])
         })
 
     return integration

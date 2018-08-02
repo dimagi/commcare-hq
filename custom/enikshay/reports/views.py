@@ -3,16 +3,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.http.response import JsonResponse
 from django.utils.decorators import method_decorator
-from django.shortcuts import render
-from django.views.generic.base import View, TemplateView
+from django.views.generic.base import View
 
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.es import CaseES
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext, LocationChoiceProvider
-from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_PERSON
-from custom.enikshay.duplicate_ids import get_duplicated_case_stubs, add_debug_info_to_cases
 from custom.enikshay.reports.utils import StubReport
 from custom.enikshay.reports.choice_providers import DistrictChoiceProvider
 

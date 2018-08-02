@@ -54,6 +54,7 @@ from custom.icds_reports.models import (
     AggregateChildHealthDailyFeedingForms,
     AggregateChildHealthPostnatalCareForms,
     AggregateChildHealthTHRForms,
+    AggregateAwcInfrastructureForms,
     ChildHealthMonthly,
     CcsRecordMonthly,
     UcrTableNameMapping)
@@ -197,6 +198,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 icds_state_aggregation_task.si(
                     state_id=state_id, date=monthly_date, func=_aggregate_bp_forms
                 ) for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_awc_infra_forms)
+                for state_id in state_ids
             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
             res = group(*stage_1_tasks).apply_async()
@@ -357,6 +362,11 @@ def _aggregate_pnc_forms(state_id, day):
 def _aggregate_thr_forms(state_id, day):
     AggregateChildHealthTHRForms.aggregate(state_id, day)
     AggregateCcsRecordTHRForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_awc_infra_forms(state_id, day):
+    AggregateAwcInfrastructureForms.aggregate(state_id, day)
 
 
 @track_time
