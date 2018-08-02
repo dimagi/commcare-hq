@@ -6,11 +6,12 @@ CREATE FUNCTION compare_server_client_case_transaction_order(
 BEGIN
     RETURN (
         WITH transaction_orders AS (
-            SELECT
-                ROW_NUMBER() OVER (ORDER BY server_date) ordinal_by_server_date,
-                ROW_NUMBER() OVER (ORDER BY client_date) ordinal_by_client_date
+            SELECT ROW_NUMBER() OVER (ORDER BY server_date) ordinal_by_server_date,
+                   ROW_NUMBER() OVER (ORDER BY client_date) ordinal_by_client_date
             FROM form_processor_casetransaction
             WHERE case_id = _case_id
+                  AND client_date IS NOT NULL
+                  AND server_date IS NOT NULL
         )
         SELECT NOT EXISTS (
             SELECT *
