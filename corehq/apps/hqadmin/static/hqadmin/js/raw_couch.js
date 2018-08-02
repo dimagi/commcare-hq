@@ -1,22 +1,20 @@
 /* globals CodeMirror, hqDefine */
 hqDefine('hqadmin/js/raw_couch', function () {
     $(function() {
-        // don't break if offline (Also why I left it as a <pre/>)
-        if (window.CodeMirror) {
-            var couchDocElement = document.getElementById('couch-document');
-            if (couchDocElement) {
-                CodeMirror(function(elt) {
-                    couchDocElement.parentNode.replaceChild(elt, couchDocElement);
-                }, {
-                    value: couchDocElement.textContent,
-                    readOnly: true,
-                    lineNumbers: true,
-                    mode: {name: "javascript", json: true},
-                    viewportMargin: Infinity,
-                    foldGutter: true,
-                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-                });
+        var $element = $("#couch-document");
+        var editor = ace.edit(
+            $element.get(0),
+            {
+                showPrintMargin: false,
+                maxLines: 40,
+                minLines: 3,
+                fontSize: 14,
+                wrap: true,
+                useWorker: false,
             }
-        }
+        );
+        editor.session.setMode('ace/mode/json');
+        editor.setReadOnly(true);
+        editor.session.setValue(JSON.stringify($("#couch-document").data('doc'), null, 4));
     });
 });

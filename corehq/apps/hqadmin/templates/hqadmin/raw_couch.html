@@ -12,23 +12,12 @@
 
         {% javascript_libraries %}
 
-        {# CodeMirror uses granular resources as a means of config #}
         {% if use_code_mirror %}
-        <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
-        <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
-        <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
-        <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
-        <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
-        <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
-        <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
+        <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
+        <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
+        <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
         <script src="{% static 'hqadmin/js/raw_couch.js' %}"></script>
         {% endif %}
-
-        <style>
-            .CodeMirror {
-                height: auto;
-            }
-        </style>
 
     </head>
     <body>
@@ -84,7 +73,7 @@
                     <a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
                     <div>
                         <h3>Raw Doc:</h3>
-                        <pre id="couch-document">{{ doc }}</pre>
+                        <pre id="couch-document" data-doc="{% html_attr doc %}"></pre>
                     </div>
                 </div>
             </div>
