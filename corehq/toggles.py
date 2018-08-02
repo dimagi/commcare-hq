@@ -1612,4 +1612,5 @@ RELATED_LOCATIONS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['jemord'],
+    help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
 )
