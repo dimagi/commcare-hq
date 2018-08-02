@@ -196,9 +196,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         if self.selected_app_id:
             # adding nested filter for reporting_metadata.last_submissions.app_id
             # and reporting_metadata.last_syncs.app_id when app is selected
-            last_submission_filter =  filters.nested('reporting_metadata.last_submissions',
-                                                     filters.term('reporting_metadata.last_submissions.app_id',
-                                                                  self.selected_app_id)
+            last_submission_filter = filters.nested('reporting_metadata.last_submissions',
+                                                    filters.term('reporting_metadata.last_submissions.app_id',
+                                                                 self.selected_app_id)
                                                     )
             last_sync_filter = filters.nested('reporting_metadata.last_syncs',
                                               filters.term("reporting_metadata.last_syncs.app_id",
