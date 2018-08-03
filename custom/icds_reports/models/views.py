@@ -57,6 +57,11 @@ class AggAwcDailyView(models.Model):
 
 
 class DailyAttendanceView(models.Model):
+    """Contains one row for every day that an AWC has submiteed a Daily Feeding form.
+
+    If an AWC has submitted multiple forms for a day, the form that was submitted last
+    is the one reported.
+    """
     awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
@@ -78,16 +83,28 @@ class DailyAttendanceView(models.Model):
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     doc_id = models.TextField(blank=True, null=True)
-    pse_date = models.DateField(blank=True, null=True)
-    awc_open_count = models.IntegerField(blank=True, null=True)
-    count = models.IntegerField(blank=True, null=True)
-    eligible_children = models.IntegerField(blank=True, null=True)
-    attended_children = models.IntegerField(blank=True, null=True)
-    attended_children_percent = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
-    form_location = models.TextField(blank=True, null=True)
-    form_location_lat = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
-    form_location_long = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
-    image_name = models.TextField(blank=True, null=True)
+    pse_date = models.DateField(blank=True, null=True, help_text="Date on phone when form was completed")
+    awc_open_count = models.IntegerField(
+        blank=True, null=True,
+        help_text="awc_opened_aww = 'yes' OR awc_opened_someone_else = 'yes'"
+    )
+    count = models.IntegerField(blank=True, null=True, help_text="not used")
+    eligible_children = models.IntegerField(blank=True, null=True, help_text="/form/num_children")
+    attended_children = models.IntegerField(blank=True, null=True, help_text="/form/num_attended_children")
+    attended_children_percent = models.DecimalField(
+        max_digits=65535, decimal_places=65535, blank=True, null=True,
+        help_text="attended_children / eligible_children"
+    )
+    form_location = models.TextField(blank=True, null=True, help_text='not used')
+    form_location_lat = models.DecimalField(
+        max_digits=65535, decimal_places=65535, blank=True, null=True,
+        help_text="Latitude of form submission"
+    )
+    form_location_long = models.DecimalField(
+        max_digits=65535, decimal_places=65535, blank=True, null=True,
+        help_text="Longitude of form submission"
+    )
+    image_name = models.TextField(blank=True, null=True, help_text="/form/photo_children_present")
 
     class Meta(object):
         app_label = 'icds_model'
@@ -599,4 +616,3 @@ class AwcLocationMonths(models.Model):
         app_label = 'icds_model'
         managed = False
         db_table = 'awc_location_months'
-
