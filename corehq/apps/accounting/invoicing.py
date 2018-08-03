@@ -13,7 +13,7 @@ from django.utils.translation import ugettext as _, ungettext
 
 from memoized import memoized
 
-from corehq.util.dates import get_first_last_days, get_previous_month_date_range
+from corehq.util.dates import get_previous_month_date_range
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
