@@ -21,7 +21,6 @@ from couchdbkit import ResourceConflict
 
 from casexml.apps.phone.fixtures import generator
 from corehq.apps.users.util import format_username
-from custom.enikshay.login_as_context import get_enikshay_login_as_context
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base
 from xml2json.lib import xml2json
@@ -304,12 +303,6 @@ class LoginAsUsers(View):
 
     def _user_query(self, search_string, page, limit):
         user_data_fields = []
-        if toggles.ENIKSHAY.enabled(self.domain):
-            user_data_fields = [
-                'id_issuer_number',
-                'id_issuer_body',
-                'agency_id_legacy',
-            ]
         return login_as_user_query(
             self.domain,
             self.couch_user,
@@ -330,10 +323,6 @@ class LoginAsUsers(View):
             'user_id': user.user_id,
             'location': user.sql_location.to_json() if user.sql_location else None,
         }
-        if toggles.ENIKSHAY.enabled(self.domain):
-            formatted_user.update({
-                'enikshay': get_enikshay_login_as_context(user)
-            })
         return formatted_user
 
 
