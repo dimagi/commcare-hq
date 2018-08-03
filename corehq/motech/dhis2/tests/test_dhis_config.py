@@ -23,6 +23,21 @@ class TestDhisConfigValidation(SimpleTestCase):
     def tearDown(self):
         Dhis2Repeater.set_db(self.db)
 
+    def test_form_validation(self):
+        config = {
+            'form_configs': [{}]
+        }
+        form = Dhis2ConfigForm(data=config)
+        self.assertFalse(form.is_valid())
+        self.assertDictEqual(form.errors, {
+            'form_configs': [
+                'The "program_id" property is required. Please specify the DHIS2 Program of the event.',
+                'The "event_date" property is required. Please provide a FormQuestion, FormQuestionMap or '
+                'ConstantString to determine the date of the event.',
+                'The "datavalue_maps" property is required. Please map CommCare values to OpenMRS data elements.'
+            ]
+        })
+
     def test_empty_json(self):
         config = {
             'form_configs': [{}]
