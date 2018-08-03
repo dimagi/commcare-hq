@@ -942,14 +942,6 @@ NINETYNINE_DOTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ENIKSHAY_API = StaticToggle(
-    'enikshay_api',
-    'Enikshay: Enable access to eNikshay api endpoints',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    always_enabled={"enikshay"},
-)
-
 NIKSHAY_INTEGRATION = StaticToggle(
     'nikshay_integration',
     'Enikshay: Enable patient registration in Nikshay',
@@ -1285,15 +1277,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
         "other reports - by individual user, group, or location.  Note that this "
         "will also force the report to always display by user."
     ),
-)
-
-ENIKSHAY = StaticToggle(
-    'enikshay',
-    "Enikshay: Enable custom enikshay functionality: additional user and location validation",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'enikshay'},
-    relevant_environments={'enikshay'},
 )
 
 ICDS = StaticToggle(
