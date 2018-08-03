@@ -58,6 +58,12 @@
                 {% endblocktrans %}
             </p>
             {% endif %}
+            <div>
+                <label>
+                    Languages Linked:
+                    <input type="checkbox" data-bind="checked: languagesLinked" />
+                </label>
+            </div>
         </div>
     </div>
     <div class="form-group" data-bind="visible: showCustomPath">
@@ -69,6 +75,9 @@
             <input type="hidden" class="jr-resource-field"
                    name="{{ qualifier|default_if_none:"" }}media_{{ type }}"
                    data-bind="value: savedPath" />
+            <input type="hidden"
+                   name="{{type}}_languages_linked"
+                   data-bind="value: languagesLinked" />
         </div>
         <div class="col-sm-1">
             <button type="button" class="btn btn-default"

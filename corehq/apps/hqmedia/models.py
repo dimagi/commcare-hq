@@ -445,10 +445,9 @@ class ApplicationMediaReference(object):
         Useful info for user-facing things.
     """
 
-    def __init__(self, path,
-                 module_id=None, module_name=None,
-                 form_id=None, form_name=None, form_order=None,
-                 media_class=None, is_menu_media=False, app_lang=None):
+    def __init__(self, path, module_id=None, module_name=None, form_id=None,
+                 form_name=None, form_order=None, media_class=None,
+                 is_menu_media=False, app_lang=None, languages_linked=False):
 
         if not isinstance(path, six.string_types):
             path = ''
@@ -468,6 +467,8 @@ class ApplicationMediaReference(object):
         self.is_menu_media = is_menu_media
 
         self.app_lang = app_lang or "en"
+
+        self.languages_linked = languages_linked
 
     def __str__(self):
         detailed_location = ""
@@ -497,6 +498,7 @@ class ApplicationMediaReference(object):
             'path': self.path,
             "icon_class": self.media_class.get_icon_class(),
             "media_type": self.media_class.get_nice_name(),
+            "languages_linked": self.languages_linked,
         }
 
     def _get_name(self, raw_name, lang=None):
@@ -682,6 +684,7 @@ class HQMediaMixin(Document):
         image_ref = ApplicationMediaReference(
             item.icon_by_language(to_language),
             media_class=CommCareImage,
+            languages_linked=item.media_image_languages_linked,
             **media_kwargs
         )
         image_ref = image_ref.as_dict()
@@ -690,6 +693,7 @@ class HQMediaMixin(Document):
         audio_ref = ApplicationMediaReference(
             item.audio_by_language(to_language),
             media_class=CommCareAudio,
+            languages_linked=item.media_audio_languages_linked,
             **media_kwargs
         )
         audio_ref = audio_ref.as_dict()

@@ -71,6 +71,8 @@ hqDefine('app_manager/js/app_manager_media', function() {
             }
         });
 
+        self.languagesLinked = ko.observable(o.ref.languages_linked);
+
         self.setCustomPath = function() {
             self.useCustomPath(true);
             if (self.customPath().length === 0) {
