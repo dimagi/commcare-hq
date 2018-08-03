@@ -1579,7 +1579,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def drop_table_query(self):
         return 'DELETE FROM "{}"'.format(self.tablename)
 
-    def aggregate_query(self):
+    def aggregation_query(self):
 
         columns = (
             ('awc_id', 'ucr.awc_id'),
@@ -1732,7 +1732,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
     def drop_table_query(self):
         return 'DELETE FROM "{}"'.format(self.tablename)
 
-    def aggregate_query(self):
+    def aggregation_query(self):
 
         columns = (
             ('state_id', 'state_id'),
