@@ -21,6 +21,7 @@
             {% endif %}
             <button type="button" class="btn btn-default" data-toggle="modal" data-target="#{{ slug }}"
                     data-bind="attr: { 'data-hqmediapath': currentPath },
+                               enable: enabled,
                                event: {
                                     mediaUploadComplete: uploadComplete,
                                     click: passToUploadController
@@ -32,6 +33,7 @@
             <button type="button" class="btn btn-danger"
                     data-bind="
                         visible: refHasPath,
+                        enable: enabled,
                         event: {
                             click: removeMedia
                         }
@@ -41,6 +43,7 @@
             <button type="button" class="btn btn-default pull-right"
                     data-bind="
                         visible: showDefaultPath,
+                        enable: enabled,
                         click: function () {
                             setCustomPath();
                             hqImport('analytix/js/google').track.event('App Builder', 'Click Show Path for a Form or Module', '{{ type }}');
@@ -58,11 +61,18 @@
                 {% endblocktrans %}
             </p>
             {% endif %}
-            <div>
+            <div data-bind="visible: isDefaultLanguage">
                 <label>
-                    Languages Linked:
-                    <input type="checkbox" data-bind="checked: languagesLinked" />
+                    {% blocktrans %}
+                        Use this {{ label }} for all languages
+                    {% endblocktrans %}:
+                    <input type="checkbox" data-bind="enable: enabled, checked: languagesLinked" />
                 </label>
+            </div>
+            <div data-bind="visible: languagesLinked() && !isDefaultLanguage">
+                {% blocktrans %}
+                    This {{ label }} is linked to the default language, and can only be modified there.
+                {% endblocktrans %}
             </div>
         </div>
     </div>
@@ -71,6 +81,7 @@
         <div class="col-sm-4">
             <input type="text" class="form-control"
                    data-bind="value: customPath,
+                              enable: enabled,
                               valueUpdate: 'textchange'" />
             <input type="hidden" class="jr-resource-field"
                    name="{{ qualifier|default_if_none:"" }}media_{{ type }}"
@@ -83,6 +94,7 @@
             <button type="button" class="btn btn-default"
                     data-bind="
                         visible: showCustomPath,
+                        enable: enabled,
                         event: { click: setDefaultPath }
                     ">
                 <i class="fa fa-remove"></i>

@@ -3,8 +3,14 @@ hqDefine('app_manager/js/app_manager_media', function() {
         /* This interfaces the media reference for a form or module menu
         (as an icon or image) with the upload manager.*/
         'use strict';
-        var self = {};
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+            self = {
+                isDefaultLanguage: initial_page_data('current_language') === initial_page_data('default_language')
+            };
 
+        self.enabled = ko.observable(
+            o.ref.languages_linked ? self.isDefaultLanguage : true
+        );
         self.ref = ko.observable(new MenuMediaReference(o.ref));
         self.refHasPath = ko.computed(function() {
             return self.ref().path.length > 0;
