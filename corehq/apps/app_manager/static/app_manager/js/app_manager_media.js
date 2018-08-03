@@ -3,9 +3,9 @@ hqDefine('app_manager/js/app_manager_media', function() {
         /* This interfaces the media reference for a form or module menu
         (as an icon or image) with the upload manager.*/
         'use strict';
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
             self = {
-                isDefaultLanguage: initial_page_data('current_language') === initial_page_data('default_language')
+                isDefaultLanguage: initialPageData('current_language') === initialPageData('default_language'),
             };
 
         self.enabled = ko.observable(
