@@ -612,11 +612,11 @@ def current_month_wasting_column(beta):
 
 
 def hfa_recorded_in_month_column(beta):
-    return 'zscore_grading_hfa_recorded_in_month' if beta else 'height_measured_in_month'
+    return 'zscore_grading_hfa_recorded_in_month'
 
 
 def wfh_recorded_in_month_column(beta):
-    return 'zscore_grading_wfh_recorded_in_month' if beta else 'weighed_and_height_measured_in_month'
+    return 'zscore_grading_wfh_recorded_in_month'
 
 
 def default_age_interval(beta):

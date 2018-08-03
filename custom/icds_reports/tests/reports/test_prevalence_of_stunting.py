@@ -57,7 +57,7 @@ class TestPrevalenceOfStunting(TestCase):
                     "severe": 0,
                     "moderate": 0,
                     "normal": 0,
-                    "total_measured": 7,
+                    "total_measured": 0,
                     "total": 449,
                     'original_name': ["st1"],
                     "fillKey": "0%-25%"
@@ -66,7 +66,7 @@ class TestPrevalenceOfStunting(TestCase):
                     "severe": 0,
                     "moderate": 0,
                     "normal": 0,
-                    "total_measured": 25,
+                    "total_measured": 0,
                     "total": 490,
                     'original_name': ["st2"],
                     "fillKey": "0%-25%"
@@ -117,8 +117,8 @@ class TestPrevalenceOfStunting(TestCase):
             [
                 {'indicator': 'Total Children (6 - 60 months) eligible to have height measured:', 'value': '939'},
                 {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
-                 'value': '32'},
-                {'indicator': 'Number of Children (6 - 60 months) unmeasured:', 'value': '907'},
+                 'value': '0'},
+                {'indicator': 'Number of Children (6 - 60 months) unmeasured:', 'value': '939'},
                 {'indicator': '% children (6 - 60 months) with severely stunted growth:', 'value': '0.00%'},
                 {'indicator': '% children (6 - 60 months) with moderate stunted growth:', 'value': '0.00%'},
                 {'indicator': '% children (6 - 60 months) with normal stunted growth:', 'value': '0.00%'}
@@ -182,7 +182,7 @@ class TestPrevalenceOfStunting(TestCase):
             {
                 'block_map': {
                     'moderate': 0,
-                    'total_measured': 7,
+                    'total_measured': 0,
                     'normal': 0,
                     'original_name': ['b1', 'b2'],
                     'severe': 0,
@@ -316,13 +316,13 @@ class TestPrevalenceOfStunting(TestCase):
                         "y": 0.0,
                         "x": 1491004800000,
                         "all": 964,
-                        "measured": 11
+                        "measured": 0
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "all": 939,
-                        "measured": 32
+                        "measured": 0
                     }
                 ],
                 "key": "% normal"
@@ -361,13 +361,13 @@ class TestPrevalenceOfStunting(TestCase):
                         "y": 0.0,
                         "x": 1491004800000,
                         "all": 964,
-                        "measured": 11
+                        "measured": 0
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "all": 939,
-                        "measured": 32
+                        "measured": 0
                     }
                 ],
                 "key": "% moderately stunted"
@@ -406,13 +406,13 @@ class TestPrevalenceOfStunting(TestCase):
                         "y": 0.0,
                         "x": 1491004800000,
                         "all": 964,
-                        "measured": 11
+                        "measured": 0
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "all": 939,
-                        "measured": 32
+                        "measured": 0
                     }
                 ],
                 "key": "% severely stunted"
@@ -499,7 +499,7 @@ class TestPrevalenceOfStunting(TestCase):
                     "total": 150,
                     "severe": 0,
                     "moderate": 0,
-                    "total_measured": 4,
+                    "total_measured": 0,
                     "normal": 0
                 },
                 "s1": {

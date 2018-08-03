@@ -58,7 +58,7 @@ class TestPrevalenceOfSevere(TestCase):
                     "moderate": 0,
                     "normal": 0,
                     'total_height_eligible': 449,
-                    "total_measured": 7,
+                    "total_measured": 0,
                     "total_weighed": 302,
                     'original_name': ["st1"],
                     "fillKey": "0%-5%"
@@ -68,10 +68,10 @@ class TestPrevalenceOfSevere(TestCase):
                     "moderate": 1,
                     "normal": 0,
                     'total_height_eligible': 490,
-                    "total_measured": 24,
+                    "total_measured": 0,
                     "total_weighed": 366,
                     'original_name': ["st2"],
-                    "fillKey": "0%-5%"
+                    "fillKey": "7%-100%"
                 }
             }
         )
@@ -120,10 +120,10 @@ class TestPrevalenceOfSevere(TestCase):
             [
                 {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '668'},
                 {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
-                 'value': '31'},
+                 'value': '0'},
                 {'indicator': 'Number of children (6 - 60 months) unmeasured:', 'value': '271'},
                 {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.00%'},
-                {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '3.23%'},
+                {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '100.00%'},
                 {'indicator': '% Normal (6 - 60 months):', 'value': '0.00%'}
             ]
         )
@@ -185,7 +185,7 @@ class TestPrevalenceOfSevere(TestCase):
             {
                 'block_map': {
                     'moderate': 0,
-                    'total_measured': 7,
+                    'total_measured': 0,
                     'normal': 0,
                     'original_name': ['b1', 'b2'],
                     'severe': 0,
@@ -249,7 +249,7 @@ class TestPrevalenceOfSevere(TestCase):
                 },
                 {
                     "loc_name": "st2",
-                    "percent": 4.166666666666667
+                    "percent": 100.0
                 },
             ]
         )
@@ -272,7 +272,7 @@ class TestPrevalenceOfSevere(TestCase):
                 },
                 {
                     "loc_name": "st2",
-                    "percent": 4.166666666666667
+                    "percent": 100.0
                 },
             ]
         )
@@ -322,14 +322,14 @@ class TestPrevalenceOfSevere(TestCase):
                         "y": 0.0,
                         "x": 1491004800000,
                         "total_weighed": 659,
-                        'total_measured': 11,
+                        'total_measured': 0,
                         'total_height_eligible': 964,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "total_weighed": 668,
-                        'total_measured': 31,
+                        'total_measured': 0,
                         'total_height_eligible': 939,
                     }
                 ],
@@ -371,14 +371,14 @@ class TestPrevalenceOfSevere(TestCase):
                         "y": 0.0,
                         "x": 1491004800000,
                         "total_weighed": 659,
-                        'total_measured': 11,
+                        'total_measured': 0,
                         'total_height_eligible': 964,
                     },
                     {
-                        "y": 0.03225806451612903,
+                        "y": 1.0,
                         "x": 1493596800000,
                         "total_weighed": 668,
-                        'total_measured': 31,
+                        'total_measured': 0,
                         'total_height_eligible': 939,
                     }
                 ],
@@ -420,14 +420,14 @@ class TestPrevalenceOfSevere(TestCase):
                         "y": 0.0,
                         "x": 1491004800000,
                         "total_weighed": 659,
-                        'total_measured': 11,
+                        'total_measured': 0,
                         'total_height_eligible': 964,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "total_weighed": 668,
-                        'total_measured': 31,
+                        'total_measured': 0,
                         'total_height_eligible': 939,
                     }
                 ],
@@ -453,7 +453,7 @@ class TestPrevalenceOfSevere(TestCase):
                 },
                 {
                     "loc_name": "st2",
-                    "percent": 4.166666666666667
+                    "percent": 100.0
                 },
             ]
         )
@@ -699,7 +699,7 @@ class TestPrevalenceOfSevere(TestCase):
                     "total_weighed": 84,
                     "severe": 0,
                     "moderate": 0,
-                    "total_measured": 4,
+                    "total_measured": 0,
                     "normal": 0,
                     "total_height_eligible": 150,
                 },

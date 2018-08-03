@@ -179,13 +179,13 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][7],
             {
                 'average': {
-                    'html': 3.225806451612903,
-                    'sort_key': 3.225806451612903
+                    'html': 100.0,
+                    'sort_key': 100.0
                 },
                 'data': [
                     {'html': 'Children from 6 - 60 months with moderate acute malnutrition (weight-for-height)'},
                     {'html': 0.0, 'sort_key': 0.0},
-                    {'html': 3.225806451612903, 'sort_key': 3.225806451612903},
+                    {'html': 100.0, 'sort_key': 100.0},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
