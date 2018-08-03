@@ -61,4 +61,10 @@
 
 .nav > li > a {
   color: @cc-brand-low;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-all;
+  text-overflow: ellipsis;
 }
