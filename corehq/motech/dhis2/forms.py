@@ -81,11 +81,33 @@ class Dhis2ConfigForm(forms.Form):
         self.helper.add_input(Submit('submit', _('Save Changes')))
 
     def clean_form_configs(self):
+        errors = []
         for form_config in self.cleaned_data['form_configs']:
-            if not form_config['datavalue_maps']:
-                raise ValidationError(
-                    '"datavalue_maps" is empty for form "{}". Please map CommCare values to OpenMRS data '
-                    'elements.'.format(form_config['xmlns'])
-                )
+            if form_config.get('xmlns'):
+                required_msg = _('The "%(property)s" property is required for '
+                                 'form "{}".'.format(form_config['xmlns']))
+            else:
+                required_msg = _('The "%(property)s" property is required.')
 
+            if not form_config.get('program_id'):
+                errors.append(ValidationError(
+                    _('{} Please specify the DHIS2 Program of the event.'.format(required_msg)),
+                    params={'property': 'program_id'},
+                    code='required_property',
+                ))
+            if not form_config.get('event_date'):
+                errors.append(ValidationError(
+                    _('{} Please provide a FormQuestion, FormQuestionMap or ConstantString to determine the '
+                      'date of the event.'.format(required_msg)),
+                    params={'property': 'event_date'},
+                    code='required_property',
+                ))
+            if not form_config.get('datavalue_maps'):
+                errors.append(ValidationError(
+                    _('{} Please map CommCare values to OpenMRS data elements.'.format(required_msg)),
+                    params={'property': 'datavalue_maps'},
+                    code='required_property',
+                ))
+        if errors:
+            raise ValidationError(errors)
         return self.cleaned_data['form_configs']
