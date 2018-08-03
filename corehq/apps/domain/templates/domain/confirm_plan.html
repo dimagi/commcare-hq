@@ -7,12 +7,14 @@
 {% endblock %}
 
 {% block form_content %}
-{% initial_page_data 'isUpgrade' isUpgrade %}
-{% initial_page_data 'nextInvoiceDate' nextInvoiceDate %}
-{% initial_page_data 'currentPlan' currentPlan %}
-{% initial_page_data 'isDowngradeBeforeMinimum' isDowngradeBeforeMinimum|BOOL %}
-{% initial_page_data 'currentSubscriptionEndDate' currentSubscriptionEndDate %}
+{% initial_page_data 'is_upgrade' is_upgrade|BOOL %}
+{% initial_page_data 'next_invoice_date' next_invoice_date %}
+{% initial_page_data 'current_plan' current_plan %}
+{% initial_page_data 'new_plan' plan.name %}
+{% initial_page_data 'is_downgrade_before_minimum' is_downgrade_before_minimum %}
+{% initial_page_data 'current_subscription_end_date' current_subscription_end_date %}
 {% registerurl 'email_on_downgrade' domain %}
+{% registerurl 'confirm_billing_account_info' domain %}
     <p class="lead">
         {% blocktrans with plan.name as p %}
         You have selected the <strong>{{ p }} Software Plan</strong>.
@@ -49,7 +51,7 @@
             <p>CommCare bills on a monthly basis, and all subscriptions require a 30 day minimum commitment. You
                 should expect your first invoice on {{ invoice_date }}, or you can prepay for your subscription
                 by following the instructions
-                <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>
+                <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>.
             </p>
             {% endblocktrans %}
         </div>
@@ -103,7 +105,6 @@
         <a href="{% url 'domain_subscription_view' domain %}" class="btn btn-primary">{% trans 'Stay with Community Plan' %}</a>
     </div>
     {% else %}
-    <form action="{% url 'confirm_billing_account_info' domain %}" method="post" class="form">
         {% csrf_token %}
         <hr />
         <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
@@ -112,15 +113,22 @@
             Clicking the 'Select this Plan' button below will bring you to a page where you can enter basic billing information.
             {% endblocktrans %}
         </p>
-        <div class="form-actions">
-            <div class="col-sm-6">
-                <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
-                <button class="btn btn-primary" data-bind="click: openDowngradeModal">
-                    {% trans 'Select this Plan' %}
-                </button>
-            </div>
+    {% csrf_token %}
+    <hr />
+    <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
+    <p>
+        {% blocktrans %}
+        Clicking the 'Select this Plan' button below will bring you to a page where you can enter basic billing information.
+        {% endblocktrans %}
+    </p>
+    <div class="form-actions">
+        <div class="col-sm-6">
+            <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
+            <button class="btn btn-primary" id="confirm-plan" data-bind="click: openDowngradeModal">
+                {% trans 'Select this Plan' %}
+            </button>
         </div>
-    </form>
+    </div>
     {% endif %}
 {% endblock %}
 
