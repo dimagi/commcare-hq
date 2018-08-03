@@ -147,9 +147,6 @@ class DomainInvoiceFactory(object):
         with transaction.atomic():
             invoice = self._generate_invoice(subscription, invoice_start, invoice_end)
             record = BillingRecord.generate_record(invoice)
-            # invoice = generate_invoice(subscription, invoice_start, invoice_end)
-            # update_invoice_due_date(invoice, subscription, self.date_end)
-            # record = BillingRecord.generate_record(invoice)
         if record.should_send_email:
             try:
                 if invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
@@ -639,19 +636,26 @@ class UserLineItemFactory(FeatureLineItemFactory):
     @property
     def num_excess_users_over_period(self):
         # Iterate through all months in the invoice date range to aggregate total users into one line item
+        dates = self.all_month_ends_in_invoice()
         excess_users = 0
-        month_end = self.invoice.date_end
-        while month_end > self.invoice.date_start:
+        for date in dates:
             total_users = 0
             for domain in self.subscribed_domains:
                 try:
-                    history = DomainUserHistory.objects.get(domain=domain, record_date=month_end)
-                    total_users += max(history.num_users - self.rate.monthly_limit, 0)
+                    history = DomainUserHistory.objects.get(domain=domain, record_date=date)
+                    total_users += history.num_users
                 except DomainUserHistory.DoesNotExist:
                     total_users += 0
             excess_users += max(total_users - self.rate.monthly_limit, 0)
-            _, month_end = get_previous_month_date_range(month_end)
         return excess_users
+
+    def all_month_ends_in_invoice(self):
+        month_end = self.invoice.date_end
+        dates = []
+        while month_end > self.invoice.date_start:
+            dates.append(month_end)
+            _, month_end = get_previous_month_date_range(month_end)
+        return dates
 
     @property
     def num_excess_users(self):
