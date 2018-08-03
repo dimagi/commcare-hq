@@ -743,6 +743,10 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         return context
 
     @cached_property
+    def new_reminders_migrator(self):
+        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
+
+    @cached_property
     def schedule_form(self):
         args = [
             self.domain,
@@ -755,7 +759,10 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.request.method == 'POST':
             args.append(self.request.POST)
 
-        return ConditionalAlertScheduleForm(*args)
+        return ConditionalAlertScheduleForm(
+            *args,
+            new_reminders_migrator=self.new_reminders_migrator
+        )
 
     @property
     def schedule(self):
@@ -831,7 +838,11 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.criteria_form.save_criteria(rule)
                 self.schedule_form.save_rule_action_and_schedule(rule)
 
-            initiate_messaging_rule_run(rule.domain, rule.pk)
+            if not (
+                self.new_reminders_migrator and
+                self.schedule_form.cleaned_data['skip_running_rule_post_save']
+            ):
+                initiate_messaging_rule_run(rule.domain, rule.pk)
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
