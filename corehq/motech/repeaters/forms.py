@@ -109,7 +109,7 @@ class GenericRepeaterForm(forms.Form):
             self.special_crispy_fields["auth_type"],
             "username",
             "password",
-            "skip_cert_verify",
+            self.special_crispy_fields["skip_cert_verify"],
         ])
         return form_fields
 
@@ -136,6 +136,7 @@ class GenericRepeaterForm(forms.Form):
                 css_class='form-group'
             ),
             "auth_type": twbscrispy.PrependedText('auth_type', ''),
+            "skip_cert_verify": twbscrispy.PrependedText('skip_cert_verify', ''),
         }
 
     def clean(self):
