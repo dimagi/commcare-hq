@@ -20,7 +20,16 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT, REPEATER_SUCCESS_COUNT
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.quickcache import quickcache
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    StringListProperty,
+    StringProperty,
+)
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
