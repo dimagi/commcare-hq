@@ -1553,6 +1553,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
+        self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
+
 
     @property
     def ccs_record_monthly_ucr_tablename(self):
@@ -1695,7 +1697,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             agg_thr_table=AGG_CCS_RECORD_THR_TABLE,
             ccs_record_case_ucr=self.ccs_record_case_ucr_tablename,
             agg_pnc_table=AGG_CCS_RECORD_PNC_TABLE,
-            agg_bp_form_table=AGG_CCS_RECORD_BP_TABLE,
+            agg_bp_table=AGG_CCS_RECORD_BP_TABLE,
             agg_delivery_table=AGG_CCS_RECORD_DELIVERY_TABLE,
             pregnant_tasks_case_ucr=self.pregnant_tasks_cases_ucr_tablename,
         ), {
@@ -1714,7 +1716,6 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
-        self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
 
     @property
     def ccs_record_monthly_ucr_tablename(self):
@@ -1792,7 +1793,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             {columns}
         ) (SELECT
             {calculations}
-            FROM "{ucr_ccs_record_table}"
+            FROM "{ucr_ccs_record_table}" ucr
             WHERE month = %(start_date)s AND state_id != ''
             GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, 
                      ccs_status, trimester, caste, disabled, minority, resident
@@ -1815,11 +1816,11 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('awc_id', lambda col: col if aggregation_level > 4 else "'All'"),
             ('month', 'month'),
             ('ccs_status', 'ccs_status'),
-            ('trimester', 'All'),
-            ('caste', 'All'),
-            ('disabled', 'All'),
-            ('minority', 'All'),
-            ('resident', 'All'),
+            ('trimester', "'All'"),
+            ('caste', "'All'"),
+            ('disabled', "'All'"),
+            ('minority', "'All'"),
+            ('resident', "'All'"),
             ('valid_in_month', ),
             ('lactating', ),
             ('pregnant', ),
