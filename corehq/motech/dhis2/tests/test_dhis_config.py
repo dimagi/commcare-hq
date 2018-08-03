@@ -1,16 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import json
 
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
 from jsonobject.base_properties import BadValueError
 
-from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
+from corehq.motech.dhis2.dhis2_config import Dhis2Config
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
-
-import json
 
 
 class TestDhisConfigValidation(SimpleTestCase):
@@ -42,11 +41,8 @@ class TestDhisConfigValidation(SimpleTestCase):
         config = {
             'form_configs': [{}]
         }
-        form = Dhis2ConfigForm(data=config)
-        self.assertTrue(form.is_valid())
-        data = form.cleaned_data
         repeater = Dhis2Repeater()
-        repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
+        repeater.dhis2_config = Dhis2Config.wrap(config)
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
@@ -56,15 +52,12 @@ class TestDhisConfigValidation(SimpleTestCase):
 
     def test_missing_event_date(self):
         config = {
-            'form_configs': json.dumps([{
+            'form_configs': [{
                 'program_id': 'test program'
-            }])
+            }]
         }
-        form = Dhis2ConfigForm(data=config)
-        self.assertTrue(form.is_valid())
-        data = form.cleaned_data
         repeater = Dhis2Repeater()
-        repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
+        repeater.dhis2_config = Dhis2Config.wrap(config)
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
@@ -79,14 +72,23 @@ class TestDhisConfigValidation(SimpleTestCase):
                 'event_date': {
                     'doc_type': 'FormQuestion',
                     'form_question': '/data/event_date'
-                }
+                },
+                'datavalue_maps': [
+                    {
+                        'data_element_id': 'dhis2_element_id',
+                        'value': {
+                            'doc_type': 'FormQuestion',
+                            'form_question': '/data/example_question'
+                        }
+                    }
+                ]
             }])
         }
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
-        data = form.cleaned_data
+
         repeater = Dhis2Repeater()
-        repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
+        repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
         repeater.save()
 
     def test_config_empty_datavalue_map(self):
@@ -110,9 +112,9 @@ class TestDhisConfigValidation(SimpleTestCase):
         }
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
-        data = form.cleaned_data
+
         repeater = Dhis2Repeater()
-        repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
+        repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
@@ -147,9 +149,9 @@ class TestDhisConfigValidation(SimpleTestCase):
         }
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
-        data = form.cleaned_data
+
         repeater = Dhis2Repeater()
-        repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
+        repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
         repeater.save()
 
     def test_org_unit_id_migration(self):
@@ -160,14 +162,23 @@ class TestDhisConfigValidation(SimpleTestCase):
                 'event_date': {
                     'doc_type': 'FormQuestion',
                     'form_question': '/data/event_date'
-                }
+                },
+                'datavalue_maps': [
+                    {
+                        'data_element_id': 'dhis2_element_id',
+                        'value': {
+                            'doc_type': 'FormQuestion',
+                            'form_question': '/data/example_question'
+                        }
+                    }
+                ]
             }])
         }
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
-        data = form.cleaned_data
+
         repeater = Dhis2Repeater()
-        repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
+        repeater.dhis2_config = Dhis2Config.wrap(form.cleaned_data)
         repeater.save()
         org_unit_value_source = dict(repeater.dhis2_config.form_configs[0].org_unit_id)
         self.assertDictEqual(org_unit_value_source, {
