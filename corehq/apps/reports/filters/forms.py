@@ -436,7 +436,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if instance._show_unknown:
             return True
         for param in params:
-            if param['slug'] == PARAM_SLUG_APP_ID:
+            if param['slug'] in [PARAM_SLUG_APP_ID, PARAM_SLUG_STATUS]:
                 return True
         return False
 
