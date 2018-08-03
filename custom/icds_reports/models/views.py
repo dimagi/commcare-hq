@@ -189,6 +189,11 @@ class AggAwcMonthly(models.Model):
 
     For rows for higher level of locations, the lower levels are 'All'.
     For example, in a supervisor row, awc_id = 'All'
+
+    Vocabulary:
+      seeking services: person_case.registered_status != 'not_registered'
+      not migrated: person_case.migration_status != 'migrated'
+      beneficiary: seeking services AND not migrated
     """
     awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
@@ -250,8 +255,7 @@ class AggAwcMonthly(models.Model):
     )
     cases_person = models.IntegerField(
         blank=True, null=True,
-        help_text="Number of open person cases where registered_status != 'not_registered' and "
-        "migration_status != 'migrated'"
+        help_text="Number of open person cases who are beneficiaries"
     )
     cases_person_all = models.IntegerField(
         blank=True, null=True, help_text="Number of open person cases"
@@ -278,36 +282,126 @@ class AggAwcMonthly(models.Model):
         blank=True, null=True,
         help_text="Number of person cases whose last_referral_date is in this month"
     )
-    cases_ccs_pregnant = models.IntegerField(blank=True, null=True)
-    cases_ccs_lactating = models.IntegerField(blank=True, null=True)
-    cases_child_health = models.IntegerField(blank=True, null=True)
-    cases_ccs_pregnant_all = models.IntegerField(blank=True, null=True)
-    cases_ccs_lactating_all = models.IntegerField(blank=True, null=True)
-    cases_child_health_all = models.IntegerField(blank=True, null=True)
-    usage_num_pse = models.IntegerField(blank=True, null=True)
-    usage_num_gmp = models.IntegerField(blank=True, null=True)
-    usage_num_thr = models.IntegerField(blank=True, null=True)
-    usage_num_home_visit = models.IntegerField(blank=True, null=True)
-    usage_num_bp_tri1 = models.IntegerField(blank=True, null=True)
-    usage_num_bp_tri2 = models.IntegerField(blank=True, null=True)
-    usage_num_bp_tri3 = models.IntegerField(blank=True, null=True)
-    usage_num_pnc = models.IntegerField(blank=True, null=True)
-    usage_num_ebf = models.IntegerField(blank=True, null=True)
-    usage_num_cf = models.IntegerField(blank=True, null=True)
-    usage_num_delivery = models.IntegerField(blank=True, null=True)
-    usage_num_due_list_ccs = models.IntegerField(blank=True, null=True)
-    usage_num_due_list_child_health = models.IntegerField(blank=True, null=True)
-    infra_type_of_building = models.TextField(blank=True, null=True)
-    infra_clean_water = models.IntegerField(blank=True, null=True)
-    infra_functional_toilet = models.IntegerField(blank=True, null=True)
-    infra_adult_weighing_scale = models.IntegerField(blank=True, null=True)
-    infra_infant_weighing_scale = models.IntegerField(blank=True, null=True)
-    infra_medicine_kits = models.IntegerField(blank=True, null=True)
-    num_awc_infra_last_update = models.IntegerField(blank=True, null=True)
-    usage_num_hh_reg = models.IntegerField(blank=True, null=True)
-    usage_num_add_pregnancy = models.IntegerField(blank=True, null=True)
-    cases_person_has_aadhaar_v2 = models.IntegerField(blank=True, null=True)
-    cases_person_beneficiary_v2 = models.IntegerField(blank=True, null=True)
+    cases_ccs_pregnant = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of ccs_record cases which are pregnant and beneficiaries"
+    )
+    cases_ccs_pregnant_all = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of ccs_record cases which are pregnant who are not migrated"
+    )
+    cases_ccs_lactating = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of ccs_record cases which have delivered in the past 183 days and are beneficiaries"
+    )
+    cases_ccs_lactating_all = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of ccs_record cases which are lactating who are not migrated"
+    )
+    cases_child_health = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of child_health cases which are beneficiaries"
+    )
+    cases_child_health_all = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of child_health cases who are not migrated"
+    )
+    cases_person_has_aadhaar_v2 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of child_health and ccs_records whose person case has an aadhaar number"
+    )
+    cases_person_beneficiary_v2 = models.IntegerField(
+        blank=True, null=True,
+        help_text="cases_child_health + cases_ccs_pregnant + cases_ccs_lactating"
+    )
+    usage_num_pse = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Daily Feeding forms submitted"
+    )
+    usage_num_gmp = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Growth Monitoring forms submitted"
+    )
+    usage_num_thr = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of THR forms submitted"
+    )
+    usage_num_home_visit = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Home Visit Scheduler forms submitted"
+    )
+    usage_num_bp_tri1 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Birth Preparedness forms submitted in the first trimester (from /form/new_edd)"
+    )
+    usage_num_bp_tri2 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Birth Preparedness forms submitted in the second trimester (from /form/new_edd)"
+    )
+    usage_num_bp_tri3 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Birth Preparedness forms submitted in the third trimester (from /form/new_edd)"
+    )
+    usage_num_pnc = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Postnatal Care Forms submitted"
+    )
+    usage_num_ebf = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Exclusive Breast Feeding forms submitted"
+    )
+    usage_num_cf = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Complementary Feeding forms submitted"
+    )
+    usage_num_delivery = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Delivery forms submitted"
+    )
+    usage_num_due_list_ccs = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of due list forms submitted where tasks.type is pregnancy"
+    )
+    usage_num_due_list_child_health = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of due list forms submitted where tasks.type is child"
+    )
+    usage_num_hh_reg = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Register Household forms submitted"
+    )
+    usage_num_add_pregnancy = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Add Pregnancy forms submitted"
+    )
+    infra_type_of_building = models.TextField(
+        blank=True, null=True,
+        help_text="Either 'pucca', 'semi_pucca', 'kuccha', 'partial_covered_space'"
+    )
+    infra_clean_water = models.IntegerField(
+        blank=True, null=True,
+        help_text="Latest filled out value of source_drinking_water is either [1,2,3]"
+    )
+    infra_functional_toilet = models.IntegerField(
+        blank=True, null=True,
+        help_text="Latest filled out value of toilet_functional = 'yes'"
+    )
+    infra_adult_weighing_scale = models.IntegerField(
+        blank=True, null=True,
+        help_text="available/adult_scale = 'yes' OR usable/adult_scale = 'yes'"
+    )
+    infra_infant_weighing_scale = models.IntegerField(
+        blank=True, null=True,
+        help_text="available/baby_scale = 'yes' OR usable/baby_scale = 'yes' OR available/flat_scale = 'yes'"
+    )
+    infra_medicine_kits = models.IntegerField(
+        blank=True, null=True,
+        help_text="usable/medicine_kits = 'yes'"
+    )
+    num_awc_infra_last_update = models.IntegerField(
+        blank=True, null=True,
+        help_text="last date an infrastrucutre form was submitted"
+    )
 
     class Meta(object):
         app_label = 'icds_model'
