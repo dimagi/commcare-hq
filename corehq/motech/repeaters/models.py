@@ -89,6 +89,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1), required=False)
     username = StringProperty()
     password = StringProperty()
+    skip_cert_verify = BooleanProperty(default=False)
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
 
@@ -262,9 +263,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
 
     @property
     def verify(self):
-        # overwrite to skip certificate verification when sending request
-        # to https urls
-        return True
+        return not self.skip_cert_verify
 
     def send_request(self, repeat_record, payload, verify=None):
         headers = self.get_headers(repeat_record)

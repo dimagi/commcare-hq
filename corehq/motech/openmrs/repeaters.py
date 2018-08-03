@@ -109,7 +109,7 @@ class OpenmrsRepeater(CaseRepeater):
         form_question_values = get_form_question_values(payload)
 
         return send_openmrs_data(
-            Requests(self.domain, self.url, self.username, self.password),
+            Requests(self.domain, self.url, self.username, self.password, verify=self.verify),
             self.domain,
             payload,
             self.openmrs_config,
