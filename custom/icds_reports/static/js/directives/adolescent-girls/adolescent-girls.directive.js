@@ -16,7 +16,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     };
     vm.filters = ['age', 'gender'];
     vm.rightLegend = {
-        info: 'Total number of adolescent girls who are enrolled for Anganwadi Services',
+        info: 'Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -54,7 +54,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ",",
-        'captionContent': ' Total number of adolescent girls who are enrolled for Anganwadi Services',
+        'captionContent': ' Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;

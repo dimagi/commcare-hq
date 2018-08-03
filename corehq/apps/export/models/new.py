@@ -1788,19 +1788,20 @@ class FormExportDataSchema(ExportDataSchema):
     @classmethod
     def _add_export_items_for_case(cls, group_schema, root_path, case_properties, label_prefix,
                                    repeat_context, repeats, case_indices=None, create=True, close=False):
-        def _add_to_group_schema(path, label, transform=None):
+        def _add_to_group_schema(path, label, transform=None, datatype=None):
             group_schema.items.append(ExportItem(
                 path=_question_path_to_path_nodes(path, repeats),
                 label='{}.{}'.format(label_prefix, label),
                 last_occurrences=group_schema.last_occurrences,
                 tag=PROPERTY_TAG_CASE,
-                transform=transform
+                transform=transform,
+                datatype=datatype
             ))
 
         # Add case attributes
-        for case_attribute in CASE_ATTRIBUTES:
+        for case_attribute, datatype in CASE_ATTRIBUTES.items():
             path = '{}/case/{}'.format(root_path, case_attribute)
-            _add_to_group_schema(path, case_attribute)
+            _add_to_group_schema(path, case_attribute, datatype=datatype)
 
         # Add case updates
         for case_property, case_path in six.iteritems(case_properties):
@@ -1823,7 +1824,7 @@ class FormExportDataSchema(ExportDataSchema):
         if create:
             for case_create_element in CASE_CREATE_ELEMENTS:
                 path = '{}/case/create/{}'.format(root_path, case_create_element)
-                _add_to_group_schema(path, 'create.{}'.format(case_create_element))
+                _add_to_group_schema(path, 'create.{}'.format(case_create_element), datatype='string')
 
         if close:
             path = '{}/case/close'.format(root_path)
@@ -2614,19 +2615,6 @@ class ExportMigrationMeta(Document):
 
     class Meta(object):
         app_label = 'export'
-
-    @property
-    def old_export_url(self):
-        from corehq.apps.export.views import EditCustomCaseExportView, EditCustomFormExportView
-        if self.export_type == FORM_EXPORT:
-            view_cls = EditCustomFormExportView
-        else:
-            view_cls = EditCustomCaseExportView
-
-        return '{}{}'.format(get_url_base(), reverse(
-            view_cls.urlname,
-            args=[self.domain, self.saved_export_id],
-        ))
 
 
 class DailySavedExportNotification(models.Model):

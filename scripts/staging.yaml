@@ -49,15 +49,17 @@
 trunk: master
 name: autostaging
 branches:
-  - jls/requirejs-locations  # Jenny June 22
   - nh/omrs/levenshtein # Norman June 29
-  - mk-strict-version-check # MK Jul 2
-  - mk-277767 # MK Jul 3
-  - sk/caching-user-id # SK Jul 4
-  - dmr/time-s3-blobdb  # Danny Jul 5
   - es/location-upload  # Ethan July 6
-  - es/location-download  # Ethan July 6
-  - jls/data-clean-unknown-nodes  # Jenny July 10
+  - jls/appcues-template-apps  # Jenny July 16
+  - jls/requirejs-case-importer  # Jenny July 17
+  - revert-21236-fr/add-secure-urllib3  # Danny July 18
+  #- jls/requirejs-domain-billing  # Jenny July 19
+  - nh/lw/dhis  # Norman July 20
+  - dmr/fix-package-security-vulnerabilities  # Danny July 21
+  - jls/enterprise-settings  # Jenny July 23
+  - nh/fix_staging/why  # Norman July 24
+  - jls/requirejs-login  # Jenny July 22
   - jls/unify-tab-history  # Jenny July 10
 submodules:
   submodules/django-digest-src:

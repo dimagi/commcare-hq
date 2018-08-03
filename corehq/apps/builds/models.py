@@ -7,6 +7,7 @@ from corehq.apps.app_manager.const import APP_V2
 from dimagi.ext.couchdbkit import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
+from corehq.blobs.mixin import BlobMixin
 from corehq.util.quickcache import quickcache
 from itertools import groupby
 from distutils.version import StrictVersion
@@ -28,7 +29,7 @@ class SemanticVersionProperty(StringProperty):
         return value
 
 
-class CommCareBuild(Document):
+class CommCareBuild(BlobMixin, Document):
     """
     #python manage.py shell
     #>>> from corehq.apps.builds.models import CommCareBuild

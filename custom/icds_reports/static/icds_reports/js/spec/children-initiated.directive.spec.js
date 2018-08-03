@@ -191,7 +191,7 @@ describe('Children Initiated Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food. \n' +
+            'Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, the percentage that was given a timely introduction to solid, semi-solid or soft food.\n' +
             '\n' +
             'Timely intiation of complementary feeding in addition to breastmilk at 6 months of age is a key feeding practice to reduce malnutrition'
         );

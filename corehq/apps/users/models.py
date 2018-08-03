@@ -1357,8 +1357,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         }[doc_type].wrap(source)
 
     @classmethod
-    @quickcache(['username'])
-    def get_by_username(cls, username):
+    @quickcache(['username'], skip_arg="strict")
+    def get_by_username(cls, username, strict=False):
         if not username:
             return None
 
@@ -1458,13 +1458,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def save_docs(cls, docs, **kwargs):
-        # this won't clear the caches, lets check if it's used anywhere before disallowing it's use
-        _assert = soft_assert('@'.join(['skelly', 'dimagi.com']), exponential_backoff=False)
-        _assert(False, "bulk save called on user class")
         utcnow = datetime.utcnow()
         for doc in docs:
             doc['last_modified'] = utcnow
         super(CouchUser, cls).save_docs(docs, **kwargs)
+        for user in docs:
+            user.clear_quickcache_for_user()
 
     bulk_save = save_docs
 
@@ -1754,6 +1753,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore the user's phone numbers
         - It will not restore reminders for cases
         """
+        by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
+        if by_username and by_username['id'] != self._id:
+            return False, "A user with the same username already exists in the system"
         if self.base_doc.endswith(DELETED_SUFFIX):
             self.base_doc = self.base_doc[:-len(DELETED_SUFFIX)]
 
@@ -1765,6 +1767,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
+        return True, None
 
     def retire(self):
         suffix = DELETED_SUFFIX

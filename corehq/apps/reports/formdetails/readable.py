@@ -5,6 +5,8 @@ from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.exceptions import XFormException
+from corehq.form_processor.utils.xform import get_node
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from dimagi.ext.jsonobject import *
@@ -527,7 +529,7 @@ def questions_in_hierarchy(questions):
     return question_lists_by_group[None]
 
 
-def build_data_cleaning_questions_and_responses(form_data):
+def get_data_cleaning_data(form_data, instance):
     question_response_map = {}
     ordered_question_values = []
 
@@ -541,6 +543,14 @@ def build_data_cleaning_questions_and_responses(form_data):
                 if question.repeat:
                     value = "{}[{}]{}".format(question.repeat, repeat_index + 1,
                                               re.sub(r'^' + question.repeat, '', question.value))
+
+                # Limit data cleaning to nodes that can be found in the response submission.
+                # form_data may contain other data that shouldn't be clean-able, like subcase attributes.
+                try:
+                    get_node(instance.get_xml_element(), value, instance.xmlns)
+                except XFormQuestionValueNotFound:
+                    continue
+
                 question_response_map[value] = {
                     'label': question.label,
                     'icon': question.icon,

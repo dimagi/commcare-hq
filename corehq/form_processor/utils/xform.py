@@ -11,6 +11,7 @@ import xml2json
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.models import Attachment
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
 
@@ -224,17 +225,36 @@ def resave_form(domain, form):
         XFormInstance.get_db().save_doc(form.to_json())
 
 
-def update_response(xml, question, response, xmlns=None):
+def get_node(root, question, xmlns=''):
     '''
-    Given a form submission's xml element, updates the response for an individual question.
-    Question and response are both strings; see XFormQuestionValueIterator for question format.
+    Given an xml element, find the node corresponding to a question path.
+    See XFormQuestionValueIterator for question path format.
+    Throws XFormQuestionValueNotFound if question is not present.
     '''
-    node = xml
+
+    def _next_node(node, xmlns, id, index=None):
+        try:
+            return node.findall("{{{}}}{}".format(xmlns, id))[index or 0]
+        except (IndexError, KeyError):
+            raise XFormQuestionValueNotFound()
+
+    node = root
     i = XFormQuestionValueIterator(question)
     for (qid, index) in i:
-        node = node.findall("{{{}}}{}".format(xmlns, qid))[index or 0]
-    node = node.find("{{{}}}{}".format(xmlns, i.last()))
-    if node is not None and node.text != response:
+        node = _next_node(node, xmlns, qid, index)
+    node = _next_node(node, xmlns, i.last())
+    if node is None:
+        raise XFormQuestionValueNotFound()
+    return node
+
+
+def update_response(root, question, response, xmlns=None):
+    '''
+    Given a form submission's xml root, updates the response for an individual question.
+    Question and response are both strings; see XFormQuestionValueIterator for question format.
+    '''
+    node = get_node(root, question, xmlns)
+    if node.text != response:
         node.text = response
         return True
     return False

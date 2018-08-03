@@ -10,8 +10,8 @@ from corehq.apps.cloudcare.views import (
     FormplayerPreviewSingleApp,
     PreviewAppView,
     LoginAsUsers,
-    form_context, get_cases,
-    get_fixtures, default,
+    form_context,
+    default,
 )
 
 app_urls = [
@@ -29,9 +29,6 @@ app_urls = [
 
 api_urls = [
     url(r'^login_as/users/$', LoginAsUsers.as_view(), name=LoginAsUsers.urlname),
-    url(r'^cases/$', get_cases, name='cloudcare_get_cases'),
-    url(r'^fixtures/(?P<user_id>[\w-]+)/(?P<fixture_id>[:\w-]+)$', get_fixtures,
-        name='cloudcare_get_fixtures'),
     url(r'^readable_questions/$', ReadableQuestions.as_view(), name=ReadableQuestions.urlname),
 ]
 

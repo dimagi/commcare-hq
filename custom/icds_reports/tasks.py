@@ -38,8 +38,10 @@ from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
-from custom.icds_reports.const import DASHBOARD_DOMAIN
+from custom.icds_reports.const import DASHBOARD_DOMAIN, CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, \
+    DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT
 from custom.icds_reports.models import (
+    AggChildHealth,
     AggChildHealthMonthly,
     AggregateComplementaryFeedingForms,
     AggregateGrowthMonitoringForms,
@@ -51,7 +53,14 @@ from custom.icds_reports.models import (
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
-from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time
+from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
+from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
+from custom.icds_reports.sqldata.exports.children import ChildrenExport
+from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
+from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
+from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
+    create_excel_file
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -101,7 +110,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_ccs_record_monthly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_child_health.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_ccs_record.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
@@ -178,6 +186,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
             res = group(*stage_1_tasks).apply_async()
+            res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
             res.get()
 
             res_child = chain(
@@ -188,7 +197,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
                 icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
             ).apply_async()
-            res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
             res_daily.get()
             res_ccs.get()
             res_child.get()
@@ -387,10 +395,11 @@ def _daily_attendance_table(day):
 
 @track_time
 def _agg_child_health_table(day):
-    _run_custom_sql_script([
-        "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
-        "SELECT aggregate_child_health(%s)"
-    ], day)
+    with transaction.atomic():
+        _run_custom_sql_script([
+            "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
+        ], day)
+        AggChildHealth.aggregate(force_to_date(day))
 
 
 @track_time
@@ -466,6 +475,71 @@ def _find_stagnant_cases(adapter):
         table.columns.inserted_at <= stagnant_date
     ).distinct()
     return query.all()
+
+
+@task(queue='icds_dashboard_reports_queue')
+def prepare_excel_reports(config, aggregation_level, include_test, beta, location, domain,
+                          file_format, indicator):
+    if indicator == CHILDREN_EXPORT:
+        data_type = 'Children'
+        excel_data = ChildrenExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+    elif indicator == PREGNANT_WOMEN_EXPORT:
+        data_type = 'Pregnant_Women'
+        excel_data = PregnantWomenExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test
+        ).get_excel_data(location)
+    elif indicator == DEMOGRAPHICS_EXPORT:
+        data_type = 'Demographics'
+        excel_data = DemographicsExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+    elif indicator == SYSTEM_USAGE_EXPORT:
+        data_type = 'System_Usage'
+        excel_data = SystemUsageExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test
+        ).get_excel_data(location)
+    elif indicator == AWC_INFRASTRUCTURE_EXPORT:
+        data_type = 'AWC_Infrastructure'
+        excel_data = AWCInfrastructureExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test
+        ).get_excel_data(location)
+    elif indicator == BENEFICIARY_LIST_EXPORT:
+        data_type = 'Beneficiary_List'
+        excel_data = BeneficiaryExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+    cache_key = create_excel_file(excel_data, data_type, file_format)
+    params = {
+        'domain': domain,
+        'uuid': cache_key,
+        'file_format': file_format,
+        'data_type': data_type,
+    }
+
+    return {
+        'domain': domain,
+        'uuid': cache_key,
+        'file_format': file_format,
+        'data_type': data_type,
+        'link': reverse('icds_download_excel', params=params, absolute=True, kwargs={'domain': domain})
+    }
 
 
 @task(queue='icds_dashboard_reports_queue')

@@ -11,7 +11,6 @@ from custom.icds_reports.const import ChartColors, MapColors
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestMedicineKit(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_medicine_kit_data_map(
@@ -80,7 +79,8 @@ class TestMedicineKit(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of AWCs that reported having a Medicine Kit"
+            "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs "
+            "that reported having a Medicine Kit"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -346,7 +346,8 @@ class TestMedicineKit(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs that reported having a Medicine Kit",
+                "info": "Of the AWCs that have submitted an Infrastructure Details form, "
+                        "the percentage of AWCs that reported having a Medicine Kit",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 2,

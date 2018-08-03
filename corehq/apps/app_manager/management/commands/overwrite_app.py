@@ -32,5 +32,5 @@ class Command(BaseCommand):
     @property
     def report_map(self):
         if not self._report_map:
-            self._report_map = get_static_report_mapping(self.from_domain, self.to_domain, {})
+            self._report_map = get_static_report_mapping(self.from_domain, self.to_domain)
         return self._report_map

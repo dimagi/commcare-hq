@@ -15,7 +15,7 @@ from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
-    build_data_cleaning_questions_and_responses,
+    get_data_cleaning_data,
     get_questions_from_xform_node,
     get_readable_form_data,
     get_readable_data_for_submission)
@@ -317,13 +317,16 @@ class ReadableFormTest(TestCase):
         )
 
     @patch('corehq.apps.reports.formdetails.readable.get_questions')
-    def test_build_data_cleaning(self, questions_patch):
+    def test_get_data_cleaning_data(self, questions_patch):
         builder = XFormBuilder()
         responses = OrderedDict()
 
         # Simple question
         builder.new_question('something', 'Something')
         responses['something'] = 'blue'
+
+        # Skipped question - doesn't appear in repsonses, shouldn't appear in data cleaning data
+        builder.new_question('skip', 'Skip me')
 
         # Simple group
         lights = builder.new_group('lights', 'Traffic Lights', data_type='group')
@@ -354,7 +357,7 @@ class ReadableFormTest(TestCase):
         xml = FormSubmissionBuilder(form_id='123', form_properties=responses).as_xml_string()
         submitted_xform = submit_form_locally(xml, self.domain).xform
         form_data, _ = get_readable_data_for_submission(submitted_xform)
-        question_response_map, ordered_question_values = build_data_cleaning_questions_and_responses(form_data)
+        question_response_map, ordered_question_values = get_data_cleaning_data(form_data, submitted_xform)
 
         expected_question_values = [
             '/data/something',
