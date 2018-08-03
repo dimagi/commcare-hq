@@ -101,7 +101,7 @@ class OpenmrsRepeater(CaseRepeater):
         payload = super(OpenmrsRepeater, self).get_payload(repeat_record)
         return json.loads(payload)
 
-    def send_request(self, repeat_record, payload, verify=None):
+    def send_request(self, repeat_record, payload):
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
             extra_fields=[identifier.case_property

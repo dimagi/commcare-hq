@@ -63,7 +63,7 @@ class Dhis2Repeater(FormRepeater):
         payload = super(Dhis2Repeater, self).get_payload(repeat_record)
         return json.loads(payload)
 
-    def send_request(self, repeat_record, payload, verify=None):
+    def send_request(self, repeat_record, payload):
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
                 return send_data_to_dhis2(

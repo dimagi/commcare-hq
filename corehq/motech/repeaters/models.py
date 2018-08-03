@@ -265,7 +265,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def verify(self):
         return not self.skip_cert_verify
 
-    def send_request(self, repeat_record, payload, verify=None):
+    def send_request(self, repeat_record, payload):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
         url = self.get_url(repeat_record)
