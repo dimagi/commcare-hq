@@ -122,7 +122,7 @@ class CcsRecordMonthly(models.Model):
     valid_in_month = models.SmallIntegerField(blank=True, null=True)
     mobile_number = models.TextField(blank=True, null=True)
     preg_order = models.SmallIntegerField(blank=True, null=True)
-    home_vist_date = models.DateField(blank=True, null=True)
+    home_visit_date = models.DateField(blank=True, null=True)
     num_pnc_visits = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):

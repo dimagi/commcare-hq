@@ -1664,7 +1664,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('blurred_vision', 'agg_bp.blurred_vision'),
             ('convulsions', 'agg_bp.convulsions'),
             ('rupture', 'agg_bp.rupture'),
-            ('home_visit_date', 'agg_bp.latest_time_end_processed::DATE'),
+            ('bp_date', 'agg_bp.latest_time_end_processed::DATE'),
             ('is_ebf', 'agg_pnc.is_ebf'),
             ('breastfed_at_birth', 'agg_delivery.breastfed_at_birth'),
             ('person_name', 'case_list.person_name'),

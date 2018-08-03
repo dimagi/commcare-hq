@@ -30,5 +30,5 @@ ALTER TABLE ccs_record_monthly ADD COLUMN tt_2 date;
 ALTER TABLE ccs_record_monthly ADD COLUMN valid_in_month smallint;
 ALTER TABLE ccs_record_monthly ADD COLUMN preg_order smallint;
 ALTER TABLE ccs_record_monthly ADD COLUMN mobile_number text;
-ALTER TABLE ccs_record_monthly ADD COLUMN home_visit_date date;
+ALTER TABLE ccs_record_monthly ADD COLUMN bp_date date;
 ALTER TABLE ccs_record_monthly ADD COLUMN num_pnc_visits smallint;
