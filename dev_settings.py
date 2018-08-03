@@ -110,7 +110,7 @@ PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 
 # These ES hosts are to be used strictly for DEBUG mode read operations
 ELASTICSEARCH_DEBUG_HOSTS = {
-    'prod': 'hqes0.internal-va.commcarehq.org',
+    'prod': 'hqes5.internal-va.commcarehq.org',
     'staging': 'hqes0-staging.internal-va.commcarehq.org',
     'india': '10.162.36.221',
 }
