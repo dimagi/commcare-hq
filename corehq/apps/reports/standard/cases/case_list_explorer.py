@@ -52,7 +52,7 @@ class CaseListExplorer(CaseListReport):
     def es_results(self):
         timer = datadog_bucket_timer(
             'commcare.case_list_explorer_query.es_timings',
-            tags=['domain:{}'.format(self.domain)],
+            tags=[],
             timing_buckets=(0.01, 0.05, 1, 5),
         )
         with timer:
@@ -159,7 +159,7 @@ class CaseListExplorer(CaseListReport):
     def _get_rows(self, data):
         timer = datadog_bucket_timer(
             'commcare.case_list_explorer_query.row_fetch_timings',
-            tags=['domain:{}'.format(self.domain)],
+            tags=[],
             timing_buckets=(0.01, 0.05, 1, 5),
         )
         with timer:
