@@ -1415,6 +1415,9 @@ class ProjectSettingsTab(UITab):
     url_prefix_formats = (
         '/a/{domain}/settings/project/',
         '/a/{domain}/phone/prime_restore/',
+        '/a/{domain}/motech/',
+        '/a/{domain}/dhis2/',
+        '/a/{domain}/openmrs/',
     )
 
     _is_viewable = False
