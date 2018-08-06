@@ -83,9 +83,9 @@
   <div class="tabbable appmanager-tabs-container">
 
     {% if not module.is_surveys %}
-      <ul class="nav nav-tabs" id="module-view-tabs">
+      <ul class="nav nav-tabs sticky-tabs" id="module-view-tabs">
         {% block tab-headers %}
-          <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
+          <li><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
           {% for detail in details %}
             <li>
               <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
@@ -110,7 +110,7 @@
 
     <div class="tab-content">
       {% block tab-content %}
-        <div class="tab-pane active" id="module-settings">
+        <div class="tab-pane" id="module-settings">
           {% include "app_manager/partials/module_view_settings.html" %}
         </div>
 
