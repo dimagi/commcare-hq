@@ -1616,10 +1616,18 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                     ) % software_plan_name
                 )
             else:
-                messages.success(
-                    request, _(
+                if self.is_downgrade_before_minimum:
+                    start_date = self.current_subscription.date_start + datetime.timedelta(days=31)
+                    message = _(
+                        "You have successfully scheduled a subscription to the %s Software Plan, "
+                        "set to start on %s."
+                    ) % (software_plan_name, start_date.strftime(USER_DATE_FORMAT))
+                else:
+                    message = _(
                         "Your project has been successfully subscribed to the %s Software Plan."
                     ) % software_plan_name
+                messages.success(
+                    request, message
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
