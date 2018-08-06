@@ -641,7 +641,16 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def column_names(self):
         return [
             _("Name"),
+            _("Case Type"),
+            _("Status"),
+            _("Last Run"),
+            _("Action"),
         ]
+
+    @property
+    @memoized
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
 
     @property
     def paginated_list(self):
@@ -650,6 +659,13 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 'itemData': {
                     'id': rule.pk,
                     'name': rule.name,
+                    'case_type': rule.case_type,
+                    'active': rule.active,
+                    'last_run': (ServerTime(rule.last_run)
+                                 .user_time(self.project_timezone)
+                                 .done()
+                                 .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
+                    'edit_url': reverse(EditCaseRuleView.urlname, args=[self.domain, rule.pk]),
                 },
                 'template': 'base-rule-template',
             }
@@ -671,35 +687,12 @@ class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
     ACTION_DELETE = 'delete'
 
     @property
-    @memoized
-    def project_timezone(self):
-        return get_timezone_for_user(None, self.domain)
-
-    @use_angular_js
-    @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
-    def dispatch(self, *args, **kwargs):
-        return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
-
-    @property
     def page_context(self):
         return {
             'pagination_limit_cookie_name': ('hq.pagination.limit'
                                              '.automatic_update_rule_list.%s'
                                              % self.domain),
             'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
-        }
-
-    def _format_rule(self, rule):
-        return {
-            'id': rule.pk,
-            'name': rule.name,
-            'case_type': rule.case_type,
-            'active': rule.active,
-            'last_run': (ServerTime(rule.last_run)
-                         .user_time(self.project_timezone)
-                         .done()
-                         .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
-            'edit_url': reverse(EditCaseRuleView.urlname, args=[self.domain, rule.pk]),
         }
 
     @allow_remote_invocation
