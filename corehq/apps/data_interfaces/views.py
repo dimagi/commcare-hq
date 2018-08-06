@@ -699,7 +699,6 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
     def _get_rule(self, rule_id):
-        error = None
         if rule_id is None:
             return None, _("Please provide an id.")
 
