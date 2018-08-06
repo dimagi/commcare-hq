@@ -1,10 +1,18 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'hqwebapp/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load djangular_tags %}
 
+{% requirejs_main 'hqwebapp/js/crud_paginated_list_init' %}
+
+{% block pagination_templates %}
+<script type="text/html" id="base-rule-template">
+    <td data-bind="text: name"></td>
+</script>
+{% endblock %}
+
+{% comment %}
 {% block js %}
-<script src="{% static 'hqwebapp/js/pagination.ng.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/pagination.ng.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -167,3 +175,4 @@
     </div>
 </div>
 {% endblock %}
+{% endcomment %}

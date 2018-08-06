@@ -612,6 +612,59 @@ def xform_management_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
+class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
+    template_name = 'data_interfaces/list_automatic_update_rules.html'
+    urlname = 'automatic_update_rule_list'
+    page_title = ugettext_lazy("Automatically Close Cases")
+
+    limit_text = ugettext_lazy("rules per page")
+    empty_notification = ugettext_lazy("You have no case rules.")
+    loading_message = ugettext_lazy("Loading rules...")
+
+    @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
+    def dispatch(self, *args, **kwargs):
+        return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
+
+    @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def total(self):
+        return self._rules().count()
+
+    @property
+    def column_names(self):
+        return [
+            _("Name"),
+        ]
+
+    @property
+    def paginated_list(self):
+        for rule in self._rules():
+            yield {
+                'itemData': {
+                    'id': rule.pk,
+                    'name': rule.name,
+                },
+                'template': 'base-rule-template',
+            }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+    @memoized
+    def _rules(self):
+        return AutomaticUpdateRule.by_domain(
+            self.domain,
+            AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+            active_only=False,
+        )
+'''
 class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
@@ -732,6 +785,7 @@ class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
         return {
             'success': True,
         }
+'''
 
 
 class AddAutomaticUpdateRuleView(HQJSONResponseMixin, DataInterfaceSection):
