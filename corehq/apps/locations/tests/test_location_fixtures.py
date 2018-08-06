@@ -437,6 +437,7 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
 class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
+    domain = 'location_fixtures'
     location_type_names = ['state', 'county', 'city']
     location_structure = [
         ('Massachusetts', [
