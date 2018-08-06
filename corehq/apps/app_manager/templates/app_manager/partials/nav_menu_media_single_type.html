@@ -61,20 +61,22 @@
                 {% endblocktrans %}
             </p>
             {% endif %}
-            {% if app.langs|length > 1 %}
-                <div data-bind="visible: isDefaultLanguage">
-                    <label>
+            {% if request|toggle_enabled:'LANGUAGE_LINKED_MULTIMEDIA' %}
+                {% if app.langs|length > 1%}
+                    <div data-bind="visible: isDefaultLanguage">
+                        <label>
+                            {% blocktrans %}
+                                Use this {{ label }} for all languages
+                            {% endblocktrans %}:
+                            <input type="checkbox" data-bind="enable: enabled, checked: languagesLinked" />
+                        </label>
+                    </div>
+                    <div data-bind="visible: languagesLinked() && !isDefaultLanguage">
                         {% blocktrans %}
-                            Use this {{ label }} for all languages
-                        {% endblocktrans %}:
-                        <input type="checkbox" data-bind="enable: enabled, checked: languagesLinked" />
-                    </label>
-                </div>
-                <div data-bind="visible: languagesLinked() && !isDefaultLanguage">
-                    {% blocktrans %}
-                        This {{ label }} is linked to the default language, and can only be modified there.
-                    {% endblocktrans %}
-                </div>
+                            This {{ label }} is linked to the default language, and can only be modified there.
+                        {% endblocktrans %}
+                    </div>
+                {% endif %}
             {% endif %}
         </div>
     </div>
@@ -83,14 +85,20 @@
         <div class="col-sm-4">
             <input type="text" class="form-control"
                    data-bind="value: customPath,
-                              enable: enabled,
-                              valueUpdate: 'textchange'" />
+                         enable: enabled,
+                         valueUpdate: 'textchange'" />
             <input type="hidden" class="jr-resource-field"
                    name="{{ qualifier|default_if_none:"" }}media_{{ type }}"
                    data-bind="value: savedPath" />
-            <input type="hidden"
-                   name="use_default_{{type}}_for_all"
-                   data-bind="value: languagesLinked" />
+            {% if request|toggle_enabled:'LANGUAGE_LINKED_MULTIMEDIA' %}
+                <input type="hidden"
+                       name="use_default_{{type}}_for_all"
+                       data-bind="value: languagesLinked" />
+            {% else %}
+                <input type="hidden"
+                       name="use_default_{{type}}_for_all"
+                       data-bind="value: false" />
+            {% endif %}
         </div>
         <div class="col-sm-1">
             <button type="button" class="btn btn-default"
