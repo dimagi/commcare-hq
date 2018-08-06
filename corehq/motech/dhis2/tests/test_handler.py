@@ -73,7 +73,10 @@ class TestDhisHandler(TestCase):
                     'form_question': '/data/event_date'
                 },
                 'event_status': 'COMPLETED',
-                'org_unit_id': 'dhis2_location_id',
+                'org_unit_id': {
+                    'doc_type': 'ConstantString',
+                    'value': 'dhis2_location_id'
+                },
                 'datavalue_maps': [
                     {
                         'data_element_id': 'dhis2_element_id',

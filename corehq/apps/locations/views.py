@@ -36,7 +36,6 @@ from corehq.apps.locations.tasks import download_locations_async, import_locatio
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
-from custom.enikshay.user_setup import ENikshayLocationFormSet
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -529,9 +528,7 @@ class NewLocationView(BaseLocationView):
     @memoized
     def location_form(self):
         data = self.request.POST if self.request.method == 'POST' else None
-        form_set = (ENikshayLocationFormSet if toggles.ENIKSHAY.enabled(self.domain)
-                    else LocationFormSet)
-        return form_set(
+        return LocationFormSet(
             self.location,
             bound_data=data,
             request_user=self.request.couch_user,

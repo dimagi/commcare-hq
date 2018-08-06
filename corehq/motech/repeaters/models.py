@@ -1,40 +1,52 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime, timedelta
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-import six.moves.urllib.parse
-import warnings
 
+import warnings
+from datetime import datetime, timedelta
+
+import six
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
+from couchdbkit.exceptions import ResourceNotFound
 from django.utils.translation import ugettext_lazy as _
+from memoized import memoized
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import Timeout, ConnectionError
-from couchdbkit.exceptions import ResourceNotFound
 
+from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
-from corehq.motech.repeaters.repeater_generators import FormRepeaterXMLPayloadGenerator, \
-    FormRepeaterJsonPayloadGenerator, CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator, \
-    ShortFormRepeaterJsonPayloadGenerator, AppStructureGenerator, UserPayloadGenerator, LocationPayloadGenerator
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT, REPEATER_SUCCESS_COUNT
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.quickcache import quickcache
-from dimagi.ext.couchdbkit import *
-from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from couchforms.const import DEVICE_LOG_XMLNS
-from memoized import memoized
-from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.post import simple_post, perform_SOAP_operation
-
-from .dbaccessors import (
-    get_pending_repeat_record_count,
-    get_failure_repeat_record_count,
-    get_success_repeat_record_count,
-    get_cancelled_repeat_record_count
+from corehq.motech.repeaters.repeater_generators import (
+    FormRepeaterXMLPayloadGenerator,
+    FormRepeaterJsonPayloadGenerator,
+    CaseRepeaterXMLPayloadGenerator,
+    CaseRepeaterJsonPayloadGenerator,
+    ShortFormRepeaterJsonPayloadGenerator,
+    AppStructureGenerator,
+    UserPayloadGenerator,
+    LocationPayloadGenerator,
 )
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT, REPEATER_SUCCESS_COUNT
+from corehq.util.quickcache import quickcache
+from couchforms.const import DEVICE_LOG_XMLNS
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    StringListProperty,
+    StringProperty,
+)
+from dimagi.utils.mixins import UnicodeMixIn
+from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.post import simple_post, perform_SOAP_operation
 from .const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
@@ -44,9 +56,14 @@ from .const import (
     RECORD_CANCELLED_STATE,
     POST_TIMEOUT,
 )
+from .dbaccessors import (
+    get_pending_repeat_record_count,
+    get_failure_repeat_record_count,
+    get_success_repeat_record_count,
+    get_cancelled_repeat_record_count
+)
 from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
-import six
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -89,6 +106,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1), required=False)
     username = StringProperty()
     password = StringProperty()
+    skip_cert_verify = BooleanProperty(default=False)
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
 
@@ -262,11 +280,9 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
 
     @property
     def verify(self):
-        # overwrite to skip certificate verification when sending request
-        # to https urls
-        return True
+        return not self.skip_cert_verify
 
-    def send_request(self, repeat_record, payload, verify=None):
+    def send_request(self, repeat_record, payload):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
         url = self.get_url(repeat_record)

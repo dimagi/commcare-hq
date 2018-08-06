@@ -19,7 +19,8 @@ def _get_program(config, case_trigger_info=None, payload=None):
 
 
 def _get_org_unit(config, case_trigger_info=None, payload=None):
-    org_unit_id = config.org_unit_id
+    org_unit_id_spec = config.org_unit_id
+    org_unit_id = org_unit_id_spec.get_value(case_trigger_info) if org_unit_id_spec else None
     if not org_unit_id:
         user_id = payload.get('@user_id')
         user = CouchUser.get_by_user_id(user_id)

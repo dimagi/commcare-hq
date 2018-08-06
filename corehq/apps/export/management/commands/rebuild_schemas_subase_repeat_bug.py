@@ -26,8 +26,9 @@ class Command(BaseCommand):
             for gs in group_schemas:
                 if not gs.path[-1].is_repeat:
                     schemas_to_rebuild[domain].append((app_id, xmlns))
+                    break
 
-        for domain, schema_keys in schemas_to_rebuild:
+        for domain, schema_keys in schemas_to_rebuild.items():
             print("Rebuilding {} schemas for domain '{}'".format(len(schema_keys), domain))
             for app_id, xmlns in schema_keys:
                 print("    rebuilding ('{}', '{}')".format(app_id, xmlns))

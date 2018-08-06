@@ -155,7 +155,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
-            _create_views(cursor)
             _update_aggregate_locations_tables(cursor)
 
         state_ids = (SQLLocation.objects
@@ -215,7 +214,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         ).delay()
 
 
-def _create_views(cursor):
+def create_views(cursor):
     try:
         celery_task_logger.info("Starting icds reports create_sql_views")
         for sql_view_path in SQL_VIEWS_PATHS:

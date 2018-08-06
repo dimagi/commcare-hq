@@ -1415,6 +1415,9 @@ class ProjectSettingsTab(UITab):
     url_prefix_formats = (
         '/a/{domain}/settings/project/',
         '/a/{domain}/phone/prime_restore/',
+        '/a/{domain}/motech/',
+        '/a/{domain}/dhis2/',
+        '/a/{domain}/openmrs/',
     )
 
     _is_viewable = False
@@ -1626,15 +1629,18 @@ def _get_integration_section(domain):
         }, {
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
-        }, {
-            'title': _(MotechLogListView.page_title),
-            'url': reverse(MotechLogListView.urlname, args=[domain])
         }])
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
         integration.append({
             'title': _(OpenmrsImporterView.page_title),
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
+        })
+
+    if toggles.DHIS2_INTEGRATION.enabled(domain) or toggles.OPENMRS_INTEGRATION.enabled(domain):
+        integration.append({
+            'title': _(MotechLogListView.page_title),
+            'url': reverse(MotechLogListView.urlname, args=[domain])
         })
 
     return integration

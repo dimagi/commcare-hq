@@ -39,7 +39,7 @@ def create_build_files_for_all_app_profiles(domain, build_id):
     save_app = False
     for profile in build_profiles:
         if not app.has_attachment('files/{id}/profile.xml'.format(id=profile)):
-            app.create_build_files(save=True, build_profile_id=profile)
+            app.create_build_files(build_profile_id=profile)
             save_app = True
     if save_app:
         app.save()

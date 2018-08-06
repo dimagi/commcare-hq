@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-दवा वाउचर आईडी {{ voucher_id }} लाभार्थी आईडी {{ person_id }}  के साथ {{ person_name }} को जारी किया गया है।

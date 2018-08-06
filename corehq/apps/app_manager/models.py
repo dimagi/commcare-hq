@@ -5137,21 +5137,20 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             settings['Build-Number'] = self.version
         return settings
 
-    def create_build_files(self, save=False, build_profile_id=None):
+    def create_build_files(self, build_profile_id=None):
         built_on = datetime.datetime.utcnow()
         all_files = self.create_all_files(build_profile_id)
-        if save:
-            self.date_created = built_on
-            self.built_on = built_on
-            self.built_with = BuildRecord(
-                version=self.build_spec.version,
-                build_number=self.version,
-                datetime=built_on,
-            )
+        self.date_created = built_on
+        self.built_on = built_on
+        self.built_with = BuildRecord(
+            version=self.build_spec.version,
+            build_number=self.version,
+            datetime=built_on,
+        )
 
-            for filepath in all_files:
-                self.lazy_put_attachment(all_files[filepath],
-                                         'files/%s' % filepath)
+        for filepath in all_files:
+            self.lazy_put_attachment(all_files[filepath],
+                                     'files/%s' % filepath)
 
     def create_jadjar_from_build_files(self, save=False):
         self.validate_jar_path()
@@ -5322,7 +5321,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             force_new_forms = True
         copy.set_form_versions(previous_version, force_new_forms)
         copy.set_media_versions(previous_version)
-        copy.create_build_files(save=True)
+        copy.create_build_files()
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
@@ -5583,14 +5582,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
                 if not force_new_version:
-                    form_version = None
                     try:
                         previous_form = previous_version.get_form(form.unique_id)
                         # take the previous version's compiled form as-is
                         # (generation code may have changed since last build)
                         previous_source = previous_version.fetch_attachment(filename)
                     except (ResourceNotFound, FormNotFoundException):
-                        pass
+                        form.version = None
                     else:
                         previous_hash = _hash(previous_source)
 
@@ -5599,10 +5597,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         previous_form_version = previous_form.get_version()
                         form.version = previous_form_version
                         my_hash = _hash(self.fetch_xform(form=form))
-                        if previous_hash == my_hash:
-                            form_version = previous_form_version
-
-                    form.version = form_version
+                        if previous_hash != my_hash:
+                            form.version = None
                 else:
                     form.version = None
 
