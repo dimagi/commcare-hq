@@ -63,6 +63,7 @@ branches:
   - dmr/fix-package-security-vulnerabilities  # Danny July 21
   - nh/omrs/atom+leven  # Norman July 31
   - nh/motech/set_repeater  # Norman Aug 6
+  - np/couchdbkit-0.9.7  # Nick P Aug 8
 submodules:
   submodules/django-digest-src:
     branches: []
