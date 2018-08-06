@@ -47,7 +47,7 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.web import json_response
 from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm, BrokenBuildsForm, EmailForm, SuperuserManagementForm,
+    AuthenticateAsForm, EmailForm, SuperuserManagementForm,
     ReprocessMessagingCaseUpdatesForm,
     DisableTwoFactorForm, DisableUserForm)
 from corehq.apps.hqadmin.reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
