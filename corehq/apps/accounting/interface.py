@@ -211,10 +211,10 @@ class AccountingInterface(AddItemInterface):
             queryset = queryset.filter(
                 account_type=account_type,
             )
-        is_customer_billing_account = CustomerAccountFilter.get_value(self.request, self.domain)
-        if is_customer_billing_account is not None:
+        is_customer_account = CustomerAccountFilter.get_value(self.request, self.domain)
+        if is_customer_account is not None:
             queryset = queryset.filter(
-                is_customer_billing_account=is_customer_billing_account == CustomerAccountFilter.is_customer_account
+                is_customer_billing_account=is_customer_account == CustomerAccountFilter.is_customer_account
             )
         is_active = ActiveStatusFilter.get_value(self.request, self.domain)
         if is_active is not None:
