@@ -73,7 +73,8 @@ def _should_patch_gevent(args, gevent_commands):
 
 
 def set_default_settings_path(argv):
-    if len(argv) > 1 and argv[1] == 'test':
+    if len(argv) > 1 and argv[1] == 'test' or os.environ.get('CCHQ_TESTING') == '1':
+        os.environ.setdefault('CCHQ_TESTING', '1')
         module = 'testsettings'
     else:
         module = 'settings'
