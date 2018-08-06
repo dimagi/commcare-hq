@@ -4,12 +4,14 @@ hqDefine("data_interfaces/js/list_automatic_update_rules", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/crud_paginated_list',
+    'analytix/js/google',
 ], function(
     $,
     ko,
     _,
     initialPageData,
-    CRUDPaginatedList
+    CRUDPaginatedList,
+    googleAnalytics
 ) {
     var showActionError = function(rule, error) {
         var newItemData = _.extend({}, rule.itemData(), {
@@ -62,6 +64,10 @@ hqDefine("data_interfaces/js/list_automatic_update_rules", [
 
         ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
         paginatedListModel.init();
+
+        $("#add-new").click(function() {
+            googleAnalytics.track.event('Automatic Case Closure', 'Rules', 'Set Rule');
+        });
     });
     /*'use strict';
     var autoUpdateRuleApp = window.angular.module('autoUpdateRuleApp', ['hq.pagination']);
@@ -94,9 +100,6 @@ hqDefine("data_interfaces/js/list_automatic_update_rules", [
             .error(function () {
                 rule.action_error = gettext("Issue communicating with server. Try again.");
             });
-        },
-        trackNewRule: function () {
-            hqImport('analytix/js/google').track.event('Automatic Case Closure', 'Rules', 'Set Rule');
         },
     });*/
 });
