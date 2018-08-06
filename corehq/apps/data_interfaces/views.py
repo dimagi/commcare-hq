@@ -681,7 +681,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for rule in self._rules():
+        for rule in self._rules()[self.skip:self.skip + self.limit]:
             yield {
                 'itemData': self._format_rule(rule),
                 'template': 'base-rule-template',
