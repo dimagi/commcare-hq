@@ -547,8 +547,7 @@ class AggChildHealthMonthly(models.Model):
         blank=True, null=True, help_text="case open, alive, not migrated"
     )
     wer_eligible = models.IntegerField(
-        blank=True, null=True,
-        wer_eligible="age <= 60 months and valid_in_month"
+        blank=True, null=True, help_text="age <= 60 months and valid_in_month"
     )
     nutrition_status_weighed = models.IntegerField(
         blank=True, null=True,
