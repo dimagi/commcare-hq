@@ -527,6 +527,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             show_test=include_test
         ).get_excel_data(location)
     elif indicator == BENEFICIARY_LIST_EXPORT:
+        # this report doesn't use this configuration
+        config.pop('aggregation_level', None)
         data_type = 'Beneficiary_List'
         excel_data = BeneficiaryExport(
             config=config,

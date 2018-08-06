@@ -227,6 +227,31 @@ def _rename_key(dct, old, new):
         del dct[old]
 
 
+def app_template_dir(slug):
+    return os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'template_apps', slug)
+
+
+@memoized
+def load_app_template(slug):
+    with open(os.path.join(app_template_dir(slug), 'app.json')) as f:
+        return json.load(f)
+
+
+@memoized
+def get_template_app_multimedia_paths(slug):
+    paths = []
+    base_path = app_template_dir(slug)
+    for root, subdirs, files in os.walk(base_path):
+        subdir = os.path.relpath(root, base_path)
+        if subdir == '.':
+            continue
+        for file in files:
+            if file.startswith("."):
+                continue
+            paths.append(subdir + os.sep + file)
+    return paths
+
+
 @memoized
 def load_case_reserved_words():
     with open(
@@ -1491,6 +1516,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
     media_audio = DictProperty(StringProperty)
     custom_icons = ListProperty(CustomIcon)
 
+    # When set to true, all languages use the specific media from the default language
+    use_default_image_for_all = BooleanProperty(default=False)
+    use_default_audio_for_all = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data):
         # Lazy migration from single-language media to localizable media
@@ -1526,6 +1555,13 @@ class NavMenuItemMediaMixin(DocumentSchema):
             to return first path in sorted lang->media-path list
         """
         assert media_attr in ('media_image', 'media_audio')
+        toggle_enabled = toggles.LANGUAGE_LINKED_MULTIMEDIA.enabled
+        app = self.get_app()
+
+        if self.use_default_image_for_all and media_attr == 'media_image' and toggle_enabled(app.domain):
+            lang = app.default_language
+        if self.use_default_audio_for_all and media_attr == 'media_audio' and toggle_enabled(app.domain):
+            lang = app.default_language
 
         media_dict = getattr(self, media_attr)
         if not media_dict:
