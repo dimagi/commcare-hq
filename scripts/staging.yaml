@@ -62,6 +62,7 @@ branches:
   - dmr/fix-package-security-vulnerabilities+nh/omrs/atom+leven
   - dmr/fix-package-security-vulnerabilities  # Danny July 21
   - nh/omrs/atom+leven  # Norman July 31
+  - nh/motech/set_repeater  # Norman Aug 6
 submodules:
   submodules/django-digest-src:
     branches: []
