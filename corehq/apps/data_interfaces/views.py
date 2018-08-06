@@ -631,7 +631,9 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @property
     def page_context(self):
-        return self.pagination_context
+        context = self.pagination_context
+        context['help_site_url'] = 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases'
+        return context
 
     @property
     def total(self):
@@ -685,15 +687,6 @@ class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
     ACTION_DELETE = 'delete'
-
-    @property
-    def page_context(self):
-        return {
-            'pagination_limit_cookie_name': ('hq.pagination.limit'
-                                             '.automatic_update_rule_list.%s'
-                                             % self.domain),
-            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
-        }
 
     @allow_remote_invocation
     def update_rule(self, in_data):

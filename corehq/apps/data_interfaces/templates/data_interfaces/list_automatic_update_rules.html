@@ -4,6 +4,25 @@
 
 {% requirejs_main 'hqwebapp/js/crud_paginated_list_init' %}
 
+{% block pagination_header %}
+    <div class="row">
+        <div class="col-sm-8">
+            <p class="lead">
+                {% blocktrans %}
+                Automatically update and close cases from CommCareHQ
+                {% endblocktrans %}
+            </p>
+            <p>
+                {% blocktrans %}
+                Create rules for closing cases from CommCareHQ.
+                All rules run every day at midnight GMT.
+                For more information, see the <a href="{{ help_site_url }}">Help Site</a>.
+                {% endblocktrans %}
+            </p>
+        </div>
+    </div>
+{% endblock pagination_header %}
+
 {% block pagination_templates %}
 <script type="text/html" id="base-rule-template">
     <td>
@@ -19,7 +38,7 @@
     <td data-bind="text: last_run"></td>
     <td>TODO</td>
 </script>
-{% endblock %}
+{% endblock pagination_templates %}
 
 {% comment %}
 {% block js %}
@@ -39,22 +58,6 @@
                 <i class="fa fa-plus"></i> {% trans "Add Automatic Case Close Rule" %}
             </button>
         </a>
-    </div>
-    <div class="row">
-        <div class="col-sm-8">
-            <p class="lead">
-                {% blocktrans %}
-                Automatically update and close cases from CommCareHQ
-                {% endblocktrans %}
-            </p>
-            <p>
-                {% blocktrans %}
-                Create rules for closing cases from CommCareHQ.
-                All rules run every day at midnight GMT.
-                For more information, see the <a href="{{ help_site_url }}">Help Site</a>.
-                {% endblocktrans %}
-            </p>
-        </div>
     </div>
     <div class="panel panel-default"
          ng-cloak>
