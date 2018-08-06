@@ -61,9 +61,6 @@ import six
 class BaseNikshayRepeater(CaseRepeater):
     @property
     def verify(self):
-        # Never verify SSL certificates when sending requests to https urls
-        # 2018-08-03 (Norman): Left this as False to maintain current behaviour
-        #     instead of using self.skip_cert_verify like base class
         return False
 
     @classmethod
@@ -285,9 +282,6 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
 
     @property
     def verify(self):
-        # Never verify SSL certificates when sending requests to https urls
-        # 2018-08-03 (Norman): Left this as False to maintain current behaviour
-        #     instead of using self.skip_cert_verify
         return False
 
     @classmethod
