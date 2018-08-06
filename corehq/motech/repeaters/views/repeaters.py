@@ -130,6 +130,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         repeater.username = cleaned_data['username']
         repeater.password = cleaned_data['password']
         repeater.format = cleaned_data['format']
+        repeater.skip_cert_verify = cleaned_data['skip_cert_verify']
         return repeater
 
     def post_save(self, request, repeater):
