@@ -50,20 +50,9 @@
                         hide: isLoadingVisible
                     }
                 ">
+
                 <div class="row" data-bind="visible: isPaginationActive">
-                    <div class="col-md-4">
-                        <div class="form-inline" style="margin: 1.6em 0;">
-                            <label for="pagination-limit">{% trans 'Show' %}</label>
-                            <select class="form-control" id="pagination-limit" data-bind="event: {change: updateListLimit}">
-                                {% for limit in pagination.limit_options %}
-                                    <option value="{{ limit }}">
-                                        {{ limit }} {{ pagination.text.limit }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
+                    <div class="col-md-12">
                         {% include 'hqwebapp/partials/pagination.html' %}
                     </div>
                 </div>
@@ -159,11 +148,25 @@
                     </div>
                 </div>
             </div>
+
             <div class="row" data-bind="visible: isPaginationActive">
-                <div class="col-md-12">
+                <div class="col-md-4">
+                    <div class="form-inline" style="margin: 1.6em 0;">
+                        <label for="pagination-limit">{% trans 'Show' %}</label>
+                        <select class="form-control" id="pagination-limit" data-bind="event: {change: updateListLimit}">
+                            {% for limit in pagination.limit_options %}
+                                <option value="{{ limit }}">
+                                    {{ limit }} {{ pagination.text.limit }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-8">
                     {% include 'hqwebapp/partials/pagination.html' %}
                 </div>
             </div>
+
         </div>
     {% endblock %}
     {% block pagination_footer %}
