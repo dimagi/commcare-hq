@@ -99,6 +99,7 @@
         <a href="{% url 'domain_subscription_view' domain %}" class="btn btn-primary">{% trans 'Stay with Community Plan' %}</a>
     </div>
     {% else %}
+    <form action="{% url 'confirm_billing_account_info' domain %}" method="post" class="form">
         {% csrf_token %}
         <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
         <hr />
@@ -115,7 +116,7 @@
                 </button>
             </div>
         </div>
-    </div>
+    </form>
     {% endif %}
 {% endblock %}
 
