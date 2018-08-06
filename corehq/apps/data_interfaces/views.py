@@ -620,6 +620,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     limit_text = ugettext_lazy("rules per page")
     empty_notification = ugettext_lazy("You have no case rules.")
     loading_message = ugettext_lazy("Loading rules...")
+    deleted_items_header = ugettext_lazy("Deleted Rules")
 
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
@@ -697,18 +698,39 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
-    def update_rule(self):
-        rule_id = self.parameters.get('id')
+    def _get_rule(self, rule_id):
+        error = None
         if rule_id is None:
-            return {'success': False, 'error': _("Please provide an id.")}
+            return None, _("Please provide an id.")
 
         try:
             rule = AutomaticUpdateRule.objects.get(pk=rule_id, workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         except AutomaticUpdateRule.DoesNotExist:
-            return {'success': False, 'error': _("Rule not found.")}
+            return None, _("Rule not found.")
 
         if rule.domain != self.domain:
-            return {'success': False, 'error': _("Rule not found.")}
+            return None, _("Rule not found.")
+
+        return rule, None
+
+    def get_deleted_item_data(self, rule_id):
+        (rule, error) = self._get_rule(rule_id)
+        if rule is None:
+            return {'success': False, 'error': error}
+
+        rule.soft_delete()
+
+        return {
+            'itemData': {
+                'name': rule.name,
+            },
+            'template': 'rule-deleted-template',
+        }
+
+    def update_rule(self):
+        (rule, error) = self._get_rule(self.parameters.get('id'))
+        if rule is None:
+            return {'success': False, 'error': error}
 
         if self.action == self.ACTION_ACTIVATE:
             rule.activate()
@@ -724,19 +746,6 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @property
     def deactivate_response(self):
         return self.update_rule()
-'''
-class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
-    ACTION_DELETE = 'delete'
-
-    @allow_remote_invocation
-    def update_rule(self, in_data):
-        elif action == self.ACTION_DELETE:
-            rule.soft_delete()
-
-        return {
-            'success': True,
-        }
-'''
 
 
 class AddAutomaticUpdateRuleView(HQJSONResponseMixin, DataInterfaceSection):
