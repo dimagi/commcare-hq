@@ -61,19 +61,21 @@
                 {% endblocktrans %}
             </p>
             {% endif %}
-            <div data-bind="visible: isDefaultLanguage">
-                <label>
+            {% if app.langs|length > 1 %}
+                <div data-bind="visible: isDefaultLanguage">
+                    <label>
+                        {% blocktrans %}
+                            Use this {{ label }} for all languages
+                        {% endblocktrans %}:
+                        <input type="checkbox" data-bind="enable: enabled, checked: languagesLinked" />
+                    </label>
+                </div>
+                <div data-bind="visible: languagesLinked() && !isDefaultLanguage">
                     {% blocktrans %}
-                        Use this {{ label }} for all languages
-                    {% endblocktrans %}:
-                    <input type="checkbox" data-bind="enable: enabled, checked: languagesLinked" />
-                </label>
-            </div>
-            <div data-bind="visible: languagesLinked() && !isDefaultLanguage">
-                {% blocktrans %}
-                    This {{ label }} is linked to the default language, and can only be modified there.
-                {% endblocktrans %}
-            </div>
+                        This {{ label }} is linked to the default language, and can only be modified there.
+                    {% endblocktrans %}
+                </div>
+            {% endif %}
         </div>
     </div>
     <div class="form-group" data-bind="visible: showCustomPath">
