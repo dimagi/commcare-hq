@@ -90,15 +90,9 @@
             <input type="hidden" class="jr-resource-field"
                    name="{{ qualifier|default_if_none:"" }}media_{{ type }}"
                    data-bind="value: savedPath" />
-            {% if request|toggle_enabled:'LANGUAGE_LINKED_MULTIMEDIA' %}
-                <input type="hidden"
-                       name="use_default_{{type}}_for_all"
-                       data-bind="value: languagesLinked" />
-            {% else %}
-                <input type="hidden"
-                       name="use_default_{{type}}_for_all"
-                       data-bind="value: false" />
-            {% endif %}
+            <input type="hidden"
+                   name="use_default_{{type}}_for_all"
+                   data-bind="value: languagesLinked" />
         </div>
         <div class="col-sm-1">
             <button type="button" class="btn btn-default"
