@@ -621,6 +621,9 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     empty_notification = ugettext_lazy("You have no case rules.")
     loading_message = ugettext_lazy("Loading rules...")
 
+    ACTION_ACTIVATE = 'activate'
+    ACTION_DEACTIVATE = 'deactivate'
+
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
         return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
@@ -628,6 +631,13 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @property
     def parameters(self):
         return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    def allowed_actions(self):
+        actions = super(AutomaticUpdateRuleListView, self).allowed_actions
+        actions.append('activate')
+        actions.append('deactivate')
+        return actions
 
     @property
     def page_context(self):
@@ -654,26 +664,27 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def project_timezone(self):
         return get_timezone_for_user(None, self.domain)
 
+    def _format_rule(self, rule):
+        return {
+            'id': rule.pk,
+            'name': rule.name,
+            'case_type': rule.case_type,
+            'active': rule.active,
+            'last_run': (ServerTime(rule.last_run)
+                         .user_time(self.project_timezone)
+                         .done()
+                         .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
+            'edit_url': reverse(EditCaseRuleView.urlname, args=[self.domain, rule.pk]),
+            'action_error': "",     # must be provided because knockout template looks for it
+        }
+
     @property
     def paginated_list(self):
         for rule in self._rules():
             yield {
-                'itemData': {
-                    'id': rule.pk,
-                    'name': rule.name,
-                    'case_type': rule.case_type,
-                    'active': rule.active,
-                    'last_run': (ServerTime(rule.last_run)
-                                 .user_time(self.project_timezone)
-                                 .done()
-                                 .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
-                    'edit_url': reverse(EditCaseRuleView.urlname, args=[self.domain, rule.pk]),
-                },
+                'itemData': self._format_rule(rule),
                 'template': 'base-rule-template',
             }
-
-    def post(self, *args, **kwargs):
-        return self.paginate_crud_response
 
     @memoized
     def _rules(self):
@@ -682,53 +693,43 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
             active_only=False,
         )
-'''
-class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
-    ACTION_ACTIVATE = 'activate'
-    ACTION_DEACTIVATE = 'deactivate'
-    ACTION_DELETE = 'delete'
 
-    @allow_remote_invocation
-    def update_rule(self, in_data):
-        try:
-            rule_id = in_data['id']
-        except KeyError:
-            return {
-                'error': _("Please provide an id."),
-            }
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
 
-        try:
-            action = in_data['update_action']
-        except KeyError:
-            return {
-                'error': _("Please provide an update_action."),
-            }
-
-        if action not in (
-            self.ACTION_ACTIVATE,
-            self.ACTION_DEACTIVATE,
-            self.ACTION_DELETE,
-        ):
-            return {
-                'error': _("Unrecognized update_action."),
-            }
+    def update_rule(self):
+        rule_id = self.parameters.get('id')
+        if rule_id is None:
+            return {'success': False, 'error': _("Please provide an id.")}
 
         try:
             rule = AutomaticUpdateRule.objects.get(pk=rule_id, workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         except AutomaticUpdateRule.DoesNotExist:
-            return {
-                'error': _("Rule not found."),
-            }
+            return {'success': False, 'error': _("Rule not found.")}
 
         if rule.domain != self.domain:
-            return {
-                'error': _("Rule not found."),
-            }
+            return {'success': False, 'error': _("Rule not found.")}
 
-        if action == self.ACTION_ACTIVATE:
+        if self.action == self.ACTION_ACTIVATE:
             rule.activate()
-        elif action == self.ACTION_DEACTIVATE:
+        elif self.action == self.ACTION_DEACTIVATE:
             rule.activate(False)
+
+        return {'success': True, 'itemData': self._format_rule(rule)}
+
+    @property
+    def activate_response(self):
+        return self.update_rule()
+
+    @property
+    def deactivate_response(self):
+        return self.update_rule()
+'''
+class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
+    ACTION_DELETE = 'delete'
+
+    @allow_remote_invocation
+    def update_rule(self, in_data):
         elif action == self.ACTION_DELETE:
             rule.soft_delete()
 

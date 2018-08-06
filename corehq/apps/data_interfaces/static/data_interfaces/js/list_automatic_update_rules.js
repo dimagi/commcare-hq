@@ -11,16 +11,41 @@ hqDefine("data_interfaces/js/list_automatic_update_rules", [
     initialPageData,
     CRUDPaginatedList
 ) {
+    var showActionError = function(rule, error) {
+        var newItemData = _.extend({}, rule.itemData(), {
+            action_error: error,
+        });
+        rule.itemData(newItemData);
+    };
+
+    var updateRule = function(action, rule) {
+        $.ajax({
+            url: "",
+            type: "POST",
+            dataType: 'json',
+            data: {
+                action: action,
+                id: rule.itemId,
+            },
+            success: function(data) {
+                if (data.success) {
+                    rule.itemData(data.itemData);
+                } else {
+                    showActionError(rule, data.error);
+                }
+            },
+            error: function() {
+                showActionError(rule, gettext("Issue communicating with server. Try again."));
+            },
+        });
+    };
+
     var ruleModel = function(itemSpec, initRow) {
-        return CRUDPaginatedList.PaginatedItem(itemSpec, function(rowElems, paginatedItem) {
-            initRow(rowElems, paginatedItem);
+        return CRUDPaginatedList.PaginatedItem(itemSpec, function(rowElems, rule) {
+            initRow(rowElems, rule);
 
-            $(rowElems).find(".activate").click(function() {
-                console.log("activate me");
-            });
-
-            $(rowElems).find(".deactivate").click(function() {
-                console.log("deactivate me");
+            $(rowElems).find("button[data-action]").click(function() {
+                updateRule($(this).data("action"), rule);
             });
         });
     };
@@ -52,40 +77,6 @@ hqDefine("data_interfaces/js/list_automatic_update_rules", [
     }]);
     autoUpdateRuleApp.constant('paginationLimitCookieName', '{{ pagination_limit_cookie_name }}');
     autoUpdateRuleApp.constant('paginationCustomData', {
-        activateRule: function (rule, djangoRMI) {
-            djangoRMI.update_rule({
-                id: rule.id,
-                update_action: 'activate'
-            })
-            .success(function (data) {
-                if (data.success) {
-                    rule.active = true;
-                    rule.action_error = '';
-                } else {
-                    rule.action_error = data.error;
-                }
-            })
-            .error(function () {
-                rule.action_error = gettext("Issue communicating with server. Try again.");
-            });
-        },
-        deactivateRule: function (rule, djangoRMI) {
-            djangoRMI.update_rule({
-                id: rule.id,
-                update_action: 'deactivate'
-            })
-            .success(function (data) {
-                if (data.success) {
-                    rule.active = false;
-                    rule.action_error = '';
-                } else {
-                    rule.action_error = data.error;
-                }
-            })
-            .error(function () {
-                rule.action_error = gettext("Issue communicating with server. Try again.");
-            });
-        },
         deleteRule: function (rule, djangoRMI, paginationController) {
             $('#delete_' + rule.id).modal('hide');
             djangoRMI.update_rule({
