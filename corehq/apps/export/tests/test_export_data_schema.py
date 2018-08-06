@@ -45,6 +45,7 @@ from corehq.apps.export.const import (
     CASE_CREATE_ELEMENTS,
 )
 from six.moves import map
+from six.moves import zip
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
