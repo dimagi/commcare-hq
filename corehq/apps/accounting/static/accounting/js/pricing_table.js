@@ -1,10 +1,10 @@
 hqDefine('accounting/js/pricing_table', function () {
-    var pricingTableModel = function (editions, current_edition, isRenewal,
-                                      startDateAfterMinimumSubscription, subscriptionBelowMinimum) {
+    var pricingTableModel = function (editions, currentEdition, isRenewal, startDateAfterMinimumSubscription,
+                                      subscriptionBelowMinimum) {
         'use strict';
         var self = {};
 
-        self.currentEdition = current_edition;
+        self.currentEdition = currentEdition;
         self.isRenewal = isRenewal;
         self.startDateAfterMinimumSubscription = startDateAfterMinimumSubscription;
         self.subscriptionBelowMinimum = subscriptionBelowMinimum;
@@ -12,7 +12,7 @@ hqDefine('accounting/js/pricing_table', function () {
             return pricingTableEditionModel(edition, self.currentEdition);
         }));
 
-        self.selected_edition = ko.observable(isRenewal ? current_edition : false);
+        self.selected_edition = ko.observable(isRenewal ? currentEdition : false);
         self.isSubmitVisible = ko.computed(function () {
             if (isRenewal){
                 return true;
@@ -29,20 +29,20 @@ hqDefine('accounting/js/pricing_table', function () {
             if (oldPlan === 'Enterprise') {
                 if (newPlan === 'Enterprise' || newPlan === 'Pro' ||
                     newPlan === 'Standard' || newPlan === 'Community') {
-                    return true
+                    return true;
                 }
             }
             else if (oldPlan === 'Advanced') {
                 if (newPlan === 'Pro' || newPlan === 'Standard' || newPlan === 'Community') {
-                    return true
+                    return true;
                 }
             } else if (oldPlan === 'Pro') {
                 if (newPlan === 'Standard' || newPlan === 'Community') {
-                    return true
+                    return true;
                 }
             } else if (oldPlan === 'Standard') {
                 if (newPlan === 'Community') {
-                    return true
+                    return true;
                 }
             }
             return false;
@@ -68,7 +68,7 @@ hqDefine('accounting/js/pricing_table', function () {
             }
         };
 
-        self.submitDowngradeForm = function (pricingTable, e) {
+        self.submitDowngradeForm = function (pricingTable) {
             if (self.form) {
                 self.form.submit();
             }
@@ -83,14 +83,14 @@ hqDefine('accounting/js/pricing_table', function () {
         return self;
     };
 
-    var pricingTableEditionModel = function (data, current_edition) {
+    var pricingTableEditionModel = function (data, currentEdition) {
         'use strict';
         var self = {};
 
         self.slug = ko.observable(data[0]);
         self.name = ko.observable(data[1].name);
         self.description = ko.observable(data[1].description);
-        self.currentEdition = ko.observable(data[0] === current_edition);
+        self.currentEdition = ko.observable(data[0] === currentEdition);
         self.notCurrentEdition = ko.computed(function (){
             return !self.currentEdition();
         });

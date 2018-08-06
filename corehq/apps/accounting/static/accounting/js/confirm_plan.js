@@ -34,7 +34,7 @@ hqDefine('accounting/js/confirm_plan', function () {
                     note: $button.closest(".modal").find("textarea").val(),
                 },
                 success: finish,
-                error: finish
+                error: finish,
             });
         };
 
@@ -43,11 +43,11 @@ hqDefine('accounting/js/confirm_plan', function () {
 
 
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
+        var initialPageData = hqImport('hqwebapp/js/initial_page_data').get;
         confirmPlanModel = confirmPlanModel(
-            initial_page_data('is_upgrade'),
-            initial_page_data('current_plan'),
-            initial_page_data('new_plan')
+            initialPageData('is_upgrade'),
+            initialPageData('current_plan'),
+            initialPageData('new_plan')
         );
         $('#confirm-plan').koApplyBindings(confirmPlanModel);
         $('#modal-downgrade').koApplyBindings(confirmPlanModel);
