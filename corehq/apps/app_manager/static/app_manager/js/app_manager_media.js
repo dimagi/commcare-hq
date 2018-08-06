@@ -9,7 +9,7 @@ hqDefine('app_manager/js/app_manager_media', function() {
             };
 
         self.enabled = ko.observable(
-            o.ref.languages_linked ? self.isDefaultLanguage : true
+            o.ref.use_default_media ? self.isDefaultLanguage : true
         );
         self.ref = ko.observable(new MenuMediaReference(o.ref));
         self.refHasPath = ko.computed(function() {
@@ -77,7 +77,7 @@ hqDefine('app_manager/js/app_manager_media', function() {
             }
         });
 
-        self.languagesLinked = ko.observable(o.ref.languages_linked);
+        self.languagesLinked = ko.observable(o.ref.use_default_media);
 
         self.setCustomPath = function() {
             self.useCustomPath(true);

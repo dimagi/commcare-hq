@@ -310,9 +310,9 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self._test_correct_icon_translations(self.app, self.module.case_list, icon_locale)
         self._test_correct_audio_translations(self.app, self.module.case_list, audio_locale)
 
-    def test_linked_language_image(self):
-        self.module.media_image_languages_linked = True
-        self.module.media_audio_languages_linked = True
+    def test_use_default_media(self):
+        self.module.use_default_image_for_all = True
+        self.module.use_default_audio_for_all = True
 
         self.module.set_icon('en', self.image_path)
         self.module.set_audio('en', self.audio_path)

@@ -1492,8 +1492,8 @@ class NavMenuItemMediaMixin(DocumentSchema):
     custom_icons = ListProperty(CustomIcon)
 
     # When set to true, all languages use the specific media from the default language
-    media_image_languages_linked = BooleanProperty(default=False)
-    media_audio_languages_linked = BooleanProperty(default=False)
+    use_default_image_for_all = BooleanProperty(default=False)
+    use_default_audio_for_all = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -1531,9 +1531,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
         """
         assert media_attr in ('media_image', 'media_audio')
 
-        if self.media_image_languages_linked and media_attr == 'media_image':
+        if self.use_default_image_for_all and media_attr == 'media_image':
             lang = self.get_app().default_language
-        if self.media_audio_languages_linked and media_attr == 'media_audio':
+        if self.use_default_audio_for_all and media_attr == 'media_audio':
             lang = self.get_app().default_language
 
         media_dict = getattr(self, media_attr)

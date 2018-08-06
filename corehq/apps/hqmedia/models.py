@@ -447,7 +447,7 @@ class ApplicationMediaReference(object):
 
     def __init__(self, path, module_id=None, module_name=None, form_id=None,
                  form_name=None, form_order=None, media_class=None,
-                 is_menu_media=False, app_lang=None, languages_linked=False):
+                 is_menu_media=False, app_lang=None, use_default_media=False):
 
         if not isinstance(path, six.string_types):
             path = ''
@@ -468,7 +468,7 @@ class ApplicationMediaReference(object):
 
         self.app_lang = app_lang or "en"
 
-        self.languages_linked = languages_linked
+        self.use_default_media = use_default_media
 
     def __str__(self):
         detailed_location = ""
@@ -498,7 +498,7 @@ class ApplicationMediaReference(object):
             'path': self.path,
             "icon_class": self.media_class.get_icon_class(),
             "media_type": self.media_class.get_nice_name(),
-            "languages_linked": self.languages_linked,
+            "use_default_media": self.use_default_media,
         }
 
     def _get_name(self, raw_name, lang=None):
@@ -684,7 +684,7 @@ class HQMediaMixin(Document):
         image_ref = ApplicationMediaReference(
             item.icon_by_language(to_language),
             media_class=CommCareImage,
-            languages_linked=item.media_image_languages_linked,
+            use_default_media=item.use_default_image_for_all,
             **media_kwargs
         )
         image_ref = image_ref.as_dict()
@@ -693,7 +693,7 @@ class HQMediaMixin(Document):
         audio_ref = ApplicationMediaReference(
             item.audio_by_language(to_language),
             media_class=CommCareAudio,
-            languages_linked=item.media_audio_languages_linked,
+            use_default_media=item.use_default_audio_for_all,
             **media_kwargs
         )
         audio_ref = audio_ref.as_dict()
