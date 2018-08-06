@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'hqwebapp/js/crud_paginated_list_init' %}
+{% requirejs_main 'data_interfaces/js/list_automatic_update_rules' %}
 
 {% block pagination_header %}
     <div class="row">
@@ -36,19 +36,22 @@
         <span class="label label-danger" data-bind="visible: !active">{% trans "Inactive" %}</span>
     </td>
     <td data-bind="text: last_run"></td>
-    <td>TODO</td>
+    <td>
+        <button type="button"
+                class="btn btn-default activate"
+                data-bind="visible: !active">
+            {% trans "Activate" %}
+        </button>
+        <button type="button"
+                class="btn btn-default deactivate"
+                data-bind="visible: active">
+            {% trans "Deactivate" %}
+        </button>
+    </td>
 </script>
 {% endblock pagination_templates %}
 
 {% comment %}
-{% block js %}
-    <script src="{% static 'hqwebapp/js/pagination.ng.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script src="{% static "data_interfaces/js/list_automatic_update_rules.js" %}"></script>
-{% endblock %}
-
 {% block page_content %}
 {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
 <div ng-app="autoUpdateRuleApp" ng-controller="PaginatedListController as paginationController">
@@ -77,18 +80,6 @@
                     <tr ng-repeat="rule in paginatedItems">
                         {% angularjs %}
                         <td>
-                            <button type="button"
-                                    class="btn btn-default"
-                                    ng-hide="rule.active"
-                                    ng-click="activateRule(rule, djangoRMI);">
-                                {% trans "Activate" %}
-                            </button>
-                            <button type="button"
-                                    class="btn btn-default"
-                                    ng-show="rule.active"
-                                    ng-click="deactivateRule(rule, djangoRMI);">
-                                {% trans "Deactivate" %}
-                            </button>
                             <button type="button"
                                     class="btn btn-danger"
                                     data-toggle="modal"
