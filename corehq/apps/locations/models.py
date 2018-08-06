@@ -712,6 +712,13 @@ class SQLLocation(AdjListModel):
         # For backwards compatability
         return self
 
+    @property
+    def related_location_ids(self):
+        a = LocationRelation.objects.filter(location_a=self.location_id).values_list('location_b', flat=True)
+        b = LocationRelation.objects.filter(location_b=self.location_id).values_list('location_a', flat=True)
+
+        return set(a).union(set(b))
+
 
 def filter_for_archived(locations, include_archive_ancestors):
     """
@@ -800,3 +807,28 @@ def _unassign_users_from_location(domain, location_id):
             user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():
             user.unset_location_by_id(location_id, fall_back_to_next=True)
+
+
+class LocationRelation(models.Model):
+    """Implements a many-to-many mapping between locations.
+
+    Assumptions:
+      - This is not a directed graph. i.e. a connection between
+        location_a -> location_b implies the opposite connection exists
+
+    Caveats:
+      - This is currently under active development for REACH.
+        It's expected to change, so don't rely on it for other projects.
+      - There is no cycle checking. If you attempt to go further than one step,
+        you will get an infinite loop.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    location_a = models.ForeignKey(
+        SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
+    location_b = models.ForeignKey(
+        SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
+
+    class Meta(object):
+        unique_together = [
+            ('location_a', 'location_b')
+        ]

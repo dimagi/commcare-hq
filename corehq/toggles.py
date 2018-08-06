@@ -942,14 +942,6 @@ NINETYNINE_DOTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ENIKSHAY_API = StaticToggle(
-    'enikshay_api',
-    'Enikshay: Enable access to eNikshay api endpoints',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    always_enabled={"enikshay"},
-)
-
 NIKSHAY_INTEGRATION = StaticToggle(
     'nikshay_integration',
     'Enikshay: Enable patient registration in Nikshay',
@@ -1287,15 +1279,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     ),
 )
 
-ENIKSHAY = StaticToggle(
-    'enikshay',
-    "Enikshay: Enable custom enikshay functionality: additional user and location validation",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'enikshay'},
-    relevant_environments={'enikshay'},
-)
-
 ICDS = StaticToggle(
     'icds',
     "ICDS: Enable ICDS features (necessary since features are on Softlayer and ICDS envs)",
@@ -1603,4 +1586,13 @@ AGGREGATE_UCRS = StaticToggle(
     TAG_INTERNAL,  # this might change in the future
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['czue'],
+)
+
+
+RELATED_LOCATIONS = StaticToggle(
+    'related_locations',
+    'REACH: Enable experimental location many-to-many mappings',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    notification_emails=['jemord'],
 )

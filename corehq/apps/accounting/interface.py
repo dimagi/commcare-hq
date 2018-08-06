@@ -97,6 +97,7 @@ def customer_invoice_cell(invoice):
         invoice.id
     )
 
+
 def invoice_cost_cell(invoice):
     from corehq.apps.accounting.views import InvoiceSummaryView
     return format_datatables_data(

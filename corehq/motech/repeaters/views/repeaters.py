@@ -380,6 +380,7 @@ def test_repeater(request, domain):
 
         username = request.POST.get('username')
         password = request.POST.get('password')
+        verify = not request.POST.get('skip_cert_verify') == 'true'
         if auth_type == BASIC_AUTH:
             auth = HTTPBasicAuth(username, password)
         elif auth_type == DIGEST_AUTH:
@@ -388,7 +389,7 @@ def test_repeater(request, domain):
             auth = None
 
         try:
-            resp = simple_post(fake_post, url, headers=headers, auth=auth)
+            resp = simple_post(fake_post, url, headers=headers, auth=auth, verify=verify)
             if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
                                                 "response": resp.content,
