@@ -1,13 +1,12 @@
 hqDefine('accounting/js/pricing_table', function () {
-    var pricingTableModel = function (editions, currentEdition, isRenewal, startDateAfterMinimumSubscription,
-                                      subscriptionBelowMinimum) {
+    var pricingTableModel = function (editions, currentEdition, isRenewal, startDate, isSubscriptionBelowMin) {
         'use strict';
         var self = {};
 
         self.currentEdition = currentEdition;
         self.isRenewal = isRenewal;
-        self.startDateAfterMinimumSubscription = startDateAfterMinimumSubscription;
-        self.subscriptionBelowMinimum = subscriptionBelowMinimum;
+        self.startDateAfterMinimumSubscription = startDate;
+        self.subscriptionBelowMinimum = isSubscriptionBelowMin;
         self.editions = ko.observableArray(_.map(editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
         }));
@@ -68,7 +67,7 @@ hqDefine('accounting/js/pricing_table', function () {
             }
         };
 
-        self.submitDowngradeForm = function (pricingTable) {
+        self.submitDowngradeForm = function () {
             if (self.form) {
                 self.form.submit();
             }
