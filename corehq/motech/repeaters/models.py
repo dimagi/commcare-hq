@@ -20,6 +20,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.motech.const import ALGO_AES
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterXMLPayloadGenerator,
     FormRepeaterJsonPayloadGenerator,
@@ -30,6 +31,7 @@ from corehq.motech.repeaters.repeater_generators import (
     UserPayloadGenerator,
     LocationPayloadGenerator,
 )
+from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT, REPEATER_SUCCESS_COUNT
 from corehq.util.quickcache import quickcache
@@ -271,11 +273,18 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         # to be overridden
         return self.generator.get_headers()
 
+    @property
+    def plaintext_password(self):
+        if self.password.startswith('${algo}$'.format(algo=ALGO_AES)):
+            ciphertext = self.password.split('$', 2)[2]
+            return b64_aes_decrypt(ciphertext)
+        return self.password
+
     def get_auth(self):
         if self.auth_type == BASIC_AUTH:
-            return HTTPBasicAuth(self.username, self.password)
+            return HTTPBasicAuth(self.username, self.plaintext_password)
         elif self.auth_type == DIGEST_AUTH:
-            return HTTPDigestAuth(self.username, self.password)
+            return HTTPDigestAuth(self.username, self.plaintext_password)
         return None
 
     @property

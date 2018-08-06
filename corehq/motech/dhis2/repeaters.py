@@ -67,7 +67,7 @@ class Dhis2Repeater(FormRepeater):
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
                 return send_data_to_dhis2(
-                    Requests(self.domain, self.url, self.username, self.password, verify=self.verify),
+                    Requests(self.domain, self.url, self.username, self.plaintext_password, verify=self.verify),
                     form_config,
                     payload,
                 )
