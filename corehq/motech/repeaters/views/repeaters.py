@@ -13,7 +13,8 @@ from django.views.decorators.http import require_POST
 
 from memoized import memoized
 
-from corehq.motech.const import PASSWORD_PLACEHOLDER
+from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES
+from corehq.motech.utils import b64_aes_encrypt
 from dimagi.utils.post import simple_post
 
 from corehq import toggles
@@ -131,7 +132,10 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         repeater.auth_type = cleaned_data['auth_type'] or None
         repeater.username = cleaned_data['username']
         if cleaned_data['password'] != PASSWORD_PLACEHOLDER:
-            repeater.password = cleaned_data['password']
+            repeater.password = '${algo}${ciphertext}'.format(
+                algo=ALGO_AES,
+                ciphertext=b64_aes_encrypt(cleaned_data['password'])
+            )
         repeater.format = cleaned_data['format']
         repeater.skip_cert_verify = cleaned_data['skip_cert_verify']
         return repeater
