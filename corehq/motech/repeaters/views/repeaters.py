@@ -12,6 +12,8 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 
 from memoized import memoized
+
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from dimagi.utils.post import simple_post
 
 from corehq import toggles
@@ -128,7 +130,8 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         repeater.url = cleaned_data['url']
         repeater.auth_type = cleaned_data['auth_type'] or None
         repeater.username = cleaned_data['username']
-        repeater.password = cleaned_data['password']
+        if cleaned_data['password'] != PASSWORD_PLACEHOLDER:
+            repeater.password = cleaned_data['password']
         repeater.format = cleaned_data['format']
         repeater.skip_cert_verify = cleaned_data['skip_cert_verify']
         return repeater
@@ -275,10 +278,12 @@ class EditRepeaterView(BaseRepeaterView):
         else:
             repeater_id = self.kwargs['repeater_id']
             repeater = Repeater.get(repeater_id)
+            data = repeater.to_json()
+            data['password'] = PASSWORD_PLACEHOLDER
             return self.repeater_form_class(
                 domain=self.domain,
                 repeater_class=self.repeater_class,
-                data=repeater.to_json(),
+                data=data,
                 submit_btn_text=_("Update Repeater"),
             )
 
