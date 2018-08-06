@@ -1252,6 +1252,13 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
+    'language_linked_multimedia',
+    'Add a setting to link multimedia to the default language',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN]
+)
+
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',
