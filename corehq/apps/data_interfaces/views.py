@@ -666,10 +666,6 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
         )
 '''
 class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
-    template_name = 'data_interfaces/list_automatic_update_rules.html'
-    urlname = 'automatic_update_rule_list'
-    page_title = ugettext_lazy("Automatically Close Cases")
-
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
     ACTION_DELETE = 'delete'
@@ -704,38 +700,6 @@ class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
                          .done()
                          .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
             'edit_url': reverse(EditCaseRuleView.urlname, args=[self.domain, rule.pk]),
-        }
-
-    @allow_remote_invocation
-    def get_pagination_data(self, in_data):
-        try:
-            limit = int(in_data['limit'])
-            page = int(in_data['page'])
-        except (TypeError, KeyError, ValueError):
-            return {
-                'success': False,
-                'error': _("Please provide pagination info."),
-            }
-
-        start = (page - 1) * limit
-        stop = limit * page
-
-        rules = AutomaticUpdateRule.by_domain(
-            self.domain,
-            AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
-            active_only=False,
-        )
-
-        rule_page = rules.order_by('name')[start:stop]
-        total = rules.count()
-
-        return {
-            'response': {
-                'itemList': list(map(self._format_rule, rule_page)),
-                'total': total,
-                'page': page,
-            },
-            'success': True,
         }
 
     @allow_remote_invocation
