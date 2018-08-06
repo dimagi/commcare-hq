@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import unicode_literals
 
 from __future__ import print_function
@@ -119,7 +120,7 @@ def compare_cases(domain, doc_type, startdate, enddate):
         primary_count, es_count, primary_ids, es_ids = 0, 0, set(), set()
         months = (enddate - startdate).days / 30 + 1
         for month in range(0, months):
-            enddate = (startdate + timedelta(days=(month+1)*30)).date()
+            enddate = (startdate + timedelta(days=(month + 1) * 30)).date()
             startdate = (startdate + timedelta(days=month * 30)).date()
             pc1, esc1, p1, es1 = _get_diffs(
                 get_primary_db_case_ids(domain, doc_type, startdate, enddate),
