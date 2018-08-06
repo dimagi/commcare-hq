@@ -144,6 +144,8 @@
     {% initial_page_data 'is_allowed_to_be_release_notes_form' is_allowed_to_be_release_notes_form %}
     {% initial_page_data 'is_training_module' is_training_module %}
     {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+    {% initial_page_data 'default_language' app.default_language %}
+    {% initial_page_data 'current_language' lang %}
     {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
         {% initial_page_data 'apps_modules' apps_modules %}
     {% endif %}
