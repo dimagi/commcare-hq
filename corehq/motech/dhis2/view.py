@@ -22,6 +22,7 @@ from corehq.apps.domain.views import BaseProjectSettingsView
 from memoized import memoized
 from dimagi.utils.web import json_response
 from six.moves import range
+from six.moves import map
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
