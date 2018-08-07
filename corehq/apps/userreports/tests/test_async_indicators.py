@@ -99,7 +99,8 @@ class TestBulkUpdate(TestCase):
             'd3': ['c2']
         }
         AsyncIndicator.objects.bulk_create([
-            AsyncIndicator(doc_id=doc_id, doc_type=doc_type, domain=domain, indicator_config_ids=sorted(config_ids))
+            AsyncIndicator(
+                doc_id=doc_id, doc_type=doc_type, domain=domain, indicator_config_ids=sorted(config_ids))
             for doc_id, config_ids in six.iteritems(initial_data)
         ])
         updated_data = {
