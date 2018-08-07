@@ -62,6 +62,7 @@ branches:
   - nh/omrs/atom+leven  # Norman July 31
   - nh/motech/set_repeater  # Norman Aug 6
   - np/couchdbkit-0.9.7  # Nick P Aug 8
+  - nh/merge_migrations  # Norman Aug 7 for deploy
 submodules:
   submodules/django-digest-src:
     branches: []
