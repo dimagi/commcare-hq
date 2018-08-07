@@ -96,6 +96,34 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     '''
 
 
+class AppCaseSummaryView(AppSummaryView):
+    urlname = 'app_case_summary'
+    page_title = ugettext_noop("Case Summary")
+    template_name = 'app_manager/case_summary.html'
+
+    @property
+    def page_context(self):
+        context = super(AppCaseSummaryView, self).page_context
+        context.update({
+            'is_case_summary': True,
+        })
+        return context
+
+
+class AppFormSummaryView(AppSummaryView):
+    urlname = 'app_form_summary'
+    page_title = ugettext_noop("Form Summary")
+    template_name = 'app_manager/form_summary.html'
+
+    @property
+    def page_context(self):
+        context = super(AppFormSummaryView, self).page_context
+        context.update({
+            'is_form_summary': True,
+        })
+        return context
+
+
 class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
 
     urlname = 'app_data_json'
