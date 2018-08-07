@@ -442,13 +442,13 @@ def chosen_filters_to_labels(config, default_interval=''):
     }
 
     age_intervals = {
-        '6': '0-6 months',
-        '12': '6-12 months',
-        '24': '12-24 months',
-        '36': '24-36 months',
-        '48': '36-48 months',
-        '60': '48-60 months',
-        '72': '60-72 months'
+        '6': '0-6 months (0-180 days)',
+        '12': '6-12 months (181-365 days)',
+        '24': '12-24 months (366-730 days)',
+        '36': '24-36 months (731-1095 days)',
+        '48': '36-48 months (1096-1460 days)',
+        '60': '48-60 months (1461-1825 days)',
+        '72': '60-72 months (1826-2190 days)'
     }
 
     gender = config.get('gender')
