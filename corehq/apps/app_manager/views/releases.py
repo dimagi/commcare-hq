@@ -53,6 +53,7 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
 from corehq.apps.builds.models import CommCareBuildConfig
+from corehq.apps.es import AppES
 from corehq.apps.users.models import CouchUser
 import six
 
@@ -84,20 +85,10 @@ def paginate_releases(request, domain, app_id):
         start_build = {}
     timezone = get_timezone_for_user(request.couch_user, domain)
 
-    saved_apps = []
-    batch = [None]
-    while len(saved_apps) < limit and len(batch):
-        batch = Application.get_db().view('app_manager/saved_app',
-            startkey=[domain, app_id, start_build],
-            endkey=[domain, app_id],
-            descending=True,
-            limit=limit,
-            wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
-        ).all()
-        if len(batch):
-            start_build = batch[-1]['version'] - 1
-        saved_apps = saved_apps + [app for app in batch if not only_show_released or app['is_released']]
-    saved_apps = saved_apps[:limit]
+    app_es = AppES().domain(domain).is_build().app_id(app_id).size(limit).sort('version', desc=True)
+    if only_show_released:
+        app_es = app_es.is_released()
+    saved_apps = [SavedAppBuild.wrap(app).to_saved_build_json(timezone) for app in app_es.run().hits]
 
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
