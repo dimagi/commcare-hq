@@ -3,46 +3,6 @@
 {% load hq_shared_tags %}
 {% load djangular_tags %}
 
-{% block navigation_extra %}
-{% angularjs %}
-    <li role="presentation">
-        <div class="appnav-item" ng-class="{ 'active' : allSelected()}">
-            <a ng-click="filterList()"
-               class="appnav-link-full">
-              <i class="fa fa-search appnav-primary-icon"></i>
-              <span>{% trans "View All Forms" %}</span>
-            </a>
-        </div>
-    </li>
-    <li ng-repeat="module in modules" role="presentation">
-
-        <div class="appnav-item" ng-class="{ 'active' : moduleSelected(module)}">
-          <a ng-click="filterList(module)"
-               class="appnav-link-full">
-              {% verbatim %}
-              <i class="{{ getModuleIcon(module) }} appnav-primary-icon"></i>
-            <span>{{ getFormModuleLabel(module) }}</span>
-            {% endverbatim %}
-          </a>
-        </div>
-        <ul class="appnav-menu appnav-menu-nested">
-            <li ng-repeat="form in module.forms">
-                <div class="appnav-item"
-                     ng-class="{ 'active' : formSearch.id === form.id }">
-                  <a ng-click="filterList(module, form)"
-                     class="appnav-link-full">
-                      {% verbatim %}
-                      <i class="{{ getModuleFormIcon(form) }} appnav-primary-icon"></i>
-                      <span>{{ getFormModuleLabel(form) }}</span>
-                      {% endverbatim %}
-                  </a>
-                </div>
-            </li>
-        </ul>
-    </li>
-{% endangularjs %}
-{% endblock %}
-
 {% block content %}
 {% angularjs %}
     <div class="page-header" style="margin-top: 0;">

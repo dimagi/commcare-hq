@@ -84,15 +84,6 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
             'response': self.app.get_case_metadata().to_json(),
             'success': True,
         }
-
-    @allow_remote_invocation
-    def get_form_data(self, in_data):
-        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
-        return {
-            'response': modules,
-            'errors': errors,
-            'success': True,
-        }
     '''
 
 
@@ -118,8 +109,11 @@ class AppFormSummaryView(AppSummaryView):
     @property
     def page_context(self):
         context = super(AppFormSummaryView, self).page_context
+        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
         context.update({
             'is_form_summary': True,
+            'modules': modules,
+            'errors': errors,   # TODO: support
         })
         return context
 
