@@ -204,23 +204,22 @@ def apps_update_calculated_properties():
 
 
 @task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_email_report(self, recipient_list, body, subject, report):
-    '''
+def send_email_report(self, recipient_list, body, subject, report_class, report_state):
+    """
     Function invokes send_HTML_email to email the html text report.
     If the report is too large to fit into email then a download link is
     sent via email to download report
     :Parameter recipient_list:
             list of recipient to whom email is to be sent
-    :Parameter request:
-            request object which contains request details
     :Parameter body:
             body content of the email
     :Parameter subject:
             subject of the email
-    :Parameter config:
-            object of ReportConfig. Contains the report configuration
-            like reportslug, report_type etc
-    '''
+    :Parameter report_class:
+            Report class.
+    :Parameter report_state:
+            Dict representing the report state
+    """
     try:
         for recipient in recipient_list:
             send_HTML_email(subject, recipient,
@@ -231,27 +230,9 @@ def send_email_report(self, recipient_list, body, subject, report):
         if getattr(er, 'smtp_code', None) == 522:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
-            email_large_report(report, recipient_list)
+            export_all_rows_task(report_class, report_state, recipient_list=recipient_list)
         else:
             self.retry(exc=er)
-
-
-def email_large_report(report, recipient_list):
-    """
-    Function sends the requested report download link in the email.
-    This function is invoked when user tries to email very large report.
-
-    :Parameter request:
-        request object which contains request details
-    :Parameter config:
-            object of ReportConfig. Contains the report configuration
-            like reportslug, report_type etc
-    :Parameter recipient:
-            recipient to whom email is to be sent
-    """
-
-    report.rendered_as = 'export'
-    export_all_rows_task(report.__class__, report.__getstate__(), recipient_list=recipient_list)
 
 
 @task(ignore_result=True)
