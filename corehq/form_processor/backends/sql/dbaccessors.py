@@ -1270,8 +1270,11 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
         } if updated_xforms else {}
 
-        form_ids_to_fetch = list(form_ids - set(updated_xforms_map.keys()))
-        xform_map = {form.form_id: form for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)}
+        form_ids_to_fetch = list(form_ids - set(updated_xforms_map))
+        xform_map = {
+            form.form_id: form
+            for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)
+        }
 
         def get_form(form_id):
             if form_id in updated_xforms_map:
@@ -1282,12 +1285,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             except KeyError:
                 raise XFormNotFound
 
-        for transaction in transactions:
-            if transaction.form_id:
+        for case_transaction in transactions:
+            if case_transaction.form_id:
                 try:
-                    transaction.cached_form = get_form(transaction.form_id)
+                    case_transaction.cached_form = get_form(case_transaction.form_id)
                 except XFormNotFound:
-                    logging.error('Form not found during rebuild: %s', transaction.form_id)
+                    logging.error('Form not found during rebuild: %s', case_transaction.form_id)
 
         return transactions
 

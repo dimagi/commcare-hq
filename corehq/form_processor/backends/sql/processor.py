@@ -305,7 +305,7 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):
-        transactions = CaseAccessorSql.get_case_transactions_by_case_id(
+        transactions = CaseAccessorSQL.get_case_transactions_by_case_id(
             case.case_id,
             updated_xforms=updated_xforms)
         strategy = SqlCaseUpdateStrategy(case)
