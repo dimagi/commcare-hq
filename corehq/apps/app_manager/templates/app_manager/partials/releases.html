@@ -65,8 +65,10 @@
                 {% include 'app_manager/partials/releases_table.html' %}
             </div>
             {% if enable_update_prompts %}
+                 <script src="{% static 'app_manager/js/summary/update_prompt.js' %}"></script>
                 <div id="prompt-settings-tab" class="tab-pane">
                     {% crispy prompt_settings_form %}
+                <div data-bind="saveButton: saveButton"></div>
                 </div>
             {% endif %}
             {% if build_profile_access %}
