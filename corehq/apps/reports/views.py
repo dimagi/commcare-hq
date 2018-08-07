@@ -851,7 +851,9 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
         recipient_emails.add(request.couch_user.get_email())
 
     body = render_full_report_notification(request, content).content
-    send_email_report.delay(recipient_emails, request, body, subject, config)
+    report = config.report(request, domain=config.domain)
+
+    send_email_report.delay(recipient_emails, body, subject, report)
 
     return HttpResponse()
 
