@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/summary/update_prompt', function () {
+hqDefine('app_manager/js/releases/update_prompt', function () {
     function updatePromptModel(form) {
         var self = {};
         var url = form[0].action,
