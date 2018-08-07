@@ -24,7 +24,7 @@ hqDefine('app_manager/js/summary/update_prompt', function () {
     $(function () {
         var promptSettingTab = $('#prompt-settings-tab');
         if (promptSettingTab.length) {
-            var form = $("#update-manager")
+            var form = $("#update-manager");
 
             var updatePrompt = updatePromptModel(form);
             promptSettingTab.koApplyBindings(updatePrompt);
