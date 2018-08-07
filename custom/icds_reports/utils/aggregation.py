@@ -1638,13 +1638,12 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('resident', 'ucr.resident'),
             ('valid_in_month', 'ucr.valid_in_month'),
             ('anc_in_month',
-                'COALESCE( '
              '( '
                 '(CASE WHEN ut.due_list_date_anc_1 BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) + '
                 '(CASE WHEN ut.due_list_date_anc_2 BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) + '
                 '(CASE WHEN ut.due_list_date_anc_3 BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) + '
                 '(CASE WHEN ut.due_list_date_anc_4 BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) '
-                '), 0)'),
+                ')'),
             ('anc_1', 'ut.due_list_date_anc_1'),
             ('anc_2', 'ut.due_list_date_anc_2'),
             ('anc_3', 'ut.due_list_date_anc_3'),
