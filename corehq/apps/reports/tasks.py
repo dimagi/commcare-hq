@@ -204,7 +204,7 @@ def apps_update_calculated_properties():
 
 
 @task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_email_report(self, recipient_list, request, body, subject, config):
+def send_email_report(self, recipient_list, body, subject, report):
     '''
     Function invokes send_HTML_email to email the html text report.
     If the report is too large to fit into email then a download link is
@@ -231,12 +231,12 @@ def send_email_report(self, recipient_list, request, body, subject, config):
         if getattr(er, 'smtp_code', None) == 522:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
-            email_large_report(request, config, recipient_list)
+            email_large_report(report, recipient_list)
         else:
             self.retry(exc=er)
 
 
-def email_large_report(request, config, recipient_list):
+def email_large_report(report, recipient_list):
     """
     Function sends the requested report download link in the email.
     This function is invoked when user tries to email very large report.
@@ -249,7 +249,7 @@ def email_large_report(request, config, recipient_list):
     :Parameter recipient:
             recipient to whom email is to be sent
     """
-    report = config.report(request, domain=config.domain)
+
     report.rendered_as = 'export'
     export_all_rows_task(report.__class__, report.__getstate__(), recipient_list=recipient_list)
 
