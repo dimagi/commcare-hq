@@ -100,7 +100,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     def _update_checkpoint(self, change, context):
-        if change:
+        if change and context:
             updated = self.fire_change_processed_event(change, context)
         else:
             updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
