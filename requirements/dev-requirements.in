@@ -1,5 +1,3 @@
--r requirements.txt
-
 django-debug-toolbar==1.8
 line_profiler==1.0
 -e git+git://github.com/dimagi/couchdbkit-debugpanel.git#egg=couchdbkit-debugpanel
@@ -20,3 +18,5 @@ modernize==0.6
 Fabric==1.14.0
 readline==6.2.4.1
 pip-tools==2.0.2
+
+--r requirements.txt
