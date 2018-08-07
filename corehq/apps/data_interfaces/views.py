@@ -99,6 +99,7 @@ class BulkUploadCasesException(Exception):
 
 class DataInterfaceSection(BaseDomainView):
     section_name = ugettext_noop("Data")
+    urlname = 'data_interfaces_default'
 
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
@@ -106,7 +107,7 @@ class DataInterfaceSection(BaseDomainView):
 
     @property
     def section_url(self):
-        return reverse("data_interfaces_default", args=[self.domain])
+        return reverse(self.urlname, args=[self.domain])
 
 
 class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
