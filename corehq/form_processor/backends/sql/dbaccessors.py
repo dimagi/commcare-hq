@@ -915,10 +915,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         if not case_id:
             return False
-        with get_cursor(CaseTransaction) as cursor:
+
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        db = get_db_alias_for_partitioned_doc(case_id)
+        with connections[db].cursor() as cursor:
             cursor.execute(
-                'SELECT compare_server_client_case_transaction_order(%s)',
-                [case_id])
+                'SELECT compare_server_client_case_transaction_order(%s, %s)',
+                [case_id, CaseTransaction.case_rebuild_types()])
             result = cursor.fetchone()[0]
             return result
 
