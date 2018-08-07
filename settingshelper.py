@@ -15,7 +15,7 @@ from raven import fetch_git_sha
 
 
 def is_testing():
-    return len(sys.argv) > 1 and sys.argv[1] == "test"
+    return os.environ.get("CCHQ_TESTING") == "1"
 
 
 class SharedDriveConfiguration(object):
