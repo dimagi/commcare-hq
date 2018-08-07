@@ -1730,7 +1730,7 @@ class Subscription(models.Model):
     def is_below_minimum_subscription(self):
         if self.is_trial:
             return False
-        elif self.date_start <= datetime.date(2018, 7, 30): # TODO: Set this date to be the date we launch this feature
+        elif self.date_start <= datetime.date(2018, 7, 1): # TODO: Set this date to be the date we launch this feature
             # Only block upgrades for subscriptions created after the date we launched the 30-Day Minimum
             return False
         elif self.date_start >= datetime.date.today() - datetime.timedelta(days=2):
