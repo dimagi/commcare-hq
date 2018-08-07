@@ -821,13 +821,17 @@ class LocationRelation(models.Model):
         SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
 
     @classmethod
-    def to_locations(cls, location_ids):
+    def from_locations(cls, locations):
+        """Returns  a list of location_ids that have a relation to the list of locations passed in.
+
+        The result will not include any duplicates and any locations that are passed in
+        """
         relations = LocationRelation.objects.filter(
-            Q(location_a_id__in=location_ids) | Q(location_b_id__in=location_ids)
+            Q(location_a__in=locations) | Q(location_b__in=locations)
         ).values_list('location_a_id', 'location_b_id')
 
         related_locations = {loc_id for relation in relations for loc_id in relation}
-        return related_locations - set(location_ids)
+        return related_locations - {l.location_id for l in locations}
 
     class Meta(object):
         unique_together = [

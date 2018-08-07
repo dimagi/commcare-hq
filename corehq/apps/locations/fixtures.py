@@ -235,8 +235,7 @@ class RelatedLocationsFixtureProvider(FixtureProvider):
 
         restore_user = restore_state.restore_user
         user_locations = restore_user.get_sql_locations(restore_user.domain)
-        user_location_ids = user_locations.values_list('location_id', flat=True)
-        related_location_ids = LocationRelation.to_locations(user_location_ids)
+        related_location_ids = LocationRelation.from_locations(user_locations)
         related_location_pks = (
             SQLLocation.objects.filter(location_id__in=related_location_ids)
             .values_list('pk', flat=True)
