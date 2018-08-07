@@ -124,7 +124,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
 
 
     $.fn.removeSpinnerFromButton = function () {
-        $(this).find('i').remove();
+        $(this).find('i.fa-spin').remove();
     };
 
 

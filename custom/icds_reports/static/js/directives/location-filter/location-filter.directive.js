@@ -76,8 +76,8 @@ function LocationModalController($uibModalInstance, $location, locationsService,
         if ($location.path().indexOf('awc_reports') !== -1) {
             vm.showMessage = vm.selectedLocations[4] === null;
         }
-        if (level < 4) {
-            locationsService.getChildren($item.location_id).then(function (data) {
+        if (level < 4 && $item) {
+            vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
                 if ($item.user_have_access) {
                     vm.locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
                     vm.selectedLocations[level + 1] = ALL_OPTION;
@@ -241,7 +241,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                 vm.location_id = 'all';
             }
             storageService.setKey('search', $location.search());
-            if (selectedLocationIndex() === 4) {
+            if (selectedLocationIndex() === 4 && $location.path().indexOf('awc_reports') === -1) {
                 $location.path('awc_reports');
             }
             $scope.$emit('filtersChange');
@@ -275,7 +275,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 
     var init = function() {
         if (vm.selectedLocationId && vm.selectedLocationId !== 'all' && vm.selectedLocationId !== 'null') {
-            $rootScope.locationPromise = locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
+            vm.myPromise = locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
                 var locations = data.locations;
 
                 var selectedLocation = data.selected_location;
@@ -323,10 +323,24 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                 if ($location.path().indexOf('awc_reports') !== -1 && selectedLocationIndex() < 4) {
                     vm.open();
                 }
+                if ($location.path().indexOf('awc_reports') === -1 && selectedLocationIndex() === 4) {
+                    vm.onSelect(vm.selectedLocations[3], 3);
+                    vm.selectedLocationId = vm.selectedLocations[3].location_id;
+                    vm.location_id = vm.selectedLocationId;
+                    locations = vm.getLocationsForLevel(selectedLocationIndex());
+                    var loc = _.filter(locations, function (loc) {
+                        return loc.location_id === vm.selectedLocationId;
+                    });
+                    $location.search('location_name', loc[0]['name']);
+                    $location.search('location_id', vm.selectedLocationId);
+                    $location.search('selectedLocationLevel', selectedLocationIndex());
+                    storageService.setKey('search', $location.search());
+                    $scope.$emit('filtersChange');
+                }
             });
         } else {
             initHierarchy();
-            $rootScope.locationPromise = locationsService.getRootLocations().then(function(data) {
+            vm.myPromise = locationsService.getRootLocations().then(function(data) {
                 vm.locationsCache.root = [ ALL_OPTION ].concat(data.locations);
                 vm.selectedLocations[0] = ALL_OPTION;
 
@@ -359,7 +373,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
         if (level < 4) {
-            locationsService.getChildren($item.location_id).then(function (data) {
+            vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
                 if ($item.user_have_access) {
                     vm.locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
                 } else {

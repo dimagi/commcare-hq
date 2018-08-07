@@ -9,6 +9,7 @@ import postgres_copy
 import sqlalchemy
 
 from django.conf import settings
+from django.db import connections
 from django.test.utils import override_settings
 
 from corehq.apps.domain.models import Domain
@@ -18,6 +19,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
+    create_views,
     move_ucr_data_into_aggregation_tables,
     _aggregate_child_health_pnc_forms)
 from io import open
@@ -30,6 +32,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'daily_feeding': 'config_report_icds-cas_static-daily_feeding_forms_85b1167f',
     'household_cases': 'config_report_icds-cas_static-household_cases_eadc276d',
     'infrastructure': 'config_report_icds-cas_static-infrastructure_form_05fe0f1a',
+    'infrastructure_v2': 'config_report_icds-cas_static-infrastructure_form_v2_36e9ebb0',
     'location_ucr': 'config_report_icds-cas_static-awc_location_88b3f9c3',
     'person_cases': 'config_report_icds-cas_static-person_cases_v2_b4b5d57a',
     'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',
@@ -41,6 +44,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'thr_form': 'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
     'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
     'pnc_forms': 'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
+    'dashboard_daily_feeding': 'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
 }
 
 
@@ -93,6 +97,10 @@ def setUpModule():
         adapters = [get_indicator_adapter(config) for config in configs]
 
         for adapter in adapters:
+            try:
+                adapter.drop_table()
+            except Exception:
+                pass
             adapter.build_table()
 
         engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
@@ -110,9 +118,21 @@ def setUpModule():
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
-        except AssertionError:
-            pass
-    _call_center_domain_mock.stop()
+        except AssertionError as e:
+            # we always use soft assert to email when the aggregation has completed
+            if "Aggregation completed" not in str(e):
+                print(e)
+                tearDownModule()
+                raise
+        except Exception as e:
+            print(e)
+            tearDownModule()
+            raise
+        finally:
+            _call_center_domain_mock.stop()
+
+        with connections['icds-ucr'].cursor() as cursor:
+            create_views(cursor)
 
 
 def tearDownModule():

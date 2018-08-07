@@ -19,14 +19,13 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instance_ids
 from corehq.apps.export.const import SAVED_EXPORTS_QUEUE
+from corehq.util.log import send_HTML_email
 from corehq.apps.reports.util import send_report_download_email
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
 from couchexport.files import Temp
-from couchexport.groupexports import export_for_group, rebuild_export
+from couchexport.groupexports import rebuild_export
 from couchexport.tasks import cache_file_to_be_served
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -54,7 +53,6 @@ from .analytics.esaccessors import (
 from .export import save_metadata_export_to_tempfile
 from .models import (
     FormExportSchema,
-    HQGroupExportConfiguration,
     ReportNotification,
     UnsupportedScheduledReportError,
 )
@@ -145,40 +143,6 @@ def monthly_reports():
         send_delayed_report(report_id)
 
 
-@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def saved_exports():
-    for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
-        export_for_group_async.delay(group_config_id)
-
-    for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
-        from corehq.apps.export.tasks import rebuild_export_task
-        last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        rebuild_export_task.apply_async(
-            args=[
-                daily_saved_export_id, last_access_cutoff
-            ],
-            # Normally the rebuild_export_task uses the background queue,
-            # however we want to override it to use its own queue so that it does
-            # not disrupt other actions.
-            queue=SAVED_EXPORTS_QUEUE,
-        )
-
-
-@task(queue='background_queue', ignore_result=True)
-def rebuild_export_task(groupexport_id, index, last_access_cutoff=None, filter=None):
-    group_config = HQGroupExportConfiguration.get(groupexport_id)
-    config, schema = group_config.all_exports[index]
-    rebuild_export(config, schema, last_access_cutoff, filter=filter)
-
-
-@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
-def export_for_group_async(group_config_id):
-    # exclude exports not accessed within the last 7 days
-    last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-    group_config = HQGroupExportConfiguration.get(group_config_id)
-    export_for_group(group_config, last_access_cutoff=last_access_cutoff)
-
-
 @task(queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
 def rebuild_export_async(config, schema):
     rebuild_export(config, schema)
@@ -239,8 +203,59 @@ def apps_update_calculated_properties():
         es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": props})
 
 
+@task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+def send_email_report(self, recipient_list, request, body, subject, config):
+    '''
+    Function invokes send_HTML_email to email the html text report.
+    If the report is too large to fit into email then a download link is
+    sent via email to download report
+    :Parameter recipient_list:
+            list of recipient to whom email is to be sent
+    :Parameter request:
+            request object which contains request details
+    :Parameter body:
+            body content of the email
+    :Parameter subject:
+            subject of the email
+    :Parameter config:
+            object of ReportConfig. Contains the report configuration
+            like reportslug, report_type etc
+    '''
+    try:
+        for recipient in recipient_list:
+            send_HTML_email(subject, recipient,
+                            body, email_from=settings.DEFAULT_FROM_EMAIL,
+                            smtp_exception_skip_list=[522])
+
+    except Exception as er:
+        if getattr(er, 'smtp_code', None) == 522:
+            # If the smtp server rejects the email because of its large size.
+            # Then sends the report download link in the email.
+            email_large_report(request, config, recipient_list)
+        else:
+            self.retry(exc=er)
+
+
+def email_large_report(request, config, recipient_list):
+    """
+    Function sends the requested report download link in the email.
+    This function is invoked when user tries to email very large report.
+
+    :Parameter request:
+        request object which contains request details
+    :Parameter config:
+            object of ReportConfig. Contains the report configuration
+            like reportslug, report_type etc
+    :Parameter recipient:
+            recipient to whom email is to be sent
+    """
+    report = config.report(request, domain=config.domain)
+    report.rendered_as = 'export'
+    export_all_rows_task(report.__class__, report.__getstate__(), recipient_list=recipient_list)
+
+
 @task(ignore_result=True)
-def export_all_rows_task(ReportClass, report_state):
+def export_all_rows_task(ReportClass, report_state, recipient_list=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
 
@@ -250,15 +265,20 @@ def export_all_rows_task(ReportClass, report_state):
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
     hash_id = _store_excel_in_redis(report_class, file)
-    _send_email(report.request.couch_user, report, hash_id)
+
+    if not recipient_list:
+        recipient_list = [report.request.couch_user.get_email()]
+
+    for recipient in recipient_list:
+        _send_email(report.request.couch_user, report, hash_id, recipient=recipient)
 
 
-def _send_email(user, report, hash_id):
+def _send_email(user, report, hash_id, recipient):
     domain = report.domain or user.get_domains()[0]
     link = absolute_reverse("export_report", args=[domain, str(hash_id),
                                                    report.export_format])
 
-    send_report_download_email(report.name, user, link)
+    send_report_download_email(report.name, recipient, link)
 
 
 def _store_excel_in_redis(report_class, file):

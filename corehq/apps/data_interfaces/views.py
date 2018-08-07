@@ -535,6 +535,7 @@ class XFormManagementView(DataInterfaceSection):
             import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
             form_query_string = six.moves.urllib.parse.unquote(self.request.POST.get('select_all'))
             from django.http import HttpRequest, QueryDict
+            from django_otp.middleware import OTPMiddleware
 
             _request = HttpRequest()
             _request.couch_user = request.couch_user
@@ -543,8 +544,11 @@ class XFormManagementView(DataInterfaceSection):
             _request.couch_user.current_domain = self.domain
             _request.can_access_all_locations = request.couch_user.has_permission(self.domain,
                                                                                   'access_all_locations')
+            _request.session = request.session
 
             _request.GET = QueryDict(form_query_string)
+            OTPMiddleware().process_request(_request)
+
             dispatcher = EditDataInterfaceDispatcher()
             xform_ids = dispatcher.dispatch(
                 _request,

@@ -32,6 +32,7 @@ handler500 = 'corehq.apps.hqwebapp.views.server_error'
 handler404 = 'corehq.apps.hqwebapp.views.not_found'
 handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
 
+from corehq.apps.accounting.urls import domain_specific as accounting_domain_specific
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
@@ -46,6 +47,7 @@ domain_specific = [
     # not have a slash, so don't include it at the root urlconf
     url(r'^receiver/', include('corehq.apps.receiverwrapper.urls')),
     url(r'^settings/', include(settings_domain_specific)),
+    url(r'^enterprise/', include(accounting_domain_specific)),
     url(r'^users/', include(users_redirect)),
     url(r'^domain/', include(domain_redirect)),
     url(r'^groups/', include('corehq.apps.groups.urls')),
@@ -73,7 +75,6 @@ domain_specific = [
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     url(r'^', include('custom.icds_reports.urls')),
-    url(r'^', include('custom.enikshay.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
     url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
@@ -97,7 +98,6 @@ urlpatterns = [
     url(r'^account/', include('corehq.apps.settings.urls')),
     url(r'^project_store(.*)$', rewrite_url),
     url(r'^exchange/', include('corehq.apps.appstore.urls')),
-    url(r'^webforms/', include('touchforms.formplayer.urls')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),
@@ -107,7 +107,6 @@ urlpatterns = [
     url(r'^hq/reports/', include(report_urls)),
     url(r'^hq/flags/', include('corehq.apps.toggle_ui.urls')),
     url(r'^hq/pillow_errors/', include('corehq.apps.hqpillow_retry.urls')),
-    url(r'^hq/tour/', include('corehq.apps.tour.urls')),
     url(r'^hq/notifications/', include('corehq.apps.notifications.urls')),
     url(r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),

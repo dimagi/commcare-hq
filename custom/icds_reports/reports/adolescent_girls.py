@@ -69,7 +69,8 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
             "average": sum(average) / float(len(average) or 1),
             "average_format": 'number',
             "info": _((
-                "Total number of adolescent girls who are enrolled for Anganwadi Services"
+                "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled "
+                "for Anganwadi Services"
             )),
             "extended_info": [
                 {
@@ -154,7 +155,8 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
         "tooltips_data": dict(tooltips_data),
         "format": "number",
         "info": _((
-            "Total number of adolescent girls who are enrolled for Anganwadi Services"
+            "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled "
+            "for Anganwadi Services"
         )),
         "chart_data": [
             {

@@ -16,7 +16,9 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     };
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of pregnant women who delivered in a public or private medical facility in the last month. Delivery in medical instituitions is associated with a decrease in maternal mortality rate.',
+        info: 'Of the total number of women enrolled for Anganwadi services who gave birth in the last month, the percentage who delivered in a public or private medical facility.\n' +
+        '\n' +
+        'Delivery in medical instituitions is associated with a decrease in maternal mortality rate',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -54,7 +56,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of pregnant women who delivered in a public or private medical facility in the last month. \n' +
+        'captionContent': ' Of the total number of women enrolled for Anganwadi services who gave birth in the last month, the percentage who delivered in a public or private medical facility.\n' +
         '\n' +
         'Delivery in medical instituitions is associated with a decrease in maternal mortality rate',
     };

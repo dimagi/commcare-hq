@@ -447,11 +447,14 @@ function Question(json, parent) {
     self.afterRender = function() { self.entry.afterRender(); };
 
     self.triggerAnswer = function() {
-        $.publish('formplayer.dirty');
         self.pendingAnswer(_.clone(self.answer()));
-        $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
+        publishAnswerEvent();
     };
-    self.onchange = _.throttle(self.triggerAnswer, self.throttle);
+    var publishAnswerEvent = _.throttle(function() {
+        $.publish('formplayer.dirty');
+        $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
+    }, self.throttle);
+    self.onchange = self.triggerAnswer;
 
     self.mediaSrc = function(resourceType) {
         if (!resourceType || !_.isFunction(Formplayer.resourceMap)) { return ''; }

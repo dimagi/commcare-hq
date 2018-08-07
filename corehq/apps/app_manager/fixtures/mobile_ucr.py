@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
+import random
 
 from django.conf import settings
 from lxml.builder import E
@@ -26,11 +27,14 @@ from corehq.util.xml_utils import serialize
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id
 )
 from six.moves import zip
 from six.moves import map
+
+UCR_COMPARISONS_THRESHOLD = 1000
 
 
 def _should_sync(restore_state):
@@ -200,6 +204,10 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
+
+        if (report_config.report_id in settings.UCR_COMPARISONS and
+                random.randint(0, UCR_COMPARISONS_THRESHOLD) == UCR_COMPARISONS_THRESHOLD):
+            compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)
@@ -371,6 +379,10 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             defer_filters, filter_options_by_field, restore_user._couch_user)
         report_filter_elem = E.fixture(id=ReportFixturesProviderV2._report_filter_id(report_config.uuid))
         report_filter_elem.append(filters_elem)
+
+        if (report_config.report_id in settings.UCR_COMPARISONS and
+                random.randint(0, UCR_COMPARISONS_THRESHOLD) == UCR_COMPARISONS_THRESHOLD):
+            compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.fixture(
             id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid), user_id=restore_user.user_id,

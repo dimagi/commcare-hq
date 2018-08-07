@@ -64,6 +64,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     api_key_auth)
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
@@ -242,6 +243,7 @@ def get_app_view_context(request, app):
                                     args=(app.domain, app.get_id)),
             'adjective': _("app translation"),
             'plural_noun': _("app translations"),
+            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request)
         },
     })
     context.update({
@@ -251,7 +253,8 @@ def get_app_view_context(request, app):
         ),
         'bulk_app_translation_form': get_bulk_upload_form(
             context,
-            context_key="bulk_app_translation_upload"
+            context_key="bulk_app_translation_upload",
+            form_class=AppTranslationsBulkUploadForm,
         )
     })
     context.update({
@@ -353,13 +356,6 @@ def copy_app(request, domain):
                     set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
             linked = data.get('linked')
             if linked:
-                for module in app.modules:
-                    if isinstance(module, ReportModule):
-                        messages.error(request, _('This linked application uses mobile UCRs which '
-                                                  'are currently not supported. For this application to '
-                                                  'function correctly, you will need to remove those modules.'))
-                        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
                 master_version = get_latest_released_app_version(app.domain, app_id)
                 if not master_version:
                     messages.error(request, _("Creating linked app failed."
@@ -371,6 +367,7 @@ def copy_app(request, domain):
                 try:
                     update_linked_app(linked_app, request.couch_user.get_id)
                 except AppLinkError as e:
+                    linked_app.delete()
                     messages.error(request, str(e))
                     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
@@ -627,7 +624,6 @@ def edit_app_attr(request, domain, app_id, attr):
 
     """
     app = get_app(domain, app_id)
-    lang = request.COOKIES.get('lang', (app.langs or ['en'])[0])
 
     try:
         hq_settings = json.loads(request.body)['hq']
@@ -644,7 +640,6 @@ def edit_app_attr(request, domain, app_id, attr):
         'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
-        'anonymous_cloudcare_enabled',
         'case_sharing',
         'translation_strategy',
         'auto_gps_capture',
@@ -672,7 +667,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('practice_mobile_worker_id', None),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
-        ('anonymous_cloudcare_enabled', None),
         ('manage_urls', None),
         ('name', None),
         ('platform', None),
@@ -726,12 +720,6 @@ def edit_app_attr(request, domain, app_id, attr):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
         if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
-
-    if should_edit("anonymous_cloudcare_enabled"):
-        if app.get_doc_type() not in ("Application",):
-            raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
-        if not has_privilege(request, privileges.CLOUDCARE):
-            app.anonymous_cloudcare_enabled = False
 
     def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):

@@ -50,6 +50,8 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from memoized import memoized
+
+from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
@@ -340,9 +342,9 @@ def _login(req, domain_name, template_name):
             return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
     if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
-        req.POST._mutable = True
-        req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
-        req.POST._mutable = False
+        with mutable_querydict(req.POST):
+            req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
+
     if 'auth-username' in req.POST:
         couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
@@ -596,6 +598,14 @@ class BugReportView(View):
         ).format(**report)
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
+        debug_context = {
+            'datetime': datetime.utcnow(),
+            'self_started': '<unknown>',
+            'scale_backend': '<unknown>',
+            'has_handoff_info': '<unknown>',
+            'project_description': '<unknown>',
+            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+        }
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
             new_project_description = req.POST.get('project_description')
@@ -610,6 +620,13 @@ class BugReportView(View):
             ).format(
                 software_plan=Subscription.get_subscribed_plan_by_domain(domain),
             ))
+
+            debug_context.update({
+                'self_started': domain_object.internal.self_started,
+                'scale_backend': should_use_sql_backend(domain),
+                'has_handoff_info': bool(domain_object.internal.partner_contact),
+                'project_description': domain_object.project_description,
+            })
 
         subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
         cc = [el for el in report['cc'].strip().split(",") if el]
@@ -635,14 +652,7 @@ class BugReportView(View):
                 "Has Support Hand-off Info: {has_handoff_info}\n"
                 "Project description: {project_description}\n"
                 "Sentry Error: {sentry_error}\n"
-            ).format(
-                datetime=datetime.utcnow(),
-                self_started=domain_object.internal.self_started,
-                scale_backend=should_use_sql_backend(domain),
-                has_handoff_info=bool(domain_object.internal.partner_contact),
-                project_description=domain_object.project_description,
-                sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
-            )
+            ).format(**debug_context)
             traceback_info = cache.cache.get(report['500traceback'])
             cache.cache.delete(report['500traceback'])
             message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
@@ -1136,10 +1146,10 @@ class MaintenanceAlertsView(BasePageView):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
         return {
             'alerts': [{
-            'created': six.text_type(alert.created),
-            'active': alert.active,
-            'html': alert.html,
-            'id': alert.id,
+                'created': six.text_type(alert.created),
+                'active': alert.active,
+                'html': alert.html,
+                'id': alert.id,
             } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
         }
 

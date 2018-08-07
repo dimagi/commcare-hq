@@ -92,7 +92,7 @@ class FormXmlnsTest(SimpleTestCase, TestXmlMixin):
         old_form = self.form
         old_form.source = self.get_source()
 
-        new_form = self.app._copy_form(self.module, old_form, self.module)
+        new_form = self.app.copy_form(self.module, old_form, self.module)
 
         self.assertEqual(new_form.xmlns, XMLNS_PREFIX + new_form.unique_id)
         self.assertIn(new_form.xmlns, new_form.source)

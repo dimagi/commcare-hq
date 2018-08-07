@@ -187,7 +187,7 @@ describe('Enrolled Women Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of pregnant women who are enrolled for Anganwadi Services'
+            'Of the total number of pregnant women, the percentage of pregnant women enrolled for Anganwadi Services'
         );
     });
 

@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
-    CaseTriggerInfo,
     CreatePatientIdentifierTask,
     CreatePersonAddressTask,
     CreatePersonAttributeTask,
@@ -20,6 +19,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 )
 from corehq.motech.openmrs.workflow import WorkflowTask, execute_workflow
 from corehq.motech.utils import pformat_json
+from corehq.motech.value_source import CaseTriggerInfo
 from dimagi.utils.parsing import string_to_utc_datetime
 
 

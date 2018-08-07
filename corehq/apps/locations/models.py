@@ -430,21 +430,59 @@ class SQLLocation(AdjListModel):
         publish_location_saved(self.domain, self.location_id)
 
     def delete(self, *args, **kwargs):
-        from corehq.apps.commtrack.models import sync_supply_point
-        from .document_store import publish_location_saved
-        to_delete = self.get_descendants(include_self=True)
+        """Delete this location and all descentants
 
-        # This deletion should ideally happen in a transaction. It's not
-        # currently possible as supply point cases are stored either in a
-        # separate database or in couch. Happy Debugging!
+        Supply point cases and user updates are performed asynchronously.
+        """
+        from .tasks import update_users_at_locations
+        from .document_store import publish_location_saved
+
+        to_delete = self.get_descendants(include_self=True)
         for loc in to_delete:
-            loc._remove_users()
-            sync_supply_point(loc, is_deletion=True)
+            loc._remove_user()
 
         super(SQLLocation, self).delete(*args, **kwargs)
+        update_users_at_locations.delay(
+            self.domain,
+            [loc.location_id for loc in to_delete],
+            [loc.supply_point_id for loc in to_delete if loc.supply_point_id],
+            list(self.get_ancestors().location_ids()),
+        )
         publish_location_saved(self.domain, self.location_id, is_deletion=True)
 
     full_delete = delete
+
+    @classmethod
+    def bulk_delete(cls, locations, ancestor_location_ids):
+        """Bulk delete the given locations and update their ancestors
+
+        WARNING databases may be left in an inconsistent state if the
+        transaction in which this deletion is performed is rolled back.
+        This method mutates other databases that will not be reverted on
+        transaction rollback.
+
+        :param locations: A list of SQLLocation objects. All locations
+        in the list are expected to be leaf nodes or parents of nodes
+        that are also in the list. Behavior of passing a non-leaf node
+        without also passing all of its descendants is undefined.
+        :param ancestor_location_ids: A list of ancestor `location_id`s
+        for the given `locations`.
+        """
+        from .tasks import update_users_at_locations
+        if not locations:
+            return
+        if len(set(loc.domain for loc in locations)) != 1:
+            raise ValueError("cannot bulk delete locations for multiple domains")
+        cls.objects.filter(id__in=[loc.id for loc in locations]).delete()
+        # NOTE _remove_user() not called here. No domains were using
+        # SQLLocation.user_id at the time this was written, and that
+        # field is slated for removal.
+        update_users_at_locations.delay(
+            locations[0].domain,
+            [loc.location_id for loc in locations],
+            [loc.supply_point_id for loc in locations if loc.supply_point_id],
+            ancestor_location_ids,
+        )
 
     def to_json(self, include_lineage=True):
         json_dict = {
@@ -497,7 +535,7 @@ class SQLLocation(AdjListModel):
 
         self._products = value
 
-    def _remove_users(self):
+    def _remove_user(self):
         """
         Unassigns the users assigned to that location.
 
@@ -509,23 +547,24 @@ class SQLLocation(AdjListModel):
             user.active = False
             user.save()
 
-        _unassign_users_from_location(self.domain, self.location_id)
-        self.update_users_at_ancestor_locations()
-
-    def update_users_at_ancestor_locations(self):
-        from . tasks import update_users_at_locations
-        location_ids = list(self.get_ancestors().location_ids())
-        update_users_at_locations.delay(location_ids)
-
     def archive(self):
         """
         Mark a location and its descendants as archived and unassigns users
         assigned to the location.
         """
-        for loc in self.get_descendants(include_self=True):
+        from .tasks import update_users_at_locations
+        locations = self.get_descendants(include_self=True)
+        for loc in locations:
             loc.is_archived = True
             loc.save()
-            loc._remove_users()
+            loc._remove_user()
+
+        update_users_at_locations.delay(
+            self.domain,
+            [loc.location_id for loc in locations],
+            [loc.supply_point_id for loc in locations if loc.supply_point_id],
+            list(self.get_ancestors().location_ids()),
+        )
 
     def unarchive(self):
         """
@@ -673,6 +712,13 @@ class SQLLocation(AdjListModel):
         # For backwards compatability
         return self
 
+    @property
+    def related_location_ids(self):
+        a = LocationRelation.objects.filter(location_a=self.location_id).values_list('location_b', flat=True)
+        b = LocationRelation.objects.filter(location_b=self.location_id).values_list('location_a', flat=True)
+
+        return set(a).union(set(b))
+
 
 def filter_for_archived(locations, include_archive_ancestors):
     """
@@ -751,13 +797,38 @@ def _unassign_users_from_location(domain, location_id):
     Unset location for all users assigned to that location.
     """
     from corehq.apps.locations.dbaccessors import user_ids_at_locations
-    from corehq.apps.users.models import CommCareUser
+    from corehq.apps.users.models import CouchUser
     from dimagi.utils.couch.database import iter_docs
 
     user_ids = user_ids_at_locations([location_id])
-    for doc in iter_docs(CommCareUser.get_db(), user_ids):
-        user = CommCareUser.wrap(doc)
+    for doc in iter_docs(CouchUser.get_db(), user_ids):
+        user = CouchUser.wrap_correctly(doc)
         if user.is_web_user():
             user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():
             user.unset_location_by_id(location_id, fall_back_to_next=True)
+
+
+class LocationRelation(models.Model):
+    """Implements a many-to-many mapping between locations.
+
+    Assumptions:
+      - This is not a directed graph. i.e. a connection between
+        location_a -> location_b implies the opposite connection exists
+
+    Caveats:
+      - This is currently under active development for REACH.
+        It's expected to change, so don't rely on it for other projects.
+      - There is no cycle checking. If you attempt to go further than one step,
+        you will get an infinite loop.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    location_a = models.ForeignKey(
+        SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
+    location_b = models.ForeignKey(
+        SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
+
+    class Meta(object):
+        unique_together = [
+            ('location_a', 'location_b')
+        ]

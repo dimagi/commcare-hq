@@ -32,29 +32,6 @@
     </span>
 </script>
 
-<script type="text/html" id="CommcareSettings.widgets.share_link">
-    <form class="form-inline">
-        <div class="col-sm-3">
-            <input type="checkbox"
-                   data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
-        </div>
-        <div class="form-group col-sm-9">
-            <div class="input-group">
-                <input class="form-control js-anonymous-link" type="text" readonly="readonly"
-                       value="{{ app.anonymous_cloudcare_url }}" style="background-color: white"
-                       data-bind="click: selectText"/>
-                <span class="input-group-btn">
-                    <a class="btn btn-default" data-bind="
-                            click: copyUrl
-                        ">
-                        <i class="fa fa-files-o"></i>
-                    </a>
-                </span>
-            </div>
-        </div>
-    </form>
-</script>
-
 <script type="text/html" id="CommcareSettings.widgets.customProperty">
   <div class="row">
     <div class="col-sm-5">

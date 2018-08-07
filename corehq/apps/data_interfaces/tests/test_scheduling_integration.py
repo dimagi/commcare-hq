@@ -37,6 +37,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
 )
+from corehq.messaging.scheduling.tasks import handle_case_timed_schedule_instance
 from corehq.messaging.scheduling.tests.util import delete_alert_schedules, delete_timed_schedules
 from corehq.messaging.tasks import run_messaging_rule, sync_case_for_messaging_rule
 from corehq.sql_db.util import run_query_across_partitioned_databases
@@ -372,6 +373,130 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
+
+    @run_with_all_backends
+    @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
+    @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_timed_schedule_stop_date_case_property(self, utcnow_patch, send_patch):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(9, 0)),
+            SMSContent(message={'en': 'Hello'}),
+            extra_options={'stop_date_case_property_name': 'stop_date'},
+        )
+
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('CommCareUser', self.user.get_id),),
+        )
+
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        utcnow_patch.return_value = datetime(2018, 7, 1, 7, 0)
+        with create_case(self.domain, 'person') as case:
+            # The case matches the rule and is setup to start sending
+            update_case(self.domain, case.case_id, case_properties={'stop_date': '2018-07-03'})
+
+            [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instance.case_id, case.case_id)
+            self.assertEqual(instance.rule_id, rule.pk)
+            self.assertEqual(instance.timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instance.start_date, date(2018, 7, 1))
+            self.assertEqual(instance.domain, self.domain)
+            self.assertEqual(instance.recipient_type, 'CommCareUser')
+            self.assertEqual(instance.recipient_id, self.user.get_id)
+            self.assertEqual(instance.current_event_num, 0)
+            self.assertEqual(instance.schedule_iteration_num, 1)
+            self.assertEqual(instance.next_event_due, datetime(2018, 7, 1, 13, 0))
+            self.assertTrue(instance.active)
+
+            # Send the first event, and schedule the next event for the next day
+            utcnow_patch.return_value = datetime(2018, 7, 1, 13, 1)
+            handle_case_timed_schedule_instance(case.case_id, instance.schedule_instance_id)
+            self.assertEqual(send_patch.call_count, 1)
+
+            [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instance.case_id, case.case_id)
+            self.assertEqual(instance.rule_id, rule.pk)
+            self.assertEqual(instance.timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instance.start_date, date(2018, 7, 1))
+            self.assertEqual(instance.domain, self.domain)
+            self.assertEqual(instance.recipient_type, 'CommCareUser')
+            self.assertEqual(instance.recipient_id, self.user.get_id)
+            self.assertEqual(instance.current_event_num, 0)
+            self.assertEqual(instance.schedule_iteration_num, 2)
+            self.assertEqual(instance.next_event_due, datetime(2018, 7, 2, 13, 0))
+            self.assertTrue(instance.active)
+
+            # Send the second event, and deactivate because the stop date has been reached
+            utcnow_patch.return_value = datetime(2018, 7, 2, 13, 1)
+            handle_case_timed_schedule_instance(case.case_id, instance.schedule_instance_id)
+            self.assertEqual(send_patch.call_count, 2)
+
+            [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instance.case_id, case.case_id)
+            self.assertEqual(instance.rule_id, rule.pk)
+            self.assertEqual(instance.timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instance.start_date, date(2018, 7, 1))
+            self.assertEqual(instance.domain, self.domain)
+            self.assertEqual(instance.recipient_type, 'CommCareUser')
+            self.assertEqual(instance.recipient_id, self.user.get_id)
+            self.assertEqual(instance.current_event_num, 0)
+            self.assertEqual(instance.schedule_iteration_num, 3)
+            self.assertEqual(instance.next_event_due, datetime(2018, 7, 3, 13, 0))
+            self.assertFalse(instance.active)
+
+            # Update the stop date and the instance should be reactivated
+            update_case(self.domain, case.case_id, case_properties={'stop_date': '2018-08-01'})
+
+            [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instance.case_id, case.case_id)
+            self.assertEqual(instance.rule_id, rule.pk)
+            self.assertEqual(instance.timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instance.start_date, date(2018, 7, 1))
+            self.assertEqual(instance.domain, self.domain)
+            self.assertEqual(instance.recipient_type, 'CommCareUser')
+            self.assertEqual(instance.recipient_id, self.user.get_id)
+            self.assertEqual(instance.current_event_num, 0)
+            self.assertEqual(instance.schedule_iteration_num, 3)
+            self.assertEqual(instance.next_event_due, datetime(2018, 7, 3, 13, 0))
+            self.assertTrue(instance.active)
+
+            # Update the stop date and the instance should be deactivated
+            update_case(self.domain, case.case_id, case_properties={'stop_date': '2018-06-01'})
+
+            [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instance.case_id, case.case_id)
+            self.assertEqual(instance.rule_id, rule.pk)
+            self.assertEqual(instance.timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instance.start_date, date(2018, 7, 1))
+            self.assertEqual(instance.domain, self.domain)
+            self.assertEqual(instance.recipient_type, 'CommCareUser')
+            self.assertEqual(instance.recipient_id, self.user.get_id)
+            self.assertEqual(instance.current_event_num, 0)
+            self.assertEqual(instance.schedule_iteration_num, 3)
+            self.assertEqual(instance.next_event_due, datetime(2018, 7, 3, 13, 0))
+            self.assertFalse(instance.active)
+
+            # Update the stop date and the instance should be reactivated and fast-forwarded
+            utcnow_patch.return_value = datetime(2018, 7, 4, 13, 1)
+            update_case(self.domain, case.case_id, case_properties={'stop_date': '2018-08-01'})
+
+            [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instance.case_id, case.case_id)
+            self.assertEqual(instance.rule_id, rule.pk)
+            self.assertEqual(instance.timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instance.start_date, date(2018, 7, 1))
+            self.assertEqual(instance.domain, self.domain)
+            self.assertEqual(instance.recipient_type, 'CommCareUser')
+            self.assertEqual(instance.recipient_id, self.user.get_id)
+            self.assertEqual(instance.current_event_num, 0)
+            self.assertEqual(instance.schedule_iteration_num, 5)
+            self.assertEqual(instance.next_event_due, datetime(2018, 7, 5, 13, 0))
+            self.assertTrue(instance.active)
 
     @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')

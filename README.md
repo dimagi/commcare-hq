@@ -13,6 +13,8 @@ providing generic domain management and form data-collection functionality.
 
 More in depth docs are available on [ReadTheDocs](http://commcare-hq.readthedocs.io/)
 
+If you are interested in managing a production CommCare HQ environment, check out [CommCare Cloud](http://dimagi.github.io/commcare-cloud/), our toolkit for deploying and maintaining CommCare servers.
+
 ### Key Components
 
 + CommCare application builder
@@ -207,16 +209,16 @@ For all STATICFILES changes (primarily LESS and JavaScript), run:
     $ manage.py compress
 
 
-#### FormPlayer
+#### Formplayer
 
-To enable FormPlayer, ensure that `TOUCHFORMS_API_USER` and
-`TOUCHFORMS_API_PASSWORD` in `localsettings.py` are the credentials of the
-django admin user you created above (with manage.py bootstrap) and then create
-the file `submodules/touchforms-src/touchforms/backend/localsettings.py` with
-the following contents:
+Formplayer is a Java service that allows us to use applications on the web instead of on a mobile device. 
+
+In `localsettings.py`:
 ```
-URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
+FORMPLAYER_URL = 'http://localhost:8010'
 ```
+
+Then you need to have formplayer running. There are a few options as described below.
 
 ##### Running Formplayer in Docker
 

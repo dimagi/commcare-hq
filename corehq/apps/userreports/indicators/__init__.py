@@ -24,6 +24,8 @@ class Column(object):
         """
         Column name going into the database - needs to be truncated according to db limitations
         """
+        # we have to explicitly truncate the column IDs otherwise postgres will do it
+        # and will choke on them if there are duplicates: http://manage.dimagi.com/default.asp?175495
         return truncate_value(self.id)
 
     def __repr__(self):

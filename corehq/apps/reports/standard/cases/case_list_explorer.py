@@ -2,7 +2,9 @@ from __future__ import absolute_import, unicode_literals
 
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
+from six.moves import range
 
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES_MAP,
@@ -22,7 +24,6 @@ from corehq.apps.reports.standard.cases.filters import (
     CaseListExplorerColumns,
     XpathCaseSearchFilter,
 )
-from six.moves import range
 from corehq.elastic import iter_es_docs_from_query
 
 
@@ -33,14 +34,15 @@ class CaseListExplorer(CaseListReport):
 
     exportable = True
     exportable_all = True
+    emailable = True
     _is_exporting = False
 
     fields = [
+        XpathCaseSearchFilter,
+        CaseListExplorerColumns,
         CaseListFilter,
         CaseTypeFilter,
         SelectOpenCloseFilter,
-        XpathCaseSearchFilter,
-        CaseListExplorerColumns,
     ]
 
     def _build_query(self, sort=True):
@@ -51,12 +53,18 @@ class CaseListExplorer(CaseListReport):
             try:
                 query = query.xpath_query(self.domain, xpath)
             except CaseFilterError as e:
+                track_workflow(self.request.couch_user.username, "Case List Explorer: Query Error")
+
                 error = "<p>{}.</p>".format(escape(e))
                 bad_part = "<p>{} <strong>{}</strong></p>".format(
                     _("The part of your search query we didn't understand is: "),
                     escape(e.filter_part)
                 ) if e.filter_part else ""
                 raise BadRequestError("{}{}".format(error, bad_part))
+
+            if '/' in xpath:
+                track_workflow(self.request.couch_user.username, "Case List Explorer: Related case search")
+
         return query
 
     def _populate_sort(self, query, sort):
@@ -78,36 +86,55 @@ class CaseListExplorer(CaseListReport):
         return query
 
     @property
-    def headers(self):
-        header = DataTablesHeader(*self.columns)
-        header.custom_sort = [[0, 'desc']]
-        return header
-
-    @property
     def columns(self):
-        return [
+        if self._is_exporting:
+            persistent_cols = [
+                DataTablesColumn(
+                    "@case_id",
+                    prop_name='@case_id',
+                    sortable=True,
+                )
+            ]
+        else:
+            persistent_cols = [
+                DataTablesColumn(
+                    "case_name",
+                    prop_name='case_name',
+                    sortable=True,
+                    visible=False,
+                ),
+                DataTablesColumn(
+                    _("View Case"),
+                    prop_name='_link',
+                    sortable=False,
+                )
+            ]
+
+        return persistent_cols + [
             DataTablesColumn(
-                column['label'],
-                prop_name=column['name'],
-                visible=(not column.get('hidden')),
-                sortable=column['name'] not in CASE_COMPUTED_METADATA,
+                column,
+                prop_name=column,
+                sortable=column not in CASE_COMPUTED_METADATA,
             )
-            for column in self._columns
+            for column in CaseListExplorerColumns.get_value(self.request, self.domain)
         ]
 
     @property
-    def _columns(self):
-        """Columns from the report filter
-        """
-        if self._is_exporting:
-            return CaseListExplorerColumns.EXPORT_PERSISTENT_COLUMNS + [
-                c for c in CaseListExplorerColumns.get_value(self.request, self.domain)
-                if c['name'] not in [p['name'] for p in CaseListExplorerColumns.PERSISTENT_COLUMNS]
-            ]
-        return CaseListExplorerColumns.get_value(self.request, self.domain)
+    def headers(self):
+        column_names = [c.prop_name for c in self.columns]
+        headers = DataTablesHeader(*self.columns)
+        # by default, sort by name, otherwise we fall back to the case_name hidden column
+        if "case_name" in column_names[1:]:
+            headers.custom_sort = [[column_names[1:].index("case_name") + 1, 'asc']]
+        elif "name" in column_names:
+            headers.custom_sort = [[column_names.index("name"), 'asc']]
+        else:
+            headers.custom_sort = [[0, 'asc']]
+        return headers
 
     @property
     def rows(self):
+        track_workflow(self.request.couch_user.username, "Case List Explorer: Search Performed")
         data = (flatten_result(row) for row in self.es_results['hits'].get('hits', []))
         return self._get_rows(data)
 
@@ -120,11 +147,12 @@ class CaseListExplorer(CaseListReport):
         for case in data:
             case_display = SafeCaseDisplay(self, case)
             yield [
-                case_display.get(column)
-                for column in self._columns
+                case_display.get(column.prop_name)
+                for column in self.columns
             ]
 
     @property
     def export_table(self):
         self._is_exporting = True
+        track_workflow(self.request.couch_user.username, "Case List Explorer: Export button clicked")
         return super(CaseListExplorer, self).export_table

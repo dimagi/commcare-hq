@@ -116,11 +116,11 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
             "average": "%.2f" % ((sum(values_to_calculate_average)) /
                                  float(len(values_to_calculate_average) or 1)),
             "info": _((
-                "Percentage of children ({}) enrolled for Anganwadi Services with height-for-age below "
-                "-2Z standard deviations of the WHO Child Growth Standards median."
+                "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
+                "children between {} who were moderately/severely stunted in the current month. "
                 "<br/><br/>"
-                "Stunting is a sign of chronic undernutrition and has long lasting harmful "
-                "consequences on the growth of a child".format(age_label)
+                "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on "
+                "the growth of a child".format(age_label)
             )),
             "extended_info": [
                 {
@@ -360,11 +360,11 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of children{} enrolled for Anganwadi Services with height-for-age below "
-            "-2Z standard deviations of the WHO Child Growth Standards median."
+            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage "
+            "of children between {} who were moderately/severely stunted in the current month. "
             "<br/><br/>"
-            "Stunting is a sign of chronic undernutrition and has long lasting harmful "
-            "consequences on the growth of a child".format(chosen_filters)
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on "
+            "the growth of a child".format(chosen_filters)
         )),
         "chart_data": [
             {

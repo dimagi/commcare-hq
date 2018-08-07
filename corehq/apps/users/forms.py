@@ -5,7 +5,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
-from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
+from crispy_forms.layout import Fieldset, Layout, Submit
 import datetime
 
 from corehq.apps.hqwebapp.widgets import Select2Ajax
@@ -22,14 +22,13 @@ from django_countries.data import COUNTRIES
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
-from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.users.models import CouchUser, UserRole
-from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
@@ -40,7 +39,6 @@ from crispy_forms import helper as cb3_helper
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
-from corehq.util.soft_assert import soft_assert
 from memoized import memoized
 
 import re
@@ -230,10 +228,6 @@ class BaseUserInfoForm(forms.Form):
 
 
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
-    email_opt_out = forms.BooleanField(
-        required=False,
-        label=ugettext_lazy("Opt out of emails about CommCare updates."),
-    )
     analytics_enabled = forms.BooleanField(
         required=False,
         label=ugettext_lazy("Enable Tracking"),
@@ -289,8 +283,6 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         ]
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
-        if self.set_email_opt_out:
-            basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
 
         self.new_helper.layout = cb3_layout.Layout(
             cb3_layout.Fieldset(
@@ -316,10 +308,6 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         return not settings.ENTERPRISE_MODE
 
     @property
-    def set_email_opt_out(self):
-        return self.user.is_web_user() and not settings.ENTERPRISE_MODE
-
-    @property
     def collapse_other_options(self):
         return self.user.is_commcare_user()
 
@@ -328,8 +316,6 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         result = list(self.fields)
         if not self.set_analytics_enabled:
             result.remove('analytics_enabled')
-        if not self.set_email_opt_out:
-            result.remove('email_opt_out')
         return result
 
     def update_user(self, save=True, **kwargs):
@@ -661,60 +647,6 @@ class NewMobileWorkerForm(forms.Form):
         return cleaned_password
 
 
-class NewAnonymousMobileWorkerForm(forms.Form):
-    location_id = forms.CharField(
-        label=ugettext_noop("Location"),
-        required=False,
-    )
-    username = forms.CharField(
-        max_length=50,
-        label=ugettext_noop("Username"),
-        initial=ANONYMOUS_USERNAME,
-    )
-    password = forms.CharField(
-        required=True,
-        min_length=1,
-    )
-
-    def __init__(self, project, request_user, *args, **kwargs):
-        super(NewAnonymousMobileWorkerForm, self).__init__(*args, **kwargs)
-        self.project = project
-        self.request_user = request_user
-        self.can_access_all_locations = request_user.has_permission(self.project.name, 'access_all_locations')
-        if not self.can_access_all_locations:
-            self.fields['location_id'].required = True
-
-        if project.uses_locations:
-            self.fields['location_id'].widget = AngularLocationSelectWidget(
-                require=not self.can_access_all_locations)
-            location_field = crispy.Field(
-                'location_id',
-                ng_model='mobileWorker.location_id',
-            )
-        else:
-            location_field = crispy.Hidden(
-                'location_id',
-                '',
-                ng_model='mobileWorker.location_id',
-            )
-
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-4'
-        self.helper.field_class = 'col-sm-8'
-        self.helper.layout = Layout(
-            Fieldset(
-                _('Basic Information'),
-                crispy.Field(
-                    'username',
-                    readonly=True,
-                ),
-                location_field,
-                crispy.Hidden('is_anonymous', 'yes'),
-            )
-        )
-
-
 class GroupMembershipForm(forms.Form):
     selected_ids = forms.Field(
         label=ugettext_lazy("Group Membership"),
@@ -840,38 +772,10 @@ class AngularLocationSelectWidget(forms.Widget):
         """.format(validator='validate-location=""' if self.require else '')
 
 
-class SupplyPointSelectWidget(forms.Widget):
-
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
-        super(SupplyPointSelectWidget, self).__init__(attrs)
-        self.domain = domain
-        self.id = id
-        self.multiselect = multiselect
-        if query_url:
-            self.query_url = query_url
-        else:
-            self.query_url = reverse('child_locations_for_select2', args=[self.domain])
-
-    def render(self, name, value, attrs=None):
-        location_ids = value.split(',') if value else []
-        locations = list(SQLLocation.active_objects
-                         .filter(domain=self.domain, location_id__in=location_ids))
-        initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
-
-        return get_template('locations/manage/partials/autocomplete_select_widget.html').render({
-            'id': self.id,
-            'name': name,
-            'value': ','.join(loc.location_id for loc in locations),
-            'query_url': self.query_url,
-            'multiselect': self.multiselect,
-            'initial_data': initial_data,
-        })
-
-
 class PrimaryLocationWidget(forms.Widget):
     """
     Options for this field are dynamically set in JS depending on what options are selected
-    for 'assigned_locations'. This works in conjunction with SupplyPointSelectWidget.
+    for 'assigned_locations'. This works in conjunction with LocationSelectWidget.
     """
     def __init__(self, css_id, source_css_id, attrs=None):
         """
@@ -909,12 +813,10 @@ class CommtrackUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self.domain = None
-        if 'domain' in kwargs:
-            self.domain = kwargs['domain']
-            del kwargs['domain']
+        from corehq.apps.locations.forms import LocationSelectWidget
+        self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        self.fields['assigned_locations'].widget = SupplyPointSelectWidget(
+        self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations'
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(

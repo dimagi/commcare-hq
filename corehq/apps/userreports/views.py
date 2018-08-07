@@ -164,6 +164,7 @@ def swallow_programming_errors(fn):
     return decorated
 
 
+@method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator(), name='dispatch')
 class BaseUserConfigReportsView(BaseDomainView):
     section_name = ugettext_lazy("Configurable Reports")
 
@@ -176,6 +177,9 @@ class BaseUserConfigReportsView(BaseDomainView):
             'reports': ReportConfiguration.by_domain(self.domain) + static_reports,
             'data_sources': DataSourceConfiguration.by_domain(self.domain) + static_data_sources,
         })
+        if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
+            from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
+            context['aggregate_data_sources'] = AggregateTableDefinition.objects.filter(domain=self.domain)
         return context
 
     @property
@@ -185,10 +189,6 @@ class BaseUserConfigReportsView(BaseDomainView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
-
-    @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseUserConfigReportsView, self).dispatch(request, *args, **kwargs)
 
 
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
@@ -215,7 +215,6 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'report': self.config,
-            'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
         }
 
     @property
@@ -975,7 +974,6 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'form': self.edit_form,
             'data_source': self.config,
             'read_only': self.read_only,
-            'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
             'used_by_reports': self.get_reports(),
         }
 
@@ -1287,6 +1285,11 @@ def process_url_params(params, columns):
 def export_data_source(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = IndicatorSqlAdapter(config)
+    url = reverse('export_configurable_data_source', args=[domain, config._id])
+    return export_sql_adapter_view(request, domain, adapter, url)
+
+
+def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
     q = adapter.get_query_object()
     table = adapter.get_table()
 
@@ -1317,7 +1320,7 @@ def export_data_source(request, domain, config_id):
             del keyword_params['format']
         return HttpResponseRedirect(
             '%s?%s' % (
-                reverse('export_configurable_data_source', args=[domain, config._id]),
+                too_large_redirect_url,
                 urlencode(keyword_params)
             )
         )
@@ -1331,7 +1334,7 @@ def export_data_source(request, domain, config_id):
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as tmpfile:
         try:
-            tables = [[config.table_id, get_table(q)]]
+            tables = [[adapter.table_id, get_table(q)]]
             export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
             msg = ugettext_lazy(
@@ -1339,7 +1342,7 @@ def export_data_source(request, domain, config_id):
                 "please make sure your parameters are valid."
             )
             return HttpResponse(msg, status=400)
-        return export_response(Temp(path), params.format, config.display_name)
+        return export_response(Temp(path), params.format, adapter.display_name)
 
 
 @login_and_domain_required

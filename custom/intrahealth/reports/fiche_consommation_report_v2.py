@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
-from custom.intrahealth.filters import FicheLocationFilter
+from custom.intrahealth.filters import FicheLocationFilter2
 from custom.intrahealth.reports.utils import IntraHealthLocationMixin, IntraHealthReportConfigMixin
 from custom.intrahealth.sqldata import FicheData2
 from memoized import memoized
@@ -93,7 +93,7 @@ class FicheConsommationReport2(MultiReport):
     name = "Fiche Consommation NEW"
     slug = 'fiche_consommation2'
     title = "Fiche Consommation NEW"
-    fields = [DatespanFilter, FicheLocationFilter]
+    fields = [DatespanFilter, FicheLocationFilter2]
     export_format_override = 'csv'
     default_rows = 10
     exportable = True

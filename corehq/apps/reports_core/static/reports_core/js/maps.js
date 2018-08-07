@@ -32,7 +32,7 @@ hqDefine('reports_core/js/maps', function () {
             privates.layerControl = L.control.layers(baseMaps);
             privates.layerControl.addTo(privates.map);
 
-            new ZoomToFitControl().addTo(privates.map);
+            new (hqImport("reports/js/maps_utils").ZoomToFitControl)().addTo(privates.map);
             $('#zoomtofit').css('display', 'block');
         } else {
             if (privates.map.activeOverlay) {
@@ -74,7 +74,7 @@ hqDefine('reports_core/js/maps', function () {
             privates.layerControl.addOverlay(overlay, config.layer_name);
             overlay.addTo(privates.map);
             privates.map.activeOverlay = overlay;
-            zoomToAll(privates.map);
+            hqImport("reports/js/maps_utils").zoomToAll(privates.map);
         }
     };
 
