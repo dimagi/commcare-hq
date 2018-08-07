@@ -201,7 +201,7 @@ def get_case_hierarchy(case, type_info):
     accessor = CaseAccessors(case.domain)
     new_indices = {case.case_id}
     seen_indices = {case.case_id}
-    last_index = None
+    last_index = case.case_id
     while True:
         new_indices = accessor.get_indexed_case_ids(new_indices)
         if not set(new_indices) - seen_indices:
