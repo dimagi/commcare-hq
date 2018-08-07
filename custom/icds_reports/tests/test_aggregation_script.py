@@ -159,12 +159,8 @@ class AggregationScriptTest(AggregationScriptTestBase):
         )
 
 
-class CcsRecordAggregationTest(AggregationScriptTestBase):
-    sort_key = (
-        'state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id',
-        'ccs_status'
-    )
-    always_include_columns = set(sort_key)
+class CcsRecordMonthlyAggregationTest(AggregationScriptTestBase):
+    always_include_columns = {'awc_id', 'case_id'}
 
     def test_ccs_record_monthly_2017_04_01(self):
         self._load_and_compare_data(
@@ -179,6 +175,14 @@ class CcsRecordAggregationTest(AggregationScriptTestBase):
             os.path.join(OUTPUT_PATH, 'ccs_record_monthly_2017-05-01_sorted.csv'),
             sort_key=['awc_id', 'case_id']
         )
+
+
+class CcsRecordAggregationTest(AggregationScriptTestBase):
+    sort_key = (
+        'state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id',
+        'ccs_status', 'trimester', 'caste', 'disabled', 'minority', 'resident'
+    )
+    always_include_columns = set(sort_key)
 
     def test_agg_ccs_record_2017_04_01_1(self):
         self._load_and_compare_data(
