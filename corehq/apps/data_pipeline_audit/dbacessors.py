@@ -36,15 +36,16 @@ def get_es_case_counts(domain, doc_type, gte, lt):
 
 
 def get_es_case_range(domain):
-    def query(order):
-        result = es.CaseES().domain(domain).sort('server_modified_on', desc=order).size(1).run().raw_hits
+    def descending_query(order):
+        result = es.CaseES().domain(domain).sort(
+            'server_modified_on', desc=order).size(1).run().raw_hits
         if len(result) == 0:
             return None
         else:
             return dateutil.parser.parse([0]['_source']['server_modified_on'])
     return (
-        query(False),
-        query(True)
+        descending_query(order=False),
+        descending_query(order=True)
     )
 
 
