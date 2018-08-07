@@ -1473,7 +1473,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
             return False
         elif self.current_subscription is None or self.current_subscription.is_trial:
             return False
-        elif self.current_subscription.date_start + datetime.timedelta(days=30) >= datetime.date.today():
+        elif self.current_subscription.is_below_minimum_subscription:
             return True
         else:
             return False
@@ -1617,11 +1617,11 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                 )
             else:
                 if self.is_downgrade_before_minimum:
-                    start_date = self.current_subscription.date_start + datetime.timedelta(days=31)
+                    start_date = self.current_subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT)
                     message = _(
                         "You have successfully scheduled a subscription to the %s Software Plan, "
                         "set to start on %s."
-                    ) % (software_plan_name, start_date.strftime(USER_DATE_FORMAT))
+                    ) % (software_plan_name, start_date)
                 else:
                     message = _(
                         "Your project has been successfully subscribed to the %s Software Plan."
