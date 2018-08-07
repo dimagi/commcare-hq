@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from casexml.apps.stock.consumption import ConsumptionHelper
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
+from corehq.util.quickcache import quickcache
 from dimagi.ext import jsonobject
 
 
@@ -21,31 +22,25 @@ class StockLedgerValueWrapper(jsonobject.JsonObject):
     daily_consumption = jsonobject.FloatProperty()
     location_id = jsonobject.StringProperty()
 
-    _sql_product = None
-    _sql_location = None
-
-    def __init__(self, _obj=None, sql_product=None, sql_location=None, *args, **kwargs):
-        self._sql_product = sql_product
-        self._sql_location = sql_location
-        super(StockLedgerValueWrapper, self).__init__(_obj, *args, **kwargs)
-
     @property
+    @quickcache(['self.domain', 'self.entry_id'])
     def sql_product(self):
-        if self.entry_id and not self._sql_product:
-            try:
-                self._sql_product = SQLProduct.objects.get(domain=self.domain, product_id=self.entry_id)
-            except ObjectDoesNotExist:
-                # todo: cache this result so multiple failing calls don't keep hitting the DB
-                return None
-
-        return self._sql_product
+        try:
+            return SQLProduct.objects.get(domain=self.domain, product_id=self.entry_id)
+        except ObjectDoesNotExist:
+            return None
 
     @property
+    @quickcache(['self.domain', 'self.location_id'])
     def sql_location(self):
-        if self.location_id and not self._sql_location:
-            self._sql_location = SQLLocation.objects.get_or_None(domain=self.domain, location_id=self.location_id)
-            # todo: cache this result so multiple failing calls don't keep hitting the DB
-        return self._sql_location
+        try:
+            return (
+                SQLLocation.objects
+                .prefetch_related('location_type')
+                .get(domain=self.domain, location_id=self.location_id)
+            )
+        except ObjectDoesNotExist:
+            return None
 
     @classmethod
     def from_stock_state(cls, stock_state):
@@ -102,8 +97,12 @@ def get_relevant_supply_point_ids(domain, active_sql_location=None):
         return list(filter_relevant(SQLLocation.objects.filter(domain=domain)))
 
 
-def get_product_id_name_mapping(domain):
-    return dict(SQLProduct.objects.filter(domain=domain).values_list('product_id', 'name'))
+@quickcache(['domain', 'program_id'])
+def get_product_id_name_mapping(domain, program_id=None):
+    products = SQLProduct.objects.filter(domain=domain)
+    if program_id:
+        products = products.filter(program_id=program_id)
+    return dict(products.values_list('product_id', 'name'))
 
 
 def get_product_ids_for_program(domain, program_id):

@@ -33,6 +33,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.session_helper = connection_manager.get_session_helper(self.engine_id)
         self.engine = self.session_helper.engine
 
+    @property
+    def table_id(self):
+        return self.config.table_id
+
+    @property
+    def display_name(self):
+        return self.config.display_name
+
     @memoized
     def get_table(self):
         return get_indicator_table(self.config)
@@ -140,6 +148,9 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             self.handle_exception(doc, e)
 
     def save_rows(self, rows):
+        if not rows:
+            return
+
         # transform format from ColumnValue to dict
         formatted_rows = [
             {i.column.database_column_name: i.value for i in row}

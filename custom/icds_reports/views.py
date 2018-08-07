@@ -31,9 +31,12 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import UserRole, Permissions
+from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.files import safe_filename_header
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds.tasks import (
     push_translation_files_to_transifex,
@@ -47,6 +50,7 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
 from custom.icds_reports.forms import AppTranslationsForm
+from custom.icds_reports.models.helper import IcdsFile
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -99,14 +103,8 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
-from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
-from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
-from custom.icds_reports.sqldata.exports.children import ChildrenExport
-from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
-from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
-from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
-    prepare_issnip_monthly_register_reports
+    prepare_issnip_monthly_register_reports, prepare_excel_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column
@@ -114,10 +112,12 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
+from couchexport.shortcuts import export_response
+from couchexport.export import Format
 
 
 @location_safe
-@method_decorator([toggles.ICDS_REPORTS.required_decorator(), login_and_domain_required], name='dispatch')
+@method_decorator([login_and_domain_required], name='dispatch')
 class TableauView(RedirectView):
 
     permanent = True
@@ -428,6 +428,7 @@ class LocationView(View):
             ]
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LocationAncestorsView(View):
@@ -616,7 +617,9 @@ class AwcReportsView(BaseReportView):
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
-                self.request.GET.get('case_id')
+                self.request.GET.get('case_id'),
+                config['awc_id'],
+                tuple(current_month.timetuple())[:3]
             )
         return JsonResponse(data=data)
 
@@ -662,48 +665,7 @@ class ExportIndicatorView(View):
             except SQLLocation.DoesNotExist:
                 pass
 
-        if indicator == CHILDREN_EXPORT:
-            return ChildrenExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test,
-                beta=icds_pre_release_features(self.request.couch_user)
-            ).to_export(export_format, location)
-        elif indicator == PREGNANT_WOMEN_EXPORT:
-            return PregnantWomenExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test
-            ).to_export(export_format, location)
-        elif indicator == DEMOGRAPHICS_EXPORT:
-            return DemographicsExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test,
-                beta=icds_pre_release_features(request.user)
-            ).to_export(export_format, location)
-        elif indicator == SYSTEM_USAGE_EXPORT:
-            return SystemUsageExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test
-            ).to_export(export_format, location)
-        elif indicator == AWC_INFRASTRUCTURE_EXPORT:
-            return AWCInfrastructureExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test
-            ).to_export(export_format, location)
-        elif indicator == BENEFICIARY_LIST_EXPORT:
-            if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
-                return HttpResponseBadRequest()
-            return BeneficiaryExport(
-                config=beneficiary_config,
-                loc_level=aggregation_level,
-                show_test=include_test,
-                beta=icds_pre_release_features(self.request.couch_user)
-            ).to_export('csv', location)
-        elif indicator == ISSNIP_MONTHLY_REGISTER_PDF:
+        if indicator == ISSNIP_MONTHLY_REGISTER_PDF:
             awcs = request.POST.get('selected_awcs').split(',')
             location = request.POST.get('location', '')
             if 'all' in awcs and location:
@@ -720,6 +682,23 @@ class ExportIndicatorView(View):
                 month,
                 year,
                 request.couch_user
+            )
+            task_id = task.task_id
+            return JsonResponse(data={'task_id': task_id})
+        if indicator == BENEFICIARY_LIST_EXPORT:
+            if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
+                return HttpResponseBadRequest()
+        if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
+                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT):
+            task = prepare_excel_reports.delay(
+                config,
+                aggregation_level,
+                include_test,
+                icds_pre_release_features(self.request.couch_user),
+                location,
+                self.kwargs['domain'],
+                export_format,
+                indicator
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})
@@ -1546,36 +1525,49 @@ class ICDSBugReportView(BugReportView):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
+class DownloadExportReport(View):
+    def get(self, request, *args, **kwargs):
+        uuid = self.request.GET.get('uuid', None)
+        file_format = self.request.GET.get('file_format', 'xlsx')
+        content_type = Format.from_format(file_format)
+        data_type = self.request.GET.get('data_type', 'beneficiary_list')
+        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type=data_type)
+        response = HttpResponse(
+            icds_file.get_file_from_blobdb().read(),
+            content_type=content_type.mimetype
+        )
+        response['Content-Disposition'] = safe_filename_header(data_type, content_type.extension)
+        return response
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
 class DownloadPDFReport(View):
     def get(self, request, *args, **kwargs):
         uuid = self.request.GET.get('uuid', None)
         format = self.request.GET.get('format', None)
-        client = get_redis_client()
+        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type='issnip_monthly')
         if format == 'one':
-            response = HttpResponse(client.get(uuid), content_type='application/pdf')
+            response = HttpResponse(icds_file.get_file_from_blobdb().read(), content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register_cumulative.pdf"'
             return response
         else:
-            response = HttpResponse(client.get(uuid), content_type='application/zip')
+            response = HttpResponse(icds_file.get_file_from_blobdb().read(), content_type='application/zip')
             response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register.zip"'
             return response
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class CheckPDFReportStatus(View):
+class CheckExportReportStatus(View):
     def get(self, request, *args, **kwargs):
         task_id = self.request.GET.get('task_id', None)
-
         res = AsyncResult(task_id)
         status = res.ready()
 
         if status:
-            task_result = prepare_issnip_monthly_register_reports.AsyncResult(task_id)
-            result = task_result.get()
             return JsonResponse(
                 {
                     'task_ready': status,
-                    'task_result': result
+                    'task_result': res.result
                 }
             )
         return JsonResponse({'task_ready': status})
@@ -1584,6 +1576,8 @@ class CheckPDFReportStatus(View):
 @location_safe
 class ICDSImagesAccessorAPI(View):
     @method_decorator(api_auth)
+    @method_decorator(require_permission(
+        Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport'))
     def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not attachment_id:
             raise Http404
@@ -1631,15 +1625,16 @@ class ICDSAppTranslations(BaseDomainView):
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
                          form_data['version'])
 
-    @staticmethod
-    def perform_push_request(request, form_data):
-        push_translation_files_to_transifex.delay(request.domain, form_data)
+    def perform_push_request(self, request, form_data):
+        if form_data['target_lang']:
+            if not self.ensure_resources_present(request):
+                return False
+        push_translation_files_to_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to submit files for translations'))
         return True
 
-    @staticmethod
-    def resources_translated(request, transifex):
-        resource_pending_translations = (transifex.
+    def resources_translated(self, request):
+        resource_pending_translations = (self._transifex.
                                          resources_pending_translations(break_if_true=True))
         if resource_pending_translations:
             messages.error(
@@ -1649,37 +1644,51 @@ class ICDSAppTranslations(BaseDomainView):
             return False
         return True
 
-    def perform_pull_request(self, request, form_data, transifex):
+    def ensure_resources_present(self, request):
+        if not self._transifex.resource_slugs:
+            messages.error(request, _('Resources not found for this project and version.'))
+            return False
+        return True
+
+    def perform_pull_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
+            return False
         if form_data['perform_translated_check']:
-            if not self.resources_translated(request, transifex):
+            if not self.resources_translated(request):
+                return False
+        if form_data['lock_translations']:
+            if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+                messages.error(request, _('Resources yet to be completely translated for all languages. '
+                                          'Hence, the request for locking resources can not be performed.'))
                 return False
         pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to pull for translations. '
                                     'You should receive an email shortly'))
         return True
 
-    def perform_delete_request(self, request, form_data, transifex):
-        if not transifex.resource_slugs:
-            messages.error(request, _('Resources not found for this project and version.'))
+    def perform_delete_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
             return False
-        if not self.resources_translated(request, transifex):
+        if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+            messages.error(request, _('Resources yet to be completely translated for all languages. '
+                                      'Hence, the request for deleting resources can not be performed.'))
             return False
         delete_resources_on_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to delete resources.'))
         return True
 
     def perform_request(self, request, form_data):
-        transifex = self.transifex(request.domain, form_data)
-        if not transifex.source_lang_is(form_data.get('source_lang')):
+        self._transifex = self.transifex(request.domain, form_data)
+        if not self._transifex.source_lang_is(form_data.get('source_lang')):
             messages.error(request, _('Source lang selected not available for the project'))
             return False
         else:
             if form_data['action'] == 'push':
                 return self.perform_push_request(request, form_data)
             elif form_data['action'] == 'pull':
-                return self.perform_pull_request(request, form_data, transifex)
+                return self.perform_pull_request(request, form_data)
             elif form_data['action'] == 'delete':
-                return self.perform_delete_request(request, form_data, transifex)
+                return self.perform_delete_request(request, form_data)
 
     def post(self, request, *args, **kwargs):
         if not transifex_details_available_for_domain(self.domain):
@@ -1693,5 +1702,19 @@ class ICDSAppTranslations(BaseDomainView):
                         return redirect(self.urlname, domain=self.domain)
                 except ResourceMissing as e:
                     messages.error(request, e)
-                    return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class InactiveAWW(View):
+    def get(self, request, *args, **kwargs):
+        sync_date = request.GET.get('date', None)
+        if sync_date:
+            sync = IcdsFile.objects.filter(file_added=sync_date).first()
+        else:
+            sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
+        zip_name = 'inactive_awws_%s' % sync.file_added.strftime('%Y-%m-%d')
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
+        except NotFound:
+            raise Http404

@@ -171,6 +171,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
+    // Loosely based on https://jsfiddle.net/hQnWG/614/
     ko.bindingHandlers.multirow_sortable = {
         updateSortableList: function(itemList) {
             _(itemList()).each(function(item, index) {
@@ -202,125 +203,144 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             };
             list.subscribe(forceUpdate);
 
-            // based on https://jsfiddle.net/hQnWG/614/
-
-            $(element).on('click', 'tr', function (e) {
-                if ($(this).hasClass('moving')) {
-                    $(this).removeClass('moving');
-                    ko.bindingHandlers.multirow_sortable.updateSortableList(list);
-                } else if (e.ctrlKey || e.metaKey) {
-                    $(this).toggleClass("selected-for-sort").toggleClass('success');
-                    $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
-                } else if (e.shiftKey) {
-                    var shiftSelectedIndex = parseInt($(this)[0].attributes['data-order'].value),
-                        shiftClickedRow = $(this),
-                        lastClickedIndex = 0,
-                        lastClickedRow = null;
-                    if ($('.last-clicked').length > 0) {
-                        lastClickedRow = $('.last-clicked').eq(0);
-                        lastClickedIndex = parseInt(lastClickedRow[0].attributes['data-order'].value);
-                    } else {
-                        lastClickedRow = $(this).parent().children().eq(0);
-                    }
-
-                    var firstRow = null,
-                        start = null,
-                        end = null;
-                    if (shiftSelectedIndex < lastClickedIndex) {
-                        start = shiftSelectedIndex;
-                        end = lastClickedIndex;
-                        firstRow = shiftClickedRow;
-                    } else {
-                        start = lastClickedIndex;
-                        end = shiftSelectedIndex;
-                        firstRow = lastClickedRow;
-                    }
-
-                    var next = firstRow;
-                    for (var i = start; i <= end; i++) {
-                        next.addClass('selected-for-sort success');
-                        next = next.next();
-                    }
-                } else {
-                    $(this).addClass('selected-for-sort success last-clicked')
-                        .siblings().removeClass('selected-for-sort success last-clicked');
-                }
-            });
-
             $(element).on('click', '.send-to-top', function () {
-                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
-
-                var row = $(this).parent().parent();
-                var currentIndex = row[0].attributes['data-order'].value;
-                list.unshift(list.splice(currentIndex, 1)[0]);
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+                moveRowToIndex(row, 0);
             });
 
             $(element).on('click', '.send-to-bottom', function () {
-                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+                moveRowToIndex(row, list().length - 1);
+            });
 
-                var row = $(this).parent().parent();
-                var currentIndex = row[0].attributes['data-order'].value;
+            $(element).on('click', '.export-table-checkbox', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+            });
 
-                var lastSelectedRowIndex = null;
-                for (var i = 0; i < list().length; i++) {
-                    if (list()[i].selected()) {
-                        lastSelectedRowIndex = i;
+            $(element).on('click', 'tr', function (e) {
+                if ($(this).hasClass('ignore-click')) {
+                    // Don't do anything if send-to-top, send-to-bottom, or select-for-export was clicked.
+                    $(this).removeClass('ignore-click');
+                } else if (e.ctrlKey || e.metaKey) {
+                    // CTRL-clicking (CMD on OSX) toggles whether a row is highlighted for sorting.
+                    var exportColumn = getExportColumnByRow($(this));
+                    exportColumn.selectedForSort(!exportColumn.selectedForSort());
+                    $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
+                } else if (e.shiftKey) {
+                    // Clicking the shift key highlights all rows between the shift-clicked row
+                    // and the previously clicked row.
+                    var shiftSelectedIndex = getIndexFromRow($(this)),
+                        lastClickedIndex = 0,
+                        start = null,
+                        end = null;
+                    if ($('.last-clicked').length > 0) {
+                        lastClickedIndex = getIndexFromRow($('.last-clicked').eq(0));
                     }
-                }
-
-                if (currentIndex < lastSelectedRowIndex) {
-                    var currentListItem = list.splice(currentIndex, 1)[0];
-                    list.splice(lastSelectedRowIndex, 0, currentListItem);
+                    if (shiftSelectedIndex < lastClickedIndex) {
+                        start = shiftSelectedIndex;
+                        end = lastClickedIndex;
+                    } else {
+                        start = lastClickedIndex;
+                        end = shiftSelectedIndex;
+                    }
+                    for (var i = start; i <= end; i++) {
+                        list()[i].selectedForSort(true);
+                    }
+                } else {
+                    // Clicking a row selects it for sorting and unselects all other rows.
+                    $(this).addClass('last-clicked').siblings().removeClass('last-clicked');
+                    for (var i = 0; i < list().length; i++) {
+                        list()[i].selectedForSort(false);
+                    }
+                    getExportColumnByRow($(this)).selectedForSort(true);
                 }
             });
 
             $(element).sortable({
                 delay: 150,
                 helper: function (e, item) {
-                    if (!item.hasClass('selected-for-sort')) {
-                        item.addClass('selected-for-sort success')
-                            .siblings().removeClass('selected-for-sort success');
+                    // If the dragged row isn't selected for sorting, select it and unselect all other rows.
+                    var exportColumn = getExportColumnByRow(item);
+                    if (!exportColumn.selectedForSort()) {
+                        for (var i = 0; i < list().length; i++) {
+                            list()[i].selectedForSort(false);
+                        }
+                        exportColumn.selectedForSort(true);
                     }
-
-                    var elements = item.siblings('.selected-for-sort').detach();
-                    $('body').append(elements);
-
+                    // Only show the row that is clicked and dragged.
+                    item.siblings('.selected-for-sort').hide();
                     return item;
                 },
+                // Drop the rows in the chosen location.
+                // Maintain the original order of the selected rows.
                 stop: function (e, ui) {
                     ui.item.after($('.selected-for-sort'));
 
-                    // TODO - get working
-                    $('.selected-for-sort').sort(function(a, b) {
-                        var aDataOrder = parseInt(a.attributes['data-order'].value),
-                            bDataOrder = parseInt(b.attributes['data-order'].value);
-                        if (aDataOrder < bDataOrder) {
-                            return -1;
-                        } else if (bDataOrder < aDataOrder) {
-                            return 1;
-                        } else {
-                            return 0;
+                    var previousRow = ui.item.prev()[0],
+                        previousIndex = null;
+                    if(previousRow) {
+                        previousIndex = parseInt(previousRow.attributes['data-order'].value);
+                    }
+
+                    var movedIndices = [];
+                    $('.selected-for-sort').each(function (index, element) {
+                        movedIndices.push(parseInt(element.attributes['data-order'].value));
+                    });
+                    movedIndices.sort();
+
+                    var originalList = list.splice(0, list().length);
+
+                    var insertDraggedElements = function() {
+                        movedIndices.forEach(function (movedIndex) {
+                            list.push(originalList[movedIndex]);
+                        });
+                    };
+
+                    // Insert rows at top of list.
+                    if (previousIndex === null) {
+                        insertDraggedElements();
+                    }
+                    originalList.forEach(function(originalListElement, originalListIndex) {
+                        // Other rows stay in their original order.
+                        if (!movedIndices.includes(originalListIndex)) {
+                            list.push(originalListElement);
+                        }
+                        // Insert rows in the middle of the list.
+                        if (originalListIndex === previousIndex) {
+                            insertDraggedElements();
                         }
                     });
-
-                    // Reorder the data in knockout
-                    var newList = [],
-                        cur = 0,
-                        i = 0;
-                    for (cur = 0; cur < element.children.length; cur++) {
-                        i = parseInt(element.children[cur].attributes['data-order'].value);
-                        newList.push(list()[i]);
-                    }
-                    list().splice(0, list().length);
-                    for (i = 0; i < newList.length; i++) {
-                        list().push(newList[i]);
-                    }
-
-                    for (cur = 0; cur < element.children.length; cur++) {
-                        element.children[cur].attributes['data-order'].value = cur;
-                    }
                 },
             });
+
+            // Helper functions
+
+            var getIndexFromRow = function (row) {
+                return parseInt(row[0].attributes['data-order'].value);
+            };
+
+            var getExportColumnByRow = function(row) {
+                return list()[getIndexFromRow(row)];
+            };
+
+            var setIgnoreClick = function(row) {
+                row.addClass('ignore-click').siblings().removeClass('ignore-click');
+            };
+
+            var getRowFromClickedElement = function(element) {
+                return element.closest('tr');
+            };
+
+            var moveRowToIndex = function (row, newIndex) {
+                var oldIndex = getIndexFromRow(row);
+                row.remove();
+                var currentListItem = list.splice(oldIndex, 1)[0];
+                list.splice(newIndex, 0, currentListItem);
+            };
+
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
         update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {

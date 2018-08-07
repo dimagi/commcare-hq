@@ -2,18 +2,18 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import CommtrackActionConfig
-from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
-from corehq.apps.custom_data_fields.models import CustomDataField
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
+from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import CommCareUser
 from corehq.toggles import USE_SMS_WITH_INACTIVE_CONTACTS
 from custom.ilsgateway.models import ILSGatewayConfig
+from custom.ilsgateway.tests.test_script import TestScript
+from custom.ilsgateway.tests.utils import bootstrap_user
 from custom.ilsgateway.utils import make_loc
-from custom.logistics.tests.test_script import TestScript
-from custom.logistics.tests.utils import bootstrap_user
 from casexml.apps.stock.models import DocDomainMapping
 from six.moves import range
 
@@ -117,15 +117,18 @@ class ILSTestScript(TestScript):
             cls.sms_backend_mapping.delete()
         if cls.sms_backend.id is not None:
             cls.sms_backend.delete()
-        for username in [
+        users = get_user_docs_by_username([
             'stella',
             'bella',
             'trella',
             'msd_person',
-        ]:
-            user = CommCareUser.get_by_username(username)
-            if user:
-                user.delete()
+        ])
+        if users:
+            CommCareUser.bulk_delete([
+                CommCareUser.wrap_correctly(user)
+                for user in users
+            ])
+
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()
         SQLProduct.objects.all().delete()
@@ -144,7 +147,7 @@ class ILSTestScript(TestScript):
             if location:
                 location.delete()
         SQLLocation.objects.all().delete()
-        test_domain = Domain.get_by_name(TEST_DOMAIN)
+        test_domain = Domain.get_by_name(TEST_DOMAIN, strict=True)
         if test_domain:
             test_domain.delete()
         super(ILSTestScript, cls).tearDownClass()

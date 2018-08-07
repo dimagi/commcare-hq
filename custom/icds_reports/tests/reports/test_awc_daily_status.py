@@ -23,7 +23,7 @@ class TestAWCDailyStatus(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                    "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
                     "average": 0.0,
                     "period": "Daily",
                     'extended_info': [
@@ -69,7 +69,7 @@ class TestAWCDailyStatus(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                    "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
                     "average": 0.0,
                     "extended_info": [
                         {
@@ -126,7 +126,7 @@ class TestAWCDailyStatus(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                    "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
                     "average": 0.0,
                     "period": "Daily",
                     'extended_info': [
@@ -542,7 +542,7 @@ class TestAWCDailyStatus(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
                 "tooltips_data": {
                     "s2": {
                         "in_day": 0,
@@ -583,7 +583,7 @@ class TestAWCDailyStatus(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                "info": "Of the total number of AWCs, the percentage of AWCs that were open yesterday.",
                 "tooltips_data": {
                     "s2": {
                         "in_day": 0,

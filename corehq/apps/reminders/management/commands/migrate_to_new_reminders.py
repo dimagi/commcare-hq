@@ -66,9 +66,10 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from corehq.messaging.tasks import initiate_messaging_rule_run
+from corehq.messaging.util import project_is_on_new_reminders
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
-from datetime import time, datetime
+from datetime import time, datetime, timedelta
 from django.db import transaction
 from django.db.models import Q
 from django.core.management.base import BaseCommand
@@ -77,7 +78,11 @@ from time import sleep
 from io import open
 
 
-ABT_CUSTOM_RECIPIENT = 'CASE_OWNER_LOCATION_PARENT'
+CUSTOM_RECIPIENTS = (
+    'CASE_OWNER_LOCATION_PARENT',
+    'HOST_CASE_OWNER_LOCATION',
+    'HOST_CASE_OWNER_LOCATION_PARENT',
+)
 
 
 def log(message):
@@ -187,7 +192,7 @@ class CaseReminderHandlerMigrator(BaseMigrator):
 
     def migrate(self):
         with transaction.atomic():
-            self.schedule = self.schedule_migration_function(self.handler)
+            self.schedule = self.schedule_migration_function(self.handler, self)
             self.rule = self.rule_migration_function(self.handler, self.schedule, self.until_references_timestamp)
 
     def log_migrated_reminder(self):
@@ -277,6 +282,28 @@ class CaseReminderHandlerMigrator(BaseMigrator):
         initiate_messaging_rule_run(self.rule.domain, self.rule.pk)
 
 
+class ManualCaseReminderHandlerMigrator(CaseReminderHandlerMigrator):
+
+    def __init__(self, handler, rule_id):
+        self.handler = handler
+        self.source_duplicate_count = 0
+
+        try:
+            self.rule = AutomaticUpdateRule.objects.get(
+                pk=rule_id,
+                domain=handler.domain,
+                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                deleted=False,
+            )
+        except AutomaticUpdateRule.DoesNotExist:
+            raise ValueError("Invalid rule_id given: %s" % rule_id)
+
+        self.schedule = self.rule.get_messaging_rule_schedule()
+
+    def migrate(self):
+        pass
+
+
 class BroadcastMigrator(BaseMigrator):
 
     def __init__(self, handler, broadcast_migration_function):
@@ -285,7 +312,7 @@ class BroadcastMigrator(BaseMigrator):
 
     def migrate(self):
         with transaction.atomic():
-            self.broadcast, self.schedule = self.broadcast_migration_function(self.handler)
+            self.broadcast, self.schedule = self.broadcast_migration_function(self.handler, self)
 
     def log_migrated_reminder(self):
         obj, _ = MigratedReminder.objects.get_or_create(handler_id=self.handler._id)
@@ -294,23 +321,22 @@ class BroadcastMigrator(BaseMigrator):
         obj.save()
 
     def migrate_schedule_instances(self):
-        recipient = self.broadcast.recipients[0]
-
         if not isinstance(self.schedule, AlertSchedule):
             raise TypeError("Expected AlertSchedule")
 
-        instance = AlertScheduleInstance(
-            domain=self.broadcast.domain,
-            recipient_type=recipient[0],
-            recipient_id=recipient[1],
-            current_event_num=0,
-            schedule_iteration_num=2,
-            next_event_due=self.handler.start_datetime,
-            active=False,
-            alert_schedule_id=self.schedule.schedule_id,
-        )
+        for recipient in self.broadcast.recipients:
+            instance = AlertScheduleInstance(
+                domain=self.broadcast.domain,
+                recipient_type=recipient[0],
+                recipient_id=recipient[1],
+                current_event_num=0,
+                schedule_iteration_num=2,
+                next_event_due=self.handler.start_datetime,
+                active=False,
+                alert_schedule_id=self.schedule.schedule_id,
+            )
 
-        instance.save(force_insert=True)
+            instance.save(force_insert=True)
 
     def get_alert_schedule_instance_class(self):
         return AlertScheduleInstance
@@ -334,7 +360,7 @@ class BroadcastMigrator(BaseMigrator):
         refresh_alert_schedule_instances(self.schedule.schedule_id, self.broadcast.recipients)
 
 
-def get_extra_scheduling_options(handler, translated=True, include_utc_option=False):
+def get_extra_scheduling_options(handler, migrator, translated=True, include_utc_option=False):
     if handler.reminder_type == REMINDER_TYPE_DEFAULT and handler.include_child_locations:
         raise ValueError("Unexpected value for include_child_locations for %s" % handler._id)
 
@@ -342,9 +368,13 @@ def get_extra_scheduling_options(handler, translated=True, include_utc_option=Fa
         'active': handler.active,
         'default_language_code': handler.default_lang if translated else None,
         'include_descendant_locations': handler.include_child_locations,
+        'user_data_filter': handler.user_data_filter or {},
     }
 
-    if include_utc_option:
+    if isinstance(migrator, CaseReminderHandlerMigrator) and handler.until and migrator.until_references_timestamp:
+        result['stop_date_case_property_name'] = handler.until
+
+    if include_utc_option or ('stop_date_case_property_name' in result):
         result['use_utc_as_default_timezone'] = True
 
     return result
@@ -454,8 +484,8 @@ def get_rule_recipients(handler):
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, None)]
     elif handler.recipient == RECIPIENT_USER_GROUP:
         return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
-    elif handler.recipient == ABT_CUSTOM_RECIPIENT:
-        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, ABT_CUSTOM_RECIPIENT)]
+    elif handler.recipient in CUSTOM_RECIPIENTS:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, handler.recipient)]
     else:
         raise ValueError("Unexpected recipient: '%s'" % handler.recipient)
 
@@ -466,9 +496,7 @@ def get_broadcast_recipients(handler):
     elif handler.recipient == RECIPIENT_USER_GROUP:
         return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
     elif handler.recipient == RECIPIENT_LOCATION:
-        if len(handler.location_ids) != 1:
-            raise ValueError("Expected exactly one location id for %s" % handler._id)
-        return [(ScheduleInstance.RECIPIENT_TYPE_LOCATION, handler.location_ids[0])]
+        return [(ScheduleInstance.RECIPIENT_TYPE_LOCATION, location_id) for location_id in handler.location_ids]
     else:
         raise ValueError("Unexpected recipient: '%s'" % handler.recipient)
 
@@ -518,10 +546,7 @@ def migrate_rule(handler, schedule, until_references_timestamp):
         else:
             raise ValueError("Unexpected start_match_type '%s'" % handler.start_match_type)
 
-    if handler.until:
-        if until_references_timestamp:
-            raise ValueError("Expected until_references_timestamp to be False")
-
+    if handler.until and not until_references_timestamp:
         # A legacy option from the original framework which only checked two values, 'ok' or 'OK'
         rule.add_criteria(
             MatchPropertyDefinition,
@@ -546,27 +571,27 @@ def migrate_rule(handler, schedule, until_references_timestamp):
     return rule
 
 
-def migrate_simple_alert_schedule(handler):
+def migrate_simple_alert_schedule(handler, migrator):
     return AlertSchedule.create_simple_alert(
         handler.domain,
         get_content(handler, handler.events[0]),
-        extra_options=get_extra_scheduling_options(handler),
+        extra_options=get_extra_scheduling_options(handler, migrator),
     )
 
 
-def migrate_simple_daily_schedule(handler):
+def migrate_simple_daily_schedule(handler, migrator):
     return TimedSchedule.create_simple_daily_schedule(
         handler.domain,
         get_timed_event(handler, handler.events[0]),
         get_content(handler, handler.events[0]),
         total_iterations=handler.max_iteration_count,
         start_offset=handler.start_offset,
-        extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
+        extra_options=get_extra_scheduling_options(handler, migrator, include_utc_option=True),
         repeat_every=handler.schedule_length,
     )
 
 
-def migrate_simple_weekly_schedule(handler):
+def migrate_simple_weekly_schedule(handler, migrator):
     if handler.schedule_length > 0 and (handler.schedule_length % 7) == 0:
         repeat_every = handler.schedule_length // 7
     elif handler.max_iteration_count == 1:
@@ -581,35 +606,85 @@ def migrate_simple_weekly_schedule(handler):
         [handler.start_day_of_week],
         handler.start_day_of_week,
         total_iterations=handler.max_iteration_count,
-        extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
+        extra_options=get_extra_scheduling_options(handler, migrator, include_utc_option=True),
         repeat_every=repeat_every,
     )
 
 
-def migrate_custom_daily_schedule(handler):
+def get_offset_based_start_date_schedule_migration_function(repeat_every_override):
+
+    def migrate_offset_based_start_date_schedule(handler, migrator):
+        base_datetime = datetime(2000, 1, 1)
+        running_datetime = datetime(2000, 1, 1)
+
+        event_and_content_objects = []
+        for event in handler.events:
+            running_datetime += timedelta(days=event.day_num)
+            running_datetime += timedelta(hours=event.fire_time.hour)
+            running_datetime += timedelta(minutes=event.fire_time.minute)
+
+            event_and_content_objects.append((
+                TimedEvent(
+                    day=(running_datetime - base_datetime).days,
+                    time=running_datetime.time(),
+                ),
+                get_content(handler, event)
+            ))
+
+        if handler.max_iteration_count == 1:
+            repeat_every = event_and_content_objects[-1][0].day + 1
+        elif repeat_every_override:
+            repeat_every = repeat_every_override
+        else:
+            raise ValueError("Expected repeat_every_override")
+
+        if len(event_and_content_objects) == 1 and event_and_content_objects[0][0].day == 0:
+            return TimedSchedule.create_simple_daily_schedule(
+                handler.domain,
+                event_and_content_objects[0][0],
+                event_and_content_objects[0][1],
+                total_iterations=handler.max_iteration_count,
+                start_offset=handler.start_offset,
+                extra_options=get_extra_scheduling_options(handler, migrator, include_utc_option=True),
+                repeat_every=repeat_every,
+            )
+        else:
+            return TimedSchedule.create_custom_daily_schedule(
+                handler.domain,
+                event_and_content_objects,
+                total_iterations=handler.max_iteration_count,
+                start_offset=handler.start_offset,
+                extra_options=get_extra_scheduling_options(handler, migrator, include_utc_option=True),
+                repeat_every=repeat_every,
+            )
+
+    return migrate_offset_based_start_date_schedule
+
+
+def migrate_custom_daily_schedule(handler, migrator):
     return TimedSchedule.create_custom_daily_schedule(
         handler.domain,
         [(get_timed_event(handler, event), get_content(handler, event)) for event in handler.events],
         total_iterations=handler.max_iteration_count,
         start_offset=handler.start_offset,
-        extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
+        extra_options=get_extra_scheduling_options(handler, migrator, include_utc_option=True),
         repeat_every=handler.schedule_length,
     )
 
 
-def migrate_custom_alert_schedule(handler):
+def migrate_custom_alert_schedule(handler, migrator):
     return AlertSchedule.create_custom_alert(
         handler.domain,
         [(get_event(handler, event), get_content(handler, event)) for event in handler.events],
-        extra_options=get_extra_scheduling_options(handler),
+        extra_options=get_extra_scheduling_options(handler, migrator),
     )
 
 
-def migrate_past_immediate_broadcast(handler):
+def migrate_past_immediate_broadcast(handler, migrator):
     schedule = AlertSchedule.create_simple_alert(
         handler.domain,
         get_content(handler, handler.events[0], translated=False),
-        extra_options=get_extra_scheduling_options(handler, translated=False),
+        extra_options=get_extra_scheduling_options(handler, migrator, translated=False),
     )
 
     broadcast = ImmediateBroadcast.objects.create(
@@ -651,9 +726,6 @@ class Command(BaseCommand):
         if handler.active and handler.uses_parent_case_property:
             return None
 
-        if handler.active and handler.start_date and handler.use_today_if_start_date_is_blank:
-            return None
-
         return migrate_rule
 
     def get_rule_schedule_migration_function(self, handler):
@@ -688,20 +760,26 @@ class Command(BaseCommand):
             except ValueError:
                 return None
 
-        if handler.recipient not in (
+        if handler.recipient not in (CUSTOM_RECIPIENTS + (
             RECIPIENT_OWNER,
             RECIPIENT_CASE,
             RECIPIENT_USER_GROUP,
             RECIPIENT_USER,
             RECIPIENT_PARENT_CASE,
-            ABT_CUSTOM_RECIPIENT,
-        ):
+        )):
             return None
 
         if handler.recipient == RECIPIENT_USER_GROUP and not handler.user_group_id:
             return None
 
-        if handler.user_data_filter:
+        if handler.user_data_filter and handler.recipient not in (
+            RECIPIENT_USER_GROUP,
+            RECIPIENT_OWNER,
+            RECIPIENT_USER,
+            'CASE_OWNER_LOCATION_PARENT',
+            'HOST_CASE_OWNER_LOCATION',
+            'HOST_CASE_OWNER_LOCATION_PARENT',
+        ):
             return None
 
         fire_time_types = [event.fire_time_type for event in handler.events]
@@ -751,6 +829,26 @@ class Command(BaseCommand):
             else:
                 # Custom daily schedule goes here
                 return migrate_custom_daily_schedule
+        elif (
+            handler.start_date and
+            handler.event_interpretation == EVENT_AS_OFFSET and
+            handler.start_day_of_week == DAY_ANY
+        ):
+            if not self.confirm(
+                "Does %s.%s reference a date and not a timestamp? " % (handler.case_type, handler.start_date)
+            ):
+                return None
+
+            repeat_every_override = None
+            if handler.max_iteration_count != 1:
+                repeat_every_override = self.get_int(
+                    "What is the schedule length for %s? (Enter 0 to stop migration)" % handler._id
+                )
+
+                if repeat_every_override <= 0:
+                    return None
+
+            return get_offset_based_start_date_schedule_migration_function(repeat_every_override)
 
         return None
 
@@ -780,16 +878,16 @@ class Command(BaseCommand):
         if handler.recipient == RECIPIENT_USER_GROUP and not handler.user_group_id:
             return None
 
-        if handler.recipient == RECIPIENT_LOCATION and len(handler.location_ids) != 1:
-            return None
-
         if handler.locked:
             return None
 
         if handler.start_condition_type != ON_DATETIME:
             return None
 
-        if handler.user_data_filter:
+        if handler.user_data_filter and handler.recipient not in (
+            RECIPIENT_USER_GROUP,
+            RECIPIENT_LOCATION,
+        ):
             return None
 
         reminder_result = list(
@@ -822,7 +920,10 @@ class Command(BaseCommand):
             return None
 
         if handler.use_today_if_start_date_is_blank and handler.active and handler.start_date:
-            return None
+            if not self.confirm(
+                "Ok to treat use_today_if_start_date_is_blank as False for %s? y/n " % handler._id
+            ):
+                return None
 
         if handler.reminder_type == REMINDER_TYPE_DEFAULT:
             for event in handler.events:
@@ -832,17 +933,21 @@ class Command(BaseCommand):
             until_references_timestamp = False
             if handler.until:
                 until_references_timestamp = self.confirm(
-                    "Does until property %s.%s reference a timestamp? y/n " % (handler.case_type, handler.until)
+                    "Does until property %s %s.%s reference a timestamp? y/n " %
+                    (handler._id, handler.case_type, handler.until)
                 )
-
-            if until_references_timestamp:
-                return None
 
             rule_migration_function = self.get_rule_migration_function(handler)
             schedule_migration_function = self.get_rule_schedule_migration_function(handler)
             if rule_migration_function and schedule_migration_function:
                 return CaseReminderHandlerMigrator(handler, rule_migration_function, schedule_migration_function,
                     until_references_timestamp)
+
+            if self.confirm(
+                "A suitable migrator could not be found for %s. Use manual migrator? y/n " % handler._id
+            ):
+                rule_id = self.get_int("Enter rule id for %s: " % handler._id)
+                return ManualCaseReminderHandlerMigrator(handler, rule_id)
 
             return None
         elif handler.reminder_type == REMINDER_TYPE_ONE_TIME:
@@ -856,7 +961,7 @@ class Command(BaseCommand):
         return handler.reminder_type in (REMINDER_TYPE_KEYWORD_INITIATED, REMINDER_TYPE_SURVEY_MANAGEMENT)
 
     def migration_already_done(self, domain_obj):
-        if domain_obj.uses_new_reminders:
+        if project_is_on_new_reminders(domain_obj):
             log("'%s' already uses new reminders, nothing to do" % domain_obj.name)
             return True
 
@@ -915,6 +1020,14 @@ class Command(BaseCommand):
                 return True
             elif answer == 'n':
                 return False
+
+    def get_int(self, message):
+        while True:
+            answer = moves.input(message)
+            try:
+                return int(answer)
+            except (ValueError, TypeError):
+                pass
 
     def get_locked_count(self, domain):
         return AutomaticUpdateRule.objects.filter(

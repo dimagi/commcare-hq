@@ -188,7 +188,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'rest_framework.authtoken',
     'djcelery',
     'django_prbac',
     'djangular',
@@ -268,7 +267,6 @@ HQ_APPS = (
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
-    'corehq.apps.tour',
     'corehq.apps.users',
     'corehq.apps.settings',
     'corehq.apps.ota',
@@ -303,6 +301,7 @@ HQ_APPS = (
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
+    'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
@@ -321,7 +320,6 @@ HQ_APPS = (
     'fluff.fluff_filter',
     'soil',
     'toggle',
-    'touchforms.formplayer',
     'phonelog',
     'pillowtop',
     'pillow_retry',
@@ -351,7 +349,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
-    'custom.logistics',
     'custom.ilsgateway',
     'custom.zipline',
     'custom.ewsghana',
@@ -360,7 +357,6 @@ HQ_APPS = (
     'custom.ucla',
 
     'custom.intrahealth',
-    'custom.world_vision',
     'custom.up_nrhm',
 
     'custom.care_pathways',
@@ -372,15 +368,6 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
-)
-
-ENIKSHAY_APPS = (
-    'custom.enikshay',
-    'custom.enikshay.integrations.ninetyninedots',
-    'custom.enikshay.integrations.nikshay',
-    'custom.enikshay.integrations.bets',
-    'custom.enikshay.two_b_datamigration',
-    'custom.enikshay.two_b_release_1',
 )
 
 # also excludes any app starting with 'django.'
@@ -413,7 +400,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
 )
 
 # any built-in management commands we want to override should go in hqscripts
-INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
+INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
@@ -496,8 +483,11 @@ SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
+ENABLE_SOFT_ASSERT_EMAILS = True
+
 SERVER_ENVIRONMENT = 'localdev'
 ICDS_ENVS = ('icds', 'icds-new')
+UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
 USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
@@ -514,30 +504,22 @@ PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
 # OTA restore fixture generators
-FIXTURE_GENERATORS = {
-    # fixtures that may be sent to the phone independent of cases
-    'standalone': [
-        # core
-        "corehq.apps.users.fixturegenerators.user_groups",
-        "corehq.apps.fixtures.fixturegenerators.item_lists",
-        "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
-        "corehq.apps.products.fixtures.product_fixture_generator",
-        "corehq.apps.programs.fixtures.program_fixture_generator",
-        "corehq.apps.app_manager.fixtures.report_fixture_generator",
-        "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
-        "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
-        # custom
-        "custom.bihar.reports.indicators.fixtures.generator",
-        "custom.m4change.fixtures.report_fixtures.generator",
-        "custom.m4change.fixtures.location_fixtures.generator",
-
-    ],
-    # fixtures that must be sent along with the phones cases
-    'case': [
-        "corehq.apps.locations.fixtures.location_fixture_generator",
-        "corehq.apps.locations.fixtures.flat_location_fixture_generator",
-    ]
-}
+FIXTURE_GENERATORS = [
+    "corehq.apps.users.fixturegenerators.user_groups",
+    "corehq.apps.fixtures.fixturegenerators.item_lists",
+    "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
+    "corehq.apps.products.fixtures.product_fixture_generator",
+    "corehq.apps.programs.fixtures.program_fixture_generator",
+    "corehq.apps.app_manager.fixtures.report_fixture_generator",
+    "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
+    "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
+    "corehq.apps.locations.fixtures.location_fixture_generator",
+    "corehq.apps.locations.fixtures.flat_location_fixture_generator",
+    "corehq.apps.locations.fixtures.related_locations_fixture_generator",
+    "custom.bihar.reports.indicators.fixtures.generator",
+    "custom.m4change.fixtures.report_fixtures.generator",
+    "custom.m4change.fixtures.location_fixtures.generator",
+]
 
 ### Shared drive settings ###
 # Also see section after localsettings import
@@ -570,7 +552,6 @@ CELERY_PERIODIC_QUEUE = 'celery_periodic'
 CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
 CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
-ENIKSHAY_QUEUE = 'enikshay_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
@@ -871,8 +852,6 @@ KAFKA_URL = 'localhost:9092'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
-OVERRIDE_UCR_BACKEND = None
-
 # CommCare HQ - To indicate server
 COMMCARE_HQ_NAME = "CommCare HQ"
 # CommCare - To Indicate mobile
@@ -899,14 +878,13 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = None
 AUTHPROXY_URL = None
 AUTHPROXY_CERT = None
 
-ENIKSHAY_PRIVATE_API_USERS = {}
-ENIKSHAY_PRIVATE_API_PASSWORD = None
-
 # number of docs for UCR to queue asynchronously at once
 # ideally # of documents it takes to process in ~30 min
 ASYNC_INDICATORS_TO_QUEUE = 10000
 ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
+
+UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 # Example:
@@ -1028,7 +1006,9 @@ TEMPLATES = [
                 'corehq.util.context_processors.base_template',
                 'corehq.util.context_processors.current_url_name',
                 'corehq.util.context_processors.domain',
+                'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
+                'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
@@ -1555,7 +1535,6 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "UCLA_SEXUAL_HEALTH": "custom.ucla.api.sexual_health_message_bank_content",
     "UCLA_MED_ADHERENCE": "custom.ucla.api.med_adherence_message_bank_content",
     "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
-    "ENIKSHAY_PRESCRIPTION_VOUCHER_ALERT": "custom.enikshay.messaging.custom_content.prescription_voucher_alert",
 }
 
 # Used by the new reminders framework
@@ -1606,18 +1585,6 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'CASE_OWNER_LOCATION_PARENT':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
          "Abt: The case owner's location's parent location"],
-    'TB_PERSON_CASE_FROM_VOUCHER_CASE':
-        ['custom.enikshay.messaging.custom_recipients.person_case_from_voucher_case',
-         "TB: Person case from voucher case"],
-    'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID':
-        ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
-         "TB: Agency user case from voucher_fulfilled_by_id"],
-    'TB_BENEFICIARY_REGISTRATION_RECIPIENTS':
-        ['custom.enikshay.messaging.custom_recipients.beneficiary_registration_recipients',
-         "TB: Beneficiary Registration Recipients"],
-    'TB_PRESCRIPTION_VOUCHER_ALERT_RECIPIENTS':
-        ['custom.enikshay.messaging.custom_recipients.prescription_voucher_alert_recipients',
-         "TB: Prescription Voucher Alert Recipients"],
 }
 
 # Used by the new reminders framework
@@ -1634,6 +1601,12 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
          "ICDS: Supervisor Location from AWC Owner"],
+    'HOST_CASE_OWNER_LOCATION':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
+    'HOST_CASE_OWNER_LOCATION_PARENT':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location_parent',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
     'CASE_OWNER_LOCATION_PARENT':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
          "Abt: The case owner's location's parent location"],
@@ -1786,9 +1759,6 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
-        'custom.world_vision.models.WorldVisionMotherFluffPillow',
-        'custom.world_vision.models.WorldVisionChildFluffPillow',
-        'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
@@ -1815,33 +1785,10 @@ BASE_REPEATERS = (
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
+    'corehq.motech.dhis2.repeaters.Dhis2Repeater',
 )
 
-ENIKSHAY_REPEATERS = (
-    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
-    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
-    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
-    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
-    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUnenrollPatientRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPrivatePatientRepeater',
-    'custom.enikshay.integrations.nikshay.repeaters.NikshayHealthEstablishmentRepeater',
-    'custom.enikshay.integrations.bets.repeaters.ChemistBETSVoucherRepeater',
-    'custom.enikshay.integrations.bets.repeaters.LabBETSVoucherRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETS180TreatmentRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSDrugRefillRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSSuccessfulTreatmentRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSDiagnosisAndNotificationRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSAYUSHReferralRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSUserRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSLocationRepeater',
-    'custom.enikshay.integrations.bets.repeaters.BETSBeneficiaryRepeater',
-)
-
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + ENIKSHAY_REPEATERS
+REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS
 
 
 STATIC_UCR_REPORTS = [
@@ -1876,6 +1823,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile_mpr_2a_deaths.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_sql_mpr_2a_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
@@ -1888,10 +1836,13 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_ccs_record_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_5_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_6ac_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_6b_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_7_growth_monitoring_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_8_tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_9_vhnd_forms.json'),
@@ -1918,20 +1869,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'adherence.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_2b.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_private.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_register_2b.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_patients.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'cc_outbound_call_list.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'payment_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'beneficiary_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_register_for_culture.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'drug_voucher.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_summary.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'diagnostic_register.json'),
+    os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
 
 ]
 
@@ -1962,6 +1900,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
@@ -1982,48 +1921,21 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v4.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v4.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v5.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'referral_tasklist.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_2b.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v4.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v5.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v4.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v4.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v5.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_adherence_report.json'),
-
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'test.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'voucher.json'),
-
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_v1.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_v2.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_v1.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_v2.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'livraison_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'rapture_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'recouvrement_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json')
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
+
+    os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2084,18 +1996,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
     ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
-    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
-    ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
-    ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
-    ('month_expression', 'custom.enikshay.expressions.month_expression'),
-    ('enikshay_referred_to', 'custom.enikshay.expressions.referred_to_expression'),
-    ('enikshay_referred_by', 'custom.enikshay.expressions.referred_by_expression'),
-    ('enikshay_date_of_referral', 'custom.enikshay.expressions.date_of_referral_expression'),
-    ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
-    ('enikshay_episode_from_person', 'custom.enikshay.expressions.episode_from_person_expression'),
-    ('enikshay_key_populations', 'custom.enikshay.expressions.key_populations_expression'),
-    ('enikshay_most_recent_referral_from_person', 'custom.enikshay.expressions.most_recent_referral_expression'),
-    ('enikshay_most_recent_episode_from_person', 'custom.enikshay.expressions.most_recent_episode_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -2104,13 +2004,9 @@ CUSTOM_UCR_EXPRESSION_LISTS = [
     ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
-CUSTOM_UCR_REPORT_FILTERS = [
-    ('enikshay_location_hierarchy', "custom.enikshay.ucr_filters._build_enikshay_location_hierarchy"),
-]
+CUSTOM_UCR_REPORT_FILTERS = []
 
-CUSTOM_UCR_REPORT_FILTER_VALUES = [
-    ("enikshay_location_hierarchy", "custom.enikshay.ucr_filters.ENikshayLocationHierarchyFilterValue"),
-]
+CUSTOM_UCR_REPORT_FILTER_VALUES = []
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
@@ -2150,43 +2046,11 @@ DOMAIN_MODULE_MAP = {
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
-    'enikshay-test': 'custom.enikshay',
-    'enikshay': 'custom.enikshay',
-    'enikshay-test-2': 'custom.enikshay',
-    'enikshay-test-3': 'custom.enikshay',
-    'enikshay-nikshay-migration-test': 'custom.enikshay',
-    'enikshay-domain-copy-test': 'custom.enikshay',
-    'enikshay-aks-audit': 'custom.enikshay',
-    'np-migration-3': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-1': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-2': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-3': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-4': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-5': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-6': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-7': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-8': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-9': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-10': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-11': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-12': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-13': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-14': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-15': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-16': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-17': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-18': 'custom.enikshay',
-    'enikshay-uatbc-migration-test-19': 'custom.enikshay',
-    'sheel-enikshay': 'custom.enikshay',
-    'enikshay-reports-qa': 'custom.enikshay',
-    'enikshay-performance-test': 'custom.enikshay',
-
     'crs-remind': 'custom.apps.crs_reports',
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'test-pathfinder': 'custom.m4change',
-    'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
@@ -2227,7 +2091,6 @@ RESTORE_TIMING_DOMAINS = {
     # ("env", "domain"),
     ("production", "malawi-fp-study"),
     ("production", "rec"),
-    ("softlayer", "enikshay"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####

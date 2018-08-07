@@ -61,12 +61,18 @@ class ConfigurableReportCustomSQLDataSourceHelper(object):
     def __init__(self, report_data_source):
         self.report_data_source = report_data_source
         self.adapter = get_indicator_adapter(self.report_data_source.config)
+        self.custom_table = None
 
     def session_helper(self):
         return self.adapter.session_helper
 
     def get_table(self):
+        if self.custom_table is not None:
+            return self.custom_table
         return self.adapter.get_table()
+
+    def set_table(self, table):
+        self.custom_table = table
 
     @property
     def _filters(self):

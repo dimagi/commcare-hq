@@ -35,7 +35,6 @@ from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.hqwebapp.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -119,22 +118,13 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
-@require_deploy_apps
-def releases_ajax(request, domain, app_id):
-    context = get_releases_context(request, domain, app_id)
-    response = render(request, "app_manager/partials/releases.html", context)
-    response.set_cookie('lang', encode_if_unicode(context['lang']))
-    return response
-
-
 def get_releases_context(request, domain, app_id):
     app = get_app(domain, app_id)
-    context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
     prompt_settings_form = PromptUpdateSettingsForm.from_app(app, request_user=request.couch_user)
 
-    context.update({
+    context = {
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'can_view_cloudcare': has_privilege(request, privileges.CLOUDCARE),
@@ -151,7 +141,7 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
-    })
+    }
     if not app.is_remote_app():
         context.update({
             'enable_update_prompts': app.enable_update_prompts,
@@ -440,7 +430,6 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     page_title = ugettext_lazy("App diff")
     template_name = 'app_manager/app_diff.html'
 
-    @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
 

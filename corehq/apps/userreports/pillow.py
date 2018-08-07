@@ -11,9 +11,7 @@ from alembic.autogenerate.api import compare_metadata
 from kafka.util import kafka_bytestring
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.userreports.const import (
-    KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
-)
+from corehq.apps.userreports.const import KAFKA_TOPICS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import (
     BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
@@ -22,7 +20,7 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
@@ -142,19 +140,12 @@ class ConfigurableReportTableManagerMixin(object):
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
-    def _tables_by_engine_id(self, engine_ids):
-        return [
+    def rebuild_tables_if_necessary(self):
+        self._rebuild_sql_tables([
             adapter
             for adapter_list in self.table_adapters_by_domain.values()
             for adapter in adapter_list
-            if get_backend_id(adapter.config, can_handle_laboratory=True) in engine_ids
-        ]
-
-    def rebuild_tables_if_necessary(self):
-        sql_supported_backends = [UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY]
-        es_supported_backends = [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY]
-        self._rebuild_sql_tables(self._tables_by_engine_id(sql_supported_backends))
-        self._rebuild_es_tables(self._tables_by_engine_id(es_supported_backends))
+        ])
 
     def _rebuild_sql_tables(self, adapters):
         tables_by_engine = defaultdict(dict)
@@ -191,11 +182,6 @@ class ConfigurableReportTableManagerMixin(object):
             tables_to_migrate = get_tables_to_migrate(diffs, table_names)
             tables_to_migrate -= tables_to_rebuild
             migrate_tables(engine, raw_diffs, tables_to_migrate)
-
-    def _rebuild_es_tables(self, adapters):
-        # note unlike sql rebuilds this doesn't rebuild the indicators
-        for adapter in adapters:
-            adapter.rebuild_table_if_necessary()
 
     def rebuild_table(self, adapter):
         config = adapter.config

@@ -1,0 +1,436 @@
+{
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+  "config": {
+    "description": "Performance indicators for HEWs",
+    "display_name": "(mobile) HEW performance",
+    "table_id": "static-hew_performance_indicators",
+    "referenced_doc_type": "XFormInstance",
+    "configured_filter": {
+      "type": "and",
+      "filters": [
+        {
+          "operator": "in",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "comment": null,
+          "property_value": [
+            "http://openrosa.org/formdesigner/50F20DEC-1245-448A-A772-5C6F57AC555F",
+            "http://openrosa.org/formdesigner/e92e472ec15345cb1063973ba72ac959d0b46cda",
+            "http://openrosa.org/formdesigner/337114dc9c6d9b281a785447277c5953f5a73eed",
+            "http://openrosa.org/formdesigner/d132285dd65e8a57db8fe294ca6a38f39d618ee1",
+            "http://openrosa.org/formdesigner/8a9facf502c7dcc4b3771a2cbacd1b8d801c09b0",
+            "http://openrosa.org/formdesigner/c78c517e6025349e80e8a16d38368aa99224cb7c",
+            "http://openrosa.org/formdesigner/42195C62-7788-436B-9DD9-00266164FD5B",
+            "http://openrosa.org/formdesigner/A82F4BC0-211E-4F7D-8F09-027F435F8747",
+            "http://openrosa.org/formdesigner/5a2f0cb6919462f7737c80c4fb17fb415470d7f4",
+            "http://openrosa.org/formdesigner/a4740418cd265f245221bfb3455c4d3c3c6228d9",
+            "http://openrosa.org/formdesigner/a0248549ed912f9421cbbf31a60644b1f883c757",
+            "http://openrosa.org/formdesigner/1609246dfc32eef29d3e0a802948ada6d9816191",
+            "http://openrosa.org/formdesigner/38e925be58f6ca6fc8957ab7065729f432890a7",
+            "http://openrosa.org/formdesigner/9955ec97a56ad9cb2ab06a0caadb4273eb704ad8",
+            "http://openrosa.org/formdesigner/5fe4368dda17b5c7fcb7ca9c715496bcb5d5ef98",
+            "http://openrosa.org/formdesigner/94da5c8831e67bd735624d9f546b139f44c0d3fc",
+            "http://openrosa.org/formdesigner/86e7d507a9d9b20039b86fc0e4cb8927ded500a2",
+            "http://openrosa.org/formdesigner/b7376769f928a46a1b1b346c53e2207c70069298",
+            "http://openrosa.org/formdesigner/5113265e0b01be51f96900e1768b33a9f145d885",
+            "http://openrosa.org/formdesigner/84857a0096ede94bdc1e649a051fe750c529b71e",
+            "http://openrosa.org/formdesigner/39826BED-E454-43C3-A514-ABD58A320EA1",
+            "http://openrosa.org/formdesigner/DEB0684D-7A2C-434D-845B-2E91F0ACB4F7",
+            "http://openrosa.org/formdesigner/27D0EA92-5E3E-4611-85A4-E4FCBBBA9923",
+            "http://openrosa.org/formdesigner/9c5809cdf7d47b1159e416d58ae1af9d30c4e081",
+            "http://openrosa.org/formdesigner/bd1718bf793818693aa3a426d6196d0c07fb79ad",
+            "http://openrosa.org/formdesigner/d9a7e4cc8d1dc99ee02946570bb5be70c6cc75d",
+            "http://openrosa.org/formdesigner/71a15a9de42762387387bcfc66b255fabd320120",
+            "http://openrosa.org/formdesigner/EE0D0D73-A4BC-4360-B3D3-0A7C15EE2EDF",
+            "http://openrosa.org/formdesigner/8da590a993e42894d972abe279c7a9adb87d55f1",
+            "http://openrosa.org/formdesigner/5877b33d90b6d9084ab77e6a445d78c53398934a",
+            "http://openrosa.org/formdesigner/ad39d31d92fd346688c6b3207e7e05e0fa15674",
+            "http://openrosa.org/formdesigner/7ed012aafe9b6ff501f0fa21482b7dbb7bba5f81"
+          ]
+        }
+      ]
+    },
+    "named_expressions": {
+      "user_location_id": {
+        "datatype": "string",
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "location_id"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareUser",
+        "doc_id_expression": {
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        }
+      }
+    },
+    "configured_indicators": [
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "hew_name",
+        "datatype": "string",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        },
+        "transform": {
+          "type": "custom",
+          "custom_type": "user_display"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "hew_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "woreda",
+        "datatype": "string",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "locations",
+            "woreda"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "woreda"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "health_center",
+        "datatype": "string",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "locations",
+            "health_center"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "health_center"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "health_post",
+        "datatype": "string",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "locations",
+            "health_post"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "health_post"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "health_post_id",
+        "datatype": "string",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "locations",
+            "health_post_id"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "health_post_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "user_location_id",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "datatype": "string",
+          "type": "named",
+          "name": "user_location_id"
+        },
+        "column_id": "user_location_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "user_location_type",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "location_id_expression": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "type": "location_type_name"
+        },
+        "column_id": "user_location_type"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "received_on",
+        "datatype": "date",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "datatype": "date",
+          "type": "property_name",
+          "property_name": "received_on"
+        },
+        "column_id": "received_on"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "received_on_ethiopian",
+        "datatype": "string",
+        "expression": {
+          "datatype": "date",
+          "type": "property_name",
+          "property_name": "received_on"
+        },
+        "is_primary_key": false,
+        "transform": {
+          "type": "custom",
+          "custom_type": "gregorian_date_to_ethiopian_date"
+        },
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "received_on_ethiopian"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "anc_visit_count",
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "type": "and",
+            "filters": [
+              {
+                "comment": null,
+                "type": "named",
+                "name": "is_anc_visit"
+              }
+            ]
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "anc_visit_count"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "pnc_visit_count",
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "type": "and",
+            "filters": [
+              {
+                "comment": null,
+                "type": "named",
+                "name": "is_pnc_visit"
+              }
+            ]
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "pnc_visit_count"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "all_visit_count",
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "type": "and",
+            "filters": [
+              {
+                "comment": null,
+                "type": "named",
+                "name": "is_a_visit"
+              }
+            ]
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "visit_count"
+      }
+    ],
+    "named_filters": {
+      "is_pnc_visit": {
+        "operator": "eq",
+        "type": "boolean_expression",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "xmlns"
+        },
+        "comment": null,
+        "property_value": "http://openrosa.org/formdesigner/d9a7e4cc8d1dc99ee02946570bb5be70c6cc75d"
+      },
+      "is_a_health_post": {
+        "operator": "eq",
+        "type": "boolean_expression",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "location_type"
+        },
+        "comment": null,
+        "property_value": "Health Post"
+      },
+      "is_a_visit": {
+        "operator": "in",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "xmlns"
+        },
+        "type": "boolean_expression",
+        "comment": null,
+        "property_value": [
+          "http://openrosa.org/formdesigner/50F20DEC-1245-448A-A772-5C6F57AC555F",
+          "http://openrosa.org/formdesigner/e92e472ec15345cb1063973ba72ac959d0b46cda",
+          "http://openrosa.org/formdesigner/337114dc9c6d9b281a785447277c5953f5a73eed",
+          "http://openrosa.org/formdesigner/d132285dd65e8a57db8fe294ca6a38f39d618ee1",
+          "http://openrosa.org/formdesigner/8a9facf502c7dcc4b3771a2cbacd1b8d801c09b0",
+          "http://openrosa.org/formdesigner/c78c517e6025349e80e8a16d38368aa99224cb7c",
+          "http://openrosa.org/formdesigner/42195C62-7788-436B-9DD9-00266164FD5B",
+          "http://openrosa.org/formdesigner/A82F4BC0-211E-4F7D-8F09-027F435F8747",
+          "http://openrosa.org/formdesigner/5a2f0cb6919462f7737c80c4fb17fb415470d7f4",
+          "http://openrosa.org/formdesigner/a4740418cd265f245221bfb3455c4d3c3c6228d9",
+          "http://openrosa.org/formdesigner/a0248549ed912f9421cbbf31a60644b1f883c757",
+          "http://openrosa.org/formdesigner/1609246dfc32eef29d3e0a802948ada6d9816191",
+          "http://openrosa.org/formdesigner/38e925be58f6ca6fc8957ab7065729f432890a7",
+          "http://openrosa.org/formdesigner/9955ec97a56ad9cb2ab06a0caadb4273eb704ad8",
+          "http://openrosa.org/formdesigner/5fe4368dda17b5c7fcb7ca9c715496bcb5d5ef98",
+          "http://openrosa.org/formdesigner/94da5c8831e67bd735624d9f546b139f44c0d3fc",
+          "http://openrosa.org/formdesigner/86e7d507a9d9b20039b86fc0e4cb8927ded500a2",
+          "http://openrosa.org/formdesigner/b7376769f928a46a1b1b346c53e2207c70069298",
+          "http://openrosa.org/formdesigner/5113265e0b01be51f96900e1768b33a9f145d885",
+          "http://openrosa.org/formdesigner/84857a0096ede94bdc1e649a051fe750c529b71e",
+          "http://openrosa.org/formdesigner/39826BED-E454-43C3-A514-ABD58A320EA1",
+          "http://openrosa.org/formdesigner/DEB0684D-7A2C-434D-845B-2E91F0ACB4F7",
+          "http://openrosa.org/formdesigner/27D0EA92-5E3E-4611-85A4-E4FCBBBA9923",
+          "http://openrosa.org/formdesigner/9c5809cdf7d47b1159e416d58ae1af9d30c4e081",
+          "http://openrosa.org/formdesigner/bd1718bf793818693aa3a426d6196d0c07fb79ad",
+          "http://openrosa.org/formdesigner/d9a7e4cc8d1dc99ee02946570bb5be70c6cc75d",
+          "http://openrosa.org/formdesigner/71a15a9de42762387387bcfc66b255fabd320120",
+          "http://openrosa.org/formdesigner/EE0D0D73-A4BC-4360-B3D3-0A7C15EE2EDF",
+          "http://openrosa.org/formdesigner/8da590a993e42894d972abe279c7a9adb87d55f1",
+          "http://openrosa.org/formdesigner/5877b33d90b6d9084ab77e6a445d78c53398934a",
+          "http://openrosa.org/formdesigner/ad39d31d92fd346688c6b3207e7e05e0fa15674",
+          "http://openrosa.org/formdesigner/7ed012aafe9b6ff501f0fa21482b7dbb7bba5f81"
+        ]
+      },
+      "is_anc_visit": {
+        "operator": "eq",
+        "type": "boolean_expression",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "xmlns"
+        },
+        "comment": null,
+        "property_value": "http://openrosa.org/formdesigner/9c5809cdf7d47b1159e416d58ae1af9d30c4e081"
+      }
+    }
+  }
+}

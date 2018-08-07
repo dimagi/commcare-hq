@@ -5,6 +5,8 @@ from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.exceptions import XFormException
+from corehq.form_processor.utils.xform import get_node
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from dimagi.ext.jsonobject import *
@@ -14,6 +16,7 @@ from corehq.apps.app_manager.models import Application, FormActionCondition
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from django.utils.translation import ugettext_lazy as _
+import re
 import six
 from six.moves import map
 
@@ -64,7 +67,7 @@ class FormQuestion(JsonObject):
     @property
     def editable(self):
         if not self.type:
-            return False
+            return True
         vtype = VELLUM_TYPES[self.type]
         if 'editable' not in vtype:
             return False
@@ -524,3 +527,37 @@ def questions_in_hierarchy(questions):
                 and question.value not in question_lists_by_group:
             question_lists_by_group[question.value] = question.children
     return question_lists_by_group[None]
+
+
+def get_data_cleaning_data(form_data, instance):
+    question_response_map = {}
+    ordered_question_values = []
+
+    def _add_to_question_response_map(data, repeat_index=None):
+        for index, question in enumerate(data):
+            if question.children:
+                next_index = repeat_index if question.repeat else index
+                _add_to_question_response_map(question.children, repeat_index=next_index)
+            elif question.editable and question.response is not None:  # ignore complex and skipped questions
+                value = question.value
+                if question.repeat:
+                    value = "{}[{}]{}".format(question.repeat, repeat_index + 1,
+                                              re.sub(r'^' + question.repeat, '', question.value))
+
+                # Limit data cleaning to nodes that can be found in the response submission.
+                # form_data may contain other data that shouldn't be clean-able, like subcase attributes.
+                try:
+                    get_node(instance.get_xml_element(), value, instance.xmlns)
+                except XFormQuestionValueNotFound:
+                    continue
+
+                question_response_map[value] = {
+                    'label': question.label,
+                    'icon': question.icon,
+                    'value': question.response,
+                    'splitName': re.sub(r'/', '/\u200B', value),
+                }
+                ordered_question_values.append(value)
+
+    _add_to_question_response_map(form_data)
+    return (question_response_map, ordered_question_values)

@@ -16,16 +16,20 @@ from six.moves import zip
 from six.moves import range
 from io import open
 
+from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
+from custom.icds_reports.utils.aggregation import InactiveAwwsAggregationHelper
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
-class AggregationScriptTest(TestCase):
+class AggregationScriptTestBase(TestCase):
     """
     Note: test setup and teardown are done at module level using
         setUpModule and tearDownModule
     """
+
+    always_include_columns = None
 
     def _load_csv(self, path):
         with open(path, encoding='utf-8') as f:
@@ -95,16 +99,18 @@ class AggregationScriptTest(TestCase):
             dict1 = list1[idx]
             dict2 = list2[idx]
 
-            differences = []
+            differences = set()
 
             for key in dict1.keys():
                 if key != 'id':
                     value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
-                    value2 = dict2[key].replace('\r\n', '\n')
+                    value2 = dict2.get(key, '').replace('\r\n', '\n')
                     if value1 != value2:
-                        differences.append(key)
+                        differences.add(key)
 
             if differences:
+                if self.always_include_columns:
+                    differences |= self.always_include_columns
                 messages.append("""
                     Actual and expected row {} are not the same
                     Actual:   {}
@@ -115,7 +121,7 @@ class AggregationScriptTest(TestCase):
                         difference, dict1[difference].decode('utf-8')) for difference in differences]
                     ),
                     ', '.join(['{}: {}'.format(
-                        difference, dict2[difference]) for difference in differences]
+                        difference, dict2.get(difference, '')) for difference in differences]
                     )
                 ))
 
@@ -143,6 +149,8 @@ class AggregationScriptTest(TestCase):
                 )
             )
 
+
+class AggregationScriptTest(AggregationScriptTestBase):
     def test_icds_months(self):
         self._load_and_compare_data(
             'icds_months',
@@ -164,33 +172,153 @@ class AggregationScriptTest(TestCase):
             sort_key=['awc_id', 'case_id']
         )
 
-    def test_daily_attendance_2017_04_01(self):
+    def test_agg_ccs_record_2017_04_01_1(self):
         self._load_and_compare_data(
-            'daily_attendance_2017-04-01',
-            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'doc_id']
+            'agg_ccs_record_2017-04-01_1',
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_1_sorted.csv'),
+            sort_key=['awc_id']
         )
 
-    def test_daily_attendance_2017_05_01(self):
+    def test_agg_ccs_record_2017_04_01_2(self):
         self._load_and_compare_data(
-            'daily_attendance_2017-05-01',
-            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'doc_id']
+            'agg_ccs_record_2017-04-01_2',
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_2_sorted.csv'),
+            sort_key=['awc_id']
         )
 
-    def test_child_health_monthly_2017_04_01(self):
+    def test_agg_ccs_record_2017_04_01_3(self):
         self._load_and_compare_data(
-            'child_health_monthly_2017-04-01',
-            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
+            'agg_ccs_record_2017-04-01_3',
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_3_sorted.csv'),
+            sort_key=['awc_id']
         )
 
-    def test_child_health_monthly_2017_05_01(self):
+    def test_agg_ccs_record_2017_04_01_4(self):
         self._load_and_compare_data(
-            'child_health_monthly_2017-05-01',
-            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
+            'agg_ccs_record_2017-04-01_4',
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_4_sorted.csv'),
         )
+
+    def test_agg_ccs_record_2017_04_01_5(self):
+        self._load_and_compare_data(
+            'agg_ccs_record_2017-04-01_5',
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_5_sorted.csv'),
+        )
+
+    def test_agg_ccs_record_2017_05_01_1(self):
+        self._load_and_compare_data(
+            'agg_ccs_record_2017-05-01_1',
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_1_sorted.csv'),
+            sort_key=['awc_id']
+        )
+
+    def test_agg_ccs_record_2017_05_01_2(self):
+        self._load_and_compare_data(
+            'agg_ccs_record_2017-05-01_2',
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_2_sorted.csv'),
+            sort_key=['awc_id']
+        )
+
+    def test_agg_ccs_record_2017_05_01_3(self):
+        self._load_and_compare_data(
+            'agg_ccs_record_2017-05-01_3',
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_3_sorted.csv'),
+            sort_key=['awc_id']
+        )
+
+    def test_agg_ccs_record_2017_05_01_4(self):
+        self._load_and_compare_data(
+            'agg_ccs_record_2017-05-01_4',
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_4_sorted.csv'),
+        )
+
+    def test_agg_ccs_record_2017_05_01_5(self):
+        self._load_and_compare_data(
+            'agg_ccs_record_2017-05-01_5',
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_5_sorted.csv'),
+        )
+
+
+class AggChildHealthAggregationTest(AggregationScriptTestBase):
+    sort_key = (
+        'state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id',
+        'gender', 'age_tranche', 'caste', 'disabled', 'minority', 'resident',
+    )
+    always_include_columns = set(sort_key)
+
+    def test_agg_child_health_2017_04_01_1(self):
+        self._load_and_compare_data(
+            'agg_child_health_2017-04-01_1',
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_1_sorted.csv'),
+            sort_key=self.sort_key
+        )
+
+    def test_agg_child_health_2017_04_01_2(self):
+        self._load_and_compare_data(
+            'agg_child_health_2017-04-01_2',
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_2_sorted.csv'),
+            sort_key=self.sort_key
+        )
+
+    def test_agg_child_health_2017_04_01_3(self):
+        self._load_and_compare_data(
+            'agg_child_health_2017-04-01_3',
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_3_sorted.csv'),
+            sort_key=self.sort_key
+        )
+
+    def test_agg_child_health_2017_04_01_4(self):
+        self._load_and_compare_data(
+            'agg_child_health_2017-04-01_4',
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_4_sorted.csv'),
+            sort_key=self.sort_key
+        )
+
+    def test_agg_child_health_2017_04_01_5(self):
+        self._load_and_compare_data(
+            'agg_child_health_2017-04-01_5',
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_5_sorted.csv'),
+            sort_key=self.sort_key
+        )
+
+    def test_agg_child_health_2017_05_01_1(self):
+        self._load_and_compare_data(
+            'agg_child_health_2017-05-01_1',
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_1_sorted.csv'),
+            sort_key=self.sort_key
+        )
+
+    def test_agg_child_health_2017_05_01_2(self):
+        self._load_and_compare_data(
+            'agg_child_health_2017-05-01_2',
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_2_sorted.csv'),
+            sort_key=self.sort_key
+        )
+
+    def test_agg_child_health_2017_05_01_3(self):
+        self._load_and_compare_data(
+            'agg_child_health_2017-05-01_3',
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_3_sorted.csv'),
+            sort_key=self.sort_key
+        )
+
+    def test_agg_child_health_2017_05_01_4(self):
+        self._load_and_compare_data(
+            'agg_child_health_2017-05-01_4',
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_4_sorted.csv'),
+            sort_key=self.sort_key
+        )
+
+    def test_agg_child_health_2017_05_01_5(self):
+        self._load_and_compare_data(
+            'agg_child_health_2017-05-01_5',
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_5_sorted.csv'),
+            sort_key=self.sort_key
+        )
+
+
+class AggAwcAggregationTest(AggregationScriptTestBase):
+    always_include_columns = {'state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id'}
 
     def test_agg_awc_daily(self):
         self._load_and_compare_data(
@@ -269,134 +397,75 @@ class AggregationScriptTest(TestCase):
             sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
-    def test_agg_child_health_2017_04_01_1(self):
+
+class ChildHealthMonthlyAggregationTest(AggregationScriptTestBase):
+    always_include_columns = {'awc_id', 'case_id'}
+
+    def test_child_health_monthly_2017_04_01(self):
         self._load_and_compare_data(
-            'agg_child_health_2017-04-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_1_sorted.csv'),
-            sort_key=['awc_id']
+            'child_health_monthly_2017-04-01',
+            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-04-01_sorted.csv'),
+            sort_key=['awc_id', 'case_id']
         )
 
-    def test_agg_child_health_2017_04_01_2(self):
+    def test_child_health_monthly_2017_05_01(self):
         self._load_and_compare_data(
-            'agg_child_health_2017-04-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_2_sorted.csv'),
-            sort_key=['awc_id']
+            'child_health_monthly_2017-05-01',
+            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-05-01_sorted.csv'),
+            sort_key=['awc_id', 'case_id']
         )
 
-    def test_agg_child_health_2017_04_01_3(self):
+
+class DailyAttendanceAggregationTest(AggregationScriptTestBase):
+    def test_daily_attendance_2017_04_01(self):
         self._load_and_compare_data(
-            'agg_child_health_2017-04-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_3_sorted.csv'),
-            sort_key=['awc_id']
+            'daily_attendance_2017-04-01',
+            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-04-01_sorted.csv'),
+            sort_key=['awc_id', 'pse_date']
         )
 
-    def test_agg_child_health_2017_04_01_4(self):
+    def test_daily_attendance_2017_05_01(self):
         self._load_and_compare_data(
-            'agg_child_health_2017-04-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_4_sorted.csv'),
+            'daily_attendance_2017-05-01',
+            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
+            sort_key=['awc_id', 'pse_date']
         )
 
-    def test_agg_child_health_2017_04_01_5(self):
-        self._load_and_compare_data(
-            'agg_child_health_2017-04-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_5_sorted.csv'),
-        )
 
-    def test_agg_child_health_2017_05_01_1(self):
-        self._load_and_compare_data(
-            'agg_child_health_2017-05-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_1_sorted.csv'),
-            sort_key=['awc_id']
-        )
+@override_settings(SERVER_ENVIRONMENT='icds-new')
+class InactiveAWWsTest(TestCase):
 
-    def test_agg_child_health_2017_05_01_2(self):
-        self._load_and_compare_data(
-            'agg_child_health_2017-05-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_2_sorted.csv'),
-            sort_key=['awc_id']
-        )
+    @classmethod
+    def setUpClass(cls):
+        last_sync = date(2017, 4, 1)
+        cls.helper = InactiveAwwsAggregationHelper(last_sync)
+        super(InactiveAWWsTest, cls).setUpClass()
 
-    def test_agg_child_health_2017_05_01_3(self):
-        self._load_and_compare_data(
-            'agg_child_health_2017-05-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_3_sorted.csv'),
-            sort_key=['awc_id']
-        )
+    def tearDown(self):
+        AggregateInactiveAWW.objects.all().delete()
 
-    def test_agg_child_health_2017_05_01_4(self):
-        self._load_and_compare_data(
-            'agg_child_health_2017-05-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_4_sorted.csv'),
-        )
+    def test_missing_locations_query(self):
+        missing_location_query = self.helper.missing_location_query()
+        with get_cursor(AggregateInactiveAWW) as cursor:
+            cursor.execute(missing_location_query)
+        records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
+        self.assertEquals(records.count(), 0)
 
-    def test_agg_child_health_2017_05_01_5(self):
-        self._load_and_compare_data(
-            'agg_child_health_2017-05-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_5_sorted.csv'),
-        )
+    def test_aggregate_query(self):
+        missing_location_query = self.helper.missing_location_query()
+        aggregation_query, agg_params = self.helper.aggregate_query()
+        with get_cursor(AggregateInactiveAWW) as cursor:
+            cursor.execute(missing_location_query)
+            cursor.execute(aggregation_query, agg_params)
+        records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
+        self.assertEquals(records.count(), 46)
 
-    def test_agg_ccs_record_2017_04_01_1(self):
-        self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_1_sorted.csv'),
-            sort_key=['awc_id']
-        )
-
-    def test_agg_ccs_record_2017_04_01_2(self):
-        self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_2_sorted.csv'),
-            sort_key=['awc_id']
-        )
-
-    def test_agg_ccs_record_2017_04_01_3(self):
-        self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_3_sorted.csv'),
-            sort_key=['awc_id']
-        )
-
-    def test_agg_ccs_record_2017_04_01_4(self):
-        self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_4_sorted.csv'),
-        )
-
-    def test_agg_ccs_record_2017_04_01_5(self):
-        self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_5_sorted.csv'),
-        )
-
-    def test_agg_ccs_record_2017_05_01_1(self):
-        self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_1_sorted.csv'),
-            sort_key=['awc_id']
-        )
-
-    def test_agg_ccs_record_2017_05_01_2(self):
-        self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_2_sorted.csv'),
-            sort_key=['awc_id']
-        )
-
-    def test_agg_ccs_record_2017_05_01_3(self):
-        self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_3_sorted.csv'),
-            sort_key=['awc_id']
-        )
-
-    def test_agg_ccs_record_2017_05_01_4(self):
-        self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_4_sorted.csv'),
-        )
-
-    def test_agg_ccs_record_2017_05_01_5(self):
-        self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_5_sorted.csv'),
-        )
+    def test_submission_dates(self):
+        missing_location_query = self.helper.missing_location_query()
+        aggregation_query, agg_params = self.helper.aggregate_query()
+        with get_cursor(AggregateInactiveAWW) as cursor:
+            cursor.execute(missing_location_query)
+            cursor.execute(aggregation_query, agg_params)
+        record = AggregateInactiveAWW.objects.filter(awc_id='a10').first()
+        self.assertEquals(date(2017, 4, 5), record.first_submission)
+        self.assertEquals(date(2017, 5, 5), record.last_submission)

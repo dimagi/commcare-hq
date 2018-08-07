@@ -227,6 +227,9 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
 
     def _assert_rows_in_ucr_table(self, config, rows):
         results = list(load_data_from_db(get_table_name(self.domain.name, config.table_id)))
+        if not rows:
+            self.assertEqual(results, [])
+            return
         actual_rows = [{key: r[key] for key in rows[0]} for r in results]
 
         self.assertEqual(

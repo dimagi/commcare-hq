@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import logging
 
 from botocore.vendored.requests.exceptions import ReadTimeout
@@ -16,16 +16,14 @@ from django.db import transaction
 from django.db.models import Count, Min
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
-from restkit import RequestError
 
-from couchexport.export import export_from_tables
 from couchexport.models import Format
 from soil.util import get_download_file_path, expose_download
 
 from corehq import toggles
-from corehq.apps.reports.util import send_report_download_email
+from corehq.apps.reports.util import send_report_download_email, DatatablesParams
 from corehq.apps.userreports.const import (
-    UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
+    UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
 )
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
@@ -49,8 +47,8 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
 from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.logging import notify_exception
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 import six
@@ -185,8 +183,12 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
-    def _run_report(backend_to_use):
-        data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True, backend=backend_to_use)
+    new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
+    if new_report_config_id is None:
+        return
+
+    def _run_report(spec):
+        data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True)
         data_source.set_filter_values(filter_values)
         if sort_column:
             data_source.set_order_by(
@@ -210,18 +212,20 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
             json_response["total_row"] = total_row
         return json_response
 
-    spec, is_static = get_report_config(report_config_id, domain)
+    old_spec, unused = get_report_config(report_config_id, domain)
+    new_spec, unused = get_report_config(new_report_config_id, domain)
     experiment_context = {
         "domain": domain,
         "report_config_id": report_config_id,
+        "new_report_config_id": new_report_config_id,
         "filter_values": filter_values,
     }
     experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
     with experiment.control() as c:
-        c.record(_run_report(UCR_SQL_BACKEND))
+        c.record(_run_report(old_spec))
 
     with experiment.candidate() as c:
-        c.record(_run_report(UCR_ES_BACKEND))
+        c.record(_run_report(new_spec))
 
     objects = experiment.run()
     return objects
@@ -312,14 +316,15 @@ def _get_config(config_id):
 def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
-    assert len(indicator_doc_ids) <= ASYNC_INDICATOR_CHUNK_SIZE
+    for ids in chunked(indicator_doc_ids, 10):
+        _build_async_indicators(ids)
 
+
+def _build_async_indicators(indicator_doc_ids):
     def handle_exception(exception, config_id, doc, adapter):
         metric = None
         if isinstance(exception, (ProtocolError, ReadTimeout)):
             metric = 'commcare.async_indicator.riak_error'
-        elif isinstance(exception, RequestError):
-            metric = 'commcare.async_indicator.couch_error'
         elif isinstance(exception, (ESError, ConnectionTimeout)):
             # a database had an issue so log it and go on to the next document
             metric = 'commcare.async_indicator.es_error'
@@ -445,6 +450,11 @@ def build_async_indicators(indicator_doc_ids):
         )
 
 
+@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+def save_document(doc_ids):
+    build_async_indicators(doc_ids)
+
+
 @periodic_task(
     run_every=crontab(minute="*/5"),
     queue=settings.CELERY_PERIODIC_QUEUE,
@@ -526,4 +536,4 @@ def export_ucr_async(report_export, download_id, user):
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
     link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
 
-    send_report_download_email(report_export.title, user, link)
+    send_report_download_email(report_export.title, user.get_email(), link)

@@ -7,6 +7,7 @@ from corehq.apps.app_manager.const import APP_V2
 from dimagi.ext.couchdbkit import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
+from corehq.blobs.mixin import BlobMixin
 from corehq.util.quickcache import quickcache
 from itertools import groupby
 from distutils.version import StrictVersion
@@ -16,16 +17,19 @@ class SemanticVersionProperty(StringProperty):
 
     def validate(self, value, required=True):
         super(SemanticVersionProperty, self).validate(value, required)
+        if not self.required and not value:
+            return value
         try:
-            major, minor, _ = value.split('.')
+            major, minor, point = value.split('.')
             int(major)
             int(minor)
+            int(point)
         except Exception:
             raise BadValueError("Build version %r does not comply with the x.y.z schema" % value)
         return value
 
 
-class CommCareBuild(Document):
+class CommCareBuild(BlobMixin, Document):
     """
     #python manage.py shell
     #>>> from corehq.apps.builds.models import CommCareBuild
@@ -166,7 +170,7 @@ class CommCareBuild(Document):
 
 
 class BuildSpec(DocumentSchema):
-    version = StringProperty()
+    version = SemanticVersionProperty(required=False)
     build_number = IntegerProperty(required=False)
     latest = BooleanProperty()
 

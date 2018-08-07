@@ -6,31 +6,22 @@ import json
 import socket
 from collections import defaultdict, namedtuple
 
+import requests
 from django.conf import settings
 from django.http import (
-    HttpResponseRedirect,
     HttpResponse,
-    HttpResponseBadRequest,
-    HttpResponseNotFound,
-    JsonResponse,
-    StreamingHttpResponse,
 )
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
-from restkit import Resource
-from restkit.errors import Unauthorized
+from requests.exceptions import HTTPError
 
 from corehq.apps.domain.decorators import (
-    require_superuser, require_superuser_or_contractor,
-    login_or_basic, domain_admin_required,
-    check_lockout)
+    require_superuser, require_superuser_or_contractor)
 from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
-from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
-    CommCareCaseSQLRawDocSerializer
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.supervisord.api import (
     PillowtopSupervisorApi,
@@ -44,10 +35,6 @@ from dimagi.utils.web import json_response
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from corehq.apps.hqadmin import service_checks, escheck
-from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm, BrokenBuildsForm, EmailForm, SuperuserManagementForm,
-    ReprocessMessagingCaseUpdatesForm,
-    DisableTwoFactorForm, DisableUserForm)
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.utils import get_celery_stats
@@ -105,8 +92,11 @@ def system_ajax(request):
     if type == "_active_tasks":
         try:
             tasks = [x for x in db.server.active_tasks() if x['type'] == "indexer"]
-        except Unauthorized:
-            return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
+        except HTTPError as e:
+            if e.response.status_code == 403:
+                return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
+            else:
+                return json_response({'error': "Unable to access CouchDB Tasks."}, status_code=500)
 
         if not is_bigcouch():
             return json_response(tasks)
@@ -148,12 +138,14 @@ def system_ajax(request):
         return json_response(es_index_status)
 
     if celery_monitoring:
-        cresource = Resource(celery_monitoring, timeout=3)
         if type == "flower_poll":
             ret = []
             try:
-                t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
-                all_tasks = json.loads(t)
+                all_tasks = requests.get(
+                    celery_monitoring + '/api/tasks',
+                    params={'limit': task_limit},
+                    timeout=3,
+                ).json()
             except Exception as ex:
                 return json_response({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
 

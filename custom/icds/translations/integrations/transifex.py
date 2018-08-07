@@ -122,15 +122,17 @@ class Transifex(object):
                                                                     self.lock_translations)
         return po_entries
 
-    def resources_pending_translations(self, break_if_true=False):
+    def resources_pending_translations(self, break_if_true=False, all_langs=False):
         """
         :param break_if_true: break as soon as untranslated resource is found and return its slug/name
+        :param all_langs: check for all langs for translation, if False just the source lang
         :return: single resource slug in case of break_if_true or a list of resources that are found
         with pending translations
         """
         resources_pending_translations = []
+        check_for_lang = None if all_langs else self.source_lang
         for resource_slug in self.resource_slugs:
-            if not self.client.translation_completed(resource_slug, self.source_lang):
+            if not self.client.translation_completed(resource_slug, check_for_lang):
                 if break_if_true:
                     return resource_slug
                 resources_pending_translations.append(resource_slug)

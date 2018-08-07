@@ -28,7 +28,9 @@ from django.template import loader
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, LANGUAGE_SESSION_KEY
+
+
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
@@ -42,11 +44,14 @@ from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
+from corehq.apps.users.models import CouchUser
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from memoized import memoized
+
+from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
@@ -67,7 +72,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name, update_session_language
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
@@ -337,9 +342,15 @@ def _login(req, domain_name, template_name):
             return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
     if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
-        req.POST._mutable = True
-        req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
-        req.POST._mutable = False
+        with mutable_querydict(req.POST):
+            req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
+
+    if 'auth-username' in req.POST:
+        couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
+        if couch_user:
+            new_lang = couch_user.language
+            old_lang = req.session.get(LANGUAGE_SESSION_KEY)
+            update_session_language(req, old_lang, new_lang)
 
     req.base_template = settings.BASE_TEMPLATE
 
@@ -369,9 +380,7 @@ def _login(req, domain_name, template_name):
 @two_factor_exempt
 @sensitive_post_parameters('auth-password')
 def login(req):
-    # this view, and the one below, is overridden because
-    # we need to set the base template to use somewhere
-    # somewhere that the login page can access it.
+    # This is a wrapper around the _login view
 
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
@@ -384,6 +393,7 @@ def login(req):
 
 @location_safe
 def domain_login(req, domain, template_name="login_and_password/login.html"):
+    # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
         raise Http404
@@ -588,6 +598,14 @@ class BugReportView(View):
         ).format(**report)
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
+        debug_context = {
+            'datetime': datetime.utcnow(),
+            'self_started': '<unknown>',
+            'scale_backend': '<unknown>',
+            'has_handoff_info': '<unknown>',
+            'project_description': '<unknown>',
+            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+        }
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
             new_project_description = req.POST.get('project_description')
@@ -602,6 +620,13 @@ class BugReportView(View):
             ).format(
                 software_plan=Subscription.get_subscribed_plan_by_domain(domain),
             ))
+
+            debug_context.update({
+                'self_started': domain_object.internal.self_started,
+                'scale_backend': should_use_sql_backend(domain),
+                'has_handoff_info': bool(domain_object.internal.partner_contact),
+                'project_description': domain_object.project_description,
+            })
 
         subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
         cc = [el for el in report['cc'].strip().split(",") if el]
@@ -627,14 +652,7 @@ class BugReportView(View):
                 "Has Support Hand-off Info: {has_handoff_info}\n"
                 "Project description: {project_description}\n"
                 "Sentry Error: {sentry_error}\n"
-            ).format(
-                datetime=datetime.utcnow(),
-                self_started=domain_object.internal.self_started,
-                scale_backend=should_use_sql_backend(domain),
-                has_handoff_info=bool(domain_object.internal.partner_contact),
-                project_description=domain_object.project_description,
-                sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
-            )
+            ).format(**debug_context)
             traceback_info = cache.cache.get(report['500traceback'])
             cache.cache.delete(report['500traceback'])
             message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
@@ -1128,10 +1146,10 @@ class MaintenanceAlertsView(BasePageView):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
         return {
             'alerts': [{
-            'created': six.text_type(alert.created),
-            'active': alert.active,
-            'html': alert.html,
-            'id': alert.id,
+                'created': six.text_type(alert.created),
+                'active': alert.active,
+                'html': alert.html,
+                'id': alert.id,
             } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
         }
 

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.util.test_utils import unit_testing_only
 
@@ -63,10 +62,3 @@ def get_all_report_configs():
 def delete_all_report_configs():
     from corehq.apps.userreports.models import ReportConfiguration
     delete_all_docs_by_doc_type(ReportConfiguration.get_db(), ('ReportConfiguration',))
-
-
-def get_all_es_data_sources():
-    from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-    data_sources = DynamicDataSourceProvider().get_data_sources()
-    data_sources.extend(StaticDataSourceProvider().get_data_sources())
-    return [s for s in data_sources if s.backend_id in [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY]]

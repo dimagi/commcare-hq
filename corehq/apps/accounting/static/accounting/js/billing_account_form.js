@@ -10,12 +10,13 @@ hqDefine('accounting/js/billing_account_form', [
     ko,
     initialPageData
 ) {
-    var billingAccountFormModel = function (isActive, isCustomerBillingAccount) {
+    var billingAccountFormModel = function (isActive, isCustomerBillingAccount, enterpriseAdminEmails) {
         'use strict';
         var self = {};
 
         self.is_active = ko.observable(isActive);
         self.is_customer_billing_account = ko.observable(isCustomerBillingAccount);
+        self.enterprise_admin_emails = ko.observable(enterpriseAdminEmails);
         self.showActiveAccounts = ko.computed(function () {
             return !self.is_active();
         });
@@ -25,7 +26,7 @@ hqDefine('accounting/js/billing_account_form', [
 
     $(function () {
         var baForm = billingAccountFormModel(initialPageData.get('account_form_is_active'),
-            initialPageData.get('is_customer_billing_account'));
+            initialPageData.get('is_customer_billing_account'), initialPageData.get('enterprise_admin_emails'));
         $('#account-form').koApplyBindings(baForm);
 
         $("#show_emails").click(function() {

@@ -71,6 +71,28 @@
       text-decoration: none;
     }
   }
+
+  .dimagi-logo svg {
+    height: 22px;
+    width: 50px;
+    top: 10px;
+    position: relative;
+  }
+
+  @media (max-width: @screen-sm-max) {
+    height: @navbar-footer-height * 2;
+    min-height: @navbar-footer-height * 2;
+  }
+
+  @media (max-width: @screen-xs-max) {
+    height: @navbar-footer-height * 3;
+    min-height: @navbar-footer-height * 3;
+  }
+
+  @media (max-width: 340px) {
+    height: @navbar-footer-height * 4;
+    min-height: @navbar-footer-height * 4;
+  }
 }
 
 .nav-settings-bar {
@@ -309,4 +331,9 @@
   .mainmenu-tabs.collapse {
     display: block;
   }
+}
+
+.navbar-signin {
+  float: right;
+  text-align: right;
 }

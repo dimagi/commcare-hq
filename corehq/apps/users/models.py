@@ -7,7 +7,6 @@ import logging
 import re
 from uuid import uuid4
 
-from rest_framework.authtoken.models import Token
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
@@ -19,7 +18,6 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
-from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -110,6 +108,7 @@ class Permissions(DocumentSchema):
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
+    edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
 
     view_reports = BooleanProperty(default=False)
@@ -202,7 +201,8 @@ class Permissions(DocumentSchema):
             edit_data=True,
             edit_apps=True,
             view_reports=True,
-            edit_billing=True
+            edit_billing=True,
+            edit_shared_exports=True,
         )
 
 
@@ -231,6 +231,7 @@ class UserRolePresets(object):
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
             cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
                                                        edit_locations=True,
+                                                       edit_shared_exports=True,
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
             cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
@@ -375,16 +376,34 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return {details['name'] for role, details in six.iteritems(PERMISSIONS_PRESETS)}
 
 PERMISSIONS_PRESETS = {
-    'edit-apps': {'name': 'App Editor',
-                  'permissions': Permissions(edit_apps=True, view_reports=True)},
-    'field-implementer': {'name': 'Field Implementer',
-                          'permissions': Permissions(edit_commcare_users=True,
-                                                     edit_locations=True,
-                                                     view_reports=True)},
-    'read-only': {'name': 'Read Only',
-                  'permissions': Permissions(view_reports=True)},
-    'no-permissions': {'name': 'Read Only',
-                       'permissions': Permissions(view_reports=True)},
+    'edit-apps': {
+        'name': 'App Editor',
+        'permissions': Permissions(
+            edit_apps=True,
+            view_reports=True,
+        ),
+    },
+    'field-implementer': {
+        'name': 'Field Implementer',
+        'permissions': Permissions(
+            edit_commcare_users=True,
+            edit_locations=True,
+            edit_shared_exports=True,
+            view_reports=True,
+        ),
+    },
+    'read-only': {
+        'name': 'Read Only',
+        'permissions': Permissions(
+            view_reports=True,
+        ),
+    },
+    'no-permissions': {
+        'name': 'Read Only',
+        'permissions': Permissions(
+            view_reports=True,
+        ),
+    },
 }
 
 
@@ -936,7 +955,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     #        ('site_edited',     'Manually added or edited from the HQ website.'),
     status = StringProperty()
     language = StringProperty()
-    email_opt_out = BooleanProperty(default=False)
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
     user_data = DictProperty()
@@ -1339,36 +1357,24 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         }[doc_type].wrap(source)
 
     @classmethod
-    @quickcache(['username'], skip_arg='strict')
-    def get_by_username(cls, username, strict=True):
+    @quickcache(['username'], skip_arg="strict")
+    def get_by_username(cls, username, strict=False):
         if not username:
             return None
 
-        def get(stale, raise_if_none):
-            result = cls.get_db().view('users/by_username',
-                key=username,
-                include_docs=True,
-                reduce=False,
-                stale=stale if not strict else None,
-            )
-            return result.one(except_all=raise_if_none)
-        try:
-            result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
-            if result['doc'] is None or result['doc']['username'] != username:
-                raise NoResultFound
-        except NoResultFound:
-            result = get(stale=None, raise_if_none=False)
-
-        if result:
-            return cls.wrap_correctly(result['doc'])
+        view_result = cls.get_db().view(
+            'users/by_username',
+            key=username,
+            include_docs=True,
+            reduce=False,
+        )
+        result = view_result.one()
+        if result and result['doc'] and result['doc']['username'] == username:
+            couch_user = cls.wrap_correctly(result['doc'])
+            cls.get_by_user_id.set_cached_value(couch_user.__class__, couch_user.get_id).to(couch_user)
+            return couch_user
         else:
             return None
-
-    @classmethod
-    def get_anonymous_mobile_worker(cls, domain):
-        return cls.get_by_username(
-            format_username(ANONYMOUS_USERNAME, domain)
-        )
 
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
@@ -1411,18 +1417,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if domain:
             if not couch_user.is_member_of(domain):
                 return None
+        cls.get_by_username.set_cached_value(couch_user.__class__, couch_user.username).to(couch_user)
         return couch_user
 
     @classmethod
     def from_django_user(cls, django_user):
         return cls.get_by_username(django_user.username)
-
-    @classmethod
-    def from_django_user_include_anonymous(cls, domain, django_user):
-        if django_user.is_anonymous:
-            return cls.get_anonymous_mobile_worker(domain)
-        else:
-            return cls.get_by_username(django_user.username)
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='',
@@ -1462,6 +1462,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         for doc in docs:
             doc['last_modified'] = utcnow
         super(CouchUser, cls).save_docs(docs, **kwargs)
+        for user in docs:
+            user.clear_quickcache_for_user()
 
     bulk_save = save_docs
 
@@ -1474,7 +1476,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             if by_username and by_username['id'] != self._id:
                 raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
-            if not self.to_be_deleted():
+            if self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
                 django_user.save()
 
@@ -1498,7 +1500,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                     # avoid triggering cyclical sync
                     super(CouchUser, couch_user).save(**get_safe_write_kwargs())
                 except ResourceConflict:
-                    cls.django_user_post_save_signal(sender, django_user, created, max_tries - 1)
+                    if max_tries > 0:
+                        couch_user.clear_quickcache_for_user()
+                        cls.django_user_post_save_signal(sender, django_user, created, max_tries - 1)
+                    else:
+                        raise
+
+                couch_user.clear_quickcache_for_user()
 
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
@@ -1591,8 +1599,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     # with a location where location.location_type.has_user == True
     user_location_id = StringProperty()
 
-    is_anonymous = BooleanProperty(default=False)
-
     @classmethod
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships
@@ -1672,7 +1678,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                uuid='',
                date='',
                phone_number=None,
-               is_anonymous=False,
                location=None,
                commit=True,
                **kwargs):
@@ -1690,7 +1695,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
-        commcare_user.is_anonymous = is_anonymous
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
@@ -1699,11 +1703,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
-
-        if is_anonymous:
-            assert commit, 'Commit must be true when creating an anonymous user'
-            django_user = commcare_user.get_django_user()
-            Token.objects.create(user=django_user)
 
         return commcare_user
 
@@ -1754,6 +1753,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore the user's phone numbers
         - It will not restore reminders for cases
         """
+        by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
+        if by_username and by_username['id'] != self._id:
+            return False, "A user with the same username already exists in the system"
         if self.base_doc.endswith(DELETED_SUFFIX):
             self.base_doc = self.base_doc[:-len(DELETED_SUFFIX)]
 
@@ -1765,6 +1767,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
+        return True, None
 
     def retire(self):
         suffix = DELETED_SUFFIX
@@ -2294,10 +2297,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         # override this function to pass global admin rights off to django
         return self.is_superuser
 
-    @property
-    def is_anonymous(self):
-        return False
-
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
@@ -2640,10 +2639,6 @@ class AnonymousCouchUser(object):
 
     @property
     def is_active(self):
-        return True
-
-    @property
-    def is_anonymous(self):
         return True
 
     def is_domain_admin(self):

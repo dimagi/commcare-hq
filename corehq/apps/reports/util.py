@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
+import json
 import math
 import pytz
 import warnings
@@ -495,7 +496,7 @@ def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     return user_es_query.count() > USER_QUERY_LIMIT
 
 
-def send_report_download_email(title, user, link):
+def send_report_download_email(title, recipient, link):
     subject = "%s: Requested export excel data"
     body = "The export you requested for the '%s' report is ready.<br>" \
            "You can download the data at the following link: %s<br><br>" \
@@ -503,7 +504,34 @@ def send_report_download_email(title, user, link):
 
     send_HTML_email(
         _(subject) % title,
-        user.get_email(),
+        recipient,
         _(body) % (title, "<a href='%s'>%s</a>" % (link, link)),
         email_from=settings.DEFAULT_FROM_EMAIL
     )
+
+
+class DatatablesParams(object):
+    def __init__(self, count, start, desc, echo, search=None):
+        self.count = count
+        self.start = start
+        self.desc = desc
+        self.echo = echo
+        self.search = search
+
+    def __repr__(self):
+        return json.dumps({
+            'start': self.start,
+            'count': self.count,
+            'echo': self.echo,
+        }, indent=2)
+
+    @classmethod
+    def from_request_dict(cls, query):
+        count = int(query.get("iDisplayLength", "10"))
+        start = int(query.get("iDisplayStart", "0"))
+
+        desc = (query.get("sSortDir_0", "desc") == "desc")
+        echo = query.get("sEcho", "0")
+        search = query.get("sSearch", "")
+
+        return DatatablesParams(count, start, desc, echo, search)

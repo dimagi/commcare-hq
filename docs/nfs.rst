@@ -78,7 +78,7 @@ For files that are uploaded and require asynchronous processing e.g. imports, yo
     if hasattr(uploaded_file, 'temporary_file_path') and settings.SHARED_DRIVE_CONF.temp_dir:
         path = settings.SHARED_DRIVE_CONF.get_temp_file()
         shutil.move(uploaded_file.temporary_file_path(), path)
-        saved_file = expose_file_download(path)
+        saved_file = expose_file_download(path, expiry=60 * 60)
     else:
         uploaded_file.file.seek(0)
         saved_file = expose_cached_download(uploaded_file.file.read(), expiry=(60 * 60))

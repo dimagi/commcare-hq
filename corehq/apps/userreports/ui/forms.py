@@ -15,7 +15,6 @@ from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 
 
 class DocumentFormBase(forms.Form):
@@ -50,12 +49,9 @@ VISIBILITY_CHOICES = (
 )
 
 
-SOFT_ROLLOUT_HELP_TEXT = "Percentage of requests to send to ES. Only useful for Laboratory reports"
-
-
 class ConfigurableReportEditForm(DocumentFormBase):
 
-    _id = forms.CharField(disabled=True, label=_('Report ID'),
+    _id = forms.CharField(required=False, disabled=True, label=_('Report ID'),
                           help_text=help_text.REPORT_ID)
     config_id = forms.ChoiceField()  # gets overridden on instantiation
     title = forms.CharField()
@@ -66,7 +62,6 @@ class ConfigurableReportEditForm(DocumentFormBase):
     columns = JsonField(expected_type=list)
     configured_charts = JsonField(expected_type=list)
     sort_expression = JsonField(expected_type=list)
-    soft_rollout = forms.DecimalField(min_value=0, max_value=1, help_text=SOFT_ROLLOUT_HELP_TEXT)
 
     def __init__(self, domain, instance=None, read_only=False, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, read_only, *args, **kwargs)
@@ -91,7 +86,6 @@ class ConfigurableReportEditForm(DocumentFormBase):
             'columns',
             'configured_charts',
             'sort_expression',
-            'soft_rollout',
         ]
         if instance.config_id:
             fields.append('_id')
@@ -141,17 +135,9 @@ DOC_TYPE_CHOICES = (
 )
 
 
-BACKEND_CHOICES = (
-    (UCR_SQL_BACKEND, 'Postgres'),
-    (UCR_ES_BACKEND, 'ElasticSearch'),
-    (UCR_LABORATORY_BACKEND, 'Laboratory'),
-    (UCR_ES_PRIMARY, 'ES primary'),
-)
-
-
 class ConfigurableDataSourceEditForm(DocumentFormBase):
 
-    _id = forms.CharField(disabled=True, label=_('Data Source ID'),
+    _id = forms.CharField(required=False, disabled=True, label=_('Data Source ID'),
                           help_text=help_text.DATA_SOURCE_ID)
     table_id = forms.CharField(label=_("Table ID"),
                                help_text=help_text.TABLE_ID)
@@ -174,11 +160,6 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     named_filters = JsonField(required=False, expected_type=dict,
                               label=_("Named filters (optional)"),
                               help_text=help_text.NAMED_FILTER)
-    backend_id = forms.ChoiceField(
-        choices=BACKEND_CHOICES,
-        label=_("Backend"),
-        initial=UCR_SQL_BACKEND
-    )
     asynchronous = forms.BooleanField(
         initial=False,
         required=False,
@@ -217,7 +198,6 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             'configured_indicators',
             'named_expressions',
             'named_filters',
-            'backend_id',
             'asynchronous',
         ]
         if data_source_config.get_id:

@@ -131,7 +131,6 @@
 
         .app-pic {
             width: 12.5em;
-{#            height: 12.5em;#}
             margin-right: .5em;
         }
 
@@ -168,12 +167,7 @@
     </style>
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
-        <script src="{% static 'appstore/js/appstore_base.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% requirejs_main 'appstore/js/appstore_base' %}
 
 {% block page_navigation %}
     {% url "appstore" as search_url %}

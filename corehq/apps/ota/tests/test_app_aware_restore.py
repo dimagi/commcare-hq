@@ -12,7 +12,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.tests.utils import (
-    get_sample_report_config, mock_datasource_config, mock_sql_backend
+    get_sample_report_config, mock_datasource_config
 )
 from corehq.apps.users.models import UserRole, Permissions
 
@@ -79,9 +79,8 @@ class AppAwareSyncTests(TestCase):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
-            with mock_sql_backend():
-                with mock_datasource_config():
-                    fixtures = call_fixture_generator(report_fixture_generator, self.user)
+            with mock_datasource_config():
+                fixtures = call_fixture_generator(report_fixture_generator, self.user)
         reports = fixtures[0].findall('.//report')
         self.assertEqual(len(reports), 2)
         report_ids = {r.attrib.get('id') for r in reports}
@@ -94,9 +93,8 @@ class AppAwareSyncTests(TestCase):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
-            with mock_sql_backend():
-                with mock_datasource_config():
-                    fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app1)
+            with mock_datasource_config():
+                fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app1)
         reports = fixtures[0].findall('.//report')
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')
@@ -120,13 +118,12 @@ class AppAwareSyncTests(TestCase):
 
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
-            with mock_sql_backend():
-                with mock_datasource_config():
-                    fixtures = call_fixture_generator(
-                        report_fixture_generator,
-                        self.user,
-                        device_id="WebAppsLogin|user@project.commcarehq.org"
-                    )
+            with mock_datasource_config():
+                fixtures = call_fixture_generator(
+                    report_fixture_generator,
+                    self.user,
+                    device_id="WebAppsLogin|user@project.commcarehq.org"
+                )
         reports = fixtures[0].findall('.//report')
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')
@@ -145,10 +142,9 @@ class AppAwareSyncTests(TestCase):
 
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
-            with mock_sql_backend():
-                with mock_datasource_config():
-                    device = MockDevice(self.domain_obj, self.user)
-                    restore = device.sync(version=V3).payload
-                    self.assertIn('<fixture id="commcare:reports"', restore)
-                    self.assertIn('report_id="{id}"'.format(id=self.report_config1._id), restore)
-                    self.assertIn('report_id="{id}"'.format(id=self.report_config2._id), restore)
+            with mock_datasource_config():
+                device = MockDevice(self.domain_obj, self.user)
+                restore = device.sync(version=V3).payload
+                self.assertIn('<fixture id="commcare:reports"', restore)
+                self.assertIn('report_id="{id}"'.format(id=self.report_config1._id), restore)
+                self.assertIn('report_id="{id}"'.format(id=self.report_config2._id), restore)

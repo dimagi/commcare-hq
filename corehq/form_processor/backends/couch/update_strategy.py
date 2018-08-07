@@ -340,6 +340,11 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             return fetch_attachment.form.fetch_attachment(name)
         fetch_attachment.form = xform
 
+        # NOTE `attachment_action` is a
+        # `casexml.apps.case.models.CommCareCaseAction` and
+        # `attachment_action.attachments` is a dict with values of
+        # `casexml.apps.case.sharedmodels.CommCareCaseAttachment`
+
         attach_dict = {}
         # cache all attachment streams from xform
         for k, v in attachment_action.attachments.items():
@@ -366,8 +371,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             update_attachments[k] = v
             if v.is_present:
                 # add attachment from xform
-                identifier = v.identifier
-                content = attach_dict[identifier]
+                content = attach_dict[v.identifier]
                 self.case.deferred_put_attachment(
                     content, k, content_type=v.server_mime)
             else:
