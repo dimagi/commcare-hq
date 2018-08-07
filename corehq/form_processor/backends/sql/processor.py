@@ -11,9 +11,6 @@ from django.db import transaction
 from lxml import etree
 
 from casexml.apps.case.xform import get_case_updates
-from corehq.form_processor.backends.sql.dbaccessors import (
-    FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
-)
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.change_publishers import (
     publish_form_saved, publish_case_saved, publish_ledger_v2_saved,
@@ -24,7 +21,6 @@ from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
-from corehq.form_processor.utils.sql import get_case_transactions_by_case_id
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
 import six
@@ -305,7 +301,9 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):
-        transactions = get_case_transactions_by_case_id(case.case_id, updated_xforms=updated_xforms)
+        transactions = CaseAccessorSQL.get_case_transactions_by_case_id(
+            case.case_id,
+            updated_xforms=updated_xforms)
         strategy = SqlCaseUpdateStrategy(case)
 
         rebuild_transaction = CaseTransaction.rebuild_transaction(case, detail)

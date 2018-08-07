@@ -1214,14 +1214,19 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @property
     def is_case_rebuild(self):
-        return bool(
-            (self.TYPE_REBUILD_FORM_ARCHIVED & self.type) or
-            (self.TYPE_REBUILD_FORM_EDIT & self.type) or
-            (self.TYPE_REBUILD_USER_ARCHIVED & self.type) or
-            (self.TYPE_REBUILD_USER_REQUESTED & self.type) or
-            (self.TYPE_REBUILD_WITH_REASON & self.type) or
-            (self.TYPE_REBUILD_FORM_REPROCESS & self.type)
-        )
+        return bool(self.type & self.case_rebuild_types())
+
+    @classmethod
+    def case_rebuild_types(cls):
+        """ returns an int of all rebuild types reduced using a bitwise or """
+        return functools.reduce(lambda x, y: x | y, [
+            cls.TYPE_REBUILD_FORM_ARCHIVED,
+            cls.TYPE_REBUILD_FORM_EDIT,
+            cls.TYPE_REBUILD_USER_ARCHIVED,
+            cls.TYPE_REBUILD_USER_REQUESTED,
+            cls.TYPE_REBUILD_WITH_REASON,
+            cls.TYPE_REBUILD_FORM_REPROCESS,
+        ])
 
     @property
     def readable_type(self):
