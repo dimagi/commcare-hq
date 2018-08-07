@@ -25,7 +25,7 @@ hqDefine("app_manager/js/app_view_application", function() {
                 $modal = $("#copy-toggles");
 
             if(!validateCopyApplicationForm($form)){
-                return false
+                return false;
             }
 
             if (initial_page_data("is_superuser")) {
@@ -90,7 +90,7 @@ hqDefine("app_manager/js/app_view_application", function() {
             //if application name is not entered
             if(!appName.val()){
                 appNameDiv.addClass('has-error');
-                error = true
+                error = true;
                 var apperrorMessage = 'Application name is required';
 
                 appName.after($("<span class=\"help-block\"></span>").text(apperrorMessage));
@@ -111,7 +111,7 @@ hqDefine("app_manager/js/app_view_application", function() {
             }
 
             return !error;
-        }
+        };
             
 
     });
