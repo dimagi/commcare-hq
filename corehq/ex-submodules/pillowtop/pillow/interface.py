@@ -127,7 +127,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                     if self._should_process_in_chunks:
                         changes_chunk.append(change)
                         chunk_full = len(changes_chunk) == self.processors[0].processor_chunk_size
-                        time_elapsed = datetime.utcnow() - last_process_time > min_wait_seconds
+                        time_elapsed = (datetime.utcnow() - last_process_time).seconds > min_wait_seconds
                         if chunk_full or time_elapsed:
                             last_process_time = datetime.utcnow()
                             self.process_chunk_with_error_handling(changes_chunk, context)
