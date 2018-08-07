@@ -655,16 +655,16 @@ class RelatedLocationForm(forms.Form):
         selected_location_ids = set(filter(None, selected_location_ids))
 
         previous_locations = LocationRelation.from_locations([self.location])
-        locations_to_add = selected_location_ids - previous_locations
         locations_to_remove = previous_locations - selected_location_ids
 
+        LocationRelation.objects.filter(
+            (Q(location_a=self.location) & Q(location_b__location_id__in=locations_to_remove)) |
+            (Q(location_b=self.location) & Q(location_a__location_id__in=locations_to_remove))
+        ).delete()
+
+        locations_to_add = selected_location_ids - previous_locations
         for location_id in locations_to_add:
             LocationRelation.objects.get_or_create(
                 location_a=self.location,
                 location_b=SQLLocation.objects.get(location_id=location_id)
             )
-
-        LocationRelation.objects.filter(
-            location_a=self.location, location_b__location_id__in=locations_to_remove).delete()
-        LocationRelation.objects.filter(
-            location_b=self.location, location_a__location_id__in=locations_to_remove).delete()
