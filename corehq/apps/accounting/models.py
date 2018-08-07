@@ -1736,7 +1736,7 @@ class Subscription(models.Model):
         elif self.date_start >= datetime.date.today() - datetime.timedelta(days=2):
             # 1-2 day grace period (because you cannot compare date and datetime)
             return False
-        elif self.date_start + datetime.timedelta(days=3) >= datetime.date.today():
+        elif self.date_start + datetime.timedelta(days=30) >= datetime.date.today():
             return True
         else:
             return False
