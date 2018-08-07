@@ -1621,7 +1621,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
-                cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
+                cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user, hide=True)
                 if self.current_subscription is not None:
                     if self.is_downgrade() and self.current_subscription.is_below_minimum_subscription:
                         self.current_subscription.update_subscription(
