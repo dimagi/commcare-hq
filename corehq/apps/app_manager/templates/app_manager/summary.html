@@ -30,6 +30,12 @@
 
 {% endblock stylesheets %}
 
+{% block content %}
+    summarize me
+{% endblock content %}
+
+
+{% comment %}
 {% block js %}{{ block.super }}
     <script src="{% static 'app_manager/js/summary/app_summary.ng.js' %}"></script>
     <script src="{% static 'app_manager/js/summary/summary.js' %}"></script>
@@ -53,3 +59,4 @@
           <ng-view></ng-view>
     </div>
 {% endblock content %}
+{% endcomment %}
