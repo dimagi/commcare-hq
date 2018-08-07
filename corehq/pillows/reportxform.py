@@ -6,6 +6,7 @@ from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter, get_ucr_es_form_pillow
+from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.form import get_domain_form_change_provider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
 
@@ -44,7 +45,12 @@ class ReportFormReindexerFactory(ReindexerFactory):
         domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
         change_provider = get_domain_form_change_provider(domains=domains)
         return ElasticPillowReindexer(
-            pillow=get_ucr_es_form_pillow(),
+            pillow_or_pillow_processor=ElasticProcessor(
+                elasticsearch=get_es_new(),
+                index_info=REPORT_XFORM_INDEX_INFO,
+                doc_prep_fn=transform_xform_for_report_forms_index,
+                doc_filter_fn=report_xform_filter
+            ),
             change_provider=change_provider,
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,
