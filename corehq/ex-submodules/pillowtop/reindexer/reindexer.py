@@ -127,16 +127,11 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
         )
 
 
-class PillowReindexer(Reindexer):
-    def __init__(self, pillow):
-        self.pillow = pillow
-
-
-class PillowChangeProviderReindexer(PillowReindexer):
+class PillowChangeProviderReindexer(Reindexer):
     start_from = None
 
     def __init__(self, pillow, change_provider):
-        super(PillowChangeProviderReindexer, self).__init__(pillow)
+        self.pillow = pillow
         self.change_provider = change_provider
 
     def reindex(self):
