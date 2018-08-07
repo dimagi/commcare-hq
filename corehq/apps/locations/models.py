@@ -7,8 +7,8 @@ from functools import partial
 from bulk_update.helper import bulk_update as bulk_update_helper
 
 import jsonfield
-from django.conf import settings
 from django.db import models, transaction
+from django.db.models import Q
 from django_cte import CTEQuerySet
 from memoized import memoized
 
@@ -280,7 +280,6 @@ class LocationQueriesMixin(object):
 
         Accepts partial matches, matches against name and site_code.
         """
-        Q = models.Q
         return Q(domain=domain) & Q(
             Q(name__icontains=user_input) | Q(site_code__icontains=user_input)
         )
@@ -712,13 +711,6 @@ class SQLLocation(AdjListModel):
         # For backwards compatability
         return self
 
-    @property
-    def related_location_ids(self):
-        a = LocationRelation.objects.filter(location_a=self.location_id).values_list('location_b', flat=True)
-        b = LocationRelation.objects.filter(location_b=self.location_id).values_list('location_a', flat=True)
-
-        return set(a).union(set(b))
-
 
 def filter_for_archived(locations, include_archive_ancestors):
     """
@@ -827,6 +819,19 @@ class LocationRelation(models.Model):
         SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
     location_b = models.ForeignKey(
         SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
+
+    @classmethod
+    def from_locations(cls, locations):
+        """Returns  a list of location_ids that have a relation to the list of locations passed in.
+
+        The result will not include any duplicates and any locations that are passed in
+        """
+        relations = LocationRelation.objects.filter(
+            Q(location_a__in=locations) | Q(location_b__in=locations)
+        ).values_list('location_a_id', 'location_b_id')
+
+        related_locations = {loc_id for relation in relations for loc_id in relation}
+        return related_locations - {l.location_id for l in locations}
 
     class Meta(object):
         unique_together = [
