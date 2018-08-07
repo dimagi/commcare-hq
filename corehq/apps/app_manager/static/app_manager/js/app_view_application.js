@@ -23,6 +23,11 @@ hqDefine("app_manager/js/app_view_application", function() {
                 $form = $submit.closest("form"),
                 domain = $form.find("#id_domain").val(),
                 $modal = $("#copy-toggles");
+
+            if(!validateCopyApplicationForm($form))
+                return false
+
+
             if (initial_page_data("is_superuser")) {
                 $submit.disableButton();
                 $.ajax({
@@ -61,5 +66,42 @@ hqDefine("app_manager/js/app_view_application", function() {
                 $form.submit();
             }
         });
+
+        var validateCopyApplicationForm = function(form){
+            var domainDiv  = form.find("#div_id_domain"),
+                appNameDiv = form.find("#div_id_name"),
+                domain = domainDiv.find("#id_domain"),
+                appName = appNameDiv.find("#id_name"),
+                error = false,
+                domainNames = initial_page_data("domain_names");
+
+            appNameDiv.removeClass('has-error');
+            domainDiv.removeClass('has-error');
+            form.find('.help-block').remove();
+
+            if(!appName.val()){
+                appNameDiv.addClass('has-error');
+                error = true
+                var apperrorMessage = 'Application name is required';
+
+                appName.after($("<span class=\"help-block\"></span>").text(apperrorMessage));
+            }
+
+            if(domainNames.indexOf(domain.val()) === -1){
+                 domainDiv.addClass('has-error');
+                 error = true;
+                 var domainerrorMessage = 'Invalid Project Selected';
+
+                if(!domain.val()){
+                    domainerrorMessage = 'Project name is required';
+                }
+
+                domain.after($("<span class=\"help-block\"></span>").text(domainerrorMessage));
+            }
+
+            return !error;
+        }
+            
+
     });
 });
