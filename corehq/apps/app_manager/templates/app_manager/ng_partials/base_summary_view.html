@@ -10,35 +10,7 @@
 
             <nav>
 
-                <div class="appnav-name-wrapper">
-                    <div class="appnav-name-settings">
-                        <a href="{{ appSettingsURL }}"
-                           class="appnav-responsive">
-                            <i class="fa fa-gear"></i>
-                        </a>
-                    </div>
-                    <h2 class="appnav-name">
-                        <a href="{{ appHomeURL }}"
-                           class="appnav-responsive">
-                            <span class="variable-app_name">{{ appName }}</span>
-                        </a>
-                    </h2>
-                    <h3 class="appnav-section-name">
-                      <span>{% trans "App Summary" %}</span>
-                    </h3>
-                </div>
-
-
                 <ul class="nav nav-hq-sidebar appnav-menu">
-                    <li role="presentation">
-                        <div class="appnav-item">
-                            <a href="{{ appDownloadURL }}?lang={{ lang }}"
-                               class="appnav-link-full">
-                                <i class="fa fa-download appnav-primary-icon"></i>
-                                <span>{% trans "High Level Summary" %}</span>
-                            </a>
-                        </div>
-                    </li>
                     <li role="presentation" class="nav-divider"></li>
                     <li role="presentation">
                         <div class="appnav-item" ng-class="{active: isActive('/forms')}">
@@ -58,28 +30,10 @@
                             </a>
                         </div>
                     </li>
-                    <li role="presentation" class="nav-divider"></li>
-                    {% block navigation_extra %}
-                    {% endblock %}
                 </ul>
 
             </nav>
         </div>
-        <div id="hq-content" class="appmanager-main-container">
-            <div class="appmanager-settings-content"
-                 id="js-appmanager-body">
-              {% block content %}{% endblock %}
-            </div>
-        </div>
-
-        <script type="text/ng-template" id="/loading.html">
-            <div class="row">
-                <div class="col-sm-12">
-                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                    {% trans "Loading ..." %}
-                </div>
-            </div>
-        </script>
 
     </div>
 </div>

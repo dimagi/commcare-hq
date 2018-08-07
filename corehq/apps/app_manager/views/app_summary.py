@@ -14,6 +14,7 @@ from dimagi.utils.web import json_response
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.util import get_form_data
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views import LoginAndDomainMixin
@@ -32,7 +33,6 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     page_title = ugettext_noop("Summary")
     template_name = 'app_manager/summary.html'
 
-    @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
@@ -49,10 +49,12 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
         if not self.app or self.app.doc_type == 'RemoteApp':
             raise Http404()
 
+        lang, langs = get_langs(self.request, self.app)
         return {
             'VELLUM_TYPES': VELLUM_TYPES,
             'form_name_map': _get_name_map(self.app),
-            'langs': self.app.langs,
+            'lang': lang,
+            'langs': langs,
             'app_id': self.app.id,
             'app_name': self.app.name,
             'read_only': self.app.doc_type == 'LinkedApplication',
