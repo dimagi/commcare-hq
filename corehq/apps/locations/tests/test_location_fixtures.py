@@ -659,8 +659,6 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
     - State
         - County
             - City
-        - Region
-            - Town
     """
     location_type_names = ['state', 'county', 'city']
     location_structure = TEST_LOCATION_STRUCTURE
