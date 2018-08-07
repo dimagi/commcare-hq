@@ -1,0 +1,20 @@
+<!-- used by corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js -->
+<script type="text/html" id="ko-pagination-template">
+    <ul class="pagination">
+        <li>
+            <a href="#" data-bind="click: previousPage">
+                <span>&laquo;</span>
+            </a>
+        </li>
+        <!-- ko foreach: pagesShown -->
+        <li data-bind="css: { active: $data == $parent.currentPage()}">
+            <a href="#" data-bind="text: $data, click: $parent.goToPage"></a>
+        </li>
+        <!-- /ko -->
+        <li>
+            <a href="#" data-bind="click: nextPage">
+                <span>&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</script>

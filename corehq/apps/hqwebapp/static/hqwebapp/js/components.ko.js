@@ -1,6 +1,7 @@
 (function () {
     var components = {
         'inline-edit': 'hqwebapp/js/components/inline_edit',
+        'pagination': 'hqwebapp/js/components/pagination'
     };
 
     _.each(components, function(moduleName, elementName) {
