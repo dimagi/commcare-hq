@@ -5,6 +5,7 @@
 #    make requirements
 #
 -e git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect
+-e git+https://github.com/Legrandin/pycryptodome@0df6211#egg=pycryptodome
 alembic==0.8.6
 amqp==1.4.9
 anyjson==0.3.3
@@ -126,7 +127,6 @@ py-kissmetrics==1.0.1
 pyasn1==0.4.3
 pycco==0.5.1
 pycparser==2.18
-pycryptodome==3.6.4
 pygithub==1.35
 pygments==2.0.2
 pygooglechart==0.4.0
