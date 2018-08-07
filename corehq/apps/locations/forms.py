@@ -651,10 +651,9 @@ class RelatedLocationForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self):
-        selected_location_ids = set()
-        if self.cleaned_data['related_locations']:
-            # ''.split(',') == ['']
-            selected_location_ids = set(self.cleaned_data['related_locations'].split(','))
+        selected_location_ids = self.cleaned_data['related_locations'].split(',')
+        selected_location_ids = set(filter(None, selected_location_ids))
+
         previous_locations = LocationRelation.from_locations([self.location])
         locations_to_add = selected_location_ids - previous_locations
         locations_to_remove = previous_locations - selected_location_ids
