@@ -60,7 +60,7 @@ branches:
   - dmr/fix-package-security-vulnerabilities+nh/omrs/atom+leven
   - dmr/fix-package-security-vulnerabilities  # Danny July 21
   - nh/omrs/atom+leven  # Norman July 31
-  - nh/motech/set_repeater  # Norman Aug 6
+#  - nh/motech/set_repeater  # Norman Aug 6
   - np/couchdbkit-0.9.7  # Nick P Aug 8
   - jls/requirejs-scheduling  # Jenny Aug 7
   - 30-day-minimum-subscription # Gabriella Aug 7
