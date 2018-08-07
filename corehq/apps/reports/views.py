@@ -853,7 +853,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     body = render_full_report_notification(request, content).content
     report = config.report(request, domain=config.domain)
 
-    send_email_report.delay(recipient_emails, body, subject, report)
+    send_email_report.delay(recipient_emails, body, subject, report.__class__, report.__getstate__())
 
     return HttpResponse()
 
