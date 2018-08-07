@@ -135,6 +135,7 @@ class PartitionedModel(models.Model):
 
     def _add_routing(self, kwargs):
         if 'using' in kwargs:
-            assert kwargs['using'] == self.db
+            assert kwargs['using'] == self.db, \
+                "using=%r, expected %r" % (kwargs['using'], self.db)
         else:
             kwargs['using'] = self.db
