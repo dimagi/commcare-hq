@@ -24,9 +24,9 @@ hqDefine("app_manager/js/app_view_application", function() {
                 domain = $form.find("#id_domain").val(),
                 $modal = $("#copy-toggles");
 
-            if(!validateCopyApplicationForm($form))
+            if(!validateCopyApplicationForm($form)){
                 return false
-
+            }
 
             if (initial_page_data("is_superuser")) {
                 $submit.disableButton();
@@ -67,6 +67,14 @@ hqDefine("app_manager/js/app_view_application", function() {
             }
         });
 
+        /***
+         * The function is used to validate the copy application form data before submitting it.
+         * It checks the following things:
+         *      1. the application name is entered or not
+         *      2. valid project/domain is selected or not
+         * @param form
+         * @returns {boolean}
+         */
         var validateCopyApplicationForm = function(form){
             var domainDiv  = form.find("#div_id_domain"),
                 appNameDiv = form.find("#div_id_name"),
@@ -79,6 +87,7 @@ hqDefine("app_manager/js/app_view_application", function() {
             domainDiv.removeClass('has-error');
             form.find('.help-block').remove();
 
+            //if application name is not entered
             if(!appName.val()){
                 appNameDiv.addClass('has-error');
                 error = true
@@ -87,10 +96,12 @@ hqDefine("app_manager/js/app_view_application", function() {
                 appName.after($("<span class=\"help-block\"></span>").text(apperrorMessage));
             }
 
+            //if project/domain is not selected or invalid domain is selected
             if(domainNames.indexOf(domain.val()) === -1){
-                 domainDiv.addClass('has-error');
-                 error = true;
-                 var domainerrorMessage = 'Invalid Project Selected';
+
+                domainDiv.addClass('has-error');
+                error = true;
+                var domainerrorMessage = 'Invalid Project Selected';
 
                 if(!domain.val()){
                     domainerrorMessage = 'Project name is required';
