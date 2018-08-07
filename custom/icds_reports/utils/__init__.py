@@ -637,6 +637,13 @@ def get_age_filters(beta):
     ]
 
 
+def get_age_condition(beta):
+    if beta:
+        return "age_tranche != :age_72"
+    else:
+        return "age_tranche != :age_0 AND age_tranche != :age_6 AND age_tranche != :age_72"
+
+
 def track_time(func):
     """A decorator to track the duration an aggregation script takes to execute"""
     from custom.icds_reports.models import AggregateSQLProfile
