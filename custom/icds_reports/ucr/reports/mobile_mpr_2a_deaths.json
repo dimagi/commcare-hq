@@ -26,13 +26,14 @@
         "datatype": "date"
       },
       {
-        "datatype": "date",
         "display": "Date of Death",
-        "field": "date_death",
         "type": "date",
-        "slug": "date_death"
+        "slug": "date_death",
+        "field": "date_death",
+        "datatype": "date"
       },
       {
+        "display": "Filter by AWW",
         "type": "dynamic_choice_list",
         "slug": "awc_id",
         "field": "awc_id",
@@ -41,10 +42,10 @@
           "include_descendants": true,
           "order_by_hierarchy": true,
           "show_full_path": true
-        },
-        "display": "Filter by AWW"
+        }
       },
       {
+        "display": "Filter by Supervisor",
         "type": "dynamic_choice_list",
         "slug": "supervisor_id",
         "field": "supervisor_id",
@@ -53,10 +54,10 @@
           "include_descendants": true,
           "order_by_hierarchy": true,
           "show_full_path": true
-        },
-        "display": "Filter by Supervisor"
+        }
       },
       {
+        "display": "Filter by Block",
         "type": "dynamic_choice_list",
         "slug": "block_id",
         "field": "block_id",
@@ -65,10 +66,10 @@
           "include_descendants": true,
           "order_by_hierarchy": true,
           "show_full_path": true
-        },
-        "display": "Filter by Block"
+        }
       },
       {
+        "display": "Filter by District",
         "type": "dynamic_choice_list",
         "slug": "district_id",
         "field": "district_id",
@@ -77,10 +78,10 @@
           "include_descendants": true,
           "order_by_hierarchy": true,
           "show_full_path": true
-        },
-        "display": "Filter by District"
+        }
       },
       {
+        "display": "Filter by State",
         "type": "dynamic_choice_list",
         "slug": "state_id",
         "field": "state_id",
@@ -89,8 +90,7 @@
           "include_descendants": true,
           "order_by_hierarchy": true,
           "show_full_path": true
-        },
-        "display": "Filter by State"
+        }
       }
     ],
     "columns": [
