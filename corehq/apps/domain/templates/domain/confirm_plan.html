@@ -53,6 +53,7 @@
                 subscription by following the instructions
                 <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>.
             </p>
+            <input type="checkbox" id="user-agreement" value="True"> I understand and wish to continue.<br>
             {% endblocktrans %}
         </div>
         {% elif is_downgrade_before_minimum %}
@@ -114,7 +115,7 @@
         <div class="form-actions">
             <div class="col-sm-6">
                 <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
-                <button class="btn btn-primary" id="confirm-plan" data-bind="click: openDowngradeModal">
+                <button class="btn btn-primary" id="confirm-plan" data-bind="click: openDowngradeModal" disabled>
                     {% trans 'Confirm Plan' %}
                 </button>
             </div>
