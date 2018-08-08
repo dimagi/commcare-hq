@@ -48,9 +48,9 @@
         <div class="alert alert-danger">
             {% blocktrans with next_invoice_date as invoice_date %}
             <h4>Note: Continuing will change your current subscription.</h4>
-            <p>CommCare bills on a monthly basis, and all subscriptions require a 30 day minimum commitment. You
-                should expect your first invoice on {{ invoice_date }}, or you can prepay for your subscription
-                by following the instructions
+            <p>CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.
+                You should expect your first invoice on {{ invoice_date }}, or you can prepay for your
+                subscription by following the instructions
                 <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>.
             </p>
             {% endblocktrans %}
@@ -61,10 +61,7 @@
             {% blocktrans with current_plan.name as p %}
             <h4>Note: Continuing will change your current subscription.</h4>
             <p>We’re sorry to see you go! You’ll have access to the features on your
-                <strong>{{ p }} Software Plan </strong></p> through {{ current_subscription_end_date }}.
-                If you’d like to continue using CommCare’s paid features, you can
-                <a href="https://www.commcarehq.org/a/project-space/settings/project/subscription/change/">renew</a>
-                your subscription at any time before {{ current_subscription_end_date }}.
+            <strong>{{ p }} Software Plan </strong> through {{ current_subscription_end_date }}.</p>
             {% endblocktrans %}
         </div>
         {% else %}
@@ -111,14 +108,14 @@
         <hr />
         <p>
             {% blocktrans %}
-            Clicking the 'Select this Plan' button below will bring you to a page where you can enter basic billing information.
+            Clicking the 'Confirm Plan' button below will bring you to a page where you can enter basic billing information.
             {% endblocktrans %}
         </p>
         <div class="form-actions">
             <div class="col-sm-6">
                 <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
                 <button class="btn btn-primary" id="confirm-plan" data-bind="click: openDowngradeModal">
-                    {% trans 'Select this Plan' %}
+                    {% trans 'Confirm Plan' %}
                 </button>
             </div>
         </div>

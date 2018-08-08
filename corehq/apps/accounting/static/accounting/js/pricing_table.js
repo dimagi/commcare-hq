@@ -57,10 +57,10 @@ hqDefine('accounting/js/pricing_table', function () {
             if (self.isDowngrade(oldPlan, newPlan) && self.subscriptionBelowMinimum) {
                 var $modal = $("#modal-minimum-subscription");
                 $modal.find('.modal-body')[0].innerHTML =
-                    "CommCare bills on a monthly basis. If you cancel now, your subscription will downgrade to " +
-                    "the " + newPlan + " plan on " + newStartDate + ". Would you still like to schedule this " +
-                    "downgrade? You will still have full access to your " + oldPlan + " subscription until " +
-                    newStartDate + ".";
+                    "CommCare is billed on a monthly basis. If you proceed, your subscription will downgrade " +
+                    "to the " + newPlan + " plan on " + newStartDate + ". You will still have full access " +
+                    "to your " + oldPlan + " subscription until " + newStartDate +
+                    ". Would you still like to schedule this downgrade?";
                 $modal.modal('show');
             } else {
                 self.form.submit();
