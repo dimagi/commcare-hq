@@ -18,6 +18,14 @@
     ],
     "filters": [
       {
+        "slug": "date_death_exists",
+        "type": "pre",
+        "field": "date_death",
+        "pre_operator": "!=",
+        "pre_value": "",
+        "datatype": "date"
+      },
+      {
         "compare_as_string": false,
         "datatype": "date",
         "required": false,
