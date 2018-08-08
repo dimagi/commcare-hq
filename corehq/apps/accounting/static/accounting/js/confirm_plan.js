@@ -41,6 +41,7 @@ hqDefine('accounting/js/confirm_plan', function () {
         var userAgreementCheckBox = document.getElementById('user-agreement');
         var confirmPlanButton = document.getElementById('confirm-plan');
         if (userAgreementCheckBox !== null) {
+            confirmPlanButton.disabled = true;
             userAgreementCheckBox.onchange = function () {
                 confirmPlanButton.disabled = !this.checked;
             };
