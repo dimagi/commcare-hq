@@ -214,7 +214,7 @@ class AutomaticUpdateRule(models.Model):
             workflow=workflow,
             deleted=False,
             **additional_filters
-        )
+        ).order_by('name', 'id')
 
     @classmethod
     def domain_has_conditional_alerts(cls, domain):

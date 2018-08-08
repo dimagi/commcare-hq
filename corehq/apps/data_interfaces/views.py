@@ -636,8 +636,8 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @property
     def allowed_actions(self):
         actions = super(AutomaticUpdateRuleListView, self).allowed_actions
-        actions.append('activate')
-        actions.append('deactivate')
+        actions.append(self.ACTION_ACTIVATE)
+        actions.append(self.ACTION_DEACTIVATE)
         return actions
 
     @property
