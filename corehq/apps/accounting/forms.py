@@ -2430,7 +2430,7 @@ class EnterpriseSettingsForm(forms.Form):
         label="Signup Restriction Message",
         required=False,
         help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
-        widget=forms.Textarea(attrs={'rows': 2}),
+        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 128}),
     )
     restrict_signup_email = forms.EmailField(
         label="Signup Restriction Contact",
