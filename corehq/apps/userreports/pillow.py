@@ -215,7 +215,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             # remove it until the next bootstrap call
             self.table_adapters_by_domain[domain].remove(table)
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         self.bootstrap_if_needed()
 
         domain = change.metadata.domain

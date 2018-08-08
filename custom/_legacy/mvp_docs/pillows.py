@@ -34,7 +34,7 @@ class MVPIndicatorProcessorBase(PillowProcessor):
     document_class = None
     indicator_class = None
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         from corehq.apps.indicators.utils import get_namespaces
 
         with _lock_manager(self._get_lock(change)):

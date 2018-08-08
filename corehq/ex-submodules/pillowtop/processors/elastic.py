@@ -30,7 +30,7 @@ class ElasticProcessor(PillowProcessor):
     def es_getter(self):
         return self.elasticsearch
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         if change.deleted and change.id:
             self._delete_doc_if_exists(change.id)
             return
@@ -51,7 +51,7 @@ class ElasticProcessor(PillowProcessor):
             doc_type=self.index_info.type,
             doc_id=change.id,
             es_getter=self.es_getter,
-            name=pillow_instance.get_name(),
+            name='ElasticProcessor',
             data=doc_ready_to_save,
             update=self._doc_exists(change.id),
         )

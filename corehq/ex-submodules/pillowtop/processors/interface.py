@@ -5,7 +5,7 @@ import six
 
 class PillowProcessor(six.with_metaclass(ABCMeta, object)):
     @abstractmethod
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         pass
 
     def checkpoint_updated(self):

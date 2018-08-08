@@ -19,7 +19,7 @@ class GroupsToUsersProcessor(PillowProcessor):
     def __init__(self):
         self._es = get_es_new()
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         if change.deleted:
             remove_group_from_users(change.get_document(), self._es)
         else:

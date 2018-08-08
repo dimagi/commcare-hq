@@ -29,7 +29,7 @@ class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
     def process_doc(self, doc):
         change = self._doc_to_change(doc, self.data_source_type, self.data_source_name)
         try:
-            self.pillow_processor.process_change(None, change)
+            self.pillow_processor.process_change(change)
         except Exception:
             return False
         else:
@@ -131,7 +131,7 @@ class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
         form_submission_changes = self._doc_to_changes(doc)
         for change in form_submission_changes:
             try:
-                self.pillow_processor.process_change(None, change)
+                self.pillow_processor.process_change(change)
             except Exception:
                 return False
         return True

@@ -93,7 +93,7 @@ def _get_case_properties(doc_dict):
 
 class CaseSearchPillowProcessor(ElasticProcessor):
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         assert isinstance(change, Change)
         if change.metadata is not None:
             # Comes from KafkaChangeFeed (i.e. running pillowtop)
@@ -103,7 +103,7 @@ class CaseSearchPillowProcessor(ElasticProcessor):
             domain = change.get_document()['domain']
 
         if domain and domain_needs_search_index(domain):
-            super(CaseSearchPillowProcessor, self).process_change(pillow_instance, change)
+            super(CaseSearchPillowProcessor, self).process_change(change)
 
 
 def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow', num_processes=1,

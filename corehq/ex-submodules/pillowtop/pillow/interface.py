@@ -261,7 +261,7 @@ class ConstructedPillow(PillowBase):
 
     def process_change(self, change):
         for processor in self.processors:
-            processor.process_change(self, change)
+            processor.process_change(change)
 
     def fire_change_processed_event(self, change, context):
         if self._change_processed_event_handler is not None:

@@ -45,7 +45,7 @@ def get_user_sync_history_pillow(
 
 class UserSyncHistoryProcessor(PillowProcessor):
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         synclog = change.get_document()
         if not synclog:
             return
@@ -87,7 +87,7 @@ class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
         synclog_changes = self._doc_to_changes(doc)
         for change in synclog_changes:
             try:
-                self.pillow_processor.process_change(None, change)
+                self.pillow_processor.process_change(change)
             except Exception:
                 return False
         return True

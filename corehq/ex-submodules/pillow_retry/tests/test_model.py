@@ -45,7 +45,7 @@ class GetDocProcessor(PillowProcessor):
     Processor that does absolutely nothing.
     """
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         doc = change.get_document()
         if not change.deleted and not doc:
             raise Exception('missing doc')
