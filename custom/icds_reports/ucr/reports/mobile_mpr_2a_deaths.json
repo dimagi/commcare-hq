@@ -26,7 +26,6 @@
         "datatype": "date"
       },
       {
-        "compare_as_string": false,
         "datatype": "date",
         "required": false,
         "display": "Date of Death",
@@ -35,7 +34,6 @@
         "slug": "date_death"
       },
       {
-        "compare_as_string": false,
         "show_all": true,
         "datatype": "string",
         "type": "dynamic_choice_list",
@@ -51,7 +49,6 @@
         "display": "Filter by AWW"
       },
       {
-        "compare_as_string": false,
         "show_all": true,
         "datatype": "string",
         "type": "dynamic_choice_list",
@@ -67,7 +64,6 @@
         "display": "Filter by Supervisor"
       },
       {
-        "compare_as_string": false,
         "show_all": true,
         "datatype": "string",
         "type": "dynamic_choice_list",
@@ -83,7 +79,6 @@
         "display": "Filter by Block"
       },
       {
-        "compare_as_string": false,
         "show_all": true,
         "datatype": "string",
         "type": "dynamic_choice_list",
@@ -99,7 +94,6 @@
         "display": "Filter by District"
       },
       {
-        "compare_as_string": false,
         "show_all": true,
         "datatype": "string",
         "type": "dynamic_choice_list",
