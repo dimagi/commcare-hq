@@ -536,7 +536,7 @@ def get_data_cleaning_data(form_data, instance):
 
     def _repeat_question_value(question, repeat_index):
         return "{}[{}]{}".format(question.repeat, repeat_index,
-                                  re.sub(r'^' + question.repeat, '', question.value))
+                                 re.sub(r'^' + question.repeat, '', question.value))
 
     def _add_to_question_response_map(data, repeat_index=None):
         for index, question in enumerate(data):
