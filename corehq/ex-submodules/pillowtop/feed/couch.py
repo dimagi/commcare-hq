@@ -19,12 +19,12 @@ class CouchChangeFeed(ChangeFeed):
         from corehq.apps.change_feed.data_sources import SOURCE_COUCH
         extra_args = {'feed': 'continuous'} if forever else {}
         extra_args.update(self._extra_couch_view_params)
+        if self._couch_filter:
+            extra_args.update({'filter': self._couch_filter})
         self._last_processed_seq = since
         changes_stream = ChangesStream(
             db=self._couch_db,
-            heartbeat=True,
             since=since,
-            filter=self._couch_filter,
             include_docs=True,
             **extra_args
         )
