@@ -111,7 +111,7 @@
         <div class="form-actions">
             <div class="col-sm-6">
                 <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
-                <button class="btn btn-primary" id="confirm-plan" data-bind="click: openDowngradeModal">
+                <button class="btn btn-primary" id="confirm-plan" data-bind="click: openDowngradeModal" disabled>
                     {% trans 'Confirm Plan' %}
                 </button>
             </div>
