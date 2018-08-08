@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from __future__ import division
 import json
 import uuid
+from math import ceil
 
 from django.db.models import Count
 from django.http import HttpResponse, Http404
@@ -73,22 +75,28 @@ def _get_error_counts(domain, app_id, version_numbers):
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
+    page = int(request.GET.get('page', 1))
+    page = max(page, 1)
     try:
         limit = int(limit)
     except (TypeError, ValueError):
         limit = 10
-    start_build_param = request.GET.get('start_build')
-    if start_build_param and json.loads(start_build_param):
-        start_build = json.loads(start_build_param)
-        assert isinstance(start_build, int)
-    else:
-        start_build = {}
+
     timezone = get_timezone_for_user(request.couch_user, domain)
 
-    app_es = AppES().domain(domain).is_build().app_id(app_id).size(limit).sort('version', desc=True)
+    app_es = (
+        AppES()
+        .start((page - 1) * limit)
+        .size(limit)
+        .sort('version', desc=True)
+        .domain(domain)
+        .is_build()
+        .app_id(app_id)
+    )
     if only_show_released:
         app_es = app_es.is_released()
-    saved_apps = [SavedAppBuild.wrap(app).to_saved_build_json(timezone) for app in app_es.run().hits]
+    apps = app_es.run()
+    saved_apps = [SavedAppBuild.wrap(app).to_saved_build_json(timezone) for app in apps.hits]
 
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
@@ -106,7 +114,16 @@ def paginate_releases(request, domain, app_id):
         for app in saved_apps:
             app['num_errors'] = num_errors_dict.get(app['version'], 0)
 
-    return json_response(saved_apps)
+    num_pages = int(ceil(apps.total / limit))
+
+    return json_response({
+        'apps': saved_apps,
+        'pagination': {
+            'total': apps.total,
+            'num_pages': num_pages,
+            'current_page': page,
+        }
+    })
 
 
 def get_releases_context(request, domain, app_id):

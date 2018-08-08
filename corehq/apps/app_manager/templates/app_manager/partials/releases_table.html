@@ -83,11 +83,7 @@
 
     <div class="releases-container"
          data-bind="css: {hide: false},
-                    template: {
-                        foreach: savedApps,
-                        afterAdd: function(elem) { $(elem).hide().fadeIn() },
-                        beforeRemove: function(elem) { if (elem.nodeType === 1) { $(elem).fadeOut(); } }
-                    }" >
+                    template: {foreach: savedApps}" >
 
         <div class="panel panel-release"
              data-bind="css: {
@@ -207,12 +203,9 @@
         </div><!-- .panel-release -->
     </div> <!-- .releases-container -->
 
-    <p data-bind="visible: fetchState() !== 'pending' && !doneFetching(), css: {hide: false}" class="hide">
-        <a href="#" class="btn btn-default btn-block" data-bind="click: function() { getMoreSavedApps(true); }">
-            {% trans "View More" %}
-        </a>
-    </p>
-
+    <pagination params="goToPage: goToPage,
+                        perPage: fetchLimit,
+                        totalItems: totalItems"></pagination>
     <script type="text/html" id="delete-build-modal-template">
         <div class="modal-dialog">
             <div class="modal-content">

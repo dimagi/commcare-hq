@@ -15,7 +15,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     var el = $('#releases-table');
     if (el.length) {
         var releasesMain = releasesMainModel(o);
-        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
+        _.defer(function(){ releasesMain.goToPage(1); });
         el.koApplyBindings(releasesMain);
     }
 

@@ -2,21 +2,23 @@ hqDefine('hqwebapp/js/components/pagination', function() {
     return {
         viewModel: function(params){
             var self = {};
+
             self.currentPage = ko.observable(params.currentPage || 1);
-            self.totalItems = ko.observable(params.totalItems || 500);
-            self.perPage = ko.observable(params.perPage || 10);
+            self.totalItems = params.totalItems;
+            self.perPage = ko.observable(params.perPage || 5);
             self.numPages = ko.computed(function(){
                 return Math.ceil(self.totalItems() / self.perPage());
             });
 
             self.nextPage = function(){
-                self.currentPage(Math.min(self.currentPage() + 1, self.numPages()));
+                self.goToPage(Math.min(self.currentPage() + 1, self.numPages()));
             };
             self.previousPage = function(){
-                self.currentPage(Math.max(self.currentPage() - 1, 1));
+                self.goToPage(Math.max(self.currentPage() - 1, 1));
             };
             self.goToPage = function(page){
                 self.currentPage(page);
+                params.goToPage(self.currentPage());
             };
             self.pagesShown = ko.computed(function(){
                 var pages = [];
