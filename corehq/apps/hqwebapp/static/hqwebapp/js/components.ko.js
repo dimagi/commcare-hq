@@ -1,10 +1,20 @@
-(function () {
+hqDefine("hqwebapp/js/components.ko", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/components/inline_edit',
+], function(
+    $,
+    ko,
+    _,
+    inlineEdit
+) {
     var components = {
-        'inline-edit': 'hqwebapp/js/components/inline_edit',
+        'inline-edit': inlineEdit,
     };
 
     _.each(components, function(moduleName, elementName) {
-        ko.components.register(elementName, hqImport(moduleName));
+        ko.components.register(elementName, moduleName);
     });
 
     $(function() {
@@ -17,4 +27,4 @@
             });
         });
     });
-}());
+});
