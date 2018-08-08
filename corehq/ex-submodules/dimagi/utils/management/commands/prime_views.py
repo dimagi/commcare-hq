@@ -5,8 +5,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from gevent import monkey; monkey.patch_all()
 import sys
 import gevent
-from restkit.session import set_session
-set_session("gevent")
 from gevent.pool import Pool
 from django.core.management.base import BaseCommand
 
