@@ -278,6 +278,7 @@ class FilteredCountColumn(ReportColumn):
     sortable = BooleanProperty(default=False)
 
     def get_column_config(self, data_source_config, lang):
+        import ipdb; ipdb.set_trace()
         return ColumnConfig(columns=[
             DatabaseColumn(
                 header=self.get_header(lang),
