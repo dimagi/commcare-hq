@@ -38,6 +38,14 @@ hqDefine('accounting/js/confirm_plan', function () {
             });
         };
 
+        var userAgreementCheckBox = document.getElementById('user-agreement');
+        var confirmPlanButton = document.getElementById('confirm-plan');
+        if (userAgreementCheckBox != null) {
+            userAgreementCheckBox.onchange = function () {
+                confirmPlanButton.disabled = !this.checked;
+            };
+        }
+
         return self;
     };
 
