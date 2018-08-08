@@ -14,7 +14,10 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
+    AGG_CCS_RECORD_BP_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,
+    AGG_CCS_RECORD_THR_TABLE,
+    AGG_CCS_RECORD_DELIVERY_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_DAILY_FEEDING_TABLE,
@@ -383,7 +386,8 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         return """
         SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
-        MAX(counsel_methods) OVER w AS counsel_methods
+        MAX(counsel_methods) OVER w AS counsel_methods,
+        LAST_VALUE(is_ebf) OVER w as is_ebf
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -410,14 +414,15 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, counsel_methods
+          state_id, month, case_id, latest_time_end_processed, counsel_methods, is_ebf
         ) (
           SELECT
             %(state_id)s AS state_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
-            GREATEST(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods
+            GREATEST(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods,
+            ucr.is_ebf as is_ebf
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -489,6 +494,46 @@ class THRFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
                 child_health_case_id IS NOT NULL
           GROUP BY child_health_case_id
+        )
+        """.format(
+            ucr_tablename=self.ucr_tablename,
+            tablename=tablename
+        ), query_params
+
+
+class THRFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
+    ucr_data_source_id = 'static-dashboard_thr_forms'
+    aggregate_parent_table = AGG_CCS_RECORD_THR_TABLE
+    aggregate_child_table_prefix = 'icds_db_ccs_thr_form_'
+
+    def aggregation_query(self):
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
+        current_month_start = month_formatter(self.month)
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
+
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id,
+            "current_month_start": current_month_start,
+            "next_month_start": next_month_start,
+        }
+
+        return """
+        INSERT INTO "{tablename}" (
+          state_id, month, case_id, latest_time_end_processed, days_ration_given_mother
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            ccs_record_case_id AS case_id,
+            MAX(timeend) AS latest_time_end_processed,
+            SUM(days_ration_given_mother) AS days_ration_given_mother
+          FROM "{ucr_tablename}"
+          WHERE state_id = %(state_id)s AND
+                timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
+                ccs_record_case_id IS NOT NULL
+          GROUP BY ccs_record_case_id
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
@@ -690,6 +735,182 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
             "next_month": (month + relativedelta(month=1)).strftime('%Y-%m-%d'),
             "state_id": self.state_id
         }
+
+
+class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
+    ucr_data_source_id = 'static-dashboard_birth_preparedness_forms'
+    aggregate_parent_table = AGG_CCS_RECORD_BP_TABLE
+    aggregate_child_table_prefix = 'icds_db_bp_form_'
+
+    @property
+    def _old_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    def _anemic_query(self):
+        """
+        UPDATE agg_table SET
+            anemia = anemia
+        FROM (
+            SELECT ccs_record_case_id, LAST_VALUE(anemia) OVER w AS anemia
+            FROM ucr_table
+            WHERE state_id = state_id AND month = month AND anemia != 0
+        ) ut
+        WHERE agg_table.state_id = state_id AND agg_table.month = month AND case_id = ut.ccs_record_case_id
+        """
+
+    def data_from_ucr_query(self):
+        current_month_start = month_formatter(self.month)
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
+
+        # anemia calculation is wrong here because it doesn't ignore nulls.
+        return """
+        SELECT DISTINCT ccs_record_case_id AS case_id,
+        LAST_VALUE(timeend) OVER w AS latest_time_end,
+        MAX(immediate_breastfeeding) OVER w AS immediate_breastfeeding,
+        LAST_VALUE(eating_extra) OVER w as eating_extra,
+        LAST_VALUE(resting) OVER w as resting,
+        LAST_VALUE(anc_weight) OVER w as anc_weight,
+        LAST_VALUE(anc_blood_pressure) OVER w as anc_blood_pressure,
+        LAST_VALUE(bp_sys) OVER w as bp_sys,
+        LAST_VALUE(bp_dia) OVER w as bp_dia,
+        LAST_VALUE(anc_hemoglobin) OVER w as anc_hemoglobin,
+        LAST_VALUE(bleeding) OVER w as bleeding,
+        LAST_VALUE(swelling) OVER w as swelling,
+        LAST_VALUE(blurred_vision) OVER w as blurred_vision,
+        LAST_VALUE(convulsions) OVER w as convulsions,
+        LAST_VALUE(rupture) OVER w as rupture
+        FROM "{ucr_tablename}"
+        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+        WINDOW w AS (
+            PARTITION BY ccs_record_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )
+        """.format(ucr_tablename=self.ucr_tablename), {
+            "current_month_start": current_month_start,
+            "next_month_start": next_month_start,
+            "state_id": self.state_id
+        }
+
+    def aggregation_query(self):
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
+        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
+
+        ucr_query, ucr_query_params = self.data_from_ucr_query()
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id
+        }
+        query_params.update(ucr_query_params)
+
+        return """
+        INSERT INTO "{tablename}" (
+          state_id, month, case_id, latest_time_end_processed,
+          immediate_breastfeeding, anemia, eating_extra, resting,
+          anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
+          bleeding, swelling, blurred_vision, convulsions, rupture
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
+            GREATEST(ucr.immediate_breastfeeding, prev_month.immediate_breastfeeding) AS immediate_breastfeeding,
+            prev_month.anemia AS anemia,
+            COALESCE(ucr.eating_extra, prev_month.eating_extra) AS eating_extra,
+            COALESCE(ucr.resting, prev_month.resting) AS resting,
+            COALESCE(ucr.anc_weight, prev_month.anc_weight) as anc_weight,
+            COALESCE(ucr.anc_blood_pressure, prev_month.anc_blood_pressure) as anc_blood_pressure,
+            COALESCE(ucr.bp_sys, prev_month.bp_sys) as bp_sys,
+            COALESCE(ucr.bp_dia, prev_month.bp_dia) as bp_dia,
+            COALESCE(ucr.anc_hemoglobin, prev_month.anc_hemoglobin) as anc_hemoglobin,
+            ucr.bleeding as bleeding,
+            ucr.swelling as swelling,
+            ucr.blurred_vision as blurred_vision,
+            ucr.convulsions as convulsions,
+            ucr.rupture as rupture
+          FROM ({ucr_table_query}) ucr
+          FULL OUTER JOIN "{previous_month_tablename}" prev_month
+          ON ucr.case_id = prev_month.case_id
+        )
+        """.format(
+            ucr_table_query=ucr_query,
+            previous_month_tablename=previous_month_tablename,
+            tablename=tablename
+        ), query_params
+
+    def compare_with_old_data_query(self):
+        month = self.month.replace(day=1)
+        return """
+        SELECT agg.case_id
+        FROM "{ccs_record_monthly_ucr}" ccs_ucr
+        FULL OUTER JOIN "{new_agg_table}" agg
+        ON ccs_ucr.doc_id = agg.case_id AND ccs_ucr.month = agg.month AND agg.state_id = ccs_ucr.state_id
+        WHERE ccs_ucr.month = %(month)s and agg.state_id = %(state_id)s AND
+              (ccs_ucr.pregnant = 1 AND (
+                 (ccs_ucr.anemic_severe = 1 AND agg.anemia != 1) OR
+                 (ccs_ucr.anemic_moderate = 1 AND agg.anemia != 2) OR
+                 (ccs_ucr.anemic_normal = 1 AND agg.anemia != 3) OR
+                 (ccs_ucr.anemic_unknown = 1 AND agg.anemia != 0) OR
+                 ccs_ucr.extra_meal != agg.eating_extra OR
+                 ccs_ucr.resting_during_pregnancy != agg.resting
+              )) AND
+              (ccs_ucr.pregnant = 1 AND trimester = 3 AND (
+                 ccs_ucr.counsel_immediate_bf != agg.immediate_breastfeeding
+              ))
+        """.format(
+            ccs_record_monthly_ucr=self._old_ucr_tablename,
+            new_agg_table=self.aggregate_parent_table,
+        ), {
+            "month": month.strftime('%Y-%m-%d'),
+            "next_month": (month + relativedelta(month=1)).strftime('%Y-%m-%d'),
+            "state_id": self.state_id
+        }
+
+
+class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
+    ucr_data_source_id = 'static-dashboard_delivery_forms'
+    aggregate_parent_table = AGG_CCS_RECORD_DELIVERY_TABLE
+    aggregate_child_table_prefix = 'icds_db_delivery_form_'
+
+    def aggregation_query(self):
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
+        current_month_start = month_formatter(self.month)
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
+
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id,
+            "current_month_start": current_month_start,
+            "next_month_start": next_month_start,
+        }
+
+        return """
+        INSERT INTO "{tablename}" (
+          state_id, month, case_id, latest_time_end_processed, breastfed_at_birth
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            case_load_ccs_record0 AS case_id,
+            LAST_VALUE(timeend) over w AS latest_time_end_processed,
+            LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth
+          FROM "{ucr_tablename}"
+          WHERE state_id = %(state_id)s AND
+                timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
+                case_load_ccs_record0 IS NOT NULL
+          WINDOW w AS (
+            PARTITION BY case_load_ccs_record0
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+          )
+        )
+        """.format(
+            ucr_tablename=self.ucr_tablename,
+            tablename=tablename
+        ), query_params
 
 
 def recalculate_aggregate_table(model_class):
@@ -1428,3 +1649,4 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
             ucr_table_query=ucr_query,
             tablename=tablename
         ), query_params
+
