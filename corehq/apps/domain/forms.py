@@ -1621,17 +1621,34 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
-                cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
+                cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user, hide=True)
                 if self.current_subscription is not None:
-                    self.current_subscription.change_plan(
-                        self.plan_version,
-                        web_user=self.creating_user,
-                        adjustment_method=SubscriptionAdjustmentMethod.USER,
-                        service_type=SubscriptionType.PRODUCT,
-                        pro_bono_status=ProBonoStatus.NO,
-                        do_not_invoice=False,
-                        no_invoice_reason='',
-                    )
+                    if self.is_downgrade() and self.current_subscription.is_below_minimum_subscription:
+                        self.current_subscription.update_subscription(
+                            date_start=self.current_subscription.date_start,
+                            date_end=self.current_subscription.date_start + datetime.timedelta(days=30)
+                        )
+                        Subscription.new_domain_subscription(
+                            account=self.account,
+                            domain=self.domain,
+                            plan_version=self.plan_version,
+                            date_start=self.current_subscription.date_start + datetime.timedelta(days=31),
+                            web_user=self.creating_user,
+                            adjustment_method=SubscriptionAdjustmentMethod.USER,
+                            service_type=SubscriptionType.PRODUCT,
+                            pro_bono_status=ProBonoStatus.NO,
+                            funding_source=FundingSource.CLIENT,
+                        )
+                    else:
+                        self.current_subscription.change_plan(
+                            self.plan_version,
+                            web_user=self.creating_user,
+                            adjustment_method=SubscriptionAdjustmentMethod.USER,
+                            service_type=SubscriptionType.PRODUCT,
+                            pro_bono_status=ProBonoStatus.NO,
+                            do_not_invoice=False,
+                            no_invoice_reason='',
+                        )
                 else:
                     Subscription.new_domain_subscription(
                         self.account, self.domain, self.plan_version,
@@ -1649,6 +1666,24 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 show_stack_trace=True,
             )
             return False
+
+    def is_downgrade(self):
+        if self.current_subscription is None:
+            return False
+
+        current_edition = self.current_subscription.plan_version.plan.edition
+        new_edition = self.plan_version.plan.edition
+
+        if current_edition == 'Advanced':
+            if new_edition == 'Pro' or new_edition == 'Standard' or new_edition == 'Community':
+                return True
+        if current_edition == 'Pro':
+            if new_edition == 'Standard' or new_edition == 'Community':
+                return True
+        if current_edition == 'Standard':
+            if new_edition == 'Community':
+                return True
+        return False
 
 
 class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
