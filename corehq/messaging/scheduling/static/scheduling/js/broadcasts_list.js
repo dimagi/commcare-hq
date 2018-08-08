@@ -70,10 +70,10 @@ hqDefine("scheduling/js/broadcasts_list", [
                     "render": function(data, type, row) {
                         var disabled = row.editable ? '' : ' disabled ';
                         if (row.active) {
-                            return '<button data-id="' + row.id + '"' + disabled + 'class="btn btn-default broadcast-deactivate">'
+                            return '<button data-id="' + row.id + '"' + disabled + 'data-action="deactivate_scheduled_broadcast" class="btn btn-default broadcast-activate">'
                                    + gettext("Deactivate") + '</button>';
                         } else {
-                            return '<button data-id="' + row.id + '"' + disabled + 'class="btn btn-default broadcast-activate">'
+                            return '<button data-id="' + row.id + '"' + disabled + 'data-action="activate_scheduled_broadcast" class="btn btn-default broadcast-activate">'
                                    + gettext("Activate") + '</button>';
                         }
                     },
@@ -116,20 +116,20 @@ hqDefine("scheduling/js/broadcasts_list", [
         });
 
         $(document).on('click', '.broadcast-activate', activateScheduledBroadcast);
-        $(document).on('click', '.broadcast-deactivate', deactivateScheduledBroadcast);
         $(document).on('click', '.broadcast-delete', deleteScheduledBroadcast);
     });
 
-    function broadcastAction(action, element) {
-        var broadcast_id = $(element).data("id");
-        var activateButton = $('#activate-button-for-scheduled-broadcast-' + broadcast_id);
-        var deleteButton = $('#delete-button-for-scheduled-broadcast-' + broadcast_id);
+    function broadcastAction(action, button) {
+        var broadcast_id = $(button).data("id"),
+            $row = $(button).closest("tr"),
+            $activateButton = $row.find(".broadcast-activate"),
+            $deleteButton = $row.find(".broadcast-delete");
         if (action === 'delete_scheduled_broadcast') {
-            deleteButton.disableButton();
-            activateButton.prop('disabled', true);
+            $deleteButton.disableButton();
+            $activateButton.prop('disabled', true);
         } else {
-            activateButton.disableButton();
-            deleteButton.prop('disabled', true);
+            $activateButton.disableButton();
+            $deleteButton.prop('disabled', true);
         }
 
         $.ajax({
@@ -147,15 +147,11 @@ hqDefine("scheduling/js/broadcasts_list", [
     }
 
     function activateScheduledBroadcast() {
-        broadcastAction('activate_scheduled_broadcast', this);
-    }
-
-    function deactivateScheduledBroadcast() {
-        broadcastAction('deactivate_scheduled_broadcast', this);
+        broadcastAction($(this).data("action"), this);
     }
 
     function deleteScheduledBroadcast() {
-        if(confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
+        if (confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
             broadcastAction('delete_scheduled_broadcast', this);
         }
     }
