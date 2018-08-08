@@ -108,6 +108,17 @@ class BillingAccountType(object):
     )
 
 
+class InvoicingPlan(object):
+    MONTHLY = "MONTHLY"
+    QUARTERLY = "QUARTERLY"
+    YEARLY = "YEARLY"
+    CHOICES = (
+        (MONTHLY, "Monthly"),
+        (QUARTERLY, "Quarterly"),
+        (YEARLY, "Yearly")
+    )
+
+
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
@@ -353,6 +364,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
     is_active = models.BooleanField(default=True)
     is_customer_billing_account = models.BooleanField(default=False)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
+    invoicing_plan = models.CharField(
+        max_length=25,
+        default=InvoicingPlan.MONTHLY,
+        choices=InvoicingPlan.CHOICES
+    )
     entry_point = models.CharField(
         max_length=25,
         default=EntryPoint.NOT_SET,
@@ -2782,6 +2798,9 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
     def generate_pdf(self, invoice):
         self.save()
         pdf_data = NamedTemporaryFile()
+        account_name = ''
+        if invoice.is_customer_invoice:
+            account_name = invoice.account.name
         template = InvoiceTemplate(
             pdf_data.name,
             invoice_number=invoice.invoice_number,
@@ -2799,6 +2818,7 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             is_wire=invoice.is_wire,
             is_customer=invoice.is_customer_invoice,
             is_prepayment=invoice.is_wire and invoice.is_prepayment,
+            account_name=account_name
         )
 
         if not invoice.is_wire:
@@ -2808,12 +2828,19 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
                 line_items = LineItem.objects.filter(subscription_invoice=invoice)
             for line_item in line_items:
                 is_unit = line_item.unit_description is not None
+                is_quarterly = line_item.invoice.is_customer_invoice and \
+                    line_item.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY
+                unit_cost = line_item.subtotal
+                if is_unit:
+                    unit_cost = line_item.unit_cost
+                if is_quarterly and line_item.base_description is not None:
+                    unit_cost = line_item.product_rate.monthly_fee
                 description = line_item.base_description or line_item.unit_description
                 if line_item.quantity > 0:
                     template.add_item(
                         description,
-                        line_item.quantity if is_unit else 1,
-                        line_item.unit_cost if is_unit else line_item.subtotal,
+                        line_item.quantity if is_unit or is_quarterly else 1,
+                        unit_cost,
                         line_item.subtotal,
                         line_item.applied_credit,
                         line_item.total
@@ -2902,6 +2929,9 @@ class LineItem(models.Model):
 
     @property
     def subtotal(self):
+        if self.customer_invoice and self.customer_invoice.account.invoicing_plan != InvoicingPlan.MONTHLY:
+            return self.base_cost * self.quantity + self.unit_cost * self.quantity
+
         return self.base_cost + self.unit_cost * self.quantity
 
     @property
@@ -3446,3 +3476,22 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
         """
         if self.line_item and self.invoice:
             raise ValidationError(_("You can't specify both an invoice and a line item."))
+
+
+class DomainUserHistory(models.Model):
+    """
+    A record of the number of users in a domain at the record_date.
+    Created by task calculate_users_and_sms_in_all_domains on the first of every month.
+    Used to bill clients for the appropriate number of users
+    """
+    domain = models.CharField(max_length=256)
+    record_date = models.DateField()
+    num_users = models.IntegerField(default=0, null=True)
+
+    @classmethod
+    def create(cls, domain, num_users, record_date):
+        return cls(
+            domain=domain,
+            num_users=num_users,
+            record_date=record_date
+        )

@@ -216,6 +216,7 @@ class GenericReportView(object):
 
         class FakeHttpRequest(object):
             method = 'GET'
+            domain = ''
             GET = {}
             META = {}
             couch_user = None

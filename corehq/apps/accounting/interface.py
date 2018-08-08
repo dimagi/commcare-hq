@@ -49,6 +49,7 @@ from .filters import (
     SubscriberFilter,
     SubscriptionTypeFilter,
     TrialStatusFilter,
+    CustomerAccountFilter
 )
 from .forms import AdjustBalanceForm
 from .models import (
@@ -96,6 +97,7 @@ def customer_invoice_cell(invoice):
         )),
         invoice.id
     )
+
 
 def invoice_cost_cell(invoice):
     from corehq.apps.accounting.views import InvoiceSummaryView
@@ -147,6 +149,7 @@ class AccountingInterface(AddItemInterface):
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
         'corehq.apps.accounting.interface.AccountTypeFilter',
+        'corehq.apps.accounting.interface.CustomerAccountFilter',
         'corehq.apps.accounting.interface.ActiveStatusFilter',
         'corehq.apps.accounting.interface.DimagiContactFilter',
         'corehq.apps.accounting.interface.EntryPointFilter',
@@ -207,6 +210,11 @@ class AccountingInterface(AddItemInterface):
         if account_type is not None:
             queryset = queryset.filter(
                 account_type=account_type,
+            )
+        is_customer_account = CustomerAccountFilter.get_value(self.request, self.domain)
+        if is_customer_account is not None:
+            queryset = queryset.filter(
+                is_customer_billing_account=is_customer_account == CustomerAccountFilter.is_customer_account
             )
         is_active = ActiveStatusFilter.get_value(self.request, self.domain)
         if is_active is not None:

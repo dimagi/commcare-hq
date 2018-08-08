@@ -1,2 +1,0 @@
-class NinetyNineDotsException(Exception):
-    pass

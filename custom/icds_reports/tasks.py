@@ -48,6 +48,7 @@ from custom.icds_reports.models import (
     AggregateChildHealthDailyFeedingForms,
     AggregateChildHealthPostnatalCareForms,
     AggregateChildHealthTHRForms,
+    AggregateAwcInfrastructureForms,
     ChildHealthMonthly,
     UcrTableNameMapping)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
@@ -154,7 +155,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
-            _create_views(cursor)
             _update_aggregate_locations_tables(cursor)
 
         state_ids = (SQLLocation.objects
@@ -184,6 +184,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                     state_id=state_id, date=monthly_date, func=_aggregate_child_health_pnc_forms
                 ) for state_id in state_ids
             ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_awc_infra_forms)
+                for state_id in state_ids
+            ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
             res = group(*stage_1_tasks).apply_async()
             res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
@@ -210,7 +214,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         ).delay()
 
 
-def _create_views(cursor):
+def create_views(cursor):
     try:
         celery_task_logger.info("Starting icds reports create_sql_views")
         for sql_view_path in SQL_VIEWS_PATHS:
@@ -341,6 +345,11 @@ def _aggregate_child_health_pnc_forms(state_id, day):
 @track_time
 def _aggregate_thr_forms(state_id, day):
     AggregateChildHealthTHRForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_awc_infra_forms(state_id, day):
+    AggregateAwcInfrastructureForms.aggregate(state_id, day)
 
 
 @track_time
@@ -518,6 +527,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             show_test=include_test
         ).get_excel_data(location)
     elif indicator == BENEFICIARY_LIST_EXPORT:
+        # this report doesn't use this configuration
+        config.pop('aggregation_level', None)
         data_type = 'Beneficiary_List'
         excel_data = BeneficiaryExport(
             config=config,

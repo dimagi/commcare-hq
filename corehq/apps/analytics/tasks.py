@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
+from __future__ import division
 import csv342 as csv
 import os
 
@@ -42,6 +43,7 @@ from memoized import memoized
 
 from corehq.apps.analytics.utils import analytics_enabled_for_email
 from io import open
+from six.moves import range
 
 _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
                                                '{}@{}'.format('biyeun', 'dimagi.com'),

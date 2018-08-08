@@ -29,6 +29,7 @@ from corehq.messaging.scheduling.models import (
     TimedSchedule,
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
+from corehq.messaging.util import project_is_on_new_reminders
 from django.db import transaction
 
 
@@ -202,7 +203,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         Reminder rules will be deactivated.
         """
         try:
-            if domain.uses_new_reminders:
+            if project_is_on_new_reminders(domain):
                 _deactivate_schedules(domain)
             else:
                 for reminder in _active_reminders(domain):
@@ -222,7 +223,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         All Reminder rules utilizing "survey" will be deactivated.
         """
         try:
-            if domain.uses_new_reminders:
+            if project_is_on_new_reminders(domain):
                 _deactivate_schedules(domain, survey_only=True)
             else:
                 surveys = [x for x in _active_reminders(domain)
@@ -531,7 +532,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Reminder rules will be deactivated.
         """
-        if domain.uses_new_reminders:
+        if project_is_on_new_reminders(domain):
             num_active = (
                 len(_get_active_immediate_broadcasts(domain)) +
                 len(_get_active_scheduled_broadcasts(domain)) +
@@ -557,7 +558,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
-        if domain.uses_new_reminders:
+        if project_is_on_new_reminders(domain):
             num_survey = (
                 len(_get_active_immediate_broadcasts(domain, survey_only=True)) +
                 len(_get_active_scheduled_broadcasts(domain, survey_only=True)) +

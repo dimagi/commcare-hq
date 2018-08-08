@@ -9,6 +9,7 @@ import json
 import uuid
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from six.moves.urllib.parse import urlencode
+from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -50,6 +51,7 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
+    DomainUserHistory
 )
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
@@ -64,7 +66,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.notifications.models import Notification
-from corehq.apps.users.models import FakeUser, WebUser
+from corehq.apps.users.models import FakeUser, WebUser, CommCareUser
 from corehq.const import (
     SERVER_DATE_FORMAT,
     SERVER_DATETIME_FORMAT_NO_SEC,
@@ -898,3 +900,16 @@ def email_enterprise_report(domain, slug, couch_user):
            "You can download the data at the following link: {}<br><br>" \
            "Please remember that this link will only be active for 24 hours.".format(account.name, link)
     send_html_email_async(subject, couch_user.username, body)
+
+
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+def calculate_users_in_all_domains():
+    for domain in Domain.get_all_names():
+        num_users = CommCareUser.total_by_domain(domain)
+        record_date = datetime.date.today() - relativedelta(days=1)
+        user_history = DomainUserHistory.create(
+            domain=domain,
+            num_users=num_users,
+            record_date=record_date
+        )
+        user_history.save()

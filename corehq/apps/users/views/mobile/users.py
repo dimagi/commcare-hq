@@ -1235,11 +1235,15 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
             not self.invitation.already_registered and
             self.form.is_valid()
         ):
+            email = self.form.cleaned_data.get('email')
+            if email:
+                email = email.lower()
+
             user = CommCareUser.create(
                 self.domain,
                 self.form.cleaned_data.get('username'),
                 self.form.cleaned_data.get('password'),
-                email=self.form.cleaned_data.get('email'),
+                email=email,
                 phone_number=self.invitation.phone_number,
                 device_id='Generated from HQ',
                 user_data=self.invitation.custom_user_data,

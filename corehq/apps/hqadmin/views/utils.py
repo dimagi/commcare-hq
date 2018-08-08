@@ -30,7 +30,7 @@ from corehq.util.supervisord.api import (
     pillow_supervisor_status
 )
 from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm, BrokenBuildsForm, EmailForm, SuperuserManagementForm,
+    AuthenticateAsForm, EmailForm, SuperuserManagementForm,
     ReprocessMessagingCaseUpdatesForm,
     DisableTwoFactorForm, DisableUserForm)
 
