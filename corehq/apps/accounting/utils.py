@@ -350,7 +350,7 @@ def get_account_name_from_default_name(default_name):
         )
 
 
-def cancel_future_subscriptions(domain_name, from_date, web_user, hide=False):
+def cancel_future_subscriptions(domain_name, from_date, web_user):
     from corehq.apps.accounting.models import (
         Subscription,
         SubscriptionAdjustment,
@@ -361,7 +361,6 @@ def cancel_future_subscriptions(domain_name, from_date, web_user, hide=False):
         date_start__gt=from_date,
     ).order_by('date_start').all():
         later_subscription.date_end = later_subscription.date_start
-        later_subscription.is_hidden_to_ops = hide
         later_subscription.save()
         SubscriptionAdjustment.record_adjustment(
             later_subscription,
