@@ -279,7 +279,7 @@ def _list_to_processed_forms_tuple(forms):
 class XFormQuestionValueIterator(object):
     """
     Iterator to help navigate a data structure (likely xml or json)
-    representing an xml document, based on a given path. Skips root node.
+    representing a form submission, based on a given path. Skips root node.
     Each call of `next` returns a tuple of id and index. Iterates until
     the last non-leaf node. After iterating, the leaf node's id is
     available via `last`. Example:
@@ -292,6 +292,10 @@ class XFormQuestionValueIterator(object):
 
     Note that repeat groups in the given path are ONE-indexed as in xpath, while
     the indices returned by next/last are ZERO-indexed for easier array indexing.
+
+    Also note that repeat groups have an index only if there are multiple instances
+    of the group. This matches the structure of form_data, which uses a list of dicts
+    to represent multiple repeat groups but a single dict to represent a single repeat.
     """
 
     def __init__(self, path):
