@@ -224,7 +224,6 @@ class RelatedLocationsFixtureProvider(FixtureProvider):
 
     - Relations do not nest. Meaning that a location needs a direct relation
       to another location for it be included in this fixture.
-    - Only the user's primary location will get its related locations synced
     """
     id = 'related_locations'
     serializer = FlatLocationSerializer()
