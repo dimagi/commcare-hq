@@ -27,7 +27,6 @@
       },
       {
         "datatype": "date",
-        "required": false,
         "display": "Date of Death",
         "field": "date_death",
         "type": "date",
@@ -37,7 +36,6 @@
         "show_all": true,
         "datatype": "string",
         "type": "dynamic_choice_list",
-        "required": false,
         "slug": "awc_id",
         "field": "awc_id",
         "choice_provider": {
@@ -52,7 +50,6 @@
         "show_all": true,
         "datatype": "string",
         "type": "dynamic_choice_list",
-        "required": false,
         "slug": "supervisor_id",
         "field": "supervisor_id",
         "choice_provider": {
@@ -67,7 +64,6 @@
         "show_all": true,
         "datatype": "string",
         "type": "dynamic_choice_list",
-        "required": false,
         "slug": "block_id",
         "field": "block_id",
         "choice_provider": {
@@ -82,7 +78,6 @@
         "show_all": true,
         "datatype": "string",
         "type": "dynamic_choice_list",
-        "required": false,
         "slug": "district_id",
         "field": "district_id",
         "choice_provider": {
@@ -97,7 +92,6 @@
         "show_all": true,
         "datatype": "string",
         "type": "dynamic_choice_list",
-        "required": false,
         "slug": "state_id",
         "field": "state_id",
         "choice_provider": {
