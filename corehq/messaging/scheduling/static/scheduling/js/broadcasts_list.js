@@ -11,7 +11,7 @@ hqDefine("scheduling/js/broadcasts_list", [
     var scheduledTable = null;
 
     $(function() {
-        var list_broadcasts_url = initialPageData.reverse("new_list_broadcasts");
+        var listBroadcastsUrl = initialPageData.reverse("new_list_broadcasts");
 
         scheduledTable = $("#scheduled-table").dataTable({
             "lengthChange": false,
@@ -20,7 +20,7 @@ hqDefine("scheduling/js/broadcasts_list", [
             "displayLength": 10,
             "processing": false,
             "serverSide": true,
-            "ajaxSource": list_broadcasts_url,
+            "ajaxSource": listBroadcastsUrl,
             "fnServerParams": function(aoData) {
                 aoData.push({"name": "action", "value": "list_scheduled"});
             },
@@ -88,7 +88,7 @@ hqDefine("scheduling/js/broadcasts_list", [
             "displayLength": 10,
             "processing": false,
             "serverSide": true,
-            "ajaxSource": list_broadcasts_url,
+            "ajaxSource": listBroadcastsUrl,
             "fnServerParams": function(aoData) {
                 aoData.push({"name": "action", "value": "list_immediate"});
             },
@@ -120,7 +120,7 @@ hqDefine("scheduling/js/broadcasts_list", [
     });
 
     function broadcastAction(action, button) {
-        var broadcast_id = $(button).data("id"),
+        var broadcastId = $(button).data("id"),
             $row = $(button).closest("tr"),
             $activateButton = $row.find(".broadcast-activate"),
             $deleteButton = $row.find(".broadcast-delete");
@@ -138,7 +138,7 @@ hqDefine("scheduling/js/broadcasts_list", [
             dataType: 'json',
             data: {
                 action: action,
-                broadcast_id: broadcast_id,
+                broadcast_id: broadcastId,
             },
         })
             .always(function() {
