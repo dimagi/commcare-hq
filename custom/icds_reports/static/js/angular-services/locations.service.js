@@ -1,6 +1,4 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-var google = hqImport('analytix/js/google');
-var locationServiceEventCategory = google.trackCategory('Location Service');
 
 window.angular.module('icdsApp').factory('locationsService', ['$http', '$location', function($http, $location) {
     return {
@@ -9,106 +7,135 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
         },
         getChildren: function(parentId) {
             var includeTest = $location.search()['include_test'];
-            locationServiceEventCategory.event(
-                'Fetching data started', 'getChildren', {'parentId': parentId}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Location Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'getChildren'
+            });
             return $http.get(url('icds_locations'), {
                 params: {parent_id: parentId, include_test: includeTest},
             }).then(
                 function(response) {
-                    locationServiceEventCategory.event(
-                        'Fetching data succeeded', 'getChildren', {'parentId': parentId}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Location Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'getChildren'
+                    });
                     return response.data;
                 },
                 function() {
-                    locationServiceEventCategory.event(
-                        'Fetching data failed', 'getChildren', {'parentId': parentId}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Location Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'getChildren'
+                    });
                 }
             );
         },
         getAncestors: function(locationId) {
             var includeTest = $location.search()['include_test'];
-            locationServiceEventCategory.event(
-                'Fetching data started', 'getAncestors', {'locationId': locationId}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Location Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'getAncestors'
+            });
             return $http.get(url('icds_locations_ancestors'), {
                 params: {location_id: locationId, include_test: includeTest},
             }).then(
                 function(response) {
-                    locationServiceEventCategory.event(
-                        'Fetching data succeeded', 'getAncestors', {'locationId': locationId}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Location Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'getAncestors'
+                    });
                     return response.data;
                 },
                 function() {
-                    locationServiceEventCategory.event(
-                        'Fetching data failed', 'getAncestors', {'locationId': locationId}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Location Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'getAncestors'
+                    });
                 }
             );
         },
         getLocation: function(locationId) {
             var includeTest = $location.search()['include_test'];
-            locationServiceEventCategory.event(
-                'Fetching data started', 'getLocation', {'locationId': locationId}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Location Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'getLocation'
+            });
             return $http.get(url('icds_locations'), {
                 params: {location_id: locationId, include_test: includeTest},
             }).then(
                 function(response) {
-                    locationServiceEventCategory.event(
-                        'Fetching data succeeded', 'getLocation', {'locationId': locationId}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Location Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'getLocation'
+                    });
                     return response.data;
                 },
                 function() {
-                    locationServiceEventCategory.event(
-                        'Fetching data failed', 'getLocation', {'locationId': locationId}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Location Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'getLocation'
+                    });
                 }
             );
         },
         getLocationByNameAndParent: function(name, parentId) {
             var includeTest = $location.search()['include_test'];
-            locationServiceEventCategory.event(
-                'Fetching data started', 'getLocationByNameAndParent', {'name': name, 'parentId': parentId}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Location Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'getLocationByNameAndParent'
+            });
             return $http.get(url('icds_locations'), {
                 params: {name: name, parent_id: parentId, include_test: includeTest},
             }).then(
                 function(response) {
-                    locationServiceEventCategory.event(
-                        'Fetching data succeeded', 'getLocationByNameAndParent',
-                        {'name': name, 'parentId': parentId}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Location Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'getLocationByNameAndParent'
+                    });
                     return response.data.locations;
                 },
                 function() {
-                    locationServiceEventCategory.event(
-                        'Fetching data failed', 'getLocationByNameAndParent', {'name': name, 'parentId': parentId}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Location Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'getLocationByNameAndParent'
+                    });
                 }
             );
         },
         getAwcLocations: function(locationId) {
-            locationServiceEventCategory.event(
-                'Fetching data started', 'getAwcLocations', {'locationId': locationId}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Location Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'getAwcLocations'
+            });
             return $http.get(url('awc_locations'), {
                 params: {location_id: locationId},
             }).then(
                 function(response) {
-                    locationServiceEventCategory.event(
-                        'Fetching data succeeded', 'getAwcLocations', {'locationId': locationId}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Location Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'getAwcLocations'
+                    });
                     return response.data.locations;
                 },
                 function() {
-                    locationServiceEventCategory.event(
-                        'Fetching data failed', 'getAwcLocations', {'locationId': locationId}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Location Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'getAwcLocations'
+                    });
                 }
             );
         },

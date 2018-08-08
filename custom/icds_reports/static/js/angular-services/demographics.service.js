@@ -1,13 +1,13 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-var google = hqImport('analytix/js/google');
-var demographicsServiceEventCategory = google.trackCategory('Demographics Service');
 
 window.angular.module('icdsApp').factory('demographicsService', ['$http', function($http) {
     return {
         getRegisteredHouseholdData: function(step, params) {
-            demographicsServiceEventCategory.event(
-                'Fetching data started', 'Registered Household', {'step': step, 'params': params}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Demographics Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Registered Household'
+            });
             var get_url = url('registered_household', step);
             return  $http({
                 method: "GET",
@@ -15,22 +15,28 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                 params: params,
             }).then(
                 function(response) {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data succeeded', 'Registered Household', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Registered Household'
+                    });
                     return response;
                 },
                 function() {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data failed', 'Registered Household', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Registered Household'
+                    });
                 }
             );
         },
         getEnrolledChildrenData: function(step, params) {
-            demographicsServiceEventCategory.event(
-                'Fetching data started', 'Enrolled Children', {'step': step, 'params': params}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Demographics Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Enrolled Children'
+            });
             var get_url = url('enrolled_children', step);
             return  $http({
                 method: "GET",
@@ -38,22 +44,28 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                 params: params,
             }).then(
                 function(response) {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data succeeded', 'Enrolled Children', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Enrolled Children'
+                    });
                     return response;
                 },
                 function() {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data failed', 'Enrolled Children', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Enrolled Children'
+                    });
                 }
             );
         },
         getEnrolledWomenData: function(step, params) {
-            demographicsServiceEventCategory.event(
-                'Fetching data started', 'Enrolled Women', {'step': step, 'params': params}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Demographics Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Enrolled Women'
+            });
             var get_url = url('enrolled_women', step);
             return  $http({
                 method: "GET",
@@ -61,22 +73,28 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                 params: params,
             }).then(
                 function(response) {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data succeeded', 'Enrolled Women', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Enrolled Women'
+                    });
                     return response;
                 },
                 function() {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data failed', 'Enrolled Women', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Enrolled Women'
+                    });
                 }
             );
         },
         getLactatingEnrolledWomenData: function(step, params) {
-            demographicsServiceEventCategory.event(
-                'Fetching data started', 'Lactating Enrolled Women', {'step': step, 'params': params}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Demographics Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Lactating Enrolled Women'
+            });
             var get_url = url('lactating_enrolled_women', step);
             return  $http({
                 method: "GET",
@@ -84,22 +102,28 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                 params: params,
             }).then(
                 function(response) {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data succeeded', 'Lactating Enrolled Women', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Lactating Enrolled Women'
+                    });
                     return response;
                 },
                 function() {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data failed', 'Lactating Enrolled Women', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Lactating Enrolled Women'
+                    });
                 }
             );
         },
         getAdolescentGirlsData: function(step, params) {
-            demographicsServiceEventCategory.event(
-                'Fetching data started', 'Adolescent Girls', {'step': step, 'params': params}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Demographics Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Adolescent Girls'
+            });
             var get_url = url('adolescent_girls', step);
             return  $http({
                 method: "GET",
@@ -107,22 +131,28 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                 params: params,
             }).then(
                 function(response) {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data succeeded', 'Adolescent Girls', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Adolescent Girls'
+                    });
                     return response;
                 },
                 function() {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data failed', 'Adolescent Girls', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Adolescent Girls'
+                    });
                 }
             );
         },
         getAdhaarData: function(step, params) {
-            demographicsServiceEventCategory.event(
-                'Fetching data started', 'Adhaar Beneficiaries', {'step': step, 'params': params}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Demographics Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Adhaar Beneficiaries'
+            });
             var get_url = url('adhaar', step);
             return  $http({
                 method: "GET",
@@ -130,15 +160,19 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                 params: params,
             }).then(
                 function(response) {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data succeeded', 'Adhaar Beneficiaries', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Adhaar Beneficiaries'
+                    });
                     return response;
                 },
                 function() {
-                    demographicsServiceEventCategory.event(
-                        'Fetching data failed', 'Adhaar Beneficiaries', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Demographics Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Adhaar Beneficiaries'
+                    });
                 }
             );
         },

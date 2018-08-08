@@ -1,13 +1,13 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-var google = hqImport('analytix/js/google');
-var maternalChildServiceEventCategory = google.trackCategory('Maternal Child Service');
 
 window.angular.module('icdsApp').factory('maternalChildService', ['$http', function($http) {
     return {
         getUnderweightChildrenData: function(step, params) {
-            maternalChildServiceEventCategory.event(
-                'Fetching data started', 'Underweight Children', [step, params]
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Maternal Child Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Underweight Children'
+            });
             var get_url = url('underweight_children', step);
             return  $http({
                 method: "GET",
@@ -15,22 +15,28 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             }).then(
                 function(response) {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data succeeded', 'Underweight Children', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Underweight Children'
+                    });
                     return response;
                 },
                 function() {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data failed', 'Underweight Children', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Underweight Children'
+                    });
                 }
             );
         },
         getPrevalenceOfSevereData: function(step, params) {
-            maternalChildServiceEventCategory.event(
-                'Fetching data started', 'Prevalence Of Severe', [step, params]
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Maternal Child Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Prevalence Of Severe'
+            });
             var get_url = url('prevalence_of_severe', step);
             return  $http({
                 method: "GET",
@@ -38,22 +44,28 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             }).then(
                 function(response) {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data succeeded', 'Prevalence Of Severe', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Prevalence Of Severe'
+                    });
                     return response;
                 },
                 function() {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data failed', 'Prevalence Of Severe', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Prevalence Of Severe'
+                    });
                 }
             );
         },
         getPrevalenceOfStuntingData: function(step, params) {
-            maternalChildServiceEventCategory.event(
-                'Fetching data started', 'Prevalence Of Stunting', [step, params]
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Maternal Child Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Prevalence Of Stunting'
+            });
             var get_url = url('prevalence_of_stunting', step);
             return  $http({
                 method: "GET",
@@ -61,22 +73,28 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             }).then(
                 function(response) {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data succeeded', 'Prevalence Of Stunting', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Prevalence Of Stunting'
+                    });
                     return response;
                 },
                 function() {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data failed', 'Prevalence Of Stunting', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Prevalence Of Stunting'
+                    });
                 }
             );
         },
         getNewbornLowBirthData: function(step, params) {
-            maternalChildServiceEventCategory.event(
-                'Fetching data started', 'Newborn Low Birth', [step, params]
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Maternal Child Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Newborn Low Birth'
+            });
             var get_url = url('low_birth', step);
             return  $http({
                 method: "GET",
@@ -84,22 +102,28 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             }).then(
                 function(response) {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data succeeded', 'Newborn Low Birth', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Newborn Low Birth'
+                    });
                     return response;
                 },
                 function() {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data failed', 'Newborn Low Birth', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Newborn Low Birth'
+                    });
                 }
             );
         },
         earlyInitiationBreastfeeding: function(step, params) {
-            maternalChildServiceEventCategory.event(
-                'Fetching data started', 'Early Initiation Breastfeeding', [step, params]
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Maternal Child Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Early Initiation Breastfeeding'
+            });
             var get_url = url('early_initiation', step);
             return  $http({
                 method: "GET",
@@ -107,23 +131,28 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             }).then(
                 function(response) {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data succeeded', 'Early Initiation Breastfeeding',
-                        {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Early Initiation Breastfeeding'
+                    });
                     return response;
                 },
                 function() {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data failed', 'Early Initiation Breastfeeding', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Early Initiation Breastfeeding'
+                    });
                 }
             );
         },
         getExclusiveBreastfeedingData: function(step, params) {
-            maternalChildServiceEventCategory.event(
-                'Fetching data started', 'Exclusive Breastfeeding', [step, params]
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Maternal Child Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Exclusive Breastfeeding'
+            });
             var get_url = url('exclusive-breastfeeding', step);
             return  $http({
                 method: "GET",
@@ -131,22 +160,28 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             }).then(
                 function(response) {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data succeeded', 'Exclusive Breastfeeding', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Exclusive Breastfeeding'
+                    });
                     return response;
                 },
                 function() {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data failed', 'Exclusive Breastfeeding', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Exclusive Breastfeeding'
+                    });
                 }
             );
         },
         getChildrenInitiatedData: function(step, params) {
-            maternalChildServiceEventCategory.event(
-                'Fetching data started', 'Children Initiated', [step, params]
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Maternal Child Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Children Initiated'
+            });
             var get_url = url('children_initiated', step);
             return  $http({
                 method: "GET",
@@ -154,22 +189,28 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             }).then(
                 function(response) {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data succeeded', 'Children Initiated', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Children Initiated'
+                    });
                     return response;
                 },
                 function() {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data failed', 'Children Initiated', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Children Initiated'
+                    });
                 }
             );
         },
         getInstitutionalDeliveriesData: function(step, params) {
-            maternalChildServiceEventCategory.event(
-                'Fetching data started', 'Institutional Deliveries', [step, params]
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Maternal Child Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Institutional Deliveries'
+            });
             var get_url = url('institutional_deliveries', step);
             return  $http({
                 method: "GET",
@@ -177,22 +218,28 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             }).then(
                 function(response) {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data succeeded', 'Institutional Deliveries', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Institutional Deliveries'
+                    });
                     return response;
                 },
                 function() {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data failed', 'Institutional Deliveries', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Institutional Deliveries'
+                    });
                 }
             );
         },
         getImmunizationCoverageData: function(step, params) {
-            maternalChildServiceEventCategory.event(
-                'Fetching data started', 'Immunization Coverage', [step, params]
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Maternal Child Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Immunization Coverage'
+            });
             var get_url = url('immunization_coverage', step);
             return  $http({
                 method: "GET",
@@ -200,15 +247,19 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             }).then(
                 function(response) {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data succeeded', 'Immunization Coverage', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Immunization Coverage'
+                    });
                     return response;
                 },
                 function() {
-                    maternalChildServiceEventCategory.event(
-                        'Fetching data failed', 'Immunization Coverage', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Maternal Child Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Immunization Coverage'
+                    });
                 }
             );
         },

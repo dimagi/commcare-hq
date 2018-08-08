@@ -1,13 +1,13 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-var google = hqImport('analytix/js/google');
-var icdsCasReachServiceEventCategory = google.trackCategory('ICDS CAS Reach Service');
 
 window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', function($http) {
     return {
         getAwcDailyStatusData: function(step, params) {
-            icdsCasReachServiceEventCategory.event(
-                'Fetching data started', 'Awc Daily Status', {'step': step, 'params': params}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'ICDS CAS Reach Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Awc Daily Status'
+            });
             var get_url = url('awc_daily_status', step);
             return  $http({
                 method: "GET",
@@ -15,22 +15,28 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
                 params: params,
             }).then(
                 function(response) {
-                    icdsCasReachServiceEventCategory.event(
-                        'Fetching data succeeded', 'Awc Daily Status', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'ICDS CAS Reach Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Awc Daily Status'
+                    });
                     return response;
                 },
                 function() {
-                    icdsCasReachServiceEventCategory.event(
-                        'Fetching data failed', 'Awc Daily Status', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'ICDS CAS Reach Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Awc Daily Status'
+                    });
                 }
             );
         },
         getAwcsCoveredData: function(step, params) {
-            icdsCasReachServiceEventCategory.event(
-                'Fetching data started', 'Awcs Covered', {'step': step, 'params': params}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'ICDS CAS Reach Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'Awcs Covered'
+            });
             var get_url = url('awcs_covered', step);
             return  $http({
                 method: "GET",
@@ -38,15 +44,19 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
                 params: params,
             }).then(
                 function(response) {
-                    icdsCasReachServiceEventCategory.event(
-                        'Fetching data succeeded', 'Awcs Covered', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'ICDS CAS Reach Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'Awcs Covered'
+                    });
                     return response;
                 },
                 function() {
-                    icdsCasReachServiceEventCategory.event(
-                        'Fetching data failed', 'Awcs Covered', {'step': step, 'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'ICDS CAS Reach Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'Awcs Covered'
+                    });
                 }
             );
         },

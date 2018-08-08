@@ -1,13 +1,13 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-var google = hqImport('analytix/js/google');
-var progressReportServiceEventCategory = google.trackCategory('Progress Report Service');
 
 window.angular.module('icdsApp').factory('progressReportService', ['$http', function($http) {
     return {
         getData: function(params) {
-            progressReportServiceEventCategory.event(
-                'Fetching data started', 'getData', {'params': params}
-            );
+            window.ga('send', 'event', {
+                'eventCategory': 'Progress Report Service',
+                'eventAction': 'Fetching data started',
+                'eventLabel': 'getData'
+            });
             var get_url = url('fact_sheets', '---');
             return  $http({
                 method: "GET",
@@ -15,15 +15,19 @@ window.angular.module('icdsApp').factory('progressReportService', ['$http', func
                 params: params,
             }).then(
                 function(response) {
-                    progressReportServiceEventCategory.event(
-                        'Fetching data succeeded', 'getData', {'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Progress Report Service',
+                        'eventAction': 'Fetching data succeeded',
+                        'eventLabel': 'getData'
+                    });
                     return response;
                 },
                 function() {
-                    progressReportServiceEventCategory.event(
-                        'Fetching data failed', 'getData', {'params': params}
-                    );
+                    window.ga('send', 'event', {
+                        'eventCategory': 'Progress Report Service',
+                        'eventAction': 'Fetching data failed',
+                        'eventLabel': 'getData'
+                    });
                 }
             );
         },

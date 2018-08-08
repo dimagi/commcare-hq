@@ -1,7 +1,7 @@
 /* global moment, _ */
 
 
-function MonthModalController($location, $uibModalInstance, gaService) {
+function MonthModalController($location, $uibModalInstance) {
     var vm = this;
 
     vm.months = [];
@@ -39,9 +39,11 @@ function MonthModalController($location, $uibModalInstance, gaService) {
     }
 
     vm.apply = function() {
-        gaService.trackCategory('Date Filter').event(
-            'Date Changed', '', {'month': vm.selectedMonth, 'year': vm.selectedYear}
-        );
+        window.ga('send', 'event', {
+            'eventCategory': 'Date Filter',
+            'eventAction': 'Date Changed',
+            'eventLabel': ''
+        });
         $uibModalInstance.close({
             month: vm.selectedMonth,
             year: vm.selectedYear,
@@ -104,7 +106,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
 }
 
 MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
-MonthModalController.$inject = ['$location', '$uibModalInstance', 'gaService'];
+MonthModalController.$inject = ['$location', '$uibModalInstance'];
 
 window.angular.module('icdsApp').directive("monthFilter", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
