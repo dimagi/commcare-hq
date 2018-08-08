@@ -1,6 +1,15 @@
-hqDefine('case_importer/js/excel_fields', function () {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
-    function ExcelFieldRows(excelFields, caseFieldSpecs) {
+hqDefine('case_importer/js/excel_fields', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'fast-levenshtein/levenshtein',
+], function (
+    $,
+    ko,
+    _,
+    levenshtein
+) {
+    function excelFieldRows(excelFields, caseFieldSpecs) {
         var self = {
             excelFields: excelFields,
             caseFieldSpecs: caseFieldSpecs,
@@ -71,7 +80,7 @@ hqDefine('case_importer/js/excel_fields', function () {
                 var suggestions = _(self.caseFieldSuggestions).map(function (suggestion) {
                     return {
                         // make distance case-insensitive
-                        distance: window.Levenshtein.get(field.toLowerCase(), suggestion.toLowerCase()),
+                        distance: levenshtein.get(field.toLowerCase(), suggestion.toLowerCase()),
                         field: suggestion,
                     };
                 }).filter(function (suggestion) {
@@ -93,8 +102,9 @@ hqDefine('case_importer/js/excel_fields', function () {
 
         return self;
     }
-    var sanitizeCaseField = function (original_value) {
-        var value = original_value;
+
+    var sanitizeCaseField = function (originalValue) {
+        var value = originalValue;
         // space to underscore
         value = value.replace(/\s/g, "_");
         // remove other symbols
@@ -104,50 +114,8 @@ hqDefine('case_importer/js/excel_fields', function () {
         return value;
     };
 
-    $(function() {
-        var excelFields = initialPageData.get('excel_fields');
-        var caseFieldSpecs = initialPageData.get('case_field_specs');
-        var excelFieldRows = ExcelFieldRows(excelFields, caseFieldSpecs);
-        $('#excel-field-rows').koApplyBindings(excelFieldRows);
-
-        function autofillProperties() {
-            excelFieldRows.autoFill();
-        }
-
-        $('#js-add-mapping').click(function(e) {
-            excelFieldRows.addRow();
-            e.preventDefault();
-        });
-
-        $('.custom_field').on('change, keypress, keydown, keyup', function() {
-            var original_value = $(this).val();
-            var value = sanitizeCaseField(original_value);
-            if (value !== original_value) {
-                $(this).val(value);
-            }
-        });
-
-        $('#field_form').submit(function() {
-            $('[disabled]').each(function() {
-                $(this).prop('disabled', false);
-            });
-
-            return true;
-        });
-
-        $('#back_button').click(function() {
-            history.back();
-            return false;
-        });
-
-        $('#autofill').click(autofillProperties);
-
-        $('#back_breadcrumb').click(function(e) {
-            e.preventDefault();
-            history.back();
-            return false;
-        });
-    });
-
-    return { sanitizeCaseField: sanitizeCaseField };
+    return {
+        excelFieldRowsModel: excelFieldRows,
+        sanitizeCaseField: sanitizeCaseField,
+    };
 });
