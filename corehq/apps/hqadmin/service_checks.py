@@ -194,7 +194,7 @@ def check_couch():
 
 def check_formplayer():
     try:
-        res = requests.get('{}/serverup'.format(get_formplayer_url()), timeout=5)
+        res = requests.get('{}/serverup'.format(get_formplayer_url()), timeout=5, verify=False)
     except requests.exceptions.ConnectTimeout:
         return ServiceStatus(False, "Could not establish a connection in time")
     except requests.ConnectionError:
