@@ -138,7 +138,7 @@ class PillowChangeProviderReindexer(Reindexer):
     def reindex(self):
         for i, change in enumerate(self.change_provider.iter_all_changes()):
             try:
-                # Todo; pass correct args depending on pillow/processor
+                # below works because signature is same for pillow and processor
                 self.pillow_or_pillow_processor.process_change(change)
             except Exception:
                 pillow_logging.exception("Unable to process change: %s", change.id)
