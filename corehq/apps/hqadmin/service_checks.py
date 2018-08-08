@@ -194,6 +194,8 @@ def check_couch():
 
 def check_formplayer():
     try:
+        # Setting verify=False in this request keeps this from failing for urls with unsigned certificates.
+        # Allowing this because the certificate will always be unsigned for the fullstack deploy.
         res = requests.get('{}/serverup'.format(get_formplayer_url()), timeout=5, verify=False)
     except requests.exceptions.ConnectTimeout:
         return ServiceStatus(False, "Could not establish a connection in time")
