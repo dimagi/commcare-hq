@@ -1141,6 +1141,7 @@ class Subscription(models.Model):
         """
         assert date_start is not None
         for sub in Subscription.visible_objects.filter(
+            Q(date_end__isnull=True) | Q(date_end__gt=F('date_start')),
             subscriber=self.subscriber,
         ).exclude(
             id=self.id,
