@@ -108,7 +108,7 @@ def get_db_name(dbname, is_test):
 
     :param is_test: Add test prefix if true.
     """
-    return (TEST_DATABASE_PREFIX + dbname) if is_test else dbname
+    return (TEST_DATABASE_PREFIX + dbname.decode('utf-8')) if is_test else dbname
 
 
 def assign_test_db_names(dbs):
