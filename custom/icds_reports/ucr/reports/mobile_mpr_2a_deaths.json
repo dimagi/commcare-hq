@@ -33,8 +33,6 @@
         "slug": "date_death"
       },
       {
-        "show_all": true,
-        "datatype": "string",
         "type": "dynamic_choice_list",
         "slug": "awc_id",
         "field": "awc_id",
@@ -47,8 +45,6 @@
         "display": "Filter by AWW"
       },
       {
-        "show_all": true,
-        "datatype": "string",
         "type": "dynamic_choice_list",
         "slug": "supervisor_id",
         "field": "supervisor_id",
@@ -61,8 +57,6 @@
         "display": "Filter by Supervisor"
       },
       {
-        "show_all": true,
-        "datatype": "string",
         "type": "dynamic_choice_list",
         "slug": "block_id",
         "field": "block_id",
@@ -75,8 +69,6 @@
         "display": "Filter by Block"
       },
       {
-        "show_all": true,
-        "datatype": "string",
         "type": "dynamic_choice_list",
         "slug": "district_id",
         "field": "district_id",
@@ -89,8 +81,6 @@
         "display": "Filter by District"
       },
       {
-        "show_all": true,
-        "datatype": "string",
         "type": "dynamic_choice_list",
         "slug": "state_id",
         "field": "state_id",
