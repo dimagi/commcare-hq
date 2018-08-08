@@ -369,13 +369,12 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         data_source.set_filter_values(filter_values)
         data_source.set_defer_fields([f.field for f in defer_filters])
         filter_options_by_field = defaultdict(set)
-        last_sync = _last_sync_time(domain, restore_user.user_id)
 
         rows_elem = ReportFixturesProviderV2._get_v2_report_elem(
             data_source,
             {f.field for f in defer_filters},
             filter_options_by_field,
-            last_sync,
+            _last_sync_time(domain, restore_user.user_id),
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
@@ -388,8 +387,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
 
         report_elem = E.fixture(
             id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
-            report_id=report_config.report_id, last_sync=last_sync,
-            indexed='true'
+            report_id=report_config.report_id, indexed='true'
         )
         report_elem.append(rows_elem)
         return [report_filter_elem, report_elem]
