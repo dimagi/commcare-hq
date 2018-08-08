@@ -1743,11 +1743,11 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('awc_id', 'awc_id'),
             ('month', 'month'),
             ('ccs_status', 'ccs_status'),
-            ('trimester', "COALESCE(ucr.trimester::text, '')"),
+            ('trimester', "COALESCE(ucr.trimester::text, '') as coalesce_trimester"),
             ('caste', 'caste'),
-            ('disabled', "COALESCE(ucr.disabled, 'no')"),
-            ('minority', "COALESCE(ucr.minority, 'no')"),
-            ('resident', "COALESCE(ucr.resident,'no')"),
+            ('disabled', "COALESCE(ucr.disabled, 'no') as coalesce_disabled"),
+            ('minority', "COALESCE(ucr.minority, 'no') as coalesce_minority"),
+            ('resident', "COALESCE(ucr.resident,'no') as coalesce_resident"),
             ('valid_in_month', 'sum(ucr.valid_in_month)'),
             ('lactating', 'sum(ucr.lactating)'),
             ('pregnant', 'sum(ucr.pregnant)'),
@@ -1796,7 +1796,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             FROM "{ucr_ccs_record_table}" ucr
             WHERE month = %(start_date)s AND state_id != ''
             GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, 
-                     ccs_status, trimester, caste, disabled, minority, resident
+                     ccs_status, coalesce_trimester, caste, coalesce_disabled, coalesce_minority, coalesce_resident
         )
         """.format(
             tablename=self.tablename,
