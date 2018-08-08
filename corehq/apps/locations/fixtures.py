@@ -219,6 +219,34 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
+class RelatedLocationSerializer(FlatLocationSerializer):
+
+    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
+        all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
+            'code', flat=True
+        )
+        location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
+        attrs_to_index = ['@{}'.format(attr) for attr in location_type_attrs]
+        attrs_to_index.extend(_get_indexed_field_name(field.slug) for field in data_fields
+                              if field.index_in_fixture)
+        attrs_to_index.extend(['@id', '@type', 'name', '@distance'])
+
+        xml_nodes = self._get_fixture_node(fixture_id, restore_user, locations_queryset,
+                                           location_type_attrs, data_fields)
+
+        user_locations = restore_user.get_sql_locations(restore_user.domain)
+        distance_dict = LocationRelation.relation_distance_dictionary(user_locations)
+
+        child_node = xml_nodes.getchildren()[0]
+        for grandchild_node in child_node.getchildren():
+            location_id = grandchild_node.get('id')
+            if location_id in distance_dict:
+                minimum_distance = min(six.itervalues(distance_dict[location_id]))
+                grandchild_node.set('distance', str(minimum_distance))
+
+        return [get_index_schema_node(fixture_id, attrs_to_index), xml_nodes]
+
+
 class RelatedLocationsFixtureProvider(FixtureProvider):
     """This fixture is under active development for REACH, and is expected to change.
 
@@ -226,7 +254,7 @@ class RelatedLocationsFixtureProvider(FixtureProvider):
       to another location for it be included in this fixture.
     """
     id = 'related_locations'
-    serializer = FlatLocationSerializer()
+    serializer = RelatedLocationSerializer()
 
     def __call__(self, restore_state):
         if not toggles.RELATED_LOCATIONS.enabled(restore_state.domain):
