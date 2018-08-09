@@ -9,12 +9,25 @@
                 <th class="col-sm-3">{% trans "Property" %}</th>
                 <!-- ko if: showCaseTileColumn() -->
                 <th class="col-sm-2">{% trans "Display Text" %}</th>
-                <th class="col-sm-3">{% trans "Format" %}</th>
-                <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
+                    <!-- ko if: showColumnWidth() -->
+                    <th class="col-sm-2">{% trans "Format" %}</th>
+                    <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
+                    <th class="col-sm-1">{% trans "Width (%)" %}</th>
+                    <!--/ko-->
+                    <!-- ko ifnot: showColumnWidth() -->
+                    <th class="col-sm-3">{% trans "Format" %}</th>
+                    <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
+                    <!--/ko-->
                 <!--/ko-->
                 <!-- ko ifnot: showCaseTileColumn() -->
                 <th class="col-sm-3">{% trans "Display Text" %}</th>
-                <th class="col-sm-4">{% trans "Format" %}</th>
+                    <!-- ko if: showColumnWidth() -->
+                    <th class="col-sm-3">{% trans "Format" %}</th>
+                    <th class="col-sm-1">{% trans "Width (%)" %}</th>
+                    <!--/ko-->
+                    <!-- ko ifnot: showColumnWidth() -->
+                    <th class="col-sm-4">{% trans "Format" %}</th>
+                    <!--/ko-->
                 <!-- /ko -->
                 <th class="col-sm-1"></th>
             </tr>
@@ -102,6 +115,11 @@
                         <option value="sex">sex</option>
                         <option value="date">date</option>
                     </select>
+                </td>
+                <!-- /ko -->
+                <!-- ko if: $parent.showColumnWidth() -->
+                <td class="col-sm-1">
+                    <input type="text" class="form-control" data-bind="value: column_width" />
                 </td>
                 <!-- /ko -->
                 <td class="col-sm-1 text-center">

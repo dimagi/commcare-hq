@@ -313,6 +313,9 @@ hqDefine('app_manager/js/details/screen_config', function() {
                 this.original.case_tile_field = ko.utils.unwrapObservable(this.original.case_tile_field) || "";
                 this.case_tile_field = ko.observable(this.original.case_tile_field);
 
+                this.original.column_width = ko.utils.unwrapObservable(this.original.column_width) || "";
+                this.column_width = ko.observable(this.original.column_width);
+
                 // Set up tab attributes
                 var tabDefaults = {
                     isTab: false,
@@ -517,6 +520,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     that[element].on('change', fireChange);
                 });
                 this.case_tile_field.subscribe(fireChange);
+                this.column_width.subscribe(fireChange);
 
                 this.$format = $('<div/>').append(this.format.ui);
                 this.$format.find("select").css("margin-bottom", "5px");
@@ -590,6 +594,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     column.filter_xpath = this.filter_xpath_extra.val();
                     column.calc_xpath = this.calc_xpath_extra.val();
                     column.case_tile_field = this.case_tile_field();
+                    column.column_width = this.column_width();
                     if (this.isTab) {
                         // Note: starting_index is added by Screen.serialize
                         return _.extend({
@@ -660,6 +665,9 @@ hqDefine('app_manager/js/details/screen_config', function() {
                 this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
                 this.showCaseTileColumn = ko.computed(function() {
                     return that.useCaseTiles() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
+                });
+                this.showColumnWidth = ko.computed(function() {
+                    return that.columnKey === 'short';   // && some toggle
                 });
                 this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
                 this.persistentCaseContextXML = ko.observable(spec[this.columnKey].persistent_case_context_xml || 'case_name');
