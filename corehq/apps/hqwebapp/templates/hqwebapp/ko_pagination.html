@@ -1,9 +1,10 @@
+{% load i18n %}
 <!-- used by corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js -->
 <script type="text/html" id="ko-pagination-template">
     <div class="row">
         <div class="col-sm-5">
             <div style="display: inline-block;">
-                Showing <span data-bind="text: ((currentPage() - 1) * perPage()) + 1"></span> to <span data-bind="text: currentPage() * perPage()"></span> of <span data-bind="text: totalItems"></span> entries</div>
+                {% trans 'Showing' %} <span data-bind="text: ((currentPage() - 1) * perPage()) + 1"></span> {% trans 'to' %} <span data-bind="text: currentPage() * perPage()"></span> {% trans 'of' %} <span data-bind="text: totalItems"></span> {% trans 'entries' %}</div>
             <div style="display: inline-block;">
                 <select data-bind="value: perPage,
                                    options: [5, 25, 50, 100],
