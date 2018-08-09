@@ -20,9 +20,7 @@
 {% endif %}
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/pricing_table.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'accounting/js/pricing_table' %}
 
 {% block form_content %}
 {% initial_page_data 'editions' editions %}
