@@ -248,9 +248,16 @@
     "></span>
 </script>
 <script type="text/html" id="unsupported-entry-ko-template">
-    <div class="unsupported alert alert-warning" data-bind="
-        text: 'Sorry, web entry cannot support this type of question ' + datatype
-    "></div>
+    <div class="unsupported alert alert-warning">
+        {% blocktrans %}
+            Sorry, web entry cannot support this type of question.
+            <br><br>
+            <small>
+                This question will appear as follows in data exports:
+                <strong data-bind="text: $data.answer"></strong>
+            </small>
+        {% endblocktrans %}
+    </div>
 </script>
 <script type="text/html" id="geo-entry-ko-template">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
