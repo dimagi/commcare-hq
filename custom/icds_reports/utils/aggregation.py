@@ -748,23 +748,10 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
-    def _anemic_query(self):
-        """
-        UPDATE agg_table SET
-            anemia = anemia
-        FROM (
-            SELECT ccs_record_case_id, LAST_VALUE(anemia) OVER w AS anemia
-            FROM ucr_table
-            WHERE state_id = state_id AND month = month AND anemia != 0
-        ) ut
-        WHERE agg_table.state_id = state_id AND agg_table.month = month AND case_id = ut.ccs_record_case_id
-        """
-
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
-        # anemia calculation is wrong here because it doesn't ignore nulls.
         return """
         SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
@@ -815,24 +802,24 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
           SELECT
             %(state_id)s AS state_id,
             %(month)s AS month,
-            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
-            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
+            ucr.case_id AS case_id,
+            ucr.latest_time_end AS latest_time_end_processed,
             GREATEST(ucr.immediate_breastfeeding, prev_month.immediate_breastfeeding) AS immediate_breastfeeding,
-            prev_month.anemia AS anemia,
-            COALESCE(ucr.eating_extra, prev_month.eating_extra) AS eating_extra,
-            COALESCE(ucr.resting, prev_month.resting) AS resting,
-            COALESCE(ucr.anc_weight, prev_month.anc_weight) as anc_weight,
-            COALESCE(ucr.anc_blood_pressure, prev_month.anc_blood_pressure) as anc_blood_pressure,
-            COALESCE(ucr.bp_sys, prev_month.bp_sys) as bp_sys,
-            COALESCE(ucr.bp_dia, prev_month.bp_dia) as bp_dia,
-            COALESCE(ucr.anc_hemoglobin, prev_month.anc_hemoglobin) as anc_hemoglobin,
+            ucr.anemia AS anemia,
+            ucr.eating_extra AS eating_extra,
+            ucr.resting AS resting,
+            ucr.anc_weight anc_weight,
+            ucr.anc_blood_pressure as anc_blood_pressure,
+            ucr.bp_sys as bp_sys,
+            ucr.bp_dia as bp_dia,
+            ucr.anc_hemoglobin as anc_hemoglobin,
             ucr.bleeding as bleeding,
             ucr.swelling as swelling,
             ucr.blurred_vision as blurred_vision,
             ucr.convulsions as convulsions,
             ucr.rupture as rupture
           FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN "{previous_month_tablename}" prev_month
+          LEFT JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
         )
         """.format(
