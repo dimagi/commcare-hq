@@ -24,7 +24,7 @@ hqDefine("app_manager/js/app_view_application", function() {
                 domain = $form.find("#id_domain").val(),
                 $modal = $("#copy-toggles");
 
-            if(!validateCopyApplicationForm($form)){
+            if(!isCopyApplicationFormValid($form)){
                 return false;
             }
 
@@ -75,7 +75,7 @@ hqDefine("app_manager/js/app_view_application", function() {
          * @param form
          * @returns {boolean}
          */
-        var validateCopyApplicationForm = function(form){
+        var isCopyApplicationFormValid = function(form){
             var domainDiv  = form.find("#div_id_domain"),
                 appNameDiv = form.find("#div_id_name"),
                 domain = domainDiv.find("#id_domain"),
@@ -84,16 +84,18 @@ hqDefine("app_manager/js/app_view_application", function() {
                 domainNames = initial_page_data("domain_names");
 
             appNameDiv.removeClass('has-error');
+            domainDiv.find('.help-block').remove();
+
             domainDiv.removeClass('has-error');
-            form.find('.help-block').remove();
+            appNameDiv.find('.help-block').remove();
 
             //if application name is not entered
-            if(!appName.val()){
+            if(!appName.val().trim()){
                 appNameDiv.addClass('has-error');
                 error = true;
-                var apperrorMessage = 'Application name is required';
+                var appErrorMessage = gettext('Application name is required');
 
-                appName.after($("<span class=\"help-block\"></span>").text(apperrorMessage));
+                appName.after($("<span class=\"help-block\"></span>").text(appErrorMessage));
             }
 
             //if project/domain is not selected or invalid domain is selected
@@ -101,13 +103,13 @@ hqDefine("app_manager/js/app_view_application", function() {
 
                 domainDiv.addClass('has-error');
                 error = true;
-                var domainerrorMessage = 'Invalid Project Selected';
+                var domainErrorMessage = gettext('Invalid Project Selected');
 
                 if(!domain.val()){
-                    domainerrorMessage = 'Project name is required';
+                    domainErrorMessage = gettext('Project name is required');
                 }
 
-                domain.after($("<span class=\"help-block\"></span>").text(domainerrorMessage));
+                domain.after($("<span class=\"help-block\"></span>").text(domainErrorMessage));
             }
 
             return !error;
