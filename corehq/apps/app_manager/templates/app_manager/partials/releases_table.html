@@ -67,7 +67,7 @@
             {% trans "Sorry, you don't have permission to do this action!" %}
         </span>
         <span data-bind="visible: buildErrorCode() !== 403">
-            {% trans "Whoops, that didn't go through. Reload the page and click Make New Version to try again." %}
+            {% trans "An error occurred. Reload the page and click Make New Version to try again." %}
         </span>
     </div>
 
@@ -78,7 +78,7 @@
 
     <div class="alert alert-danger hide"
          data-bind="visible: fetchState() === 'error', css: {hide: false}">
-        {% trans "Whoops, we couldn't get those versions for you. Could you try that again?" %}
+        {% trans "An error occurred while fetching versions. Reload the page to try again." %}
     </div>
 
     <div class="releases-container"
