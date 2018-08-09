@@ -70,14 +70,14 @@ class SharedDriveConfiguration(object):
 
 def get_server_url(http_method, server_root, username, password):
     if username and password:
-        return b'%(http_method)s://%(user)s:%(pass)s@%(server)s' % {
+        return '%(http_method)s://%(user)s:%(pass)s@%(server)s' % {
             'http_method': http_method,
             'user': username,
             'pass': password,
             'server': server_root,
         }
     else:
-        return b'%(http_method)s://%(server)s' % {
+        return '%(http_method)s://%(server)s' % {
             'http_method': http_method,
             'server': server_root,
         }
@@ -91,9 +91,9 @@ def get_dynamic_db_settings(server_root, username, password, dbname,
 
     """
 
-    http_method = b'https' if use_https else b'http'
+    http_method = 'https' if use_https else 'http'
     server_url = get_server_url(http_method, server_root, username, password)
-    database = b'%(server)s/%(database)s' % {
+    database = '%(server)s/%(database)s' % {
         'server': server_url,
         'database': dbname,
     }
