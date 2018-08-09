@@ -421,6 +421,13 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
+CASE_LIST_COLUMN_WIDTHS = StaticToggle(
+    'case_list_column_widths',
+    'Allow user to specify case list column widths',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+)
+
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Allow custom XML to define case lists (ex. for case tiles)',

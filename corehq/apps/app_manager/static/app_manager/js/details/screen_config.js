@@ -667,7 +667,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     return that.useCaseTiles() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
                 });
                 this.showColumnWidth = ko.computed(function() {
-                    return that.columnKey === 'short';   // && some toggle
+                    return that.columnKey === 'short' && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_COLUMN_WIDTHS');
                 });
                 this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
                 this.persistentCaseContextXML = ko.observable(spec[this.columnKey].persistent_case_context_xml || 'case_name');
