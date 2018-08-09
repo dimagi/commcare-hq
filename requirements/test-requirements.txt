@@ -4,8 +4,9 @@
 #
 #    make requirements
 #
--e git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect
+git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect==0.5.7a2
 -e git+git://github.com/millerdev/django-nose@fast-first-1.4.4#egg=django-nose
+git+https://github.com/Legrandin/pycryptodome@0df6211#egg=pycryptodome==3.6.5a1
 alembic==0.8.6
 amqp==1.4.9
 anyjson==0.3.3
@@ -90,7 +91,7 @@ jinja2==2.8
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.6
+jsonobject-couchdbkit==0.9.7
 jsonobject==0.9.3
 jsonpath-rw==1.4.0
 kafka-python==0.9.5
@@ -119,7 +120,6 @@ py-kissmetrics==1.0.1
 pyasn1==0.4.3
 pycco==0.5.1
 pycparser==2.18
-pycryptodome==3.6.4
 pygithub==1.35
 pygments==2.0.2
 pygooglechart==0.4.0
