@@ -222,6 +222,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.fetchState = ko.observable('');
         self.fetchLimit = o.fetchLimit || 5;
         self.currentAppVersion = ko.observable(self.options.currentAppVersion);
+        self.latestReleasedVersion = ko.observable(self.options.latestReleasedVersion);
         self.lastAppVersion = ko.observable();
 
         self.download_modal = $(self.options.download_modal_id);
@@ -278,15 +279,6 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.app_error_url = function(appId, version) {
             return self.reverse('project_report_dispatcher') + '?app=' + appId + '&version_number=' + version;
         };
-        self.latestReleaseId = ko.computed(function () {
-            for (var i = 0; i < self.savedApps().length; i++) {
-                var savedApp = self.savedApps()[i];
-                if (savedApp.is_released()) {
-                    return savedApp.id();
-                }
-            }
-            return null;
-        });
 
         self.previousBuildId = function(index) {
             if (self.savedApps()[index + 1]) {
@@ -343,6 +335,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     },
                     success: function (data) {
                         savedApp.is_released(data.is_released);
+                        self.latestReleasedVersion(data.latest_released_version);
                         $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
                     },
                     error: function () {

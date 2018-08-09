@@ -11,6 +11,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         recipient_contacts: initial_page_data('sms_contacts'),
         download_modal_id: '#download-zip-modal',
         fetchLimit: initial_page_data('fetch_limit'),
+        latestReleasedVersion: initial_page_data('latestReleasedVersion'),
     };
     var el = $('#releases-table');
     if (el.length) {

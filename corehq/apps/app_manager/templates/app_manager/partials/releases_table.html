@@ -89,7 +89,7 @@
              data-bind="css: {
                 'build-released': is_released(),
                 'build-unreleased': !is_released(),
-                'build-latest-release': id() === $root.latestReleaseId(),
+                'build-latest-release': version() === $root.latestReleasedVersion(),
                 'error': build_broken
             }">
           <div class="panel-heading">
@@ -119,7 +119,7 @@
                   <!--ko if: is_released() != 'error' -->
 
                   <span class="label label-info"
-                        data-bind="visible: id() === $root.latestReleaseId()">{% trans "Latest" %}</span>
+                        data-bind="visible: version() === $root.latestReleasedVersion()">{% trans "Latest" %}</span>
                   <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
                   <div class="btn-group">
                       <button type="button"

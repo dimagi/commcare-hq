@@ -137,6 +137,7 @@ def get_releases_context(request, domain, app_id):
         'can_send_sms': can_send_sms,
         'can_view_cloudcare': has_privilege(request, privileges.CLOUDCARE),
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
+        'latest_released_version': get_latest_released_app_version(domain, app_id),
         'sms_contacts': (
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
@@ -203,7 +204,10 @@ def release_build(request, domain, app_id, saved_app_id):
         _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
 
     if ajax:
-        return json_response({'is_released': is_released})
+        return json_response({
+            'is_released': is_released,
+            'latest_released_version': get_latest_released_app_version(domain, app_id)
+        })
     else:
         return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
