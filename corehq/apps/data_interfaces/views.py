@@ -648,7 +648,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @property
     def total(self):
-        return self._rules().count()
+        return len(self._rules())
 
     @property
     def column_names(self):
@@ -689,11 +689,11 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @memoized
     def _rules(self):
-        return AutomaticUpdateRule.by_domain(
+        return sorted(AutomaticUpdateRule.by_domain(
             self.domain,
             AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
             active_only=False,
-        )
+        ), key=lambda rule: (rule.name, rule.id))
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
