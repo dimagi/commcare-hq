@@ -1,7 +1,18 @@
-hqDefine('accounting/js/confirm_plan', function () {
+hqDefine('accounting/js/confirm_plan', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data'
+], function (
+    $,
+    ko,
+    _,
+    initialPageData
+) {
     var confirmPlanModel = function (isUpgrade, currentPlan, newPlan) {
         'use strict';
         var self = {};
+
         self.isUpgrade = isUpgrade;
         self.currentPlan = currentPlan;
         self.newPlan = newPlan;
@@ -27,7 +38,7 @@ hqDefine('accounting/js/confirm_plan', function () {
             $button.disableButton();
             $.ajax({
                 method: "POST",
-                url: hqImport('hqwebapp/js/initial_page_data').reverse('email_on_downgrade'),
+                url: initialPageData.reverse('email_on_downgrade'),
                 data: {
                     old_plan: self.currentPlan.name,
                     new_plan: self.newPlan.name,
@@ -38,27 +49,31 @@ hqDefine('accounting/js/confirm_plan', function () {
             });
         };
 
-        var userAgreementCheckBox = document.getElementById('user-agreement');
-        var confirmPlanButton = document.getElementById('confirm-plan');
-        if (userAgreementCheckBox !== null) {
-            confirmPlanButton.disabled = true;
-            userAgreementCheckBox.onchange = function () {
-                confirmPlanButton.disabled = !this.checked;
-            };
-        }
+        self.init = function () {
+            var userAgreementCheckBox = document.getElementById('user-agreement');
+            var confirmPlanButton = document.getElementById('confirm-plan');
+            if (userAgreementCheckBox !== null) {
+                confirmPlanButton.disabled = true;
+                userAgreementCheckBox.onchange = function () {
+                    confirmPlanButton.disabled = !this.checked;
+                };
+            }
+        };
 
         return self;
     };
 
 
     $(function () {
-        var initialPageData = hqImport('hqwebapp/js/initial_page_data').get;
-        confirmPlanModel = confirmPlanModel(
-            initialPageData('is_upgrade'),
-            initialPageData('current_plan'),
-            initialPageData('new_plan')
+        var confirmPlan = confirmPlanModel(
+            initialPageData.get('is_upgrade'),
+            initialPageData.get('current_plan'),
+            initialPageData.get('new_plan')
         );
+
         $('#confirm-plan').koApplyBindings(confirmPlanModel);
         $('#modal-downgrade').koApplyBindings(confirmPlanModel);
-    }());
+
+        confirmPlan.init();
+    });
 });

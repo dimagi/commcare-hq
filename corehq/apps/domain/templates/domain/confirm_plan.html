@@ -1,10 +1,7 @@
 {% extends "domain/base_change_plan.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-
-{% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/confirm_plan.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'accounting/js/confirm_plan' %}
 
 {% block form_content %}
 {% initial_page_data 'is_upgrade' is_upgrade|BOOL %}

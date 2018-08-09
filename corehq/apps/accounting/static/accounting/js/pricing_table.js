@@ -1,4 +1,14 @@
-hqDefine('accounting/js/pricing_table', function () {
+hqDefine('accounting/js/pricing_table', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data'
+], function (
+    $,
+    ko,
+    _,
+    initialPageData
+) {
     var pricingTableModel = function (editions, currentEdition, isRenewal, startDate, isSubscriptionBelowMin) {
         'use strict';
         var self = {};
@@ -116,14 +126,13 @@ hqDefine('accounting/js/pricing_table', function () {
     };
 
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            pricingTable = pricingTableModel(
-                initial_page_data('editions'),
-                initial_page_data('current_edition'),
-                initial_page_data('is_renewal'),
-                initial_page_data('start_date_after_minimum_subscription'),
-                initial_page_data('subscription_below_minimum')
-            );
+        var pricingTable = pricingTableModel(
+            initialPageData.get('editions'),
+            initialPageData.get('current_edition'),
+            initialPageData.get('is_renewal'),
+            initialPageData.get('start_date_after_minimum_subscription'),
+            initialPageData.get('subscription_below_minimum')
+        );
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
@@ -131,5 +140,5 @@ hqDefine('accounting/js/pricing_table', function () {
         $('#modal-minimum-subscription').koApplyBindings(pricingTable);
 
         pricingTable.init();
-    }());
+    });
 });
