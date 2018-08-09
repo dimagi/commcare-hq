@@ -19,4 +19,4 @@ Fabric==1.14.0
 readline==6.2.4.1
 pip-tools==2.0.2
 
---r requirements.txt
+--requirement requirements.txt
