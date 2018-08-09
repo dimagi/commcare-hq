@@ -51,9 +51,9 @@ class MigrationView(BaseMigrationView, FormView):
 
 
 def get_case_hierarchy_for_restore(case):
-    from corehq.apps.reports.view_helpers import get_case_hierarchy
+    from corehq.apps.reports.view_helpers import get_children
     return [
-        c for c in get_case_hierarchy(case, {})['case_list']
+        c for c in get_children(case)['case_list']
         if not c.closed
     ]
 

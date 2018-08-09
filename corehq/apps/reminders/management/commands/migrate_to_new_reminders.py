@@ -903,7 +903,7 @@ class Command(BaseCommand):
             return None
 
         if (
-            (len(reminder_result) == 0 or not reminder_result[0].active) and
+            (len(reminder_result) == 0 or not reminder_result[0].active or reminder_result[0].error) and
             handler.start_datetime and
             handler.start_datetime < datetime.utcnow() and
             handler.event_interpretation == EVENT_AS_OFFSET and

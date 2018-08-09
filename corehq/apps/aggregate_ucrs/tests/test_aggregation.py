@@ -206,7 +206,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
             case_blocks=[caseblock],
             form_properties=properties,
         )
-        submit_form_locally(form_builder.as_xml_string(), cls.domain, received_on=received_on)
+        submit_form_locally(form_builder.as_xml_string(), cls.domain, received_on=received_on, app_id=cls.app._id)
         return form_id
 
     @classmethod

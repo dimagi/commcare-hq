@@ -490,7 +490,7 @@ class DownloadFormExportView(BaseDownloadExportView):
     """
     urlname = 'export_download_forms'
     show_date_range = True
-    page_title = ugettext_noop("Download Form Export")
+    page_title = ugettext_noop("Download Form Data Export")
     check_for_multimedia = True
     form_or_case = 'form'
     filter_form_class = FilterFormCouchExportDownloadForm
@@ -599,7 +599,7 @@ class BulkDownloadFormExportView(DownloadFormExportView):
     """View to download a Bulk Form Export with filters.
     """
     urlname = 'export_bulk_download_forms'
-    page_title = ugettext_noop("Download Form Exports")
+    page_title = ugettext_noop("Download Form Data Exports")
 
     def get_filters(self, filter_form_data):
         filters = super(BulkDownloadFormExportView, self).get_filters(filter_form_data)
@@ -615,7 +615,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
     """View to download a SINGLE Case Export with Filters
     """
     urlname = 'export_download_cases'
-    page_title = ugettext_noop("Download Case Export")
+    page_title = ugettext_noop("Download Case Data Export")
     form_or_case = 'case'
     filter_form_class = FilterCaseCouchExportDownloadForm
 
@@ -1318,7 +1318,7 @@ class DashboardFeedPaywall(BaseProjectDataView):
 @location_safe
 class FormExportListView(BaseExportListView):
     urlname = 'list_form_exports'
-    page_title = ugettext_noop("Export Forms")
+    page_title = ugettext_noop("Export Form Data")
     form_or_case = 'form'
 
     @property
@@ -1434,7 +1434,7 @@ class FormExportListView(BaseExportListView):
 
 
 class DeIdFormExportListView(FormExportListView):
-    page_title = ugettext_noop("Export De-Identified Forms")
+    page_title = ugettext_noop("Export De-Identified Form Data")
     urlname = 'list_form_deid_exports'
     is_deid = True
 
@@ -1477,7 +1477,7 @@ class DeIdDashboardFeedListView(_DeidMixin, DashboardFeedListView):
 @location_safe
 class CaseExportListView(BaseExportListView):
     urlname = 'list_case_exports'
-    page_title = ugettext_noop("Export Cases")
+    page_title = ugettext_noop("Export Case Data")
     allow_bulk_export = False
     form_or_case = 'case'
 
@@ -1748,7 +1748,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
 @location_safe
 class CreateNewCustomFormExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_form'
-    page_title = ugettext_lazy("Create Form Export")
+    page_title = ugettext_lazy("Create Form Data Export")
     export_type = FORM_EXPORT
 
     def create_new_export_instance(self, schema):
@@ -1767,7 +1767,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
 @location_safe
 class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_case'
-    page_title = ugettext_lazy("Create Case Export")
+    page_title = ugettext_lazy("Create Case Data Export")
     export_type = CASE_EXPORT
 
     def create_new_export_instance(self, schema):
@@ -1913,13 +1913,13 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
 
 class EditNewCustomFormExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_form'
-    page_title = ugettext_lazy("Edit Form Export")
+    page_title = ugettext_lazy("Edit Form Data Export")
     export_type = FORM_EXPORT
 
 
 class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_case'
-    page_title = ugettext_lazy("Edit Case Export")
+    page_title = ugettext_lazy("Edit Case Data Export")
     export_type = CASE_EXPORT
 
 
@@ -2122,7 +2122,7 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
-    page_title = ugettext_noop("Download Form Exports")
+    page_title = ugettext_noop("Download Form Data Exports")
     filter_form_class = EmwfFilterFormExport
     export_filter_class = ExpandedMobileWorkerFilter
 
@@ -2168,7 +2168,7 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
 
 class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExportView):
     urlname = 'new_export_download_sms'
-    page_title = ugettext_noop("Export SMS")
+    page_title = ugettext_noop("Export SMS Messages")
     form_or_case = None
     filter_form_class = FilterSmsESExportDownloadForm
     export_id = None
