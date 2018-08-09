@@ -9,6 +9,7 @@ from celery.utils.log import get_task_logger
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
+from django.views.decorators.debug import sensitive_variables
 from couchdbkit import ResourceConflict, BulkSaveError
 from casexml.apps.case.mock import CaseBlock
 
@@ -16,7 +17,6 @@ from corehq import toggles
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserArchivedRebuild
-from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
 from django.utils.html import format_html
@@ -30,7 +30,7 @@ from six.moves import map
 logger = get_task_logger(__name__)
 
 
-@task(ErrorMail=SensitiveErrorMail)
+@sensitive_variables('user_specs', 'group_specs')
 def bulk_upload_async(domain, user_specs, group_specs):
     from corehq.apps.users.bulkupload import create_or_update_users_and_groups
     task = bulk_upload_async
