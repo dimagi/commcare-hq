@@ -293,7 +293,6 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.goToPage = function(page){
             self.fetchState('pending');
-            self.savedApps([]);
             $.ajax({
                 url: self.reverse("paginate_releases"),
                 dataType: 'json',
