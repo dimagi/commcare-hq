@@ -1121,11 +1121,9 @@
         }
      },
      {
-        "display_name": null,
         "transform": {},
         "datatype": "small_integer",
         "type": "expression",
-        "is_primary_key": false,
         "is_nullable": true,
         "column_id": "preg_order",
         "expression": {
@@ -1135,11 +1133,9 @@
         }
      },
      {
-        "display_name": null,
         "transform": {},
         "datatype": "string",
         "type": "expression",
-        "is_primary_key": false,
         "is_nullable": true,
         "column_id": "mobile_number",
         "expression": {
@@ -1149,11 +1145,9 @@
         }
      },
      {
-        "display_name": null,
         "transform": {},
         "datatype": "small_integer",
         "type": "expression",
-        "is_primary_key": false,
         "is_nullable": true,
         "column_id": "num_pnc_visits",
         "expression": {
