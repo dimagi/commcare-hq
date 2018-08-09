@@ -5,11 +5,13 @@ hqDefine('hqwebapp/js/components/pagination', function() {
 
             self.currentPage = ko.observable(params.currentPage || 1);
             self.totalItems = params.totalItems;
-            self.perPage = ko.observable(params.perPage || 5);
+            self.perPage = params.perPage;
             self.numPages = ko.computed(function(){
                 return Math.ceil(self.totalItems() / self.perPage());
             });
-
+            self.perPage.subscribe(function(){
+                self.goToPage(1);
+            });
             self.nextPage = function(){
                 self.goToPage(Math.min(self.currentPage() + 1, self.numPages()));
             };
@@ -20,6 +22,9 @@ hqDefine('hqwebapp/js/components/pagination', function() {
                 self.currentPage(page);
                 params.goToPage(self.currentPage());
             };
+            self.itemsShowing = ko.computed(function(){
+                return self.currentPage() * self.perPage();
+            });
             self.pagesShown = ko.computed(function(){
                 var pages = [];
                 for (var i = 1; i <= self.numPages(); i++){

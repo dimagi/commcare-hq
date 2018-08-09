@@ -1,20 +1,35 @@
 <!-- used by corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js -->
 <script type="text/html" id="ko-pagination-template">
-    <ul class="pagination">
-        <li>
-            <a href="#" data-bind="click: previousPage">
-                <span>&laquo;</span>
-            </a>
-        </li>
-        <!-- ko foreach: pagesShown -->
-        <li data-bind="css: { active: $data == $parent.currentPage()}">
-            <a href="#" data-bind="text: $data, click: $parent.goToPage"></a>
-        </li>
-        <!-- /ko -->
-        <li>
-            <a href="#" data-bind="click: nextPage">
-                <span>&raquo;</span>
-            </a>
-        </li>
-    </ul>
+    <div class="row">
+        <div class="col-sm-5">
+            <div style="display: inline-block;">
+                Showing <span data-bind="text: ((currentPage() - 1) * perPage()) + 1"></span> to <span data-bind="text: currentPage() * perPage()"></span> of <span data-bind="text: totalItems"></span> entries</div>
+            <div style="display: inline-block;">
+                <select data-bind="value: perPage,
+                                   options: [5, 25, 50, 100],
+                                   optionsText: function(num){return num + ' ' + gettext('per page')};
+                                   ">
+                </select>
+            </div>
+        </div>
+        <div class="col-sm-7">
+            <ul class="pagination">
+                <li>
+                    <a href="#" data-bind="click: previousPage">
+                        <span>&laquo;</span>
+                    </a>
+                </li>
+                <!-- ko foreach: pagesShown -->
+                <li data-bind="css: { active: $data == $parent.currentPage()}">
+                    <a href="#" data-bind="text: $data, click: $parent.goToPage"></a>
+                </li>
+                <!-- /ko -->
+                <li>
+                    <a href="#" data-bind="click: nextPage">
+                        <span>&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
 </script>

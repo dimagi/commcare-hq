@@ -220,7 +220,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.buildErrorCode = ko.observable('');
         self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
-        self.fetchLimit = o.fetchLimit || 5;
+        self.fetchLimit = ko.observable(o.fetchLimit || 5);
         self.currentAppVersion = ko.observable(self.options.currentAppVersion);
         self.latestReleasedVersion = ko.observable(self.options.latestReleasedVersion);
         self.lastAppVersion = ko.observable();
