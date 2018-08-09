@@ -1,0 +1,12 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% requirejs_main 'accounting/js/enterprise_settings' %}
+
+{% block page_content %}
+    {% initial_page_data 'accounts_email' accounts_email %}
+    {% initial_page_data 'restricted_domains' account.enterprise_restricted_signup_domains %}
+    {% initial_page_data 'restrict_signup' restrict_signup %}
+    {% crispy settings_form %}
+{% endblock %}
