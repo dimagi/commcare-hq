@@ -26,34 +26,6 @@
                 }
                 return '';
             };
-            self.translateName = function(names, target_lang, fallback) {
-                fallback = fallback ? fallback : '[unknown]';
-                if (!names) {
-                    return fallback;
-                }
-                var langs = [target_lang].concat(config.appLangs),
-                    firstLang = _(langs).find(function(lang) {
-                        return names[lang];
-                    });
-                if (!firstLang) {
-                    return fallback;
-                }
-                return names[firstLang] + (firstLang === target_lang ? '' : ' [' + firstLang + ']');
-            };
-            self.getModuleName = function(formId, target_lang) {
-                var names = config.formNameMap[formId];
-                if (names) {
-                    return self.translateName(names.module_name, target_lang);
-                }
-                return formId;
-            };
-            self.getFormName = function(formId, target_lang) {
-                var names = config.formNameMap[formId];
-                if (names) {
-                    return self.translateName(names.form_name, target_lang);
-                }
-                return formId;
-            };
             self.getFormUrl = function(formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
@@ -195,32 +167,6 @@
 
         $scope.getFormModuleLabel = function(form_module) {
             return utils.translateName(form_module.name, $scope.lang);
-        };
-
-        $scope.getModuleFormIcon = function(form_module) {
-            var formIcon = 'fa fa-file-o appnav-primary-icon';
-            if (form_module.action_type === 'open') {
-                formIcon = 'fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg';
-            } else if (form_module.action_type === 'close') {
-                formIcon = 'fcc fcc-app-completeform appnav-primary-icon appnav-primary-icon-lg';
-            } else if (form_module.action_type === 'update') {
-                formIcon = 'fcc fcc-app-updateform appnav-primary-icon appnav-primary-icon-lg';
-            }
-            return formIcon;
-        };
-
-        $scope.getModuleIcon = function(form_module) {
-            var moduleIcon = 'fa fa-folder-open';
-            if (form_module.module_type === 'advanced') {
-                moduleIcon = 'fa fa-flask';
-            } else if (form_module.module_type === 'report') {
-                moduleIcon = 'fa fa-bar-chart';
-            } else if (form_module.module_type === 'shadow') {
-                moduleIcon = 'fa fa-folder-open-o';
-            } else if (!form_module.is_surveys) {
-                moduleIcon = 'fa fa-bars';
-            }
-            return moduleIcon;
         };
 
         self.init();

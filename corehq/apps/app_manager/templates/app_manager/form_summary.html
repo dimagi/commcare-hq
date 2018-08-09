@@ -1,66 +1,49 @@
 {% extends 'app_manager/base_summary.html' %}
+{% load hq_shared_tags %}
 {% load i18n %}
 {% load xforms_extras %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static "app_manager/js/summary/utils.js" %}"></script>
+    <script src="{% static "app_manager/js/summary/form_summary.js" %}"></script>
+{% endblock js %}
 
 {% block navigation_extra %}
     <li role="presentation">
         <div class="appnav-item">
-            <a class="appnav-link-full">
+            <a class="appnav-link-full" data-bind="css: { active: viewAllSelected }">
               <i class="fa fa-search appnav-primary-icon"></i>
-              <span>{% trans "View All Forms" %}</span>
+              <span data-bind="text: viewAllItems"></span>
             </a>
         </div>
     </li>
-    {% for module in modules %}
+    <!-- ko foreach: items -->
         <li role="presentation">
-        <div class="appnav-item">
+            <div class="appnav-item">
                 <a class="appnav-link-full">
-                    <!-- TODO: DRY up with module_link_primary.html -->
-                    {% if module.module_type == 'advanced' %}
-                      <i class="fa fa-flask appmanager-icon-type appnav-primary-icon"></i>
-                    {% elif module.module_type == 'report' %}
-                      <i class="fa fa-bar-chart appmanager-icon-type appnav-primary-icon"></i>
-                    {% elif module.module_type == 'shadow' %}
-                      <i class="fa fa-folder-open-o appmanager-icon-type appnav-primary-icon"></i>
-                    {% elif module.is_training_module %}
-                      <i class="fa fa-book appnav-primary-icon"></i>
-                    {% elif not module.is_surveys %}
-                      <i class="fa fa-bars appnav-primary-icon"></i>
-                    {% else %}
-                      <i class="fa fa-folder-open appnav-primary-icon"></i>
-                    {% endif %}
-                    <span>{{ module.name|html_trans_prefix_delim:langs }}</span>
+                    <i data-bind="attr: { 'class': $data.icon }"></i>
+                    <span data-bind="text: name"></span>
                 </a>
             </div>
-            <ul class="appnav-menu appnav-menu-nested">
-                {% for form in module.forms %}
+            <!-- ko foreach: subitems -->
+                <ul class="appnav-menu appnav-menu-nested">
                     <li>
                         <div class="appnav-item">
                             <a class="appnav-link-full">
-                                <!-- TODO: DRY up with form_link_primary.html (note action_type vs get_action_type) -->
-                                <i
-                                    {% if form.action_type == 'open' %}
-                                        class="fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg"
-                                    {% elif form.action_type == 'close' %}
-                                        class="fcc fcc-app-completeform appnav-primary-icon appnav-primary-icon-lg"
-                                    {% elif form.action_type == 'update' %}
-                                        class="fcc fcc-app-updateform appnav-primary-icon appnav-primary-icon-lg"
-                                    {% elif form.form_type == 'shadow_form' %}
-                                        class="fa fa-moon-o appnav-primary-icon"
-                                    {% else %}
-                                        class="fa fa-file-o appnav-primary-icon"
-                                    {% endif %}
-                                ></i>
-                                <span>{{ form.name|html_trans_prefix_delim:langs }}</span>
+                                <i data-bind="attr: { 'class': $data.icon }"></i>
+                                <span data-bind="text: name"></span>
                             </a>
                         </div>
                     </li>
-                {% endfor %}
-            </ul>
+                </ul>
+            <!-- /ko -->
         </li>
-    {% endfor %}
+    <!-- /ko -->
 {% endblock navigation_extra %}
 
 {% block content_extra %}
-    i am the form summary: {{ modules }}
+    {% initial_page_data 'lang' lang %}
+    {% initial_page_data 'langs' langs %}
+    {% initial_page_data 'modules' modules %}
+    i am the form summary
 {% endblock content_extra %}
