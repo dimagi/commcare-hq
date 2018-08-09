@@ -45,7 +45,7 @@ class GenericRepeaterForm(forms.Form):
     password = forms.CharField(
         required=False,
         label='Password',
-        widget=forms.PasswordInput()
+        widget=forms.PasswordInput(render_value=True)
     )
     skip_cert_verify = forms.BooleanField(
         label=_('Skip SSL certificate verification'),
