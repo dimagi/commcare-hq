@@ -59,7 +59,7 @@ hqDefine('accounting/js/confirm_plan', [
                 };
             }
         };
-        
+
         return self;
     };
 
