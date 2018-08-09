@@ -142,7 +142,7 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
             if postfix in self.db_urls_by_prefix:
                 url = self.db_urls_by_prefix[postfix]
             else:
-                url = b'%s__%s' % (self.main_db_url, postfix)
+                url = '%s__%s' % (self.main_db_url, postfix)
             return app_label, url
         else:
             return app_label, self.main_db_url
