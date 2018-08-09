@@ -825,7 +825,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     request_data = request_as_dict(request)
 
-    send_email_report.delay(recipient_emails, domain, report_slug, report_type, request_data, once, form.cleaned_data)
+    send_email_report.delay(recipient_emails, domain, report_slug, report_type,
+                            request_data, once, form.cleaned_data)
     return HttpResponse()
 
 

@@ -211,7 +211,8 @@ def apps_update_calculated_properties():
 
 
 @task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_email_report(self, recipient_emails, domain, report_slug, report_type, request_data, once, cleaned_data):
+def send_email_report(self, recipient_emails, domain, report_slug, report_type,
+                      request_data, once, cleaned_data):
     """
     Function invokes send_HTML_email to email the html text report.
     If the report is too large to fit into email then a download link is
