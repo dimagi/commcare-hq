@@ -45,5 +45,18 @@
     {% initial_page_data 'lang' lang %}
     {% initial_page_data 'langs' langs %}
     {% initial_page_data 'modules' modules %}
-    i am the form summary
+    <ul>
+        <!-- ko foreach: modules -->
+            <li>
+            <span data-bind="text: name"></span>
+                <ul>
+                    <!-- ko foreach: forms -->
+                        <li>
+                            <span data-bind="text: name"></span>
+                        </li>
+                    <!-- /ko -->
+                </ul>
+            </li>
+        <!-- /ko -->
+    </ul>
 {% endblock content_extra %}

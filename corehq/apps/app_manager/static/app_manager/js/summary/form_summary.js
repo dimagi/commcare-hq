@@ -18,10 +18,36 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         return self;
     };
 
+    var contentModel = function(options) {
+        assertProperties(options, ['lang', 'langs', 'modules'], []);
+
+        var self = {};
+        self.lang = options.lang;
+        self.langs = options.langs;
+        self.modules = _.map(options.modules, function(module) {
+            return moduleModel(module, self.lang, self.langs);
+        });
+
+        return self;
+    };
+
+    var moduleModel = function(module, lang, langs) {
+        var self = _.extend({}, module);
+
+        self.name = utils.translateName(self.name, lang, langs);
+        self.forms = _.map(self.forms, function(form) {
+            form.name = utils.translateName(form.name, lang, langs);
+            return form;
+        });
+
+        return self;
+    };
+
     $(function() {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
             lang = initialPageData.get('lang'),
             langs = initialPageData.get('langs');
+
         $("#hq-sidebar > nav").koApplyBindings(menuModel({
             items: _.map(initialPageData.get("modules"), function(module) {
                 return {
@@ -38,6 +64,12 @@ hqDefine('app_manager/js/summary/form_summary', function() {
                 };
             }),
             viewAllItems: gettext("View All Forms"),
+        }));
+
+        $("#js-appmanager-body").koApplyBindings(contentModel({
+            lang: lang,
+            langs: langs,
+            modules: initialPageData.get("modules"),
         }));
     });
 });
