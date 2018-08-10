@@ -263,6 +263,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         rows_to_save_by_adapter = defaultdict(list)
         adapters = self.table_adapters_by_domain[domain]
         to_delete = {change for change in changes_chunk if change.deleted}
+        to_delete_by_adapter = defaultdict(list)
         to_update = set(changes_chunk) - to_delete
 
         failed, docs = self._get_docs(to_update)
@@ -283,16 +284,17 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                                 "Error in getting UCR values for changes chunk {ids}: {ex}".format(
                                     ids=[c.id for c in to_delete], ex=ex))
                             failed_changes.add(changes_by_id[doc['_id']])
-                elif adapter.config.deleted_filter(doc):
-                    to_delete.add(changes_by_id[doc['_id']])
+                elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
+                    to_delete_by_adapter[adapter].append(doc['_id'])
             eval_context.reset_iteration()
         for adapter in adapters:
+            delete_ids = to_delete_by_adapter[adapter] + [c.id for c in to_delete]
             try:
-                adapter.bulk_delete([c.id for c in to_delete])
+                adapter.bulk_delete(delete_ids)
             except Exception as ex:
                 notify_exception(None,
                     "Error in deleting changes chunk {ids}: {ex}".format(
-                        ids=[c.id for c in to_delete], ex=ex))
+                        ids=delete_ids, ex=ex))
                 failed_changes.update(to_delete)
         for adapter, rows in six.iteritems(rows_to_save_by_adapter):
             try:
