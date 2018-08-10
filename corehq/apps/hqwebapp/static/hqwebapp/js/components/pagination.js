@@ -1,3 +1,11 @@
+// Knockout Pagination Component
+// Include the <pagination> element on on your knockout page with the following parameters:
+// goToPage(page): a function that updates your view with new items for the given page.
+// perPage: a knockout observable that holds the number of items per page. This will be updated when the user changes the number of items using the dropdown. This should be used in your `goToPage` function to return the correct number of items.
+// totalItems: a knockout observable that returns the total number of items
+// See releases_table.html for an example.
+// This component must be nested within another element that has had knockout bindings applied to it.
+
 hqDefine('hqwebapp/js/components/pagination', function() {
     return {
         viewModel: function(params){
