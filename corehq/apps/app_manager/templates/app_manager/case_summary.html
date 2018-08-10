@@ -1,5 +1,23 @@
 {% extends 'app_manager/base_summary.html' %}
+{% load i18n %}
 
 {% block content_extra %}
+    <div class="page-header" style="margin-top: 0;">
+        <h3>
+          <i class="fcc fcc-fd-external-case"></i>
+          <span>{% trans "Case Summary" %}</span>
+        </h3>
+        <div class="row">
+            <div class="col-xs-8">
+                <div class="btn-toolbar pull-right" role="toolbar">
+                    <a class="btn btn-primary" href="{% url "download_case_summary" domain app_id %}?lang={{ lang }}">
+                        <i class="fa fa-download"></i>
+                        {% trans "Download" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     i am the case summary
 {% endblock content_extra %}

@@ -45,6 +45,24 @@
     {% initial_page_data 'lang' lang %}
     {% initial_page_data 'langs' langs %}
     {% initial_page_data 'modules' modules %}
+
+    <div class="page-header" style="margin-top: 0;">
+        <h3>
+          <i class="fa fa-file-text-o"></i>
+          {% trans "Form Summary" %}</h1>
+        </h3>
+        <div class="row">
+            <div class="col-xs-9">
+                <div class="btn-toolbar pull-right" role="toolbar">
+                    <a class="btn btn-primary" href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}">
+                        <i class="fa fa-download"></i>
+                        {% trans "Download" %}
+                    </a>
+                </div>
+             </div>
+        </div>
+    </div>
+
     <ul>
         <!-- ko foreach: modules -->
             <li data-bind="visible: isSelected">

@@ -23,11 +23,6 @@
 {% block content %}
 {% angularjs %}
     <div class="page-header" style="margin-top: 0;">
-        <h3>
-          <i class="fcc fcc-fd-external-case"></i>
-          <span>{% trans "Case Summary" %}</span>
-        </h3>
-
         <div class="row">
             <div class="col-xs-4">
                 <form class="form-inline" role="form">
@@ -70,10 +65,6 @@
                             &nbsp;{% trans "Show Calculations" %}
                         </button>
                     </div>
-                    <a class="btn btn-primary" href="{{ caseDownloadURL }}?lang={{ lang }}">
-                        <i class="fa fa-download"></i>
-                        {% trans "Download" %}
-                    </a>
                 </div>
             </div>
         </div>
