@@ -5,9 +5,8 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'scheduling/js/create_schedule.ko',
-    'data_interfaces/js/make_read_only'
-    ],
-    function($, ko, initialPageData) {
+    'data_interfaces/js/make_read_only',
+], function($, ko, initialPageData) {
 
     var CaseRuleCriteria = function(initial, constants) {
         'use strict';

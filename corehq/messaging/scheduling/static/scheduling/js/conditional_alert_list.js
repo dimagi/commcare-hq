@@ -1,8 +1,7 @@
 hqDefine("scheduling/js/conditional_alert_list", [
     'jquery',
-    'hqwebapp/js/initial_page_data'
-    ],
-    function($, initialPageData) {
+    'hqwebapp/js/initial_page_data',
+], function($, initialPageData) {
     var table = null;
 
     $(function() {
