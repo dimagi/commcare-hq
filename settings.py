@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import inspect
 from collections import defaultdict
 import importlib
 import os
@@ -944,20 +945,20 @@ def _determine_couch_databases(couch_databases):
                 'COUCH_DATABASE_NAME': COUCH_DATABASE_NAME,
             },
         }
-        warnings.warn("""COUCH_SERVER_ROOT and related variables are deprecated
+        warnings.warn(inspect.cleandoc("""COUCH_SERVER_ROOT and related variables are deprecated
 
-Please replace your COUCH_* settings with
+        Please replace your COUCH_* settings with
 
-    COUCH_DATABASES = {
-        'default': {
-            'COUCH_HTTPS': %(COUCH_HTTPS)r,
-            'COUCH_SERVER_ROOT': %(COUCH_SERVER_ROOT)r,
-            'COUCH_USERNAME': %(COUCH_USERNAME)r,
-            'COUCH_PASSWORD': %(COUCH_PASSWORD)r,
-            'COUCH_DATABASE_NAME': %(COUCH_DATABASE_NAME)r,
-        },
-    }
-    """ % globals(), DeprecationWarning)
+            COUCH_DATABASES = {
+                'default': {
+                    'COUCH_HTTPS': %(COUCH_HTTPS)r,
+                    'COUCH_SERVER_ROOT': %(COUCH_SERVER_ROOT)r,
+                    'COUCH_USERNAME': %(COUCH_USERNAME)r,
+                    'COUCH_PASSWORD': %(COUCH_PASSWORD)r,
+                    'COUCH_DATABASE_NAME': %(COUCH_DATABASE_NAME)r,
+                },
+            }
+            """) % globals(), DeprecationWarning)
 
     return couch_databases
 
@@ -989,12 +990,12 @@ IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
 
 if not KAFKA_BROKERS and 'KAFKA_URL' in globals():
     import warnings
-    warnings.warn("""KAFKA_URL is deprecated
+    warnings.warn(inspect.cleandoc("""KAFKA_URL is deprecated
 
-Please replace KAFKA_URL with KAFKA_BROKERS as follows:
+    Please replace KAFKA_URL with KAFKA_BROKERS as follows:
 
-KAFKA_BROKERS = ['%s']
-""" % KAFKA_URL, DeprecationWarning)
+        KAFKA_BROKERS = ['%s']
+    """) % KAFKA_URL, DeprecationWarning)
 
     KAFKA_BROKERS = [KAFKA_URL]
 
