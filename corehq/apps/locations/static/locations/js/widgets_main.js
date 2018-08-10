@@ -2,6 +2,8 @@ hqDefine("locations/js/widgets_main", [
     'jquery',
     'underscore',
     'select2-3.5.2-legacy/select2',
+    'scheduling/js/create_schedule.ko',
+    'data_interfaces/js/make_read_only'
 ], function(
     $,
     _
