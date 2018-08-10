@@ -60,9 +60,23 @@
         </div>
     </div>
 
+    <!-- TODO: errors -->
+    <!--div class="alert alert-danger" ng-repeat="form in errors" ng-show="errors">
+        <i class="fa fa-exclamation-circle"></i> {% trans "Error in form:" %}
+        {% verbatim %}"{{ getFormModuleLabel(form) }}"{% endverbatim %}
+        {% trans "in module" %}
+        {% verbatim %}"{{ getFormModuleLabel(form.module) }}"
+        <a href="{{ form.error.edit_url }}" ng-if="!readOnly">
+            <i class="fa fa-pencil"></i>
+        </a><br/>
+        {{ form.error.details }}
+        {% endverbatim %}
+    </div-->
+
     <ul data-bind="foreach: modules">
         <li data-bind="visible: isSelected">
             <h4>
+                <!-- TODO: language support, readOnly -->
                 <a data-bind="attr: { href: url }">
                     <i data-bind="attr: { 'class': icon }"></i>
                     <span data-bind="text: name"></span>
@@ -72,6 +86,7 @@
             <ul data-bind="foreach: forms">
                 <li data-bind="visible: isSelected">
                     <h5>
+                        <!-- TODO: language support, readOnly -->
                         <a data-bind="attr: { href: url }">
                             <i data-bind="attr: { 'class': icon }"></i>
                             <span data-bind="text: name"></span>
@@ -81,7 +96,7 @@
                     <ol data-bind="foreach: questions">
                         <li>
                             <i data-bind="attr: { 'class': icon }" title="type"></i>
-                            <span data-bind="text: value"></span>
+                            <span data-bind="text: value"></span> <!-- TODO: name vs id, language support -->
                             <span data-bind="visible: required" title="{% trans "This question is required" %}">*</span>
                             <span class="text-muted" data-bind="visible: $root.showComments">
                                 &nbsp; <span data-bind="text: comment"></span>
@@ -113,6 +128,7 @@
                             </ul>
                             <ol data-bind="foreach: options">
                                 <li>
+                                    <!-- TODO: name vs id, language support -->
                                     <span data-bind="text: value"></span>
                                 </li>
                             </ol>
