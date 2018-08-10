@@ -110,7 +110,6 @@
         $scope.lang = 'en';
         $scope.showLabels = true;
         $scope.showCalculations = false;
-        $scope.showRelevance = false;
         $scope.showConstraints = false;
         $scope.showComments = false;
         $scope.showDefaultValues = false;

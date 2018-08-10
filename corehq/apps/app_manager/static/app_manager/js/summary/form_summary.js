@@ -23,6 +23,11 @@ hqDefine('app_manager/js/summary/form_summary', function() {
             });
         });
 
+        self.showRelevance = ko.observable(false);
+        self.toggleRelevance = function() {
+            self.showRelevance(!self.showRelevance());
+        };
+
         return self;
     };
 

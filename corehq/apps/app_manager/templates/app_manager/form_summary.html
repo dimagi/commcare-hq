@@ -22,6 +22,13 @@
         </h3>
         <div class="row">
             <div class="col-xs-9">
+                <div class="btn-group" role="group" >
+                    <button type="button" class="btn btn-default"
+                            data-bind="click: toggleRelevance, css: { active: showRelevance }">
+                            <i class="fa fa-code-fork" data-bind="css: { 'hq-icon': showRelevance }"></i>
+                        &nbsp;{% trans "Display" %}
+                    </button>
+                </div>
                 <div class="btn-toolbar pull-right" role="toolbar">
                     <a class="btn btn-primary" href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}">
                         <i class="fa fa-download"></i>
@@ -57,6 +64,12 @@
                                     <span data-bind="text: value"></span>
                                 </li>
                             </ol>
+                            <ul class="fa-ul" data-bind="if: relevant, visible: $root.showRelevance">
+                                <li>
+                                    <i class="fa-li fa fa-code-fork text-muted"></i>
+                                    <span data-bind="text: relevant"></span>
+                                </li>
+                            </ul>
                         </li>
                     </ol>
                 </li>
