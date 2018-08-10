@@ -26,5 +26,21 @@
         </div>
     </div>
 
-    i am the case summary
+    <div class="row">
+        <div class="col-sm-12">
+            <!-- ko foreach: caseTypes -->
+                <div class="panel panel-appmanager" data-bind="visible: isSelected">
+                    <div class="panel-heading">
+                        <h4 class="panel-title panel-title-nolink">
+                            <i class="fcc fcc-fd-external-case"></i>
+                            <span data-bind="text: name"></span>
+                        </h4>
+                    </div>
+                    <div class="panel-body">
+                        stuff about <span data-bind="text: name"></span>
+                    </div>
+                </div>
+            <!-- /ko -->
+        </div>
+    </div>
 {% endblock content_extra %}
