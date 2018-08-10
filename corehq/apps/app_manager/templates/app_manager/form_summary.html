@@ -23,6 +23,7 @@
         <div class="row">
             <div class="col-xs-9">
                 <div class="btn-group" role="group" >
+                    <!-- TODO: template binding for these? -->
                     <button type="button" class="btn btn-default"
                             data-bind="click: toggleCalculations, css: { active: showCalculations }">
                             <i class="fa fa-calculator" data-bind="css: { 'hq-icon': showCalculations }"></i>
@@ -81,12 +82,11 @@
                         <li>
                             <i data-bind="attr: { 'class': icon }" title="type"></i>
                             <span data-bind="text: value"></span>
-                            <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: comment"</span>
-                            <ol data-bind="foreach: options">
-                                <li>
-                                    <span data-bind="text: value"></span>
-                                </li>
-                            </ol>
+                            <span data-bind="visible: required" title="{% trans "This question is required" %}">*</span>
+                            <span class="text-muted" data-bind="visible: $root.showComments">
+                                &nbsp; <span data-bind="text: comment"></span>
+                            </span>
+                            <!-- TODO: template binding for these? -->
                             <ul class="fa-ul" data-bind="if: calculate, visible: $root.showCalculations">
                                 <li>
                                     <i class="fa-li fa fa-calculator text-muted"></i>
@@ -111,6 +111,11 @@
                                     <span data-bind="text: setvalue"></span>
                                 </li>
                             </ul>
+                            <ol data-bind="foreach: options">
+                                <li>
+                                    <span data-bind="text: value"></span>
+                                </li>
+                            </ol>
                         </li>
                     </ol>
                 </li>

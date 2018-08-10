@@ -81,7 +81,6 @@
                                 <span ng-show="showLabels">{{ getQuestionLabel(question) }}</span>
                                 {% endverbatim %}
                                 <span ng-hide="showLabels">{{ question.value }}</span>
-                                <span ng-show="question.required" title="{% trans "This question is required" %}">*</span>
                                 <ol>
                                     <li ng-repeat="option in question.options">
                                         {% verbatim %}
