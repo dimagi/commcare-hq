@@ -255,7 +255,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
         for domain, changes_chunk in six.iteritems(changes_by_domain):
             rows_to_save_by_adapter = defaultdict(list)
-            adapters = list(self.table_adapters_by_domain[domain])
+            adapters = self.table_adapters_by_domain[domain]
             to_delete = {change for change in changes_chunk if change.deleted}
             to_update = set(changes_chunk) - to_delete
             docs = get_docs(to_update, domain)

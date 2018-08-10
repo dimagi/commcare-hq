@@ -942,6 +942,7 @@ class AsyncIndicator(models.Model):
 
     @classmethod
     def bulk_update_records(cls, configs_by_docs, domain, doc_type_by_id):
+        # type (Dict[str, List[str]], str, Dict[str, str]) -> None
         # configs_by_docs should be a dict of doc_id -> list of config_ids
         if not configs_by_docs:
             return
