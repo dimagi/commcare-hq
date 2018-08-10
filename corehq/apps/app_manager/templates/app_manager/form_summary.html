@@ -45,6 +45,8 @@
     {% initial_page_data 'lang' lang %}
     {% initial_page_data 'langs' langs %}
     {% initial_page_data 'modules' modules %}
+    {% registerurl 'form_source' domain app_id '---' %}
+    {% registerurl 'view_module' domain app_id '---' %}
 
     <div class="page-header" style="margin-top: 0;">
         <h3>
@@ -66,11 +68,21 @@
     <ul>
         <!-- ko foreach: modules -->
             <li data-bind="visible: isSelected">
-                <span data-bind="text: name"></span>
+                <h4>
+                    <a data-bind="attr: { href: url }">
+                        <i data-bind="attr: { 'class': icon }"></i>
+                        <span data-bind="text: name"></span>
+                    </a>
+                </h4>
                 <ul>
                     <!-- ko foreach: forms -->
                         <li data-bind="visible: isSelected">
-                            <span data-bind="text: name"></span>
+                            <h5>
+                                <a data-bind="attr: { href: url }">
+                                    <i data-bind="attr: { 'class': icon }"></i>
+                                    <span data-bind="text: name"></span>
+                                </a>
+                            </h5>
                         </li>
                     <!-- /ko -->
                 </ul>

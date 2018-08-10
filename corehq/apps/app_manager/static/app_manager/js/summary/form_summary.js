@@ -70,6 +70,8 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         var self = _.extend({}, module);
 
         self.name = utils.translateName(self.name, lang, langs);
+        self.url = hqImport("hqwebapp/js/initial_page_data").reverse("view_module", self.id);
+        self.icon = utils.moduleIcon(self) + ' hq-icon';
         self.forms = _.map(self.forms, function(form) {
             return formModel(form, lang, langs);
         });
@@ -83,6 +85,8 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         var self = _.extend({}, form);
 
         self.name = utils.translateName(self.name, lang, langs);
+        self.url = hqImport("hqwebapp/js/initial_page_data").reverse("form_source", self.id);
+        self.icon = utils.formIcon(self) + ' hq-icon';
 
         self.isSelected = ko.observable(true);
 
