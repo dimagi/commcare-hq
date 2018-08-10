@@ -1,4 +1,10 @@
-hqDefine("scheduling/js/create_schedule.ko", function() {
+hqDefine("scheduling/js/create_schedule.ko", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/select2_handler',
+    'jquery-ui/ui/datepicker',
+], function($, ko, intialPageData, select2Handler) {
     ko.bindingHandlers.useTimePicker = {
         init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
             $(element).timepicker({
@@ -67,12 +73,12 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         var self = this;
 
         self.subject = new TranslationViewModel(
-            hqImport("hqwebapp/js/initial_page_data").get("language_list"),
+            intialPageData.get("language_list"),
             initial_values.subject
         );
 
         self.message = new TranslationViewModel(
-            hqImport("hqwebapp/js/initial_page_data").get("language_list"),
+            intialPageData.get("language_list"),
             initial_values.message
         );
 
@@ -115,7 +121,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.event_id = id;
 
-        var custom_event_formset = hqImport("hqwebapp/js/initial_page_data").get("current_values").custom_event_formset;
+        var custom_event_formset = intialPageData.get("current_values").custom_event_formset;
         if(id < custom_event_formset.length) {
             self.eventAndContentViewModel = new EventAndContentViewModel(custom_event_formset[id]);
         } else {
@@ -481,7 +487,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         };
     };
 
-    var baseSelect2Handler = hqImport("hqwebapp/js/select2_handler").baseSelect2Handler,
+    var baseSelect2Handler = select2Handler.baseSelect2Handler,
         recipientsSelect2Handler = function (initial_object_list, initial_comma_separated_list, field) {
             /*
              * initial_object_list is a list of {id: ..., text: ...} objects representing the initial value
@@ -541,13 +547,13 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
     $(function () {
         var scheduleViewModel = new CreateScheduleViewModel(
-            hqImport("hqwebapp/js/initial_page_data").get("current_values"),
-            hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_recipients"),
-            hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_group_recipients"),
-            hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_organization_recipients"),
-            hqImport("hqwebapp/js/initial_page_data").get("current_select2_location_types"),
-            hqImport("hqwebapp/js/initial_page_data").get("current_select2_case_group_recipients"),
-            hqImport("hqwebapp/js/initial_page_data").get("current_visit_scheduler_form")
+            intialPageData.get("current_values"),
+            intialPageData.get("current_select2_user_recipients"),
+            intialPageData.get("current_select2_user_group_recipients"),
+            intialPageData.get("current_select2_user_organization_recipients"),
+            intialPageData.get("current_select2_location_types"),
+            intialPageData.get("current_select2_case_group_recipients"),
+            intialPageData.get("current_visit_scheduler_form")
         );
         $('#create-schedule-form').koApplyBindings(scheduleViewModel);
         scheduleViewModel.init();

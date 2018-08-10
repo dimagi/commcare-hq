@@ -3,8 +3,8 @@
 
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/select2_handler.js' %}"></script>
-    <script src="{% static 'scheduling/js/create_schedule.ko.js' %}"></script>
+    {% requirejs_main 'scheduling/js/create_schedule.ko' %}
+
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}

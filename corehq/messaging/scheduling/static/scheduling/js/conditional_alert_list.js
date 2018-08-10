@@ -1,8 +1,12 @@
-hqDefine("scheduling/js/conditional_alert_list", function() {
+hqDefine("scheduling/js/conditional_alert_list", [
+    'jquery',
+    'hqwebapp/js/initial_page_data'
+    ],
+    function($, initialPageData) {
     var table = null;
 
     $(function() {
-        var conditonal_alert_list_url = hqImport("hqwebapp/js/initial_page_data").reverse("conditional_alert_list");
+        var conditonal_alert_list_url = initialPageData.reverse("conditional_alert_list");
 
         table = $("#conditional-alert-list").dataTable({
             "lengthChange": false,
@@ -45,7 +49,7 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 {
                     "targets": [1],
                     "render": function(data, type, row) {
-                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_conditional_alert', row.id);
+                        var url = initialPageData.reverse('edit_conditional_alert', row.id);
                         return "<a href='" + url + "'>" + row.name + "</a>";
                     },
                 },
@@ -162,7 +166,7 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
 
     function restartRule(rule_id) {
         var prompt = null;
-        if(hqImport("hqwebapp/js/initial_page_data").get("limit_rule_restarts")) {
+        if(initialPageData.get("limit_rule_restarts")) {
             prompt = gettext(
                 "A rule should only be restarted when you believe it is stuck and is not progressing. " +
                 "You will only be able to restart this rule once every two hours. Restart this rule?"
