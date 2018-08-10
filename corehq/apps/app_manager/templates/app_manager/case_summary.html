@@ -143,6 +143,34 @@
                                                     show-calculations="showCalculations"
                                                     show-labels="showLabels"
                                                     lang="lang"></form-questions-->
+                                            <!--ul class="fa-ul">
+                                                <li ng-repeat="question in questions">
+                                                    {% verbatim %}<i class="hq-icon fa-li { getIcon(question.question.type) }"></i>{% endverbatim %}
+                                                    {% verbatim %}<span ng-show="showLabels">{ getQuestionLabel(question.question) }</span>{% endverbatim %}
+                                                    <ul ng-if="question.question.options" ng-show="showLabels">
+                                                        <li ng-repeat="option in question.question.options">
+                                                            { getSelectOptionsLabel(option) }
+                                                        </li>
+                                                    </ul>
+                                                    <span ng-hide="showLabels">{ question.question.value }</span>
+                                                        <ul ng-if="question.question.options" ng-hide="showLabels">
+                                                            <li ng-repeat="option in question.question.options">
+                                                                { option.value }
+                                                            </li>
+                                                        </ul>
+                                                    <ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">
+                                                        <li>
+                                                            <i class="fa-li fa fa-sitemap text-muted"></i>
+                                                            { question.condition.question } { question.condition.operator } { question.condition.answer }
+                                                        </li>
+                                                    </ul>
+                                                    <ul class="fa-ul" ng-if="question.question.calculate" ng-show="showCalculations">
+                                                        <li>
+                                                            <i class="fa-li fa fa-calculator text-muted"></i> { question.question.calculate }
+                                                        </li>
+                                                    </ul>
+                                                </li>
+                                            </ul-->
                                         </td>
                                         <td>
                                             TODO: save questions
@@ -152,6 +180,34 @@
                                                     show-calculations="showCalculations"
                                                     show-labels="showLabels"
                                                     lang="lang"></form-questions-->
+                                            <!--ul class="fa-ul">
+                                                <li ng-repeat="question in questions">
+                                                    {% verbatim %}<i class="hq-icon fa-li { getIcon(question.question.type) }"></i>{% endverbatim %}
+                                                    {% verbatim %}<span ng-show="showLabels">{ getQuestionLabel(question.question) }</span>{% endverbatim %}
+                                                    <ul ng-if="question.question.options" ng-show="showLabels">
+                                                        <li ng-repeat="option in question.question.options">
+                                                            { getSelectOptionsLabel(option) }
+                                                        </li>
+                                                    </ul>
+                                                    <span ng-hide="showLabels">{ question.question.value }</span>
+                                                        <ul ng-if="question.question.options" ng-hide="showLabels">
+                                                            <li ng-repeat="option in question.question.options">
+                                                                { option.value }
+                                                            </li>
+                                                        </ul>
+                                                    <ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">
+                                                        <li>
+                                                            <i class="fa-li fa fa-sitemap text-muted"></i>
+                                                            { question.condition.question } { question.condition.operator } { question.condition.answer }
+                                                        </li>
+                                                    </ul>
+                                                    <ul class="fa-ul" ng-if="question.question.calculate" ng-show="showCalculations">
+                                                        <li>
+                                                            <i class="fa-li fa fa-calculator text-muted"></i> { question.question.calculate }
+                                                        </li>
+                                                    </ul>
+                                                </li>
+                                            </ul-->
                                         </td>
                                     </tr>
                                 <!-- /ko -->

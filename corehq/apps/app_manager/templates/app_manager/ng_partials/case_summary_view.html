@@ -3,23 +3,6 @@
 {% load hq_shared_tags %}
 {% load djangular_tags %}
 
-{% block navigation_extra %}
-    {% angularjs %}
-    <li role="presentation" >
-        <div class="appnav-item"
-             ng-class="{ 'active' : !typeSearch.name }">
-            <a ng-click="filterCaseTypes()"
-               class="appnav-link-full">
-              <i class="fa fa-search appnav-primary-icon"></i>
-              <span>{% trans "View All Case Types" %}</span>
-            </a>
-        </div>
-        <hierarchy hierarchy="hierarchy" filter-case-types="filterCaseTypes(casetype)"  type-search="typeSearch"
-                has-errors="hasErrors(casetype)"></hierarchy>
-    </li>
-    {% endangularjs %}
-{% endblock %}
-
 {% block content %}
 {% angularjs %}
     <div class="page-header" style="margin-top: 0;">
@@ -63,79 +46,5 @@
             </div>
         </div>
     </div>
-    <loading></loading>
-    <div class="row" ng-hide="loading">
-        <div class="col-sm-12">
-            <div ng-repeat="caseType in caseTypes|filter:typeSearch:true">
-                <div class="panel panel-appmanager" ng-show="(caseType.properties|filter:propertySearch).length">
-                    <div class="panel-heading">
-                        <h4 class="panel-title panel-title-nolink">
-                            <i class="fcc fcc-fd-external-case"></i>
-                            {{ caseType.name }}
-                        </h4>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-<!-- template for rendering case type hierarchy in navigation -->
-<script type="text/ng-template" id="/hierarchy.html">
-  <ul class="appnav-menu appnav-menu-nested">
-      <member ng-repeat='(casetype, subhierarchy) in hierarchy' casetype='casetype' hierarchy="subhierarchy"
-              type-search="typeSearch" filter-case-types="filterCaseTypes({casetype: casetype})"
-              has-errors="hasErrors({casetype: casetype})"></member>
-  </ul>
-</script>
-
-<!-- sub-template for member of case type hierarchy -->
-<script type="text/ng-template" id="/hierarchy_member.html">
-  <li role="presentation">
-      <div class="appnav-item" ng-class="{ 'active' : typeSearch.name === casetype }">
-          <a ng-click="filterCaseTypes({casetype: casetype})"
-             class="appnav-link-full">
-              <i class="fcc fcc-fd-external-case appnav-primary-icon"></i>
-              <span>{{ casetype }}</span>
-              <i class="fa fa-exclamation-triangle text-danger" ng-show="hasErrors({casetype: casetype})"></i>
-          </a>
-      </div>
-  </li>
-</script>
-
-<!-- template for rendering form questions -->
-<script type="text/ng-template" id="/form_questions.html">
-<ul class="fa-ul">
-    <li ng-repeat="question in questions">
-        {% verbatim %}<i class="hq-icon fa-li {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
-        {% verbatim %}<span ng-show="showLabels">{{ getQuestionLabel(question.question) }}</span>{% endverbatim %}
-        {% verbatim %}
-        <ul ng-if="question.question.options" ng-show="showLabels">
-            <li ng-repeat="option in question.question.options">
-                {{ getSelectOptionsLabel(option) }}
-            </li>
-        </ul>
-        {% endverbatim %}
-
-        <span ng-hide="showLabels">{{ question.question.value }}</span>
-        {% verbatim %}
-            <ul ng-if="question.question.options" ng-hide="showLabels">
-                <li ng-repeat="option in question.question.options">
-                    {{ option.value }}
-                </li>
-            </ul>
-        {% endverbatim %}
-        <ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">
-            <li>
-                <i class="fa-li fa fa-sitemap text-muted"></i> {{ question.condition.question }} {{ question.condition.operator }} {{ question.condition.answer }}
-            </li>
-        </ul>
-        <ul class="fa-ul" ng-if="question.question.calculate" ng-show="showCalculations">
-            <li>
-                <i class="fa-li fa fa-calculator text-muted"></i> {{ question.question.calculate }}
-            </li>
-        </ul>
-    </li>
-</ul>
-</script>
 {% endangularjs %}
 {% endblock %}
