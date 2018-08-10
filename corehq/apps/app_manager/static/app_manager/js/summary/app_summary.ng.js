@@ -236,20 +236,6 @@
     };
     summaryModule.controller(controllers);
 
-    summaryModule.directive('openerCloser', ['utils', function(utils) {
-        return {
-            restrict: 'E',
-            templateUrl: '/opener_closer.html',
-            scope: {
-                forms: '=',
-                lang: '=',
-            },
-            controller: function($scope) {
-                $scope.getFormName = utils.getFormName;
-            },
-        };
-    }]);
-
     summaryModule.directive('formQuestions', ['utils', function(utils) {
         return {
             restrict: 'E',

@@ -6,6 +6,26 @@ hqDefine('app_manager/js/summary/case_summary', function() {
     var caseTypeModel = function(caseType) {
         var self = _.extend({}, caseType);
 
+        // Convert these from objects to lists so knockout can process more easily
+        self.relationshipList = _.map(_.keys(self.relationships), function(relationship) {
+            return {
+                relationship: relationship,
+                caseType: self.relationships[relationship],
+            };
+        });
+        self.openedByList = _.map(_.keys(self.opened_by), function(formId) {
+            return {
+                formId: formId,
+                conditions: self.opened_by[formId].conditions,
+            };
+        });
+        self.closedByList = _.map(_.keys(self.closed_by), function(formId) {
+            return {
+                formId: formId,
+                conditions: self.closed_by[formId].conditions,
+            };
+        });
+
         self.isSelected = ko.observable(true);
 
         return self;
@@ -25,6 +45,11 @@ hqDefine('app_manager/js/summary/case_summary', function() {
                 caseType.isSelected(!selectedId || selectedId === caseType.name);
             });
         });
+
+        self.showConditions = ko.observable(true);
+        self.toggleConditions = function() {
+            self.showConditions(!self.showConditions());
+        };
 
         return self;
     };

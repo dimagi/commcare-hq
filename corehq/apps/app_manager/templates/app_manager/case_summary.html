@@ -17,6 +17,14 @@
         <div class="row">
             <div class="col-xs-8">
                 <div class="btn-toolbar pull-right" role="toolbar">
+                    <div class="btn-group" role="group" >
+                        <!-- TODO: this should also affect question conditions -->
+                        <button type="button" class="btn btn-default"
+                                data-bind="click: toggleConditions, css: { active : showConditions }">
+                            <i class="fa fa-sitemap" data-bind="css: {'hq-icon': showConditions }"></i>
+                            &nbsp;{% trans "Show Conditions" %}
+                        </button>
+                    </div>
                     <a class="btn btn-primary" href="{% url "download_case_summary" domain app_id %}?lang={{ lang }}">
                         <i class="fa fa-download"></i>
                         {% trans "Download" %}
@@ -37,7 +45,69 @@
                         </h4>
                     </div>
                     <div class="panel-body">
-                        stuff about <span data-bind="text: name"></span>
+                        <div class="well">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>{% trans "Relationships:" %}</strong>
+                                    <ul data-bind="foreach: relationshipList">
+                                        <li>
+                                            <span class="label label-primary" data-bind="text: relationship"></span>
+                                            <span data-bind="text: caseType"></span>
+                                        </li>
+                                   </ul>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>{% trans "Opened by:" %}</strong>
+                                    <ul data-bind="foreach: openedByList">
+                                        <li>
+                                            <span data-bind="text: formId"></span><!-- TODO: name not id -->
+                                            <!-- ko: if: conditions -->
+                                                <ul data-bind="visible: $root.showConditions, foreach: conditions">
+                                                    <li>
+                                                        <i class="fa fa-sitemap"></i>
+                                                        <span data-bind="text: question"></span>
+                                                        <span data-bind="text: operator"></span>
+                                                        <span data-bind="text: answer"></span>
+                                                    </li>
+                                                </ul>
+                                            <!-- /ko -->
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>{% trans "Closed by:" %}</strong>
+                                    <ul data-bind="foreach: closedByList">
+                                        <li>
+                                            <span data-bind="text: formId"></span><!-- TODO: name not id -->
+                                            <!-- ko: if: conditions -->
+                                                <ul data-bind="visible: $root.showConditions, foreach: conditions">
+                                                    <li>
+                                                        <i class="fa fa-sitemap"></i>
+                                                        <span data-bind="text: question"></span>
+                                                        <span data-bind="text: operator"></span>
+                                                        <span data-bind="text: answer"></span>
+                                                    </li>
+                                                </ul>
+                                            <!-- /ko -->
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <!-- TODO -->
+                            <!--div class="row" ng-show="caseType.has_errors">
+                                <div class="col-md-6">
+                                    {% trans "Problems:" %}
+                                    <ul>
+                                        <li ng-show="caseType.error">
+                                            {{ caseType.error }}
+                                        </li>
+                                        <li ng-repeat="property in caseType.properties|filter:{'has_errors': true}">
+                                            <a href="" ng-click="gotoAnchor(caseType.name, property.name)">{{ property.name }}</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div-->
+                        </div>
                     </div>
                 </div>
             <!-- /ko -->
