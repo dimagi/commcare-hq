@@ -214,94 +214,100 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
     def process_changes_chunk(self, pillow_instance, changes):
         failed_changes = set()
 
-        def get_docs(_changes, domain):
-            # get docs in bulk and validate revision
-            if not _changes:
-                return []
-            # break up doctype
-            _changes_by_doc_store = defaultdict(list)
-            for change in _changes:
-                _changes_by_doc_store[change.document_store].append(change)
-
-            # query
-            docs = []
-            for doc_store, d_changes in six.iteritems(_changes_by_doc_store):
-                docs.extend(list(doc_store.iter_documents([change.id for change in d_changes])))
-
-            # catch missing docs
-            docs_by_id = {doc['_id']: doc for doc in docs}
-            for change in _changes:
-                if change.id not in docs_by_id:
-                    # we need to capture DocumentMissingError which is not possible in bulk
-                    #   so let pillow fall back to serial mode to capture the error for missing docs
-                    failed_changes.add(change)
-                    continue
-                try:
-                    ensure_matched_revisions(change, docs_by_id.get(change.id))
-                except DocumentMismatchError:
-                    failed_changes.add(change)
-            good_changes = set(_changes) - failed_changes
-            return [docs_by_id.get(change.id) for change in good_changes]
-
         self.bootstrap_if_needed()
 
         # break up changes by domain
         changes_by_domain = defaultdict(list)
-        changes_by_id = {change.id: change for change in changes}
         for change in changes:
             if change.metadata.domain and change.metadata.domain in self.table_adapters_by_domain:
                 # if no domain we won't save to any UCR table
                 changes_by_domain[change.metadata.domain].append(change)
 
         for domain, changes_chunk in six.iteritems(changes_by_domain):
-            rows_to_save_by_adapter = defaultdict(list)
-            adapters = self.table_adapters_by_domain[domain]
-            to_delete = {change for change in changes_chunk if change.deleted}
-            to_update = set(changes_chunk) - to_delete
-            docs = get_docs(to_update, domain)
-            async_configs_by_doc_id = defaultdict(list)
+            failed = self._process_chunk_for_domain(domain, changes_chunk)
+            failed_changes.update(failed)
 
-            for doc in docs:
-                eval_context = EvaluationContext(doc)
-                for adapter in adapters:
-                    if adapter.config.filter(doc):
-                        if adapter.run_asynchronous:
-                            async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
-                        else:
-                            try:
-                                rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
-                            except Exception as ex:
-                                notify_exception(None,
-                                    "{name} Error in getting UCR values for changes chunk {ids}: {ex}".format(
-                                        name=pillow_instance.get_name(), ids=[c.id for c in to_delete], ex=ex))
-                                failed_changes.add(changes_by_id[doc['_id']])
-                    elif adapter.config.deleted_filter(doc):
-                        to_delete.add(changes_by_id[doc['_id']])
-                eval_context.reset_iteration()
+        return failed_changes
 
+    def _get_docs(self, changes):
+        # get docs in bulk and validate revision
+        failed_changes = set()
+        # break up by doctype
+        _changes_by_doc_store = defaultdict(list)
+        for change in changes:
+            _changes_by_doc_store[change.document_store].append(change)
+
+        # query
+        docs = []
+        for doc_store, d_changes in six.iteritems(_changes_by_doc_store):
+            docs.extend(list(doc_store.iter_documents([change.id for change in d_changes])))
+
+        # catch missing docs
+        docs_by_id = {doc['_id']: doc for doc in docs}
+        for change in changes:
+            if change.id not in docs_by_id:
+                # we need to capture DocumentMissingError which is not possible in bulk
+                #   so let pillow fall back to serial mode to capture the error for missing docs
+                failed_changes.add(change)
+                continue
+            try:
+                ensure_matched_revisions(change, docs_by_id.get(change.id))
+            except DocumentMismatchError:
+                failed_changes.add(change)
+        good_changes = set(changes) - failed_changes
+        return failed_changes, [docs_by_id.get(change.id) for change in good_changes]
+
+    def _process_chunk_for_domain(self, domain, changes_chunk):
+        changes_by_id = {change.id: change for change in changes_chunk}
+        failed_changes = set()
+        rows_to_save_by_adapter = defaultdict(list)
+        adapters = self.table_adapters_by_domain[domain]
+        to_delete = {change for change in changes_chunk if change.deleted}
+        to_update = set(changes_chunk) - to_delete
+
+        failed, docs = self._get_docs(to_update)
+        failed_changes.update(failed)
+        async_configs_by_doc_id = defaultdict(list)
+
+        for doc in docs:
+            eval_context = EvaluationContext(doc)
             for adapter in adapters:
-                try:
-                    adapter.bulk_delete([c.id for c in to_delete])
-                except Exception as ex:
-                    notify_exception(None,
-                        "{name} Error in deleting changes chunk {ids}: {ex}".format(
-                            name=pillow_instance.get_name(), ids=[c.id for c in to_delete], ex=ex))
-                    failed_changes.union(to_delete)
-            for adapter, rows in six.iteritems(rows_to_save_by_adapter):
-                try:
-                    adapter.save_rows(rows)
-                except Exception:
-                    notify_exception(None,
-                        "{name} Error in saving changes chunk {ids}: {ex}".format(
-                            name=pillow_instance.get_name(), ids=[c.id for c in to_delete], ex=ex))
-                    failed_changes.union(to_update)
-
-            if async_configs_by_doc_id:
-                doc_type_by_id = {
-                    _id: changes_by_id[_id].metadata.document_type
-                    for _id in async_configs_by_doc_id.keys()
-                }
-                AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
+                if adapter.config.filter(doc):
+                    if adapter.run_asynchronous:
+                        async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
+                    else:
+                        try:
+                            rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                        except Exception as ex:
+                            notify_exception(None,
+                                "Error in getting UCR values for changes chunk {ids}: {ex}".format(
+                                    ids=[c.id for c in to_delete], ex=ex))
+                            failed_changes.add(changes_by_id[doc['_id']])
+                elif adapter.config.deleted_filter(doc):
+                    to_delete.add(changes_by_id[doc['_id']])
+            eval_context.reset_iteration()
+        for adapter in adapters:
+            try:
+                adapter.bulk_delete([c.id for c in to_delete])
+            except Exception as ex:
+                notify_exception(None,
+                    "Error in deleting changes chunk {ids}: {ex}".format(
+                        ids=[c.id for c in to_delete], ex=ex))
+                failed_changes.update(to_delete)
+        for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+            try:
+                adapter.save_rows(rows)
+            except Exception:
+                notify_exception(None,
+                    "Error in saving changes chunk {ids}: {ex}".format(
+                        ids=[c.id for c in to_delete], ex=ex))
+                failed_changes.update(to_update)
+        if async_configs_by_doc_id:
+            doc_type_by_id = {
+                _id: changes_by_id[_id].metadata.document_type
+                for _id in async_configs_by_doc_id.keys()
+            }
+            AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
 
         return failed_changes
 
