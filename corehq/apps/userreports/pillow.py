@@ -239,8 +239,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
         # query
         docs = []
-        for doc_store, d_changes in six.iteritems(_changes_by_doc_store):
-            docs.extend(list(doc_store.iter_documents([change.id for change in d_changes])))
+        for doc_store, _changes in six.iteritems(_changes_by_doc_store):
+            docs.extend(list(doc_store.iter_documents([change.id for change in _changes])))
 
         # catch missing docs
         docs_by_id = {doc['_id']: doc for doc in docs}
@@ -300,7 +300,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             except Exception:
                 notify_exception(None,
                     "Error in saving changes chunk {ids}: {ex}".format(
-                        ids=[c.id for c in to_delete], ex=ex))
+                        ids=[c.id for c in to_update], ex=ex))
                 failed_changes.update(to_update)
         if async_configs_by_doc_id:
             doc_type_by_id = {
