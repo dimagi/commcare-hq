@@ -11,6 +11,7 @@
     {% initial_page_data 'lang' lang %}
     {% initial_page_data 'langs' langs %}
     {% initial_page_data 'modules' modules %}
+    {% initial_page_data 'VELLUM_TYPES' VELLUM_TYPES %}
     {% registerurl 'form_source' domain app_id '---' %}
     {% registerurl 'view_module' domain app_id '---' %}
 
@@ -31,28 +32,35 @@
         </div>
     </div>
 
-    <ul>
-        <!-- ko foreach: modules -->
-            <li data-bind="visible: isSelected">
-                <h4>
-                    <a data-bind="attr: { href: url }">
-                        <i data-bind="attr: { 'class': icon }"></i>
-                        <span data-bind="text: name"></span>
-                    </a>
-                </h4>
-                <ul>
-                    <!-- ko foreach: forms -->
-                        <li data-bind="visible: isSelected">
-                            <h5>
-                                <a data-bind="attr: { href: url }">
-                                    <i data-bind="attr: { 'class': icon }"></i>
-                                    <span data-bind="text: name"></span>
-                                </a>
-                            </h5>
+    <ul data-bind="foreach: modules">
+        <li data-bind="visible: isSelected">
+            <h4>
+                <a data-bind="attr: { href: url }">
+                    <i data-bind="attr: { 'class': icon }"></i>
+                    <span data-bind="text: name"></span>
+                </a>
+            </h4>
+            <ul data-bind="foreach: forms">
+                <li data-bind="visible: isSelected">
+                    <h5>
+                        <a data-bind="attr: { href: url }">
+                            <i data-bind="attr: { 'class': icon }"></i>
+                            <span data-bind="text: name"></span>
+                        </a>
+                    </h5>
+                    <ol data-bind="foreach: questions">
+                        <li>
+                            <i data-bind="attr: { 'class': icon }" title="type"></i>
+                            <span data-bind="text: value"></span>
+                            <ol data-bind="foreach: options">
+                                <li>
+                                    <span data-bind="text: value"></span>
+                                </li>
+                            </ol>
                         </li>
-                    <!-- /ko -->
-                </ul>
-            </li>
-        <!-- /ko -->
+                    </ol>
+                </li>
+            </ul>
+        </li>
     </ul>
 {% endblock content_extra %}

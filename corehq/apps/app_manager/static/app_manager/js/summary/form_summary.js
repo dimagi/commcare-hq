@@ -1,5 +1,6 @@
 hqDefine('app_manager/js/summary/form_summary', function() {
     var assertProperties = hqImport("hqwebapp/js/assert_properties").assert,
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         utils = hqImport('app_manager/js/summary/utils');
 
     var contentModel = function(options) {
@@ -46,15 +47,28 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         self.name = utils.translateName(self.name, lang, langs);
         self.url = hqImport("hqwebapp/js/initial_page_data").reverse("form_source", self.id);
         self.icon = utils.formIcon(self) + ' hq-icon';
+        self.questions = _.map(self.questions, function(question) {
+            return questionModel(question);
+        });
 
         self.isSelected = ko.observable(true);
 
         return self;
     };
 
+    var questionModel = function(question) {
+        var self = _.extend({
+            options: [],
+        }, question);
+
+        var vellumType = initialPageData.get('VELLUM_TYPES')[question.type];
+        self.icon = 'hq-icon ' + (vellumType ? vellumType.icon : '');
+
+        return self;
+    };
+
     $(function() {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            menu = hqImport("app_manager/js/summary/menu"),
+        var menu = hqImport("app_manager/js/summary/menu"),
             lang = initialPageData.get('lang'),
             langs = initialPageData.get('langs');
 
