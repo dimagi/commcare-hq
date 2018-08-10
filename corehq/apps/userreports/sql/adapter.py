@@ -166,10 +166,11 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         table = self.get_table()
 
         stmt = insert(table).values(formatted_rows)
+        col_names = list(formatted_rows[0].keys())
         excluded_dict = {
-            col.column.database_column_name: getattr(stmt.excluded, col.column.database_column_name)
-            for col in rows[0]
-            if col.column.database_column_name not in table.primary_key
+            col_name: stmt.excluded.get(col_name)
+            for col_name in col_names
+            if col_name not in table.primary_key
         }
         upsert_stmt = stmt.on_conflict_do_update(
             constraint=table.primary_key,
