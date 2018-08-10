@@ -42,12 +42,6 @@
                             <i class="fa fa-quote-left" ng-class="showComments ? 'hq-icon' : ''"></i>
                             &nbsp;{% trans "Comments" %}
                         </button>
-                        <button type="button" class="btn btn-default"
-                                ng-click="showDefaultValues = !showDefaultValues"
-                                ng-class="{ 'active': showDefaultValues }">
-                            <i class="fa fa-home" ng-class="showDefaultValues ? 'hq-icon' : ''"></i>
-                            &nbsp;{% trans "Default Values" %}
-                        </button>
                     </div>
                 </div>
              </div>
@@ -107,11 +101,6 @@
                                         <span ng-hide="showLabels">{{ option.value }}</span>
                                     </li>
                                 </ol>
-                                <ul class="fa-ul" ng-if="question.setvalue" ng-show="showDefaultValues">
-                                    <li>
-                                        <i class="fa-li fa fa-home text-muted"></i> {{ question.setvalue }}
-                                    </li>
-                                </ul>
                             </li>
                         </ol>
                     </li>

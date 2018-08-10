@@ -38,6 +38,11 @@
                         <i class="fa fa-ban" data-bind="css: { 'hq-icon': showConstraints }"></i>
                         &nbsp;{% trans "Validation" %}
                     </button>
+                    <button type="button" class="btn btn-default"
+                            data-bind="click: toggleDefaultValues, css: { active: showDefaultValues }">
+                        <i class="fa fa-home" data-bind="css: { 'hq-icon': showDefaultValues }"></i>
+                        &nbsp;{% trans "Default Values" %}
+                    </button>
                 </div>
                 <div class="btn-toolbar pull-right" role="toolbar">
                     <a class="btn btn-primary" href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}">
@@ -90,6 +95,12 @@
                                 <li>
                                     <i class="fa-li fa fa-ban text-muted"></i>
                                     <span data-bind="text: constraint"></span>
+                                </li>
+                            </ul>
+                            <ul class="fa-ul" data-bind="if: setvalue, visible: $root.showDefaultValues">
+                                <li>
+                                    <i class="fa-li fa fa-home text-muted"></i>
+                                    <span data-bind="text: setvalue"></span>
                                 </li>
                             </ul>
                         </li>
