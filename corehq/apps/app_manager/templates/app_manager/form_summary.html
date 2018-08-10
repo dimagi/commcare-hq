@@ -4,42 +4,8 @@
 {% load xforms_extras %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "app_manager/js/summary/utils.js" %}"></script>
     <script src="{% static "app_manager/js/summary/form_summary.js" %}"></script>
 {% endblock js %}
-
-{% block navigation_extra %}
-    <li role="presentation">
-        <div class="appnav-item" data-bind="click: selectAll, css: { active: viewAllSelected }">
-            <a class="appnav-link-full">
-              <i class="fa fa-search appnav-primary-icon"></i>
-              <span data-bind="text: viewAllItems"></span>
-            </a>
-        </div>
-    </li>
-    <!-- ko foreach: items -->
-        <li role="presentation">
-        <div class="appnav-item" data-bind="click: $root.select, css: { active: isSelected }">
-                <a class="appnav-link-full">
-                    <i data-bind="attr: { 'class': $data.icon }"></i>
-                    <span data-bind="text: name"></span>
-                </a>
-            </div>
-            <!-- ko foreach: subitems -->
-                <ul class="appnav-menu appnav-menu-nested">
-                    <li>
-                        <div class="appnav-item" data-bind="click: $root.select, css: { active: isSelected }">
-                            <a class="appnav-link-full">
-                                <i data-bind="attr: { 'class': $data.icon }"></i>
-                                <span data-bind="text: name"></span>
-                            </a>
-                        </div>
-                    </li>
-                </ul>
-            <!-- /ko -->
-        </li>
-    <!-- /ko -->
-{% endblock navigation_extra %}
 
 {% block content_extra %}
     {% initial_page_data 'lang' lang %}

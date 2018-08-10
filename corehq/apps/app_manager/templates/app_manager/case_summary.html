@@ -1,7 +1,14 @@
 {% extends 'app_manager/base_summary.html' %}
+{% load hq_shared_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static "app_manager/js/summary/case_summary.js" %}"></script>
+{% endblock js %}
+
 {% block content_extra %}
+    {% initial_page_data 'case_metadata' case_metadata %}
+
     <div class="page-header" style="margin-top: 0;">
         <h3>
           <i class="fcc fcc-fd-external-case"></i>

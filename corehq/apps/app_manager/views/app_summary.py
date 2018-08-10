@@ -77,15 +77,6 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.app_id])
 
-    '''
-    @allow_remote_invocation
-    def get_case_data(self, in_data):
-        return {
-            'response': self.app.get_case_metadata().to_json(),
-            'success': True,
-        }
-    '''
-
 
 class AppCaseSummaryView(AppSummaryView):
     urlname = 'app_case_summary'
@@ -97,6 +88,7 @@ class AppCaseSummaryView(AppSummaryView):
         context = super(AppCaseSummaryView, self).page_context
         context.update({
             'is_case_summary': True,
+            'case_metadata': self.app.get_case_metadata().to_json(),
         })
         return context
 
