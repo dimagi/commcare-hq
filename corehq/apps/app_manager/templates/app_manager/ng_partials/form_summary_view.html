@@ -37,12 +37,6 @@
                     </div>
                     <div class="btn-group" role="group" >
                         <button type="button" class="btn btn-default"
-                                ng-click="showConstraints = !showConstraints"
-                                ng-class="{ 'active': showConstraints }">
-                            <i class="fa fa-ban" ng-class="showConstraints ? 'hq-icon' : ''"></i>
-                            &nbsp;{% trans "Validation" %}
-                        </button>
-                        <button type="button" class="btn btn-default"
                                 ng-click="showComments = !showComments"
                                 ng-class="{ 'active': showComments }">
                             <i class="fa fa-quote-left" ng-class="showComments ? 'hq-icon' : ''"></i>
@@ -113,11 +107,6 @@
                                         <span ng-hide="showLabels">{{ option.value }}</span>
                                     </li>
                                 </ol>
-                                <ul class="fa-ul" ng-if="question.constraint" ng-show="showConstraints">
-                                    <li>
-                                        <i class="fa-li fa fa-ban text-muted"></i> {{ question.constraint }}
-                                    </li>
-                                </ul>
                                 <ul class="fa-ul" ng-if="question.setvalue" ng-show="showDefaultValues">
                                     <li>
                                         <i class="fa-li fa fa-home text-muted"></i> {{ question.setvalue }}

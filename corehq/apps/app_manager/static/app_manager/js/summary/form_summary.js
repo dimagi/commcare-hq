@@ -33,6 +33,11 @@ hqDefine('app_manager/js/summary/form_summary', function() {
             self.showRelevance(!self.showRelevance());
         };
 
+        self.showConstraints = ko.observable(false);
+        self.toggleConstraints = function() {
+            self.showConstraints(!self.showConstraints());
+        };
+
         return self;
     };
 

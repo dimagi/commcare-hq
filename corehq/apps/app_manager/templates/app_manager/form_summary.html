@@ -33,6 +33,11 @@
                             <i class="fa fa-code-fork" data-bind="css: { 'hq-icon': showRelevance }"></i>
                         &nbsp;{% trans "Display" %}
                     </button>
+                    <button type="button" class="btn btn-default"
+                            data-bind="click: toggleConstraints, css: { active: showConstraints }">
+                        <i class="fa fa-ban" data-bind="css: { 'hq-icon': showConstraints }"></i>
+                        &nbsp;{% trans "Validation" %}
+                    </button>
                 </div>
                 <div class="btn-toolbar pull-right" role="toolbar">
                     <a class="btn btn-primary" href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}">
@@ -79,6 +84,12 @@
                                 <li>
                                     <i class="fa-li fa fa-code-fork text-muted"></i>
                                     <span data-bind="text: relevant"></span>
+                                </li>
+                            </ul>
+                            <ul class="fa-ul" data-bind="if: constraint, visible: $root.showConstraints">
+                                <li>
+                                    <i class="fa-li fa fa-ban text-muted"></i>
+                                    <span data-bind="text: constraint"></span>
                                 </li>
                             </ul>
                         </li>
