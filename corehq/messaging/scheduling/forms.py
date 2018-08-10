@@ -1523,6 +1523,13 @@ class ScheduleForm(Form):
                     *self.get_extra_timing_fields(),
                     data_bind="visible: showSharedTimeInput"
                 ),
+                crispy.Div(
+                    crispy.HTML(
+                        '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
+                        _("Define the send times in the events below.")
+                    ),
+                    data_bind="visible: send_frequency() === '%s'" % self.SEND_CUSTOM_DAILY,
+                ),
                 data_bind="visible: usesTimedSchedule()"
             ),
             hqcrispy.B3MultiField(
