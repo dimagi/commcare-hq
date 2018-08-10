@@ -2,6 +2,18 @@ hqDefine('app_manager/js/summary/form_summary', function() {
     var assertProperties = hqImport("hqwebapp/js/assert_properties").assert,
         utils = hqImport('app_manager/js/summary/utils');
 
+    var menuItemModel = function(options) {
+        assertProperties(options, ['id', 'name', 'icon'], ['subitems']);
+        var self = _.extend({}, options);
+
+        self.selected = ko.observable(false);
+        self.select = function() {
+            self.selected(true);
+        };
+
+        return self;
+    };
+
     var menuModel = function(options) {
         assertProperties(options, ['items', 'viewAllItems'], []);
 
@@ -10,10 +22,23 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         self.items = options.items;
         self.viewAllItems = options.viewAllItems;
 
-        self.selected = ko.observable();
+        self.selected = ko.observable('');
         self.viewAllSelected = ko.computed(function() {
             return !self.selected();
         });
+
+        self.select = function(item) {
+            self.selected(item.id);
+            _.each(self.items, function(i) {
+                i.selected(item.id === i.id);
+                _.each(i.subitems, function(s) {
+                    s.selected(item.id === s.id);
+                });
+            });
+        };
+        self.selectAll = function() {
+            self.select('');
+        };
 
         return self;
     };
@@ -50,18 +75,18 @@ hqDefine('app_manager/js/summary/form_summary', function() {
 
         $("#hq-sidebar > nav").koApplyBindings(menuModel({
             items: _.map(initialPageData.get("modules"), function(module) {
-                return {
+                return menuItemModel({
                     id: module.id,
                     name: utils.translateName(module.name, lang, langs),
                     icon: utils.moduleIcon(module),
                     subitems: _.map(module.forms, function(form) {
-                        return {
+                        return menuItemModel({
                             id: form.id,
                             name: utils.translateName(form.name, lang, langs),
                             icon: utils.formIcon(form),
-                        };
+                        });
                     }),
-                };
+                });
             }),
             viewAllItems: gettext("View All Forms"),
         }));

@@ -10,8 +10,8 @@
 
 {% block navigation_extra %}
     <li role="presentation">
-        <div class="appnav-item">
-            <a class="appnav-link-full" data-bind="css: { active: viewAllSelected }">
+        <div class="appnav-item" data-bind="click: selectAll, css: { active: viewAllSelected }">
+            <a class="appnav-link-full">
               <i class="fa fa-search appnav-primary-icon"></i>
               <span data-bind="text: viewAllItems"></span>
             </a>
@@ -19,7 +19,7 @@
     </li>
     <!-- ko foreach: items -->
         <li role="presentation">
-            <div class="appnav-item">
+        <div class="appnav-item" data-bind="click: $root.select, css: { active: selected }">
                 <a class="appnav-link-full">
                     <i data-bind="attr: { 'class': $data.icon }"></i>
                     <span data-bind="text: name"></span>
@@ -28,7 +28,7 @@
             <!-- ko foreach: subitems -->
                 <ul class="appnav-menu appnav-menu-nested">
                     <li>
-                        <div class="appnav-item">
+                        <div class="appnav-item" data-bind="click: $root.select, css: { active: selected }">
                             <a class="appnav-link-full">
                                 <i data-bind="attr: { 'class': $data.icon }"></i>
                                 <span data-bind="text: name"></span>
