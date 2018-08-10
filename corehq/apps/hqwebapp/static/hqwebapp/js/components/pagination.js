@@ -41,12 +41,12 @@ hqDefine('hqwebapp/js/components/pagination', function() {
                     }
                     else if (pages.length < 5 && pages[pages.length - 1] > self.currentPage()){
                         pages.push(i);
-                    };
-                };
+                    }
+                }
                 return pages;
             });
             return self;
         },
-        template: '<div data-bind="template: { name: \'ko-pagination-template\' }"></div>'
+        template: '<div data-bind="template: { name: \'ko-pagination-template\' }"></div>',
     };
 });
