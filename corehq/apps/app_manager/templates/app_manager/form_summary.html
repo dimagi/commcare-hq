@@ -24,6 +24,11 @@
             <div class="col-xs-9">
                 <div class="btn-group" role="group" >
                     <button type="button" class="btn btn-default"
+                            data-bind="click: toggleCalculations, css: { active: showCalculations }">
+                            <i class="fa fa-calculator" data-bind="css: { 'hq-icon': showCalculations }"></i>
+                        &nbsp;{% trans "Calculations" %}
+                    </button>
+                    <button type="button" class="btn btn-default"
                             data-bind="click: toggleRelevance, css: { active: showRelevance }">
                             <i class="fa fa-code-fork" data-bind="css: { 'hq-icon': showRelevance }"></i>
                         &nbsp;{% trans "Display" %}
@@ -64,6 +69,12 @@
                                     <span data-bind="text: value"></span>
                                 </li>
                             </ol>
+                            <ul class="fa-ul" data-bind="if: calculate, visible: $root.showCalculations">
+                                <li>
+                                    <i class="fa-li fa fa-calculator text-muted"></i>
+                                    <span data-bind="text: calculate"></span>
+                                </li>
+                            </ul>
                             <ul class="fa-ul" data-bind="if: relevant, visible: $root.showRelevance">
                                 <li>
                                     <i class="fa-li fa fa-code-fork text-muted"></i>
