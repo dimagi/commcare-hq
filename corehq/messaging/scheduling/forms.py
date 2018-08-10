@@ -424,7 +424,7 @@ class CustomEventForm(ContentForm):
     # Corresponds to TimedEvent.time or RandomTimedEvent.time
     time = CharField(
         required=False,
-        label='',
+        label=ugettext_lazy("HH:MM"),
     )
 
     # Corresponds to RandomTimedEvent.window_length
@@ -928,7 +928,7 @@ class ScheduleForm(Form):
             (TimedSchedule.EVENT_RANDOM_TIME, ugettext_lazy("A random time")),
         )
     )
-    send_time = CharField(required=False)
+    send_time = CharField(required=False, label=ugettext_lazy("HH:MM"))
     window_length = IntegerField(
         required=False,
         min_value=1,
