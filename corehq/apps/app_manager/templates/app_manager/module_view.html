@@ -110,7 +110,8 @@
 
     <div class="tab-content">
       {% block tab-content %}
-        <div class="tab-pane" id="module-settings">
+        <!-- Survey modules don't actually use tabs, so the sticky-tabs logic doesn't run, so content must be explicitly set to .active -->
+        <div class="tab-pane{% if module.is_surveys %} active{% endif %}" id="module-settings">
           {% include "app_manager/partials/module_view_settings.html" %}
         </div>
 
