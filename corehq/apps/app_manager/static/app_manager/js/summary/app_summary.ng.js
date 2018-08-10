@@ -109,7 +109,6 @@
         };
         $scope.lang = 'en';
         $scope.showLabels = true;
-        $scope.showComments = false;
         $scope.appLangs = summaryConfig.appLangs;
         $scope.getFormUrl = utils.getFormUrl;
         $scope.getModuleUrl = utils.getModuleUrl;

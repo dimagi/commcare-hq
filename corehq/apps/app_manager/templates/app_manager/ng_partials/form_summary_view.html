@@ -35,14 +35,6 @@
                             {% trans "Question IDs" %}
                         </button>
                     </div>
-                    <div class="btn-group" role="group" >
-                        <button type="button" class="btn btn-default"
-                                ng-click="showComments = !showComments"
-                                ng-class="{ 'active': showComments }">
-                            <i class="fa fa-quote-left" ng-class="showComments ? 'hq-icon' : ''"></i>
-                            &nbsp;{% trans "Comments" %}
-                        </button>
-                    </div>
                 </div>
              </div>
         </div>
@@ -71,7 +63,6 @@
                      <a ng-href="{{ getModuleUrl(module.id, lang) }}" ng-if="!readOnly">{{ getFormModuleLabel(module) }}</a>
                      <span ng-if="readOnly">{{ getFormModuleLabel(module) }}</span>
                      {% endverbatim %}
-                     <span class="text-muted" ng-show="showComments"> &nbsp; {{ module.short_comment }}</span>
                  </h4>
 
                 <ul>
@@ -82,7 +73,6 @@
                         <a ng-href="{{ getFormUrl(form.id, lang) }}" ng-if="!readOnly">{{ getFormModuleLabel(form) }}</a>
                         <span ng-if="readOnly"> {{ getFormModuleLabel(form) }}</span>
                         {% endverbatim %}
-                        <span class="text-muted" ng-show="showComments"> &nbsp; {{ form.short_comment }}</span>
                     </h5>
                         <ol>
                             <li ng-repeat="question in form.questions|filter:questionSearch">
@@ -91,7 +81,6 @@
                                 <span ng-show="showLabels">{{ getQuestionLabel(question) }}</span>
                                 {% endverbatim %}
                                 <span ng-hide="showLabels">{{ question.value }}</span>
-                                <span class="text-muted" ng-show="showComments"> &nbsp; {{ question.comment }}</span>
                                 <span ng-show="question.required" title="{% trans "This question is required" %}">*</span>
                                 <ol>
                                     <li ng-repeat="option in question.options">

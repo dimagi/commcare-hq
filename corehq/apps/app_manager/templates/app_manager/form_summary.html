@@ -39,6 +39,11 @@
                         &nbsp;{% trans "Validation" %}
                     </button>
                     <button type="button" class="btn btn-default"
+                            data-bind="click: toggleComments, css: { active: showComments }">
+                        <i class="fa fa-quote-left" data-bind="css: { 'hq-icon': showComments }"></i>
+                        &nbsp;{% trans "Comments" %}
+                    </button>
+                    <button type="button" class="btn btn-default"
                             data-bind="click: toggleDefaultValues, css: { active: showDefaultValues }">
                         <i class="fa fa-home" data-bind="css: { 'hq-icon': showDefaultValues }"></i>
                         &nbsp;{% trans "Default Values" %}
@@ -61,6 +66,7 @@
                     <i data-bind="attr: { 'class': icon }"></i>
                     <span data-bind="text: name"></span>
                 </a>
+                <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
             </h4>
             <ul data-bind="foreach: forms">
                 <li data-bind="visible: isSelected">
@@ -69,11 +75,13 @@
                             <i data-bind="attr: { 'class': icon }"></i>
                             <span data-bind="text: name"></span>
                         </a>
+                        <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
                     </h5>
                     <ol data-bind="foreach: questions">
                         <li>
                             <i data-bind="attr: { 'class': icon }" title="type"></i>
                             <span data-bind="text: value"></span>
+                            <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: comment"</span>
                             <ol data-bind="foreach: options">
                                 <li>
                                     <span data-bind="text: value"></span>
