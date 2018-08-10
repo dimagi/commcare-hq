@@ -74,54 +74,6 @@
                             {{ caseType.name }}
                         </h4>
                     </div>
-                    <div class="panel-body">
-                        <table class="case-properties table" ng-repeat-end>
-                            <thead>
-                                <tr>
-                                    <th>{% trans "Case Property" %}</th>
-                                    <th>{% trans "Description" %}</th>
-                                    <th>{% trans "Form" %}</th>
-                                    <th>{% trans "Load questions" %}</th>
-                                    <th>{% trans "Save questions" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody ng-repeat="property in caseType.properties|filter:propertySearch">
-                                <tr ng-repeat="form in property.forms" id="{{ caseType.name }}:{{ property.name }}"
-                                    ng-class="{'danger': property.has_errors}">
-                                    <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
-                                    <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.description }}</td>
-                                    <td>
-                                        {% verbatim %}
-                                        <div ng-if="!readOnly">
-                                            <a ng-href="{{ getModuleUrl(form.form_id, lang) }}">
-                                                {{ getModuleName(form.form_id, lang) }}</a> ->
-                                            <a ng-href="{{ getFormUrl(form.form_id, lang) }}">
-                                                {{ getFormName(form.form_id, lang) }}</a>
-                                        </div>
-                                        <div ng-if="readOnly">
-                                            <span>{{ getModuleName(form.form_id, lang) }} -> {{ getFormName(form.form_id, lang) }}</span>
-                                        </div>
-                                        {% endverbatim %}
-                                        <i class="fa fa-exclamation-triangle text-danger" ng-repeat="error in form.errors"
-                                           popover="{{ error }}" popover-trigger="mouseenter"
-                                           popover-placement="bottom"></i>
-                                    </td>
-                                    <td><form-questions
-                                            questions="form.load_questions"
-                                            show-conditions="showConditions"
-                                            show-calculations="showCalculations"
-                                            show-labels="showLabels"
-                                            lang="lang"></form-questions></td>
-                                    <td><form-questions
-                                            questions="form.save_questions"
-                                            show-conditions="showConditions"
-                                            show-calculations="showCalculations"
-                                            show-labels="showLabels"
-                                            lang="lang"></form-questions></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
             </div>
         </div>

@@ -108,6 +108,55 @@
                                 </div>
                             </div-->
                         </div>
+                        <table class="case-properties table">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Case Property" %}</th>
+                                    <th>{% trans "Description" %}</th>
+                                    <th>{% trans "Form" %}</th>
+                                    <th>{% trans "Load questions" %}</th>
+                                    <th>{% trans "Save questions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody data-bind="foreach: properties">
+                                <!-- ko foreach: forms -->
+                                    <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}">
+                                        <!-- ko if: !$index() -->
+                                        <td data-bind="attr: {rowspan: $parent.forms.length}, text: $parent.name"></td>
+                                        <td data-bind="attr: {rowspan: $parent.forms.length}, text: $parent.description"></td>
+                                        <!-- /ko -->
+                                        <td>
+                                            <!-- TODO: module name, form name, readOnly -->
+                                            module &rarr; <span data-bind="text: form_id"></span>
+                                            <!-- TODO: test -->
+                                            <!-- ko foreach: errors -->
+                                                <i class="fa fa-exclamation-triangle text-danger"
+                                                   popover-trigger="mouseenter" popover-placement="bottom"
+                                                   data-bind="attr: {popover: $data}"></i>
+                                            <!-- /ko -->
+                                        </td>
+                                        <td>
+                                            TODO: load questions
+                                            <!--form-questions
+                                                    questions="form.load_questions"
+                                                    show-conditions="showConditions"
+                                                    show-calculations="showCalculations"
+                                                    show-labels="showLabels"
+                                                    lang="lang"></form-questions-->
+                                        </td>
+                                        <td>
+                                            TODO: save questions
+                                            <!--form-questions
+                                                    questions="form.save_questions"
+                                                    show-conditions="showConditions"
+                                                    show-calculations="showCalculations"
+                                                    show-labels="showLabels"
+                                                    lang="lang"></form-questions-->
+                                        </td>
+                                    </tr>
+                                <!-- /ko -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             <!-- /ko -->
