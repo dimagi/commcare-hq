@@ -2410,7 +2410,7 @@ class BroadcastForm(ScheduleForm):
 
     schedule_name = CharField(
         required=True,
-        label=ugettext_lazy('Schedule Name'),
+        label=ugettext_lazy("Broadcast Name"),
         max_length=1000,
     )
 
