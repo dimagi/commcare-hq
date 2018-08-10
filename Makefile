@@ -9,16 +9,16 @@ requirements: export CUSTOM_COMPILE_COMMAND=make requirements
 requirements: scripts/_vendor/pip-post-compile.sh
 	pip-compile -o requirements/requirements.txt requirements/requirements.in
 	pip-compile -o requirements/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
+	pip-compile -o requirements/test-requirements.txt requirements/test-requirements.in
 	pip-compile -o requirements/dev-requirements.txt requirements/dev-requirements.in
 	pip-compile -o requirements/docs-requirements.txt requirements/docs-requirements.in
-	pip-compile -o requirements/test-requirements.txt requirements/test-requirements.in
 	bash scripts/_vendor/pip-post-compile.sh requirements/*requirements.txt
 
 upgrade-requirements: export CUSTOM_COMPILE_COMMAND=make upgrade-requirements
 upgrade-requirements: scripts/_vendor/pip-post-compile.sh
 	pip-compile --upgrade -o requirements/requirements.txt requirements/requirements.in
 	pip-compile --upgrade -o requirements/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
+	pip-compile --upgrade -o requirements/test-requirements.txt requirements/test-requirements.in
 	pip-compile --upgrade -o requirements/dev-requirements.txt requirements/dev-requirements.in
 	pip-compile --upgrade -o requirements/docs-requirements.txt requirements/docs-requirements.in
-	pip-compile --upgrade -o requirements/test-requirements.txt requirements/test-requirements.in
 	bash scripts/_vendor/pip-post-compile.sh requirements/*requirements.txt

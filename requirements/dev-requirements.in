@@ -1,4 +1,4 @@
--r requirements.txt
+-r test-requirements.txt
 
 django-debug-toolbar==1.8
 line_profiler==1.0
