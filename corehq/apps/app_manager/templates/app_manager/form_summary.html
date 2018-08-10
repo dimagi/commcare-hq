@@ -19,7 +19,7 @@
     </li>
     <!-- ko foreach: items -->
         <li role="presentation">
-        <div class="appnav-item" data-bind="click: $root.select, css: { active: selected }">
+        <div class="appnav-item" data-bind="click: $root.select, css: { active: isSelected }">
                 <a class="appnav-link-full">
                     <i data-bind="attr: { 'class': $data.icon }"></i>
                     <span data-bind="text: name"></span>
@@ -28,7 +28,7 @@
             <!-- ko foreach: subitems -->
                 <ul class="appnav-menu appnav-menu-nested">
                     <li>
-                        <div class="appnav-item" data-bind="click: $root.select, css: { active: selected }">
+                        <div class="appnav-item" data-bind="click: $root.select, css: { active: isSelected }">
                             <a class="appnav-link-full">
                                 <i data-bind="attr: { 'class': $data.icon }"></i>
                                 <span data-bind="text: name"></span>
@@ -47,11 +47,11 @@
     {% initial_page_data 'modules' modules %}
     <ul>
         <!-- ko foreach: modules -->
-            <li>
-            <span data-bind="text: name"></span>
+            <li data-bind="visible: isSelected">
+                <span data-bind="text: name"></span>
                 <ul>
                     <!-- ko foreach: forms -->
-                        <li>
+                        <li data-bind="visible: isSelected">
                             <span data-bind="text: name"></span>
                         </li>
                     <!-- /ko -->
