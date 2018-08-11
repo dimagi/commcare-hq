@@ -79,7 +79,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     def dehydrate_archived(self, bundle):
         return bundle.obj.is_archived
 
-    cases = UseIfRequested(
+    cases = (
         ToManyDocumentsField(
             'corehq.apps.api.resources.v0_4.CommCareCaseResource',
             attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)
@@ -223,24 +223,24 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
 
 
 class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
-    xforms_by_name = UseIfRequested(ToManyListDictField(
+    xforms_by_name = (ToManyListDictField(
         'corehq.apps.api.resources.v0_4.XFormInstanceResource',
         attribute='xforms_by_name'
     ))
 
-    xforms_by_xmlns = UseIfRequested(ToManyListDictField(
+    xforms_by_xmlns = (ToManyListDictField(
         'corehq.apps.api.resources.v0_4.XFormInstanceResource',
         attribute='xforms_by_xmlns'
     ))
 
-    child_cases = UseIfRequested(
+    child_cases = (
         ToManyDictField(
             'corehq.apps.api.resources.v0_4.CommCareCaseResource',
             attribute='child_cases'
         )
     )
 
-    parent_cases = UseIfRequested(
+    parent_cases = (
         ToManyDictField(
             'corehq.apps.api.resources.v0_4.CommCareCaseResource',
             attribute='parent_cases'
