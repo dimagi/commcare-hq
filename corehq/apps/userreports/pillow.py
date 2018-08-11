@@ -211,6 +211,16 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             # remove it until the next bootstrap call
             self.table_adapters_by_domain[domain].remove(table)
 
+    def _get_ucr_values(self, domain, table, doc, eval_context):
+        try:
+            return table.get_all_values(doc, eval_context)
+        except Exception as e:
+            try:
+                table.handle_exception(doc, e)
+            except UserReportsWarning:
+                # remove it until the next bootstrap call
+                self.table_adapters_by_domain[domain].remove(table)
+
     def process_changes_chunk(self, pillow_instance, changes):
         failed_changes = set()
 
@@ -277,13 +287,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     if adapter.run_asynchronous:
                         async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                     else:
-                        try:
-                            rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
-                        except Exception as ex:
-                            notify_exception(None,
-                                "Error in getting UCR values for changes chunk {ids}: {ex}".format(
-                                    ids=[c.id for c in to_delete], ex=ex))
-                            failed_changes.add(changes_by_id[doc['_id']])
+                        ucr_values = self._get_ucr_values(domain, adapter, doc, eval_context)
+                        rows_to_save_by_adapter[adapter].extend(ucr_values or [])
                 elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
                     to_delete_by_adapter[adapter].append(doc['_id'])
             eval_context.reset_iteration()
