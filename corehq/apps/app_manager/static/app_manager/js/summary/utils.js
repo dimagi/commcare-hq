@@ -37,9 +37,22 @@ hqDefine("app_manager/js/summary/utils", function() {
         return moduleIcon;
     };
 
+    var questionModel = function(question) {    // TODO: move? this isn't a util. could make it a util, though.
+        var self = _.extend({
+            options: [],
+        }, question);
+
+        var vellumType = hqImport("hqwebapp/js/initial_page_data").get('VELLUM_TYPES')[question.type];
+        self.icon = 'hq-icon ' + (vellumType ? vellumType.icon : '');
+
+        return self;
+    };
+
+
     return {
         formIcon: formIcon,
         moduleIcon: moduleIcon,
+        questionModel: questionModel,
         translateName: translateName,
     };
 });

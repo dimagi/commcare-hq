@@ -73,21 +73,10 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         self.url = hqImport("hqwebapp/js/initial_page_data").reverse("form_source", self.id);
         self.icon = utils.formIcon(self) + ' hq-icon';
         self.questions = _.map(self.questions, function(question) {
-            return questionModel(question);
+            return utils.questionModel(question);
         });
 
         self.isSelected = ko.observable(true);
-
-        return self;
-    };
-
-    var questionModel = function(question) {
-        var self = _.extend({
-            options: [],
-        }, question);
-
-        var vellumType = initialPageData.get('VELLUM_TYPES')[question.type];
-        self.icon = 'hq-icon ' + (vellumType ? vellumType.icon : '');
 
         return self;
     };

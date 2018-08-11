@@ -1,10 +1,21 @@
 hqDefine('app_manager/js/summary/case_summary', function() {
     var assertProperties = hqImport("hqwebapp/js/assert_properties").assert,
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        menu = hqImport("app_manager/js/summary/menu");
+        menu = hqImport("app_manager/js/summary/menu"),
+        utils = hqImport("app_manager/js/summary/utils");
 
     var propertyModel = function(property) {
         var self = _.extend({}, property);
+
+        _.each(self.forms, function(form) {
+            _.each(form.load_questions, function(questionAndConditions) {
+                questionAndConditions.question = utils.questionModel(questionAndConditions.question);
+            });
+            _.each(form.save_questions, function(questionAndConditions) {
+                questionAndConditions.question = utils.questionModel(questionAndConditions.question);
+            });
+        });
+
         self.isVisible = ko.observable(true);
         return self;
     };

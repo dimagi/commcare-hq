@@ -8,6 +8,7 @@
 
 {% block content_extra %}
     {% initial_page_data 'case_metadata' case_metadata %}
+    {% initial_page_data 'VELLUM_TYPES' VELLUM_TYPES %}
 
     <div class="page-header" style="margin-top: 0;">
         <h3>
@@ -154,29 +155,17 @@
                                             <!-- /ko -->
                                         </td>
                                         <td>
-                                            TODO: load questions
-                                            <!--form-questions
-                                                    questions="form.load_questions"
-                                                    show-conditions="showConditions"
-                                                    show-calculations="showCalculations"
-                                                    show-labels="showLabels"
-                                                    lang="lang"></form-questions-->
-                                            <!--ul class="fa-ul">
-                                                <li ng-repeat="question in questions">
-                                                    {% verbatim %}<i class="hq-icon fa-li { getIcon(question.question.type) }"></i>{% endverbatim %}
-                                                    {% verbatim %}<span ng-show="showLabels">{ getQuestionLabel(question.question) }</span>{% endverbatim %}
-                                                    <ul ng-if="question.question.options" ng-show="showLabels">
-                                                        <li ng-repeat="option in question.question.options">
-                                                            { getSelectOptionsLabel(option) }
-                                                        </li>
-                                                    </ul>
-                                                    <span ng-hide="showLabels">{ question.question.value }</span>
-                                                        <ul ng-if="question.question.options" ng-hide="showLabels">
-                                                            <li ng-repeat="option in question.question.options">
-                                                                { option.value }
-                                                            </li>
+                                            <ul class="fa-ul" data-bind="foreach: load_questions"><!-- TODO: use template binding for this + save_questions -->
+                                                <li>
+                                                    <!-- TODO: label, languages -->
+                                                    <i data-bind="attr: {'class': question.icon}"></i>
+                                                    <span data-bind="text: question.value"></span>
+                                                    <!-- ko: if question.options -->
+                                                        <ul data-bind="foreach: question.options">
+                                                            <li data-bind="text: value"></li>
                                                         </ul>
-                                                    <ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">
+                                                    <!-- /ko -->
+                                                    <!--ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">
                                                         <li>
                                                             <i class="fa-li fa fa-sitemap text-muted"></i>
                                                             { question.condition.question } { question.condition.operator } { question.condition.answer }
@@ -186,34 +175,22 @@
                                                         <li>
                                                             <i class="fa-li fa fa-calculator text-muted"></i> { question.question.calculate }
                                                         </li>
-                                                    </ul>
+                                                    </ul-->
                                                 </li>
-                                            </ul-->
+                                            </ul>
                                         </td>
                                         <td>
-                                            TODO: save questions
-                                            <!--form-questions
-                                                    questions="form.save_questions"
-                                                    show-conditions="showConditions"
-                                                    show-calculations="showCalculations"
-                                                    show-labels="showLabels"
-                                                    lang="lang"></form-questions-->
-                                            <!--ul class="fa-ul">
-                                                <li ng-repeat="question in questions">
-                                                    {% verbatim %}<i class="hq-icon fa-li { getIcon(question.question.type) }"></i>{% endverbatim %}
-                                                    {% verbatim %}<span ng-show="showLabels">{ getQuestionLabel(question.question) }</span>{% endverbatim %}
-                                                    <ul ng-if="question.question.options" ng-show="showLabels">
-                                                        <li ng-repeat="option in question.question.options">
-                                                            { getSelectOptionsLabel(option) }
-                                                        </li>
-                                                    </ul>
-                                                    <span ng-hide="showLabels">{ question.question.value }</span>
-                                                        <ul ng-if="question.question.options" ng-hide="showLabels">
-                                                            <li ng-repeat="option in question.question.options">
-                                                                { option.value }
-                                                            </li>
+                                            <ul class="fa-ul" data-bind="foreach: save_questions">
+                                                <li>
+                                                    <!-- TODO: label, languages -->
+                                                    <i data-bind="attr: {'class': question.icon}"></i>
+                                                    <span data-bind="text: question.value"></span>
+                                                    <!-- ko: if question.options -->
+                                                        <ul data-bind="foreach: question.options">
+                                                            <li data-bind="text: value"></li>
                                                         </ul>
-                                                    <ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">
+                                                    <!-- /ko -->
+                                                    <!--ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">
                                                         <li>
                                                             <i class="fa-li fa fa-sitemap text-muted"></i>
                                                             { question.condition.question } { question.condition.operator } { question.condition.answer }
@@ -223,9 +200,9 @@
                                                         <li>
                                                             <i class="fa-li fa fa-calculator text-muted"></i> { question.question.calculate }
                                                         </li>
-                                                    </ul>
+                                                    </ul-->
                                                 </li>
-                                            </ul-->
+                                            </ul>
                                         </td>
                                     </tr>
                                 <!-- /ko -->
