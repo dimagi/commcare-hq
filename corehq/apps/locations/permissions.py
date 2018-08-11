@@ -263,7 +263,8 @@ def location_safe(view):
         # Django class-based views
         if issubclass(view, View):
             # `View.as_view()` preserves stuff set on `dispatch`
-            view.dispatch.__func__.is_location_safe = True
+            # view.dispatch.__func__.is_location_safe = True
+            pass
 
         # tastypie resources
         if issubclass(view, Resource):
@@ -287,7 +288,8 @@ def conditionally_location_safe(conditional_function):
 
             # Django class-based views
             if issubclass(view_fn, View):
-                view_fn.dispatch.__func__._conditionally_location_safe_function = conditional_function
+                # view_fn.dispatch.__func__._conditionally_location_safe_function = conditional_function
+                pass
 
             # HQ report classes
             if issubclass(view_fn, GenericReportView):
