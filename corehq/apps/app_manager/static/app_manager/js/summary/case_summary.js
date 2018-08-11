@@ -8,11 +8,11 @@ hqDefine('app_manager/js/summary/case_summary', function() {
         var self = _.extend({}, property);
 
         _.each(self.forms, function(form) {
-            _.each(form.load_questions, function(questionAndConditions) {
-                questionAndConditions.question = utils.questionModel(questionAndConditions.question);
+            _.each(form.load_questions, function(questionAndCondition) {
+                questionAndCondition.question = utils.questionModel(questionAndCondition.question);
             });
-            _.each(form.save_questions, function(questionAndConditions) {
-                questionAndConditions.question = utils.questionModel(questionAndConditions.question);
+            _.each(form.save_questions, function(questionAndCondition) {
+                questionAndCondition.question = utils.questionModel(questionAndCondition.question);
             });
         });
 
@@ -74,6 +74,11 @@ hqDefine('app_manager/js/summary/case_summary', function() {
         self.showConditions = ko.observable(true);
         self.toggleConditions = function() {
             self.showConditions(!self.showConditions());
+        };
+
+        self.showCalculations = ko.observable(true);
+        self.toggleCalculations = function() {
+            self.showCalculations(!self.showCalculations());
         };
 
         self.query = ko.observable('');
