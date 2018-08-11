@@ -74,40 +74,11 @@
                                 </div>
                                 <div class="col-md-4">
                                     <strong>{% trans "Opened by:" %}</strong>
-                                    <!-- TODO: template binding for this and closedByList -->
-                                    <ul data-bind="foreach: openedByList">
-                                        <li>
-                                            <span data-bind="text: formId"></span><!-- TODO: name not id -->
-                                            <!-- ko: if: conditions -->
-                                                <ul data-bind="visible: $root.showConditions, foreach: conditions">
-                                                    <li>
-                                                        <i class="fa fa-sitemap"></i>
-                                                        <span data-bind="text: question"></span>
-                                                        <span data-bind="text: operator"></span>
-                                                        <span data-bind="text: answer"></span>
-                                                    </li>
-                                                </ul>
-                                            <!-- /ko -->
-                                        </li>
-                                    </ul>
+                                    <div data-bind="template: {name: 'opened-closed-by', data: openedByList }"></div>
                                 </div>
                                 <div class="col-md-4">
                                     <strong>{% trans "Closed by:" %}</strong>
-                                    <ul data-bind="foreach: closedByList">
-                                        <li>
-                                            <span data-bind="text: formId"></span><!-- TODO: name not id -->
-                                            <!-- ko: if: conditions -->
-                                                <ul data-bind="visible: $root.showConditions, foreach: conditions">
-                                                    <li>
-                                                        <i class="fa fa-sitemap"></i>
-                                                        <span data-bind="text: question"></span>
-                                                        <span data-bind="text: operator"></span>
-                                                        <span data-bind="text: answer"></span>
-                                                    </li>
-                                                </ul>
-                                            <!-- /ko -->
-                                        </li>
-                                    </ul>
+                                    <div data-bind="template: {name: 'opened-closed-by', data: closedByList }"></div>
                                 </div>
                             </div>
                             <!-- TODO -->
@@ -153,56 +124,10 @@
                                             <!-- /ko -->
                                         </td>
                                         <td>
-                                            <ul class="fa-ul" data-bind="foreach: load_questions"><!-- TODO: use template binding for this + save_questions -->
-                                                <li>
-                                                    <!-- TODO: label, languages -->
-                                                    <i data-bind="attr: {'class': question.icon}"></i>
-                                                    <span data-bind="text: question.value"></span>
-                                                    <ul data-bind="foreach: question.options">
-                                                        <li data-bind="text: value"></li>
-                                                    </ul>
-                                                    <ul class="fa-ul" data-bind="if: condition, visible: $root.showConditions">
-                                                        <li>
-                                                            <i class="fa-li fa fa-sitemap text-muted"></i>
-                                                            <span data-bind="text: condition.question"></span>
-                                                            <span data-bind="text: condition.operator"></span>
-                                                            <span data-bind="text: condition.answer"></span>
-                                                        </li>
-                                                    </ul>
-                                                    <ul class="fa-ul" data-bind="if: question.calculate, visible: $root.showCalculations">
-                                                        <li>
-                                                            <i class="fa-li fa fa-calculator text-muted"></i>
-                                                            <span data-bind="text: question.calculate"></span>
-                                                        </li>
-                                                    </ul>
-                                                </li>
-                                            </ul>
+                                            <div data-bind="template: {name: 'load-save-questions', data: load_questions }"></div>
                                         </td>
                                         <td>
-                                            <ul class="fa-ul" data-bind="foreach: save_questions">
-                                                <li>
-                                                    <!-- TODO: label, languages -->
-                                                    <i data-bind="attr: {'class': question.icon}"></i>
-                                                    <span data-bind="text: question.value"></span>
-                                                    <ul data-bind="foreach: question.options">
-                                                        <li data-bind="text: value"></li>
-                                                    </ul>
-                                                    <ul class="fa-ul" data-bind="if: condition, visible: $root.showConditions">
-                                                        <li>
-                                                            <i class="fa-li fa fa-sitemap text-muted"></i>
-                                                            <span data-bind="text: condition.question"></span>
-                                                            <span data-bind="text: condition.operator"></span>
-                                                            <span data-bind="text: condition.answer"></span>
-                                                        </li>
-                                                    </ul>
-                                                    <ul class="fa-ul" data-bind="if: question.calculate, visible: $root.showCalculations">
-                                                        <li>
-                                                            <i class="fa-li fa fa-calculator text-muted"></i>
-                                                            <span data-bind="text: question.calculate"></span>
-                                                        </li>
-                                                    </ul>
-                                                </li>
-                                            </ul>
+                                            <div data-bind="template: {name: 'load-save-questions', data: save_questions }"></div>
                                         </td>
                                     </tr>
                                 <!-- /ko -->
@@ -213,4 +138,51 @@
             <!-- /ko -->
         </div>
     </div>
+
+    {# List of forms that open/close a case type #}
+    <script type="text/html" id="opened-closed-by">
+        <ul data-bind="foreach: $data">
+            <li>
+                <span data-bind="text: formId"></span><!-- TODO: name not id -->
+                <!-- ko: if: conditions -->
+                    <ul data-bind="visible: $root.showConditions, foreach: conditions">
+                        <li>
+                            <i class="fa fa-sitemap"></i>
+                            <span data-bind="text: question"></span>
+                            <span data-bind="text: operator"></span>
+                            <span data-bind="text: answer"></span>
+                        </li>
+                    </ul>
+                <!-- /ko -->
+            </li>
+        </ul>
+    </script>
+
+    {# List of questions loaded/saved into a case property #}
+    <script type="text/html" id="load-save-questions">
+        <ul class="fa-ul" data-bind="foreach: $data">
+            <li>
+                <!-- TODO: label, languages -->
+                <i data-bind="attr: {'class': question.icon}"></i>
+                <span data-bind="text: question.value"></span>
+                <ul data-bind="foreach: question.options">
+                    <li data-bind="text: value"></li>
+                </ul>
+                <ul class="fa-ul" data-bind="if: condition, visible: $root.showConditions">
+                    <li>
+                        <i class="fa-li fa fa-sitemap text-muted"></i>
+                        <span data-bind="text: condition.question"></span>
+                        <span data-bind="text: condition.operator"></span>
+                        <span data-bind="text: condition.answer"></span>
+                    </li>
+                </ul>
+                <ul class="fa-ul" data-bind="if: question.calculate, visible: $root.showCalculations">
+                    <li>
+                        <i class="fa-li fa fa-calculator text-muted"></i>
+                        <span data-bind="text: question.calculate"></span>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </script>
 {% endblock content_extra %}

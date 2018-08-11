@@ -33,32 +33,16 @@
             </div>
             <div class="col-xs-9">
                 <div class="btn-group" role="group" >
-                    <!-- TODO: template binding for these? -->
-                    <button type="button" class="btn btn-default"
-                            data-bind="click: toggleCalculations, css: { active: showCalculations }">
-                            <i class="fa fa-calculator" data-bind="css: { 'hq-icon': showCalculations }"></i>
-                        &nbsp;{% trans "Calculations" %}
-                    </button>
-                    <button type="button" class="btn btn-default"
-                            data-bind="click: toggleRelevance, css: { active: showRelevance }">
-                            <i class="fa fa-code-fork" data-bind="css: { 'hq-icon': showRelevance }"></i>
-                        &nbsp;{% trans "Display" %}
-                    </button>
-                    <button type="button" class="btn btn-default"
-                            data-bind="click: toggleConstraints, css: { active: showConstraints }">
-                        <i class="fa fa-ban" data-bind="css: { 'hq-icon': showConstraints }"></i>
-                        &nbsp;{% trans "Validation" %}
-                    </button>
-                    <button type="button" class="btn btn-default"
-                            data-bind="click: toggleComments, css: { active: showComments }">
-                        <i class="fa fa-quote-left" data-bind="css: { 'hq-icon': showComments }"></i>
-                        &nbsp;{% trans "Comments" %}
-                    </button>
-                    <button type="button" class="btn btn-default"
-                            data-bind="click: toggleDefaultValues, css: { active: showDefaultValues }">
-                        <i class="fa fa-home" data-bind="css: { 'hq-icon': showDefaultValues }"></i>
-                        &nbsp;{% trans "Default Values" %}
-                    </button>
+                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleCalculations, activeObs: showCalculations,
+                                       icon: 'fa fa-calculator', text: '{% trans "Calculations"|escapejs %}' } }--><!-- /ko -->
+                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleRelevance, activeObs: showRelevance,
+                                       icon: 'fa fa-code-fork', text: '{% trans "Display"|escapejs %}' } }--><!-- /ko -->
+                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleConstraints, activeObs: showConstraints,
+                                       icon: 'fa fa-ban', text: '{% trans "Validation"|escapejs %}' } }--><!-- /ko -->
+                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleComments, activeObs: showComments,
+                                       icon: 'fa fa-quote-left', text: '{% trans "Comments"|escapejs %}' } }--><!-- /ko -->
+                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleDefaultValues, activeObs: showDefaultValues,
+                                       icon: 'fa fa-home', text: '{% trans "Default Values"|escapejs %}' } }--><!-- /ko -->
                 </div>
                 <div class="btn-toolbar pull-right" role="toolbar">
                     <a class="btn btn-primary" href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}">
@@ -113,31 +97,14 @@
                             <span class="text-muted" data-bind="visible: $root.showComments">
                                 &nbsp; <span data-bind="text: comment"></span>
                             </span>
-                            <!-- TODO: template binding for these? -->
-                            <ul class="fa-ul" data-bind="if: calculate, visible: $root.showCalculations">
-                                <li>
-                                    <i class="fa-li fa fa-calculator text-muted"></i>
-                                    <span data-bind="text: calculate"></span>
-                                </li>
-                            </ul>
-                            <ul class="fa-ul" data-bind="if: relevant, visible: $root.showRelevance">
-                                <li>
-                                    <i class="fa-li fa fa-code-fork text-muted"></i>
-                                    <span data-bind="text: relevant"></span>
-                                </li>
-                            </ul>
-                            <ul class="fa-ul" data-bind="if: constraint, visible: $root.showConstraints">
-                                <li>
-                                    <i class="fa-li fa fa-ban text-muted"></i>
-                                    <span data-bind="text: constraint"></span>
-                                </li>
-                            </ul>
-                            <ul class="fa-ul" data-bind="if: setvalue, visible: $root.showDefaultValues">
-                                <li>
-                                    <i class="fa-li fa fa-home text-muted"></i>
-                                    <span data-bind="text: setvalue"></span>
-                                </li>
-                            </ul>
+                            <!-- ko template: {name: 'question-attribute', data: { attribute: calculate, icon: 'fa-calculator',
+                                               visibleObs: $root.showCalculations } }--><!-- /ko -->
+                            <!-- ko template: {name: 'question-attribute', data: { attribute: relevant, icon: 'fa-code-fork',
+                                               visibleObs: $root.showRelevance } }--><!-- /ko -->
+                            <!-- ko template: {name: 'question-attribute', data: { attribute: constraint, icon: 'fa-ban',
+                                               visibleObs: $root.showConstraints } }--><!-- /ko -->
+                            <!-- ko template: {name: 'question-attribute', data: { attribute: setvalue, icon: 'fa-home',
+                                               visibleObs: $root.showDefaultValues } }--><!-- /ko -->
                             <ol data-bind="foreach: options">
                                 <li>
                                     <!-- TODO: name vs id, language support -->
@@ -150,4 +117,23 @@
             </ul>
         </li>
     </ul>
+
+    {# Button to toggle question attribute #}
+    <script type="text/html" id="question-attribute">
+        <ul class="fa-ul" data-bind="if: attribute, visible: visibleObs">
+            <li>
+                <i data-bind="attr: {'class': 'fa-li fa text-muted ' + icon}"></i>
+                <span data-bind="text: attribute"></span>
+            </li>
+        </ul>
+    </script>
+
+    {# Icon and value for question attribute #}
+    <script type="text/html" id="attribute-toggle">
+        <button type="button" class="btn btn-default"
+                data-bind="click: clickFn, css: { active: activeObs }">
+                <i class="fa fa-calculator" data-bind="css: { 'hq-icon': activeObs }, attr: {'class': icon}"></i>
+                &nbsp;<span data-bind="text: text"></span>
+        </button>
+    </script>
 {% endblock content_extra %}
