@@ -222,26 +222,28 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 self.table_adapters_by_domain[domain].remove(table)
 
     def process_changes_chunk(self, pillow_instance, changes):
-        failed_changes = set()
-
+        """
+        Update UCR tables in bulk by breaking up changes per domain per UCR table.
+            If an exception is raised in bulk operations of a set of changes,
+            those changes are returned to pillow for serial reprocessing.
+        """
         self.bootstrap_if_needed()
-
         # break up changes by domain
         changes_by_domain = defaultdict(list)
         for change in changes:
+            # skip if no domain or no UCR tables in the domain
             if change.metadata.domain and change.metadata.domain in self.table_adapters_by_domain:
-                # if no domain we won't save to any UCR table
                 changes_by_domain[change.metadata.domain].append(change)
 
+        retry_changes = set()
         for domain, changes_chunk in six.iteritems(changes_by_domain):
             failed = self._process_chunk_for_domain(domain, changes_chunk)
-            failed_changes.update(failed)
+            retry_changes.update(failed)
 
-        return failed_changes
+        return retry_changes
 
     def _get_docs(self, changes):
         # get docs in bulk and validate revision
-        failed_changes = set()
         # break up by doctype
         _changes_by_doc_store = defaultdict(list)
         for change in changes:
@@ -253,19 +255,20 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             docs.extend(list(doc_store.iter_documents([change.id for change in _changes])))
 
         # catch missing docs
+        retry_changes = set()
         docs_by_id = {doc['_id']: doc for doc in docs}
         for change in changes:
             if change.id not in docs_by_id:
                 # we need to capture DocumentMissingError which is not possible in bulk
                 #   so let pillow fall back to serial mode to capture the error for missing docs
-                failed_changes.add(change)
+                retry_changes.add(change)
                 continue
             try:
                 ensure_matched_revisions(change, docs_by_id.get(change.id))
             except DocumentMismatchError:
-                failed_changes.add(change)
-        good_changes = set(changes) - failed_changes
-        return failed_changes, [docs_by_id.get(change.id) for change in good_changes]
+                retry_changes.add(change)
+        good_changes = set(changes) - retry_changes
+        return retry_changes, [docs_by_id.get(change.id) for change in good_changes]
 
     def _process_chunk_for_domain(self, domain, changes_chunk):
         adapters = self.table_adapters_by_domain[domain]
@@ -274,7 +277,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         rows_to_save_by_adapter = defaultdict(list)
         async_configs_by_doc_id = defaultdict(list)
         to_update = {change for change in changes_chunk if not change.deleted}
-        failed_changes, docs = self._get_docs(to_update)
+        retry_changes, docs = self._get_docs(to_update)
 
         for doc in docs:
             eval_context = EvaluationContext(doc)
@@ -299,7 +302,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 notify_exception(None,
                     "Error in deleting changes chunk {ids}: {ex}".format(
                         ids=delete_ids, ex=ex))
-                failed_changes.update([c for c in changes_chunk if c.id in delete_ids])
+                retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
         # bulk update by adapter
         for adapter, rows in six.iteritems(rows_to_save_by_adapter):
             try:
@@ -308,7 +311,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 notify_exception(None,
                     "Error in saving changes chunk {ids}: {ex}".format(
                         ids=[c.id for c in to_update], ex=ex))
-                failed_changes.update(to_update)
+                retry_changes.update(to_update)
         if async_configs_by_doc_id:
             changes_by_id = {change.id: change for change in changes_chunk}
             doc_type_by_id = {
@@ -317,7 +320,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             }
             AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
 
-        return failed_changes
+        return retry_changes
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()

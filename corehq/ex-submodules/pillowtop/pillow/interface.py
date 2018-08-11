@@ -150,12 +150,12 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         """
         if not changes_chunk:
             return
-        failed_changes = set()
+        retry_changes = set()
         timer = TimingContext()
         with timer:
             try:
                 # chunked processing is supported if there is only one processor
-                failed_changes = self.processors[0].process_changes_chunk(self, changes_chunk)
+                retry_changes = self.processors[0].process_changes_chunk(self, changes_chunk)
             except Exception as ex:
                 notify_exception(
                     None,
@@ -169,19 +169,19 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                     self.process_with_error_handling(change, context, chunked_fallback=True)
             else:
                 # fall back to processing one by one for failed changes
-                for change in failed_changes:
+                for change in retry_changes:
                     self.process_with_error_handling(change, context, chunked_fallback=True)
         context.changes_seen += len(changes_chunk)
         # update checkpoint for just the latest change
         self._update_checkpoint(changes_chunk[-1], context)
-        self._record_datadog_metrics(changes_chunk, failed_changes, timer)
+        self._record_datadog_metrics(changes_chunk, retry_changes, timer)
 
-    def _record_datadog_metrics(self, changes_chunk, failed_changes, timer):
+    def _record_datadog_metrics(self, changes_chunk, retry_changes, timer):
         tags = ["pillow_name:{}".format(self.get_name()), "chunked:True"]
         datadog_counter('commcare.change_feed.changes.count', len(changes_chunk), tags=tags)
-        datadog_counter('commcare.change_feed.changes.exception', len(failed_changes), tags=tags)
+        datadog_counter('commcare.change_feed.changes.exception', len(retry_changes), tags=tags)
         datadog_counter('commcare.change_feed.changes.suceess',
-            len(set(changes_chunk) - set(failed_changes)), tags=tags)
+            len(set(changes_chunk) - set(retry_changes)), tags=tags)
 
         max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).seconds
         min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).seconds
