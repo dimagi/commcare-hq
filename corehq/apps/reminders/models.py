@@ -19,7 +19,7 @@ from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
 from corehq.apps.reminders.util import enqueue_reminder_directly, get_two_way_number_for_recipient
 from couchdbkit.exceptions import ResourceConflict
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.util.quickcache import quickcache

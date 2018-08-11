@@ -6,7 +6,7 @@ from django.db.models import Q, Count
 from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq import toggles
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView

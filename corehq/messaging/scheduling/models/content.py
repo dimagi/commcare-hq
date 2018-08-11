@@ -20,7 +20,7 @@ from corehq.apps.sms.api import (
 from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist
 from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
