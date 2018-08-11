@@ -99,7 +99,7 @@ hiredis==0.2.0
 xlwt==1.3.0
 django-prbac>=0.0.7
 html5lib==1.0b8
-xhtml2pdf==0.0.6
+xhtml2pdf==0.2.2
 qrcode==4.0.4
 django-user-agents==0.3.2
 csv342==1.0.0
