@@ -73,6 +73,7 @@ hqDefine('app_manager/js/summary/case_summary', function() {
             case_types: caseTypes,
         });
 
+        hqImport("hqwebapp/js/layout").setIsAppbuilderResizing(true);
         $("#hq-sidebar > nav").koApplyBindings(caseSummaryMenu);
         $("#js-appmanager-body").koApplyBindings(caseSummaryContent);
 

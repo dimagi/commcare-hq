@@ -121,6 +121,7 @@ hqDefine('app_manager/js/summary/form_summary', function() {
             modules: initialPageData.get("modules"),
         });
 
+        hqImport("hqwebapp/js/layout").setIsAppbuilderResizing(true);
         $("#hq-sidebar > nav").koApplyBindings(formSummaryMenu);
         $("#js-appmanager-body").koApplyBindings(formSummaryContent);
 
