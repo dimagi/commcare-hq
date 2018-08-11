@@ -28,6 +28,7 @@
             </div>
             <div class="col-xs-9">
                 <div class="btn-toolbar pull-right" role="toolbar">
+                    {% include 'app_manager/partials/summary_language_switcher.html' %}
                     <div class="btn-group" role="group" >
                         <button type="button" class="btn btn-default"
                                 data-bind="click: toggleConditions, css: { active : showConditions }">
@@ -40,12 +41,7 @@
                             &nbsp;{% trans "Show Calculations" %}
                         </button>
                     </div>
-                    <a class="btn btn-primary" href="{% url "download_case_summary" domain app_id %}?lang={{ lang }}">
-                        <i class="fa fa-download"></i>
-                        {% trans "Download" %}
-                    </a>
                 </div>
-                {% include 'app_manager/partials/summary_language_switcher.html' %}
             </div>
         </div>
     </div>

@@ -32,26 +32,21 @@
                 </form>
             </div>
             <div class="col-xs-9">
-                <div class="btn-group" role="group" >
-                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleCalculations, activeObs: showCalculations,
-                                       icon: 'fa fa-calculator', text: '{% trans "Calculations"|escapejs %}' } }--><!-- /ko -->
-                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleRelevance, activeObs: showRelevance,
-                                       icon: 'fa fa-code-fork', text: '{% trans "Display"|escapejs %}' } }--><!-- /ko -->
-                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleConstraints, activeObs: showConstraints,
-                                       icon: 'fa fa-ban', text: '{% trans "Validation"|escapejs %}' } }--><!-- /ko -->
-                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleComments, activeObs: showComments,
-                                       icon: 'fa fa-quote-left', text: '{% trans "Comments"|escapejs %}' } }--><!-- /ko -->
-                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleDefaultValues, activeObs: showDefaultValues,
-                                       icon: 'fa fa-home', text: '{% trans "Default Values"|escapejs %}' } }--><!-- /ko -->
-                </div>
                 <div class="btn-toolbar pull-right" role="toolbar">
-                    <a class="btn btn-primary" href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}">
-                        <i class="fa fa-download"></i>
-                        {% trans "Download" %}
-                    </a>
-                </div>
-                {# TODO: futz with floats/layouts so looks more like prod, or at least less bad #}
-                {% include 'app_manager/partials/summary_language_switcher.html' %}
+                    {% include 'app_manager/partials/summary_language_switcher.html' %}
+                    <div class="btn-group" role="group">
+                        <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleCalculations, activeObs: showCalculations,
+                                           icon: 'fa fa-calculator', text: '{% trans "Calculations"|escapejs %}' } }--><!-- /ko -->
+                        <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleRelevance, activeObs: showRelevance,
+                                           icon: 'fa fa-code-fork', text: '{% trans "Display"|escapejs %}' } }--><!-- /ko -->
+                        <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleConstraints, activeObs: showConstraints,
+                                           icon: 'fa fa-ban', text: '{% trans "Validation"|escapejs %}' } }--><!-- /ko -->
+                        <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleComments, activeObs: showComments,
+                                           icon: 'fa fa-quote-left', text: '{% trans "Comments"|escapejs %}' } }--><!-- /ko -->
+                        <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleDefaultValues, activeObs: showDefaultValues,
+                                           icon: 'fa fa-home', text: '{% trans "Default Values"|escapejs %}' } }--><!-- /ko -->
+                    </div>
+                 </div>
              </div>
         </div>
     </div>

@@ -1,21 +1,19 @@
 {% load i18n %}
 
 <!-- TODO: label/id toggle, language switcher -->
-<!--div class="btn-toolbar pull-right" role="toolbar">
-    <div class="form-inline form-group btn-group">
-        <label for="language">{% trans "Language" %}</label>
-        <select class="form-control" id="language" ng-model="lang" ng-options="lang for lang in appLangs"></select>
-    </div>
-    <div class="btn-group" role="group" >
-        <button type="button" class="btn btn-default"
-                ng-click="showLabels = true"
-                ng-class="{ 'active' : showLabels }">
-            {% trans "Labels" %}
-        </button>
-        <button type="button" class="btn btn-default"
-                ng-click="showLabels = false"
-                ng-class="{ 'active' : !showLabels }">
-            {% trans "Question IDs" %}
-        </button>
-    </div>
+<!--div class="form-inline form-group btn-group">
+    <label for="language">{% trans "Language" %}</label>
+    <select class="form-control" id="language" ng-model="lang" ng-options="lang for lang in appLangs"></select>
+</div-->
+<!--div class="btn-group" role="group" >
+    <button type="button" class="btn btn-default"
+            ng-click="showLabels = true"
+            ng-class="{ 'active' : showLabels }">
+        {% trans "Labels" %}
+    </button>
+    <button type="button" class="btn btn-default"
+            ng-click="showLabels = false"
+            ng-class="{ 'active' : !showLabels }">
+        {% trans "Question IDs" %}
+    </button>
 </div-->

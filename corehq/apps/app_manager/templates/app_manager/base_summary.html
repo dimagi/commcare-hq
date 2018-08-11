@@ -73,18 +73,24 @@
                         <li role="presentation">
                             <div class="appnav-item{% if is_form_summary %} active{% endif %}">
                                 <a href="{% url 'app_form_summary' domain app_id %}"
-                                   class="appnav-link-full">
+                                   class="appnav-title appnav-title-secondary appnav-responsive">
                                     <i class="fa fa-file-text-o appnav-primary-icon"></i>
                                     <span>{% trans "Form Summary" %}</span>
+                                </a>
+                                <a class="appnav-secondary" href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}">
+                                    <i class="fa fa-download"></i>
                                 </a>
                             </div>
                         </li>
                         <li role="presentation">
                             <div class="appnav-item{% if is_case_summary %} active{% endif %}">
                                 <a href="{% url 'app_case_summary' domain app_id %}"
-                                   class="appnav-link-full">
+                                   class="appnav-title appnav-title-secondary appnav-responsive">
                                     <i class="fcc fcc-fd-external-case appnav-primary-icon"></i>
                                     <span>{% trans "Case Summary" %}</span>
+                                </a>
+                                <a class="appnav-secondary" href="{% url "download_case_summary" domain app_id %}?lang={{ lang }}">
+                                    <i class="fa fa-download"></i>
                                 </a>
                             </div>
                         </li>
