@@ -268,17 +268,13 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         return failed_changes, [docs_by_id.get(change.id) for change in good_changes]
 
     def _process_chunk_for_domain(self, domain, changes_chunk):
-        changes_by_id = {change.id: change for change in changes_chunk}
-        failed_changes = set()
-        rows_to_save_by_adapter = defaultdict(list)
         adapters = self.table_adapters_by_domain[domain]
-        to_delete = {change for change in changes_chunk if change.deleted}
-        to_delete_by_adapter = defaultdict(list)
-        to_update = set(changes_chunk) - to_delete
 
-        failed, docs = self._get_docs(to_update)
-        failed_changes.update(failed)
+        to_delete_by_adapter = defaultdict(list)
+        rows_to_save_by_adapter = defaultdict(list)
         async_configs_by_doc_id = defaultdict(list)
+        to_update = {change for change in changes_chunk if not change.deleted}
+        failed_changes, docs = self._get_docs(to_update)
 
         for doc in docs:
             eval_context = EvaluationContext(doc)
@@ -292,15 +288,19 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
                     to_delete_by_adapter[adapter].append(doc['_id'])
             eval_context.reset_iteration()
+
+        # bulk delete by adapter
+        to_delete = [c.id for c in changes_chunk if c.deleted]
         for adapter in adapters:
-            delete_ids = to_delete_by_adapter[adapter] + [c.id for c in to_delete]
+            delete_ids = to_delete_by_adapter[adapter] + to_delete
             try:
                 adapter.bulk_delete(delete_ids)
             except Exception as ex:
                 notify_exception(None,
                     "Error in deleting changes chunk {ids}: {ex}".format(
                         ids=delete_ids, ex=ex))
-                failed_changes.update(to_delete)
+                failed_changes.update([c for c in changes_chunk if c.id in delete_ids])
+        # bulk update by adapter
         for adapter, rows in six.iteritems(rows_to_save_by_adapter):
             try:
                 adapter.save_rows(rows)
@@ -310,6 +310,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                         ids=[c.id for c in to_update], ex=ex))
                 failed_changes.update(to_update)
         if async_configs_by_doc_id:
+            changes_by_id = {change.id: change for change in changes_chunk}
             doc_type_by_id = {
                 _id: changes_by_id[_id].metadata.document_type
                 for _id in async_configs_by_doc_id.keys()
