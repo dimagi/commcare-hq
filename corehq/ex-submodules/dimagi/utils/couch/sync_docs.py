@@ -4,10 +4,10 @@ import logging
 from collections import namedtuple
 from requests.exceptions import HTTPError
 
+from django.conf import settings
+
 from couchdbkit import push
 from couchdbkit.exceptions import ResourceNotFound
-
-import settings
 
 log = logging.getLogger(__name__)
 
