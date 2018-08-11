@@ -21,6 +21,16 @@
           {% trans "Form Summary" %}</h1>
         </h3>
         <div class="row">
+            <div class="col-xs-3">
+                <form class="form-inline" role="form">
+                    <!-- TODO: filter questions -->
+                    <!--div class="form-group">
+                        <label class="sr-only" for="property">{% trans "Filter questions" %}</label>
+                        <input type="text" class="form-control" id="property" placeholder="Filter questions" ng-model="questionSearch.$">
+                    </div>
+                    <button class="btn btn-default" ng-click="questionSearch.$ = ''" type="button"><i class="fa fa-times"></i></button-->
+                </form>
+            </div>
             <div class="col-xs-9">
                 <div class="btn-group" role="group" >
                     <!-- TODO: template binding for these? -->
@@ -56,6 +66,8 @@
                         {% trans "Download" %}
                     </a>
                 </div>
+                {# TODO: futz with floats/layouts so looks more like prod, or at least less bad #}
+                {% include 'app_manager/partials/summary_language_switcher.html' %}
              </div>
         </div>
     </div>
