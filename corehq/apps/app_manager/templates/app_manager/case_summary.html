@@ -17,12 +17,12 @@
         <div class="row">
             <div class="col-xs-3">
                 <form class="form-inline" role="form">
-                    <!-- TODO: filter properties -->
-                    <!--div class="form-group">
-                      <label class="sr-only" for="property">{% trans "Filter properties" %}</label>
-                      <input type="text" class="form-control" id="property" placeholder="{% trans 'Filter properties' %}" ng-model="propertySearch.name" />
+                    <div class="form-group">
+                        <label class="sr-only" for="property">{% trans "Filter properties" %}</label>
+                        <input type="text" class="form-control" id="property" placeholder="{% trans 'Filter properties' %}"
+                               data-bind="value: query, valueUpdate: 'afterkeydown'" />
                     </div>
-                    <button class="btn btn-default" ng-click="propertySearch.name = ''" type="button"><i class="fa fa-times"></i></button-->
+                    <button class="btn btn-default" data-bind="click: clearQuery" type="button"><i class="fa fa-times"></i></button>
                 </form>
             </div>
             <div class="col-xs-9">
@@ -55,7 +55,7 @@
     <div class="row">
         <div class="col-sm-12">
             <!-- ko foreach: caseTypes -->
-                <div class="panel panel-appmanager" data-bind="visible: isSelected">
+                <div class="panel panel-appmanager" data-bind="visible: isVisible">
                     <div class="panel-heading">
                         <h4 class="panel-title panel-title-nolink">
                             <i class="fcc fcc-fd-external-case"></i>
@@ -138,7 +138,7 @@
                             </thead>
                             <tbody data-bind="foreach: properties">
                                 <!-- ko foreach: forms -->
-                                    <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}">
+                                    <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}, visible: $parent.isVisible">
                                         <!-- ko if: !$index() -->
                                         <td data-bind="attr: {rowspan: $parent.forms.length}, text: $parent.name"></td>
                                         <td data-bind="attr: {rowspan: $parent.forms.length}, text: $parent.description"></td>

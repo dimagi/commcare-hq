@@ -3,8 +3,18 @@ hqDefine('app_manager/js/summary/case_summary', function() {
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         menu = hqImport("app_manager/js/summary/menu");
 
+    var propertyModel = function(property) {
+        var self = _.extend({}, property);
+        self.isVisible = ko.observable(true);
+        return self;
+    };
+
     var caseTypeModel = function(caseType) {
         var self = _.extend({}, caseType);
+
+        self.properties = _.map(caseType.properties, function(property) {
+            return propertyModel(property);
+        });
 
         // Convert these from objects to lists so knockout can process more easily
         self.relationshipList = _.map(_.keys(self.relationships), function(relationship) {
@@ -27,6 +37,10 @@ hqDefine('app_manager/js/summary/case_summary', function() {
         });
 
         self.isSelected = ko.observable(true);
+        self.hasVisibleProperties = ko.observable(true);
+        self.isVisible = ko.computed(function() {
+            return self.isSelected() && self.hasVisibleProperties();
+        });
 
         return self;
     };
@@ -50,6 +64,22 @@ hqDefine('app_manager/js/summary/case_summary', function() {
         self.toggleConditions = function() {
             self.showConditions(!self.showConditions());
         };
+
+        self.query = ko.observable('');
+        self.clearQuery = function() {
+            self.query('');
+        };
+        self.query.subscribe(_.debounce(function(newValue) {
+            _.each(self.caseTypes, function(caseType) {
+                var hasVisible = false;
+                _.each(caseType.properties, function(property) {
+                    var isVisible = !newValue || property.name.indexOf(newValue) !== -1;
+                    property.isVisible(isVisible);
+                    hasVisible = hasVisible || isVisible;
+                });
+                caseType.hasVisibleProperties(hasVisible || !newValue && !caseType.properties.length);
+            });
+        }, 200));
 
         return self;
     };
