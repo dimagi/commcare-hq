@@ -64,7 +64,7 @@
         {% endverbatim %}
     </div-->
 
-    <ul data-bind="foreach: modules">
+    <ul class="fa-ul" data-bind="foreach: modules">
         <li data-bind="visible: isSelected">
             <h4>
                 <!-- TODO: language support, readOnly -->
@@ -74,7 +74,7 @@
                 </a>
                 <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
             </h4>
-            <ul data-bind="foreach: forms">
+            <ul class="fa-ul" data-bind="foreach: forms">
                 <li data-bind="visible: isSelected">
                     <h5>
                         <!-- TODO: language support, readOnly -->
