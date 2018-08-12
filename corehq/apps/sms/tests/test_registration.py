@@ -31,7 +31,7 @@ from mock import patch, Mock
 DUMMY_APP_ODK_URL = 'http://localhost/testapp'
 DUMMY_REGISTRATION_URL = 'http://localhost/register'
 DUMMY_APP_INFO_URL = 'http://localhost/appinfo'
-DUMMY_APP_INFO_URL_B64 = base64.b64encode(DUMMY_APP_INFO_URL)
+DUMMY_APP_INFO_URL_B64 = base64.b64encode(DUMMY_APP_INFO_URL.encode('utf-8'))
 
 
 def noop(*args, **kwargs):
