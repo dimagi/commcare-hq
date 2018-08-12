@@ -8,6 +8,8 @@
 
 {% block content_extra %}
     {% initial_page_data 'case_metadata' case_metadata %}
+    {% initial_page_data 'app_langs' app_langs %}
+    {% initial_page_data 'lang' lang %}
     {% initial_page_data 'VELLUM_TYPES' VELLUM_TYPES %}
 
     <div class="page-header" style="margin-top: 0;">
@@ -28,18 +30,14 @@
             </div>
             <div class="col-xs-9">
                 <div class="btn-toolbar pull-right" role="toolbar">
-                    <!--div class="btn-group" role="group" >
-                        <button type="button" class="btn btn-default"
-                                ng-click="showLabels = true"
-                                ng-class="{ 'active' : showLabels }">
+                    <div class="btn-group" role="group" >
+                        <button type="button" class="btn btn-default" data-bind="click: turnLabelsOn, css: { 'active': showLabels }">
                             {% trans "Labels" %}
                         </button>
-                        <button type="button" class="btn btn-default"
-                                ng-click="showLabels = false"
-                                ng-class="{ 'active' : !showLabels }">
+                        <button type="button" class="btn btn-default" data-bind="click: turnIdsOn, css: { 'active': showIds }">
                             {% trans "Question IDs" %}
                         </button>
-                    </div-->
+                    </div>
                     <div class="btn-group" role="group" >
                         <button type="button" class="btn btn-default"
                                 data-bind="click: toggleConditions, css: { active : showConditions }">
@@ -121,7 +119,7 @@
                                         <td data-bind="attr: {rowspan: $parent.forms.length}, text: $parent.description"></td>
                                         <!-- /ko -->
                                         <td>
-                                            <!-- TODO: module name, form name, readOnly -->
+                                            <!-- TODO: module & form names (correctly translated), readOnly -->
                                             module &rarr; <span data-bind="text: form_id"></span>
                                             <!-- TODO: test -->
                                             <!-- ko foreach: errors -->
@@ -169,11 +167,12 @@
     <script type="text/html" id="load-save-questions">
         <ul class="fa-ul" data-bind="foreach: $data">
             <li>
-                <!-- TODO: label, languages -->
                 <i data-bind="attr: {'class': question.icon}"></i>
-                <span data-bind="text: question.value"></span>
+                <span data-bind="visible: $root.showIds, text: question.value"></span>
+                <span data-bind="visible: $root.showLabels, text: $root.translateQuestion(question)"></span>
                 <ul data-bind="foreach: question.options">
-                    <li data-bind="text: value"></li>
+                    <li data-bind="visible: $root.showIds, text: value"></li>
+                    <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
                 </ul>
                 <ul class="fa-ul" data-bind="if: condition, visible: $root.showConditions">
                     <li>

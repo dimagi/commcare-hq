@@ -57,12 +57,14 @@ hqDefine('app_manager/js/summary/case_summary', function() {
     };
 
     var contentModel = function(options) {
-        assertProperties(options, ['case_types'], []);
+        assertProperties(options, ['case_types', 'langs', 'lang'], []);
 
         var self = {};
         self.caseTypes = _.map(options.case_types, function(caseType) {
             return caseTypeModel(caseType);
         });
+        self.lang = options.lang;
+        self.langs = options.langs;
 
         self.selectedItemId = ko.observable('');      // blank indicates "View All"
         self.selectedItemId.subscribe(function(selectedId) {
@@ -70,6 +72,17 @@ hqDefine('app_manager/js/summary/case_summary', function() {
                 caseType.isSelected(!selectedId || selectedId === caseType.name);
             });
         });
+
+        self.showLabels = ko.observable(true);
+        self.showIds = ko.computed(function() {
+            return !self.showLabels();
+        });
+        self.turnLabelsOn = function() {
+            self.showLabels(true);
+        };
+        self.turnIdsOn = function() {
+            self.showLabels(false);
+        };
 
         self.showConditions = ko.observable(true);
         self.toggleConditions = function() {
@@ -97,6 +110,13 @@ hqDefine('app_manager/js/summary/case_summary', function() {
             });
         }, 200));
 
+        self.translateQuestion = function(question) {
+            if (question.translations) {
+                return utils.translateName(question.translations, self.lang, self.langs);
+            }
+            return question.label;  // hidden values don't have translations
+        };
+
         return self;
     };
 
@@ -117,6 +137,8 @@ hqDefine('app_manager/js/summary/case_summary', function() {
 
         var caseSummaryContent = contentModel({
             case_types: caseTypes,
+            lang: initialPageData.get("lang"),
+            langs: initialPageData.get("app_langs"),
         });
 
         hqImport("hqwebapp/js/layout").setIsAppbuilderResizing(true);

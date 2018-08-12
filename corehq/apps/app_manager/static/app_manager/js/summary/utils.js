@@ -1,12 +1,11 @@
 hqDefine("app_manager/js/summary/utils", function() {
-    var translateName = function(names, targetLang, langs, fallback) {
-        fallback = fallback ? fallback : '[unknown]';
+    var translateName = function(names, targetLang, langs) {
         var langs = [targetLang].concat(langs),
             firstLang = _(langs).find(function(lang) {
                 return names[lang];
             });
         if (!firstLang) {
-            return fallback;
+            return gettext('[unknown]');;
         }
         return names[firstLang] + (firstLang === targetLang ? '' : ' [' + firstLang + ']');
     };
