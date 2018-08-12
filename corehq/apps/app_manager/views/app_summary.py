@@ -106,7 +106,7 @@ class AppFormSummaryView(AppSummaryView):
         context.update({
             'is_form_summary': True,
             'modules': modules,
-            'errors': errors,   # TODO: support
+            'errors': errors,
         })
         return context
 

@@ -4,11 +4,13 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         utils = hqImport('app_manager/js/summary/utils');
 
     var contentModel = function(options) {
-        assertProperties(options, ['lang', 'langs', 'modules', 'read_only'], []);
+        assertProperties(options, ['errors', 'form_name_map', 'lang', 'langs', 'modules', 'read_only'], []);
 
         var self = {};
+        self.errors = options.errors;
         self.lang = options.lang;
         self.langs = options.langs;
+        self.formNameMap = options.form_name_map;
         self.modules = _.map(options.modules, moduleModel);
         self.readOnly = options.read_only;
 
@@ -21,6 +23,21 @@ hqDefine('app_manager/js/summary/form_summary', function() {
                 });
             });
         });
+
+        // TODO: DRY up with case_summary.js
+        self.moduleFormReference = function(formId) {
+            var formData = self.formNameMap[formId];
+            var template = self.readOnly
+                ? "<%= moduleName %> &rarr; <%= formName %>"
+                : "<a href='<%= moduleUrl %>'><%= moduleName %></a> &rarr; <a href='<%= formUrl %>'><%= formName %></a>"
+            ;
+            return _.template(template)({
+                moduleName: self.translate(formData.module_name),
+                moduleUrl: formData.module_url,
+                formName: self.translate(formData.form_name),
+                formUrl: formData.form_url,
+            });
+        };
 
         self.showCalculations = ko.observable(false);
         self.toggleCalculations = function() {
@@ -145,6 +162,7 @@ hqDefine('app_manager/js/summary/form_summary', function() {
                     id: module.id,
                     name: utils.translateName(module.name, lang, langs),
                     icon: utils.moduleIcon(module),
+                    has_errors: false,
                     subitems: _.map(module.forms, function(form) {
                         return menu.menuItemModel({
                             id: form.id,
@@ -158,6 +176,8 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         });
 
         var formSummaryContent = contentModel({
+            errors: initialPageData.get("errors"),
+            form_name_map: initialPageData.get("form_name_map"),
             lang: lang,
             langs: langs,
             modules: initialPageData.get("modules"),

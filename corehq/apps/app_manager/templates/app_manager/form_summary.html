@@ -9,6 +9,7 @@
 {% endblock js %}
 
 {% block content_extra %}
+    {% initial_page_data 'errors' errors %}
     {% initial_page_data 'lang' lang %}
     {% initial_page_data 'langs' langs %}
     {% initial_page_data 'modules' modules %}
@@ -59,18 +60,14 @@
         </div>
     </div>
 
-    <!-- TODO: errors -->
-    <!--div class="alert alert-danger" ng-repeat="form in errors" ng-show="errors">
-        <i class="fa fa-exclamation-circle"></i> {% trans "Error in form:" %}
-        {% verbatim %}"{{ getFormModuleLabel(form) }}"{% endverbatim %}
-        {% trans "in module" %}
-        {% verbatim %}"{{ getFormModuleLabel(form.module) }}"
-        <a href="{{ form.error.edit_url }}" ng-if="!readOnly">
-            <i class="fa fa-pencil"></i>
-        </a><br/>
-        {{ form.error.details }}
-        {% endverbatim %}
-    </div-->
+    <!-- ko foreach: errors -->
+        <div class="alert alert-danger">
+            <i class="fa fa-exclamation-circle"></i> {% trans "Error in form:" %}
+            <span data-bind="html: $root.moduleFormReference(id)"></span>
+            <br/>
+            <span data-bind="text: error.details"></span>
+        </div>
+    <!-- /ko -->
 
     <ul class="fa-ul" data-bind="foreach: modules">
         <li data-bind="visible: isVisible">
