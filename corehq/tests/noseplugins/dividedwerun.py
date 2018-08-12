@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
+import six
 import types
 from hashlib import md5
 from unittest import SkipTest
@@ -107,4 +108,7 @@ def name_of(test):
 
 
 def get_score(test):
-    return md5(name_of(test)).hexdigest()[0]
+    name = name_of(test)
+    if isinstance(name, six.text_type):
+        name = name.encode('utf-8')
+    return md5(name).hexdigest()[0]
