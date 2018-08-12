@@ -48,6 +48,33 @@ hqDefine('app_manager/js/summary/form_summary', function() {
             self.showDefaultValues(!self.showDefaultValues());
         };
 
+        self.query = ko.observable('');
+        self.clearQuery = function() {
+            self.query('');
+        };
+        var match = function(needle, haystack) {
+            return !needle || haystack.toLowerCase().indexOf(needle.toLowerCase()) !== -1;
+        };
+        self.query.subscribe(_.debounce(function(newValue) {
+            _.each(self.modules, function(module) {
+                var moduleIsVisible = match(newValue, module.name);
+                _.each(module.forms, function(form) {
+                    var formIsVisible = match(newValue, form.name);
+                    _.each(form.questions, function(question) {
+                        var questionIsVisible = match(newValue, question.value + self.translateQuestion(question));
+                        questionIsVisible = questionIsVisible || _.find(question.options, function(option) {
+                            return match(newValue, option.value + self.translateQuestion(option));
+                        });
+                        question.isVisible(questionIsVisible);
+                        formIsVisible = formIsVisible || questionIsVisible;
+                    });
+                    form.hasVisibleDescendants(formIsVisible);
+                    moduleIsVisible = moduleIsVisible || formIsVisible;
+                });
+                module.hasVisibleDescendants(moduleIsVisible);
+            });
+        }, 200));
+
         return self;
     };
 
@@ -63,6 +90,11 @@ hqDefine('app_manager/js/summary/form_summary', function() {
 
         self.isSelected = ko.observable(true);
 
+        self.hasVisibleDescendants = ko.observable(true);
+        self.isVisible = ko.computed(function() {
+            return self.isSelected() && self.hasVisibleDescendants();
+        });
+
         return self;
     };
 
@@ -77,6 +109,11 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         });
 
         self.isSelected = ko.observable(true);
+
+        self.hasVisibleDescendants = ko.observable(true);
+        self.isVisible = ko.computed(function() {
+            return self.isSelected() && self.hasVisibleDescendants();
+        });
 
         return self;
     };

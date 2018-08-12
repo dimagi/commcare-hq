@@ -45,6 +45,8 @@ hqDefine("app_manager/js/summary/utils", function() {
         var vellumType = hqImport("hqwebapp/js/initial_page_data").get('VELLUM_TYPES')[question.type];
         self.icon = 'hq-icon ' + (vellumType ? vellumType.icon : '');
 
+        self.isVisible = ko.observable(true);
+
         return self;
     };
 

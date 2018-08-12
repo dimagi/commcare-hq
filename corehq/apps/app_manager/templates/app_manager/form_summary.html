@@ -23,12 +23,12 @@
         <div class="row">
             <div class="col-xs-3">
                 <form class="form-inline" role="form">
-                    <!-- TODO: filter questions -->
-                    <!--div class="form-group">
+                    <div class="form-group">
                         <label class="sr-only" for="property">{% trans "Filter questions" %}</label>
-                        <input type="text" class="form-control" id="property" placeholder="Filter questions" ng-model="questionSearch.$">
+                        <input type="text" class="form-control" placeholder="Filter questions"
+                               data-bind="value: query, valueUpdate: 'afterkeydown'" />
                     </div>
-                    <button class="btn btn-default" ng-click="questionSearch.$ = ''" type="button"><i class="fa fa-times"></i></button-->
+                    <button class="btn btn-default" data-bind="click: clearQuery" type="button"><i class="fa fa-times"></i></button>
                 </form>
             </div>
             <div class="col-xs-9">
@@ -65,7 +65,7 @@
     </div-->
 
     <ul class="fa-ul" data-bind="foreach: modules">
-        <li data-bind="visible: isSelected">
+        <li data-bind="visible: isVisible">
             <h4>
                 <!-- TODO: language support, readOnly -->
                 <a data-bind="attr: { href: url }">
@@ -75,7 +75,7 @@
                 <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
             </h4>
             <ul class="fa-ul" data-bind="foreach: forms">
-                <li data-bind="visible: isSelected">
+                <li data-bind="visible: isVisible">
                     <h5>
                         <!-- TODO: language support, readOnly -->
                         <a data-bind="attr: { href: url }">
@@ -85,7 +85,7 @@
                         <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
                     </h5>
                     <ol data-bind="foreach: questions">
-                        <li>
+                        <li data-bind="visible: isVisible">
                             <i data-bind="attr: { 'class': icon }" title="type"></i>
                             <span data-bind="text: value"></span> <!-- TODO: name vs id, language support -->
                             <span data-bind="visible: required" title="{% trans "This question is required" %}">*</span>
