@@ -303,7 +303,7 @@ class IndexedSchema(DocumentSchema):
         def __get__(self, instance, owner):
             # thanks, http://metapython.blogspot.com/2010/11/python-instance-methods-how-are-they.html
             # this makes Getter('foo') act like a bound method
-            return types.MethodType(self, instance, owner)
+            return types.MethodType(self, instance)
 
 
 class FormActionCondition(DocumentSchema):
