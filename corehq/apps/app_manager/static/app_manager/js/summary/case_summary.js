@@ -148,6 +148,7 @@ hqDefine('app_manager/js/summary/case_summary', function() {
                     id: caseType.name,
                     name: caseType.name,
                     icon: "fcc fcc-fd-external-case appnav-primary-icon",
+                    has_errors: caseType.has_errors,
                     subitems: [],
                 });
             }),

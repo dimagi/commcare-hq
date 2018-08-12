@@ -96,8 +96,7 @@
                                     <a class="appnav-link-full">
                                         <i data-bind="attr: { 'class': $data.icon }"></i>
                                         <span data-bind="text: name"></span>
-                                        <!-- TODO: display error icon on case summary, for case types with errors -->
-                                        <!--i class="fa fa-exclamation-triangle text-danger" ng-show="hasErrors({casetype: casetype})"></i-->
+                                        <i class="fa fa-exclamation-triangle text-danger" data-bind="visible: has_errors"></i>
                                     </a>
                                 </div>
                                 <!-- ko foreach: subitems -->

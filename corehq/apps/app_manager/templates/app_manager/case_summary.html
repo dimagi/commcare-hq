@@ -89,20 +89,19 @@
                                     <div data-bind="template: {name: 'opened-closed-by', data: closedByList }"></div>
                                 </div>
                             </div>
-                            <!-- TODO -->
-                            <!--div class="row" ng-show="caseType.has_errors">
+                            <div class="row" data-bind="visible: has_errors">
                                 <div class="col-md-6">
                                     {% trans "Problems:" %}
                                     <ul>
-                                        <li ng-show="caseType.error">
-                                            {{ caseType.error }}
-                                        </li>
-                                        <li ng-repeat="property in caseType.properties|filter:{'has_errors': true}">
-                                            <a href="" ng-click="gotoAnchor(caseType.name, property.name)">{{ property.name }}</a>
-                                        </li>
+                                        <li data-bind="visible: error, text: error"></li>
+                                        <!-- ko foreach: properties -->
+                                            <li data-bind="if: has_errors">
+                                                <a data-bind="attr: {href: '#' + $parent.name + ':' + name}, text: name"></a>
+                                            </li>
+                                        <!-- /ko -->
                                     </ul>
                                 </div>
-                            </div-->
+                            </div>
                         </div>
                         <table class="case-properties table">
                             <thead>
@@ -123,11 +122,9 @@
                                         <!-- /ko -->
                                         <td>
                                             <span data-bind="html: $root.moduleFormReference(form_id)"></span>
-                                            <!-- TODO: test -->
                                             <!-- ko foreach: errors -->
                                                 <i class="fa fa-exclamation-triangle text-danger"
-                                                   popover-trigger="mouseenter" popover-placement="bottom"
-                                                   data-bind="attr: {popover: $data}"></i>
+                                                   data-bind="popover: { content: $data, placement: 'bottom', trigger: 'hover' }"></i>
                                             <!-- /ko -->
                                         </td>
                                         <td>

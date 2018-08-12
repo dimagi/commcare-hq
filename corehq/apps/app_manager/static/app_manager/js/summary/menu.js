@@ -2,8 +2,10 @@ hqDefine('app_manager/js/summary/menu', function() {
     var assertProperties = hqImport("hqwebapp/js/assert_properties").assert;
 
     var menuItemModel = function(options) {
-        assertProperties(options, ['id', 'name', 'icon'], ['subitems']);
-        var self = _.extend({}, options);
+        assertProperties(options, ['id', 'name', 'icon'], ['subitems', 'has_errors']);
+        var self = _.extend({
+            has_errors: false,
+        }, options);
 
         self.isSelected = ko.observable(false);
         self.select = function() {
