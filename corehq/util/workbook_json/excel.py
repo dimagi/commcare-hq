@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import io
 from tempfile import NamedTemporaryFile
 from zipfile import BadZipfile
 import openpyxl
@@ -191,7 +193,7 @@ class WorkbookJSONReader(object):
     def __init__(self, f):
         if isinstance(f, six.string_types):
             filename = f
-        elif not isinstance(f, file):
+        elif not isinstance(f, io.IOBase):
             tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
             filename = tmp.name
             tmp.write(f.read())
