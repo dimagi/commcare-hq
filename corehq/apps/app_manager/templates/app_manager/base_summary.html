@@ -38,6 +38,7 @@
 {% endblock stylesheets %}
 
 {% block content %}
+    {% initial_page_data 'read_only' read_only %}
     {% registerurl 'current_app_version' domain app_id %}
     <div class="container-fluid">
         <div class="row appmanager-content-row">

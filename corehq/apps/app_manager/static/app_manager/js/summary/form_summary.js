@@ -4,12 +4,13 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         utils = hqImport('app_manager/js/summary/utils');
 
     var contentModel = function(options) {
-        assertProperties(options, ['lang', 'langs', 'modules'], []);
+        assertProperties(options, ['lang', 'langs', 'modules', 'read_only'], []);
 
         var self = {};
         self.lang = options.lang;
         self.langs = options.langs;
         self.modules = _.map(options.modules, moduleModel);
+        self.readOnly = options.read_only;
 
         self.selectedItemId = ko.observable('');      // blank indicates "View All"
         self.selectedItemId.subscribe(function(selectedId) {
@@ -160,6 +161,7 @@ hqDefine('app_manager/js/summary/form_summary', function() {
             lang: lang,
             langs: langs,
             modules: initialPageData.get("modules"),
+            read_only: initialPageData.get("read_only"),
         });
 
         hqImport("hqwebapp/js/layout").setIsAppbuilderResizing(true);
