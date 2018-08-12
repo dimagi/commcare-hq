@@ -54,7 +54,11 @@ def get_task_progress(task):
         else:
             current = info.get('current')
             total = info.get('total')
-            percent = current * 100 // total if total and current is not None else 0
+            if total == 0:
+                percent = 100
+            else:
+                percent = current * 100 // total if total and current is not None else 0
+
     return TaskProgress(
         current=current,
         total=total,
