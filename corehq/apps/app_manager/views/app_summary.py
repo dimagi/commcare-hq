@@ -147,7 +147,7 @@ def _get_name_map(app):
             module_url = reverse('view_module', kwargs=keywords)
             del keywords['module_unique_id']
             keywords['form_unique_id'] = form.unique_id
-            form_url = reverse('view_form', kwargs=keywords)
+            form_url = reverse('form_source', kwargs=keywords)
 
             name_map[form.unique_id] = {
                 'form_name': form.name,

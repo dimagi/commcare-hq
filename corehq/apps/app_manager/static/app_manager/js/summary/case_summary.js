@@ -57,14 +57,30 @@ hqDefine('app_manager/js/summary/case_summary', function() {
     };
 
     var contentModel = function(options) {
-        assertProperties(options, ['case_types', 'langs', 'lang'], []);
+        assertProperties(options, ['case_types', 'form_name_map', 'langs', 'lang', 'read_only'], []);
 
         var self = {};
         self.caseTypes = _.map(options.case_types, function(caseType) {
             return caseTypeModel(caseType);
         });
+        self.formNameMap = options.form_name_map;
         self.lang = options.lang;
         self.langs = options.langs;
+        self.readOnly = options.read_only;
+
+        self.moduleFormReference = function(formId) {
+            var formData = self.formNameMap[formId];
+            var template = self.readOnly
+                ? "<%= moduleName %> &rarr; <%= formName %>"
+                : "<a href='<%= moduleUrl %>'><%= moduleName %></a> &rarr; <a href='<%= formUrl %>'><%= formName %></a>"
+            ;
+            return _.template(template)({
+                moduleName: self.translate(formData.module_name),
+                moduleUrl: formData.module_url,
+                formName: self.translate(formData.form_name),
+                formUrl: formData.form_url,
+            });
+        };
 
         self.selectedItemId = ko.observable('');      // blank indicates "View All"
         self.selectedItemId.subscribe(function(selectedId) {
@@ -110,6 +126,9 @@ hqDefine('app_manager/js/summary/case_summary', function() {
             });
         }, 200));
 
+        self.translate = function(translations) {
+            return utils.translateName(translations, self.lang, self.langs);
+        };
         self.translateQuestion = function(question) {
             if (question.translations) {
                 return utils.translateName(question.translations, self.lang, self.langs);
@@ -137,8 +156,10 @@ hqDefine('app_manager/js/summary/case_summary', function() {
 
         var caseSummaryContent = contentModel({
             case_types: caseTypes,
+            form_name_map: initialPageData.get("form_name_map"),
             lang: initialPageData.get("lang"),
             langs: initialPageData.get("app_langs"),
+            read_only: initialPageData.get("read_only"),
         });
 
         hqImport("hqwebapp/js/layout").setIsAppbuilderResizing(true);

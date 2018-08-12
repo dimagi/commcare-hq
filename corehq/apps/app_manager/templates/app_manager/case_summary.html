@@ -66,11 +66,11 @@
                         </h4>
                     </div>
                     <div class="panel-body">
-                        <div class="well">
+                        <div class="well case-relationships">
                             <div class="row">
                                 <div class="col-md-4">
                                     <strong>{% trans "Relationships:" %}</strong>
-                                    <ul data-bind="foreach: relationshipList">
+                                    <ul class="fa-ul" data-bind="foreach: relationshipList">
                                         <li>
                                             <span class="label label-primary" data-bind="text: relationship"></span>
                                             <span data-bind="text: caseType"></span>
@@ -119,8 +119,7 @@
                                         <td data-bind="attr: {rowspan: $parent.forms.length}, text: $parent.description"></td>
                                         <!-- /ko -->
                                         <td>
-                                            <!-- TODO: module & form names (correctly translated), readOnly -->
-                                            module &rarr; <span data-bind="text: form_id"></span>
+                                            <span data-bind="html: $root.moduleFormReference(form_id)"></span>
                                             <!-- TODO: test -->
                                             <!-- ko foreach: errors -->
                                                 <i class="fa fa-exclamation-triangle text-danger"
@@ -148,9 +147,9 @@
     <script type="text/html" id="opened-closed-by">
         <ul data-bind="foreach: $data">
             <li>
-                <span data-bind="text: formId"></span><!-- TODO: name not id -->
+                <span data-bind="html: $root.moduleFormReference(formId)"></span>
                 <!-- ko: if: conditions -->
-                    <ul data-bind="visible: $root.showConditions, foreach: conditions">
+                    <ul class="fa-ul" data-bind="visible: $root.showConditions, foreach: conditions">
                         <li>
                             <i class="fa fa-sitemap"></i>
                             <span data-bind="text: question"></span>
