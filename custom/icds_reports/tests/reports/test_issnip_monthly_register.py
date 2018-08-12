@@ -35,7 +35,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data['cases_person_referred'], 0)
         self.assertEqual(data['aww_name'], 'aww_name48')
         self.assertEqual(data['contact_phone_number'], '91552222')
-        self.assertIsNone(data['num_anc_visits'])
+        self.assertEqual(data['num_anc_visits'], 0)
         self.assertIsNone(data['num_children_immunized'])
 
     def test_child_health_monthly_data(self):
@@ -203,7 +203,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data_a48['cases_person_referred'], 0)
         self.assertEqual(data_a48['aww_name'], 'aww_name48')
         self.assertEqual(data_a48['contact_phone_number'], '91552222')
-        self.assertIsNone(data_a48['num_anc_visits'])
+        self.assertEqual(data_a48['num_anc_visits'], 0)
         self.assertIsNone(data_a48['num_children_immunized'])
 
         self.assertEqual(data_a3['block_name'], 'b2')
@@ -219,7 +219,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data_a3['cases_person_referred'], 0)
         self.assertIsNone(data_a3['aww_name'])
         self.assertIsNone(data_a3['contact_phone_number'])
-        self.assertIsNone(data_a3['num_anc_visits'])
+        self.assertEqual(data_a3['num_anc_visits'], 0)
         self.assertIsNone(data_a3['num_children_immunized'])
 
     def test_child_health_monthly_data_multiple_locations(self):

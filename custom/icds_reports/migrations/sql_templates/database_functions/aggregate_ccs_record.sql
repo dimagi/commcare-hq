@@ -8,6 +8,7 @@ DECLARE
   _tablename4 text;
   _tablename5 text;
   _ucr_ccs_record_table text;
+  _ccs_record_monthly_table text;
   _start_date date;
   _end_date date;
   _all_text text;
@@ -23,6 +24,7 @@ BEGIN
   _tablename3 := 'agg_ccs_record' || '_' || _start_date || '_3';
   _tablename4 := 'agg_ccs_record' || '_' || _start_date || '_4';
   _tablename5 := 'agg_ccs_record' || '_' || _start_date || '_5';
+  _ccs_record_monthly_table := 'ccs_record_monthly' || '_' || _start_date;
   _all_text = 'All';
   _null_value = NULL;
   _blank_value = '';
@@ -99,8 +101,8 @@ BEGIN
     'sum(valid_in_month), ' ||
     'sum(lactating), ' ||
     'sum(pregnant), ' ||
-    'sum(thr_eligible), ' ||
-    'sum(rations_21_plus_distributed), ' ||
+    '0, ' ||
+    '0, ' ||
     'sum(tetanus_complete), ' ||
     'sum(delivered_in_month), ' ||
     'sum(anc1_received_at_delivery), ' ||
@@ -147,6 +149,24 @@ BEGIN
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx6') || ' ON ' || quote_ident(_tablename5) || '(ccs_status)';
 
     -- may want a double index on month and caste for aggregate  location query
+
+  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_ccs_record SET ' ||
+    'rations_21_plus_distributed = temp.rations_21_plus_distributed, ' ||
+    'thr_eligible = temp.thr_eligible '
+    'FROM (SELECT ' ||
+      'awc_id, month, ccs_status, trimester, caste, ' ||
+      'coalesce(disabled, ' || quote_nullable(_no_text) || ') as coalesce_disabled, ' ||
+      'coalesce(minority, ' || quote_nullable(_no_text) || ') as coalesce_minority, ' ||
+      'coalesce(resident, ' || quote_nullable(_no_text) || ') as coalesce_resident, ' ||
+      'coalesce(trimester::text, ' || quote_nullable(_blank_value) || ') as coalesce_trimester, '
+      'sum(thr_eligible) as thr_eligible, ' ||
+      'sum(CASE WHEN num_rations_distributed >= 21 THEN 1 ELSE 0 END) as rations_21_plus_distributed ' ||
+      'FROM ' || quote_ident(_ccs_record_monthly_table) || ' ' ||
+      'GROUP BY awc_id, month, ccs_status, trimester, caste, coalesce_disabled, coalesce_minority, coalesce_resident) temp ' ||
+    'WHERE temp.awc_id = agg_ccs_record.awc_id AND temp.month = agg_ccs_record.month AND temp.ccs_status = agg_ccs_record.ccs_status ' ||
+      'AND temp.coalesce_trimester = agg_ccs_record.trimester AND temp.caste = agg_ccs_record.caste ' ||
+      'AND temp.coalesce_disabled = agg_ccs_record.disabled AND temp.coalesce_minority = agg_ccs_record.minority ' ||
+      'AND temp.coalesce_resident = agg_ccs_record.resident';
 
   --Roll up by location
   _rollup_text = 'sum(valid_in_month), ' ||

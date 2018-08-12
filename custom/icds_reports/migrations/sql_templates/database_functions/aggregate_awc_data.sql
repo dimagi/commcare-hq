@@ -194,7 +194,7 @@ BEGIN
     'cases_person_has_aadhaar_v2 = COALESCE(cases_person_has_aadhaar_v2, 0) + ut.ccs_has_aadhar ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
-    'sum(anc_in_month) AS num_anc_visits, ' ||
+    'COALESCE(sum(anc_in_month), 0) AS num_anc_visits, ' ||
     'sum(has_aadhar_id) AS ccs_has_aadhar ' ||
     'FROM ' || quote_ident(_ccs_record_monthly_tablename) || ' ' ||
     'WHERE pregnant = 1 OR lactating = 1 ' ||
