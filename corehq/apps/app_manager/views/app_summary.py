@@ -55,6 +55,7 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
             'form_name_map': _get_name_map(self.app),
             'lang': lang,
             'langs': langs,
+            'app_langs': self.app.langs,
             'app_id': self.app.id,
             'app_name': self.app.name,
             'read_only': self.app.doc_type == 'LinkedApplication',

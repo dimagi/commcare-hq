@@ -46,6 +46,8 @@
                 <nav>
                     {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app_id app_name=app_name releases_active=True %}
 
+                    {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app_langs langs=langs %}
+
                     <ul class="nav nav-hq-sidebar appnav-menu">
                         <li role="presentation">
                             <div class="appnav-item">

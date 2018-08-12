@@ -44,18 +44,7 @@
 
       {% if app.get_doc_type == 'Application' %}
         {% if not app.is_remote_app and app.langs|length > 1%}
-            <div id="langs" class="appnav-language-select">
-                <label for="app-language-select-nav">{% trans "Language" %}</label>
-                <select name="lang" class="form-control input-sm">
-                    {% for lang in app.langs %}
-                        <option value="{{ lang }}"
-                                {% if lang == langs.0 %}selected=""{% endif %}>
-                            {% if lang == app.langs.0 %}*{% endif %}
-                            {{ lang }}
-                        </option>
-                    {% endfor %}
-                </select>
-          </div>
+            {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app.langs langs=langs %}
         {% endif %}
 
         {% include 'app_manager/partials/appnav_menu.html' %}

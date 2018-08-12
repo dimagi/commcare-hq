@@ -93,7 +93,6 @@ hqDefine('app_manager/js/app_manager', function () {
         _initCommcareVersion(args);
         _initSaveButtons();
         _initMenuItemSorting();
-        _initLangs();
         _initResponsiveMenus();
         _initAddItemPopovers();
     };
@@ -382,17 +381,6 @@ hqDefine('app_manager/js/app_manager', function () {
             button.ui.appendTo($buttonHolder);
             $buttonHolder.data('button', button);
             hqImport("app_manager/js/section_changer").attachToForm($form);
-        });
-    };
-
-    /**
-     * Initialize the language dropdown.
-     * @private
-     */
-    var _initLangs = function () {
-        $('#langs select').change(function () {
-            var lang = $(this).find('option:selected').attr('value');
-            $(document).attr('location', window.location.href + (window.location.search ? '&' : '?') + 'lang=' + lang);
         });
     };
 

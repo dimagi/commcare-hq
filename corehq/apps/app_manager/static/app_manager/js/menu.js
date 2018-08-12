@@ -8,6 +8,13 @@ hqDefine("app_manager/js/menu", function() {
         }
     };
 
+    var initLangs = function () {
+        $('#langs select').change(function () {
+            var lang = $(this).find('option:selected').attr('value');
+            $(document).attr('location', window.location.href + (window.location.search ? '&' : '?') + 'lang=' + lang);
+        });
+    };
+
     var initPublishStatus = function () {
         var currentAppVersionUrl = hqImport('hqwebapp/js/initial_page_data').reverse('current_app_version');
         var _checkPublishStatus = function () {
@@ -29,6 +36,7 @@ hqDefine("app_manager/js/menu", function() {
     };
 
     $(function() {
+        initLangs();
         initPublishStatus();
     });
 
