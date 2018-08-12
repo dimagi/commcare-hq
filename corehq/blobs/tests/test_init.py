@@ -15,15 +15,15 @@ from io import open
 
 @generate_cases([
     dict(root=None, msg=r"invalid shared drive path: None$"),
-    dict(root=b"", msg=r"invalid shared drive path: ''$"),
-    dict(root=b"file", msg=r"shared drive path is not a directory: '.*/file'$"),
+    dict(root="", msg=r"invalid shared drive path: ''$"),
+    dict(root="file", msg=r"shared drive path is not a directory: '.*/file'$"),
     dict(blob_dir=None, msg="blob_dir is empty or not configured"),
     dict(blob_dir="", msg="blob_dir is empty or not configured"),
 ])
 def test_get_blobdb(self, msg, root=True, blob_dir=None):
     with tempdir() as tmp:
-        if root == b"file":
-            tmp = join(tmp, b"file")
+        if root == "file":
+            tmp = join(tmp, "file")
             with open(tmp, "w", encoding='utf-8') as fh:
                 fh.write("x")
         conf = SharedDriveConfiguration(
