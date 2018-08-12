@@ -82,9 +82,9 @@ class DividedWeRunPlugin(Plugin):
                     desc = skip
                     name = test.context.__name__
                     if "." in name:
-                        name, skip.__name__ = name.rsplit(b".", 1)
+                        name, skip.__name__ = name.rsplit(".", 1)
                     else:
-                        skip.__name__ = b"*"
+                        skip.__name__ = "*"
                     skip.__module__ = name
             else:
                 desc = test.test.descriptor
