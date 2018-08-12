@@ -11,6 +11,8 @@
 {% block page_breadcrumbs %}{% endblock %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static "app_manager/js/app_manager_utils.js" %}"></script>
+    <script src="{% static "app_manager/js/menu.js" %}"></script>
     <script src="{% static "app_manager/js/summary/utils.js" %}"></script>
     <script src="{% static "app_manager/js/summary/menu.js" %}"></script>
 {% endblock js %}
@@ -36,12 +38,12 @@
 {% endblock stylesheets %}
 
 {% block content %}
+    {% registerurl 'current_app_version' domain app_id %}
     <div class="container-fluid">
         <div class="row appmanager-content-row">
             <div id="hq-sidebar" class="appmanager-sidebar col-hq-sidebar nav-hq-sidebar appsummary-sidebar" role="navigation">
 
                 <nav>
-                    {# TODO: hook up 'updates available to publish' banner (_initPublishStatus in app_manager.js) #}
                     {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app_id app_name=app_name releases_active=True %}
 
                     <ul class="nav nav-hq-sidebar appnav-menu">
