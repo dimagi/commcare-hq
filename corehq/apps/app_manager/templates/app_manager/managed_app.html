@@ -39,24 +39,7 @@
     </div>
     <nav class="appmanager-content">
 
-      <div class="{% if not module %}active {% endif %}appnav-name-wrapper{% if release_manager %} active{% endif %}">
-          <div class="appnav-name-settings">
-              <a href="{% url "app_settings" domain app.id %}" class="{% if is_app_settings_page %}active{% endif %} appnav-responsive">
-                  <i class="fa fa-gear"></i>
-              </a>
-          </div>
-          <h2 class="appnav-name">
-            <a href="{% url "view_app" domain app.id %}"
-               class="appnav-responsive">
-                <span class="variable-app_name appname-text">{{ app.name }}</span>
-            </a>
-          </h2>
-          <div id="js-publish-status"
-               class="appnav-name-publish"
-               style="display: none;">
-            {% trans "Updates Available to Publish" %}
-          </div>
-      </div>
+      {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app.id app_name=app.name releases_active=release_manager settings_active=is_app_settings_page %}
 
       {% if app.get_doc_type == 'Application' %}
         {% if not app.is_remote_app and app.langs|length > 1%}

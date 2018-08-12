@@ -41,23 +41,8 @@
             <div id="hq-sidebar" class="appmanager-sidebar col-hq-sidebar nav-hq-sidebar appsummary-sidebar" role="navigation">
 
                 <nav>
-                    <div class="appnav-name-wrapper">
-                        <div class="appnav-name-settings">
-                            <a href="{% url "app_settings" domain app_id %}"
-                               class="appnav-responsive">
-                                <i class="fa fa-gear"></i>
-                            </a>
-                        </div>
-                        <h2 class="appnav-name">
-                            <a href="{% url 'release_manager' domain app_id %}"
-                               class="appnav-responsive">
-                                <span class="variable-app_name">{{ app_name }}</span>
-                            </a>
-                        </h2>
-                        <h3 class="appnav-section-name">
-                          <span>{% trans "App Summary" %}</span>
-                        </h3>
-                    </div>
+                    {# TODO: hook up 'updates available to publish' banner (_initPublishStatus in app_manager.js) #}
+                    {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app_id app_name=app_name releases_active=True %}
 
                     <ul class="nav nav-hq-sidebar appnav-menu">
                         <li role="presentation">
