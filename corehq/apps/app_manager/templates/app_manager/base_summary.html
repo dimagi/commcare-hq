@@ -1,20 +1,17 @@
 {% extends 'hqwebapp/base.html' %}
-{% load xforms_extras %}
-{% load url_extras %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% load compress %}
-{% load djangular_tags %}
-
-{% block title %}{% trans "App Summary" %}{% endblock %}
 
 {% block page_breadcrumbs %}{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "app_manager/js/app_manager_utils.js" %}"></script>
-    <script src="{% static "app_manager/js/menu.js" %}"></script>
-    <script src="{% static "app_manager/js/summary/utils.js" %}"></script>
-    <script src="{% static "app_manager/js/summary/menu.js" %}"></script>
+    {% compress js %}
+        <script src="{% static "app_manager/js/app_manager_utils.js" %}"></script>
+        <script src="{% static "app_manager/js/menu.js" %}"></script>
+        <script src="{% static "app_manager/js/summary/utils.js" %}"></script>
+        <script src="{% static "app_manager/js/summary/menu.js" %}"></script>
+    {% endcompress %}
 {% endblock js %}
 
 {% block stylesheets %}{{ block.super }}
