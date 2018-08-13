@@ -387,14 +387,13 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
 
-    def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False,
-                checkpoint_frequency=1000):
+    def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False):
         change_feed = KafkaChangeFeed(
             topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
         checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
         event_handler = KafkaCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=checkpoint_frequency, change_feed=change_feed,
+            checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
             checkpoint_callback=processor
         )
         super(ConfigurableReportKafkaPillow, self).__init__(
@@ -440,7 +439,6 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
         topics=topics,
         num_processes=num_processes,
         process_num=process_num,
-        checkpoint_frequency=100,
     )
 
 
@@ -465,5 +463,4 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         num_processes=num_processes,
         process_num=process_num,
         retry_errors=True,
-        checkpoint_frequency=100,
     )
