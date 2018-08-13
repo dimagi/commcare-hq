@@ -2,10 +2,7 @@
 {% load hq_shared_tags %}
 
 
-{% block js %}{{ block.super }}
-    {% requirejs_main 'scheduling/js/create_schedule.ko' %}
 
-{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
 <style>
