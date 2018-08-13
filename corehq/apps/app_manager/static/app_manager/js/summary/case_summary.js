@@ -93,7 +93,7 @@ hqDefine('app_manager/js/summary/case_summary', function() {
             case_types: caseTypes,
             form_name_map: initialPageData.get("form_name_map"),
             lang: initialPageData.get("lang"),
-            langs: initialPageData.get("app_langs"),
+            langs: initialPageData.get("langs"),
             read_only: initialPageData.get("read_only"),
         });
 
