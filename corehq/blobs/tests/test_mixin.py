@@ -855,7 +855,7 @@ class TestBulkAtomicBlobs(BaseTestCase):
             self.assertEqual(fh.read(), "deferred")
 
 
-_abc_digest = mod.sha1("abc").hexdigest()
+_abc_digest = mod.sha1("abc".encode('utf-8')).hexdigest()
 
 
 @generate_cases([
