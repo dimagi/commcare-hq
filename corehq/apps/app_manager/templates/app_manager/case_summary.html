@@ -10,9 +10,6 @@
 
 {% block content_extra %}
     {% initial_page_data 'case_metadata' case_metadata %}
-    {% initial_page_data 'app_langs' app_langs %}
-    {% initial_page_data 'lang' lang %}
-    {% initial_page_data 'VELLUM_TYPES' VELLUM_TYPES %}
 
     <div class="page-header" style="margin-top: 0;">
         <h3>
@@ -21,25 +18,11 @@
         </h3>
         <div class="row">
             <div class="col-xs-3">
-                <form class="form-inline" role="form">
-                    <div class="form-group">
-                        <label class="sr-only" for="property">{% trans "Filter properties" %}</label>
-                        <input type="text" class="form-control" id="property" placeholder="{% trans 'Filter properties' %}"
-                               data-bind="value: query, valueUpdate: 'afterkeydown'" />
-                    </div>
-                    <button class="btn btn-default" data-bind="click: clearQuery" type="button"><i class="fa fa-times"></i></button>
-                </form>
+                <!-- ko template: {name: 'search-box', data: $root} --><!-- /ko -->
             </div>
             <div class="col-xs-9">
                 <div class="btn-toolbar pull-right" role="toolbar">
-                    <div class="btn-group" role="group" >
-                        <button type="button" class="btn btn-default" data-bind="click: turnLabelsOn, css: { 'active': showLabels }">
-                            {% trans "Labels" %}
-                        </button>
-                        <button type="button" class="btn btn-default" data-bind="click: turnIdsOn, css: { 'active': showIds }">
-                            {% trans "Question IDs" %}
-                        </button>
-                    </div>
+                    <!-- ko template: 'label-id-toggle' --><!-- /ko -->
                     <div class="btn-group" role="group" >
                         <button type="button" class="btn btn-default"
                                 data-bind="click: toggleConditions, css: { active : showConditions }">

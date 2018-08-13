@@ -36,7 +36,10 @@
 
 {% block content %}
     {% initial_page_data 'form_name_map' form_name_map %}
+    {% initial_page_data 'lang' lang %}
+    {% initial_page_data 'langs' langs %}
     {% initial_page_data 'read_only' read_only %}
+    {% initial_page_data 'VELLUM_TYPES' VELLUM_TYPES %}
     {% registerurl 'current_app_version' domain app_id %}
     <div class="container-fluid">
         <div class="row appmanager-content-row">
@@ -125,4 +128,27 @@
             </div>
         </div>
     </div>
+
+    {# Question label/id switcher #}
+    <script type="text/html" id="label-id-toggle">
+        <div class="btn-group" role="group" >
+            <button type="button" class="btn btn-default" data-bind="click: turnLabelsOn, css: { 'active': showLabels }">
+                {% trans "Labels" %}
+            </button>
+            <button type="button" class="btn btn-default" data-bind="click: turnIdsOn, css: { 'active': showIds }">
+                {% trans "Question IDs" %}
+            </button>
+        </div>
+    </script>
+
+    {# Question/property filter #}
+    <script type="text/html" id="search-box">
+        <form class="form-inline" role="form">
+            <div class="form-group">
+                <label class="sr-only" for="property" data-bind="text: queryLabel"></label>
+                <input type="text" class="form-control" data-bind="value: query, valueUpdate: 'afterkeydown', attr: {placeholder: queryLabel}" />
+            </div>
+            <button class="btn btn-default" data-bind="click: clearQuery" type="button"><i class="fa fa-times"></i></button>
+        </form>
+    </script>
 {% endblock content %}

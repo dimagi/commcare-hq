@@ -1,43 +1,47 @@
 hqDefine('app_manager/js/summary/form_summary', function() {
-    var assertProperties = hqImport("hqwebapp/js/assert_properties").assert,
+    var assertProperties = hqImport("hqwebapp/js/assert_properties"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        menu = hqImport("app_manager/js/summary/menu"),
         utils = hqImport('app_manager/js/summary/utils');
 
-    var contentModel = function(options) {
-        assertProperties(options, ['errors', 'form_name_map', 'lang', 'langs', 'modules', 'read_only'], []);
-
-        var self = {};
-        self.errors = options.errors;
-        self.lang = options.lang;
-        self.langs = options.langs;
-        self.formNameMap = options.form_name_map;
-        self.modules = _.map(options.modules, moduleModel);
-        self.readOnly = options.read_only;
-
-        self.selectedItemId = ko.observable('');      // blank indicates "View All"
-        self.selectedItemId.subscribe(function(selectedId) {
-            _.each(self.modules, function(module) {
-                module.isSelected(!selectedId || selectedId === module.id || _.find(module.forms, function(f) { return selectedId === f.id }));
-                _.each(module.forms, function(form) {
-                    form.isSelected(!selectedId || selectedId === form.id || selectedId === module.id);
+    var formSummaryModel = function(options) {
+        var self = menu.contentModel(_.extend(options, {
+            query_label: gettext("Filter questions"),
+            onQuery: function(query) {
+                var match = function(needle, haystack) {
+                    return !needle || haystack.toLowerCase().indexOf(needle.toLowerCase()) !== -1;
+                };
+                _.each(self.modules, function(module) {
+                    var moduleIsVisible = match(query, self.translate(module.name));
+                    _.each(module.forms, function(form) {
+                        var formIsVisible = match(query, self.translate(form.name));
+                        _.each(form.questions, function(question) {
+                            var questionIsVisible = match(query, question.value + self.translateQuestion(question));
+                            questionIsVisible = questionIsVisible || _.find(question.options, function(option) {
+                                return match(query, option.value + self.translateQuestion(option));
+                            });
+                            question.isVisible(questionIsVisible);
+                            formIsVisible = formIsVisible || questionIsVisible;
+                        });
+                        form.hasVisibleDescendants(formIsVisible);
+                        moduleIsVisible = moduleIsVisible || formIsVisible;
+                    });
+                    module.hasVisibleDescendants(moduleIsVisible);
                 });
-            });
-        });
+            },
+            onSelectMenuItem: function(selectedId) {
+                _.each(self.modules, function(module) {
+                    module.isSelected(!selectedId || selectedId === module.id || _.find(module.forms, function(f) { return selectedId === f.id }));
+                    _.each(module.forms, function(form) {
+                        form.isSelected(!selectedId || selectedId === form.id || selectedId === module.id);
+                    });
+                });
+            },
+        }));
 
-        // TODO: DRY up with case_summary.js
-        self.moduleFormReference = function(formId) {
-            var formData = self.formNameMap[formId];
-            var template = self.readOnly
-                ? "<%= moduleName %> &rarr; <%= formName %>"
-                : "<a href='<%= moduleUrl %>'><%= moduleName %></a> &rarr; <a href='<%= formUrl %>'><%= formName %></a>"
-            ;
-            return _.template(template)({
-                moduleName: self.translate(formData.module_name),
-                moduleUrl: formData.module_url,
-                formName: self.translate(formData.form_name),
-                formUrl: formData.form_url,
-            });
-        };
+        assertProperties.assertRequired(options, ['errors', 'modules']);
+        self.errors = options.errors;
+        self.modules = _.map(options.modules, moduleModel);
 
         self.showCalculations = ko.observable(false);
         self.toggleCalculations = function() {
@@ -62,54 +66,6 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         self.showDefaultValues = ko.observable(false);
         self.toggleDefaultValues = function() {
             self.showDefaultValues(!self.showDefaultValues());
-        };
-
-        self.query = ko.observable('');
-        self.clearQuery = function() {
-            self.query('');
-        };
-        var match = function(needle, haystack) {
-            return !needle || haystack.toLowerCase().indexOf(needle.toLowerCase()) !== -1;
-        };
-        self.query.subscribe(_.debounce(function(newValue) {
-            _.each(self.modules, function(module) {
-                var moduleIsVisible = match(newValue, self.translate(module.name));
-                _.each(module.forms, function(form) {
-                    var formIsVisible = match(newValue, self.translate(form.name));
-                    _.each(form.questions, function(question) {
-                        var questionIsVisible = match(newValue, question.value + self.translateQuestion(question));
-                        questionIsVisible = questionIsVisible || _.find(question.options, function(option) {
-                            return match(newValue, option.value + self.translateQuestion(option));
-                        });
-                        question.isVisible(questionIsVisible);
-                        formIsVisible = formIsVisible || questionIsVisible;
-                    });
-                    form.hasVisibleDescendants(formIsVisible);
-                    moduleIsVisible = moduleIsVisible || formIsVisible;
-                });
-                module.hasVisibleDescendants(moduleIsVisible);
-            });
-        }, 200));
-
-        self.showLabels = ko.observable(true);
-        self.showIds = ko.computed(function() {
-            return !self.showLabels();
-        });
-        self.turnLabelsOn = function() {
-            self.showLabels(true);
-        };
-        self.turnIdsOn = function() {
-            self.showLabels(false);
-        };
-
-        self.translate = function(translations) {
-            return utils.translateName(translations, self.lang, self.langs);
-        };
-        self.translateQuestion = function(question) {
-            if (question.translations) {
-                return utils.translateName(question.translations, self.lang, self.langs);
-            }
-            return question.label;  // hidden values don't have translations
         };
 
         return self;
@@ -152,8 +108,7 @@ hqDefine('app_manager/js/summary/form_summary', function() {
     };
 
     $(function() {
-        var menu = hqImport("app_manager/js/summary/menu"),
-            lang = initialPageData.get('lang'),
+        var lang = initialPageData.get('lang'),
             langs = initialPageData.get('langs');
 
         var formSummaryMenu = menu.menuModel({
@@ -175,7 +130,7 @@ hqDefine('app_manager/js/summary/form_summary', function() {
             viewAllItems: gettext("View All Forms"),
         });
 
-        var formSummaryContent = contentModel({
+        var formSummaryContent = formSummaryModel({
             errors: initialPageData.get("errors"),
             form_name_map: initialPageData.get("form_name_map"),
             lang: lang,
@@ -184,12 +139,6 @@ hqDefine('app_manager/js/summary/form_summary', function() {
             read_only: initialPageData.get("read_only"),
         });
 
-        hqImport("hqwebapp/js/layout").setIsAppbuilderResizing(true);
-        $("#hq-sidebar > nav").koApplyBindings(formSummaryMenu);
-        $("#js-appmanager-body").koApplyBindings(formSummaryContent);
-
-        formSummaryMenu.selectedItemId.subscribe(function(newValue) {
-            formSummaryContent.selectedItemId(newValue);
-        });
+        menu.initSummary(formSummaryMenu, formSummaryContent);
     });
 });

@@ -1,5 +1,5 @@
 hqDefine('app_manager/js/summary/case_summary', function() {
-    var assertProperties = hqImport("hqwebapp/js/assert_properties").assert,
+    var assertProperties = hqImport("hqwebapp/js/assert_properties"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         menu = hqImport("app_manager/js/summary/menu"),
         utils = hqImport("app_manager/js/summary/utils");
@@ -56,49 +56,31 @@ hqDefine('app_manager/js/summary/case_summary', function() {
         return self;
     };
 
-    var contentModel = function(options) {
-        assertProperties(options, ['case_types', 'form_name_map', 'langs', 'lang', 'read_only'], []);
+    var caseSummaryModel = function(options) {
+        var self = menu.contentModel(_.extend(options, {
+            query_label: gettext("Filter properties"),
+            onQuery: function(query) {
+                _.each(self.caseTypes, function(caseType) {
+                    var hasVisible = false;
+                    _.each(caseType.properties, function(property) {
+                        var isVisible = !query || property.name.indexOf(query) !== -1;
+                        property.isVisible(isVisible);
+                        hasVisible = hasVisible || isVisible;
+                    });
+                    caseType.hasVisibleProperties(hasVisible || !query && !caseType.properties.length);
+                });
+            },
+            onSelectMenuItem: function(selectedId) {
+                _.each(self.caseTypes, function(caseType) {
+                    caseType.isSelected(!selectedId || selectedId === caseType.name);
+                });
+            },
+        }));
 
-        var self = {};
+        assertProperties.assertRequired(options, ['case_types']);
         self.caseTypes = _.map(options.case_types, function(caseType) {
             return caseTypeModel(caseType);
         });
-        self.formNameMap = options.form_name_map;
-        self.lang = options.lang;
-        self.langs = options.langs;
-        self.readOnly = options.read_only;
-
-        self.moduleFormReference = function(formId) {
-            var formData = self.formNameMap[formId];
-            var template = self.readOnly
-                ? "<%= moduleName %> &rarr; <%= formName %>"
-                : "<a href='<%= moduleUrl %>'><%= moduleName %></a> &rarr; <a href='<%= formUrl %>'><%= formName %></a>"
-            ;
-            return _.template(template)({
-                moduleName: self.translate(formData.module_name),
-                moduleUrl: formData.module_url,
-                formName: self.translate(formData.form_name),
-                formUrl: formData.form_url,
-            });
-        };
-
-        self.selectedItemId = ko.observable('');      // blank indicates "View All"
-        self.selectedItemId.subscribe(function(selectedId) {
-            _.each(self.caseTypes, function(caseType) {
-                caseType.isSelected(!selectedId || selectedId === caseType.name);
-            });
-        });
-
-        self.showLabels = ko.observable(true);
-        self.showIds = ko.computed(function() {
-            return !self.showLabels();
-        });
-        self.turnLabelsOn = function() {
-            self.showLabels(true);
-        };
-        self.turnIdsOn = function() {
-            self.showLabels(false);
-        };
 
         self.showConditions = ko.observable(true);
         self.toggleConditions = function() {
@@ -108,32 +90,6 @@ hqDefine('app_manager/js/summary/case_summary', function() {
         self.showCalculations = ko.observable(true);
         self.toggleCalculations = function() {
             self.showCalculations(!self.showCalculations());
-        };
-
-        self.query = ko.observable('');
-        self.clearQuery = function() {
-            self.query('');
-        };
-        self.query.subscribe(_.debounce(function(newValue) {
-            _.each(self.caseTypes, function(caseType) {
-                var hasVisible = false;
-                _.each(caseType.properties, function(property) {
-                    var isVisible = !newValue || property.name.indexOf(newValue) !== -1;
-                    property.isVisible(isVisible);
-                    hasVisible = hasVisible || isVisible;
-                });
-                caseType.hasVisibleProperties(hasVisible || !newValue && !caseType.properties.length);
-            });
-        }, 200));
-
-        self.translate = function(translations) {
-            return utils.translateName(translations, self.lang, self.langs);
-        };
-        self.translateQuestion = function(question) {
-            if (question.translations) {
-                return utils.translateName(question.translations, self.lang, self.langs);
-            }
-            return question.label;  // hidden values don't have translations
         };
 
         return self;
@@ -155,7 +111,7 @@ hqDefine('app_manager/js/summary/case_summary', function() {
             viewAllItems: gettext("View All Cases"),
         });
 
-        var caseSummaryContent = contentModel({
+        var caseSummaryContent = caseSummaryModel({
             case_types: caseTypes,
             form_name_map: initialPageData.get("form_name_map"),
             lang: initialPageData.get("lang"),
@@ -163,12 +119,6 @@ hqDefine('app_manager/js/summary/case_summary', function() {
             read_only: initialPageData.get("read_only"),
         });
 
-        hqImport("hqwebapp/js/layout").setIsAppbuilderResizing(true);
-        $("#hq-sidebar > nav").koApplyBindings(caseSummaryMenu);
-        $("#js-appmanager-body").koApplyBindings(caseSummaryContent);
-
-        caseSummaryMenu.selectedItemId.subscribe(function(newValue) {
-            caseSummaryContent.selectedItemId(newValue);
-        });
+        menu.initSummary(caseSummaryMenu, caseSummaryContent);
     });
 });

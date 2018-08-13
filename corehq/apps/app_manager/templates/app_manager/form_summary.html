@@ -10,10 +10,7 @@
 
 {% block content_extra %}
     {% initial_page_data 'errors' errors %}
-    {% initial_page_data 'lang' lang %}
-    {% initial_page_data 'langs' langs %}
     {% initial_page_data 'modules' modules %}
-    {% initial_page_data 'VELLUM_TYPES' VELLUM_TYPES %}
     {% registerurl 'form_source' domain app_id '---' %}
     {% registerurl 'view_module' domain app_id '---' %}
 
@@ -24,25 +21,11 @@
         </h3>
         <div class="row">
             <div class="col-xs-3">
-                <form class="form-inline" role="form">
-                    <div class="form-group">
-                        <label class="sr-only" for="property">{% trans "Filter questions" %}</label>
-                        <input type="text" class="form-control" placeholder="Filter questions"
-                               data-bind="value: query, valueUpdate: 'afterkeydown'" />
-                    </div>
-                    <button class="btn btn-default" data-bind="click: clearQuery" type="button"><i class="fa fa-times"></i></button>
-                </form>
+                <!-- ko template: {name: 'search-box', data: $root} --><!-- /ko -->
             </div>
             <div class="col-xs-9">
                 <div class="btn-toolbar pull-right" role="toolbar">
-                    <div class="btn-group" role="group" >
-                        <button type="button" class="btn btn-default" data-bind="click: turnLabelsOn, css: { 'active': showLabels }">
-                            {% trans "Labels" %}
-                        </button>
-                        <button type="button" class="btn btn-default" data-bind="click: turnIdsOn, css: { 'active': showIds }">
-                            {% trans "Question IDs" %}
-                        </button>
-                    </div>
+                    <!-- ko template: 'label-id-toggle' --><!-- /ko -->
                     <div class="btn-group" role="group">
                         <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleCalculations, activeObs: showCalculations,
                                            icon: 'fa fa-calculator', text: '{% trans "Calculations"|escapejs %}' } }--><!-- /ko -->
@@ -133,7 +116,7 @@
         </ul>
     </script>
 
-    {# Icon and value for question attribute #}
+    {# Button for question attribute #}
     <script type="text/html" id="attribute-toggle">
         <button type="button" class="btn btn-default"
                 data-bind="click: clickFn, css: { active: activeObs }">
