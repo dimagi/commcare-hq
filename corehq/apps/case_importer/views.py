@@ -91,8 +91,8 @@ def excel_config(request, domain):
     if invalid_column_names:
         error_message = format_html(
             _("Column names must be <a target='_blank' href='https://www.w3schools.com/xml/xml_elements.asp'>"
-              "valid XML elements</a> and cannot start with a number or contain spaces or most special characters. "
-              "Please update the following: {}.").format(
+              "valid XML elements</a> and cannot start with a number or contain spaces or most special characters."
+              " Please update the following: {}.").format(
                 ', '.join(invalid_column_names)))
         return render_error(request, domain, error_message)
 
