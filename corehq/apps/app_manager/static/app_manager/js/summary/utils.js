@@ -1,11 +1,11 @@
 hqDefine("app_manager/js/summary/utils", function() {
-    var translateName = function(names, targetLang, langs) {
-        var langs = [targetLang].concat(langs),
+    var translateName = function(names, targetLang, allLangs) {
+        var langs = [targetLang].concat(allLangs),
             firstLang = _(langs).find(function(lang) {
                 return names[lang];
             });
         if (!firstLang) {
-            return gettext('[unknown]');;
+            return gettext('[unknown]');
         }
         return names[firstLang] + (firstLang === targetLang ? '' : ' [' + firstLang + ']');
     };

@@ -1,8 +1,7 @@
 hqDefine('app_manager/js/summary/case_summary', function() {
     var assertProperties = hqImport("hqwebapp/js/assert_properties"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        models = hqImport("app_manager/js/summary/models"),
-        utils = hqImport("app_manager/js/summary/utils");
+        models = hqImport("app_manager/js/summary/models");
 
     var caseTypeModel = function(caseType) {
         var self = models.contentItemModel(caseType);

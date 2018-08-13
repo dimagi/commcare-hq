@@ -31,7 +31,7 @@ hqDefine('app_manager/js/summary/form_summary', function() {
             },
             onSelectMenuItem: function(selectedId) {
                 _.each(self.modules, function(module) {
-                    module.isSelected(!selectedId || selectedId === module.id || _.find(module.forms, function(f) { return selectedId === f.id }));
+                    module.isSelected(!selectedId || selectedId === module.id || _.find(module.forms, function(f) { return selectedId === f.id; }));
                     _.each(module.forms, function(form) {
                         form.isSelected(!selectedId || selectedId === form.id || selectedId === module.id);
                     });
