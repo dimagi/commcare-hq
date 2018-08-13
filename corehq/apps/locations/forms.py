@@ -652,7 +652,7 @@ class RelatedLocationForm(forms.Form):
 
     def save(self):
         selected_location_ids = self.cleaned_data['related_locations'].split(',')
-        selected_location_ids = set(filter(None, selected_location_ids))
+        selected_location_ids = set(list(filter(None, selected_location_ids)))
 
         previous_locations = LocationRelation.from_locations([self.location])
         locations_to_add = selected_location_ids - previous_locations
