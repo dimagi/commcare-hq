@@ -203,7 +203,8 @@
         </div><!-- .panel-release -->
     </div> <!-- .releases-container -->
 
-    <pagination params="goToPage: goToPage,
+    <pagination data-apply-bindings="false"
+                params="goToPage: goToPage,
                         perPage: fetchLimit,
                         totalItems: totalItems"></pagination>
     <script type="text/html" id="delete-build-modal-template">

@@ -12,7 +12,7 @@
         _.each(_.keys(components), function(elementName) {
             _.each($(elementName), function(el) {
                 var $el = $(el);
-                if (!$el.closest('.ko-template').length) {
+                if (!($el.data('apply-bindings') === false)) {
                     $(el).koApplyBindings();
                 }
             });
