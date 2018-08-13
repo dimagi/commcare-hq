@@ -14,8 +14,8 @@ from six.moves import range
 def send_to_kafka(producer, topic, change_meta):
     def _send_to_kafka():
         producer.send_messages(
-            bytes(topic),
-            bytes(json.dumps(change_meta.to_json())),
+            bytes(topic, encoding='utf-8'),
+            bytes(json.dumps(change_meta.to_json()), encoding='utf-8'),
         )
 
     try:
