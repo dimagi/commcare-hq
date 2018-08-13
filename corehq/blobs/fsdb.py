@@ -47,7 +47,7 @@ class FilesystemBlobDB(AbstractBlobDB):
             set_blob_expire_object(bucket, identifier, length, timeout)
         datadog_counter('commcare.blobs.added.count')
         datadog_counter('commcare.blobs.added.bytes', value=length)
-        return BlobInfo(identifier, length, "md5-" + b64digest)
+        return BlobInfo(identifier, length, "md5-" + b64digest.decode('utf-8'))
 
     def get(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
