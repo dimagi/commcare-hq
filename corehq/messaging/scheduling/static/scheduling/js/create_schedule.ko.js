@@ -118,22 +118,25 @@ hqDefine("scheduling/js/create_schedule.ko", [
 
     var CustomEventContainer = function(id) {
         var self = this;
-
+        var initialCustomEventValue;
         self.event_id = id;
 
         var customEventFormset = intialPageData.get("current_values").custom_event_formset;
+
+
         if(id < customEventFormset.length) {
-            self.eventAndContentViewModel = new EventAndContentViewModel(customEventFormset[id]);
+            initialCustomEventValue = customEventFormset[id];
         } else {
-            self.eventAndContentViewModel = new EventAndContentViewModel(
-                {
-                    day: 1,
-                    time: '12:00',
-                    minutes_to_wait: 0,
-                    deleted: false
-                }
-            );
+            initialCustomEventValue = {
+                day: 1,
+                time: '12:00',
+                minutes_to_wait: 0,
+                deleted: false,
+            };
         }
+
+        self.eventAndContentViewModel = Object.create(EventAndContentViewModel.prototype);
+        self.eventAndContentViewModel.constructor(initialCustomEventValue);
 
         self.templateId = ko.computed(function() {
             return 'id_custom_event_template_' + id;

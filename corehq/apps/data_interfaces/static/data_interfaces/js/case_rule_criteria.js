@@ -3,7 +3,7 @@
 hqDefine("data_interfaces/js/case_rule_criteria", [
     'jquery',
     'knockout',
-    'hqwebapp/js/initial_page_data'
+    'hqwebapp/js/initial_page_data',
 ], function($, ko, initialPageData) {
 
     var CaseRuleCriteria = function(initial, constants) {
