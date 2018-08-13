@@ -1766,6 +1766,10 @@ class ScheduleForm(Form):
         return list(result)
 
     @property
+    def use_case(self):
+        raise NotImplementedError()
+
+    @property
     def current_values(self):
         values = {}
         for field_name in self.fields.keys():
@@ -1773,6 +1777,7 @@ class ScheduleForm(Form):
         values['standalone_content_form'] = self.standalone_content_form.current_values
         values['custom_event_formset'] = [form.current_values for form in self.custom_event_formset]
         values['editing_custom_immediate_schedule'] = self.editing_custom_immediate_schedule
+        values['use_case'] = self.use_case
         return values
 
     @property
@@ -2408,6 +2413,8 @@ class ScheduleForm(Form):
 
 class BroadcastForm(ScheduleForm):
 
+    use_case = 'broadcast'
+
     schedule_name = CharField(
         required=True,
         label=ugettext_lazy("Broadcast Name"),
@@ -2546,6 +2553,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     START_OFFSET_ZERO = 'ZERO'
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
+
+    use_case = 'conditional_alert'
 
     # start_date is defined on the superclass but cleaning it in this subclass
     # depends on start_date_type, which depends on send_frequency
