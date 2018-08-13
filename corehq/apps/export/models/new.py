@@ -971,6 +971,7 @@ class ExportInstance(BlobMixin, Document):
     def copy_export(self):
         export_json = self.to_json()
         del export_json['_id']
+        del export_json['external_blobs']
         export_json['name'] = '{} - Copy'.format(self.name)
         new_export = self.__class__.wrap(export_json)
         return new_export
