@@ -35,6 +35,16 @@ hqDefine('hqwebapp/js/components/pagination', function() {
             self.itemsShowing = ko.computed(function(){
                 return self.currentPage() * self.perPage();
             });
+            self.itemsText = ko.computed(function(){
+                var lastItem = Math.min(self.currentPage() * self.perPage(), self.totalItems());
+                return _.template(
+                    gettext('Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries')
+                )({
+                    firstItem: ((self.currentPage() - 1) * self.perPage()) + 1,
+                    lastItem: isNaN(lastItem) ? 1 : lastItem,
+                    maxItems: self.totalItems()
+                });
+            });
             self.pagesShown = ko.computed(function(){
                 var pages = [];
                 for (var pageNum = 1; pageNum <= self.numPages(); pageNum++){
