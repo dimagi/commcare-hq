@@ -1,0 +1,20 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block page_navigation %}
+    <h2 class="text-hq-nav-header">{% trans "Manage Translations" %}</h2>
+    <ul class="nav nav-hq-sidebar">
+        <li>
+            <a href="{% url 'convert_translations' domain %}">
+                {% trans "Convert Translations" %}
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'icds_app_translations' domain %}">
+                {% trans "Transifex Integration" %}
+            </a>
+        </li>
+    </ul>
+
+{% endblock %}
