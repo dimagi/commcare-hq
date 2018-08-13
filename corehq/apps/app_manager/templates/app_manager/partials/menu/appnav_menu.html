@@ -15,7 +15,7 @@
             <li class="edit-module-li js-sorted-li" data-index="{{ module.id }}" data-indexvar="moduleid">
 
                 <div class="appnav-item {% ifequal module.unique_id selected_module.unique_id %}{% if not form %}active{% endif %}{% endifequal %}">
-                  {% include 'app_manager/partials/confirm_delete_module.html' %}
+                  {% include 'app_manager/partials/menu/confirm_delete_module.html' %}
                   {% include 'app_manager/partials/menu/module_link_primary.html' %}
                   {% include 'app_manager/partials/menu/module_link_secondary.html' %}
                 </div>
@@ -38,7 +38,7 @@
                             >
                                 <!--[F]-->
                                 <div class="appnav-item {% ifequal form selected_form %} active{% if not formdesigner %} settings-view{% endif %}{% endifequal %}">
-                                    {% include 'app_manager/partials/confirm_delete_form.html' %}
+                                    {% include 'app_manager/partials/menu/confirm_delete_form.html' %}
                                     {% include 'app_manager/partials/menu/form_link_primary.html' %}
                                     {% include 'app_manager/partials/menu/form_link_secondary.html' %}
                                 </div>
