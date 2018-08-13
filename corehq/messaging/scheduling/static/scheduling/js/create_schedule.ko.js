@@ -121,9 +121,9 @@ hqDefine("scheduling/js/create_schedule.ko", [
 
         self.event_id = id;
 
-        var custom_event_formset = intialPageData.get("current_values").custom_event_formset;
-        if(id < custom_event_formset.length) {
-            self.eventAndContentViewModel = new EventAndContentViewModel(custom_event_formset[id]);
+        var customEventFormset = intialPageData.get("current_values").custom_event_formset;
+        if(id < customEventFormset.length) {
+            self.eventAndContentViewModel = new EventAndContentViewModel(customEventFormset[id]);
         } else {
             self.eventAndContentViewModel = new EventAndContentViewModel(
                 {

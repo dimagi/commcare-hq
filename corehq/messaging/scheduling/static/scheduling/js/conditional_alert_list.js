@@ -5,7 +5,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
     var table = null;
 
     $(function() {
-        var conditonal_alert_list_url = initialPageData.reverse("conditional_alert_list");
+        var conditonalAlterListUrl = initialPageData.reverse("conditional_alert_list");
 
         table = $("#conditional-alert-list").dataTable({
             "lengthChange": false,
@@ -14,7 +14,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
             "displayLength": 10,
             "processing": false,
             "serverSide": true,
-            "ajaxSource": conditonal_alert_list_url,
+            "ajaxSource": conditonalAlterListUrl,
             "fnServerParams": function(aoData) {
                 aoData.push({"name": "action", "value": "list_conditional_alerts"});
             },
@@ -39,8 +39,8 @@ hqDefine("scheduling/js/conditional_alert_list", [
                         var button_id = 'delete-button-for-' + row.id;
                         var disabled = row.locked_for_editing ? 'disabled' : '';
                         return '<button id="' + button_id + '" \
-                                        class="btn btn-danger" \
-                                        onclick="hqImport(\'scheduling/js/conditional_alert_list\').deleteAlert(' + row.id + ')" \
+                                        class="btn btn-danger alert-delete" \
+                                        data-id="'+row.id+'"\
                                         ' + disabled + '> \
                                 <i class="fa fa-remove"></i></button>';
                     },
@@ -78,20 +78,22 @@ hqDefine("scheduling/js/conditional_alert_list", [
                         var disabled = (row.locked_for_editing || !row.editable) ? 'disabled' : '';
                         if(row.active) {
                             html = '<button id="' + button_id + '" \
-                                            class="btn btn-default" \
-                                            onclick="hqImport(\'scheduling/js/conditional_alert_list\').deactivateAlert(' + row.id + ')" \
+                                            class="btn btn-default alert-activate" \
+                                            data-id="'+row.id+'"\
+                                            data-action="deactivate"\
                                             ' + disabled + '> \
                                    ' + gettext("Deactivate") + '</button>';
                         } else {
                             html = '<button id="' + button_id + '" + \
-                                            class="btn btn-default" + \
-                                            onclick="hqImport(\'scheduling/js/conditional_alert_list\').activateAlert(' + row.id + ')" \
+                                            class="btn btn-default alert-activate" + \
+                                            data-action="activate"\
+                                            data-id="'+row.id+'"\
                                             ' + disabled + '> \
                                    ' + gettext("Activate") + '</button>';
                         }
 
                         if(row.locked_for_editing) {
-                            html += ' <button class="btn btn-default" onclick="hqImport(\'scheduling/js/conditional_alert_list\').restartRule(' + row.id + ')">';
+                            html += ' <button class="btn btn-default alert-restart" data-id="'+row.id+'" >';
                             html += '<i class="fa fa-refresh"></i> ' + gettext("Restart Rule") + '</button>';
                         }
 
@@ -100,6 +102,10 @@ hqDefine("scheduling/js/conditional_alert_list", [
                 },
             ],
         });
+
+        $(document).on('click', '.alert-delete', deleteAlert);
+        $(document).on('click', '.alert-activate', activateAlert);
+        $(document).on('click', '.alert-restart', restartRule);
 
         function reloadTable() {
             table.fnDraw(false);
@@ -149,17 +155,14 @@ hqDefine("scheduling/js/conditional_alert_list", [
             });
     }
 
-    function activateAlert(rule_id) {
-        alertAction('activate', rule_id);
+    function activateAlert() {
+        alertAction($(this).data("action"), $(this).data("id"));
     }
 
-    function deactivateAlert(rule_id) {
-        alertAction('deactivate', rule_id);
-    }
 
-    function deleteAlert(rule_id) {
+    function deleteAlert() {
         if(confirm(gettext("Are you sure you want to delete this conditional message?"))) {
-            alertAction('delete', rule_id);
+            alertAction('delete', $(this).data("id"));
         }
     }
 
@@ -178,14 +181,8 @@ hqDefine("scheduling/js/conditional_alert_list", [
             );
         }
         if(confirm(prompt)) {
-            alertAction('restart', rule_id);
+            alertAction('restart', $(this).data("id"));
         }
     }
 
-    return {
-        activateAlert: activateAlert,
-        deactivateAlert: deactivateAlert,
-        deleteAlert: deleteAlert,
-        restartRule: restartRule,
-    };
 });
