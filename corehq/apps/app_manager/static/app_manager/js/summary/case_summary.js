@@ -1,7 +1,7 @@
 hqDefine('app_manager/js/summary/case_summary', function() {
     var assertProperties = hqImport("hqwebapp/js/assert_properties"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        menu = hqImport("app_manager/js/summary/menu"),
+        models = hqImport("app_manager/js/summary/models"),
         utils = hqImport("app_manager/js/summary/utils");
 
     var propertyModel = function(property) {
@@ -57,7 +57,7 @@ hqDefine('app_manager/js/summary/case_summary', function() {
     };
 
     var caseSummaryModel = function(options) {
-        var self = menu.contentModel(_.extend(options, {
+        var self = models.contentModel(_.extend(options, {
             query_label: gettext("Filter properties"),
             onQuery: function(query) {
                 _.each(self.caseTypes, function(caseType) {
@@ -98,9 +98,9 @@ hqDefine('app_manager/js/summary/case_summary', function() {
     $(function() {
         var caseTypes = initialPageData.get("case_metadata").case_types;
 
-        var caseSummaryMenu = menu.menuModel({
+        var caseSummaryMenu = models.menuModel({
             items: _.map(caseTypes, function(caseType) {
-                return menu.menuItemModel({
+                return models.menuItemModel({
                     id: caseType.name,
                     name: caseType.name,
                     icon: "fcc fcc-fd-external-case appnav-primary-icon",
@@ -119,6 +119,6 @@ hqDefine('app_manager/js/summary/case_summary', function() {
             read_only: initialPageData.get("read_only"),
         });
 
-        menu.initSummary(caseSummaryMenu, caseSummaryContent);
+        models.initSummary(caseSummaryMenu, caseSummaryContent);
     });
 });

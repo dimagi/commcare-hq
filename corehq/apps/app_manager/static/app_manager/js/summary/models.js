@@ -2,7 +2,7 @@
  * Base models for app summary. Inherited by case summary and form summary.
  * Sets up a menu of items, to be linked with a set of content.
  */
-hqDefine('app_manager/js/summary/menu', function() {
+hqDefine('app_manager/js/summary/models', function() {
     var assertProperties = hqImport("hqwebapp/js/assert_properties"),
         utils = hqImport('app_manager/js/summary/utils');
 

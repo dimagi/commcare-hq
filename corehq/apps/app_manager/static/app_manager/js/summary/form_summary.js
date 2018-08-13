@@ -1,11 +1,11 @@
 hqDefine('app_manager/js/summary/form_summary', function() {
     var assertProperties = hqImport("hqwebapp/js/assert_properties"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        menu = hqImport("app_manager/js/summary/menu"),
+        models = hqImport("app_manager/js/summary/models"),
         utils = hqImport('app_manager/js/summary/utils');
 
     var formSummaryModel = function(options) {
-        var self = menu.contentModel(_.extend(options, {
+        var self = models.contentModel(_.extend(options, {
             query_label: gettext("Filter questions"),
             onQuery: function(query) {
                 var match = function(needle, haystack) {
@@ -111,15 +111,15 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         var lang = initialPageData.get('lang'),
             langs = initialPageData.get('langs');
 
-        var formSummaryMenu = menu.menuModel({
+        var formSummaryMenu = models.menuModel({
             items: _.map(initialPageData.get("modules"), function(module) {
-                return menu.menuItemModel({
+                return models.menuItemModel({
                     id: module.id,
                     name: utils.translateName(module.name, lang, langs),
                     icon: utils.moduleIcon(module),
                     has_errors: false,
                     subitems: _.map(module.forms, function(form) {
-                        return menu.menuItemModel({
+                        return models.menuItemModel({
                             id: form.id,
                             name: utils.translateName(form.name, lang, langs),
                             icon: utils.formIcon(form),
@@ -139,6 +139,6 @@ hqDefine('app_manager/js/summary/form_summary', function() {
             read_only: initialPageData.get("read_only"),
         });
 
-        menu.initSummary(formSummaryMenu, formSummaryContent);
+        models.initSummary(formSummaryMenu, formSummaryContent);
     });
 });
