@@ -188,7 +188,7 @@ class FormProcessorInterface(object):
             raise
         except KafkaPublishingError as e:
             from corehq.form_processor.submission_post import notify_submission_error
-            notify_submission_error(forms.submitted, e, 'Error publishing to kafak')
+            notify_submission_error(forms.submitted, e, 'Error publishing to Kafka')
             raise PostSaveError(e)
         except Exception as e:
             from corehq.form_processor.submission_post import handle_unexpected_error

@@ -138,7 +138,7 @@ S3_BLOB_DB_SETTINGS = {
     },
 }
 
-KAFKA_URL = 'kafka:9092'
+KAFKA_BROKERS = ['kafka:9092']
 
 SHARED_DRIVE_ROOT = '/sharedfiles'
 
