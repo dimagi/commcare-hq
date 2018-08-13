@@ -49,9 +49,22 @@ hqDefine('app_manager/js/summary/models', function() {
         return self;
     };
 
+    var contentItemModel = function(options) {
+        var self = _.extend({}, options);
+
+        self.isSelected = ko.observable(true);  // based on what's selected in menu
+        self.matchesQuery = ko.observable(true);   // based on what's entered in search box
+        self.isVisible = ko.computed(function() {
+            return self.isSelected() && self.matchesQuery();
+        });
+
+        return self;
+    };
+
     var contentModel = function(options) {
-        var self = {};
         assertProperties.assertRequired(options, ['form_name_map', 'lang', 'langs', 'query_label', 'read_only', 'onQuery', 'onSelectMenuItem']);
+
+        var self = {};
 
         // Connection to menu
         self.selectedItemId = ko.observable('');      // blank indicates "View All"
@@ -69,9 +82,10 @@ hqDefine('app_manager/js/summary/models', function() {
             options.onQuery(newValue);
         }, 200));
 
-        // Translation utilities
+        // Utilities
         self.lang = options.lang;
         self.langs = options.langs;
+        self.questionIcon = utils.questionIcon;
         self.translate = function(translations) {
             return utils.translateName(translations, self.lang, self.langs);
         };
@@ -126,6 +140,7 @@ hqDefine('app_manager/js/summary/models', function() {
 
     return {
         contentModel: contentModel,
+        contentItemModel: contentItemModel,
         menuItemModel: menuItemModel,
         menuModel: menuModel,
         initSummary: initSummary,

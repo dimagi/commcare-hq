@@ -80,10 +80,10 @@
                     </h5>
                     <ol data-bind="foreach: questions">
                         <li data-bind="visible: isVisible">
-                            <i data-bind="attr: { 'class': icon }" title="type"></i>
+                            <i data-bind="attr: { 'class': $root.questionIcon($data) }" title="type"></i>
                             <span data-bind="visible: $root.showIds, text: value"></span>
                             <span data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></span>
-                            <span data-bind="visible: required" title="{% trans "This question is required" %}">*</span>
+                            <span data-bind="visible: required" title="{% trans "This question is required"|escapejs %}">*</span>
                             <span class="text-muted" data-bind="visible: $root.showComments">
                                 &nbsp; <span data-bind="text: comment"></span>
                             </span>

@@ -20,13 +20,13 @@ hqDefine('app_manager/js/summary/form_summary', function() {
                             questionIsVisible = questionIsVisible || _.find(question.options, function(option) {
                                 return match(query, option.value + self.translateQuestion(option));
                             });
-                            question.isVisible(questionIsVisible);
+                            question.matchesQuery(questionIsVisible);
                             formIsVisible = formIsVisible || questionIsVisible;
                         });
-                        form.hasVisibleDescendants(formIsVisible);
+                        form.matchesQuery(formIsVisible);
                         moduleIsVisible = moduleIsVisible || formIsVisible;
                     });
-                    module.hasVisibleDescendants(moduleIsVisible);
+                    module.matchesQuery(moduleIsVisible);
                 });
             },
             onSelectMenuItem: function(selectedId) {
@@ -72,36 +72,24 @@ hqDefine('app_manager/js/summary/form_summary', function() {
     };
 
     var moduleModel = function(module) {
-        var self = _.extend({}, module);
+        var self = models.contentItemModel(module);
 
         self.url = hqImport("hqwebapp/js/initial_page_data").reverse("view_module", self.id);
         self.icon = utils.moduleIcon(self) + ' hq-icon';
         self.forms = _.map(self.forms, formModel);
 
-        self.isSelected = ko.observable(true);
-
-        self.hasVisibleDescendants = ko.observable(true);
-        self.isVisible = ko.computed(function() {
-            return self.isSelected() && self.hasVisibleDescendants();
-        });
-
         return self;
     };
 
     var formModel = function(form) {
-        var self = _.extend({}, form);
+        var self = models.contentItemModel(form);
 
         self.url = hqImport("hqwebapp/js/initial_page_data").reverse("form_source", self.id);
         self.icon = utils.formIcon(self) + ' hq-icon';
         self.questions = _.map(self.questions, function(question) {
-            return utils.questionModel(question);
-        });
-
-        self.isSelected = ko.observable(true);
-
-        self.hasVisibleDescendants = ko.observable(true);
-        self.isVisible = ko.computed(function() {
-            return self.isSelected() && self.hasVisibleDescendants();
+            return models.contentItemModel(_.defaults({
+                options: [],
+            }, question));
         });
 
         return self;

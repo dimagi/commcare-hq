@@ -110,10 +110,10 @@
                                             <!-- /ko -->
                                         </td>
                                         <td>
-                                            <div data-bind="template: {name: 'load-save-questions', data: load_questions }"></div>
+                                            <div data-bind="template: {name: 'load-save-questions', data: {questions: load_questions, getIcon: $root.questionIcon}}"></div>
                                         </td>
                                         <td>
-                                            <div data-bind="template: {name: 'load-save-questions', data: save_questions }"></div>
+                                            <div data-bind="template: {name: 'load-save-questions', data: {questions: save_questions, getIcon: $root.questionIcon}}"></div>
                                         </td>
                                     </tr>
                                 <!-- /ko -->
@@ -146,9 +146,9 @@
 
     {# List of questions loaded/saved into a case property #}
     <script type="text/html" id="load-save-questions">
-        <ul class="fa-ul" data-bind="foreach: $data">
+        <ul class="fa-ul" data-bind="foreach: questions"><!-- Each of these is an object containing a condition and a question -->
             <li>
-                <i data-bind="attr: {'class': question.icon}"></i>
+                <i data-bind="attr: {'class': $parent.getIcon(question)}"></i>
                 <span data-bind="visible: $root.showIds, text: question.value"></span>
                 <span data-bind="visible: $root.showLabels, text: $root.translateQuestion(question)"></span>
                 <ul data-bind="foreach: question.options">

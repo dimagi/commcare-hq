@@ -4,27 +4,11 @@ hqDefine('app_manager/js/summary/case_summary', function() {
         models = hqImport("app_manager/js/summary/models"),
         utils = hqImport("app_manager/js/summary/utils");
 
-    var propertyModel = function(property) {
-        var self = _.extend({}, property);
-
-        _.each(self.forms, function(form) {
-            _.each(form.load_questions, function(questionAndCondition) {
-                questionAndCondition.question = utils.questionModel(questionAndCondition.question);
-            });
-            _.each(form.save_questions, function(questionAndCondition) {
-                questionAndCondition.question = utils.questionModel(questionAndCondition.question);
-            });
-        });
-
-        self.isVisible = ko.observable(true);
-        return self;
-    };
-
     var caseTypeModel = function(caseType) {
-        var self = _.extend({}, caseType);
+        var self = models.contentItemModel(caseType);
 
         self.properties = _.map(caseType.properties, function(property) {
-            return propertyModel(property);
+            return models.contentItemModel(property);
         });
 
         // Convert these from objects to lists so knockout can process more easily
@@ -47,12 +31,6 @@ hqDefine('app_manager/js/summary/case_summary', function() {
             };
         });
 
-        self.isSelected = ko.observable(true);
-        self.hasVisibleProperties = ko.observable(true);
-        self.isVisible = ko.computed(function() {
-            return self.isSelected() && self.hasVisibleProperties();
-        });
-
         return self;
     };
 
@@ -64,10 +42,10 @@ hqDefine('app_manager/js/summary/case_summary', function() {
                     var hasVisible = false;
                     _.each(caseType.properties, function(property) {
                         var isVisible = !query || property.name.indexOf(query) !== -1;
-                        property.isVisible(isVisible);
+                        property.matchesQuery(isVisible);
                         hasVisible = hasVisible || isVisible;
                     });
-                    caseType.hasVisibleProperties(hasVisible || !query && !caseType.properties.length);
+                    caseType.matchesQuery(hasVisible || !query && !caseType.properties.length);
                 });
             },
             onSelectMenuItem: function(selectedId) {
