@@ -1,25 +1,21 @@
 (function () {
-    // standalone components will have their own knockout bindings. Use
-    // standalone: false if you want to mix the component into another model
     var components = {
-        'inline-edit': {path: 'hqwebapp/js/components/inline_edit', standalone: true},
-        'pagination': {path: 'hqwebapp/js/components/pagination', standalone: false},
+        'inline-edit': 'hqwebapp/js/components/inline_edit',
+        'pagination': 'hqwebapp/js/components/pagination'
     };
 
-    _.each(components, function(module, elementName) {
-        ko.components.register(elementName, hqImport(module.path));
+    _.each(components, function(moduleName, elementName) {
+        ko.components.register(elementName, hqImport(moduleName));
     });
 
     $(function() {
-        _.each(components, function(module, elementName) {
-            if (module.standalone){
-                _.each($(elementName), function(el) {
-                    var $el = $(el);
-                    if (!$el.closest('.ko-template').length) {
-                        $(el).koApplyBindings();
-                    }
-                });
-            }
+        _.each(_.keys(components), function(elementName) {
+            _.each($(elementName), function(el) {
+                var $el = $(el);
+                if (!$el.closest('.ko-template').length) {
+                    $(el).koApplyBindings();
+                }
+            });
         });
     });
 }());
