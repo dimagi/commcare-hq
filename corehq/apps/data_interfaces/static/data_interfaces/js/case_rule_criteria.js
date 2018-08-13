@@ -3,9 +3,7 @@
 hqDefine("data_interfaces/js/case_rule_criteria", [
     'jquery',
     'knockout',
-    'hqwebapp/js/initial_page_data',
-    'scheduling/js/create_schedule.ko',
-    'data_interfaces/js/make_read_only',
+    'hqwebapp/js/initial_page_data'
 ], function($, ko, initialPageData) {
 
     var CaseRuleCriteria = function(initial, constants) {
