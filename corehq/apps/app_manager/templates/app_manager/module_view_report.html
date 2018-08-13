@@ -37,7 +37,7 @@
     {% registerurl 'choice_list_api' domain 'report_id' 'filter_id' %}
     {% registerurl "edit_report_module" domain app.id module.unique_id %}
     {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
-    {% include 'app_manager/partials/module_view_heading.html' %}
+    {% include 'app_manager/partials/modules/module_view_heading.html' %}
     {% include 'app_manager/partials/mobile_report_configs.html' %}
 {% endblock %}
 
@@ -49,5 +49,5 @@
 
 {% block breadcrumbs %}
     {{ block.super }}
-    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
+    {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
 {% endblock %}
