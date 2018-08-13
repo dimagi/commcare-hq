@@ -1,10 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import os.path
-import lxml
 from django.http import HttpResponseRedirect
 from django.utils.datastructures import MultiValueDictKeyError
+from django.utils.html import format_html
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
+from corehq.apps.app_manager.models import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
@@ -36,7 +37,7 @@ def render_error(request, domain, message):
 def validate_column_names(column_names, invalid_column_names):
     for column_name in column_names:
         try:
-            lxml.etree.Element(column_name)
+            validate_property(column_name)
         except ValueError:
             invalid_column_names.add(column_name)
 
@@ -88,8 +89,11 @@ def excel_config(request, domain):
         row_count = spreadsheet.max_row
 
     if invalid_column_names:
-        error_message = _("Found invalid column names. Please update the following: {}.").format(
-            ', '.join(invalid_column_names))
+        error_message = format_html(
+            _("Column names must be <a target='_blank' href='https://www.w3schools.com/xml/xml_elements.asp'>"
+              "valid XML elements</a> and cannot start with a number or contain spaces or most special characters. "
+              "Please update the following: {}.").format(
+                ', '.join(invalid_column_names)))
         return render_error(request, domain, error_message)
 
     if row_count == 0:
