@@ -1256,7 +1256,8 @@ LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
     'language_linked_multimedia',
     'Add a setting to link multimedia to the default language',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
