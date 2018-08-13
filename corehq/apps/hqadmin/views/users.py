@@ -25,7 +25,7 @@ from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from django.views.generic import FormView, TemplateView, View
 from lxml import etree
 from lxml.builder import E
@@ -55,14 +55,18 @@ from corehq.util.timer import TimingContext
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm, BrokenBuildsForm, EmailForm, SuperuserManagementForm,
+    AuthenticateAsForm, EmailForm, SuperuserManagementForm,
     ReprocessMessagingCaseUpdatesForm,
     DisableTwoFactorForm, DisableUserForm)
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 from six.moves import filter
 
 
-class AuthenticateAs(BaseAdminSectionView):
+class UserAdministration(BaseAdminSectionView):
+    section_name = ugettext_lazy("User Administration")
+
+
+class AuthenticateAs(UserAdministration):
     urlname = 'authenticate_as'
     page_title = _("Login as Other User")
     template_name = 'hqadmin/authenticate_as.html'
@@ -75,24 +79,29 @@ class AuthenticateAs(BaseAdminSectionView):
     def page_context(self):
         return {
             'hide_filters': True,
-            'form': AuthenticateAsForm(initial=self.kwargs)
+            'form': AuthenticateAsForm(initial=self.request.POST),
+            'root_page_url': reverse('authenticate_as'),
         }
 
     def post(self, request, *args, **kwargs):
         form = AuthenticateAsForm(self.request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
-            request.user = User.objects.get(username=username)
+            request.user = User.objects.get(username=form.full_username)
 
             # http://stackoverflow.com/a/2787747/835696
             # This allows us to bypass the authenticate call
             request.user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, request.user)
             return HttpResponseRedirect('/')
+        all_errors = form.errors.pop('__all__', None)
+        if all_errors:
+            messages.error(request, ','.join(all_errors))
+        if form.errors:
+            messages.error(request, form.errors)
         return self.get(request, *args, **kwargs)
 
 
-class SuperuserManagement(BaseAdminSectionView):
+class SuperuserManagement(UserAdministration):
     urlname = 'superuser_management'
     page_title = _("Grant or revoke superuser access")
     template_name = 'hqadmin/superuser_management.html'
@@ -285,13 +294,25 @@ class DomainAdminRestoreView(AdminRestoreView):
 def web_user_lookup(request):
     template = "hqadmin/web_user_lookup.html"
     web_user_email = request.GET.get("q")
+
+    context = {
+        'current_page': {
+            'title': "Look up user by email",
+            'page_name': "Look up user by email",
+        },
+        'section': {
+            'page_name': UserAdministration.section_name,
+            'url': reverse("default_admin_report"),
+        },
+    }
+
     if not web_user_email:
-        return render(request, template, {})
+        return render(request, template, context)
 
     web_user = WebUser.get_by_username(web_user_email)
-    context = {
-        'audit_report_url': reverse('admin_report_dispatcher', args=('user_audit_report',))
-    }
+    context.update({
+        'audit_report_url': reverse('admin_report_dispatcher', args=('user_audit_report',)),
+    })
     if web_user is None:
         messages.error(
             request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)

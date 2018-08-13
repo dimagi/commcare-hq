@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from django.db import connections
 from django.conf import settings
 
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
@@ -103,3 +104,8 @@ def db_for_read_write(model, write=True):
         if not write:
             return connection_manager.get_load_balanced_read_db_alais(app_label, default_db)
         return default_db
+
+
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()

@@ -12,6 +12,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
+from corehq.apps.analytics.ab_tests import appcues_template_app_test
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
@@ -58,7 +59,7 @@ from corehq.messaging.scheduling.views import (
     CreateConditionalAlertView,
     EditConditionalAlertView,
 )
-from corehq.messaging.util import show_messaging_dashboard
+from corehq.messaging.util import show_messaging_dashboard, project_is_on_new_reminders
 from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
 from corehq.motech.views import MotechLogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
@@ -66,7 +67,6 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.world_vision import WORLD_VISION_DOMAINS
 from memoized import memoized
 from django_prbac.utils import has_privilege
 from six.moves import map
@@ -84,8 +84,6 @@ class ProjectReportsTab(UITab):
 
     @property
     def view(self):
-        if self.domain in WORLD_VISION_DOMAINS:
-            return "reports_home"
         from corehq.apps.reports.views import MySavedReportsView
         return MySavedReportsView.urlname
 
@@ -463,16 +461,9 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
-    def use_new_daily_saved_exports_ui(self):
-        from corehq.apps.export.views import use_new_daily_saved_exports_ui
-        return use_new_daily_saved_exports_ui(self.domain)
-
-    @property
-    @memoized
     def should_see_daily_saved_export_list_view(self):
         return (
             self.can_view_form_or_case_exports
-            and self.use_new_daily_saved_exports_ui
             and domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
         )
 
@@ -481,7 +472,6 @@ class ProjectDataTab(UITab):
     def should_see_daily_saved_export_paywall(self):
         return (
             self.can_view_form_or_case_exports
-            and self.use_new_daily_saved_exports_ui
             and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
         )
 
@@ -490,7 +480,6 @@ class ProjectDataTab(UITab):
     def should_see_dashboard_feed_list_view(self):
         return (
             self.can_view_form_or_case_exports
-            and self.use_new_daily_saved_exports_ui  # dashboard feeds are a special kind of daily saved export
             and domain_has_privilege(self.domain, EXCEL_DASHBOARD)
         )
 
@@ -499,7 +488,6 @@ class ProjectDataTab(UITab):
     def should_see_dashboard_feed_paywall(self):
         return (
             self.can_view_form_or_case_exports
-            and self.use_new_daily_saved_exports_ui  # dashboard feeds are a special kind of daily saved export
             and not domain_has_privilege(self.domain, EXCEL_DASHBOARD)
         )
 
@@ -835,10 +823,13 @@ class ApplicationsTab(UITab):
 
         submenu_context.append(dropdown_dict(_('My Applications'),
                                is_header=True))
+        in_appcues_test = appcues_template_app_test(self._request)
         for app in apps:
             url = reverse('view_app', args=[self.domain, app.get_id]) if self.couch_user.can_edit_apps() \
                 else reverse('release_manager', args=[self.domain, app.get_id])
             app_title = self.make_app_title(app.name, app.doc_type)
+            if in_appcues_test and 'created_from_template' in app and app['created_from_template'] == 'appcues':
+                url = url + '?appcues=1'
 
             submenu_context.append(dropdown_dict(
                 app_title,
@@ -979,7 +970,7 @@ class MessagingTab(UITab):
     @memoized
     def show_new_reminders_pages(self):
         return (
-            self.project.uses_new_reminders or
+            project_is_on_new_reminders(self.project) or
             toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
         )
 
@@ -987,7 +978,7 @@ class MessagingTab(UITab):
     @memoized
     def show_old_reminders_pages(self):
         return (
-            not self.project.uses_new_reminders or
+            not project_is_on_new_reminders(self.project) or
             toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
         )
 
@@ -1428,6 +1419,9 @@ class ProjectSettingsTab(UITab):
     url_prefix_formats = (
         '/a/{domain}/settings/project/',
         '/a/{domain}/phone/prime_restore/',
+        '/a/{domain}/motech/',
+        '/a/{domain}/dhis2/',
+        '/a/{domain}/openmrs/',
     )
 
     _is_viewable = False
@@ -1639,15 +1633,18 @@ def _get_integration_section(domain):
         }, {
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
-        }, {
-            'title': _(MotechLogListView.page_title),
-            'url': reverse(MotechLogListView.urlname, args=[domain])
         }])
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
         integration.append({
             'title': _(OpenmrsImporterView.page_title),
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
+        })
+
+    if toggles.DHIS2_INTEGRATION.enabled(domain) or toggles.OPENMRS_INTEGRATION.enabled(domain):
+        integration.append({
+            'title': _(MotechLogListView.page_title),
+            'url': reverse(MotechLogListView.urlname, args=[domain])
         })
 
     return integration
@@ -1762,12 +1759,16 @@ class AccountingTab(UITab):
 
         from corehq.apps.accounting.views import (
             TriggerInvoiceView, TriggerBookkeeperEmailView,
-            TestRenewalEmailView,
+            TestRenewalEmailView, TriggerCustomerInvoiceView
         )
         items.append(('Other Actions', (
             {
                 'title': _(TriggerInvoiceView.page_title),
                 'url': reverse(TriggerInvoiceView.urlname),
+            },
+            {
+                'title': _(TriggerCustomerInvoiceView.page_title),
+                'url': reverse(TriggerCustomerInvoiceView.urlname),
             },
             {
                 'title': _(TriggerBookkeeperEmailView.page_title),
@@ -1911,6 +1912,8 @@ class AdminTab(UITab):
                  'url': reverse(ManageNotificationView.urlname)},
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
+                {'title': _('Maintenance Alerts'),
+                 'url': reverse('alerts')},
             ]
         sections = [
             (_('Administrative Reports'), [

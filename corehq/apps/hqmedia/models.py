@@ -433,7 +433,7 @@ class HQMediaMapItem(DocumentSchema):
 
     @classmethod
     def gen_unique_id(cls, m_id, path):
-        return hashlib.md5("%s: %s" % (path.encode('utf-8'), str(m_id))).hexdigest()
+        return hashlib.md5(b"%s: %s" % (path.encode('utf-8'), m_id.encode('utf-8'))).hexdigest()
 
 
 class ApplicationMediaReference(object):
@@ -445,10 +445,9 @@ class ApplicationMediaReference(object):
         Useful info for user-facing things.
     """
 
-    def __init__(self, path,
-                 module_id=None, module_name=None,
-                 form_id=None, form_name=None, form_order=None,
-                 media_class=None, is_menu_media=False, app_lang=None):
+    def __init__(self, path, module_id=None, module_name=None, form_id=None,
+                 form_name=None, form_order=None, media_class=None,
+                 is_menu_media=False, app_lang=None, use_default_media=False):
 
         if not isinstance(path, six.string_types):
             path = ''
@@ -468,6 +467,8 @@ class ApplicationMediaReference(object):
         self.is_menu_media = is_menu_media
 
         self.app_lang = app_lang or "en"
+
+        self.use_default_media = use_default_media
 
     def __str__(self):
         detailed_location = ""
@@ -497,6 +498,7 @@ class ApplicationMediaReference(object):
             'path': self.path,
             "icon_class": self.media_class.get_icon_class(),
             "media_type": self.media_class.get_nice_name(),
+            "use_default_media": self.use_default_media,
         }
 
     def _get_name(self, raw_name, lang=None):
@@ -541,7 +543,6 @@ class HQMediaMixin(Document):
 
     archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
 
-    @property
     @memoized
     def all_media(self):
         """
@@ -683,6 +684,7 @@ class HQMediaMixin(Document):
         image_ref = ApplicationMediaReference(
             item.icon_by_language(to_language),
             media_class=CommCareImage,
+            use_default_media=item.use_default_image_for_all,
             **media_kwargs
         )
         image_ref = image_ref.as_dict()
@@ -691,20 +693,20 @@ class HQMediaMixin(Document):
         audio_ref = ApplicationMediaReference(
             item.audio_by_language(to_language),
             media_class=CommCareAudio,
+            use_default_media=item.use_default_audio_for_all,
             **media_kwargs
         )
         audio_ref = audio_ref.as_dict()
         menu_media['audio'] = audio_ref
         return menu_media
 
-    @property
     @memoized
     def all_media_paths(self):
-        return set([m.path for m in self.all_media])
+        return set([m.path for m in self.all_media()])
 
     @memoized
     def get_all_paths_of_type(self, media_class_name):
-        return set([m.path for m in self.all_media if m.media_class.__name__ == media_class_name])
+        return set([m.path for m in self.all_media() if m.media_class.__name__ == media_class_name])
 
     def get_media_ref_kwargs(self, module, module_index, form=None,
                              form_index=None, is_menu_media=False):
@@ -732,7 +734,7 @@ class HQMediaMixin(Document):
         if self.check_media_state()['has_form_errors']:
             return
         paths = list(self.multimedia_map) if self.multimedia_map else []
-        permitted_paths = self.all_media_paths | self.logo_paths
+        permitted_paths = self.all_media_paths() | self.logo_paths
         for path in paths:
             if path not in permitted_paths:
                 map_changed = True
@@ -795,7 +797,7 @@ class HQMediaMixin(Document):
         """
             Used for the multimedia controller.
         """
-        return [m.as_dict(lang) for m in self.all_media]
+        return [m.as_dict(lang) for m in self.all_media()]
 
     def get_object_map(self):
         object_map = {}
@@ -833,14 +835,14 @@ class HQMediaMixin(Document):
     def check_media_state(self):
         has_missing_refs = False
 
-        for media in self.all_media:
+        for media in self.all_media():
             try:
                 self.multimedia_map[media.path]
             except KeyError:
                 has_missing_refs = True
 
         return {
-            "has_media": bool(self.all_media),
+            "has_media": bool(self.all_media()),
             "has_form_errors": self.media_form_errors,
             "has_missing_refs": has_missing_refs,
         }

@@ -5,6 +5,7 @@ from itertools import chain
 
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
+
 from corehq.util.quickcache import quickcache
 from django.http import Http404
 from django.core.cache import cache
@@ -440,7 +441,7 @@ def get_all_built_app_results(domain, app_id=None):
         'app_manager/saved_app',
         startkey=startkey,
         endkey=endkey,
-        include_docs=True,
+        include_docs=False,
     ).all()
 
 

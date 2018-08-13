@@ -60,3 +60,7 @@ class ReportConfigurationNotFoundError(UserReportsError):
 
 class InvalidQueryColumn(UserReportsError):
     pass
+
+
+class InvalidDataSourceType(UserQueryError):
+    pass

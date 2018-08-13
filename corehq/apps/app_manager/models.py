@@ -61,7 +61,6 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 from django.template.loader import render_to_string
-from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.blobs.mixin import BlobMixin
@@ -85,7 +84,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     LocationXpath,
 )
-from corehq.apps.builds import get_default_build_spec
+from corehq.apps.builds.utils import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from memoized import memoized
@@ -93,7 +92,6 @@ from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
 from corehq.util import bitly
 from corehq.util import view_utils
-from corehq.util.string_utils import random_string
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -227,6 +225,31 @@ def _rename_key(dct, old, new):
             dct["%s_backup_%s" % (new, hex(random.getrandbits(32))[2:-1])] = dct[new]
         dct[new] = dct[old]
         del dct[old]
+
+
+def app_template_dir(slug):
+    return os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'template_apps', slug)
+
+
+@memoized
+def load_app_template(slug):
+    with open(os.path.join(app_template_dir(slug), 'app.json')) as f:
+        return json.load(f)
+
+
+@memoized
+def get_template_app_multimedia_paths(slug):
+    paths = []
+    base_path = app_template_dir(slug)
+    for root, subdirs, files in os.walk(base_path):
+        subdir = os.path.relpath(root, base_path)
+        if subdir == '.':
+            continue
+        for file in files:
+            if file.startswith("."):
+                continue
+            paths.append(subdir + os.sep + file)
+    return paths
 
 
 @memoized
@@ -1493,6 +1516,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
     media_audio = DictProperty(StringProperty)
     custom_icons = ListProperty(CustomIcon)
 
+    # When set to true, all languages use the specific media from the default language
+    use_default_image_for_all = BooleanProperty(default=False)
+    use_default_audio_for_all = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data):
         # Lazy migration from single-language media to localizable media
@@ -1528,6 +1555,13 @@ class NavMenuItemMediaMixin(DocumentSchema):
             to return first path in sorted lang->media-path list
         """
         assert media_attr in ('media_image', 'media_audio')
+        toggle_enabled = toggles.LANGUAGE_LINKED_MULTIMEDIA.enabled
+        app = self.get_app()
+
+        if self.use_default_image_for_all and media_attr == 'media_image' and toggle_enabled(app.domain):
+            lang = app.default_language
+        if self.use_default_audio_for_all and media_attr == 'media_audio' and toggle_enabled(app.domain):
+            lang = app.default_language
 
         media_dict = getattr(self, media_attr)
         if not media_dict:
@@ -1586,14 +1620,18 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
         media_dict = getattr(self, media_attr) or {}
         old_value = media_dict.get(lang)
+        media_dict[lang] = media_path or ''
+        setattr(self, media_attr, media_dict)
         # remove the entry from app multimedia mappings if media is being removed now
         # This does not remove the multimedia but just it's reference in mapping
         # Added it here to ensure it's always set instead of getting it only when needed
         app = self.get_app()
         if old_value and not media_path:
-            app.multimedia_map.pop(old_value, None)
-        media_dict[lang] = media_path or ''
-        setattr(self, media_attr, media_dict)
+            # expire all_media_paths before checking for media path used in Application
+            app.all_media.reset_cache(app)
+            app.all_media_paths.reset_cache(app)
+            if old_value not in app.all_media_paths():
+                app.multimedia_map.pop(old_value, None)
 
     def set_icon(self, lang, icon_path):
         self._set_media('media_image', lang, icon_path)
@@ -3125,9 +3163,14 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             ))
 
         if self.form_filter:
+            # Replace any dots with #case, which doesn't make for valid xpath
+            # but will trigger any appropriate validation errors
+            interpolated_form_filter = interpolate_xpath(self.form_filter, case_xpath="#case",
+                    module=self.get_module(), form=self)
+
             form_filter_references_case = (
-                xpath_references_case(self.form_filter) or
-                xpath_references_user_case(self.form_filter)
+                xpath_references_case(interpolated_form_filter) or
+                xpath_references_user_case(interpolated_form_filter)
             )
 
             if form_filter_references_case:
@@ -5130,21 +5173,20 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             settings['Build-Number'] = self.version
         return settings
 
-    def create_build_files(self, save=False, build_profile_id=None):
+    def create_build_files(self, build_profile_id=None):
         built_on = datetime.datetime.utcnow()
         all_files = self.create_all_files(build_profile_id)
-        if save:
-            self.date_created = built_on
-            self.built_on = built_on
-            self.built_with = BuildRecord(
-                version=self.build_spec.version,
-                build_number=self.version,
-                datetime=built_on,
-            )
+        self.date_created = built_on
+        self.built_on = built_on
+        self.built_with = BuildRecord(
+            version=self.build_spec.version,
+            build_number=self.version,
+            datetime=built_on,
+        )
 
-            for filepath in all_files:
-                self.lazy_put_attachment(all_files[filepath],
-                                         'files/%s' % filepath)
+        for filepath in all_files:
+            self.lazy_put_attachment(all_files[filepath],
+                                     'files/%s' % filepath)
 
     def create_jadjar_from_build_files(self, save=False):
         self.validate_jar_path()
@@ -5154,7 +5196,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     self.lazy_fetch_attachment('CommCare.jad'),
                     self.lazy_fetch_attachment('CommCare.jar'),
                 )
-            except (ResourceError, KeyError):
+            except (ResourceNotFound, KeyError):
                 all_files = {
                     filename[len('files/'):]: self.lazy_fetch_attachment(filename)
                     for filename in self.blobs if filename.startswith('files/')
@@ -5315,7 +5357,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             force_new_forms = True
         copy.set_form_versions(previous_version, force_new_forms)
         copy.set_media_versions(previous_version)
-        copy.create_build_files(save=True)
+        copy.create_build_files()
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
@@ -5468,9 +5510,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
 
-    anonymous_cloudcare_enabled = BooleanProperty(default=False)
-    anonymous_cloudcare_hash = StringProperty(default=random_string)
-
     translation_strategy = StringProperty(default='select-known',
                                           choices=list(app_strings.CHOICES.keys()))
     auto_gps_capture = BooleanProperty(default=False)
@@ -5484,15 +5523,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
-
-    @property
-    def anonymous_cloudcare_url(self):
-        from corehq.apps.cloudcare.views import SingleAppLandingPageView
-
-        return view_utils.absolute_reverse(SingleAppLandingPageView.urlname, args=[
-            self.domain,
-            self.anonymous_cloudcare_hash
-        ])
 
     @property
     @memoized
@@ -5588,14 +5618,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
                 if not force_new_version:
-                    form_version = None
                     try:
                         previous_form = previous_version.get_form(form.unique_id)
                         # take the previous version's compiled form as-is
                         # (generation code may have changed since last build)
                         previous_source = previous_version.fetch_attachment(filename)
                     except (ResourceNotFound, FormNotFoundException):
-                        pass
+                        form.version = None
                     else:
                         previous_hash = _hash(previous_source)
 
@@ -5604,10 +5633,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                         previous_form_version = previous_form.get_version()
                         form.version = previous_form_version
                         my_hash = _hash(self.fetch_xform(form=form))
-                        if previous_hash == my_hash:
-                            form_version = previous_form_version
-
-                    form.version = form_version
+                        if previous_hash != my_hash:
+                            form.version = None
                 else:
                     form.version = None
 

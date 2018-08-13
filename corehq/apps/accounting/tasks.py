@@ -6,8 +6,10 @@ import datetime
 from datetime import date
 import io
 import json
+import uuid
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from six.moves.urllib.parse import urlencode
+from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -22,6 +24,7 @@ from celery.task import periodic_task, task
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.database import iter_docs
 from corehq.util.log import send_HTML_email
 
@@ -48,6 +51,7 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
+    DomainUserHistory
 )
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
@@ -62,7 +66,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.notifications.models import Notification
-from corehq.apps.users.models import FakeUser, WebUser
+from corehq.apps.users.models import FakeUser, WebUser, CommCareUser
 from corehq.const import (
     SERVER_DATE_FORMAT,
     SERVER_DATETIME_FORMAT_NO_SEC,
@@ -126,7 +130,8 @@ def _deactivate_subscription(subscription):
         next_subscription.save()
     else:
         next_subscription = assign_explicit_community_subscription(
-            subscription.subscriber.domain, subscription.date_end, account=subscription.account
+            subscription.subscriber.domain, subscription.date_end, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY,
+            account=subscription.account
         )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
@@ -590,16 +595,16 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
             )
 
 
-def ensure_explicit_community_subscription(domain_name, from_date):
+def ensure_explicit_community_subscription(domain_name, from_date, method, web_user=None):
     if not Subscription.visible_objects.filter(
         Q(date_end__gt=from_date) | Q(date_end__isnull=True),
         date_start__lte=from_date,
         subscriber__domain=domain_name,
     ).exists():
-        assign_explicit_community_subscription(domain_name, from_date)
+        assign_explicit_community_subscription(domain_name, from_date, method, web_user=web_user)
 
 
-def assign_explicit_community_subscription(domain_name, start_date, account=None):
+def assign_explicit_community_subscription(domain_name, start_date, method, account=None, web_user=None):
     future_subscriptions = Subscription.visible_objects.filter(
         date_start__gt=start_date,
         subscriber__domain=domain_name,
@@ -623,9 +628,10 @@ def assign_explicit_community_subscription(domain_name, start_date, account=None
         date_start=start_date,
         date_end=end_date,
         skip_invoicing_if_no_feature_charges=True,
-        adjustment_method=SubscriptionAdjustmentMethod.TASK,
+        adjustment_method=method,
         internal_change=True,
         service_type=SubscriptionType.PRODUCT,
+        web_user=web_user,
     )
 
 
@@ -873,21 +879,37 @@ def email_enterprise_report(domain, slug, couch_user):
     account = BillingAccount.get_account_by_domain(domain)
     report = EnterpriseReport.create(slug, account.id, couch_user)
 
-    message = _("Report run {date}\n").format(**{'date': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')})
+    # Generate file
     csv_file = io.StringIO()
     writer = csv.writer(csv_file)
     writer.writerow(report.headers)
     writer.writerows(report.rows)
-    attachment = {
-        'title': report.filename,
-        'mimetype': 'text/csv',
-        'file_obj': csv_file,
-    }
-    send_html_email_async(
-        _("{title} Report for enterprise account {name}").format(**{
-            'title': report.title,
-            'name': account.name,
-        }), couch_user.username,
-        message, text_content=message,
-        file_attachments=[attachment],
-    )
+
+    # Store file in redis
+    hash_id = uuid.uuid4().hex
+    redis = get_redis_client()
+    redis.set(hash_id, csv_file.getvalue())
+    redis.expire(hash_id, 60 * 60 * 24)
+    csv_file.close()
+
+    # Send email
+    url = absolute_reverse("enterprise_dashboard_download", args=[domain, report.slug, str(hash_id)])
+    link = "<a href='{}'>{}</a>".format(url, url)
+    subject = _("Enterprise Dashboard: {}").format(report.title)
+    body = "The enterprise report you requested for the account {} is ready.<br>" \
+           "You can download the data at the following link: {}<br><br>" \
+           "Please remember that this link will only be active for 24 hours.".format(account.name, link)
+    send_html_email_async(subject, couch_user.username, body)
+
+
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+def calculate_users_in_all_domains():
+    for domain in Domain.get_all_names():
+        num_users = CommCareUser.total_by_domain(domain)
+        record_date = datetime.date.today() - relativedelta(days=1)
+        user_history = DomainUserHistory.create(
+            domain=domain,
+            num_users=num_users,
+            record_date=record_date
+        )
+        user_history.save()

@@ -1,12 +1,12 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block reportcontent %}
+{% block page_content %}
 <div class="row">
     <div class="col-xs-12">
         <h2>{{ current_page.title }}</h2>
-        <p class="well">
+        <p class="help-block">
         {% blocktrans %}
             Please type comma-separated email addresses of users to grant/revoke superuser privileges.
         {% endblocktrans %}

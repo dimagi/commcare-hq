@@ -13,7 +13,8 @@ from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE, META_DRIFT_ADDED_FROM_CC_VERSION)
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE,
+)
 from lxml import etree as ET
 
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
@@ -951,12 +952,14 @@ class XForm(WrappedNode):
         :param include_groups: When set will return repeats and group questions
         :param include_translations: When set to True will return all the translations for the question
         """
+        from corehq.apps.app_manager.util import first_elem
 
         if not self.exists():
             return []
 
         questions = []
         repeat_contexts = set()
+        group_contexts = set()
         excluded_paths = set()
 
         control_nodes = self.get_control_nodes()
@@ -970,6 +973,10 @@ class XForm(WrappedNode):
             repeat = cnode.repeat
             if repeat is not None:
                 repeat_contexts.add(repeat)
+
+            group = cnode.group
+            if group is not None:
+                group_contexts.add(group)
 
             if not cnode.is_leaf and not include_groups:
                 continue
@@ -1013,27 +1020,29 @@ class XForm(WrappedNode):
             questions.append(question)
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
+        group_contexts = sorted(group_contexts, reverse=True)
 
         save_to_case_nodes = {}
         for path, data_node in six.iteritems(leaf_data_nodes):
             if path not in excluded_paths:
                 bind = self.get_bind(path)
-                try:
-                    matching_repeat_context = [
-                        rc for rc in repeat_contexts if path.startswith(rc + '/')
-                    ][0]
-                except IndexError:
-                    matching_repeat_context = None
+
+                matching_repeat_context = first_elem([rc for rc in repeat_contexts
+                                                      if path.startswith(rc + '/')])
+                matching_group_context = first_elem([gc for gc in group_contexts
+                                                     if path.startswith(gc + '/')])
+
                 question = {
                     "tag": "hidden",
                     "value": path,
                     "repeat": matching_repeat_context,
-                    "group": matching_repeat_context,
+                    "group": matching_group_context,
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                     "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
                     "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
                     "comment": self._get_comment(leaf_data_nodes, path),
+                    "setvalue": self.get_setvalue(path)
                 }
 
                 # Include meta information about the stock entry
@@ -1299,7 +1308,6 @@ class XForm(WrappedNode):
     def add_meta_2(self, form):
         case_parent = self.data_node
         app = form.get_app()
-        add_meta_drift = app.build_spec.release_greater_than_or_equal_to(META_DRIFT_ADDED_FROM_CC_VERSION)
         # Test all of the possibilities so that we don't end up with two "meta" blocks
         for meta in self.already_has_meta():
             case_parent.remove(meta.xml)
@@ -1318,9 +1326,8 @@ class XForm(WrappedNode):
             '{orx}userID',
             '{orx}instanceID',
             '{cc}appVersion',
+            '{orx}drift',
         )
-        if add_meta_drift:
-            tags += ('{orx}drift',)
         if form.get_auto_gps_capture():
             tags += ('{cc}location',)
         for tag in tags:
@@ -1359,13 +1366,12 @@ class XForm(WrappedNode):
             ref="meta/appVersion",
             value="instance('commcaresession')/session/context/appversion"
         )
-
-        if add_meta_drift:
-            self.add_setvalue(
-                ref="meta/drift",
-                event="xforms-revalidate",
-                value="instance('commcaresession')/session/context/drift",
-            )
+        self.add_setvalue(
+            ref="meta/drift",
+            event="xforms-revalidate",
+            value="if(count(instance('commcaresession')/session/context/drift) = 1, "
+                  "instance('commcaresession')/session/context/drift, '')",
+        )
 
         # never add pollsensor to a pre-2.14 app
         if app.enable_auto_gps:
@@ -1938,6 +1944,7 @@ VELLUM_TYPES = {
         'tag': 'input',
         'type': 'intent',
         'icon': 'fcc fcc-fd-android-intent',
+        'editable': True,
     },
     "Audio": {
         'tag': 'upload',
@@ -1949,6 +1956,7 @@ VELLUM_TYPES = {
         'tag': 'input',
         'type': 'barcode',
         'icon': 'fcc fcc-fd-android-intent',
+        'editable': True,
     },
     "DataBindOnly": {
         'icon': 'fcc fcc-fd-variable',

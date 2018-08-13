@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
-from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
+from corehq.sql_db.util import handle_connection_failure, get_all_db_aliases
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
 from pillowtop.dao.exceptions import DocumentNotFoundError
@@ -76,7 +76,7 @@ class Change(object):
     def set_document(self, document):
         self.document = document
 
-    @handle_connection_failure(get_db_aliases=get_default_and_partitioned_db_aliases)
+    @handle_connection_failure(get_db_aliases=get_all_db_aliases)
     def get_document(self):
         if not self.document and self.document_store and not self._document_checked:
             try:

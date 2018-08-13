@@ -203,9 +203,11 @@ hqDefine("reports/js/data_corrections", [
             $button.disableButton();
             $.post({
                 url: options.saveUrl,
-                data: _.mapObject(self.properties, function(model) {
-                    return model.value();
-                }),
+                data: {
+                    properties: JSON.stringify(_.mapObject(self.properties, function(model) {
+                        return model.value();
+                    })),
+                },
                 success: function() {
                     window.location.reload();
                 },

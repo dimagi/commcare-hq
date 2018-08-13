@@ -3,11 +3,8 @@
 {% load compress %}
 {% load i18n %}
 
-{% compress js %}
-{% block js %}{{ block.super }}
-    <script src="{% static 'case_search/js/case_search.js' %}"></script>
-{% endblock js %}
-{% endcompress %}
+{% requirejs_main 'case_search/js/case_search' %}
+
 {% block page_content %}
     {% registerurl 'case_data' request.domain '___' %}
 
@@ -25,11 +22,11 @@
                             <div class="panel-body">
                                 <label>
                                     {% trans "Case Type:" %}
-                                    <input name="type" type="text" placeholder="Case Type (optional)" data-bind="value: type"/>
+                                    <input name="type" type="text" placeholder="Case Type (optional)" data-bind="value: type" class="form-control"/>
                                 </label>
                                 <label>
                                     {% trans "Owner ID:" %}
-                                    <input name="type" type="text" placeholder="Owner ID (optional)" data-bind="value: owner_id"/>
+                                    <input name="type" type="text" placeholder="Owner ID (optional)" data-bind="value: owner_id" class="form-control"/>
                                 </label>
                                 <label>
                                     {% trans "Include Closed:" %}
@@ -54,13 +51,12 @@
                                     <tbody data-bind="foreach: parameters" >
                                         <tr>
                                             <td>
-                                                <input name="key" type="text" placeholder="e.g. name" data-bind="value: key"/>
+                                                <input name="key" type="text" placeholder="e.g. name" data-bind="value: key" class="form-control"/>
                                             </td>
                                             <td>
-                                                <input name="value" type="text"  placeholder="e.g. redbeard" data-bind="value: value"/>
-                                            </td>
+                                                <input name="value" type="text"  placeholder="e.g. redbeard" data-bind="value: value" class="form-control"/> </td>
                                             <td>
-                                                <select name="clause" data-bind="value: clause">
+                                                <select name="clause" data-bind="value: clause" class="form-control">
                                                     <option value="must">must</option>
                                                     <option value="should">should</option>
                                                     <option value="must_not">must_not</option>
@@ -70,7 +66,7 @@
                                                 <input name="fuzzy" type="checkbox" data-bind="checked: fuzzy">
                                             </td>
                                             <td>
-                                                <input name="value" type="text" spellcheck='false' data-bind="value: regex" placeholder="Regular Expression"/>
+                                                <input name="value" type="text" spellcheck='false' data-bind="value: regex" placeholder="Regular Expression" class="form-control"/>
                                             </td>
                                             <td>
                                                 <span class='btn btn-danger' data-bind="click: $parent.removeParameter">

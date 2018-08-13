@@ -68,8 +68,8 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
             "average": sum(average) / float(len(average) or 1),
             "average_format": 'number',
             "info": _((
-                "Total number of children between the age of ({}) who are enrolled for Anganwadi Services"
-                .format(age_label)
+                "Of the total number of children between {}, the percentage of children who are enrolled "
+                "for Anganwadi Services".format(age_label)
             )),
             "extended_info": [
                 {
@@ -215,7 +215,8 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
         "tooltips_data": dict(tooltips_data),
         "format": "number",
         "info": _((
-            "Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services"
+            "Of the total number of children between 0-6 years, the percentage of children who are "
+            "enrolled for Anganwadi Services"
         )),
         "chart_data": [
             {

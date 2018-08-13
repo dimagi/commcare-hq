@@ -190,13 +190,6 @@ class TestDetermineAuthTypeFromRequest(SimpleTestCase):
         request = self.get_django_request(auth=requests.auth.HTTPDigestAuth('foo', 'bar'))
         self.assertEqual('digest', determine_authtype_from_request(request))
 
-    def test_token_auth(self):
-        # http://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
-        request = self.get_django_request(headers={
-            'Authorization': 'Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b'
-        })
-        self.assertEqual('token', determine_authtype_from_request(request))
-
     def test_api_auth(self):
         # http://django-tastypie.readthedocs.io/en/latest/authentication.html#apikeyauthentication
         request = self.get_django_request(headers={

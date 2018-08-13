@@ -68,7 +68,11 @@ PROPERTY_TAG_STOCK = 'stock'
 KNOWN_CASE_PROPERTIES = ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]
 
 # Attributes found on a case block. <case case_id="..." date_modified="..." ...>
-CASE_ATTRIBUTES = ['@case_id', '@date_modified', '@user_id']
+CASE_ATTRIBUTES = {
+    '@case_id': 'string',
+    '@date_modified': 'datetime',
+    '@user_id': 'string'
+}
 
 # Elements that are found in a case create block
 # <case>
@@ -92,34 +96,6 @@ EMPTY_VALUE = ''
 
 UNKNOWN_INFERRED_FROM = 'unknown'
 
-SKIPPABLE_PROPERTIES = frozenset([
-    'initial_processing_complete',
-    '_rev',
-    'computed_modified_on_',
-    'server_modified_on',
-    'domain',
-    'form.#type',
-    'form.@uiVersion',
-    'openrosa_headers.HTTP_X_OPENROSA_VERSION',
-    'openrosa_headers.HTTP_ACCEPT_LANGUAGE',
-    'openrosa_headers.HTTP_DATE',
-    'problem',
-    'doc_type',
-    'path',
-    'version',
-    'date_header',
-    'migrating_blobs_from_couch',
-    'orig_id',
-    'edited_on',
-    'deprecated_date',
-    'deprecated_form_id',
-    'auth_context.authenticated',
-    'auth_context.doc_type',
-    'auth_context.domain',
-    'auth_context.user_id',
-])
-
-
 # Used for manually triggered exports
 EXPORT_DOWNLOAD_QUEUE = 'export_download_queue'
 # Used for automatically triggered exports
@@ -142,3 +118,6 @@ class SharingOption(object):
         EXPORT_ONLY,
         EDIT_AND_EXPORT,
     )
+
+
+UNKNOWN_EXPORT_OWNER = 'unknown'

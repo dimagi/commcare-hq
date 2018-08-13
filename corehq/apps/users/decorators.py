@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.http import Http404, HttpResponse
 from django.core.exceptions import PermissionDenied
-from corehq.apps.domain.decorators import login_and_domain_required, domain_specific_login_redirect
+from corehq.apps.domain.decorators import login_and_domain_required, redirect_for_login_or_domain
 from functools import wraps
 from corehq.apps.users.models import CouchUser, CommCareUser
 from django.utils.translation import ugettext as _
@@ -18,7 +18,7 @@ def require_permission_raw(permission_check, login_decorator=login_and_domain_re
         @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if not hasattr(request, "couch_user"):
-                return domain_specific_login_redirect(request, domain)
+                return redirect_for_login_or_domain(request)
             elif request.user.is_superuser or permission_check(request.couch_user, domain):
                 return view_func(request, domain, *args, **kwargs)
             else:
@@ -79,7 +79,7 @@ def require_permission_to_edit_user(view_func):
         if go_ahead:
             return login_and_domain_required(view_func)(request, domain, couch_user_id, *args, **kwargs)
         else:
-            return domain_specific_login_redirect(request, domain)
+            return redirect_for_login_or_domain(request)
     return _inner
 
 

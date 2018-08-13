@@ -2,7 +2,6 @@ hqDefine('accounting/js/base_subscriptions_main', [
     'jquery',
     'knockout',
     'accounting/js/widgets',
-    'hqwebapp/js/stay_on_tab',
     'accounting/js/credits_tab',
     'jquery-ui/ui/datepicker',
 ], function(
@@ -55,9 +54,6 @@ hqDefine('accounting/js/base_subscriptions_main', [
             dateFormat: "yy-mm-dd",
         });
         $("#id_end_date").datepicker({
-            dateFormat: "yy-mm-dd",
-        });
-        $("#id_delay_invoice_until").datepicker({
             dateFormat: "yy-mm-dd",
         });
 

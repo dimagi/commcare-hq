@@ -166,7 +166,7 @@ class SubscriptionResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = Subscription.visible_and_suppressed_objects.all().order_by('pk')
-        fields = ['id', 'salesforce_contract_id', 'date_start', 'date_end', 'date_delay_invoicing',
+        fields = ['id', 'salesforce_contract_id', 'date_start', 'date_end',
                   'date_created', 'is_active', 'do_not_invoice', 'auto_generate_credits', 'is_trial',
                   'service_type', 'pro_bono_status', 'last_modified', 'funding_source', 'is_hidden_to_ops',
                   'skip_auto_downgrade', 'skip_auto_downgrade_reason']
@@ -186,7 +186,7 @@ class InvoiceResource(ModelResource):
 
 
 class LineItemResource(ModelResource):
-    invoice = fields.IntegerField('invoice_id', null=True)
+    invoice = fields.IntegerField('subscription_invoice_id', null=True)
     feature_rate = fields.IntegerField('feature_rate_id', null=True)
     product_rate = fields.IntegerField('product_rate_id', null=True)
     subtotal = fields.DecimalField('subtotal')

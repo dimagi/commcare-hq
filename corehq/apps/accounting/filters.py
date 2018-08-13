@@ -105,6 +105,18 @@ class ActiveStatusFilter(BaseSingleOptionFilter):
     ]
 
 
+class CustomerAccountFilter(BaseSingleOptionFilter):
+    slug = 'customer_account'
+    label = _('Customer Billing Account')
+    default_text = _("Any")
+    is_customer_account = 'Yes'
+    is_not_customer_account = 'No'
+    options = [
+        (is_customer_account, is_customer_account),
+        (is_not_customer_account, is_not_customer_account),
+    ]
+
+
 class DimagiContactFilter(BaseAccountingSingleOptionFilter):
     slug = 'dimagi_contact'
     label = _('Dimagi Contact')
@@ -182,8 +194,10 @@ class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
     options = (
         (SubscriptionAdjustmentMethod.INTERNAL, "Operations Created"),
         (SubscriptionAdjustmentMethod.USER, "User Created"),
-        (SubscriptionAdjustmentMethod.TASK, "Created During Invoicing"),
+        (SubscriptionAdjustmentMethod.INVOICING, "Created During Invoicing"),
+        (SubscriptionAdjustmentMethod.TASK, "[Deprecated] Created During Invoicing"),
         (SubscriptionAdjustmentMethod.TRIAL, "30 Day Trial (default signup)"),
+        (SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY, "Defaulted to Community"),
     )
 
 

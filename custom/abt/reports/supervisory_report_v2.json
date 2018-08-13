@@ -28,6 +28,7 @@
         "vectorlink-zambia",
         "vectorlink-zimbabwe"
     ],
+    "server_environment": ["production"],
     "report_id": "supervisory_report_v2",
     "data_source_table": "supervisory-v2-001",
     "config": {
@@ -37,7 +38,7 @@
         "title": "New Supervisory Report",
         "sort_expression": [
             {
-                "field": "timeEnd",
+                "field": "received_on",
                 "order": "DESC"
             },
             {
@@ -54,11 +55,12 @@
                 "compare_as_string": false,
                 "datatype": "string",
                 "required": false,
-                "slug": "timeEnd",
-                "field": "timeEnd",
+                "slug": "received_on",
+                "field": "received_on",
                 "type": "date",
                 "display": {
                     "fra": "Date soumis",
+                    "frm": "Date soumis",
                     "en": "Date submitted",
                     "por": "Data de Submiss\u00e3o"
                 }
@@ -73,6 +75,7 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Pays",
+                    "frm": "Pays",
                     "en": "Country",
                     "por": "Pa\u00eds"
                 }
@@ -87,6 +90,7 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 1",
+                    "frm": "Niveau 1",
                     "en": "Level 1",
                     "por": "N\u00edvel 1"
                 }
@@ -101,6 +105,7 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 2",
+                    "frm": "Niveau 2",
                     "en": "Level 2",
                     "por": "N\u00edvel 2"
                 }
@@ -115,6 +120,7 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 3",
+                    "frm": "Niveau 3",
                     "en": "Level 3",
                     "por": "N\u00edvel 3"
                 }
@@ -129,6 +135,7 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 4",
+                    "frm": "Niveau 4",
                     "en": "Level 4",
                     "por": "N\u00edvel 4"
                 }
@@ -149,18 +156,19 @@
         "columns": [
             {
                 "description": null,
-                "field": "timeEnd",
+                "field": "received_on",
                 "format": "default",
                 "transform": {
                     "type": "date_format",
                     "format": "%Y-%m-%d %H:%M"
                 },
-                "column_id": "timeEnd",
+                "column_id": "received_on",
                 "alias": null,
                 "calculate_total": false,
                 "type": "field",
                 "display": {
                     "fra": "Date et heure soumis",
+                    "frm": "Date et heure soumis",
                     "en": "Date and Time Submitted",
                     "por": "Data e Hora de Submiss\u00e3o"
                 },
@@ -179,6 +187,7 @@
                 "type": "field",
                 "display": {
                     "fra": "Nom d'utilisateur",
+                    "frm": "Nom d'utilisateur",
                     "en": "Username",
                     "por": "Utilizador"
                 },
@@ -197,6 +206,7 @@
                 "type": "field",
                 "display": {
                     "fra": "Pays",
+                    "frm": "Pays",
                     "en": "Country",
                     "por": "Pa\u00eds"
                 },
@@ -215,6 +225,7 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 1",
+                    "frm": "Niveau 1",
                     "en": "Level 1",
                     "por": "N\u00edvel 1"
                 },
@@ -233,6 +244,7 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 2",
+                    "frm": "Niveau 2",
                     "en": "Level 2",
                     "por": "N\u00edvel 2"
                 },
@@ -251,6 +263,7 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 3",
+                    "frm": "Niveau 3",
                     "en": "Level 3",
                     "por": "N\u00edvel 3"
                 },
@@ -269,6 +282,7 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 4",
+                    "frm": "Niveau 4",
                     "en": "Level 4",
                     "por": "N\u00edvel 4"
                 },
@@ -287,6 +301,7 @@
                 "type": "field",
                 "display": {
                     "fra": "Noms de Inspecteurs/Superviseurs",
+                    "frm": "Noms de Inspecteurs/Superviseurs",
                     "en": "Inspector names",
                     "por": "Nome do Supervisor"
                 },
@@ -305,6 +320,7 @@
                 "type": "field",
                 "display": {
                     "fra": "Nom du formulaire",
+                    "frm": "Nom du formulaire",
                     "en": "Form Name",
                     "por": "Nome do formulario"
                 },
@@ -323,6 +339,7 @@
                 "type": "field",
                 "display": {
                     "fra": "Question",
+                    "frm": "Question",
                     "en": "Form Question",
                     "por": "Quest\u00E3o do formulario"
                 },
@@ -341,6 +358,7 @@
                 "type": "field",
                 "display": {
                     "fra": "Avertissement",
+                    "frm": "Avertissement",
                     "en": "Red Flag Warning",
                     "por": "Aviso de Alerta Vermelho"
                 },
@@ -359,6 +377,7 @@
                 "type": "field",
                 "display": {
                     "fra": "Commentaires",
+                    "frm": "Commentaires",
                     "en": "Comments",
                     "por": "Coment\u00E1rio"
                 },

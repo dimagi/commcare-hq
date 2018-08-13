@@ -5,6 +5,8 @@ from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.exceptions import XFormException
+from corehq.form_processor.utils.xform import get_node
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from dimagi.ext.jsonobject import *
@@ -14,6 +16,7 @@ from corehq.apps.app_manager.models import Application, FormActionCondition
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from django.utils.translation import ugettext_lazy as _
+import re
 import six
 from six.moves import map
 
@@ -64,7 +67,7 @@ class FormQuestion(JsonObject):
     @property
     def editable(self):
         if not self.type:
-            return False
+            return True
         vtype = VELLUM_TYPES[self.type]
         if 'editable' not in vtype:
             return False
@@ -524,3 +527,61 @@ def questions_in_hierarchy(questions):
                 and question.value not in question_lists_by_group:
             question_lists_by_group[question.value] = question.children
     return question_lists_by_group[None]
+
+
+def get_data_cleaning_data(form_data, instance):
+    question_response_map = {}
+    ordered_question_values = []
+    repeats = {}
+
+    def _repeat_question_value(question, repeat_index):
+        return "{}[{}]{}".format(question.repeat, repeat_index,
+                                 re.sub(r'^' + question.repeat, '', question.value))
+
+    def _add_to_question_response_map(data, repeat_index=None):
+        for index, question in enumerate(data):
+            if question.children:
+                next_index = repeat_index if question.repeat else index
+                _add_to_question_response_map(question.children, repeat_index=next_index)
+            elif question.editable and question.response is not None:  # ignore complex and skipped questions
+                value = question.value
+                if question.repeat:
+                    if question.repeat not in repeats:
+                        repeats[question.repeat] = repeat_index + 1
+                    else:
+                        # This is the second or later instance of a repeat group, so it gets [i] notation
+                        value = _repeat_question_value(question, repeat_index + 1)
+
+                        # Update first instance of repeat group, which didn't know it needed [i] notation
+                        if question.value in question_response_map:
+                            first_value = _repeat_question_value(question, repeat_index)
+                            question_response_map[first_value] = question_response_map.pop(question.value)
+                            try:
+                                index = ordered_question_values.index(question.value)
+                                ordered_question_values[index] = first_value
+                            except ValueError:
+                                pass
+
+                # Limit data cleaning to nodes that can be found in the response submission.
+                # form_data may contain other data that shouldn't be clean-able, like subcase attributes.
+                try:
+                    get_node(instance.get_xml_element(), value, instance.xmlns)
+                except XFormQuestionValueNotFound:
+                    continue
+
+                question_response_map[value] = {
+                    'label': question.label,
+                    'icon': question.icon,
+                    'value': question.response,
+                }
+                ordered_question_values.append(value)
+
+    _add_to_question_response_map(form_data)
+
+    # Add splitName with zero-width spaces for display purposes
+    for key in question_response_map.keys():
+        question_response_map[key].update({
+            'splitName': re.sub(r'/', '/\u200B', key),
+        })
+
+    return (question_response_map, ordered_question_values)

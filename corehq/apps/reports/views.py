@@ -9,7 +9,7 @@ from wsgiref.util import FileWrapper
 
 from corehq.util.download import get_download_response
 from dimagi.utils.couch import CriticalSection
-
+from corehq.apps.reports.tasks import send_email_report
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.domain.views import BaseDomainView
@@ -20,7 +20,7 @@ from corehq.apps.locations.permissions import conditionally_location_safe, \
     report_class_is_location_safe
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
+from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission, get_data_cleaning_data
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
@@ -80,7 +80,7 @@ from casexml.apps.stock.models import StockTransaction
 from casexml.apps.case.views import get_wrapped_case
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import UserRequestedRebuild
 
 from couchexport.exceptions import (
@@ -95,7 +95,6 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 
-from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -152,7 +151,13 @@ from corehq.util.couch import get_document_or_404
 from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.export import WorkBook
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.view_utils import absolute_reverse, reverse
+from corehq.util.view_utils import (
+    absolute_reverse,
+    reverse,
+    get_case_or_404,
+    get_form_or_404,
+    request_as_dict
+)
 
 from .dispatcher import ProjectReportDispatcher
 from .export import (
@@ -231,20 +236,6 @@ def can_view_attachments(request):
         or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.user.username)
         or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.domain)
     )
-
-
-@login_and_domain_required
-@location_safe
-def default(request, domain):
-    if domain in WORLD_VISION_DOMAINS and settings.DOMAIN_MODULE_MAP.get(domain):
-        from custom.world_vision.reports.mixed_report import MixedTTCReport
-        return HttpResponseRedirect(MixedTTCReport.get_url(domain))
-    return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
-
-
-@login_and_domain_required
-def old_saved_reports(request, domain):
-    return default(request, domain)
 
 
 class BaseProjectReportSectionView(BaseDomainView):
@@ -822,61 +813,20 @@ class AddSavedReportConfigView(View):
 @login_and_domain_required
 @datespan_default
 def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix, once=False):
-    from corehq.apps.hqwebapp.tasks import send_html_email_async
     from .forms import EmailReportForm
-    user_id = request.couch_user._id
 
     form = EmailReportForm(request.GET)
     if not form.is_valid():
         return HttpResponseBadRequest()
 
-    config = ReportConfig()
-    # see ReportConfig.query_string()
-    object.__setattr__(config, '_id', 'dummy')
-    config.name = _("Emailed report")
-    config.report_type = report_type
-
-    config.report_slug = report_slug
-    config.owner_id = user_id
-    config.domain = domain
-
-    config.start_date = request.datespan.startdate.date()
-    if request.datespan.enddate:
-        config.date_range = 'range'
-        config.end_date = request.datespan.enddate.date()
-    else:
-        config.date_range = 'since'
-
-    GET = dict(request.GET.iterlists())
-    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
-    filters = {}
-    for field in GET:
-        if not field in exclude:
-            filters[field] = GET.get(field)
-
-    config.filters = filters
-
-    subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
-    content = _render_report_configs(
-        request, [config], domain, user_id, request.couch_user, True, lang=request.couch_user.language,
-        notes=form.cleaned_data['notes'], once=once
-    )[0]
-
+    recipient_emails = set(form.cleaned_data['recipient_emails'])
     if form.cleaned_data['send_to_owner']:
-        email = request.couch_user.get_email()
-        body = render_full_report_notification(request, content).content
+        recipient_emails.add(request.couch_user.get_email())
 
-        send_html_email_async.delay(
-            subject, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL)
+    request_data = request_as_dict(request)
 
-    if form.cleaned_data['recipient_emails']:
-        for recipient in form.cleaned_data['recipient_emails']:
-            body = render_full_report_notification(request, content).content
-            send_html_email_async.delay(
-                subject, recipient, body,
-                email_from=settings.DEFAULT_FROM_EMAIL)
-
+    send_email_report.delay(recipient_emails, domain, report_slug, report_type,
+                            request_data, once, form.cleaned_data)
     return HttpResponse()
 
 
@@ -1467,7 +1417,7 @@ def form_to_json(domain, form, timezone):
 @login_and_domain_required
 @require_GET
 def case_forms(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_case_or_404(domain, case_id)
     if not (request.can_access_all_locations or
                 user_can_access_case(domain, request.couch_user, case)):
         raise location_restricted_exception(request)
@@ -1493,7 +1443,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
     """Returns all changes to a case property
     """
 
-    case = _get_case_or_404(domain, case_id)
+    case = get_case_or_404(domain, case_id)
     timezone = get_timezone_for_user(request.couch_user, domain)
     next_transaction = int(request.GET.get('next_transaction', 0))
 
@@ -1540,7 +1490,7 @@ class CaseAttachmentsView(CaseDataView):
 @login_and_domain_required
 @require_GET
 def case_xml(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_case_or_404(domain, case_id)
     version = request.GET.get('version', V2)
     return HttpResponse(case.to_xml(version), content_type='text/xml')
 
@@ -1549,7 +1499,7 @@ def case_xml(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_GET
 def case_property_names(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_case_or_404(domain, case_id)
 
     # We need to look at the export schema in order to remove any case properties that
     # have been deleted from the app. When the data dictionary is fully public, we can use that
@@ -1581,26 +1531,23 @@ def edit_case_view(request, domain, case_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
 
-    case = _get_case_or_404(domain, case_id)
+    case = get_case_or_404(domain, case_id)
     user = request.couch_user
 
-    update = {}
     old_properties = case.dynamic_case_properties()
-    for name in request.POST:
-        if name != 'external_id':       # handled separately below
-            if name in old_properties:  # updating property
-                if old_properties[name] != request.POST[name]:
-                    update[name] = request.POST[name]
-            elif request.POST[name]:    # new property
-                update[name] = request.POST[name]
+    old_properties['external_id'] = None    # special handling below
+    updates = _get_data_cleaning_updates(request, old_properties)
 
     case_block_kwargs = {}
-    if update:
-        case_block_kwargs['update'] = update
 
     # User may also update external_id; see CaseDisplayWrapper.dynamic_properties
-    if 'external_id' in request.POST and request.POST['external_id'] != case.external_id:
-        case_block_kwargs['external_id'] = request.POST['external_id']
+    if 'external_id' in updates:
+        if updates['external_id'] != case.external_id:
+            case_block_kwargs['external_id'] = updates['external_id']
+        updates.pop('external_id')
+
+    if updates:
+        case_block_kwargs['update'] = updates
 
     if case_block_kwargs:
         submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_string()],
@@ -1616,7 +1563,7 @@ def edit_case_view(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def rebuild_case_view(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_case_or_404(domain, case_id)
     rebuild_case_from_forms(domain, case_id, UserRequestedRebuild(user_id=request.couch_user.user_id))
     messages.success(request, _('Case %s was rebuilt from its forms.' % case.name))
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
@@ -1628,7 +1575,7 @@ def rebuild_case_view(request, domain, case_id):
 def resave_case_view(request, domain, case_id):
     """Re-save the case to have it re-processed by pillows
     """
-    case = _get_case_or_404(domain, case_id)
+    case = get_case_or_404(domain, case_id)
     resave_case(domain, case)
     messages.success(
         request,
@@ -1641,7 +1588,7 @@ def resave_case_view(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def close_case_view(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_case_or_404(domain, case_id)
     if case.closed:
         messages.info(request, 'Case {} is already closed.'.format(case.name))
     else:
@@ -1662,7 +1609,7 @@ def close_case_view(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def undo_close_case_view(request, domain, case_id, xform_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_case_or_404(domain, case_id)
     if not case.closed:
         messages.info(request, 'Case {} is not closed.'.format(case.name))
     else:
@@ -1678,7 +1625,7 @@ def undo_close_case_view(request, domain, case_id, xform_id):
 @login_and_domain_required
 @require_GET
 def export_case_transactions(request, domain, case_id):
-    case = _get_case_or_404(domain, case_id)
+    case = get_case_or_404(domain, case_id)
     products_by_id = dict(SQLProduct.objects.filter(domain=domain).values_list('product_id', 'name'))
 
     headers = [
@@ -1848,29 +1795,10 @@ def _get_form_render_context(request, domain, instance, case_id=None):
 
     form_data, question_list_not_found = get_readable_data_for_submission(instance)
 
-    # Build map of question values => responses
+    # Build ordered list of questions and dict of question values => responses
     # Question values will be formatted to be processed by XFormQuestionValueIterator,
     # for example "/data/group/repeat_group[2]/question_id"
-    question_response_map = {}
-    ordered_question_values = []
-
-    def _add_to_question_response_map(data, repeat_index=None):
-        for index, question in enumerate(data):
-            if question.children:
-                _add_to_question_response_map(question.children, repeat_index=index)
-            elif question.editable and question.response is not None:  # ignore complex and skipped questions
-                value = question.value
-                if question.repeat:
-                    value = "{}[{}]{}".format(question.repeat, repeat_index + 1,
-                                              re.sub(r'^' + question.repeat, '', question.value))
-                question_response_map[value] = {
-                    'label': question.label,
-                    'icon': question.icon,
-                    'value': question.response,
-                    'splitName': re.sub(r'/', '/\u200B', value),
-                }
-                ordered_question_values.append(value)
-    _add_to_question_response_map(form_data)
+    question_response_map, ordered_question_values = get_data_cleaning_data(form_data, instance)
 
     context.update({
         "context_case_id": case_id,
@@ -2085,29 +2013,9 @@ def _get_display_options(request, domain, user, form, support_enabled):
     }
 
 
-def _get_form_or_404(domain, id):
-    try:
-        form = FormAccessors(domain).get_form(id)
-        if form.domain != domain:
-            raise Http404()
-        return form
-    except XFormNotFound:
-        raise Http404()
-
-
-def _get_case_or_404(domain, case_id):
-    try:
-        case = CaseAccessors(domain).get_case(case_id)
-        if case.domain != domain or case.is_deleted:
-            raise Http404()
-        return case
-    except CaseNotFound:
-        raise Http404()
-
-
 def _get_location_safe_form(domain, user, instance_id):
     """Fetches a form and verifies that the user can access it."""
-    form = _get_form_or_404(domain, instance_id)
+    form = get_form_or_404(domain, instance_id)
     if not can_edit_form_location(domain, user, form):
         raise PermissionDenied()
     return form
@@ -2173,7 +2081,7 @@ class FormDataView(BaseProjectReportSectionView):
 @login_and_domain_required
 @require_GET
 def case_form_data(request, domain, case_id, xform_id):
-    instance = _get_form_or_404(domain, xform_id)
+    instance = get_form_or_404(domain, xform_id)
     context = _get_form_render_context(request, domain, instance, case_id)
     return JsonResponse({
         'html': render_to_string("reports/form/partials/single_form.html", context, request=request),
@@ -2187,7 +2095,7 @@ def case_form_data(request, domain, case_id, xform_id):
 @login_and_domain_required
 @require_GET
 def download_form(request, domain, instance_id):
-    instance = _get_form_or_404(domain, instance_id)
+    instance = get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
     response = HttpResponse(content_type='application/xml')
@@ -2451,6 +2359,15 @@ def unarchive_form(request, domain, instance_id):
     return HttpResponseRedirect(redirect)
 
 
+def _get_data_cleaning_updates(request, old_properties):
+    updates = {}
+    properties = json.loads(request.POST.get('properties'))
+    for prop, value in six.iteritems(properties):
+        if prop not in old_properties or old_properties[prop] != value:
+            updates[prop] = value
+    return updates
+
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
@@ -2459,11 +2376,19 @@ def edit_form(request, domain, instance_id):
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
 
-    updates = {name: request.POST[name] for name in request.POST}
-    if FormProcessorInterface(domain).update_responses(instance, updates, request.couch_user.get_id):
-        messages.success(request, _('Question responses saved.'))
+    form_data, question_list_not_found = get_readable_data_for_submission(instance)
+    old_properties, dummy = get_data_cleaning_data(form_data, instance)
+    updates = _get_data_cleaning_updates(request, old_properties)
+
+    if updates:
+        errors = FormProcessorInterface(domain).update_responses(instance, updates, request.couch_user.get_id)
+        if errors:
+            messages.error(request, _('Could not update questions: {}').format(", ".join(errors)))
+        else:
+            messages.success(request, _('Question responses saved.'))
     else:
-        messages.success(request, _('No changes made to form.'))
+        messages.info(request, _('No changes made to form.'))
+
     return JsonResponse({'success': 1})
 
 

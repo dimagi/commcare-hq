@@ -94,7 +94,7 @@ describe('AWC Reports Directive', function () {
     });
 
     it('tests get popover content', function () {
-        var expected = "<div>Weight: 50.00 kg</div><div>Height: 150.00 cm</div><div>Age: 40 months</div>";
+        var expected = "<div>Weight: 50.00 kg</div><div>Height: Data Not Valid</div><div>Age: 40 months</div>";
         var result = controller.getPopoverContent(50, 150, 40, 'both');
         assert.equal(expected, result);
     });

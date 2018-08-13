@@ -9,11 +9,13 @@ from custom.icds_reports.models.aggregate import (
     AggAwcDaily,
     DailyAttendance,
     AggregateComplementaryFeedingForms,
+    AggregateChildHealthDailyFeedingForms,
     AggregateChildHealthPostnatalCareForms,
     AggregateCcsRecordPostnatalCareForms,
     AggregateChildHealthTHRForms,
     AggregateGrowthMonitoringForms,
-    AggregateInactiveAWW
+    AggregateInactiveAWW,
+    AggregateAwcInfrastructureForms,
 )
 from custom.icds_reports.models.views import (
     AggAwcDailyView,

@@ -26,8 +26,10 @@
         "vectorlink-zambia",
         "vectorlink-zimbabwe"
     ],
+    "server_environment": ["production"],
     "data_source_table":"static-sms-indicators-001",
     "report_id":"spray-progress-report-level-3",
+    "custom_configurable_report": "custom.abt.reports.views.FormattedSprayProgressReport",
     "config": {
         "description":"",
         "title":"Spray Progress Report (Level 3)",
@@ -131,7 +133,8 @@
                     "fra":"# Applicateurs",
                     "en":"SOPs Worked"
                 },
-                "aggregation":"sum"
+                "aggregation":"sum",
+                "comment": "This column is recalculated in FormattedSprayProgressReport"
             },
             {
                 "description":null,
@@ -144,8 +147,8 @@
                 "calculate_total":false,
                 "type":"field",
                 "display":{
-                    "fra":"# Pieces Trouv\u00e9es",
-                    "en":"# Structures found"
+                    "fra":"# Structures Trouv\u00e9es",
+                    "en":"# Structures Found"
                 },
                 "aggregation":"sum"
             },
@@ -160,7 +163,7 @@
                 "calculate_total":false,
                 "type":"field",
                 "display":{
-                    "fra":"# Pieces Trait\u00e9es",
+                    "fra":"# Structures Trait\u00e9es",
                     "en":"# Structures Sprayed"
                 },
                 "aggregation":"sum"

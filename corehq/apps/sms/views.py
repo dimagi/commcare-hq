@@ -139,8 +139,10 @@ class BaseMessagingSectionView(BaseDomainView):
 
     @method_decorator(require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(Permissions.edit_data))
-    def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        if not (settings.ENTERPRISE_MODE or self.domain_object.granted_messaging_access):
+            return render(request, "sms/wall.html", self.main_context)
+        return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
 
     @property
     def section_url(self):

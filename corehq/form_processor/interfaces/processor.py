@@ -10,6 +10,9 @@ from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound, KafkaPublishingError, PostSaveError
+from corehq.form_processor.models import Attachment
+from couchforms.const import ATTACHMENT_NAME
 from memoized import memoized
 from ..utils import should_use_sql_backend
 import six
@@ -26,6 +29,7 @@ class FormProcessorInterface(object):
 
     def __init__(self, domain=None):
         self.domain = domain
+        self.use_sql_domain = should_use_sql_backend(self.domain)
 
     @property
     @memoized
@@ -33,7 +37,7 @@ class FormProcessorInterface(object):
         from couchforms.models import XFormInstance
         from corehq.form_processor.models import XFormInstanceSQL
 
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return XFormInstanceSQL
         else:
             return XFormInstance
@@ -43,7 +47,7 @@ class FormProcessorInterface(object):
     def sync_log_model(self):
         from casexml.apps.phone.models import SyncLog
 
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return SyncLog
         else:
             return SyncLog
@@ -54,7 +58,7 @@ class FormProcessorInterface(object):
         from corehq.form_processor.backends.couch.processor import FormProcessorCouch
         from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return FormProcessorSQL
         else:
             return FormProcessorCouch
@@ -65,7 +69,7 @@ class FormProcessorInterface(object):
         from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
         from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
 
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return CaseDbCacheSQL
         else:
             return CaseDbCacheCouch
@@ -75,7 +79,7 @@ class FormProcessorInterface(object):
     def ledger_processor(self):
         from corehq.form_processor.backends.couch.ledger import LedgerProcessorCouch
         from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return LedgerProcessorSQL(domain=self.domain)
         else:
             return LedgerProcessorCouch(domain=self.domain)
@@ -85,7 +89,7 @@ class FormProcessorInterface(object):
     def ledger_db(self):
         from corehq.form_processor.backends.couch.ledger import LedgerDBCouch
         from corehq.form_processor.backends.sql.ledger import LedgerDBSQL
-        if should_use_sql_backend(self.domain):
+        if self.use_sql_domain:
             return LedgerDBSQL()
         else:
             return LedgerDBCouch()
@@ -142,31 +146,32 @@ class FormProcessorInterface(object):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
     def update_responses(self, xform, value_responses_map, user_id):
+        """
+        Update a set of question responses. Returns a list of any
+        questions that were not found in the xform.
+        """
+        from corehq.form_processor.interfaces.dbaccessors import FormAccessors
         from corehq.form_processor.utils.xform import update_response
 
+        errors = []
         xml = xform.get_xml_element()
-        dirty = False
         for question, response in six.iteritems(value_responses_map):
-            if update_response(xml, question, response, xmlns=xform.xmlns):
-                dirty = True
+            try:
+                update_response(xml, question, response, xmlns=xform.xmlns)
+            except XFormQuestionValueNotFound:
+                errors.append(question)
 
-        if dirty:
-            from couchforms.const import ATTACHMENT_NAME
-            from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-            from corehq.form_processor.models import Attachment
+        existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
+        existing_form, new_form = self.processor.new_form_from_old(existing_form, xml,
+                                                                   value_responses_map, user_id)
+        new_xml = etree.tostring(xml)
+        interface = FormProcessorInterface(xform.domain)
+        interface.store_attachments(new_form, [
+            Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
+        ])
+        interface.save_processed_models([new_form, existing_form])
 
-            existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
-            existing_form, new_form = self.processor.new_form_from_old(existing_form, xml,
-                                                                       value_responses_map, user_id)
-            new_xml = etree.tostring(xml)
-            interface = FormProcessorInterface(xform.domain)
-            interface.store_attachments(new_form, [
-                Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
-            ])
-            interface.save_processed_models([new_form, existing_form])
-            return True
-
-        return False
+        return errors
 
     def save_processed_models(self, forms, cases=None, stock_result=None):
         forms = _list_to_processed_forms_tuple(forms)
@@ -181,6 +186,10 @@ class FormProcessorInterface(object):
         except BulkSaveError as e:
             logging.exception('BulkSaveError saving forms', extra={'details': {'errors': e.errors}})
             raise
+        except KafkaPublishingError as e:
+            from corehq.form_processor.submission_post import notify_submission_error
+            notify_submission_error(forms.submitted, e, 'Error publishing to kafak')
+            raise PostSaveError(e)
         except Exception as e:
             from corehq.form_processor.submission_post import handle_unexpected_error
             instance = forms.submitted
@@ -268,9 +277,9 @@ def _list_to_processed_forms_tuple(forms):
 
 
 class XFormQuestionValueIterator(object):
-    '''
+    """
     Iterator to help navigate a data structure (likely xml or json)
-    representing an xml document, based on a given path. Skips root node.
+    representing a form submission, based on a given path. Skips root node.
     Each call of `next` returns a tuple of id and index. Iterates until
     the last non-leaf node. After iterating, the leaf node's id is
     available via `last`. Example:
@@ -283,7 +292,11 @@ class XFormQuestionValueIterator(object):
 
     Note that repeat groups in the given path are ONE-indexed as in xpath, while
     the indices returned by next/last are ZERO-indexed for easier array indexing.
-    '''
+
+    Also note that repeat groups have an index only if there are multiple instances
+    of the group. This matches the structure of form_data, which uses a list of dicts
+    to represent multiple repeat groups but a single dict to represent a single repeat.
+    """
 
     def __init__(self, path):
         path = re.sub(r'^/[^\/]+/', '', path)   # strip root
@@ -300,7 +313,9 @@ class XFormQuestionValueIterator(object):
         raise StopIteration
 
     def _next(self):
-        (qid, index) = re.match(r'(\w+)(?:\[(\d+)])?', self.levels.pop()).groups()
+        # Match an identifier (likely a case property or question id)
+        # optionally followed by a repeat group index
+        (qid, index) = re.match(r'([^[]+)(?:\[(\d+)])?', self.levels.pop()).groups()
         if index is not None:
             index = int(index) - 1
         return (qid, index)

@@ -44,6 +44,8 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq import toggles
 from django.contrib.auth.models import User
+
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.resource_conflict import retry_resource
 from memoized import memoized
 from dimagi.utils.web import get_ip
@@ -58,109 +60,72 @@ def registration_default(request):
     return redirect(UserRegistrationView.urlname)
 
 
-class NewUserNumberAbTestMixin__Enabled(object):
-    @property
-    @memoized
-    def _ab_show_number(self):
-        return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
-
-    @property
-    def ab_show_number(self):
-        return self._ab_show_number.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM
-
-    @property
-    def ab_show_number_context(self):
-        return self._ab_show_number.context
-
-    def ab_show_number_update_response(self, response):
-        self._ab_show_number.update_response(response)
-
-
-class NewUserNumberAbTestMixin__NoAbEnabled(object):
-    @property
-    @memoized
-    def _ab_show_number(self):
-        return None
-
-    @property
-    def ab_show_number(self):
-        return True
-
-    @property
-    def ab_show_number_context(self):
-        return None
-
-    def ab_show_number_update_response(self, response):
-        pass
-
-
-class NewUserNumberAbTestMixin__Disabled(object):
-    @property
-    def ab_show_number(self):
-        return False
-
-    @property
-    def ab_show_number_context(self):
-        return None
-
-    def ab_show_number_update_response(self, response):
-        pass
-
-
-NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__Enabled
-
-
-class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):
+class ProcessRegistrationView(JSONResponseMixin, View):
     urlname = 'process_registration'
 
     def get(self, request, *args, **kwargs):
         raise Http404()
 
-    def _create_new_account(self, reg_form):
+    def _create_new_account(self, reg_form, additional_hubspot_data=None):
         activate_new_user(reg_form, ip=get_ip(self.request))
         new_user = authenticate(
             username=reg_form.cleaned_data['email'],
             password=reg_form.cleaned_data['password']
         )
-        web_user = WebUser.get_by_username(new_user.username)
+        web_user = WebUser.get_by_username(new_user.username, strict=True)
 
         if 'phone_number' in reg_form.cleaned_data and reg_form.cleaned_data['phone_number']:
             web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
             web_user.save()
 
-        email = new_user.email
+        if settings.IS_SAAS_ENVIRONMENT:
+            email = new_user.email
 
-        # registration analytics
-        persona = reg_form.cleaned_data['persona']
-        persona_other = reg_form.cleaned_data['persona_other']
-        appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(web_user.username,
-                                                          toggles.NAMESPACE_USER)
+            # registration analytics
+            # only do anything with this in a SAAS environment
 
-        track_workflow(email, "Requested New Account")
-        track_workflow(email, "Persona Field Filled Out", {
-            'personachoice': persona,
-            'personaother': persona_other,
-        })
+            persona = reg_form.cleaned_data['persona']
+            persona_other = reg_form.cleaned_data['persona_other']
 
-        track_web_user_registration_hubspot.delay(
-            web_user,
-            {
+            track_workflow(email, "Requested New Account", {
+                'environment': settings.SERVER_ENVIRONMENT,
+            })
+            track_workflow(email, "Persona Field Filled Out", {
+                'personachoice': persona,
+                'personaother': persona_other,
+            })
+
+            if not additional_hubspot_data:
+                additional_hubspot_data = {}
+            additional_hubspot_data.update({
                 'buyer_persona': persona,
                 'buyer_persona_other': persona_other,
-                "appcues_test": "On" if appcues_ab_test else "Off",
-            }
-        )
+            })
+            track_web_user_registration_hubspot(
+                self.request,
+                web_user,
+                additional_hubspot_data
+            )
+            if not persona or (persona == 'Other' and not persona_other):
+                # There shouldn't be many instances of this.
+                _assert = soft_assert('@'.join(['bbuczyk', 'dimagi.com']), exponential_backoff=False)
+                _assert(
+                    False,
+                    "[BAD PERSONA DATA] Persona fields during "
+                    "login submitted empty. User: {}".format(email)
+                )
 
         login(self.request, new_user)
 
     @allow_remote_invocation
     def register_new_user(self, data):
-        reg_form = RegisterWebUserForm(
-            data['data'],
-            show_number=self.ab_show_number,
-        )
+        reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
-            self._create_new_account(reg_form)
+            ab_test = ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, self.request)
+            appcues_ab_test = ab_test.context['version'] == ab_tests.APPCUES_TEMPLATE_APP_OPTION_ON
+            self._create_new_account(reg_form, additional_hubspot_data={
+                "appcues_test": "On" if appcues_ab_test else "Off",
+            })
             try:
                 request_new_domain(
                     self.request, reg_form, is_new_user=True
@@ -177,8 +142,6 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                 }
 
             username = reg_form.cleaned_data['email']
-            appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(username,
-                                                              toggles.NAMESPACE_USER)
 
             return {
                 'success': True,
@@ -202,7 +165,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         }
 
 
-class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
+class UserRegistrationView(BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
@@ -218,7 +181,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             else:
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
-        self.ab_show_number_update_response(response)
+        ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, request).update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -242,15 +205,10 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             'atypical_user': True if self.atypical_user else False
         }
         return {
-            'reg_form': RegisterWebUserForm(
-                initial=prefills,
-                show_number=self.ab_show_number,
-            ),
+            'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
-            'show_number': self.ab_show_number,
-            'ab_show_number': self.ab_show_number_context,
         }
 
     @property
@@ -374,7 +332,7 @@ def resend_confirmation(request):
         try:
             send_domain_registration_email(dom_req.new_user_username,
                     dom_req.domain, dom_req.activation_guid,
-                    request.user.get_full_name())
+                    request.user.get_full_name(), request.user.first_name)
         except Exception:
             context.update({
                 'current_page': {'page_name': _('Oops!')},
@@ -423,15 +381,20 @@ def confirm_domain(request, guid=None):
 
     requested_domain = Domain.get_by_name(req.domain)
     view_name = "dashboard_default"
+    view_args = [requested_domain]
     if not domain_has_apps(req.domain):
-        view_name = "default_new_app"
+        if ab_tests.appcues_template_app_test(request):
+            view_name = "app_from_template"
+            view_args.append("appcues")
+        else:
+            view_name = "default_new_app"
 
     # Has guid already been confirmed?
     if requested_domain.is_active:
         assert(req.confirm_time is not None and req.confirm_ip is not None)
         messages.success(request, 'Your account %s has already been activated. '
             'No further validation is required.' % req.new_user_username)
-        return HttpResponseRedirect(reverse(view_name, args=[requested_domain]))
+        return HttpResponseRedirect(reverse(view_name, args=view_args))
 
     # Set confirm time and IP; activate domain and new user who is in the
     req.confirm_time = datetime.utcnow()
@@ -450,7 +413,7 @@ def confirm_domain(request, guid=None):
     track_workflow(requesting_user.email, "Confirmed new project")
     track_confirmed_account_on_hubspot.delay(requesting_user)
     request.session['CONFIRM'] = True
-    return HttpResponseRedirect(reverse(view_name, args=[requested_domain]))
+    return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 
 @retry_resource(3)

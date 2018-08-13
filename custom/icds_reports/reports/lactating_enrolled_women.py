@@ -69,7 +69,8 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
             "average": sum(average) / float(len(average) or 1),
             "average_format": 'number',
             "info": _((
-                "Lactating Mothers enrolled for Anganwadi Services."
+                "Of the total number of lactating women, the percentage of lactating women enrolled for "
+                "Anganwadi Services"
             )),
             "extended_info": [
                 {
@@ -150,7 +151,8 @@ def get_lactating_enrolled_women_sector_data(domain, config, loc_level, location
         "tooltips_data": dict(tooltips_data),
         "format": "number",
         "info": _((
-            "Lactating Mothers enrolled for Anganwadi Services."
+            "Of the total number of lactating women, the percentage of lactating women enrolled for "
+            "Anganwadi Services"
         )),
         "chart_data": [
             {

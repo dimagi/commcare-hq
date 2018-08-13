@@ -10,7 +10,6 @@ from corehq.apps.hqadmin.views.data import (
 )
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
-    callcenter_test,
     mass_email,
     ReprocessMessagingCaseUpdatesView,
 )
@@ -56,6 +55,8 @@ urlpatterns = [
     url(r'^system/check_services$', check_services, name="check_services"),
     url(r'^system/autostaging/$', branches_on_staging, name="branches_on_staging"),
     url(r'^mass_email/$', mass_email, name="mass_email"),
+    # Same view supported with three possible urls to support tracking
+    # username and domain in the url via audit
     url(r'^auth_as/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^auth_as/(?P<username>[^/]*)/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^auth_as/(?P<username>[^/]*)/(?P<domain>{})/$'.format(new_domain_re),
@@ -72,7 +73,6 @@ urlpatterns = [
     url(r'^doc_in_es/$', doc_in_es, name='doc_in_es'),
     url(r'^raw_couch/$', raw_couch, name='raw_couch'),
     url(r'^raw_doc/$', raw_doc, name='raw_doc'),
-    url(r'^callcenter_test/$', callcenter_test, name='callcenter_test'),
     url(r'^api/', include(admin_api_urlpatterns)),
     url(r'^callcenter_ucr_check/$', CallcenterUCRCheck.as_view(), name=CallcenterUCRCheck.urlname),
     url(r'^api/', include(admin_api_urlpatterns)),

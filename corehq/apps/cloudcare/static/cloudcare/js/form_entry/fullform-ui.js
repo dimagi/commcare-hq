@@ -25,6 +25,15 @@ md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
     return defaultRender(tokens, idx, options, env, self);
 };
 
+_.delay(function() {
+    ko.bindingHandlers.renderMarkdown = {
+        update: function(element, valueAccessor) {
+            var value = ko.unwrap(valueAccessor());
+            value = md.render(value || '');
+            $(element).html(value);
+        },
+    };
+});
 
 //if index is part of a repeat, return only the part beyond the deepest repeat
 function relativeIndex(ix) {
@@ -447,11 +456,14 @@ function Question(json, parent) {
     self.afterRender = function() { self.entry.afterRender(); };
 
     self.triggerAnswer = function() {
-        $.publish('formplayer.dirty');
         self.pendingAnswer(_.clone(self.answer()));
-        $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
+        publishAnswerEvent();
     };
-    self.onchange = _.throttle(self.triggerAnswer, self.throttle);
+    var publishAnswerEvent = _.throttle(function() {
+        $.publish('formplayer.dirty');
+        $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
+    }, self.throttle);
+    self.onchange = self.triggerAnswer;
 
     self.mediaSrc = function(resourceType) {
         if (!resourceType || !_.isFunction(Formplayer.resourceMap)) { return ''; }

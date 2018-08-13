@@ -5,9 +5,7 @@
 
 {% block title %}{% trans 'Bulk Copy Indicators' %}{% endblock title %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "indicators/js/copy_to_domain.js" %}"></script>
-{% endblock %}
+{% requirejs_main 'indicators/js/copy_to_domain' %}
 
 {% block content %}
 <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">

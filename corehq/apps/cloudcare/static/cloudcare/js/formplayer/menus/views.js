@@ -469,12 +469,16 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
     Views.DetailTabView = Marionette.ItemView.extend({
         tagName: "li",
+        className: function() {
+            return this.options.model.get('active') ? 'active': '';
+        },
         template: "#detail-view-tab-item-template",
         events: {
             "click": "tabClick",
         },
         initialize: function (options) {
             this.index = options.model.get('id');
+            this.active = options.model.get('active');
             this.showDetail = options.showDetail;
         },
         tabClick: function (e) {

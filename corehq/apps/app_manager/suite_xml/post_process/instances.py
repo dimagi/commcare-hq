@@ -179,6 +179,12 @@ def location_fixture_instances(domain, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
+@register_factory('related_locations')
+def related_locations_fixture_instances(domain, instance_name):
+    if instance_name == 'related_locations' and toggles.RELATED_LOCATIONS.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
 def get_all_instances_referenced_in_xpaths(domain, xpaths):
     instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
     instances = set()

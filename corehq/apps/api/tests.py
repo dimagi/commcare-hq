@@ -26,6 +26,7 @@ from corehq.apps.userreports.models import ReportConfiguration, \
     DataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.pillows.case import transform_case_for_elasticsearch
+from corehq.util.test_utils import flag_enabled, PatchMeta
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 
@@ -98,13 +99,15 @@ class FakeXFormES(object):
         return doc
 
 
-class APIResourceTest(TestCase):
+class APIResourceTest(six.with_metaclass(PatchMeta, TestCase)):
     """
     Base class for shared API tests. Sets up a domain and user and provides
     some helper methods and properties for accessing the API
     """
-    resource = None # must be set by subclasses
-    api_name = 'v0.4' # can be overridden by subclasses
+    patch = flag_enabled('API_THROTTLE_WHITELIST')
+
+    resource = None  # must be set by subclasses
+    api_name = 'v0.4'  # can be overridden by subclasses
     maxDiff = None
 
     @classmethod
@@ -354,11 +357,11 @@ class TestXFormInstanceResource(APIResourceTest):
         # Runs *2* queries
         response = self._assert_auth_get_resource('%s?order_by=received_on' % self.list_endpoint)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(queries[0]['sort'], [{'received_on': 'asc'}])
+        self.assertEqual(queries[0]['sort'], [{'received_on': {'missing': '_first', 'order': 'asc'}}])
         # Runs *2* queries
         response = self._assert_auth_get_resource('%s?order_by=-received_on' % self.list_endpoint)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(queries[2]['sort'], [{'received_on': 'desc'}])
+        self.assertEqual(queries[2]['sort'], [{'received_on': {'missing': '_last', 'order': 'desc'}}])
 
     def test_get_list_archived(self):
         expected = [
@@ -1029,19 +1032,21 @@ class TestElasticAPIQuerySet(TestCase):
         es = FakeXFormES()
         for i in range(0, 1300):
             es.add_doc(i, {'i': i})
-        
+
         queryset = ElasticAPIQuerySet(es_client=es, payload={})
-        qs_asc = list(queryset.order_by('foo'))
-        self.assertEqual(es.queries[0]['sort'], [{'foo': 'asc'}])
+        list(queryset.order_by('foo'))
+        asc_ = {'missing': '_first', 'order': 'asc'}
+        desc_ = {'missing': '_last', 'order': 'desc'}
+        self.assertEqual(es.queries[0]['sort'], [{'foo': asc_}])
 
-        qs_desc = list(queryset.order_by('-foo'))
-        self.assertEqual(es.queries[1]['sort'], [{'foo': 'desc'}])
+        list(queryset.order_by('-foo'))
+        self.assertEqual(es.queries[1]['sort'], [{'foo': desc_}])
 
-        qs_overwrite = list(queryset.order_by('bizzle').order_by('-baz'))
-        self.assertEqual(es.queries[2]['sort'], [{'baz': 'desc'}])
+        list(queryset.order_by('bizzle').order_by('-baz'))
+        self.assertEqual(es.queries[2]['sort'], [{'baz': desc_}])
 
-        qs_multi = list(queryset.order_by('one', '-two', 'three'))
-        self.assertEqual(es.queries[3]['sort'], [{'one': 'asc'}, {'two': 'desc'}, {'three': 'asc'}])
+        list(queryset.order_by('one', '-two', 'three'))
+        self.assertEqual(es.queries[3]['sort'], [{'one': asc_}, {'two': desc_}, {'three': asc_}])
 
 
 class ToManySourceModel(object):

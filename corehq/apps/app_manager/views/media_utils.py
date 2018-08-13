@@ -33,3 +33,8 @@ def handle_media_edits(request, item, should_edit, resp, lang):
         if should_edit(attribute):
             media_path = process_media_attribute(attribute, resp, request.POST.get(attribute))
             item._set_media(attribute, lang, media_path)
+
+    if should_edit('use_default_image_for_all'):
+        item.use_default_image_for_all = request.POST.get('use_default_image_for_all') == 'true'
+    if should_edit('use_default_audio_for_all'):
+        item.use_default_audio_for_all = request.POST.get('use_default_audio_for_all') == 'true'

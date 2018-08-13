@@ -58,7 +58,7 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
             else:
                 qs = qs.values_list(*values)
 
-        for result in qs:
+        for result in qs.iterator():
             yield result
 
 
@@ -93,6 +93,10 @@ def get_db_aliases_for_partitioned_query():
 
 def get_default_db_aliases():
     return ['default']
+
+
+def get_all_db_aliases():
+    return list(settings.DATABASES)
 
 
 def get_default_and_partitioned_db_aliases():

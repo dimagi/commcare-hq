@@ -36,6 +36,7 @@ from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.files import safe_filename_header
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds.tasks import (
     push_translation_files_to_transifex,
@@ -102,14 +103,8 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
-from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
-from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
-from custom.icds_reports.sqldata.exports.children import ChildrenExport
-from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
-from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
-from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
-    prepare_issnip_monthly_register_reports
+    prepare_issnip_monthly_register_reports, prepare_excel_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column
@@ -118,10 +113,11 @@ from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
 from couchexport.shortcuts import export_response
+from couchexport.export import Format
 
 
 @location_safe
-@method_decorator([toggles.ICDS_REPORTS.required_decorator(), login_and_domain_required], name='dispatch')
+@method_decorator([login_and_domain_required], name='dispatch')
 class TableauView(RedirectView):
 
     permanent = True
@@ -432,6 +428,7 @@ class LocationView(View):
             ]
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LocationAncestorsView(View):
@@ -620,7 +617,9 @@ class AwcReportsView(BaseReportView):
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
-                self.request.GET.get('case_id')
+                self.request.GET.get('case_id'),
+                config['awc_id'],
+                tuple(current_month.timetuple())[:3]
             )
         return JsonResponse(data=data)
 
@@ -666,48 +665,7 @@ class ExportIndicatorView(View):
             except SQLLocation.DoesNotExist:
                 pass
 
-        if indicator == CHILDREN_EXPORT:
-            return ChildrenExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test,
-                beta=icds_pre_release_features(self.request.couch_user)
-            ).to_export(export_format, location)
-        elif indicator == PREGNANT_WOMEN_EXPORT:
-            return PregnantWomenExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test
-            ).to_export(export_format, location)
-        elif indicator == DEMOGRAPHICS_EXPORT:
-            return DemographicsExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test,
-                beta=icds_pre_release_features(request.user)
-            ).to_export(export_format, location)
-        elif indicator == SYSTEM_USAGE_EXPORT:
-            return SystemUsageExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test
-            ).to_export(export_format, location)
-        elif indicator == AWC_INFRASTRUCTURE_EXPORT:
-            return AWCInfrastructureExport(
-                config=config,
-                loc_level=aggregation_level,
-                show_test=include_test
-            ).to_export(export_format, location)
-        elif indicator == BENEFICIARY_LIST_EXPORT:
-            if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
-                return HttpResponseBadRequest()
-            return BeneficiaryExport(
-                config=beneficiary_config,
-                loc_level=aggregation_level,
-                show_test=include_test,
-                beta=icds_pre_release_features(self.request.couch_user)
-            ).to_export('csv', location)
-        elif indicator == ISSNIP_MONTHLY_REGISTER_PDF:
+        if indicator == ISSNIP_MONTHLY_REGISTER_PDF:
             awcs = request.POST.get('selected_awcs').split(',')
             location = request.POST.get('location', '')
             if 'all' in awcs and location:
@@ -724,6 +682,23 @@ class ExportIndicatorView(View):
                 month,
                 year,
                 request.couch_user
+            )
+            task_id = task.task_id
+            return JsonResponse(data={'task_id': task_id})
+        if indicator == BENEFICIARY_LIST_EXPORT:
+            if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
+                return HttpResponseBadRequest()
+        if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
+                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT):
+            task = prepare_excel_reports.delay(
+                config,
+                aggregation_level,
+                include_test,
+                icds_pre_release_features(self.request.couch_user),
+                location,
+                self.kwargs['domain'],
+                export_format,
+                indicator
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})
@@ -1550,6 +1525,22 @@ class ICDSBugReportView(BugReportView):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
+class DownloadExportReport(View):
+    def get(self, request, *args, **kwargs):
+        uuid = self.request.GET.get('uuid', None)
+        file_format = self.request.GET.get('file_format', 'xlsx')
+        content_type = Format.from_format(file_format)
+        data_type = self.request.GET.get('data_type', 'beneficiary_list')
+        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type=data_type)
+        response = HttpResponse(
+            icds_file.get_file_from_blobdb().read(),
+            content_type=content_type.mimetype
+        )
+        response['Content-Disposition'] = safe_filename_header(data_type, content_type.extension)
+        return response
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
 class DownloadPDFReport(View):
     def get(self, request, *args, **kwargs):
         uuid = self.request.GET.get('uuid', None)
@@ -1566,20 +1557,17 @@ class DownloadPDFReport(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class CheckPDFReportStatus(View):
+class CheckExportReportStatus(View):
     def get(self, request, *args, **kwargs):
         task_id = self.request.GET.get('task_id', None)
-
         res = AsyncResult(task_id)
         status = res.ready()
 
         if status:
-            task_result = prepare_issnip_monthly_register_reports.AsyncResult(task_id)
-            result = task_result.get()
             return JsonResponse(
                 {
                     'task_ready': status,
-                    'task_result': result
+                    'task_result': res.result
                 }
             )
         return JsonResponse({'task_ready': status})
@@ -1588,8 +1576,8 @@ class CheckPDFReportStatus(View):
 @location_safe
 class ICDSImagesAccessorAPI(View):
     @method_decorator(api_auth)
-    @require_permission(Permissions.view_report,
-                        'custom.icds_reports.reports.reports.DashboardReport')
+    @method_decorator(require_permission(
+        Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport'))
     def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not attachment_id:
             raise Http404

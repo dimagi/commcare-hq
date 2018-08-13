@@ -6,7 +6,7 @@ from random import choice, randint
 
 from django.apps import apps
 from django.test import TestCase
-
+from corehq import toggles
 from corehq.apps.accounting.tests.generator import init_default_currency
 from corehq.apps.sms.models import SMS, SQLMobileBackend
 from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import bootstrap_usage_fees
@@ -232,6 +232,27 @@ class TestGatewayFee(TestCase):
                 billable = SmsBillable.create(msg_log)
                 self.assertIsNotNone(billable)
                 self.assertIsNone(billable.gateway_fee)
+
+    def test_fee_for_non_global_backend(self):
+        self.create_least_specific_gateway_fees()
+
+        private_backend_ids = generator.arbitrary_non_global_backend_ids()
+        messages = generator.arbitrary_messages_by_backend_and_direction(
+            private_backend_ids)
+        arbitrary_message = messages[randint(0, len(messages) - 1)]
+
+        toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.set(
+            arbitrary_message.domain, True, toggles.NAMESPACE_DOMAIN)
+        billable = SmsBillable.create(arbitrary_message)
+        toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.set(
+            arbitrary_message.domain, False, toggles.NAMESPACE_DOMAIN)
+
+        self.assertIsNotNone(billable)
+        self.assertIsNotNone(billable.gateway_fee)
+        self.assertEqual(billable.gateway_charge,
+                         self.least_specific_fees[billable.direction]
+                         [billable.gateway_fee.criteria.backend_api_id])
+
 
     @patch(
         'twilio.rest.api.v2010.account.message.MessageList.get',

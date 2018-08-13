@@ -150,7 +150,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
     common_kwargs = dict(
         mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
         content_disposition='attachment; filename="{fname}"'.format(fname=filename),
-        download_id=download_id,
+        download_id=download_id, expiry=(1 * 60 * 60)
     )
     if use_transfer:
         expose_file_download(
@@ -161,7 +161,6 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
     else:
         expose_cached_download(
             FileWrapper(open(fpath, 'rb')),
-            expiry=(1 * 60 * 60),
             file_extension=file_extention_from_filename(filename),
             **common_kwargs
         )

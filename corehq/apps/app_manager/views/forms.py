@@ -43,9 +43,7 @@ from corehq.apps.app_manager.util import (
     enable_usercase,
     actions_use_usercase,
     advanced_actions_use_usercase,
-    CASE_XPATH_PATTERN_MATCHES,
     CASE_XPATH_SUBSTRING_MATCHES,
-    USER_CASE_XPATH_PATTERN_MATCHES,
     USER_CASE_XPATH_SUBSTRING_MATCHES,
 )
 from corehq.apps.app_manager.xform import (
@@ -87,7 +85,6 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
-from corehq.apps.tour import tours
 import six
 from six.moves import zip
 
@@ -678,9 +675,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'is_case_list_form': form.is_case_list_form,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'form_filter_patterns': {
-            'case': CASE_XPATH_PATTERN_MATCHES,
             'case_substring': CASE_XPATH_SUBSTRING_MATCHES,
-            'usercase': USER_CASE_XPATH_PATTERN_MATCHES,
             'usercase_substring': USER_CASE_XPATH_SUBSTRING_MATCHES,
         },
         'custom_instances': [
