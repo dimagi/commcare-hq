@@ -339,6 +339,7 @@ HQ_APPS = (
     'corehq.warehouse',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
+    'corehq.apps.translations',
 
     # custom reports
     'custom.bihar',

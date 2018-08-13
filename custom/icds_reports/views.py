@@ -19,7 +19,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from django.conf import settings
 
 from corehq import toggles
@@ -31,6 +31,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.translations.views import ConvertTranslations
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
@@ -1599,6 +1600,7 @@ class ICDSAppTranslations(BaseDomainView):
     page_title = ugettext_lazy('ICDS App Translations')
     urlname = 'icds_app_translations'
     template_name = 'icds_reports/icds_app/app_translations.html'
+    section_name = ugettext_noop("Translations")
 
     @property
     @memoized
@@ -1617,7 +1619,7 @@ class ICDSAppTranslations(BaseDomainView):
         return context
 
     def section_url(self):
-        return
+        return reverse(ConvertTranslations.urlname, args=self.args, kwargs=self.kwargs)
 
     def transifex(self, domain, form_data):
         transifex_project_slug = form_data.get('transifex_project_slug')

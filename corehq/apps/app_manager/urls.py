@@ -31,6 +31,7 @@ from corehq.apps.app_manager.views import (
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
+from corehq.apps.translations.urls import translations_urls
 
 app_urls = [
     url(r'^languages/$', view_app, name='app_languages'),
@@ -189,4 +190,5 @@ urlpatterns = [
     url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(), name=AppDiffView.urlname),
 
     url(r'^', include('custom.ucla.urls')),
+    url(r'^translations/', include(translations_urls)),
 ]
