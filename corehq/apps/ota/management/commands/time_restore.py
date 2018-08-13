@@ -40,11 +40,14 @@ class Command(BaseCommand):
                 return
 
         headers, rows = _get_headers_and_rows(domain, users, app_id)
+        totals_row = _calculate_totals_row(headers, rows)
+
         filename = "tmp.csv"
         with open(filename, 'w') as f:
             writer = csv.DictWriter(f, headers)
             writer.writeheader()
             writer.writerows(rows)
+            writer.writerow(totals_row)
 
 
 def _get_headers_and_rows(domain, users, app_id):
@@ -72,6 +75,8 @@ def _get_headers_and_rows(domain, users, app_id):
                     fixture_names.add(fixture['name'])
                     row[fixture['name']] = fixture['duration']
         rows.append(row)
+        print("Restore for '{}' took {} seconds to generate"
+              .format(user.username, timing_dict['duration']))
 
     headers = [
         'username',
@@ -87,3 +92,10 @@ def _get_headers_and_rows(domain, users, app_id):
     ] + sorted(fixture_names)
 
     return headers, rows
+
+
+def _calculate_totals_row(headers, rows):
+    totals_row = {'username': 'TOTAL'}
+    for header in headers[1:]:
+        totals_row[header] = sum(row.get(header, 0) for row in rows)
+    return totals_row
