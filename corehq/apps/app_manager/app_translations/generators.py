@@ -14,7 +14,7 @@ Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
 
 
-class POFileGenerator:
+class TransifexPOFileGenerator:
     def __init__(self, domain, app_id, version, key_lang, source_lang, lang_prefix,
                  exclude_if_default=False):
         """
@@ -43,7 +43,7 @@ class POFileGenerator:
         self.translations = OrderedDict()
         self.version = version
         self.headers = dict()  # headers for each sheet name
-        self.generated_files = list()  # list of tuples (filename, filepath)
+        self.po_file_generator = PoFileGenerator()
         self.sheet_name_to_module_or_form_type_and_id = dict()
 
     @property
@@ -162,36 +162,49 @@ class POFileGenerator:
                 app, sheet_name, rows[sheet_name]
             )
 
-    def generate_translation_files(self):
-        self._build_translations()
+    @property
+    def _metadata(self):
         if settings.TRANSIFEX_DETAILS:
             team = settings.TRANSIFEX_DETAILS['teams'][self.domain].get(self.source_lang)
         else:
             team = ""
         now = str(datetime.datetime.now())
-        for file_name in self.translations:
-            sheet_translations = self.translations[file_name]
+        return {
+            'App-Id': self.app_id_to_build,
+            'PO-Creation-Date': now,
+            'Language-Team': "{lang} ({team})".format(
+                lang=self.key_lang, team=team
+            ),
+            'MIME-Version': '1.0',
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Language': self.key_lang,
+            'Version': self.version
+        }
+
+    def generate_translation_files(self):
+        self._build_translations()
+        self.po_file_generator.generate_translation_files(self.translations, self._metadata)
+
+    def generated_files(self):
+        return self.po_file_generator.generated_files
+
+
+class PoFileGenerator(object):
+    def __init__(self):
+        self.generated_files = list()  # list of tuples (filename, filepath)
+
+    def generate_translation_files(self, translations, metadata):
+        for file_name in translations:
+            sheet_translations = translations[file_name]
             po = polib.POFile()
             po.check_for_duplicates = False
-            po.metadata = {
-                'App-Id': self.app_id_to_build,
-                'PO-Creation-Date': now,
-                'Language-Team': "{lang} ({team})".format(
-                    lang=self.key_lang, team=team
-                ),
-                'MIME-Version': '1.0',
-                'Content-Type': 'text/plain; charset=utf-8',
-                'Content-Transfer-Encoding': '8bit',
-                'Language': self.key_lang,
-                'Version': self.version
-            }
-
+            po.metadata = metadata
             for translation in sheet_translations:
                 source = translation.key
                 if source:
                     entry = polib.POEntry(
                         msgid=translation.key,
-                        msgstr=translation.translation,
+                        msgstr=translation.translation or '',
                         occurrences=translation.occurrences,
                         msgctxt=translation.msgctxt
                     )

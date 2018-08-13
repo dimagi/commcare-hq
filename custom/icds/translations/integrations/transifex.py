@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 from memoized import memoized
 
-from corehq.apps.app_manager.app_translations.generators import POFileGenerator
+from corehq.apps.app_manager.app_translations.generators import TransifexPOFileGenerator
 from corehq.apps.app_manager.app_translations.parser import TranslationsParser
 from custom.icds.translations.integrations.client import TransifexApiClient
 
@@ -36,7 +36,7 @@ class Transifex(object):
         self.is_source_file = is_source_file
         self.source_lang = source_lang
         self.lock_translations = lock_translations
-        self.po_file_generator = POFileGenerator(domain, app_id, version, self.key_lang, source_lang, lang_prefix,
+        self.po_file_generator = TransifexPOFileGenerator(domain, app_id, version, self.key_lang, source_lang, lang_prefix,
                                                  exclude_if_default)
 
     def send_translation_files(self):
