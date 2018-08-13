@@ -1,7 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
+from decimal import Decimal
 
 
 class TestBirthPreparednessForms(BaseFormsTest):
@@ -25,6 +25,17 @@ class TestBirthPreparednessForms(BaseFormsTest):
                 "ifa_last_seven_days": None,
                 "eating_extra": 1,
                 "resting": 1,
+                "anc_weight": None,
+                "anc_blood_pressure": 0,
+                "bp_sys": None,
+                "bp_dia": None,
+                "anc_abnormalities": None,
+                "anc_hemoglobin": None,
+                "bleeding": None,
+                "swelling": None,
+                "blurred_vision": None,
+                "convulsions": None,
+                "rupture": None,
             }]
         )
 
@@ -46,5 +57,16 @@ class TestBirthPreparednessForms(BaseFormsTest):
                 "ifa_last_seven_days": None,
                 "eating_extra": 1,
                 "resting": 1,
+                "anc_weight": 50,
+                "anc_blood_pressure": 1,
+                "bp_sys": 100,
+                "bp_dia": 50,
+                "anc_abnormalities": 0,
+                "anc_hemoglobin": Decimal('2.0'),
+                "bleeding": None,
+                "swelling": None,
+                "blurred_vision": None,
+                "convulsions": None,
+                "rupture": None,
             }]
         )
