@@ -1145,7 +1145,7 @@ class MessagingTab(UITab):
         if self.show_dashboard:
             result.append(dropdown_dict(_("Dashboard"), is_header=True))
             result.append(dropdown_dict(
-                _("Dashboard (beta)"),
+                _("Dashboard"),
                 url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
             ))
 

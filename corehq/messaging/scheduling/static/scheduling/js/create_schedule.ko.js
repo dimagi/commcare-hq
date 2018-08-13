@@ -139,6 +139,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         select2_case_group_recipients, current_visit_scheduler_form) {
         var self = this;
 
+        self.useCase = ko.observable(initial_values.use_case);
         self.timestamp = new Date().getTime();
         self.send_frequency = ko.observable(initial_values.send_frequency);
         self.weekdays = ko.observableArray(initial_values.weekdays || []);
