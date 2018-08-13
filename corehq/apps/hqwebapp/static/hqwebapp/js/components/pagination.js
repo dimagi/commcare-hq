@@ -20,6 +20,8 @@ hqDefine('hqwebapp/js/components/pagination', function() {
             self.perPage.subscribe(function(){
                 self.goToPage(1);
             });
+            self.maxPagesShown = params.maxPagesShown || 9;
+
             self.nextPage = function(){
                 self.goToPage(Math.min(self.currentPage() + 1, self.numPages()));
             };
@@ -35,12 +37,13 @@ hqDefine('hqwebapp/js/components/pagination', function() {
             });
             self.pagesShown = ko.computed(function(){
                 var pages = [];
-                for (var i = 1; i <= self.numPages(); i++){
-                    if (i >= self.currentPage() - 2 && i <= self.currentPage() + 2){
-                        pages.push(i);
-                    }
-                    else if (pages.length < 5 && pages[pages.length - 1] > self.currentPage()){
-                        pages.push(i);
+                for (var pageNum = 1; pageNum <= self.numPages(); pageNum++){
+                    var midPoint = Math.floor(self.maxPagesShown / 2),
+                        leftHalf = pageNum >= self.currentPage() - midPoint,
+                        rightHalf = pageNum <= self.currentPage() + midPoint,
+                        pageVisible = (leftHalf && rightHalf) || pages.length < self.maxPagesShown && pages[pages.length - 1] > self.currentPage();
+                    if (pageVisible){
+                        pages.push(pageNum);
                     }
                 }
                 return pages;
