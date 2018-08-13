@@ -134,7 +134,6 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                 notify_exception(None, 'processor error in pillow {} {}'.format(
                     self.get_name(), e,
                 ))
-                self._record_change_exception_in_datadog(change)
                 raise
         else:
             self._update_checkpoint(change, context)
@@ -188,9 +187,6 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
 
     def _record_change_success_in_datadog(self, change):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change)
-
-    def _record_change_exception_in_datadog(self, change):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change)
 
     def __record_change_metric_in_datadog(self, metric, change, timer=None):
         if change.metadata is not None:
@@ -271,6 +267,10 @@ class ConstructedPillow(PillowBase):
 
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError
+
+    datadog_counter('commcare.change_feed.changes.exceptions', tags=[
+        'pillow_name:{}'.format(pillow.get_name()),
+    ])
 
     # keep track of error attempt count
     change.increment_attempt_count()
