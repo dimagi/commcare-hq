@@ -23,10 +23,9 @@ import KISSmetrics
 import logging
 
 from django.conf import settings
-from django.urls import reverse
 from email_validator import validate_email, EmailNotValidError
 from corehq.toggles import deterministic_random
-from corehq.util.decorators import analytics_task
+from corehq.util.decorators import old_analytics_task
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.utils import (
     count_by_response_code,
@@ -37,7 +36,6 @@ from corehq.util.datadog.utils import (
     DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC
 )
 
-from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from memoized import memoized
 
@@ -243,7 +241,7 @@ def _send_hubspot_form_request(url, data):
     return requests.post(url, data=data)
 
 
-@analytics_task()
+@old_analytics_task()
 def update_hubspot_properties(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -281,12 +279,12 @@ def track_web_user_registration_hubspot(request, web_user, properties):
     )
 
 
-@analytics_task()
+@old_analytics_task()
 def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
-@analytics_task()
+@old_analytics_task()
 def track_built_app_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -294,7 +292,7 @@ def track_built_app_on_hubspot(webuser):
         _track_on_hubspot(webuser, {'built_app': True})
 
 
-@analytics_task()
+@old_analytics_task()
 def track_confirmed_account_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -325,13 +323,14 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
         )
 
 
-@analytics_task()
+@old_analytics_task()
 def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta,
                            extra_fields=None):
     _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
 
-@analytics_task()
+
+@old_analytics_task()
 def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
     ab = {
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
@@ -339,7 +338,7 @@ def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, hubspot_cookie, meta, extra_fields=ab)
 
 
-@analytics_task()
+@old_analytics_task()
 def track_job_candidate_on_hubspot(user_email):
     properties = {
         'job_candidate': True
@@ -347,7 +346,7 @@ def track_job_candidate_on_hubspot(user_email):
     _track_on_hubspot_by_email(user_email, properties=properties)
 
 
-@analytics_task()
+@old_analytics_task()
 def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
@@ -377,7 +376,7 @@ def track_workflow(email, event, properties=None):
         _track_workflow_task.delay(email, event, properties, timestamp)
 
 
-@analytics_task()
+@old_analytics_task()
 def _track_workflow_task(email, event, properties=None, timestamp=0):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
@@ -388,7 +387,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
         _raise_for_urllib3_response(res)
 
 
-@analytics_task()
+@old_analytics_task()
 def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
