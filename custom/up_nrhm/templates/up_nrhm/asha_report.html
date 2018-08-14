@@ -45,7 +45,7 @@
         <br/><small>{{ subtitle }}</small>
         {% endfor %}
     </h4>
-    {% if sf == "sf2" %}
+    {% if sf == "sf2" or sf == 'sf3' %}
     <div class="row">
         <div class="col-sm-6">
             <table class="table table-striped">
@@ -53,10 +53,12 @@
                     <td><strong>Total number of ASHAs under the Facilitator</strong></td>
                     <td>{{ total_under_facilitator }}</td>
                 </tr>
+                {% if sf == "sf2" %}
                 <tr>
                     <td><strong>Total number of ASHAs for whom the functionality checklist was filled</strong></td>
                     <td>{{ total_with_checklist }}</td>
                 </tr>
+                {% endif %}
             </table>
         </div>
     </div>

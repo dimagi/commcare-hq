@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-07-24 19:49+0000\n"
+"POT-Creation-Date: 2018-08-07 21:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Claire O'Grady <cogrady@dimagi.com>, 2018\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -52,7 +52,7 @@ msgstr ""
 msgid "You have unsaved changes"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view.js:57
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js:61
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 
@@ -2253,16 +2253,16 @@ msgstr ""
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:183
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:184
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:420
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:425
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:448
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:453
 msgid "Please wait..."
 msgstr ""
 
@@ -2276,12 +2276,12 @@ msgstr ""
 msgid "Completed: "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:30
-msgid "Hide Full Menu"
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:25
+msgid "Show Full Menu"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:34
-msgid "Show Full Menu"
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:30
+msgid "Hide Full Menu"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:29
@@ -2716,13 +2716,13 @@ msgid ""
 "Please try again, or report an issue if the problem persists."
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location.js:30
+#: corehq/apps/locations/static/locations/js/location.js:31
 msgid ""
 "User <%= name %> added successfully. A validation message has been sent to "
 "the phone number provided."
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location.js:64
+#: corehq/apps/locations/static/locations/js/location.js:65
 msgid "Error saving user"
 msgstr ""
 
@@ -2839,7 +2839,7 @@ msgstr ""
 msgid "You can email a saved version<br />of this report."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/case_details.js:33
+#: corehq/apps/reports/static/reports/js/case_details.js:34
 msgid "Unknown"
 msgstr ""
 
@@ -2870,7 +2870,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:104
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:10
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:8
 msgid "Select a language..."
 msgstr ""
 
@@ -2999,15 +2999,15 @@ msgid "An error occurred emailing you report. Please try again."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:14
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:68
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:95
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:116
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:69
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:96
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:117
 msgid "Success!"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:17
 #: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js:23
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:71
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:72
 msgid "Failed"
 msgstr ""
 
@@ -3153,34 +3153,34 @@ msgstr ""
 msgid "Form"
 msgstr "Formulário"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:44
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:26
 msgid "Password changed successfully"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:47
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:29
 msgid "Password was not changed "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:49
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:31
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:387
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:93
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:75
 msgid "Available Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:94
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:76
 msgid "Groups with this User"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:95
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:77
 msgid "Search Group..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:106
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:88
 msgid "Group membership has changed."
 msgstr ""
 
@@ -3462,15 +3462,43 @@ msgstr ""
 msgid "HQ was unable to make the request: "
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:43
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:44
 msgid "Failed to fetch payload"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:79
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:80
 msgid "Failed to send"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:100
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:121
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:101
+#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:122
 msgid "Failed to cancel"
+msgstr ""
+
+#: custom/ilsgateway/static/ilsgateway/js/main.js:7
+msgid "Sync Successful"
+msgstr ""
+
+#: custom/ilsgateway/static/ilsgateway/js/main.js:8
+msgid "Error!"
+msgstr ""
+
+#: custom/ilsgateway/static/ilsgateway/js/main.js:9
+msgid "Syncing..."
+msgstr ""
+
+#: custom/ilsgateway/static/ilsgateway/js/main.js:27
+msgid "Sync started"
+msgstr ""
+
+#: custom/ilsgateway/static/ilsgateway/js/main.js:48
+msgid "Available Locations"
+msgstr ""
+
+#: custom/ilsgateway/static/ilsgateway/js/main.js:49
+msgid "Locations in Program"
+msgstr ""
+
+#: custom/ilsgateway/static/ilsgateway/js/main.js:50
+msgid "Search Locations..."
 msgstr ""

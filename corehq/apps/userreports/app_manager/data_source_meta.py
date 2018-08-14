@@ -35,15 +35,29 @@ def make_case_data_source_filter(case_type):
     }
 
 
-def make_form_data_source_filter(xmlns):
+def make_form_data_source_filter(xmlns, app_id):
     return {
-        "type": "boolean_expression",
-        "operator": "eq",
-        "expression": {
-            "type": "property_name",
-            "property_name": "xmlns"
-        },
-        "property_value": xmlns,
+        "type": "and",
+        "filters": [
+            {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "xmlns"
+                },
+                "property_value": xmlns,
+            },
+            {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "app_id"
+                },
+                "property_value": app_id,
+            }
+        ]
     }
 
 
@@ -94,7 +108,8 @@ class FormDataSourceMeta(AppDataSourceMeta):
         self.source_xform = XForm(self.source_form.source)
 
     def get_filter(self):
-        return make_form_data_source_filter(self.source_xform.data_node.tag_xmlns)
+        return make_form_data_source_filter(
+            self.source_xform.data_node.tag_xmlns, self.source_form.get_app().get_id)
 
 
 def make_form_question_indicator(question, column_id=None, data_type=None, root_doc=False):

@@ -304,7 +304,18 @@ class ExportColumn(DocumentSchema):
             value = MISSING_VALUE
 
         if isinstance(value, list):
-            value = ' '.join(value)
+            def _serialize(str_or_dict):
+                """
+                Serialize old data for scalar questions that were previously a repeat
+
+                This is a total edge case. See https://manage.dimagi.com/default.asp?280549.
+                """
+                if isinstance(str_or_dict, dict):
+                    return ','.join('{}={}'.format(k, v) for k, v in str_or_dict.items())
+                else:
+                    return str_or_dict
+
+            value = ' '.join(_serialize(elem) for elem in value)
         return value
 
     @staticmethod

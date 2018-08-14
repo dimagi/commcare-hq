@@ -121,6 +121,10 @@ def split_path(path):
     return path, name
 
 
+def first_elem(elem_list):
+    return elem_list[0] if elem_list else None
+
+
 def save_xform(app, form, xml):
 
     def change_xmlns(xform, old_xmlns, new_xmlns):

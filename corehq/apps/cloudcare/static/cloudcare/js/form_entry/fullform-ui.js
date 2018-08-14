@@ -25,6 +25,15 @@ md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
     return defaultRender(tokens, idx, options, env, self);
 };
 
+_.delay(function() {
+    ko.bindingHandlers.renderMarkdown = {
+        update: function(element, valueAccessor) {
+            var value = ko.unwrap(valueAccessor());
+            value = md.render(value || '');
+            $(element).html(value);
+        },
+    };
+});
 
 //if index is part of a repeat, return only the part beyond the deepest repeat
 function relativeIndex(ix) {

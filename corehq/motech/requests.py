@@ -40,15 +40,18 @@ def log_request(func):
 
 
 class Requests(object):
-    def __init__(self, domain_name, base_url, username, password):
+    def __init__(self, domain_name, base_url, username, password, verify=True):
         self.domain_name = domain_name
         self.base_url = base_url
         self.username = username
         self.password = password
+        self.verify = verify
 
     @log_request
     def send_request(self, method_func, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
+        if not self.verify:
+            kwargs['verify'] = False
         try:
             response = method_func(*args, **kwargs)
             if raise_for_status:
@@ -92,6 +95,9 @@ def parse_request_exception(err):
         url=err.request.url,
         body=err.request.body
     ) if err.request.body else ' '.join((err.request.method, err.request.url))
-    err_content = pformat_json(err.response.content)  # pformat_json returns non-JSON values unchanged
-    err_response = '\n\n'.join((str(err), err_content))
+    if err.response:
+        err_content = pformat_json(err.response.content)  # pformat_json returns non-JSON values unchanged
+        err_response = '\n\n'.join((str(err), err_content))
+    else:
+        err_response = str(err)
     return err_request, err_response

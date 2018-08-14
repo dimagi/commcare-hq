@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.testcases import TestCase
 from fakecouch import FakeCouchDb
 
@@ -10,6 +11,7 @@ from corehq.motech.dhis2.forms import Dhis2ConfigForm
 from corehq.motech.dhis2.handler import _to_dhis_format
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 import json
+from six.moves import map
 
 
 class TestDhisHandler(TestCase):
@@ -73,7 +75,10 @@ class TestDhisHandler(TestCase):
                     'form_question': '/data/event_date'
                 },
                 'event_status': 'COMPLETED',
-                'org_unit_id': 'dhis2_location_id',
+                'org_unit_id': {
+                    'doc_type': 'ConstantString',
+                    'value': 'dhis2_location_id'
+                },
                 'datavalue_maps': [
                     {
                         'data_element_id': 'dhis2_element_id',
