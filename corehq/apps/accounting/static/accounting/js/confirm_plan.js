@@ -71,8 +71,8 @@ hqDefine('accounting/js/confirm_plan', [
             initialPageData.get('new_plan')
         );
 
-        $('#confirm-plan').koApplyBindings(confirmPlanModel);
-        $('#modal-downgrade').koApplyBindings(confirmPlanModel);
+        $('#confirm-plan').koApplyBindings(confirmPlan);
+        $('#modal-downgrade').koApplyBindings(confirmPlan);
 
         confirmPlan.init();
     });
