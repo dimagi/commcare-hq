@@ -166,11 +166,11 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                     ))
                 # fall back to processing one by one
                 for change in changes_chunk:
-                    self.process_with_error_handling(change, context, chunked_fallback=True)
+                    self.process_with_error_handling(change, context, update_checkpoint=False)
             else:
                 # fall back to processing one by one for failed changes
                 for change in retry_changes:
-                    self.process_with_error_handling(change, context, chunked_fallback=True)
+                    self.process_with_error_handling(change, context, update_checkpoint=False)
         context.changes_seen += len(changes_chunk)
         # update checkpoint for just the latest change
         self._update_checkpoint(changes_chunk[-1], context)
@@ -195,8 +195,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             timer.duration / len(changes_chunk),
             tags=tags + ["chunk_size:".format(str(len(changes_chunk)))])
 
-    def process_with_error_handling(self, change, context, chunked_fallback=False):
-        # chunked_fallback indicates whether the call came from `process_chunk_with_error_handling`
+    def process_with_error_handling(self, change, context, update_checkpoint=True):
         timer = TimingContext()
         try:
             with timer:
@@ -211,8 +210,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                 self._record_change_exception_in_datadog(change)
                 raise
         else:
-            if not chunked_fallback:
-                # chunked mode handles checkpoints/datadog separately
+            if update_checkpoint:
                 self._update_checkpoint(change, context)
                 self._record_change_success_in_datadog(change)
         self._record_change_in_datadog(change, timer)
