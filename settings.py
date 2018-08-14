@@ -540,7 +540,7 @@ TRANSFER_FILE_DIR_NAME = None
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 # celery
-BROKER_URL = 'django://'  # default django db based
+BROKER_URL = None
 
 CELERY_ANNOTATIONS = {
     '*': {
@@ -1485,6 +1485,7 @@ in HTML or read this email in a client that supports HTML email.
 Thanks,
 The CommCare HQ Team"""
 
+BROKER_URL = BROKER_URL or redis_cache['LOCATION']
 
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
