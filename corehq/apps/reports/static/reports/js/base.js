@@ -15,14 +15,15 @@ hqDefine("reports/js/base", function() {
 
         var $savedReports = $("#savedReports");
         if ($savedReports.length) {
-            var reportConfigsView = hqImport("reports/js/report_config_models").reportConfigsViewModel({
+            var reportConfigModels = hqImport("reports/js/report_config_models"),
+                reportConfigsView = reportConfigModels.reportConfigsViewModel({
                 filterForm: $("#reportFilters"),
                 items: initial_page_data('report_configs'),
                 defaultItem: defaultConfig,
                 saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
             });
             $savedReports.koApplyBindings(reportConfigsView);
-            reportConfigsView.setConfigBeingViewed(hqImport("reports/js/report_config_models").reportConfig(defaultConfig))
+            reportConfigsView.setConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig))
         }
 
         $('#email-enabled').tooltip({

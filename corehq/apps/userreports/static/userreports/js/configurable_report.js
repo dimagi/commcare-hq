@@ -78,14 +78,15 @@ hqDefine("userreports/js/configurable_report", function() {
             defaultConfig.datespan_slug = null;
         }
 
-        var reportConfigsView = hqImport("reports/js/report_config_models").reportConfigsViewModel({
+        var reportConfigModels = hqImport("reports/js/report_config_models"),
+            reportConfigsView = reportConfigModels.reportConfigsViewModel({
             filterForm: $("#paramSelectorForm"),
             items: initial_page_data("report_configs"),
             defaultItem: defaultConfig,
             saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
         });
         $("#savedReports").koApplyBindings(reportConfigsView);
-        reportConfigsView.setUserConfigurableConfigBeingViewed(hqImport("reports/js/report_config_models").reportConfig(defaultConfig));
+        reportConfigsView.setUserConfigurableConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
 
         $('#email-enabled').tooltip({
             placement: 'right',
