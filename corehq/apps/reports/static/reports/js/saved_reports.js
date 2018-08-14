@@ -281,13 +281,6 @@ hqDefine("reports/js/saved_reports", [
         viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
     };
 
-    $.fn.reportUserConfigurableConfigEditor = function (options) {  // jls only used in userreports/js/configurable_report
-        options.filterForm = options.filterForm || $(v);
-        var viewModel = new ReportConfigsViewModel(options);
-        $(this).koApplyBindings(viewModel);
-        viewModel.setUserConfigurableConfigBeingViewed(new ReportConfig(options.defaultItem));
-    };
-
     return {
         ReportConfig: ReportConfig,
         ReportConfigsViewModel: ReportConfigsViewModel,
