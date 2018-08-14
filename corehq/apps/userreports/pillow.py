@@ -242,35 +242,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
         return retry_changes
 
-    @staticmethod
-    def get_docs_for_changes(changes, domain):
-        # break up by doctype
-        changes_by_doctype = defaultdict(list)
-        for change in changes:
-            assert change.metadata.domain == domain
-            changes_by_doctype[change.metadata.data_source_name].append(change)
-
-        # query
-        docs = []
-        for _, _changes in six.iteritems(changes_by_doctype):
-            doc_store = _changes[0].document_store
-            docs.extend(list(doc_store.iter_documents([change.id for change in _changes])))
-
-        # catch missing docs
-        retry_changes = set()
-        docs_by_id = {doc['_id']: doc for doc in docs}
-        for change in changes:
-            if change.id not in docs_by_id:
-                # we need to capture DocumentMissingError which is not possible in bulk
-                #   so let pillow fall back to serial mode to capture the error for missing docs
-                retry_changes.add(change)
-                continue
-            try:
-                ensure_matched_revisions(change, docs_by_id.get(change.id))
-            except DocumentMismatchError:
-                retry_changes.add(change)
-        return retry_changes, docs
-
     def _process_chunk_for_domain(self, domain, changes_chunk):
         all_adapters = list(self.table_adapters_by_domain[domain])
         to_delete_by_adapter = defaultdict(list)
@@ -324,6 +295,35 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
 
         return retry_changes
+
+    @staticmethod
+    def get_docs_for_changes(changes, domain):
+        # break up by doctype
+        changes_by_doctype = defaultdict(list)
+        for change in changes:
+            assert change.metadata.domain == domain
+            changes_by_doctype[change.metadata.data_source_name].append(change)
+
+        # query
+        docs = []
+        for _, _changes in six.iteritems(changes_by_doctype):
+            doc_store = _changes[0].document_store
+            docs.extend(list(doc_store.iter_documents([change.id for change in _changes])))
+
+        # catch missing docs
+        retry_changes = set()
+        docs_by_id = {doc['_id']: doc for doc in docs}
+        for change in changes:
+            if change.id not in docs_by_id:
+                # we need to capture DocumentMissingError which is not possible in bulk
+                #   so let pillow fall back to serial mode to capture the error for missing docs
+                retry_changes.add(change)
+                continue
+            try:
+                ensure_matched_revisions(change, docs_by_id.get(change.id))
+            except DocumentMismatchError:
+                retry_changes.add(change)
+        return retry_changes, docs
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
