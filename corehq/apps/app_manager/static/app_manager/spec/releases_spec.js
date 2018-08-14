@@ -2,7 +2,7 @@
 /* global $, sinon */
 
 describe('App Releases', function() {
-    function get_saved_apps(num, extraProps, releasesMain) {
+    function getSavedApps(num, extraProps, releasesMain) {
         extraProps = extraProps || {};
         var savedAppModel = hqImport('app_manager/js/releases/releases').savedAppModel,
             savedApps = [];
@@ -48,7 +48,7 @@ describe('App Releases', function() {
             registerUrl("download_multimedia_zip", "/a/test-domain/apps/download/---/multimedia/commcare.zip");
             ajax_stub = sinon.stub($, 'ajax');
             releases = releasesMainModel(options);
-            releases.savedApps(get_saved_apps(releases.fetchLimit(), {}, releases));
+            releases.savedApps(getSavedApps(releases.fetchLimit(), {}, releases));
         });
 
         afterEach(function() {
@@ -116,7 +116,7 @@ describe('App Releases', function() {
         it('should correctly load media url', function() {
             var props = { include_media: true };
             props[savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL] = null;
-            releases.savedApps(get_saved_apps(1, props, releases));
+            releases.savedApps(getSavedApps(1, props, releases));
 
             savedApp = releases.savedApps()[0];
 
@@ -133,7 +133,7 @@ describe('App Releases', function() {
         it('should correctly load non media url', function() {
             var props = { include_media: false };
             props[savedAppModel.URL_TYPES.SHORT_ODK_URL] = null;
-            releases.savedApps(get_saved_apps(1, props, releases));
+            releases.savedApps(getSavedApps(1, props, releases));
 
             savedApp = releases.savedApps()[0];
 
@@ -152,7 +152,7 @@ describe('App Releases', function() {
 
             props[savedAppModel.URL_TYPES.SHORT_ODK_URL] = null;
             props[savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL] = null;
-            releases.savedApps(get_saved_apps(1, props, releases));
+            releases.savedApps(getSavedApps(1, props, releases));
             savedApp = releases.savedApps()[0];
 
             savedApp.get_app_code();
