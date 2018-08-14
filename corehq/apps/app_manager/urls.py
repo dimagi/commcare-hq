@@ -4,8 +4,9 @@ from django.conf.urls import url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
 from corehq.apps.app_manager.views import (
     DownloadCCZ,
-    AppSummaryView,
+    AppCaseSummaryView,
     AppDiffView,
+    AppFormSummaryView,
     AppDataView,
     LanguageProfilesView,
     DownloadCaseSummaryView,
@@ -62,7 +63,9 @@ app_urls = [
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
         form_source_legacy, name='form_source_legacy'),
     url(r'^app_data/$', AppDataView.as_view(), name=AppDataView.urlname),
-    url(r'^summary/$', AppSummaryView.as_view(), name=AppSummaryView.urlname),
+    url(r'^summary/$', AppFormSummaryView.as_view(), name=AppFormSummaryView.urlname),
+    url(r'^summary/case/$', AppCaseSummaryView.as_view(), name=AppCaseSummaryView.urlname),
+    url(r'^summary/form/$', AppFormSummaryView.as_view(), name=AppFormSummaryView.urlname),
     url(r'^summary/case/download/$', DownloadCaseSummaryView.as_view(), name=DownloadCaseSummaryView.urlname),
     url(r'^summary/form/download/$', DownloadFormSummaryView.as_view(), name=DownloadFormSummaryView.urlname),
     url(r'^summary/app/download/$', DownloadAppSummaryView.as_view(), name=DownloadAppSummaryView.urlname),

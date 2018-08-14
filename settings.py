@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import inspect
 from collections import defaultdict
 import importlib
 import os
@@ -848,7 +850,7 @@ ZIPLINE_API_PASSWORD = ''
 # Set to the list of domain names for which we will run the ICDS SMS indicators
 ICDS_SMS_INDICATOR_DOMAINS = []
 
-KAFKA_URL = 'localhost:9092'
+KAFKA_BROKERS = None
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
@@ -929,43 +931,6 @@ except ImportError as error:
     from dev_settings import *
 
 
-def _determine_couch_databases(couch_databases):
-    from dev_settings import COUCH_DATABASES as DEFAULT_COUCH_DATABASES_VALUE
-    if 'COUCH_SERVER_ROOT' in globals() and \
-            couch_databases in (None, DEFAULT_COUCH_DATABASES_VALUE):
-        import warnings
-        couch_databases = {
-            'default': {
-                'COUCH_HTTPS': COUCH_HTTPS,
-                'COUCH_SERVER_ROOT': COUCH_SERVER_ROOT,
-                'COUCH_USERNAME': COUCH_USERNAME,
-                'COUCH_PASSWORD': COUCH_PASSWORD,
-                'COUCH_DATABASE_NAME': COUCH_DATABASE_NAME,
-            },
-        }
-        warnings.warn("""COUCH_SERVER_ROOT and related variables are deprecated
-
-Please replace your COUCH_* settings with
-
-COUCH_DATABASES = {
-    'default': {
-        'COUCH_HTTPS': %(COUCH_HTTPS)r,
-        'COUCH_SERVER_ROOT': %(COUCH_SERVER_ROOT)r,
-        'COUCH_USERNAME': %(COUCH_USERNAME)r,
-        'COUCH_PASSWORD': %(COUCH_PASSWORD)r,
-        'COUCH_DATABASE_NAME': %(COUCH_DATABASE_NAME)r,
-    },
-}
-""" % globals(), DeprecationWarning)
-
-    return couch_databases
-
-
-try:
-    COUCH_DATABASES = _determine_couch_databases(COUCH_DATABASES)
-except NameError:
-    COUCH_DATABASES = _determine_couch_databases(None)
-
 COUCH_DATABASES['default'] = {
     k: v.encode('utf-8') if isinstance(v, six.text_type) else v
     for (k, v) in COUCH_DATABASES['default'].items()
@@ -985,6 +950,17 @@ for database in DATABASES.values():
 _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
+
+if not KAFKA_BROKERS and 'KAFKA_URL' in globals():
+    import warnings
+    warnings.warn(inspect.cleandoc("""KAFKA_URL is deprecated
+
+    Please replace KAFKA_URL with KAFKA_BROKERS as follows:
+
+        KAFKA_BROKERS = ['%s']
+    """) % KAFKA_URL, DeprecationWarning)
+
+    KAFKA_BROKERS = [KAFKA_URL]
 
 TEMPLATES = [
     {

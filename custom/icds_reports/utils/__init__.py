@@ -620,20 +620,12 @@ def wfh_recorded_in_month_column(beta):
 
 
 def default_age_interval(beta):
-    return '0 - 5 years' if beta else '6 - 60 months'
+    return '0 - 5 years'
 
 
 def get_age_filters(beta):
-    if beta:
-        return [
-            NOT(EQ('age_tranche', 'age_72'))
-        ]
     return [
-        AND([
-            NOT(EQ('age_tranche', 'age_0')),
-            NOT(EQ('age_tranche', 'age_6')),
-            NOT(EQ('age_tranche', 'age_72'))
-        ])
+        NOT(EQ('age_tranche', 'age_72'))
     ]
 
 
