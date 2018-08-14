@@ -337,7 +337,11 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
 
-        q = user_es.UserES().domain(domain)
+        if HQUserType.DEACTIVATED in user_types:
+            q = user_es.UserES().show_only_inactive().domain(domain)
+        else:
+            q = user_es.UserES().domain(domain)
+
         if not request_user.has_permission(domain, 'access_all_locations'):
             cls._verify_users_are_accessible(domain, request_user, user_ids)
             return q.OR(
@@ -347,7 +351,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                                       .accessible_to_user(domain, request_user)
                                       .location_ids())),
             )
-        elif HQUserType.REGISTERED in user_types:
+        elif HQUserType.REGISTERED in user_types or HQUserType.DEACTIVATED in user_types:
             # return all users with selected user_types
             user_type_filters.append(user_es.mobile_users())
             return q.OR(*user_type_filters)
