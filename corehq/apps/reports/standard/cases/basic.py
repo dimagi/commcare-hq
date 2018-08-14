@@ -73,7 +73,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 unknown=HQUserType.UNKNOWN not in user_types,
                 demo=HQUserType.DEMO_USER not in user_types,
                 commtrack=False,
-                show_deactivated=HQUserType.DEACTIVATED not in user_types
+                only_deactivated=HQUserType.DEACTIVATED not in user_types
             )
             query = query.NOT(case_es.owner(ids_to_exclude))
         else:  # Only show explicit matches
@@ -113,18 +113,18 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                         raise BadRequestError()
             raise e
 
-    def get_special_owner_ids(self, admin, unknown, demo, commtrack, show_deactivated=False, only_deactivated=False):
-        if not any([admin, unknown, demo, commtrack, show_deactivated, only_deactivated]):
+    def get_special_owner_ids(self, admin, unknown, demo, commtrack, include_deactivated=False, only_deactivated=False):
+        if not any([admin, unknown, demo, commtrack, include_deactivated, only_deactivated]):
             return []
 
         user_filters = [filter_ for include, filter_ in [
             (admin, user_es.admin_users()),
             (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
             (demo, user_es.demo_users()),
-            (show_deactivated, user_es.mobile_users()),
+            (include_deactivated, user_es.mobile_users()),
             (only_deactivated, user_es.mobile_users()),
         ] if include]
-        if show_deactivated:
+        if include_deactivated:
             owner_ids = (user_es.UserES()
                          .show_inactive()
                          .domain(self.domain)
@@ -185,7 +185,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 unknown=HQUserType.UNKNOWN in user_types,
                 demo=HQUserType.DEMO_USER in user_types,
                 commtrack=HQUserType.COMMTRACK in user_types,
-                deactivated=HQUserType.DEACTIVATED in user_types,
+                only_deactivated=HQUserType.DEACTIVATED in user_types,
             )
 
             # Get group ids for each group that was specified
