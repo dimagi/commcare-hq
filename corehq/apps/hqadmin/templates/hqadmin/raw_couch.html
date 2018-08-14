@@ -9,16 +9,15 @@
 
 
 {% block content %}
+    {% initial_page_data 'all_databases' all_databases %}
     <div class="container-fluid">
         <div class="page-header">
             <h1>Enter a doc id</h1>
-            <form class="form-inline" method="GET" action="">
+            <form class="form-inline" method="GET" action="" id="doc-form">
                 <input name="id" class="form-control" type="search" style="width: 30em"/>
-                <select class="form-control" name="db_name" style="width: 12em">
-                    <option value="">All Databases</option>
-                    {% for db in all_databases %}
-                        <option value="{{ db }}">{{ db }}</option>
-                    {% endfor %}
+                <select class="form-control"
+                        data-bind="options: allDatabases, optionsText:'dbName', optionsValue: 'dbValue'"
+                        name="db_name" style="width: 12em">
                 </select>
                 <input class="btn btn-primary form-control" type="submit"/>
             </form>
