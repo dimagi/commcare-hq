@@ -185,7 +185,7 @@ class AdminRestoreView(TemplateView):
     @staticmethod
     def get_stats_from_xml(xml_payload):
         restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-        restore_id = restore_id_element.text if restore_id_element is not None else None
+        restore_id = restore_id_element.text if restore_id_element else None
         cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
         num_cases = len(cases)
 

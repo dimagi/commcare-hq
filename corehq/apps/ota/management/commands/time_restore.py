@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import csv342 as csv
+import datetime
 
 from couchdbkit.resource import ResourceNotFound
 from django.core.management.base import BaseCommand
@@ -61,6 +62,7 @@ def _get_headers_and_rows(domain, users, app_id):
         xml_payload = etree.fromstring(b''.join(response.streaming_content))
         stats = AdminRestoreView.get_stats_from_xml(xml_payload)
         row = {
+            'timestamp': datetime.datetime.now().isoformat(),
             'username': user.username,
             'total_duration': timing_dict['duration'],
             'num_cases': stats['num_cases'],
@@ -80,6 +82,7 @@ def _get_headers_and_rows(domain, users, app_id):
 
     headers = [
         'username',
+        'timestamp',
         'total_duration',
         'num_cases',
         'num_locations',
@@ -95,7 +98,7 @@ def _get_headers_and_rows(domain, users, app_id):
 
 
 def _calculate_totals_row(headers, rows):
-    totals_row = {'username': 'TOTAL'}
-    for header in headers[1:]:
+    totals_row = {'username': 'TOTAL', 'timestamp': '---'}
+    for header in headers[2:]:
         totals_row[header] = sum(row.get(header, 0) for row in rows)
     return totals_row
