@@ -63,9 +63,9 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        if self.request.can_access_all_locations and EMWF.show_all_data(mobile_user_and_group_slugs):
+        if self.request.can_access_all_locations and EMWF.show_all_active_owners_and_admin_demo_unknown_supply(mobile_user_and_group_slugs):
             pass
-        elif self.request.can_access_all_locations and EMWF.show_project_data(mobile_user_and_group_slugs):
+        elif self.request.can_access_all_locations and EMWF.show_all_active_owners(mobile_user_and_group_slugs):
             # Show everything but stuff we know for sure to exclude
             user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
             ids_to_exclude = self.get_special_owner_ids(
@@ -73,7 +73,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 unknown=HQUserType.UNKNOWN not in user_types,
                 demo=HQUserType.DEMO_USER not in user_types,
                 commtrack=False,
-                deactivated=HQUserType.DEACTIVATED not in user_types
+                show_deactivated=HQUserType.DEACTIVATED not in user_types
             )
             query = query.NOT(case_es.owner(ids_to_exclude))
         else:  # Only show explicit matches
@@ -113,19 +113,26 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                         raise BadRequestError()
             raise e
 
-    def get_special_owner_ids(self, admin, unknown, demo, commtrack, deactivated):
-        if not any([admin, unknown, demo, commtrack, deactivated]):
+    def get_special_owner_ids(self, admin, unknown, demo, commtrack, show_deactivated=False, only_deactivated=False):
+        if not any([admin, unknown, demo, commtrack, show_deactivated, only_deactivated]):
             return []
 
         user_filters = [filter_ for include, filter_ in [
             (admin, user_es.admin_users()),
             (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
             (demo, user_es.demo_users()),
-            (deactivated, user_es.mobile_users())
+            (show_deactivated, user_es.mobile_users()),
+            (only_deactivated, user_es.mobile_users()),
         ] if include]
-        if deactivated:
+        if show_deactivated:
             owner_ids = (user_es.UserES()
                          .show_inactive()
+                         .domain(self.domain)
+                         .OR(*user_filters)
+                         .get_ids())
+        elif only_deactivated:
+            owner_ids = (user_es.UserES()
+                         .show_only_inactive()
                          .domain(self.domain)
                          .OR(*user_filters)
                          .get_ids())

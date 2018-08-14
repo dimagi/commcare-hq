@@ -145,7 +145,7 @@ class EmwfUtils(object):
     @property
     @memoized
     def static_options(self):
-        static_options = [("t__0", _("[All mobile workers]"))]
+        static_options = [("t__0", _("[All Active Mobile Workers]"))]
 
         types = ['DEMO_USER', 'ADMIN', 'UNKNOWN', 'DEACTIVATED']
         if Domain.get_by_name(self.domain).commtrack_enabled:
@@ -257,7 +257,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if not self.request.can_access_all_locations:
             return self._get_assigned_locations_default()
 
-        defaults = [('t__0', _("[All mobile workers]"))]
+        defaults = [('t__0', _("[All Active Mobile Workers]"))]
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
@@ -383,7 +383,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     @property
     def options(self):
-        return [('t__0', _("[All mobile workers]"))]
+        return [('t__0', _("[All Active Mobile Workers]"))]
 
     @classmethod
     def for_user(cls, user_id):

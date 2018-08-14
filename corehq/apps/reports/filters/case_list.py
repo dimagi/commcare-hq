@@ -20,8 +20,8 @@ class CaseListFilterUtils(EmwfUtils):
         # replace [All mobile workers] with case-list-specific options
         assert options[0][0] == "t__0"
         return [
-            ("all_data", _("[All Data]")),
-            ('project_data', _("[Project Data]"))
+            ("all_data", _("[All Active Owners] and [admin], [demo_user], [Unknown Users], and [CommCare Supply]")),
+            ('project_data', _("[All Active Owners]"))
         ] + options[1:]
 
     def _group_to_choice_tuple(self, group):
@@ -35,7 +35,7 @@ class CaseListFilterUtils(EmwfUtils):
 class CaseListFilter(ExpandedMobileWorkerFilter):
     slug = 'case_list_filter'
     options_url = 'case_list_options'
-    default_selections = [('project_data', _("[Project Data]"))]
+    default_selections = [('project_data', _("[All Active Owners]"))]
 
     @property
     @memoized
@@ -43,11 +43,11 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
         return CaseListFilterUtils(self.domain)
 
     @staticmethod
-    def show_all_data(mobile_user_and_group_slugs):
+    def show_all_active_owners_and_admin_demo_unknown_supply(mobile_user_and_group_slugs):
         return 'all_data' in mobile_user_and_group_slugs
 
     @staticmethod
-    def show_project_data(mobile_user_and_group_slugs):
+    def show_all_active_owners(mobile_user_and_group_slugs):
         return 'project_data' in mobile_user_and_group_slugs
 
     @staticmethod

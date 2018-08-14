@@ -84,7 +84,7 @@ class HQUserType(object):
                       ugettext_noop("admin"),
                       ugettext_noop("Unknown Users"),
                       ugettext_noop("CommCare Supply"),
-                      ugettext_noop("Deactivated Users")]
+                      ugettext_noop("Deactivated Mobile Workers")]
     toggle_defaults = (True, False, False, False, False, True)
     count = len(human_readable)
     included_defaults = (True, True, True, True, False, True)

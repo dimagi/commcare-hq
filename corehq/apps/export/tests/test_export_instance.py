@@ -396,7 +396,7 @@ class TestExportInstanceDefaultFilters(SimpleTestCase):
         case_export = CaseExportInstance()
         case_export_wrapped = CaseExportInstance.wrap({})
         for e in [case_export, case_export_wrapped]:
-            self.assertTrue(e.filters.show_all_data)
+            self.assertTrue(e.filters.show_all_active_owners_and_admin_demo_unknown_supply)
 
 
 class TestExportInstance(SimpleTestCase):
