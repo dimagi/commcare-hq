@@ -9,6 +9,7 @@ import postgres_copy
 import sqlalchemy
 
 from django.conf import settings
+from django.db import connections
 from django.test.utils import override_settings
 
 from corehq.apps.domain.models import Domain
