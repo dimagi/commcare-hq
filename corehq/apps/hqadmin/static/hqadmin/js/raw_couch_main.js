@@ -1,5 +1,11 @@
 /* globals ace, hqDefine */
-hqDefine('hqadmin/js/raw_couch', function () {
+hqDefine('hqadmin/js/raw_couch_main',
+    [
+        'jquery',
+        'ace-builds/src-min-noconflict/mode-json',
+        'ace-builds/src-min-noconflict/ext-searchbox'
+    ],
+    function ($) {
     $(function() {
         var $element = $("#couch-document");
         var editor = ace.edit(

@@ -4,11 +4,9 @@
 {% block title %}Doc {{ doc_id }}{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
-    <script src="{% static 'hqadmin/js/raw_couch.js' %}"></script>
+  {% requirejs_main 'hqadmin/js/raw_couch_main' %}
 {% endblock %}
+
 
 {% block content %}
     <div class="container-fluid">
@@ -34,6 +32,10 @@
             <div>
                 <h3>Databases/Tables Searched:</h3>
                 <table class="table">
+                    <tr>
+                        <th>Status</th>
+                        <th>Database Name</th>
+                    </tr>
                     {% for db in db_results %}
                     <tr>
                         <td><span class="label label-{{ db.status }}">{{ db.result }}</span></td>
