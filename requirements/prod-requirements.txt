@@ -75,6 +75,7 @@ eventlet==0.23.0          # via errand-boy
 faker==0.8.15
 flower==0.9.2
 funcsigs==1.0.2
+futures==3.2.0
 gevent==1.2.2
 ghdiff==0.4
 greenlet==0.4.12
