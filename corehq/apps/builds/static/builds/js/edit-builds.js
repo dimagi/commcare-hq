@@ -1,7 +1,11 @@
 /* globals hqDefine */
-hqDefine('builds/js/edit-builds', function () {
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-        doc = initial_page_data('doc');
+hqDefine('builds/js/edit-builds', [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'jquery-ui/ui/sortable',
+], function ($,ko, intialPageData) {
+    var doc = intialPageData.get('doc');
 
     function versionModel(version, label, superuserOnly, j2meEnabled) {
         var self = {};
@@ -17,14 +21,15 @@ hqDefine('builds/js/edit-builds', function () {
                 includes(newValue)
             );
         });
+
         return self;
     }
 
     function menuModel() {
         var self = {};
 
-        self.available_versions = initial_page_data('available_versions');
-        self.j2me_enabled_versions = initial_page_data('j2me_enabled_versions');
+        self.available_versions = intialPageData.get('available_versions');
+        self.j2me_enabled_versions = intialPageData.get('j2me_enabled_versions');
         self.versions = ko.observableArray([]);
         self.available_ones = [];
         self.available_twos = [];
@@ -88,6 +93,7 @@ hqDefine('builds/js/edit-builds', function () {
 
     var buildsMenu = menuModel();
     $("#menu-form").koApplyBindings(buildsMenu);
+    $("#menu-form").find('tbody').sortable()
 
     function postGo(url, params) {
         var $form = $("#submit-menu-form")
