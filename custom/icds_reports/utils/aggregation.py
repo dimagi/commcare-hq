@@ -767,7 +767,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(swelling) OVER w as swelling,
         LAST_VALUE(blurred_vision) OVER w as blurred_vision,
         LAST_VALUE(convulsions) OVER w as convulsions,
-        LAST_VALUE(rupture) OVER w as rupture
+        LAST_VALUE(rupture) OVER w as rupture,
+        LAST_VALUE(anemia) OVER w as anemia
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
