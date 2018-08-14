@@ -53,15 +53,10 @@ def recipient_mother_person_case_from_ccs_record_case(case_schedule_instance):
 
 def recipient_mother_person_case_from_ccs_record_case_excl_migrated_or_opted_out(case_schedule_instance):
     from custom.icds.messaging.custom_content import person_case_is_migrated_or_opted_out
-    try:
-        mother = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
-    except CaseRelationshipError as e:
-        if not skip_notifying_missing_ccs_record_parent(e):
-            notify_exception(None, message="ICDS ccs_record relationship error")
 
-        return None
+    mother = recipient_mother_person_case_from_ccs_record_case(case_schedule_instance)
 
-    if person_case_is_migrated_or_opted_out(mother):
+    if mother is None or person_case_is_migrated_or_opted_out(mother):
         return None
 
     return mother
