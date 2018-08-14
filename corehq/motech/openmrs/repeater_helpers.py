@@ -137,7 +137,7 @@ class UpdatePersonAttributeTask(WorkflowTask):
                 'value': self.value,
                 'attributeType': self.attribute_type_uuid,
             },
-            raise_for_status = True,
+            raise_for_status=True,
         )
 
     def rollback(self):
@@ -149,7 +149,7 @@ class UpdatePersonAttributeTask(WorkflowTask):
                 'value': self.existing_value,
                 'attributeType': self.attribute_type_uuid,
             },
-            raise_for_status = True,
+            raise_for_status=True,
         )
 
 
@@ -200,7 +200,7 @@ class UpdatePatientIdentifierTask(WorkflowTask):
                 'identifier': self.identifier,
                 'identifierType': self.identifier_type_uuid,
             },
-            raise_for_status = True,
+            raise_for_status=True,
         )
 
     def rollback(self):
@@ -212,7 +212,7 @@ class UpdatePatientIdentifierTask(WorkflowTask):
                 'identifier': self.existing_identifier,
                 'identifierType': self.identifier_type_uuid,
             },
-            raise_for_status = True,
+            raise_for_status=True,
         )
 
 
