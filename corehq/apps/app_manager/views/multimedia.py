@@ -50,6 +50,6 @@ def multimedia_ajax(request, domain, app_id):
             'domain': domain,
             'app': app,
         }
-        return render(request, "app_manager/partials/multimedia_ajax.html", context)
+        return render(request, "app_manager/partials/settings/multimedia_ajax.html", context)
     else:
         raise Http404()

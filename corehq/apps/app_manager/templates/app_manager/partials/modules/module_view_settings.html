@@ -46,7 +46,7 @@
             </div>
             <div class="panel-body">
               {% if not module.is_surveys and module.module_type != 'shadow' %}
-                {% include "app_manager/partials/module_view_case_type.html" %}
+                {% include "app_manager/partials/modules/module_view_case_type.html" %}
               {% endif %}
 
               {% if child_module_enabled and not module.is_training_module%}
@@ -141,7 +141,7 @@
               </div>
               {% endif %}
 
-              {% include "app_manager/partials/module_filter.html" %}
+              {% include "app_manager/partials/modules/module_filter.html" %}
 
             </div>
           </div>
