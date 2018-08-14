@@ -268,6 +268,12 @@ class ConstructedPillow(PillowBase):
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError
 
+    pillow_logging.exception("[%s] Error on change: %s, %s" % (
+        pillow.get_name(),
+        change['id'],
+        exception,
+    ))
+
     datadog_counter('commcare.change_feed.changes.exceptions', tags=[
         'pillow_name:{}'.format(pillow.get_name()),
     ])
