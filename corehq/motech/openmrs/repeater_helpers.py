@@ -524,15 +524,16 @@ def save_match_ids(case, case_config, patient):
     If we are confident of the patient matched to a case, save
     the patient's identifiers to the case.
     """
-    def get_patient_id_type_uuids_values():
-        yield PERSON_UUID_IDENTIFIER_TYPE_ID, patient['uuid']
-        for identifier in patient['identifiers']:
-            yield identifier['identifierType']['uuid'], identifier['identifier']
+    def get_patient_id_type_uuids_values(patient_):
+        yield PERSON_UUID_IDENTIFIER_TYPE_ID, patient_['uuid']
+        for identifier in patient_['identifiers']:
+            if 'identifier' in identifier:
+                yield identifier['identifierType']['uuid'], identifier['identifier']
 
     case_config_ids = case_config['patient_identifiers']
     case_update = {}
     kwargs = {}
-    for id_type_uuid, value in get_patient_id_type_uuids_values():
+    for id_type_uuid, value in get_patient_id_type_uuids_values(patient):
         if id_type_uuid in case_config_ids:
             case_property = case_config_ids[id_type_uuid]['case_property']
             if case_property == 'external_id':
