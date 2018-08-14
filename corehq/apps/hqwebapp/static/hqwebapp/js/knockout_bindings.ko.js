@@ -1,5 +1,16 @@
 /* global DOMPurify */
-hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/ui/sortable'], function($, ko) {
+hqDefine("hqwebapp/js/knockout_bindings.ko", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/atwho',
+    'hqwebapp/js/main',
+    'jquery-ui/ui/sortable',
+], function(
+    $,
+    ko,
+    atWho,
+    hqMain
+) {
 
     ko.bindingHandlers.hqbSubmitReady = {
         update: function(element, valueAccessor) {
@@ -362,7 +373,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 state = valueAccessor(),
                 saveButton;
 
-            saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+            saveButton = hqMain.initSaveButton({
                 save: function() {
                     saveButton.ajax(saveOptions());
                 },
@@ -387,7 +398,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 state = valueAccessor(),
                 deleteButton;
 
-            deleteButton = hqImport("hqwebapp/js/main").initDeleteButton({
+            deleteButton = hqMain.initDeleteButton({
                 save: function() {
                     deleteButton.ajax(saveOptions());
                 },
@@ -532,7 +543,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
                 format = ko.utils.unwrapObservable(opts.format);
             $(element).find('.hq-help').remove();
-            hqImport("hqwebapp/js/main").makeHqHelp({
+            hqMain.makeHqHelp({
                 title: name,
                 content: description,
                 html: format === 'html',
@@ -750,7 +761,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 throw new Error("The typeahead binding requires Atwho.js and Caret.js");
             }
 
-            hqImport('hqwebapp/js/atwho').init($element, {
+            atWho.init($element, {
                 afterInsert: function() {
                     $element.trigger('textchange');
                 },

@@ -2,6 +2,7 @@ hqDefine("reports/js/saved_reports_main", [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'reports/js/report_config_models',
+    'hqwebapp/js/knockout_bindings.ko', // modal binding
 ], function(
     $,
     initialPageData,
