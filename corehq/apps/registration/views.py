@@ -20,7 +20,7 @@ from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
-    track_confirmed_account_on_hubspot,
+    track_confirmed_account_on_hubspot_v2,
     track_clicked_signup_on_hubspot,
     HUBSPOT_COOKIE,
     track_web_user_registration_hubspot,
@@ -411,7 +411,7 @@ def confirm_domain(request, guid=None):
             'the time to confirm your email address: %s.'
         % (requesting_user.username))
     track_workflow(requesting_user.email, "Confirmed new project")
-    track_confirmed_account_on_hubspot.delay(requesting_user)
+    track_confirmed_account_on_hubspot_v2.delay(requesting_user)
     request.session['CONFIRM'] = True
     return HttpResponseRedirect(reverse(view_name, args=view_args))
 
