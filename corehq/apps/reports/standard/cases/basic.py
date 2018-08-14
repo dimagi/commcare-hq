@@ -125,7 +125,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         ] if include]
         if deactivated:
             owner_ids = (user_es.UserES()
-                         .show_only_inactive()
+                         .show_inactive()
                          .domain(self.domain)
                          .OR(*user_filters)
                          .get_ids())
