@@ -25,7 +25,7 @@ from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.analytics.tasks import update_hubspot_properties, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
+from corehq.apps.analytics.tasks import update_hubspot_properties_v2, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -369,7 +369,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
             settings.DEFAULT_FROM_EMAIL,
             [settings.REPORT_BUILDER_ADD_ON_EMAIL],
         )
-        update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
+        update_hubspot_properties_v2.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
 
 

@@ -6,7 +6,7 @@ from corehq.apps.accounting.utils import ensure_domain_instance
 from corehq.apps.analytics.tasks import (
     track_user_sign_in_on_hubspot,
     HUBSPOT_COOKIE,
-    update_hubspot_properties,
+    update_hubspot_properties_v2,
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.registration.views import ProcessRegistrationView
@@ -47,7 +47,7 @@ def user_save_callback(sender, **kwargs):
         properties.update(get_subscription_properties_by_user(couch_user))
         properties.update(get_domain_membership_properties(couch_user))
         identify.delay(couch_user.username, properties)
-        update_hubspot_properties(couch_user, properties)
+        update_hubspot_properties_v2(couch_user, properties)
 
 
 @receiver(commcare_domain_post_save)
@@ -61,7 +61,7 @@ def domain_save_callback(sender, domain, **kwargs):
 def update_subscription_properties_by_user(couch_user):
     properties = get_subscription_properties_by_user(couch_user)
     identify.delay(couch_user.username, properties)
-    update_hubspot_properties(couch_user, properties)
+    update_hubspot_properties_v2(couch_user, properties)
 
 
 def get_subscription_properties_by_user(couch_user):

@@ -25,7 +25,7 @@ import logging
 from django.conf import settings
 from email_validator import validate_email, EmailNotValidError
 from corehq.toggles import deterministic_random
-from corehq.util.decorators import old_analytics_task
+from corehq.util.decorators import old_analytics_task, analytics_task
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.utils import (
     count_by_response_code,
@@ -243,6 +243,11 @@ def _send_hubspot_form_request(url, data):
 
 @old_analytics_task()
 def update_hubspot_properties(webuser, properties):
+    update_hubspot_properties_v2(webuser, properties)
+
+
+@analytics_task()
+def update_hubspot_properties_v2(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         _track_on_hubspot(webuser, properties)
