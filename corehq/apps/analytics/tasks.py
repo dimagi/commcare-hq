@@ -289,6 +289,11 @@ def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
+@analytics_task()
+def track_user_sign_in_on_hubspot_v2(webuser, hubspot_cookie, meta, path):
+    _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
+
+
 @old_analytics_task()
 def track_built_app_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)

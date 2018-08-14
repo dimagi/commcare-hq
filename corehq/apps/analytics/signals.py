@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.accounting.utils import ensure_domain_instance
 from corehq.apps.analytics.tasks import (
-    track_user_sign_in_on_hubspot,
+    track_user_sign_in_on_hubspot_v2,
     HUBSPOT_COOKIE,
     update_hubspot_properties_v2,
 )
@@ -164,4 +164,4 @@ def track_user_login(sender, request, user, **kwargs):
                 return
 
         meta = get_meta(request)
-        track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta, request.path)
+        track_user_sign_in_on_hubspot_v2.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta, request.path)
