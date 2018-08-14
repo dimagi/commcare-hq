@@ -47,7 +47,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
-            e.exception.message,
+            six.text_type(e.exception),
             "Property program_id is required."
         )
 
