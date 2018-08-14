@@ -931,43 +931,6 @@ except ImportError as error:
     from dev_settings import *
 
 
-def _determine_couch_databases(couch_databases):
-    from dev_settings import COUCH_DATABASES as DEFAULT_COUCH_DATABASES_VALUE
-    if 'COUCH_SERVER_ROOT' in globals() and \
-            couch_databases in (None, DEFAULT_COUCH_DATABASES_VALUE):
-        import warnings
-        couch_databases = {
-            'default': {
-                'COUCH_HTTPS': COUCH_HTTPS,
-                'COUCH_SERVER_ROOT': COUCH_SERVER_ROOT,
-                'COUCH_USERNAME': COUCH_USERNAME,
-                'COUCH_PASSWORD': COUCH_PASSWORD,
-                'COUCH_DATABASE_NAME': COUCH_DATABASE_NAME,
-            },
-        }
-        warnings.warn(inspect.cleandoc("""COUCH_SERVER_ROOT and related variables are deprecated
-
-        Please replace your COUCH_* settings with
-
-            COUCH_DATABASES = {
-                'default': {
-                    'COUCH_HTTPS': %(COUCH_HTTPS)r,
-                    'COUCH_SERVER_ROOT': %(COUCH_SERVER_ROOT)r,
-                    'COUCH_USERNAME': %(COUCH_USERNAME)r,
-                    'COUCH_PASSWORD': %(COUCH_PASSWORD)r,
-                    'COUCH_DATABASE_NAME': %(COUCH_DATABASE_NAME)r,
-                },
-            }
-            """) % globals(), DeprecationWarning)
-
-    return couch_databases
-
-
-try:
-    COUCH_DATABASES = _determine_couch_databases(COUCH_DATABASES)
-except NameError:
-    COUCH_DATABASES = _determine_couch_databases(None)
-
 COUCH_DATABASES['default'] = {
     k: v.encode('utf-8') if isinstance(v, six.text_type) else v
     for (k, v) in COUCH_DATABASES['default'].items()
