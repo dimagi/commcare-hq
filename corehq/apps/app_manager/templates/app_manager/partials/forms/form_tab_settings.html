@@ -71,7 +71,7 @@
                     </div>
 
                     {% if form.doc_type == "ShadowForm" %}
-                        {% include "app_manager/partials/shadow_parent_select.html" %}
+                        {% include "app_manager/partials/forms/shadow_parent_select.html" %}
                     {% endif %}
 
                     {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form"%}
