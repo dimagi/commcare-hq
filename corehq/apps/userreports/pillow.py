@@ -272,21 +272,23 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         return retry_changes, docs
 
     def _process_chunk_for_domain(self, domain, changes_chunk):
-        adapters = self.table_adapters_by_domain[domain]
-
+        all_adapters = list(self.table_adapters_by_domain[domain])
         to_delete_by_adapter = defaultdict(list)
         rows_to_save_by_adapter = defaultdict(list)
         async_configs_by_doc_id = defaultdict(list)
         to_update = {change for change in changes_chunk if not change.deleted}
-        retry_changes, docs = self._get_docs(to_update)
+        retry_changes, docs = self.get_docs_for_changes(to_update, domain)
 
         for doc in docs:
+            # make a shallow copy so that adapters can be removed
+            adapters = list(self.table_adapters_by_domain[domain])
             eval_context = EvaluationContext(doc)
             for adapter in adapters:
                 if adapter.config.filter(doc):
                     if adapter.run_asynchronous:
                         async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                     else:
+                        # below call may remove an adapter on error
                         ucr_values = self._get_ucr_values(domain, adapter, doc, eval_context)
                         rows_to_save_by_adapter[adapter].extend(ucr_values or [])
                 elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
@@ -295,7 +297,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
         # bulk delete by adapter
         to_delete = [c.id for c in changes_chunk if c.deleted]
-        for adapter in adapters:
+        for adapter in all_adapters:
             delete_ids = to_delete_by_adapter[adapter] + to_delete
             try:
                 adapter.bulk_delete(delete_ids)
