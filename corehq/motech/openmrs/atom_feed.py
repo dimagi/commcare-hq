@@ -262,7 +262,7 @@ def update_patient(repeater, patient_uuid, updated_at):
 
 def poll_openmrs_atom_feeds(domain_name):
     for repeater in OpenmrsRepeater.by_domain(domain_name):
-        if repeater.atom_feed_enabled:
+        if repeater.atom_feed_enabled and not repeater.paused:
             updated_patients = get_updated_patients(repeater)
             for patient_uuid, updated_at in updated_patients:
                 update_patient(repeater, patient_uuid, updated_at)
