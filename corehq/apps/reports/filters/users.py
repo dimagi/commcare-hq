@@ -144,7 +144,7 @@ class EmwfUtils(object):
     def static_options(self):
         static_options = [("t__0", _("[All mobile workers]"))]
 
-        types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
+        types = ['DEMO_USER', 'ADMIN', 'UNKNOWN', 'DEACTIVATED']
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
