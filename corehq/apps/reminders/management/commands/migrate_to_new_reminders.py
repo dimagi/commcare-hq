@@ -66,6 +66,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from corehq.messaging.tasks import initiate_messaging_rule_run
+from corehq.messaging.util import project_is_on_new_reminders
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from datetime import time, datetime, timedelta
@@ -279,6 +280,28 @@ class CaseReminderHandlerMigrator(BaseMigrator):
 
     def refresh_schedule_instances(self):
         initiate_messaging_rule_run(self.rule.domain, self.rule.pk)
+
+
+class ManualCaseReminderHandlerMigrator(CaseReminderHandlerMigrator):
+
+    def __init__(self, handler, rule_id):
+        self.handler = handler
+        self.source_duplicate_count = 0
+
+        try:
+            self.rule = AutomaticUpdateRule.objects.get(
+                pk=rule_id,
+                domain=handler.domain,
+                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                deleted=False,
+            )
+        except AutomaticUpdateRule.DoesNotExist:
+            raise ValueError("Invalid rule_id given: %s" % rule_id)
+
+        self.schedule = self.rule.get_messaging_rule_schedule()
+
+    def migrate(self):
+        pass
 
 
 class BroadcastMigrator(BaseMigrator):
@@ -703,9 +726,6 @@ class Command(BaseCommand):
         if handler.active and handler.uses_parent_case_property:
             return None
 
-        if handler.active and handler.start_date and handler.use_today_if_start_date_is_blank:
-            return None
-
         return migrate_rule
 
     def get_rule_schedule_migration_function(self, handler):
@@ -883,7 +903,7 @@ class Command(BaseCommand):
             return None
 
         if (
-            (len(reminder_result) == 0 or not reminder_result[0].active) and
+            (len(reminder_result) == 0 or not reminder_result[0].active or reminder_result[0].error) and
             handler.start_datetime and
             handler.start_datetime < datetime.utcnow() and
             handler.event_interpretation == EVENT_AS_OFFSET and
@@ -900,7 +920,10 @@ class Command(BaseCommand):
             return None
 
         if handler.use_today_if_start_date_is_blank and handler.active and handler.start_date:
-            return None
+            if not self.confirm(
+                "Ok to treat use_today_if_start_date_is_blank as False for %s? y/n " % handler._id
+            ):
+                return None
 
         if handler.reminder_type == REMINDER_TYPE_DEFAULT:
             for event in handler.events:
@@ -920,6 +943,12 @@ class Command(BaseCommand):
                 return CaseReminderHandlerMigrator(handler, rule_migration_function, schedule_migration_function,
                     until_references_timestamp)
 
+            if self.confirm(
+                "A suitable migrator could not be found for %s. Use manual migrator? y/n " % handler._id
+            ):
+                rule_id = self.get_int("Enter rule id for %s: " % handler._id)
+                return ManualCaseReminderHandlerMigrator(handler, rule_id)
+
             return None
         elif handler.reminder_type == REMINDER_TYPE_ONE_TIME:
             broadcast_migration_function = self.get_broadcast_migration_function(handler)
@@ -932,7 +961,7 @@ class Command(BaseCommand):
         return handler.reminder_type in (REMINDER_TYPE_KEYWORD_INITIATED, REMINDER_TYPE_SURVEY_MANAGEMENT)
 
     def migration_already_done(self, domain_obj):
-        if domain_obj.uses_new_reminders:
+        if project_is_on_new_reminders(domain_obj):
             log("'%s' already uses new reminders, nothing to do" % domain_obj.name)
             return True
 

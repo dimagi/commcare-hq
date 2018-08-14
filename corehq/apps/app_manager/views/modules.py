@@ -427,6 +427,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "custom_icon_form": None,
         "custom_icon_text_body": None,
         "custom_icon_xpath": None,
+        "use_default_image_for_all": None,
+        "use_default_audio_for_all": None,
     }
 
     if attr not in attributes:

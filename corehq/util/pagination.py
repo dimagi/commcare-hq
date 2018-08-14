@@ -4,7 +4,7 @@ import hashlib
 from datetime import datetime
 
 from couchdbkit import ResourceNotFound
-from jsonobject.properties import ListProperty, BooleanProperty
+from jsonobject.properties import ListProperty, BooleanProperty, JsonArray, JsonSet, JsonDict
 
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
 from dimagi.utils.couch.database import get_db
@@ -145,6 +145,18 @@ class ResumableIteratorState(JsonObject):
     complete = BooleanProperty(default=False)
 
 
+def unpack_jsonobject(json_object):
+    if isinstance(json_object, JsonArray):
+        return [unpack_jsonobject(x) for x in json_object]
+    elif isinstance(json_object, JsonSet):
+        return {unpack_jsonobject(x) for x in json_object}
+    elif isinstance(json_object, JsonDict):
+        return {
+            unpack_jsonobject(k): unpack_jsonobject(v) for k, v in six.iteritems(json_object)
+        }
+    return json_object
+
+
 class ResumableArgsProvider(ArgsProvider):
     def __init__(self, iterator_state, args_provider):
         self.args_provider = args_provider
@@ -154,7 +166,7 @@ class ResumableArgsProvider(ArgsProvider):
 
     def get_initial_args(self):
         if self.resume:
-            return self.resume_args, self.resume_kwargs
+            return unpack_jsonobject(self.resume_args), unpack_jsonobject(self.resume_kwargs)
         return self.args_provider.get_initial_args()
 
     def get_next_args(self, last_item, *last_args, **last_kwargs):

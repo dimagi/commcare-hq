@@ -36,7 +36,6 @@ from corehq.apps.locations.tasks import download_locations_async, import_locatio
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
-from custom.enikshay.user_setup import ENikshayLocationFormSet
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -55,7 +54,7 @@ from .permissions import (
     can_edit_any_location,
 )
 from .models import LocationType, SQLLocation, filter_for_archived
-from .forms import LocationFormSet, UsersAtLocationForm
+from .forms import LocationFormSet, UsersAtLocationForm, RelatedLocationForm
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config
 import six
@@ -529,9 +528,7 @@ class NewLocationView(BaseLocationView):
     @memoized
     def location_form(self):
         data = self.request.POST if self.request.method == 'POST' else None
-        form_set = (ENikshayLocationFormSet if toggles.ENIKSHAY.enabled(self.domain)
-                    else LocationFormSet)
-        return form_set(
+        return LocationFormSet(
             self.location,
             bound_data=data,
             request_user=self.request.couch_user,
@@ -711,6 +708,17 @@ class EditLocationView(NewLocationView):
         return form
 
     @property
+    @memoized
+    def related_location_form(self):
+        if not toggles.RELATED_LOCATIONS.enabled(self.request.domain):
+            return None
+
+        return RelatedLocationForm(
+            self.domain, self.location,
+            data=self.request.POST if self.request.method == "POST" else None,
+        )
+
+    @property
     def active_products(self):
         return [(p.product_id, p.name)
                 for p in SQLProduct.objects.filter(domain=self.domain, is_archived=False).all()]
@@ -731,6 +739,7 @@ class EditLocationView(NewLocationView):
         context.update({
             'products_per_location_form': self.products_form,
             'users_per_location_form': self.users_form,
+            'related_location_form': self.related_location_form,
         })
         return context
 
@@ -751,6 +760,15 @@ class EditLocationView(NewLocationView):
         self.location.save()
         return self.form_valid()
 
+    def related_location_form_post(self, request, *args, **kwargs):
+        if self.related_location_form.is_valid():
+            self.related_location_form.save()
+            return self.form_valid()
+        else:
+            self.request.method = "GET"
+            self.form_tab = 'related_location'
+            return self.get(request, *args, **kwargs)
+
     @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "location-settings":
@@ -760,6 +778,9 @@ class EditLocationView(NewLocationView):
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
+        elif (self.request.POST['form_type'] == "related_location"
+              and toggles.RELATED_LOCATIONS.enabled(request.domain)):
+            return self.related_location_form_post(request, *args, **kwargs)
         else:
             raise Http404()
 

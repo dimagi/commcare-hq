@@ -48,6 +48,7 @@ from custom.icds_reports.models import (
     AggregateChildHealthDailyFeedingForms,
     AggregateChildHealthPostnatalCareForms,
     AggregateChildHealthTHRForms,
+    AggregateAwcInfrastructureForms,
     ChildHealthMonthly,
     UcrTableNameMapping)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
@@ -154,7 +155,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
-            _create_views(cursor)
             _update_aggregate_locations_tables(cursor)
 
         state_ids = (SQLLocation.objects
@@ -184,6 +184,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                     state_id=state_id, date=monthly_date, func=_aggregate_child_health_pnc_forms
                 ) for state_id in state_ids
             ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_awc_infra_forms)
+                for state_id in state_ids
+            ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
             res = group(*stage_1_tasks).apply_async()
             res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
@@ -210,7 +214,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         ).delay()
 
 
-def _create_views(cursor):
+def create_views(cursor):
     try:
         celery_task_logger.info("Starting icds reports create_sql_views")
         for sql_view_path in SQL_VIEWS_PATHS:
@@ -341,6 +345,11 @@ def _aggregate_child_health_pnc_forms(state_id, day):
 @track_time
 def _aggregate_thr_forms(state_id, day):
     AggregateChildHealthTHRForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_awc_infra_forms(state_id, day):
+    AggregateAwcInfrastructureForms.aggregate(state_id, day)
 
 
 @track_time
@@ -518,6 +527,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             show_test=include_test
         ).get_excel_data(location)
     elif indicator == BENEFICIARY_LIST_EXPORT:
+        # this report doesn't use this configuration
+        config.pop('aggregation_level', None)
         data_type = 'Beneficiary_List'
         excel_data = BeneficiaryExport(
             config=config,
@@ -755,7 +766,6 @@ def push_missing_docs_to_es():
         ).get(xform_doc_type.lower(), -2)
         if primary_xforms != es_xforms:
             doc_differences[(current_date, xform_doc_type)] = primary_xforms - es_xforms
-            resave_documents.delay(xform_doc_type, current_date, end_date)
 
         primary_cases = get_primary_db_case_counts(
             'icds-cas', current_date, end_date
@@ -765,7 +775,6 @@ def push_missing_docs_to_es():
         ).get(case_doc_type, -2)
         if primary_cases != es_cases:
             doc_differences[(current_date, case_doc_type)] = primary_xforms - es_xforms
-            resave_documents.delay(case_doc_type, current_date, end_date)
 
         current_date += interval
 
@@ -780,18 +789,3 @@ def push_missing_docs_to_es():
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=["{}@{}.com".format("jmoney", "dimagi")]
         )
-
-
-@task(queue='background_queue')
-def resave_documents(doc_type, start_date, end_date):
-    if doc_type == 'XFormInstance':
-        flag = '--xforms'
-    elif doc_type == 'CommCareCase':
-        flag = '--cases'
-    else:
-        raise ValueError("invalid doc_type: {}".format(doc_type))
-
-    start_date = start_date.strftime('%Y-%m-%d')
-    end_date = end_date.strftime('%Y-%m-%d')
-    # if this is kept long term, this logic should be pulled out of hte management command
-    call_command('resave_failed_forms_and_cases', 'icds-cas', start_date, end_date, flag, '--no-input')

@@ -31,7 +31,7 @@ class SQLSMSGHBackend(SQLSMSBackend):
 
     @classmethod
     def get_url(cls):
-        return 'https://api.smsgh.com/v3/messages/send'
+        return 'https://api.hubtel.com/v1/messages/send'
 
     @classmethod
     def get_api_id(cls):

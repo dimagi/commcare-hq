@@ -11,7 +11,7 @@ from mock import patch
 
 from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.tests.util import add_build
-from corehq.apps.app_manager.views import AppSummaryView
+from corehq.apps.app_manager.views import AppCaseSummaryView, AppFormSummaryView
 from corehq.apps.app_manager.views.forms import get_apps_modules
 from corehq.apps.builds.models import BuildSpec
 
@@ -146,7 +146,8 @@ class TestViews(TestCase):
         self._test_status_codes([
             'view_app',
             'release_manager',
-            AppSummaryView.urlname,
+            AppCaseSummaryView.urlname,
+            AppFormSummaryView.urlname,
         ], kwargs)
 
         build = self.app.make_build()
@@ -219,7 +220,7 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 302)
         redirect_location = response['Location']
         [app_id] = re.compile(r'[a-fA-F0-9]{32}').findall(redirect_location)
-        expected = '/apps/view/{}/?appcues=1'.format(app_id)    # Remove get param when APPCUES_AB_TEST is over
+        expected = '/apps/view/{}/'.format(app_id)
         self.assertTrue(redirect_location.endswith(expected))
         self.addCleanup(lambda: Application.get_db().delete_doc(app_id))
 

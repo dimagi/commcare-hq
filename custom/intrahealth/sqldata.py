@@ -174,7 +174,7 @@ class ConventureData(BaseSqlData):
 
         # Months are displayed in chronological order
         if 'month' in self.group_by:
-            from custom.intrahealth.reports import get_localized_months
+            from custom.intrahealth.reports.utils import get_localized_months
             return sorted(rows, key=lambda row: get_localized_months().index(row[0]))
 
         return rows

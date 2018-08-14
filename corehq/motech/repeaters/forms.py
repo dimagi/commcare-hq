@@ -45,7 +45,12 @@ class GenericRepeaterForm(forms.Form):
     password = forms.CharField(
         required=False,
         label='Password',
-        widget=forms.PasswordInput()
+        widget=forms.PasswordInput(render_value=True)
+    )
+    skip_cert_verify = forms.BooleanField(
+        label=_('Skip SSL certificate verification'),
+        required=False,
+        help_text=_('FOR TESTING ONLY: DO NOT ENABLE THIS FOR PRODUCTION INTEGRATIONS'),
     )
 
     def __init__(self, *args, **kwargs):
@@ -103,7 +108,8 @@ class GenericRepeaterForm(forms.Form):
             self.special_crispy_fields["test_link"],
             self.special_crispy_fields["auth_type"],
             "username",
-            "password"
+            "password",
+            self.special_crispy_fields["skip_cert_verify"],
         ])
         return form_fields
 
@@ -130,6 +136,7 @@ class GenericRepeaterForm(forms.Form):
                 css_class='form-group'
             ),
             "auth_type": twbscrispy.PrependedText('auth_type', ''),
+            "skip_cert_verify": twbscrispy.PrependedText('skip_cert_verify', ''),
         }
 
     def clean(self):
