@@ -5,3 +5,4 @@ django-nose
 ddtrace
 feedparser
 pycrypto
+django-celery
