@@ -11,7 +11,7 @@ from mock import patch
 
 from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.tests.util import add_build
-from corehq.apps.app_manager.views import AppSummaryView
+from corehq.apps.app_manager.views import AppCaseSummaryView, AppFormSummaryView
 from corehq.apps.app_manager.views.forms import get_apps_modules
 from corehq.apps.builds.models import BuildSpec
 
@@ -146,7 +146,8 @@ class TestViews(TestCase):
         self._test_status_codes([
             'view_app',
             'release_manager',
-            AppSummaryView.urlname,
+            AppCaseSummaryView.urlname,
+            AppFormSummaryView.urlname,
         ], kwargs)
 
         build = self.app.make_build()

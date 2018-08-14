@@ -9,6 +9,7 @@ from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_PSS
 from django.templatetags.i18n import language_name
 from django.utils.translation import activate, LANGUAGE_SESSION_KEY
+from django.views.decorators.debug import sensitive_variables
 
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
@@ -29,6 +30,7 @@ def get_hq_private_key():
     raise Exception('No private key found in localsettings.HQ_PRIVATE_KEY')
 
 
+@sensitive_variables('private_key')
 def sign(message):
     """
     Signs the SHA256 hash of message with HQ's private key, and returns

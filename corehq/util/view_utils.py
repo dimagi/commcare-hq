@@ -154,3 +154,32 @@ def get_form_or_404(domain, id):
         return form
     except XFormNotFound:
         raise Http404()
+
+
+def request_as_dict(request):
+    """
+    Function returns the dictionary which contains the data of request object.
+    :Parameter request:
+            Object of HttpRequest
+
+    :Return request_data:
+            Dict containing the request data
+    """
+
+    request_data = dict(
+        GET=request.GET if request.method == 'GET' else request.POST,
+        META=dict(
+            QUERY_STRING=request.META.get('QUERY_STRING'),
+            PATH_INFO=request.META.get('PATH_INFO')
+        ),
+        datespan=request.datespan,
+        couch_user=None,
+        can_access_all_locations=request.can_access_all_locations
+    )
+
+    try:
+        request_data.update(couch_user=request.couch_user.get_id)
+    except Exception as e:
+        logging.error("Could not pickle the couch_user id from the request object. Error: %s" % e)
+
+    return request_data

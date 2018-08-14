@@ -900,7 +900,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     ko.bindingHandlers.popover = {
         update: function(element, valueAccessor) {
             var options = ko.utils.unwrapObservable(valueAccessor());
-            if (options.title || options.context) { // don't show empty popovers
+            if (options.title || options.content) { // don't show empty popovers
                 $(element).popover(options);
             }
         },
