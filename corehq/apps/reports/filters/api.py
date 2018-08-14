@@ -156,17 +156,24 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             tokens = query.split()
             return ['%s*' % tokens.pop()] + tokens
 
-    def user_es_query(self, query):
+    def active_user_es_query(self, query):
         search_fields = ["first_name", "last_name", "base_username"]
         return (UserES()
                 .domain(self.domain)
                 .search_string_query(query, default_fields=search_fields))
 
+    def all_user_es_query(self, query):
+        search_fields = ["first_name", "last_name", "base_username"]
+        return (UserES()
+                .show_inactive()
+                .domain(self.domain)
+                .search_string_query(query, default_fields=search_fields))
+
     def get_users_size(self, query):
-        return self.user_es_query(query).count()
+        return self.all_user_es_query(query).count()
 
     def get_users(self, query, start, size):
-        users = (self.user_es_query(query)
+        users = (self.all_user_es_query(query)
                  .fields(SimplifiedUserInfo.ES_FIELDS)
                  .start(start)
                  .size(size)
@@ -257,8 +264,8 @@ class MobileWorkersOptionsView(EmwfOptionsView):
             (self.get_users_size, self.get_users),
         ]
 
-    def user_es_query(self, query):
-        query = super(MobileWorkersOptionsView, self).user_es_query(query)
+    def active_user_es_query(self, query):
+        query = super(MobileWorkersOptionsView, self).active_user_es_query(query)
         return query.mobile_users()
 
 
