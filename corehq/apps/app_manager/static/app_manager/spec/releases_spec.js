@@ -18,8 +18,7 @@ describe('App Releases', function() {
                     domain: 'test-domain',
                     target_commcare_flavor: false,
                 }, extraProps),
-                releasesMain,
-            ));
+                releasesMain));
         }
         return savedApps;
     }

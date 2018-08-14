@@ -42,7 +42,7 @@ hqDefine('hqwebapp/js/components/pagination', function() {
                 )({
                     firstItem: ((self.currentPage() - 1) * self.perPage()) + 1,
                     lastItem: isNaN(lastItem) ? 1 : lastItem,
-                    maxItems: self.totalItems()
+                    maxItems: self.totalItems(),
                 });
             });
             self.pagesShown = ko.computed(function(){
