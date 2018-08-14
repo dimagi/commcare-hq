@@ -8,7 +8,7 @@ hqDefine("reports/js/report_config_models", [
     $,
     ko,
     _,
-    standardHQReport
+    standardHQReportModule
 ) {
     var reportConfig = function (data) {
         var self = ko.mapping.fromJS(data, {
@@ -48,7 +48,7 @@ hqDefine("reports/js/report_config_models", [
 
         self.unwrap = function () {
             var data = ko.mapping.toJS(self);
-            var standardHQReport = standardHQReport.getStandardHQReport();
+            var standardHQReport = standardHQReportModule.getStandardHQReport();
             if (standardHQReport.slug) {
                 data['report_slug'] = standardHQReport.slug;
             }
@@ -143,7 +143,7 @@ hqDefine("reports/js/report_config_models", [
                 }
             };
 
-            if(self.initialLoad) {
+            if (self.initialLoad) {
                 self.initialLoad = false;
                 update_filters();
             } else {
