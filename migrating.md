@@ -31,7 +31,18 @@ Sample PRs:
 
 The `requirejs_main` tag is what indicates that a page should use RequireJS. The page should have one "main" module. Most of our pages are already set up like this: they might include a bunch of scripts, but there's one in particular that handles the event handlers, bindings, etc. that are specific to that page.
 
-It's fine for multiple pages to use the same main module - this may make sense for closely related pages.
+Considerations when choosing or creating a main module
+- Most often, there's already a single script that's only included on the page you're migrating, which you can use as the main module.
+- It's fine for multiple pages to use the same main module - this may make sense for closely related pages.
+- Sometimes a page will have some dependencies but no page-specific logic, so you can make a main module with an empty body, as in [invoice_main.js](https://github.com/dimagi/commcare-hq/commit/d14ba14f13d7d44e3a96940d2c72d2a1b918534d#diff-b81a32d5fee6a9c8af07b189c6a5693e).
+- Sometimes you can add a dependency or two to an existing module and then use it as your main module. This can work fine, but be cautious of adding bloat or creating dependencies between django apps. There's a loose hierarchy:
+   - Major third-party libraries: jQuery, knockout, underscore
+   - hqwebapp
+   - analytics
+   - app-specific reusable modules like [accounting/js/widgets](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/accounting/static/accounting/js/widgets.js), which are also sometimes used as main modules
+   - page-specific modules like [accounting/js/subscriptions_main](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/accounting/static/accounting/js/subscriptions_main.js)
+- There's a growing convention of using the suffix `_main` for main modules - more specifically, for any module that runs logic in a document ready handler.
+- HTML files that are only used as the base for other templates don't need to have a main module or a `requirejs_main` tag.
 
 Add `{% requirejs_main 'myApp/js/myModule' %}` near the top of the template: it can go after `load` and `extends` but should appear before content blocks. Note that it's a module name, not a file name, so it doesn't include `.js`.
 
@@ -65,6 +76,12 @@ To declare dependencies:
 - Check if the module uses jQuery, underscore, or knockout, and if so add them (their module names are all lowercase: 'jquery', 'knockout', 'underscore').
 - Search the module for `hqImport` calls. Add any imported modules do the dependency list and parameter list, and replace calls to `hqImport(...)` with the new parameter name.
 - If you removed any `<script>` tags from the template and haven't yet added them to the dependency list, do that.
+- Check the template's parent template:
+   - If the parent has a `requirejs_main` module, the template you're migrating should include a dependency on that module.
+   - If the parent still has `<script>` tags, the template you're migrating should include those as dependencies. It's usually convenient to migrate the parent and any "sibling" templates at the same time so you can remove the `<script>` tags altogether. If that isn't possible, make the parent check before including script tags: `{% if requirejs_main %}<script ...></script>{% endif %}`
+   - Also check the parent's parent template, etc. Stop once you get to `hqwebapp/base.html`, `hqwebapp/two_column.html`, or `hqwebapp/base_section.html`.
+
+for `<script>` tags or `requirejs_main` modules. Any dependencies of the ancestors also need to be included in the template you're migrating
 - Check the view for any [hqwebapp decorators](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/decorators.py) like `use_jquery_ui` which are used to include many common yet not global third-party libraries. Note that you typically should **not** remove the decorator, because these decorators often control both css and js, but you **do** need to add any js scripts controlled by the decorator to your js module.
 - If the module uses any globals from third parties, add the script as a dependency and also add the global to `thirdPartyGlobals` in [hqModules.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/hqModules.js) which prevents errors on pages that use your module but are not yet migrated to requirejs.
 
