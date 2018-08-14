@@ -20,6 +20,7 @@ from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.jsonpath import Cmp
 from corehq.motech.value_source import recurse_subclasses
 from dimagi.ext.couchdbkit import (
+    BooleanProperty,
     DecimalProperty,
     DocumentSchema,
     ListProperty,
@@ -37,6 +38,9 @@ class PatientFinder(DocumentSchema):
 
     Subclasses must implement the `find_patients()` method.
     """
+
+    # If no patients are found, should a new one be created?
+    create_missing = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
