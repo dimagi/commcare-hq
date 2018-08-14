@@ -548,7 +548,7 @@ def save_match_ids(case, case_config, patient):
     submit_case_blocks([case_block.as_string()], case.domain, xmlns=XMLNS_OPENMRS)
 
 
-def create_person(requests, info, case_config):
+def create_patient(requests, info, case_config):
     name = {
         property_: value_source.get_value(info)
         for property_, value_source in case_config.person_preferred_name.items()
@@ -564,20 +564,30 @@ def create_person(requests, info, case_config):
         for property_, value_source in case_config.person_properties.items()
         if property_ in PERSON_PROPERTIES and value_source.get_value(info)
     }
-    if name or address or properties:
-        person = {}
-        if name:
-            person['names'] = [serialize(name)]
-        if address:
-            person['addresses'] = [serialize(address)]
-        if properties:
-            person.update(serialize(properties))
+    person = {}
+    if name:
+        person['names'] = [serialize(name)]
+    if address:
+        person['addresses'] = [serialize(address)]
+    if properties:
+        person.update(serialize(properties))
+    if person:
+        identifiers = [
+            {'identifierType': patient_identifier_type, 'identifier': value_source.get_value(info)}
+            for patient_identifier_type, value_source in case_config.patient_identifiers.items()
+            if patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID and value_source.get_value(info)
+        ]
+        patient = {
+            'person': person,
+        }
+        if identifiers:
+            patient['identifiers'] = identifiers
         response = requests.post(
-            '/ws/rest/v1/person/',
-            json=person,
-            raise_for_status=True,
+            '/ws/rest/v1/patient/',
+            json=patient,
         )
-        return response.json()
+        if 200 <= response.status_code < 300:
+            return response.json()
 
 
 def find_patient(requests, domain, info, openmrs_config):
@@ -589,13 +599,8 @@ def find_patient(requests, domain, info, openmrs_config):
         save_match_ids(case, openmrs_config.case_config, patient)
         return patient
     if not patients and patient_finder.create_missing:
-        person = create_person(requests, info, openmrs_config.case_config)
-        if person:
-            patient = {
-                'uuid': person['uuid'],
-                'identifiers': [],
-                'person': person
-            }
+        patient = create_patient(requests, info, openmrs_config.case_config)
+        if patient:
             save_match_ids(case, openmrs_config.case_config, patient)
             return patient
     # If PatientFinder can't narrow down the number of candidate
