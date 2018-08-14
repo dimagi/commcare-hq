@@ -135,6 +135,9 @@ def setUpModule():
         finally:
             _call_center_domain_mock.stop()
 
+        with connections['icds-ucr'].cursor() as cursor:	
+            create_views(cursor)
+
 
 def tearDownModule():
     if settings.USE_PARTITIONED_DATABASE:
