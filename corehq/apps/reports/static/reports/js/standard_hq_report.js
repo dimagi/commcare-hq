@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ_MODULES, HQReport, HQAsyncReport, standardHQReport */
+/* globals COMMCAREHQ_MODULES, HQAsyncReport, standardHQReport */
 /*
     Ugly half-measure, because reports and UCR traditionally depend on a global standardHQReport
     variable that's defined in several different places. The UCR version of standardHQReport now
@@ -33,21 +33,23 @@ hqDefine("reports/js/standard_hq_report", [
             if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
                 // UCRs
                 standardReport = hqImport(ucr).getStandardHQReport();
-            } else if (typeof HQReport !== 'undefined') {
-                // Standard reports
-                var reportOptions = _.extend({}, initialPageData.get('js_options'), {
-                    emailSuccessMessage: gettext('Report successfully emailed'),
-                    emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
+            } else {
+                hqRequire(["reports/js/hq_report"], function(hqReportModule) {
+                    // Standard reports
+                    var reportOptions = _.extend({}, initialPageData.get('js_options'), {
+                        emailSuccessMessage: gettext('Report successfully emailed'),
+                        emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
+                    });
+                    if (initialPageData.get('startdate')) {
+                        reportOptions.datespan = {
+                            startdate: initialPageData.get('startdate'),
+                            enddate: initialPageData.get('enddate'),
+                        };
+                    }
+                    var standardHQReport = hqReportModule.hqReport(reportOptions);
+                    standardHQReport.init();
+                    standardReport = standardHQReport;
                 });
-                if (initialPageData.get('startdate')) {
-                    reportOptions.datespan = {
-                        startdate: initialPageData.get('startdate'),
-                        enddate: initialPageData.get('enddate'),
-                    };
-                }
-                var standardHQReport = new HQReport(reportOptions);
-                standardHQReport.init();
-                standardReport = standardHQReport;
             }
         }
         return standardReport;

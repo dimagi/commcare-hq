@@ -1,4 +1,3 @@
-/* globals HQReport */
 hqDefine("userreports/js/configurable_report", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
@@ -53,7 +52,7 @@ hqDefine("userreports/js/configurable_report", function() {
                 enddate: initial_page_data('enddate'),
             };
         }
-        var standardHQReport = new HQReport(reportOptions);
+        var standardHQReport = hqImport("reports/js/hq_report").hqReport(reportOptions);
         standardHQReport.init();
         return standardHQReport;
     };
