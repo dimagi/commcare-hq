@@ -177,7 +177,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         self._record_datadog_metrics(changes_chunk, retry_changes, timer)
 
     def _record_datadog_metrics(self, changes_chunk, retry_changes, timer):
-        tags = ["pillow_name:{}".format(self.get_name()), "chunked:True"]
+        tags = ["pillow_name:{}".format(self.get_name()), "mode:chunked"]
         datadog_counter('commcare.change_feed.changes.count', len(changes_chunk), tags=tags)
         datadog_counter('commcare.change_feed.changes.exception', len(retry_changes), tags=tags)
         datadog_counter('commcare.change_feed.changes.suceess',
@@ -189,7 +189,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         datadog_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags)
 
         datadog_histogram('commcare.change_feed.chunked.processing_time_total', timer.duration,
-            tags=tags + ["chunk_size:".format(str(len(changes_chunk)))])
+            tags=tags + ["chunk_size:{}".format(str(len(changes_chunk)))])
         datadog_histogram(
             'commcare.change_feed.processing_time',
             timer.duration / len(changes_chunk),
