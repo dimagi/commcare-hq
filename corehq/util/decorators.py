@@ -147,6 +147,10 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
 
 
 def old_analytics_task(default_retry_delay=10, max_retries=3, queue='background_queue'):
+    return analytics_task(default_retry_delay, max_retries, queue)
+
+
+def analytics_task(default_retry_delay=10, max_retries=3, queue='analytics_queue'):
     '''
         defines a task that posts data to one of our analytics endpoints. It retries the task
         up to 3 times if the post returns with a status code indicating an error with the post
