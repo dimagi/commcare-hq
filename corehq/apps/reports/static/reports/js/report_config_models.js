@@ -2,12 +2,14 @@ hqDefine("reports/js/report_config_models", [
     'jquery',
     'knockout',
     'underscore',
+    'analytix/js/google',
     'reports/js/standard_hq_report',
     'jquery-ui/ui/datepicker',
 ], function(
     $,
     ko,
     _,
+    googleAnalytics,
     standardHQReportModule
 ) {
     var reportConfig = function (data) {
@@ -219,6 +221,13 @@ hqDefine("reports/js/report_config_models", [
                 showButtonPanel: true,
                 dateFormat: 'yy-mm-dd',
             });
+        };
+
+        self.trackConfigBeingEdited = function(builderReportType) {
+            googleAnalytics.track.event('Scheduled Reports', 'Create a saved report', '-');
+            if (builderReportType) {
+                googleAnalytics.track.event('Report Viewer', 'Save Report', builderReportType);
+            }
         };
 
         self.unsetConfigBeingEdited = function () {
