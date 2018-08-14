@@ -6,6 +6,7 @@ import uuid
 from collections import namedtuple
 from datetime import datetime
 
+import pytz
 from dateutil import parser as dateutil_parser
 from dateutil.tz import tzutc
 from lxml import etree
@@ -98,7 +99,7 @@ def get_updated_patients(repeater):
         repeater.username,
         repeater.password
     )
-    last_polled_at = repeater.atom_feed_last_polled_at
+    last_polled_at = pytz.utc.localize(repeater.atom_feed_last_polled_at)
     page = repeater.atom_feed_last_page
     try:
         while True:
