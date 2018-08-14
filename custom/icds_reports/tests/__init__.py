@@ -9,7 +9,6 @@ import postgres_copy
 import sqlalchemy
 
 from django.conf import settings
-from django.db import connections
 from django.test.utils import override_settings
 
 from corehq.apps.domain.models import Domain
@@ -19,9 +18,8 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
-    create_views,
     move_ucr_data_into_aggregation_tables,
-    _aggregate_child_health_pnc_forms)
+    _aggregate_pnc_forms)
 from io import open
 
 FILE_NAME_TO_TABLE_MAPPING = {
@@ -80,6 +78,12 @@ def setUpModule():
         location_id='st1',
         location_type=state_location_type
     )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='st2',
+        location_id='st2',
+        location_type=state_location_type
+    )
 
     awc_location_type = LocationType.objects.create(
         domain=domain.name,
@@ -114,7 +118,7 @@ def setUpModule():
                 if not table_name.startswith('icds_dashboard_'):
                     postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
 
-        _aggregate_child_health_pnc_forms('st1', datetime(2017, 3, 31))
+        _aggregate_pnc_forms('st1', datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
@@ -130,9 +134,6 @@ def setUpModule():
             raise
         finally:
             _call_center_domain_mock.stop()
-
-        with connections['icds-ucr'].cursor() as cursor:
-            create_views(cursor)
 
 
 def tearDownModule():
