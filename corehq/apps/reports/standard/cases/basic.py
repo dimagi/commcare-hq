@@ -121,6 +121,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             (admin, user_es.admin_users()),
             (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
             (demo, user_es.demo_users()),
+            (deactivated, user_es.mobile_users())
         ] if include]
         if deactivated:
             owner_ids = (user_es.UserES()
