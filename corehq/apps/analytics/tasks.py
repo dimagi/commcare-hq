@@ -337,7 +337,7 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
         user = getattr(request, 'couch_user', None)
     if request and user and user.is_web_user():
         meta = get_meta(request)
-        send_hubspot_form_task.delay(
+        send_hubspot_form_task_v2.delay(
             form_id, user, request.COOKIES.get(HUBSPOT_COOKIE),
             meta, extra_fields=extra_fields
         )
@@ -350,8 +350,20 @@ def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
 
 
+@analytics_task()
+def send_hubspot_form_task_v2(form_id, web_user, hubspot_cookie, meta,
+                              extra_fields=None):
+    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
+                          extra_fields=extra_fields)
+
+
 @old_analytics_task()
 def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
+    track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta)
+
+
+@analytics_task()
+def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
     ab = {
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
     }
@@ -360,6 +372,11 @@ def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
 
 @old_analytics_task()
 def track_job_candidate_on_hubspot(user_email):
+    track_job_candidate_on_hubspot_v2(user_email)
+
+
+@analytics_task()
+def track_job_candidate_on_hubspot_v2(user_email):
     properties = {
         'job_candidate': True
     }
@@ -368,6 +385,11 @@ def track_job_candidate_on_hubspot(user_email):
 
 @old_analytics_task()
 def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
+    track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta)
+
+
+@analytics_task()
+def track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
     if number < 0.33:
@@ -393,11 +415,16 @@ def track_workflow(email, event, properties=None):
     """
     if analytics_enabled_for_email(email):
         timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-        _track_workflow_task.delay(email, event, properties, timestamp)
+        _track_workflow_task_v2.delay(email, event, properties, timestamp)
 
 
 @old_analytics_task()
 def _track_workflow_task(email, event, properties=None, timestamp=0):
+    _track_workflow_task_v2(email, event, properties, timestamp)
+
+
+@analytics_task()
+def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
@@ -409,6 +436,11 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
 
 @old_analytics_task()
 def identify(email, properties):
+    identify_v2(email, properties)
+
+
+@analytics_task()
+def identify_v2(email, properties):
     """
     Set the given properties on a KISSmetrics user.
     :param email: The email address by which to identify the user.

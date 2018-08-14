@@ -7,12 +7,12 @@ from corehq.apps.analytics.tasks import (
     track_user_sign_in_on_hubspot_v2,
     HUBSPOT_COOKIE,
     update_hubspot_properties_v2,
+    identify_v2,
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.registration.views import ProcessRegistrationView
 from corehq.util.decorators import handle_uncaught_exceptions
 from corehq.util.soft_assert import soft_assert
-from .tasks import identify
 
 from django.dispatch import receiver
 from django.urls import reverse
@@ -46,7 +46,7 @@ def user_save_callback(sender, **kwargs):
         properties = {}
         properties.update(get_subscription_properties_by_user(couch_user))
         properties.update(get_domain_membership_properties(couch_user))
-        identify.delay(couch_user.username, properties)
+        identify_v2.delay(couch_user.username, properties)
         update_hubspot_properties_v2(couch_user, properties)
 
 
@@ -60,7 +60,7 @@ def domain_save_callback(sender, domain, **kwargs):
 
 def update_subscription_properties_by_user(couch_user):
     properties = get_subscription_properties_by_user(couch_user)
-    identify.delay(couch_user.username, properties)
+    identify_v2.delay(couch_user.username, properties)
     update_hubspot_properties_v2(couch_user, properties)
 
 

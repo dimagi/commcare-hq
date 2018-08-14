@@ -21,7 +21,7 @@ from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot_v2,
-    track_clicked_signup_on_hubspot,
+    track_clicked_signup_on_hubspot_v2,
     HUBSPOT_COOKIE,
     track_web_user_registration_hubspot,
 )
@@ -187,7 +187,8 @@ class UserRegistrationView(BasePageView):
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
             meta = get_meta(request)
-            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
+            track_clicked_signup_on_hubspot_v2.delay(
+                self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
     @property
