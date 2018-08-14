@@ -8,6 +8,8 @@ findNestedDependencies: true
 skipDirOptimize: true   # could turn this off to minify everything
 generateSourceMaps: true
 fileExclusionRegExp: ^\.|\.css$
+paths:
+  stripe: "empty:"
 modules:
   - name: hqwebapp/js/base_main
     include:
