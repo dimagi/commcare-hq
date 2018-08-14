@@ -13,6 +13,7 @@ from corehq.apps.app_manager.dbaccessors import get_current_app_doc
 from corehq.apps.hqadmin.views.users import AdminRestoreView
 from corehq.apps.ota.views import get_restore_response
 from corehq.apps.users.models import CouchUser
+from corehq.util.dates import get_timestamp_for_filename
 
 
 class Command(BaseCommand):
@@ -43,7 +44,7 @@ class Command(BaseCommand):
         headers, rows = _get_headers_and_rows(domain, users, app_id)
         totals_row = _calculate_totals_row(headers, rows)
 
-        filename = "tmp.csv"
+        filename = "restore_timings_{}.csv".format(get_timestamp_for_filename())
         with open(filename, 'w') as f:
             writer = csv.DictWriter(f, headers)
             writer.writeheader()
