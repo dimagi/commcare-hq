@@ -317,7 +317,7 @@
 
 {{ request|toggle_tag_info:"CASE_LIST_LOOKUP" }}
 {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
-    {% include "app_manager/partials/case_list_lookup.html" %}
+    {% include "app_manager/partials/modules/case_list_lookup.html" %}
 {% endif %}
 
 {{ request|toggle_tag_info:"FIXTURE_CASE_SELECTION" }}
@@ -326,5 +326,5 @@
 {% endif %}
 
 {% if detail.type == 'case' and js_options.is_search_enabled %}
-{% include 'app_manager/partials/case_search_properties.html' %}
+{% include 'app_manager/partials/modules/case_search_properties.html' %}
 {% endif %}
