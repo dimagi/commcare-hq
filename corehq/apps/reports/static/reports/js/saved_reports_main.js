@@ -1,7 +1,7 @@
 hqDefine("reports/js/saved_reports_main", [
     'jquery',
     'hqwebapp/js/initial_page_data',
-    'reports/js/saved_reports',
+    'reports/js/report_config_models',
 ], function(
     $,
     initialPageData,
