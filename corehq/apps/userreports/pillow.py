@@ -242,16 +242,18 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
         return retry_changes
 
-    def _get_docs(self, changes):
-        # get docs in bulk and validate revision
+    @staticmethod
+    def get_docs_for_changes(changes, domain):
         # break up by doctype
-        _changes_by_doc_store = defaultdict(list)
+        changes_by_doctype = defaultdict(list)
         for change in changes:
-            _changes_by_doc_store[change.document_store].append(change)
+            assert change.metadata.domain == domain
+            changes_by_doctype[change.metadata.data_source_name].append(change)
 
         # query
         docs = []
-        for doc_store, _changes in six.iteritems(_changes_by_doc_store):
+        for _, _changes in six.iteritems(changes_by_doctype):
+            doc_store = _changes[0].document_store
             docs.extend(list(doc_store.iter_documents([change.id for change in _changes])))
 
         # catch missing docs
@@ -267,8 +269,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 ensure_matched_revisions(change, docs_by_id.get(change.id))
             except DocumentMismatchError:
                 retry_changes.add(change)
-        good_changes = set(changes) - retry_changes
-        return retry_changes, [docs_by_id.get(change.id) for change in good_changes]
+        return retry_changes, docs
 
     def _process_chunk_for_domain(self, domain, changes_chunk):
         adapters = self.table_adapters_by_domain[domain]

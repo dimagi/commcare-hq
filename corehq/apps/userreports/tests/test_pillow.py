@@ -21,7 +21,8 @@ from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator
 from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
-    ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow
+    ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow, \
+    ConfigurableReportPillowProcessor
 from corehq.apps.userreports.tasks import rebuild_indicators, queue_async_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     doc_to_change, get_data_source_with_related_doc_type
@@ -89,25 +90,30 @@ class ChunkedUCRProcessorTest(TestCase):
         )
         # processor.process_change should not get called but processor.process_changes_chunk
         self.assertFalse(processor_patch.called)
-        for case in cases:
-            CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+        self._delete_cases(cases)
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
-    def _create_and_process_changes(self, datetime_mock, docs=[]):
+    def _create_cases(self, datetime_mock, docs=[]):
         datetime_mock.utcnow.return_value = self.fake_time_now
         docs = docs or [
             get_sample_doc_and_indicators(self.fake_time_now)[0]
             for i in range(10)
         ]
 
-        since = self.pillow.get_change_feed().get_latest_offsets()
-
         # save case to DB - should also publish to kafka
         cases = [
             _save_sql_case(doc)
             for doc in docs
         ]
+        return cases
 
+    def _delete_cases(self, cases):
+        for case in cases:
+            CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+
+    def _create_and_process_changes(self, docs=[]):
+        since = self.pillow.get_change_feed().get_latest_offsets()
+        cases = self._create_cases(docs=docs)
         # run pillow and check changes
         self.pillow.process_changes(since=since, forever=False)
         self.adapter.refresh_table()
@@ -115,25 +121,39 @@ class ChunkedUCRProcessorTest(TestCase):
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_changes_chunk')
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
-    def test_fallback(self, process_change_patch, chunked_patch):
+    def test_full_fallback(self, process_change_patch, process_changes_patch):
 
-        chunked_patch.side_effect = Exception
+        process_changes_patch.side_effect = Exception
         cases = self._create_and_process_changes()
 
-        chunked_patch.assert_called_once()
+        process_changes_patch.assert_called_once()
         # since chunked processing failed, normal processing should get called
         process_change_patch.assert_has_calls([mock.call(mock.ANY, mock.ANY)] * 10)
-        for case in cases:
-            CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+        self._delete_cases(cases)
+
+    @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
+    @mock.patch('corehq.form_processor.document_stores.ReadonlyCaseDocumentStore.iter_documents')
+    def test_partial_fallback_calls(self, iter_docs_patch, process_change_patch):
+        # this is equivalent to failing on last 4 docs, since they are missing in docstore
+        docs = [
+            get_sample_doc_and_indicators(self.fake_time_now)[0]
+            for i in range(10)
+        ]
+        iter_docs_patch.return_value = docs[0:6]
+        cases = self._create_and_process_changes(docs)
+
+        # since chunked processing failed, normal processing should get called
+        process_change_patch.assert_has_calls([mock.call(mock.ANY, mock.ANY)] * 4)
+        self._delete_cases(cases)
 
     @mock.patch('corehq.form_processor.document_stores.ReadonlyCaseDocumentStore.iter_documents')
-    def test_partial_failure(self, docstore_patch):
+    def test_partial_fallback_data(self, iter_docs_patch):
         docs = [
             get_sample_doc_and_indicators(self.fake_time_now)[0]
             for i in range(10)
         ]
         # this is equivalent to failing on last 5 docs, since they are missing in docstore
-        docstore_patch.return_value = docs[0:5]
+        iter_docs_patch.return_value = docs[0:5]
         cases = self._create_and_process_changes(docs=docs)
         query = self.adapter.get_query_object()
         # first five docs should be processed in bulk, last five serially
@@ -142,8 +162,24 @@ class ChunkedUCRProcessorTest(TestCase):
             set([case.case_id for case in cases]),
             set([row.doc_id for row in query.all()])
         )
-        for case in cases:
-            CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+        self._delete_cases(cases)
+
+    def test_get_docs(self):
+        docs = [
+            get_sample_doc_and_indicators(self.fake_time_now)[0]
+            for i in range(10)
+        ]
+        feed = self.pillow.get_change_feed()
+        since = feed.get_latest_offsets()
+        cases = self._create_cases(docs=docs)
+        changes = list(feed.iter_changes(since, forever=False))
+        bad_changes, result_docs = ConfigurableReportPillowProcessor.get_docs_for_changes(
+            changes, docs[1]['domain'])
+        self.assertEqual(
+            set([c.id for c in changes]),
+            set([doc['_id'] for doc in result_docs])
+        )
+        self._delete_cases(cases)
 
 
 class IndicatorPillowTest(TestCase):
@@ -241,15 +277,13 @@ class IndicatorPillowTest(TestCase):
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_couch_chunked(self, datetime_mock):
-        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=100)
-        self._test_process_doc_from_couch(datetime_mock)
-        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=0)
+        self._test_process_doc_from_couch(datetime_mock, get_kafka_ucr_pillow(processor_chunk_size=100))
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_couch(self, datetime_mock):
-        self._test_process_doc_from_couch(datetime_mock)
+        self._test_process_doc_from_couch(datetime_mock, self.pillow)
 
-    def _test_process_doc_from_couch(self, datetime_mock):
+    def _test_process_doc_from_couch(self, datetime_mock, pillow):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
 
@@ -263,7 +297,7 @@ class IndicatorPillowTest(TestCase):
         producer.send_change(topics.CASE, doc_to_change(sample_doc).metadata)
 
         # run pillow and check changes
-        self.pillow.process_changes(since=since, forever=False)
+        pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
         case.delete()
 
