@@ -124,6 +124,17 @@ hqDefine('app_manager/js/summary/models', function() {
                 formUrl: formData.form_url,
             });
         };
+        self.moduleReference = function(moduleId) {
+            var moduleData = self.formNameMap[moduleId];
+            var template = self.readOnly
+                ? "<%= moduleName %>"
+                : "<a href='<%= moduleUrl %>'><%= moduleName %></a>"
+            ;
+            return _.template(template)({
+                moduleName: self.translate(moduleData.module_name),
+                moduleUrl: moduleData.module_url,
+            });
+        };
 
         return self;
     };

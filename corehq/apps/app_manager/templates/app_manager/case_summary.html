@@ -93,6 +93,8 @@
                                     <th>{% trans "Form" %}</th>
                                     <th>{% trans "Load questions" %}</th>
                                     <th>{% trans "Save questions" %}</th>
+                                    <th>{% trans "Case Lists" %}</th>
+                                    <th>{% trans "Case Details" %}</th>
                                 </tr>
                             </thead>
                             <tbody data-bind="foreach: properties">
@@ -115,6 +117,14 @@
                                         <td>
                                             <div data-bind="template: {name: 'load-save-questions', data: {questions: save_questions, getIcon: $root.questionIcon}}"></div>
                                         </td>
+                                        <!-- ko if: !$index() -->
+                                        <td>
+                                            <div data-bind="template: {name: 'case-details', data: {details: $parent.short_details}}"></div>
+                                        </td>
+                                        <td>
+                                            <div data-bind="template: {name: 'case-details', data: {details: $parent.long_details}}"></div>
+                                        </td>
+                                        <!-- /ko -->
                                     </tr>
                                 <!-- /ko -->
                             </tbody>
@@ -170,6 +180,13 @@
                     </li>
                 </ul>
             </li>
+        </ul>
+    </script>
+
+    {# Case details #}
+    <script type="text/html" id="case-details">
+        <ul class="list-unstyled" data-bind="foreach: details">
+            <li><span data-bind="html: $root.moduleReference($data.module_id)"></span> "<span data-bind="text: $root.translate($data.header)"></span>"</li>
         </ul>
     </script>
 {% endblock content_extra %}
