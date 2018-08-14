@@ -43,7 +43,7 @@ def b64_aes_encrypt(message):
     """
     key = settings.SECRET_KEY if isinstance(settings.SECRET_KEY, bytes) else settings.SECRET_KEY.encode('ascii')
     secret = pad(key, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
-    aes = AES.new(secret)
+    aes = AES.new(secret, AES.MODE_ECB)
 
     message_bytes = message if isinstance(message, bytes) else message.encode('utf8')
     plaintext = pad(message_bytes, AES_BLOCK_SIZE)
@@ -65,7 +65,7 @@ def b64_aes_decrypt(message):
     """
     key = settings.SECRET_KEY if isinstance(settings.SECRET_KEY, bytes) else settings.SECRET_KEY.encode('ascii')
     secret = pad(key, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
-    aes = AES.new(secret)
+    aes = AES.new(secret, AES.MODE_ECB)
 
     ciphertext = b64decode(message)
     plaintext = aes.decrypt(ciphertext)

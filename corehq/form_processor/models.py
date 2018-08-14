@@ -26,8 +26,7 @@ from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
-from corehq.sql_db.models import PartitionedModel, RequireDBManager
-from corehq.sql_db.routers import db_for_read_write
+from corehq.sql_db.models import PartitionedModel, RestrictedManager
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
@@ -131,18 +130,6 @@ class AttachmentMixin(SaveStateMixin):
 
     def _get_attachments_from_db(self):
         raise NotImplementedError
-
-
-class RestrictedManager(RequireDBManager):
-
-    def raw(self, raw_query, params=None, translations=None, using=None):
-        from django.db.models.query import RawQuerySet
-        if not using:
-            using = db_for_read_write(self.model)
-        return RawQuerySet(
-            raw_query, model=self.model,
-            params=params, translations=translations, using=using
-        )
 
 
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,

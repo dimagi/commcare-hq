@@ -141,23 +141,42 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
     def _best_effort_save_rows(self, rows, doc):
         try:
-            self._save_rows(rows, doc)
+            self.save_rows(rows)
         except IntegrityError:
             pass  # can be due to users messing up their tables/data so don't bother logging
         except Exception as e:
             self.handle_exception(doc, e)
 
-    def _save_rows(self, rows, doc):
-        rows = [
+    def bulk_save(self, docs):
+        rows = []
+        for doc in docs:
+            rows.extend(self.get_all_values(doc))
+        self.save_rows(rows)
+
+    def save_rows(self, rows):
+        if not rows:
+            return
+
+        # transform format from ColumnValue to dict
+        formatted_rows = [
             {i.column.database_column_name: i.value for i in row}
             for row in rows
         ]
-
+        doc_ids = set(row['doc_id'] for row in formatted_rows)
         table = self.get_table()
-        delete = table.delete(table.c.doc_id == doc['_id'])
+        delete = table.delete(table.c.doc_id.in_(doc_ids))
+        # Using session.bulk_insert_mappings below might seem more inline
+        #   with sqlalchemy API, but it results in
+        #   appending an empty row which results in a postgres
+        #   not-null constraint error, which has been hard to debug.
+        # In addition, bulk_insert_mappings is less performant than
+        #   the plain INSERT INTO VALUES statement resulting from below line
+        #   because bulk_insert_mappings is meant for multi-table insertion
+        #   so it has overhead of format conversions and multiple statements
+        insert = table.insert().values(formatted_rows)
         with self.session_helper.session_context() as session:
             session.execute(delete)
-            session.bulk_insert_mappings(self.get_sqlalchemy_mapping(), rows)
+            session.execute(insert)
 
     def delete(self, doc):
         table = self.get_table()

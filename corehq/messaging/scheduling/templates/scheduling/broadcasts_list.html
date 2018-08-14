@@ -2,9 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %} {{ block.super }}
-    <script src="{% static "scheduling/js/broadcasts_list.js" %}"></script>
-{% endblock %}
+{% requirejs_main 'scheduling/js/broadcasts_list' %}
 
 {% block stylesheets %}{{ block.super }}
 <style>

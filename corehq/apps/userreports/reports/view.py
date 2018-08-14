@@ -189,7 +189,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def has_viable_configuration(self):
         try:
             self.spec
-        except DocumentNotFound:
+        except (DocumentNotFound, BadSpecError):
             return False
         else:
             return True

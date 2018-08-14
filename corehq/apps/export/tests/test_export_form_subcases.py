@@ -85,7 +85,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                 ('form.add_a_prescription', 'Add a prescription?'),
                 ('form.voucher-name', '#form/voucher-name'),
                 ('form.is_this_a_delivery', 'Is this a delivery?'),
-                (u'form.facility_name', u'#form/facility_name'),
+                ('form.facility_name', '#form/facility_name'),
 
                 # Verify that the main parent case updates appear (case type "mom")
                 ('form.case.@case_id', 'case.@case_id'),

@@ -474,12 +474,12 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
         message_v1 = json.dumps([
             {'username': request.user.username},
             {'flag': MULTIPLE_APPS_UNLIMITED.slug}
-        ]).replace(' ', '')
+        ]).replace(' ', '').encode('utf-8')
 
         message_v2 = json.dumps([
             {'username': request.user.username},
             {'flags': [MULTIPLE_APPS_UNLIMITED.slug, ADVANCED_SETTINGS_ACCESS.slug]}
-        ]).replace(' ', '')
+        ]).replace(' ', '').encode('utf-8')
 
         qrcode_data = json.dumps({
             'username': request.user.username,

@@ -304,7 +304,18 @@ class ExportColumn(DocumentSchema):
             value = MISSING_VALUE
 
         if isinstance(value, list):
-            value = ' '.join(value)
+            def _serialize(str_or_dict):
+                """
+                Serialize old data for scalar questions that were previously a repeat
+
+                This is a total edge case. See https://manage.dimagi.com/default.asp?280549.
+                """
+                if isinstance(str_or_dict, dict):
+                    return ','.join('{}={}'.format(k, v) for k, v in str_or_dict.items())
+                else:
+                    return str_or_dict
+
+            value = ' '.join(_serialize(elem) for elem in value)
         return value
 
     @staticmethod
@@ -960,6 +971,7 @@ class ExportInstance(BlobMixin, Document):
     def copy_export(self):
         export_json = self.to_json()
         del export_json['_id']
+        del export_json['external_blobs']
         export_json['name'] = '{} - Copy'.format(self.name)
         new_export = self.__class__.wrap(export_json)
         return new_export

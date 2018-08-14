@@ -22,6 +22,7 @@ from corehq.messaging.scheduling.models import (
     SMSContent,
 )
 from corehq.messaging.tasks import initiate_messaging_rule_run
+from corehq.messaging.util import project_is_on_new_reminders
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from io import open
@@ -56,7 +57,7 @@ class Command(BaseCommand):
         if domain_obj is None:
             raise CommandError("Project space '%s' not found" % domain)
 
-        if not domain_obj.uses_new_reminders:
+        if not project_is_on_new_reminders(domain_obj):
             raise CommandError("Project space '%s' does not have new reminders enabled" % domain)
 
         json_rules = []

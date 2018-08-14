@@ -12,6 +12,9 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 
 from memoized import memoized
+
+from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES
+from corehq.motech.utils import b64_aes_encrypt
 from dimagi.utils.post import simple_post
 
 from corehq import toggles
@@ -128,8 +131,13 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         repeater.url = cleaned_data['url']
         repeater.auth_type = cleaned_data['auth_type'] or None
         repeater.username = cleaned_data['username']
-        repeater.password = cleaned_data['password']
+        if cleaned_data['password'] != PASSWORD_PLACEHOLDER:
+            repeater.password = '${algo}${ciphertext}'.format(
+                algo=ALGO_AES,
+                ciphertext=b64_aes_encrypt(cleaned_data['password'])
+            )
         repeater.format = cleaned_data['format']
+        repeater.skip_cert_verify = cleaned_data['skip_cert_verify']
         return repeater
 
     def post_save(self, request, repeater):
@@ -274,10 +282,12 @@ class EditRepeaterView(BaseRepeaterView):
         else:
             repeater_id = self.kwargs['repeater_id']
             repeater = Repeater.get(repeater_id)
+            data = repeater.to_json()
+            data['password'] = PASSWORD_PLACEHOLDER
             return self.repeater_form_class(
                 domain=self.domain,
                 repeater_class=self.repeater_class,
-                data=repeater.to_json(),
+                data=data,
                 submit_btn_text=_("Update Repeater"),
             )
 
@@ -380,6 +390,7 @@ def test_repeater(request, domain):
 
         username = request.POST.get('username')
         password = request.POST.get('password')
+        verify = not request.POST.get('skip_cert_verify') == 'true'
         if auth_type == BASIC_AUTH:
             auth = HTTPBasicAuth(username, password)
         elif auth_type == DIGEST_AUTH:
@@ -388,7 +399,7 @@ def test_repeater(request, domain):
             auth = None
 
         try:
-            resp = simple_post(fake_post, url, headers=headers, auth=auth)
+            resp = simple_post(fake_post, url, headers=headers, auth=auth, verify=verify)
             if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
                                                 "response": resp.content,

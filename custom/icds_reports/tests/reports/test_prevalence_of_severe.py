@@ -10,6 +10,7 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds')
 class TestPrevalenceOfSevere(TestCase):
+    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_prevalence_of_severe_data_map(
@@ -55,20 +56,20 @@ class TestPrevalenceOfSevere(TestCase):
             {
                 "st1": {
                     "severe": 0,
-                    "moderate": 4,
-                    "normal": 3,
+                    "moderate": 0,
+                    "normal": 0,
                     'total_height_eligible': 449,
-                    "total_measured": 7,
+                    "total_measured": 0,
                     "total_weighed": 302,
                     'original_name': ["st1"],
-                    "fillKey": "7%-100%"
+                    "fillKey": "0%-5%"
                 },
                 "st2": {
                     "severe": 0,
-                    "moderate": 4,
-                    "normal": 16,
+                    "moderate": 1,
+                    "normal": 0,
                     'total_height_eligible': 490,
-                    "total_measured": 24,
+                    "total_measured": 0,
                     "total_weighed": 366,
                     'original_name': ["st2"],
                     "fillKey": "7%-100%"
@@ -87,7 +88,7 @@ class TestPrevalenceOfSevere(TestCase):
         )
         expected = (
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6 - 60 months who were moderately/severely wasted in the "
+            "percentage of children between 0 - 5 years who were moderately/severely wasted in the "
             "current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
@@ -104,7 +105,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], "1.21")
+        self.assertEquals(data['rightLegend']['average'], "0.14")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_severe_data_map(
@@ -118,13 +119,13 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '668'},
-                {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
-                 'value': '31'},
-                {'indicator': 'Number of children (6 - 60 months) unmeasured:', 'value': '271'},
-                {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.00%'},
-                {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '25.81%'},
-                {'indicator': '% Normal (6 - 60 months):', 'value': '61.29%'}
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '668'},
+                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
+                 'value': '0'},
+                {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '271'},
+                {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
+                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '100.00%'},
+                {'indicator': '% Normal (0 - 5 years):', 'value': '0.00%'}
             ]
         )
 
@@ -167,7 +168,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent of Children Wasted (6 - 60 months)')
+        self.assertEquals(data['label'], 'Percent of Children Wasted (0 - 5 years)')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_prevalence_of_severe_data_map(
@@ -184,14 +185,14 @@ class TestPrevalenceOfSevere(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'moderate': 4,
-                    'total_measured': 7,
-                    'normal': 3,
+                    'moderate': 0,
+                    'total_measured': 0,
+                    'normal': 0,
                     'original_name': ['b1', 'b2'],
                     'severe': 0,
                     'total_height_eligible': 449,
                     'total_weighed': 302,
-                    'fillKey': '7%-100%'
+                    'fillKey': '0%-5%'
                 }
             }
         )
@@ -207,7 +208,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], "1.33")
+        self.assertEquals(data['rightLegend']['average'], "0.00")
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_severe_data_chart(
@@ -244,12 +245,12 @@ class TestPrevalenceOfSevere(TestCase):
             data['bottom_five'],
             [
                 {
-                    "loc_name": "st2",
-                    "percent": 16.666666666666668,
+                    "loc_name": "st1",
+                    "percent": 0.0
                 },
                 {
-                    "loc_name": "st1",
-                    "percent": 57.142857142857146
+                    "loc_name": "st2",
+                    "percent": 100.0
                 },
             ]
         )
@@ -267,12 +268,12 @@ class TestPrevalenceOfSevere(TestCase):
             data['top_five'],
             [
                 {
-                    "loc_name": "st2",
-                    "percent": 16.666666666666668,
+                    "loc_name": "st1",
+                    "percent": 0.0
                 },
                 {
-                    "loc_name": "st1",
-                    "percent": 57.142857142857146
+                    "loc_name": "st2",
+                    "percent": 100.0
                 },
             ]
         )
@@ -319,17 +320,17 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0
                     },
                     {
-                        "y": 0.5454545454545454,
+                        "y": 0.0,
                         "x": 1491004800000,
                         "total_weighed": 659,
-                        'total_measured': 11,
+                        'total_measured': 0,
                         'total_height_eligible': 964,
                     },
                     {
-                        "y": 0.6129032258064516,
+                        "y": 0.0,
                         "x": 1493596800000,
                         "total_weighed": 668,
-                        'total_measured': 31,
+                        'total_measured': 0,
                         'total_height_eligible': 939,
                     }
                 ],
@@ -368,17 +369,17 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0,
                     },
                     {
-                        "y": 0.09090909090909091,
+                        "y": 0.0,
                         "x": 1491004800000,
                         "total_weighed": 659,
-                        'total_measured': 11,
+                        'total_measured': 0,
                         'total_height_eligible': 964,
                     },
                     {
-                        "y": 0.25806451612903225,
+                        "y": 1.0,
                         "x": 1493596800000,
                         "total_weighed": 668,
-                        'total_measured': 31,
+                        'total_measured': 0,
                         'total_height_eligible': 939,
                     }
                 ],
@@ -417,17 +418,17 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0
                     },
                     {
-                        "y": 0.09090909090909091,
+                        "y": 0.0,
                         "x": 1491004800000,
                         "total_weighed": 659,
-                        'total_measured': 11,
+                        'total_measured': 0,
                         'total_height_eligible': 964,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "total_weighed": 668,
-                        'total_measured': 31,
+                        'total_measured': 0,
                         'total_height_eligible': 939,
                     }
                 ],
@@ -448,12 +449,12 @@ class TestPrevalenceOfSevere(TestCase):
             data['all_locations'],
             [
                 {
-                    "loc_name": "st2",
-                    "percent": 16.666666666666668,
+                    "loc_name": "st1",
+                    "percent": 0.0
                 },
                 {
-                    "loc_name": "st1",
-                    "percent": 57.142857142857146
+                    "loc_name": "st2",
+                    "percent": 100.0
                 },
             ]
         )
@@ -491,7 +492,7 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6 - 60 months enrolled who were moderately/severely wasted in the "
+            "percentage of children between 0 - 5 years enrolled who were moderately/severely wasted in the "
             "current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
@@ -517,8 +518,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 0-6 months enrolled who were moderately/severely wasted in the "
-            "current month. "
+            "percentage of children between 0-6 months (0-180 days) enrolled who were moderately/severely wasted "
+            "in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
@@ -543,8 +544,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6-12 months enrolled who were moderately/severely wasted in "
-            "the current month. "
+            "percentage of children between 6-12 months (181-365 days) enrolled who were moderately/severely "
+            "wasted in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
@@ -569,8 +570,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 48-60 months enrolled who were moderately/severely wasted in the "
-            "current month. "
+            "percentage of children between 48-60 months (1461-1825 days) enrolled who were moderately/severely "
+            "wasted in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
@@ -620,8 +621,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 0-6 months enrolled who were moderately/severely wasted in the "
-            "current month. "
+            "percentage of children between 0-6 months (0-180 days) enrolled who were moderately/severely wasted "
+            "in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
@@ -646,8 +647,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6-12 months enrolled who were moderately/severely wasted in the "
-            "current month. "
+            "percentage of children between 6-12 months (181-365 days) enrolled who were moderately/severely "
+            "wasted in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
@@ -672,8 +673,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 48-60 months enrolled who were moderately/severely wasted in the "
-            "current month. "
+            "percentage of children between 48-60 months (1461-1825 days) enrolled who were moderately/severely "
+            "wasted in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
@@ -698,9 +699,9 @@ class TestPrevalenceOfSevere(TestCase):
                 "s2": {
                     "total_weighed": 84,
                     "severe": 0,
-                    "moderate": 3,
-                    "total_measured": 4,
-                    "normal": 1,
+                    "moderate": 0,
+                    "total_measured": 0,
+                    "normal": 0,
                     "total_height_eligible": 150,
                 },
                 "s1": {
@@ -741,7 +742,7 @@ class TestPrevalenceOfSevere(TestCase):
                         ],
                         [
                             "s2",
-                            0.03571428571428571
+                            0.0
                         ]
                     ],
                     "key": ""

@@ -40,35 +40,6 @@ class TestMaternalChildData(TestCase):
                     'month': (2017, 5, 1),
                     'prev_month': (2017, 4, 1),
                     'aggregation_level': 1
-                }
-            )['records'][0][1],
-            {
-                "redirect": "wasting",
-                "color": "red",
-                "all": 31,
-                "frequency": "month",
-                "format": "percent_and_div",
-                "help_text": "Of the children enrolled for Anganwadi services, whose weight and height was "
-                             "measured, the percentage of children between 6 - 60 months enrolled who were "
-                             "moderately/severely wasted in the current month. "
-                             "<br/><br/>"
-                             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
-                             "undernutrition usually as a consequence of insufficient food intake or a high "
-                             "incidence of infectious diseases.",
-                "percent": 41.935483870967715,
-                "value": 8,
-                "label": "Wasting (Weight-for-Height)"
-            }
-        )
-
-    def test_data_wasting_weight_for_height_icds_feature_flag_enabled(self):
-        self.assertDictEqual(
-            get_maternal_child_data(
-                'icds-cas',
-                {
-                    'month': (2017, 5, 1),
-                    'prev_month': (2017, 4, 1),
-                    'aggregation_level': 1
                 },
                 False,
                 True
@@ -93,33 +64,6 @@ class TestMaternalChildData(TestCase):
         )
 
     def test_data_stunting_height_for_age(self):
-        self.assertDictEqual(
-            get_maternal_child_data(
-                'icds-cas',
-                {
-                    'month': (2017, 5, 1),
-                    'prev_month': (2017, 4, 1),
-                    'aggregation_level': 1
-                }
-            )['records'][1][0],
-            {
-                "redirect": "stunting",
-                "color": "green",
-                "all": 32,
-                "frequency": "month",
-                "format": "percent_and_div",
-                "help_text": "Of the children whose height was measured, the percentage of children between "
-                             "6 - 60 months who were moderately/severely stunted in the current month."
-                             "<br/><br/>"
-                             "Stunting is a sign of chronic undernutrition and has long lasting harmful "
-                             "consequences on the growth of a child",
-                "percent": -27.43055555555556,
-                "value": 19,
-                "label": "Stunting (Height-for-Age)"
-            }
-        )
-
-    def test_data_stunting_height_for_age_icds_feature_flag_enabled(self):
         self.assertDictEqual(
             get_maternal_child_data(
                 'icds-cas',

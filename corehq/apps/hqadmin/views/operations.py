@@ -23,7 +23,6 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.callcenter.utils import CallCenterCase
 from corehq.apps.domain.decorators import (
     require_superuser, require_superuser_or_contractor,
     login_or_basic, domain_admin_required,
@@ -48,7 +47,7 @@ from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 from corehq.apps.hqadmin.tasks import send_mass_emails
 from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm, BrokenBuildsForm, EmailForm, SuperuserManagementForm,
+    AuthenticateAsForm, EmailForm, SuperuserManagementForm,
     ReprocessMessagingCaseUpdatesForm,
     DisableTwoFactorForm, DisableUserForm)
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView, get_hqadmin_base_context
@@ -107,85 +106,6 @@ class CallcenterUCRCheck(BaseAdminSectionView):
         }
 
         return context
-
-
-@require_superuser
-def callcenter_test(request):
-    user_id = request.GET.get("user_id")
-    date_param = request.GET.get("date")
-    enable_caching = request.GET.get('cache')
-    doc_id = request.GET.get('doc_id')
-
-    if not user_id and not doc_id:
-        return render(request, "hqadmin/callcenter_test.html", {"enable_caching": enable_caching})
-
-    error = None
-    user = None
-    user_case = None
-    domain = None
-    if user_id:
-        try:
-            user = CommCareUser.get(user_id)
-            domain = user.project
-        except ResourceNotFound:
-            error = "User Not Found"
-    elif doc_id:
-        try:
-            doc = CommCareUser.get_db().get(doc_id)
-            domain = Domain.get_by_name(doc['domain'])
-            doc_type = doc.get('doc_type', None)
-            if doc_type == 'CommCareUser':
-                case_type = domain.call_center_config.case_type
-                user_case = CaseAccessors(doc['domain']).get_case_by_domain_hq_user_id(doc['_id'], case_type)
-            elif doc_type == 'CommCareCase':
-                if doc.get('hq_user_id'):
-                    user_case = CommCareCase.wrap(doc)
-                else:
-                    error = 'Case ID does does not refer to a Call Center Case'
-        except ResourceNotFound:
-            error = "User Not Found"
-
-    try:
-        query_date = dateutil.parser.parse(date_param)
-    except ValueError:
-        error = "Unable to parse date, using today"
-        query_date = date.today()
-
-    def view_data(case_id, indicators):
-        new_dict = OrderedDict()
-        key_list = sorted(indicators)
-        for key in key_list:
-            new_dict[key] = indicators[key]
-        return {
-            'indicators': new_dict,
-            'case': CommCareCase.get(case_id),
-        }
-
-    if user or user_case:
-        custom_cache = None if enable_caching else cache.caches['dummy']
-        override_case = CallCenterCase.from_case(user_case)
-        cci = CallCenterIndicators(
-            domain.name,
-            domain.default_timezone,
-            domain.call_center_config.case_type,
-            user,
-            custom_cache=custom_cache,
-            override_date=query_date,
-            override_cases=[override_case] if override_case else None
-        )
-        data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
-    else:
-        data = {}
-
-    context = {
-        "error": error,
-        "mobile_user": user,
-        "date": json_format_date(query_date),
-        "enable_caching": enable_caching,
-        "data": data,
-        "doc_id": doc_id
-    }
-    return render(request, "hqadmin/callcenter_test.html", context)
 
 
 class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):

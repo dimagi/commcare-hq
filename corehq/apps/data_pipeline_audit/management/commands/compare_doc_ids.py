@@ -1,8 +1,9 @@
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import unicode_literals
 
 from __future__ import print_function
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import argparse
 from six.moves import zip_longest
@@ -11,13 +12,14 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.change_feed.document_types import CASE_DOC_TYPES
 from corehq.apps.data_pipeline_audit.dbacessors import get_es_user_ids, get_es_form_ids, get_primary_db_form_ids, \
-    get_primary_db_case_ids, get_es_case_ids
+    get_primary_db_case_ids, get_es_case_ids, get_es_case_counts, get_es_case_range
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain, get_mobile_user_ids
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import SimpleTableWriter, CSVRowFormatter, TableRowFormatter
 from couchforms.models import doc_types
+from six.moves import range
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -105,10 +107,30 @@ class Command(BaseCommand):
 
 
 def compare_cases(domain, doc_type, startdate, enddate):
-    return _get_diffs(
-        get_primary_db_case_ids(domain, doc_type, startdate, enddate),
-        get_es_case_ids(domain, doc_type, startdate, enddate)
-    )
+    hundred_thousand = 100000
+    case_count = get_es_case_counts(domain, doc_type, startdate, enddate)
+    if case_count < hundred_thousand:
+        # small enough domain, so lookup diffs in one go
+        return _get_diffs(
+            get_primary_db_case_ids(domain, doc_type, startdate, enddate),
+            get_es_case_ids(domain, doc_type, startdate, enddate)
+        )
+    # large domain, so break up by month
+    startdate, enddate = get_es_case_range(domain)
+    primary_count, es_count, primary_ids, es_ids = 0, 0, set(), set()
+    months = (enddate - startdate).days / 30 + 1
+    for month in range(0, months):
+        enddate = (startdate + timedelta(days=(month + 1) * 30)).date()
+        startdate = (startdate + timedelta(days=month * 30)).date()
+        pc1, esc1, p1, es1 = _get_diffs(
+            get_primary_db_case_ids(domain, doc_type, startdate, enddate),
+            get_es_case_ids(domain, doc_type, startdate, enddate)
+        )
+        primary_count = primary_count + pc1
+        es_count = es_count + esc1
+        primary_ids = primary_ids.union(p1)
+        es_ids = es_ids.union(es1)
+    return primary_count, es_count, primary_ids, es_ids
 
 
 def compare_xforms(domain, doc_type, startdate, enddate):
