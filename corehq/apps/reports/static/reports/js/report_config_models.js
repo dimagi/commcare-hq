@@ -10,7 +10,7 @@ hqDefine("reports/js/report_config_models", [
     _,
     standardHQReport
 ) {
-    var ReportConfig = function (data) {
+    var reportConfig = function (data) {
         var self = ko.mapping.fromJS(data, {
             'copy': ['filters'],
         });
@@ -75,14 +75,15 @@ hqDefine("reports/js/report_config_models", [
         return self;
     };
 
-    var ReportConfigsViewModel = function (options) {
-        var self = this;
+    var reportConfigsViewModel = function (options) {
+        var self = {};
+
         self.filterForm = options.filterForm;
 
         self.initialLoad = true;
 
         self.reportConfigs = ko.observableArray(ko.utils.arrayMap(options.items, function (item) {
-            return new ReportConfig(item);
+            return reportConfig(item);
         }));
 
         self.configBeingViewed = ko.observable();
@@ -253,7 +254,7 @@ hqDefine("reports/js/report_config_models", [
                     data: JSON.stringify(config_data),
                     dataType: 'json',
                     success: function (data) {
-                        var newConfig = new ReportConfig(data);
+                        var newConfig = reportConfig(data);
                         self.addOrReplaceConfig(newConfig);
                         self.unsetConfigBeingEdited();
                         if (newConfig.report_slug == 'configurable') {
@@ -272,10 +273,12 @@ hqDefine("reports/js/report_config_models", [
                 };
             },
         };
+
+        return self;
     };
 
     return {
-        ReportConfig: ReportConfig,
-        ReportConfigsViewModel: ReportConfigsViewModel,
+        reportConfig: reportConfig,
+        reportConfigsViewModel: reportConfigsViewModel,
     };
 });
