@@ -43,6 +43,11 @@ from custom.icds_reports.const import DASHBOARD_DOMAIN, CHILDREN_EXPORT, PREGNAN
 from custom.icds_reports.models import (
     AggChildHealth,
     AggChildHealthMonthly,
+    AggCcsRecord,
+    AggregateBirthPreparednesForms,
+    AggregateCcsRecordTHRForms,
+    AggregateCcsRecordDeliveryForms,
+    AggregateCcsRecordPostnatalCareForms,
     AggregateComplementaryFeedingForms,
     AggregateGrowthMonitoringForms,
     AggregateChildHealthDailyFeedingForms,
@@ -50,6 +55,7 @@ from custom.icds_reports.models import (
     AggregateChildHealthTHRForms,
     AggregateAwcInfrastructureForms,
     ChildHealthMonthly,
+    CcsRecordMonthly,
     UcrTableNameMapping)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
@@ -102,6 +108,7 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'pregnant_tasks', 'name': 'static-pregnant-tasks_cases'},
     {'type': 'thr_form', 'is_ucr': False, 'name': 'icds_dashboard_child_health_thr_forms'},
     {'type': 'child_list', 'name': 'static-child_health_cases'},
+    {'type': 'ccs_record_list', 'name': 'static-ccs_record_cases'},
 ]
 
 SQL_FUNCTION_PATHS = [
@@ -181,7 +188,17 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
-                    state_id=state_id, date=monthly_date, func=_aggregate_child_health_pnc_forms
+                    state_id=state_id, date=monthly_date, func=_aggregate_pnc_forms
+                ) for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(
+                    state_id=state_id, date=monthly_date, func=_aggregate_delivery_forms
+                ) for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(
+                    state_id=state_id, date=monthly_date, func=_aggregate_bp_forms
                 ) for state_id in state_ids
             ])
             stage_1_tasks.extend([
@@ -338,13 +355,15 @@ def _aggregate_df_forms(state_id, day):
 
 
 @track_time
-def _aggregate_child_health_pnc_forms(state_id, day):
+def _aggregate_pnc_forms(state_id, day):
     AggregateChildHealthPostnatalCareForms.aggregate(state_id, day)
+    AggregateCcsRecordPostnatalCareForms.aggregate(state_id, day)
 
 
 @track_time
 def _aggregate_thr_forms(state_id, day):
     AggregateChildHealthTHRForms.aggregate(state_id, day)
+    AggregateCcsRecordTHRForms.aggregate(state_id, day)
 
 
 @track_time
@@ -355,6 +374,16 @@ def _aggregate_awc_infra_forms(state_id, day):
 @track_time
 def _aggregate_inactive_aww(day):
     AggregateInactiveAWW.aggregate(day)
+
+
+@track_time
+def _aggregate_delivery_forms(state_id, day):
+    AggregateCcsRecordDeliveryForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_bp_forms(state_id, day):
+    AggregateBirthPreparednesForms.aggregate(state_id, day)
 
 
 @transaction.atomic
@@ -390,9 +419,8 @@ def _child_health_monthly_table(day):
 def _ccs_record_monthly_table(day):
     _run_custom_sql_script([
         "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
-        "SELECT insert_into_ccs_record_monthly(%s)"
     ], day)
-
+    CcsRecordMonthly.aggregate(force_to_date(day))
 
 @track_time
 def _daily_attendance_table(day):
@@ -415,8 +443,8 @@ def _agg_child_health_table(day):
 def _agg_ccs_record_table(day):
     _run_custom_sql_script([
         "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
-        "SELECT aggregate_ccs_record(%s)"
     ], day)
+    AggCcsRecord.aggregate(force_to_date(day))
 
 
 @track_time
