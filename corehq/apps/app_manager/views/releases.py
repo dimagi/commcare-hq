@@ -27,7 +27,7 @@ from phonelog.models import UserErrorEntry
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_built_app_on_hubspot
+from corehq.apps.analytics.tasks import track_built_app_on_hubspot_v2
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_or_api_key
@@ -208,7 +208,7 @@ def save_copy(request, domain, app_id):
     See VersionedDoc.save_copy
 
     """
-    track_built_app_on_hubspot.delay(request.couch_user)
+    track_built_app_on_hubspot_v2.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:

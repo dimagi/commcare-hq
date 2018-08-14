@@ -296,6 +296,11 @@ def track_user_sign_in_on_hubspot_v2(webuser, hubspot_cookie, meta, path):
 
 @old_analytics_task()
 def track_built_app_on_hubspot(webuser):
+    track_built_app_on_hubspot_v2(webuser)
+
+
+@analytics_task()
+def track_built_app_on_hubspot_v2(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
