@@ -30,7 +30,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.view_utils import absolute_reverse, reverse
+from corehq.util.view_utils import absolute_reverse, reverse, request_as_dict
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from memoized import memoized
@@ -178,25 +178,8 @@ class GenericReportView(object):
         """
             For pickling the report when passing it to Celery.
         """
-        logging = get_task_logger(__name__) # logging is likely to happen within celery.
-        # pickle only what the report needs from the request object
+        request = request_as_dict(self.request)
 
-        request = dict(
-            GET=self.request.GET if self.request.method == 'GET' else self.request.POST,
-            META=dict(
-                QUERY_STRING=self.request.META.get('QUERY_STRING'),
-                PATH_INFO=self.request.META.get('PATH_INFO')
-            ),
-            datespan=self.request.datespan,
-            couch_user=None,
-            can_access_all_locations=self.request.can_access_all_locations,
-        )
-
-        try:
-            request.update(couch_user=self.request.couch_user.get_id)
-        except Exception as e:
-            logging.error("Could not pickle the couch_user id from the request object for report %s. Error: %s" %
-                          (self.name, e))
         return dict(
             request=request,
             request_params=self.request_params,

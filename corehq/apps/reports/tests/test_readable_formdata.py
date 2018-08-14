@@ -334,7 +334,14 @@ class ReadableFormTest(TestCase):
         lights.new_question('green', 'Green means')
         responses['lights'] = OrderedDict([('red', 'stop'), ('green', 'go')])
 
-        # Simple repeat group
+        # Simple repeat group, one response
+        one_hit_wonders = builder.new_group('one_hit_wonders', 'One-Hit Wonders', data_type='repeatGroup')
+        one_hit_wonders.new_question('name', 'Name')
+        responses['one_hit_wonders'] = [
+            {'name': 'A-Ha'},
+        ]
+
+        # Simple repeat group, multiple responses
         snacks = builder.new_group('snacks', 'Snacks', data_type='repeatGroup')
         snacks.new_question('kind_of_snack', 'Kind of snack')
         responses['snacks'] = [
@@ -364,6 +371,7 @@ class ReadableFormTest(TestCase):
             '/data/something',
             '/data/lights/red',
             '/data/lights/green',
+            '/data/one_hit_wonders/name',
             '/data/snacks[1]/kind_of_snack',
             '/data/snacks[2]/kind_of_snack',
             '/data/cups_of_tea[1]/details_of_cup/kind_of_cup',
@@ -379,6 +387,7 @@ class ReadableFormTest(TestCase):
             '/data/something': 'blue',
             '/data/lights/red': 'stop',
             '/data/lights/green': 'go',
+            '/data/one_hit_wonders/name': 'A-Ha',
             '/data/snacks[1]/kind_of_snack': 'samosa',
             '/data/snacks[2]/kind_of_snack': 'pakora',
             '/data/cups_of_tea[1]/details_of_cup/kind_of_cup': 'green',

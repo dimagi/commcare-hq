@@ -413,7 +413,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     }
                     self.buildState('');
                     self.buildErrorCode('');
-                    hqImport('app_manager/js/app_manager').setPublishStatus(false);
+                    hqImport('app_manager/js/menu').setPublishStatus(false);
                 },
                 error: function(xhr) {
                     self.buildErrorCode(xhr.status);

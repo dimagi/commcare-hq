@@ -5,6 +5,7 @@
 /local.ini*
 /localsettings*
 /loadtest/test_scripts/localsettings.py
+/scripts/_vendor
 !localsettings.example.py
 .settings/
 .project

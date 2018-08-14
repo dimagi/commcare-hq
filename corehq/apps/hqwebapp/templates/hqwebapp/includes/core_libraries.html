@@ -75,6 +75,7 @@
 
     {% if hq %}
         {% include 'hqwebapp/ko_pagination.html' %}
+        {% include 'hqwebapp/partials/ko_inline_edit.html' %}
         {% compress js %}
             <script src="{% static 'hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
             <script src="{% static 'hqwebapp/js/knockout_bindings.ko.js' %}"></script>

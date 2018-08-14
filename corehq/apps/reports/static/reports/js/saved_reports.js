@@ -1,3 +1,7 @@
+/**
+ * This file handles the interaction for the "My Saved Reports" page
+ * and also the modal used to save a report on standard reports pages.
+ */
 var ReportConfig = function (data) {
     var self = ko.mapping.fromJS(data, {
         'copy': ['filters'],

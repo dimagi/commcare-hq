@@ -766,7 +766,6 @@ def push_missing_docs_to_es():
         ).get(xform_doc_type.lower(), -2)
         if primary_xforms != es_xforms:
             doc_differences[(current_date, xform_doc_type)] = primary_xforms - es_xforms
-            resave_documents.delay(xform_doc_type, current_date, end_date)
 
         primary_cases = get_primary_db_case_counts(
             'icds-cas', current_date, end_date
@@ -776,7 +775,6 @@ def push_missing_docs_to_es():
         ).get(case_doc_type, -2)
         if primary_cases != es_cases:
             doc_differences[(current_date, case_doc_type)] = primary_xforms - es_xforms
-            resave_documents.delay(case_doc_type, current_date, end_date)
 
         current_date += interval
 
@@ -791,18 +789,3 @@ def push_missing_docs_to_es():
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=["{}@{}.com".format("jmoney", "dimagi")]
         )
-
-
-@task(queue='background_queue')
-def resave_documents(doc_type, start_date, end_date):
-    if doc_type == 'XFormInstance':
-        flag = '--xforms'
-    elif doc_type == 'CommCareCase':
-        flag = '--cases'
-    else:
-        raise ValueError("invalid doc_type: {}".format(doc_type))
-
-    start_date = start_date.strftime('%Y-%m-%d')
-    end_date = end_date.strftime('%Y-%m-%d')
-    # if this is kept long term, this logic should be pulled out of hte management command
-    call_command('resave_failed_forms_and_cases', 'icds-cas', start_date, end_date, flag, '--no-input')
