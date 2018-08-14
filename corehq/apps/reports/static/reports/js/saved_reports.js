@@ -1,8 +1,15 @@
-    /**
-     * This file handles the interaction for the "My Saved Reports" page
-     * and also the modal used to save a report on standard reports pages.
-     */
-hqDefine("reports/js/saved_reports", function() {
+hqDefine("reports/js/saved_reports", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'reports/js/standard_hq_report',
+    'jquery-ui/ui/datepicker',
+], function(
+    $,
+    ko,
+    _,
+    standardHQReport
+) {
     var ReportConfig = function (data) {
         var self = ko.mapping.fromJS(data, {
             'copy': ['filters'],
@@ -41,7 +48,7 @@ hqDefine("reports/js/saved_reports", function() {
 
         self.unwrap = function () {
             var data = ko.mapping.toJS(self);
-            var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+            var standardHQReport = standardHQReport.getStandardHQReport();
             if (standardHQReport.slug) {
                 data['report_slug'] = standardHQReport.slug;
             }
@@ -146,7 +153,6 @@ hqDefine("reports/js/saved_reports", function() {
 
         // edit the config currently being viewed
         self.setConfigBeingEdited = function (config) {
-
             var filters = {},
                 excludeFilters = ['startdate', 'enddate', 'format', 'date'];
             if (self.filterForm) {
@@ -282,13 +288,8 @@ hqDefine("reports/js/saved_reports", function() {
         viewModel.setUserConfigurableConfigBeingViewed(new ReportConfig(options.defaultItem));
     };
 
-    $(function() {  // jls only used in MySavedReportsView
-        var $configList = $("#ko-report-config-list");
-        if ($configList.length) {
-            $configList.koApplyBindings(new ReportConfigsViewModel({
-                items: hqImport("hqwebapp/js/initial_page_data").get('configs'),
-                saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
-            }));
-        }
-    });
+    return {
+        ReportConfig: ReportConfig,
+        ReportConfigsViewModel: ReportConfigsViewModel,
+    };
 });
