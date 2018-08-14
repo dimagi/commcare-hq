@@ -251,7 +251,7 @@
 
 
             {% if nav_form %}
-                {% include "app_manager/partials/form_tab_settings.html" %}
+                {% include "app_manager/partials/forms/form_tab_settings.html" %}
             {% endif %}
 
 
@@ -303,11 +303,11 @@
 
             {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
                 {% if module.has_schedule  %}
-                    {% include "app_manager/partials/form_tab_visit_scheduler.html" %}
+                    {% include "app_manager/partials/forms/form_tab_visit_scheduler.html" %}
                 {% endif %}
             {% endif %}
             {% if form.form_type != "shadow_form" %}
-                {% include "app_manager/partials/form_tab_advanced.html" %}
+                {% include "app_manager/partials/forms/form_tab_advanced.html" %}
             {% endif %}
         </div>
     </div>
