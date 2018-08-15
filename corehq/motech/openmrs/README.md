@@ -297,6 +297,21 @@ of someone else. So PatientFinders should be written and configured to
 skew towards false negatives (Type I errors). In other words, it is much
 better not to choose a patient than to choose the wrong patient.
 
+The `PatientFinder.create_missing` property determines whether MOTECH
+should create a new OpenMRS patient if one is not found that matches the
+given CommCare case.
+
+Behaviour defaults to "false"; do not create a new OpenMRS patient.
+
+
+WeightedPropertyPatientFinder
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The first (and currently only) subclass of `PatientFinder` is the 
+`WeightedPropertyPatientFinder` class. As the name suggests, it assigns
+weights to case properties, and scores the patients it finds in OpenMRS
+to select an OpenMRS patient that matches a CommCare case.
+
 
 Provider UUID
 -------------
