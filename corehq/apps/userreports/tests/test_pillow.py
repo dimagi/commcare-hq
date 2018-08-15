@@ -450,7 +450,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         for i in range(3):
             since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = self._post_case_blocks(i)
-            with self.assertNumQueries(12):
+            with self.assertNumQueries(11):
                 self.pillow.process_changes(since=since, forever=False)
             rows = self.adapter.get_query_object()
             self.assertEqual(rows.count(), 1)
