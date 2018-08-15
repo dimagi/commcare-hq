@@ -71,8 +71,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 unknown=False,
                 demo=False,
                 commtrack=False,
-                deactivated=HQUserType.DEACTIVATED not in user_types
             )
+            if HQUserType.DEACTIVATED not in user_types:
+                deactivated_owner_ids = self.get_deactivated_owner_ids()
+                ids_to_exclude += deactivated_owner_ids
             query = query.NOT(case_es.owner(ids_to_exclude))
         elif self.request.can_access_all_locations and EMWF.show_all_active_owners(mobile_user_and_group_slugs):
             # Show everything but stuff we know for sure to exclude
@@ -82,8 +84,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 unknown=HQUserType.UNKNOWN not in user_types,
                 demo=HQUserType.DEMO_USER not in user_types,
                 commtrack=False,
-                deactivated=HQUserType.DEACTIVATED not in user_types
             )
+            if HQUserType.DEACTIVATED not in user_types:
+                deactivated_owner_ids = self.get_deactivated_owner_ids()
+                ids_to_exclude += deactivated_owner_ids
             query = query.NOT(case_es.owner(ids_to_exclude))
         else:  # Only show explicit matches
             query = query.owner(self.case_owners)
@@ -122,29 +126,29 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                         raise BadRequestError()
             raise e
 
-    def get_special_owner_ids(self, admin, unknown, demo, commtrack, deactivated=False):
-        if not any([admin, unknown, demo, commtrack, deactivated]):
+    def get_deactivated_owner_ids(self, ):
+        user_filters = [user_es.mobile_users()]
+        owner_ids = (user_es.UserES()
+                     .show_only_inactive()
+                     .domain(self.domain)
+                     .OR(*user_filters)
+                     .get_ids())
+        return owner_ids
+
+    def get_special_owner_ids(self, admin, unknown, demo, commtrack):
+        if not any([admin, unknown, demo, commtrack]):
             return []
 
         user_filters = [filter_ for include, filter_ in [
             (admin, user_es.admin_users()),
             (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
             (demo, user_es.demo_users()),
-            (deactivated, user_es.mobile_users()),
         ] if include]
 
-        if deactivated:
-            owner_ids = (user_es.UserES()
-                         .show_only_inactive()
-                         .domain(self.domain)
-                         .OR(*user_filters)
-                         .get_ids())
-        else:
-
-            owner_ids = (user_es.UserES()
-                         .domain(self.domain)
-                         .OR(*user_filters)
-                         .get_ids())
+        owner_ids = (user_es.UserES()
+                     .domain(self.domain)
+                     .OR(*user_filters)
+                     .get_ids())
 
         if commtrack:
             owner_ids.append("commtrack-system")
@@ -190,8 +194,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 unknown=HQUserType.UNKNOWN in user_types,
                 demo=HQUserType.DEMO_USER in user_types,
                 commtrack=HQUserType.COMMTRACK in user_types,
-                deactivated=HQUserType.DEACTIVATED in user_types,
             )
+            if HQUserType.DEACTIVATED in user_types:
+                deactivated_owner_ids = self.get_deactivated_owner_ids()
+                special_owner_ids += deactivated_owner_ids
 
             # Get group ids for each group that was specified
             selected_reporting_group_ids = EMWF.selected_reporting_group_ids(mobile_user_and_group_slugs)
