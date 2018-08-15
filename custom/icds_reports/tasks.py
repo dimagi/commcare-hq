@@ -117,7 +117,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregate_ccs_record.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
@@ -126,6 +125,7 @@ SQL_FUNCTION_PATHS = [
 SQL_VIEWS_PATHS = [
     ('migrations', 'sql_templates', 'database_views', 'awc_location_months.sql'),
     ('migrations', 'sql_templates', 'database_views', 'agg_awc_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'agg_ccs_record_monthly.sql'),
     ('migrations', 'sql_templates', 'database_views', 'agg_child_health_monthly.sql'),
     ('migrations', 'sql_templates', 'database_views', 'daily_attendance.sql'),
     ('migrations', 'sql_templates', 'database_views', 'agg_awc_daily.sql'),
