@@ -2667,7 +2667,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         raise IncompatibleFormTypeException()
 
-    def update_app_case_meta(self):
+    def update_app_case_meta(self, app_case_meta):
         pass
 
 
