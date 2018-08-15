@@ -102,7 +102,8 @@ def get_updated_patients(repeater):
         repeater.username,
         repeater.password
     )
-    last_polled_at = pytz.utc.localize(repeater.atom_feed_last_polled_at)
+    last_polled_at = pytz.utc.localize(repeater.atom_feed_last_polled_at) \
+        if repeater.atom_feed_last_polled_at else None
     page = repeater.atom_feed_last_page
     try:
         while True:
