@@ -199,7 +199,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
     domain_timing_context = Counter()
 
     def __init__(self, *args, **kwargs):
-        self.processor_chunk_size = kwargs.pop('processor_chunk_size', 0)
         super(ConfigurableReportPillowProcessor, self).__init__(*args, **kwargs)
 
     @time_ucr_process_change
@@ -390,7 +389,8 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
 
-    def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False):
+    def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False,
+            processor_chunk_size=0):
         change_feed = KafkaChangeFeed(
             topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
@@ -404,7 +404,8 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
             change_feed=change_feed,
             processor=processor,
             checkpoint=checkpoint,
-            change_processed_event_handler=event_handler
+            change_processed_event_handler=event_handler,
+            processor_chunk_size=processor_chunk_size
         )
         # set by the superclass constructor
         assert self.processors is not None
@@ -436,12 +437,12 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
-            processor_chunk_size=processor_chunk_size,
         ),
         pillow_name=pillow_id,
         topics=topics,
         num_processes=num_processes,
         process_num=process_num,
+        processor_chunk_size=processor_chunk_size,
     )
 
 
@@ -458,7 +459,6 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
-            processor_chunk_size=processor_chunk_size,
             bootstrap_interval=7 * 24 * 60 * 60  # 1 week
         ),
         pillow_name=pillow_id,
@@ -466,4 +466,5 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         num_processes=num_processes,
         process_num=process_num,
         retry_errors=True,
+        processor_chunk_size=processor_chunk_size,
     )

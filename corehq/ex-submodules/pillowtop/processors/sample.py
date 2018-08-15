@@ -50,7 +50,6 @@ class TestProcessor(PillowProcessor):
 
 
 class ChunkedCountProcessor(BulkPillowProcessor):
-    processor_chunk_size = 2
 
     def __init__(self):
         self.count = 0

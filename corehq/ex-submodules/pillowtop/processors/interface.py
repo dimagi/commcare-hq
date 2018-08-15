@@ -4,6 +4,8 @@ import six
 
 
 class PillowProcessor(six.with_metaclass(ABCMeta, object)):
+    supports_batch_processing = False
+
     @abstractmethod
     def process_change(self, pillow_instance, change):
         pass
@@ -16,8 +18,7 @@ class BulkPillowProcessor(PillowProcessor):
     # To make the pillow process in chunks, create and use a processor
     #   that extends this class.
 
-    # If `processor_chunk_size` is set to zero, pillow won't process in chunks
-    processor_chunk_size = 0
+    supports_batch_processing = True
 
     @abstractmethod
     def process_changes_chunk(self, pillow_instance, changes_chunk):

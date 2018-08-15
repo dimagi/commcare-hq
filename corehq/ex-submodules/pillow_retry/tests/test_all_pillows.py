@@ -52,7 +52,6 @@ class PillowtopRetryAllPillowsTests(TestCase):
         doc = self._get_random_doc()
         pillow.process_with_error_handling(
             Change(id=doc['id'], sequence_id='3', document=doc),
-            None
         )
 
         errors = PillowError.objects.filter(pillow=pillow.pillow_id).all()

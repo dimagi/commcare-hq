@@ -75,7 +75,7 @@ class CouchPillowRetryProcessingTest(TestCase, TestMixin):
             # first change creates error
             message = 'test retry 1'
             self.pillow.process_change = MagicMock(side_effect=TestException(message))
-            self.pillow.process_with_error_handling(change, None)
+            self.pillow.process_with_error_handling(change)
 
             errors = self._check_errors(1, message)
 
@@ -135,7 +135,7 @@ class KakfaPillowRetryProcessingTest(TestCase, TestMixin):
             # first change creates error
             message = 'test retry 1'
             self.pillow.process_change = MagicMock(side_effect=TestException(message))
-            self.pillow.process_with_error_handling(change, None)
+            self.pillow.process_with_error_handling(change)
 
             errors = self._check_errors(1, message)
 

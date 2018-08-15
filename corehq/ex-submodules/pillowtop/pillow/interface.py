@@ -48,6 +48,8 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
 
     # set to true to disable saving pillow retry errors
     retry_errors = True
+    # this will be the batch size for processors that support batch processing
+    processor_chunk_size = 0
 
     @abstractproperty
     def pillow_id(self):
@@ -109,10 +111,18 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             self._record_checkpoint_in_datadog()
 
     @property
-    def _should_process_in_chunks(self):
-        # chunked processing is only supported for pillows with single processor
-        return (len(self.processors) == 1
-            and getattr(self.processors[0], 'processor_chunk_size', 0) > 0)
+    def batch_processors(self):
+        if self.processor_chunk_size > 0:
+            return [processor for processor in self.processors if processor.supports_batch_processing]
+        else:
+            return []
+
+    @property
+    def serial_processors(self):
+        if self.processor_chunk_size > 0:
+            return [processor for processor in self.processors if not processor.supports_batch_processing]
+        else:
+            return self.processors
 
     def process_changes(self, since, forever):
         # Pass changes from the feed to processors
@@ -124,57 +134,64 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
                 context.changes_seen += 1
                 if change:
-                    if self._should_process_in_chunks:
+                    # process for all serial_processors
+                    self.process_with_error_handling(change)
+                    # process for all batch_processors
+                    if self.batch_processors:
                         changes_chunk.append(change)
-                        chunk_full = len(changes_chunk) == self.processors[0].processor_chunk_size
+                        chunk_full = len(changes_chunk) == self.processor_chunk_size
                         time_elapsed = (datetime.utcnow() - last_process_time).seconds > min_wait_seconds
                         if chunk_full or time_elapsed:
                             last_process_time = datetime.utcnow()
-                            self.process_chunk_with_error_handling(changes_chunk, context)
+                            self.batch_process_with_error_handling(changes_chunk, context)
                             changes_chunk = []
                     else:
-                        self.process_with_error_handling(change, context)
+                        self._update_checkpoint(change, context)
                 else:
                     self._update_checkpoint(None, None)
-            self.process_chunk_with_error_handling(changes_chunk, context)
+            self.batch_process_with_error_handling(changes_chunk, context)
         except PillowtopCheckpointReset:
-            # finish processing any ramining chunk
-            self.process_chunk_with_error_handling(changes_chunk, context)
+            # finish processing any remaining chunk
+            self.batch_process_with_error_handling(changes_chunk, context)
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
-    def process_chunk_with_error_handling(self, changes_chunk, context):
+    def batch_process_with_error_handling(self, changes_chunk, context):
         """
         Passes given changes_chunk to the processor for chunked processing
             If there is an exception in chunked processing, falls back
             to passing changes one by one to the processor
         """
-        if not changes_chunk:
-            return
-        retry_changes = set()
-        timer = TimingContext()
-        with timer:
-            try:
-                # chunked processing is supported if there is only one processor
-                retry_changes = self.processors[0].process_changes_chunk(self, changes_chunk)
-            except Exception as ex:
-                notify_exception(
-                    None,
-                    "{pillow_name} Error in processing changes chunk {change_ids}: {ex}".format(
-                        pillow_name=self.get_name(),
-                        change_ids=[c.id for c in changes_chunk],
-                        ex=ex
-                    ))
-                # fall back to processing one by one
-                for change in changes_chunk:
-                    self.process_with_error_handling(change, context, update_checkpoint=False)
-            else:
-                # fall back to processing one by one for failed changes
-                for change in retry_changes:
-                    self.process_with_error_handling(change, context, update_checkpoint=False)
-        context.changes_seen += len(changes_chunk)
-        # update checkpoint for just the latest change
-        self._update_checkpoint(changes_chunk[-1], context)
-        self._record_datadog_metrics(changes_chunk, retry_changes, timer)
+        for processor in self.batch_processors:
+            if not changes_chunk:
+                return
+            retry_changes = set()
+            timer = TimingContext()
+            with timer:
+                # todo; consolidate timer
+                try:
+                    # chunked processing is supported if there is only one processor
+                    retry_changes = processor.process_changes_chunk(self, changes_chunk)
+                except Exception as ex:
+                    notify_exception(
+                        None,
+                        "{pillow_name} Error in processing changes chunk {change_ids}: {ex}".format(
+                            pillow_name=self.get_name(),
+                            change_ids=[c.id for c in changes_chunk],
+                            ex=ex
+                        ))
+                    # fall back to processing one by one
+                    for change in changes_chunk:
+                        self.process_with_error_handling(change, processor)
+                else:
+                    # fall back to processing one by one for failed changes
+                    for change in retry_changes:
+                        self.process_with_error_handling(change, processor)
+        if self.batch_processors:
+            context.changes_seen += len(changes_chunk)
+            # update checkpoint for just the latest change
+            self._update_checkpoint(changes_chunk[-1], context)
+            # Todo; gather all retrys not just latest
+            self._record_datadog_metrics(changes_chunk, retry_changes, timer)
 
     def _record_datadog_metrics(self, changes_chunk, retry_changes, timer):
         tags = ["pillow_name:{}".format(self.get_name()), "mode:chunked"]
@@ -195,11 +212,16 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             timer.duration / len(changes_chunk),
             tags=tags + ["chunk_size:".format(str(len(changes_chunk)))])
 
-    def process_with_error_handling(self, change, context, update_checkpoint=True):
+    def process_with_error_handling(self, change, processor=None):
         timer = TimingContext()
         try:
             with timer:
-                self.process_change(change)
+                if processor:
+                    processor.process_change(self, change)
+                else:
+                    # process on serial processors
+                    for processor in self.serial_processors:
+                        self.process_change(change)
         except Exception as ex:
             try:
                 handle_pillow_error(self, change, ex)
@@ -210,9 +232,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                 self._record_change_exception_in_datadog(change)
                 raise
         else:
-            if update_checkpoint:
-                self._update_checkpoint(change, context)
-                self._record_change_success_in_datadog(change)
+            self._record_change_success_in_datadog(change)
         self._record_change_in_datadog(change, timer)
 
     @abstractmethod
@@ -312,10 +332,11 @@ class ConstructedPillow(PillowBase):
     """
 
     def __init__(self, name, checkpoint, change_feed, processor,
-                 change_processed_event_handler=None):
+                 change_processed_event_handler=None, processor_chunk_size=0):
         self._name = name
         self._checkpoint = checkpoint
         self._change_feed = change_feed
+        self.processor_chunk_size = processor_chunk_size
         if isinstance(processor, list):
             self.processors = processor
         else:

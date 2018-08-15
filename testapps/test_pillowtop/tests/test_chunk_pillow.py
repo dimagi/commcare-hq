@@ -49,7 +49,8 @@ class ChunkedPorcessingTest(TestCase):
             processor=processor,
             change_processed_event_handler=KafkaCheckpointEventHandler(
                 checkpoint=checkpoint, checkpoint_frequency=1, change_feed=feed
-            )
+            ),
+            processor_chunk_size=2
         )
 
         since = feed.get_latest_offsets()
