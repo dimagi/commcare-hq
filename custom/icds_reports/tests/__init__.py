@@ -137,7 +137,7 @@ def setUpModule():
         finally:
             _call_center_domain_mock.stop()
 
-        with connections['icds-ucr'].cursor() as cursor:	
+        with connections['icds-ucr'].cursor() as cursor:
             create_views(cursor)
 
 

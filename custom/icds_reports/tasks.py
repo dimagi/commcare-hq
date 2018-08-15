@@ -417,10 +417,11 @@ def _child_health_monthly_table(day):
 
 @track_time
 def _ccs_record_monthly_table(day):
-    _run_custom_sql_script([
-        "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
-    ], day)
-    CcsRecordMonthly.aggregate(force_to_date(day))
+    with transaction.atomic():
+        _run_custom_sql_script([
+            "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
+        ], day)
+        CcsRecordMonthly.aggregate(force_to_date(day))
 
 @track_time
 def _daily_attendance_table(day):
@@ -441,10 +442,11 @@ def _agg_child_health_table(day):
 
 @track_time
 def _agg_ccs_record_table(day):
-    _run_custom_sql_script([
-        "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
-    ], day)
-    AggCcsRecord.aggregate(force_to_date(day))
+    with transaction.atomic():
+        _run_custom_sql_script([
+            "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
+        ], day)
+        AggCcsRecord.aggregate(force_to_date(day))
 
 
 @track_time

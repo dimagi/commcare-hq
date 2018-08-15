@@ -1543,7 +1543,6 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         self.month = transform_day_to_month(month)
         self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
 
-
     @property
     def ccs_record_monthly_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
