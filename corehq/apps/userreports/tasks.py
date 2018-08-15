@@ -445,7 +445,8 @@ def _build_async_indicators(indicator_doc_ids):
         datadog_histogram(
             'commcare.async_indicator.processing_time', timer.duration,
             tags=[
-                'config_ids:{}'.format(config_ids)
+                'config_ids:{}'.format(config_ids),
+                'batch_size:{}'.format(len(indicator_doc_ids))
             ]
         )
 
