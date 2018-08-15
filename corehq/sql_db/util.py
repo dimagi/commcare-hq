@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 import uuid
 from collections import defaultdict
 from numpy import random
-import itertools
 
 from django.conf import settings
 from django import db
