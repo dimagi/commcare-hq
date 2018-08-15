@@ -79,10 +79,10 @@ def _build_indicators(config, document_store, relevant_ids):
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
 def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
     config = _get_config_by_id(indicator_config_id)
+    success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
+    failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     send = False
     if limit == -1:
-        success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
-        failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
         send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         adapter = get_indicator_adapter(config, can_handle_laboratory=True)
