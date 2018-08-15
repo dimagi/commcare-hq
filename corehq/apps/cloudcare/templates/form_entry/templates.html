@@ -113,9 +113,8 @@
                 <!-- ko if: help() -->
                 <a
                     class="help-text-trigger"
-                    role="button">
-                    <i class="fa fa-info-circle"></i>
-                </a>
+                    role="button"
+                    ><i class="fa fa-question-circle"></i></a>
                 <div class="modal fade" role="dialog">
                     <div class="modal-dialog">
                         <div class="modal-content">
@@ -248,9 +247,29 @@
     "></span>
 </script>
 <script type="text/html" id="unsupported-entry-ko-template">
-    <div class="unsupported alert alert-warning" data-bind="
-        text: 'Sorry, web entry cannot support this type of question ' + datatype
-    "></div>
+    <div class="unsupported alert alert-warning">
+        <a class="unsupported-question-type-trigger" role="button"
+            ><i class="fa fa-question-circle"></i></a>
+        {% blocktrans %}
+            Sorry, web entry cannot support this type of question.
+        {% endblocktrans %}
+    </div>
+    <div class="modal fade" role="dialog" id="unsupported-question-type-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    {% blocktrans %}
+                        This question will appear as follows in data exports.
+                    {% endblocktrans %}
+                    <br><br>
+                    <input type="text" class="form-control" data-bind="value: $data.answer" />
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" data-dismiss="modal">{% trans "OK" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </script>
 <script type="text/html" id="geo-entry-ko-template">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
