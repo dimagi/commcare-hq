@@ -24,7 +24,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser
-from corehq.motech.openmrs.atom_feed import poll_openmrs_atom_feeds
+from corehq.motech.openmrs.atom_feed import get_updated_patients, update_patient
 from corehq.motech.openmrs.const import (
     IMPORT_FREQUENCY_WEEKLY,
     IMPORT_FREQUENCY_MONTHLY,
@@ -34,6 +34,7 @@ from corehq.motech.openmrs.const import (
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.models import POSIX_MILLISECONDS
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 from toggle.shortcuts import find_domains_with_toggle_enabled
@@ -251,6 +252,15 @@ def import_patients():
         import_patients_to_domain(domain_name)
 
 
+@task(queue='background_queue')
+def poll_openmrs_atom_feeds(domain_name):
+    for repeater in OpenmrsRepeater.by_domain(domain_name):
+        if repeater.atom_feed_enabled and not repeater.paused:
+            updated_patients = get_updated_patients(repeater)
+            for patient_uuid, updated_at in updated_patients:
+                update_patient(repeater, patient_uuid, updated_at)
+
+
 @periodic_task(
     run_every=crontab(**OPENMRS_ATOM_FEED_POLL_INTERVAL),
     queue='background_queue'
@@ -261,4 +271,4 @@ def track_changes():
     """
     domains = find_domains_with_toggle_enabled(toggles.OPENMRS_INTEGRATION)
     for domain in domains:
-        poll_openmrs_atom_feeds(domain)
+        poll_openmrs_atom_feeds.delay(domain)

@@ -21,7 +21,6 @@ from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.motech.openmrs.const import XMLNS_OPENMRS, OPENMRS_ATOM_FEED_DEVICE_ID
 from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.util.soft_assert import soft_assert
 
@@ -254,11 +253,3 @@ def update_patient(repeater, patient_uuid, updated_at):
             xmlns=XMLNS_OPENMRS,
             device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.get_id,
         )
-
-
-def poll_openmrs_atom_feeds(domain_name):
-    for repeater in OpenmrsRepeater.by_domain(domain_name):
-        if repeater.atom_feed_enabled and not repeater.paused:
-            updated_patients = get_updated_patients(repeater)
-            for patient_uuid, updated_at in updated_patients:
-                update_patient(repeater, patient_uuid, updated_at)
