@@ -133,31 +133,18 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             (deactivated, user_es.mobile_users()),
         ] if include]
 
-        deactivated_ids_to_include = []
-        active_ids_to_include = []
         if deactivated:
-            deactivated_ids_to_include = (user_es.UserES()
+            owner_ids = (user_es.UserES()
                          .show_only_inactive()
                          .domain(self.domain)
                          .OR(*user_filters)
                          .get_ids())
         else:
-            active_ids_to_include = (user_es.UserES()
+
+            owner_ids = (user_es.UserES()
                          .domain(self.domain)
                          .OR(*user_filters)
                          .get_ids())
-
-        print("-----------")
-        print("Active ids to include: ")
-        for id in active_ids_to_include:
-            print(id)
-
-        print("Deactivated ids to include: ")
-        for id in deactivated_ids_to_include:
-            print(id)
-        print("-----------")
-
-        owner_ids = deactivated_ids_to_include + active_ids_to_include
 
         if commtrack:
             owner_ids.append("commtrack-system")
