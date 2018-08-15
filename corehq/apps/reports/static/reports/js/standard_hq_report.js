@@ -5,6 +5,8 @@
     lives in userreports/js/configurable_report.js, while the non-UCR version lives in this file
     and several custom reports still define standardHQReport as a global var.
 
+    To add to the jankiness of this file, it currently lives in a half-requirejs, half-non-requirejs state.
+
     This file also controls some basic event handling for report pages, such as the "Apply" button.
 */
 hqDefine("reports/js/standard_hq_report", [
@@ -30,6 +32,7 @@ hqDefine("reports/js/standard_hq_report", [
             standardReport = standardHQReport;
         } else {
             var ucr = "userreports/js/configurable_report";
+            // This check doesn't work in a requirejs environment. Part of migrating UCR is going to be updating this.
             if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
                 // UCRs
                 standardReport = hqImport(ucr).getStandardHQReport();

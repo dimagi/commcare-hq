@@ -1,6 +1,10 @@
 hqDefine("userreports/js/configurable_report", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
+    if (typeof define === 'function' && define.amd || window.USE_REQUIREJS) {
+        throw new Error("This part of UCR is not yet migrated to RequireJS. Update the UCR logic in reports/js/standard_hq_report before removing this error.");
+    }
+
     var getStandardHQReport = function(isFirstLoad) {
         if (!initial_page_data("standardHQReport")) {
             return undefined;
