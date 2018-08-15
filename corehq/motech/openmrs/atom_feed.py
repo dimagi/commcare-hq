@@ -93,6 +93,9 @@ def get_updated_patients(repeater):
     Iterates over a paginated atom feed, yields patients updated since
     repeater.atom_feed_last_polled_at, and updates the repeater.
     """
+    def has_new_entries_since(last_polled_at, element, xpath='./atom:updated'):
+        return not last_polled_at or get_timestamp(element, xpath) > last_polled_at
+
     requests = Requests(
         repeater.domain,
         repeater.url,
@@ -104,18 +107,9 @@ def get_updated_patients(repeater):
     try:
         while True:
             feed_xml = get_patient_feed_xml(requests, page)
-            if (
-                not last_polled_at or
-                get_timestamp(feed_xml) > last_polled_at
-            ):
-                for entry in feed_xml.xpath(
-                        './atom:entry',
-                        namespaces={'atom': 'http://www.w3.org/2005/Atom'}
-                ):
-                    if (
-                        not last_polled_at or
-                        get_timestamp(entry, './atom:published') > last_polled_at
-                    ):
+            if has_new_entries_since(last_polled_at, feed_xml):
+                for entry in feed_xml.xpath('./atom:entry', namespaces={'atom': 'http://www.w3.org/2005/Atom'}):
+                    if has_new_entries_since(last_polled_at, entry, './atom:published'):
                         yield UuidUpdatedAt(
                             get_patient_uuid(entry),
                             get_timestamp(entry)
