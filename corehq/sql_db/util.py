@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import uuid
 from collections import defaultdict
 from numpy import random
+import itertools
 
 from django.conf import settings
 from django import db
@@ -21,10 +22,12 @@ ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
 STALE_CHECK_FREQUENCY = 30
 
 
-def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
+def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None, query_size=4000):
     """
     Runs a query across all partitioned databases and produces a generator
     with the results.
+
+    Iteration logic adopted from https://djangosnippets.org/snippets/1949/
 
     :param model_class: A Django model class
 
@@ -57,9 +60,17 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
                 qs = qs.values_list(*values, flat=True)
             else:
                 qs = qs.values_list(*values)
-
-        for result in qs.iterator():
-            yield result
+            sort_col = values[0]
+        else:
+            sort_col = 'pk'
+        value = 0
+        last_value = qs.order_by('-{}'.format(sort_col))[0].get(sort_col)
+        qs = qs.order_by(sort_col)
+        while value < last_value:
+            filter_expression = {'{}__gt'.format(sort_col): value}
+            for row in qs.filter(**filter_expression)[:query_size]:
+                value = row.get(sort_col)
+                yield row
 
 
 def split_list_by_db_partition(partition_values):
