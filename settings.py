@@ -850,7 +850,7 @@ ZIPLINE_API_PASSWORD = ''
 # Set to the list of domain names for which we will run the ICDS SMS indicators
 ICDS_SMS_INDICATOR_DOMAINS = []
 
-KAFKA_BROKERS = None
+KAFKA_BROKERS = ['localhost:9092']
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
@@ -988,7 +988,7 @@ _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
 
-if not KAFKA_BROKERS and 'KAFKA_URL' in globals():
+if 'KAFKA_URL' in globals():
     import warnings
     warnings.warn(inspect.cleandoc("""KAFKA_URL is deprecated
 
