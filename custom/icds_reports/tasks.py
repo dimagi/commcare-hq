@@ -183,12 +183,21 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_thr_forms)
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_child_health_thr_forms)
+                for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_ccs_record_thr_forms)
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
-                    state_id=state_id, date=monthly_date, func=_aggregate_pnc_forms
+                    state_id=state_id, date=monthly_date, func=_aggregate_child_health_pnc_forms
+                ) for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(
+                    state_id=state_id, date=monthly_date, func=_aggregate_ccs_record_pnc_forms
                 ) for state_id in state_ids
             ])
             stage_1_tasks.extend([
@@ -355,14 +364,22 @@ def _aggregate_df_forms(state_id, day):
 
 
 @track_time
-def _aggregate_pnc_forms(state_id, day):
+def _aggregate_child_health_pnc_forms(state_id, day):
     AggregateChildHealthPostnatalCareForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_ccs_record_pnc_forms(state_id, day):
     AggregateCcsRecordPostnatalCareForms.aggregate(state_id, day)
 
 
 @track_time
-def _aggregate_thr_forms(state_id, day):
+def _aggregate_child_health_thr_forms(state_id, day):
     AggregateChildHealthTHRForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_ccs_record_thr_forms(state_id, day):
     AggregateCcsRecordTHRForms.aggregate(state_id, day)
 
 
