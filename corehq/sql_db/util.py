@@ -57,6 +57,7 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
         qs = qs.filter(q_expression)
         if values:
             if len(values) == 1:
+                flat_qs = True
                 qs = qs.values_list(*values, flat=True)
             else:
                 qs = qs.values_list(*values)
@@ -64,13 +65,17 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
         else:
             sort_col = 'pk'
         value = 0
-        last_value = qs.order_by('-{}'.format(sort_col))[0].get(sort_col)
-        qs = qs.order_by(sort_col)
-        while value < last_value:
-            filter_expression = {'{}__gt'.format(sort_col): value}
-            for row in qs.filter(**filter_expression)[:query_size]:
-                value = row.get(sort_col)
-                yield row
+        last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
+        if last_value is not None:
+            qs = qs.order_by(sort_col)
+            while value < last_value:
+                filter_expression = {'{}__gt'.format(sort_col): value}
+                for row in qs.filter(**filter_expression)[:query_size]:
+                    if flat_qs:
+                        value = row
+                    else:
+                        value = row.get(sort_col)
+                    yield row
 
 
 def split_list_by_db_partition(partition_values):
