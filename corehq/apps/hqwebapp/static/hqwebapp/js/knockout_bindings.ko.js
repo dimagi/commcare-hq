@@ -2,16 +2,13 @@
 hqDefine("hqwebapp/js/knockout_bindings.ko", [
     'jquery',
     'knockout',
-    'hqwebapp/js/atwho',
     'hqwebapp/js/main',
     'jquery-ui/ui/sortable',
 ], function(
     $,
     ko,
-    atWho,
     hqMain
 ) {
-
     ko.bindingHandlers.hqbSubmitReady = {
         update: function(element, valueAccessor) {
             var value = (valueAccessor()) ? valueAccessor()() : null;
@@ -751,34 +748,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
         };
     }();
 
-    /**
-     * Autocomplete widget based on atwho.
-     */
-    ko.bindingHandlers.autocompleteAtwho = {
-        init: function(element, valueAccessor) {
-            var $element = $(element);
-            if (!$element.atwho) {
-                throw new Error("The typeahead binding requires Atwho.js and Caret.js");
-            }
-
-            atWho.init($element, {
-                afterInsert: function() {
-                    $element.trigger('textchange');
-                },
-            });
-
-            $element.on("textchange", function() {
-                if ($element.val()) {
-                    $element.change();
-                }
-            });
-        },
-
-        update: function(element, valueAccessor, allBindings) {
-            $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
-        },
-    };
-
     ko.bindingHandlers.multiTypeahead = {
         init: function(element, valueAccessor) {
             var contacts = valueAccessor();
@@ -960,4 +929,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
             });
         },
     };
+
+    return 1;
 });
