@@ -3,7 +3,7 @@
 <tr>
 
 <td>
-    <!--ko if: $index() != 0-->
+    <!-- ko if: $parent.mappingRows().length > 1 -->
         <a class="remove_row" href="#" data-bind="click: $root.removeRow"><i class="fa fa-remove"></i></a>
     <!--/ko-->
 </td>
