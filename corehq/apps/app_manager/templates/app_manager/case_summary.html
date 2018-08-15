@@ -89,7 +89,6 @@
                             <thead>
                                 <tr>
                                     <th>{% trans "Case Property" %}</th>
-                                    <th>{% trans "Description" %}</th>
                                     <th>{% trans "Form" %}</th>
                                     <th>{% trans "Load questions" %}</th>
                                     <th>{% trans "Save questions" %}</th>
@@ -101,8 +100,12 @@
                                 <!-- ko foreach: forms -->
                                     <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}, visible: $parent.isVisible">
                                         <!-- ko if: !$index() -->
-                                        <td data-bind="attr: {rowspan: $parent.forms.length}, text: $parent.name"></td>
-                                        <td data-bind="attr: {rowspan: $parent.forms.length}, text: $parent.description"></td>
+                                        <td data-bind="attr: {rowspan: $parent.forms.length}">
+                                            <dl>
+                                                <dt data-bind="text: $parent.name"></dt>
+                                                <dd data-bind="text: $parent.description"></dd>
+                                            </dl>
+                                        </td>
                                         <!-- /ko -->
                                         <td>
                                             <span data-bind="html: $root.moduleFormReference(form_id)"></span>
