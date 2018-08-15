@@ -2,8 +2,11 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 from django.test import SimpleTestCase
+from mock import Mock, patch
 
 from corehq.motech.openmrs.finders import PatientFinder, WeightedPropertyPatientFinder
+from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
+from corehq.motech.openmrs.repeater_helpers import find_patient
 
 
 PATIENT = {
@@ -60,6 +63,38 @@ class PatientFinderTests(SimpleTestCase):
             'property_weights': [],
         })
         self.assertIsInstance(finder, WeightedPropertyPatientFinder)
+
+    def test_create_missing(self):
+        """
+        create_patient should be called if PatientFinder.create_missing is set
+        """
+        openmrs_config = OpenmrsConfig.wrap({
+            'case_config': {
+                'patient_finder': {
+                    'create_missing': True,
+                    'doc_type': 'WeightedPropertyPatientFinder',
+                    'searchable_properties': [],
+                    'property_weights': [],
+                },
+                'patient_identifiers': {},
+                'match_on_ids': [],
+                'person_properties': {},
+                'person_preferred_address': {},
+                'person_preferred_name': {},
+            },
+            'form_configs': [],
+        })
+
+        with patch('corehq.motech.openmrs.repeater_helpers.CaseAccessors') as CaseAccessorsPatch, \
+                patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch:
+            requests = Mock()
+            info = Mock(case_id='123')
+            CaseAccessorsPatch.return_value = Mock(get_case=Mock())
+            create_patient_patch.return_value = None
+
+            find_patient(requests, 'test-domain', info, openmrs_config)
+
+            create_patient_patch.assert_called()
 
 
 class WeightedPropertyPatientFinderTests(SimpleTestCase):
