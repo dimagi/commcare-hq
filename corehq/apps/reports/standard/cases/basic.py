@@ -64,19 +64,17 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        if self.request.can_access_all_locations and EMWF.show_all_active_owners_and_admin_demo_unknown_supply(mobile_user_and_group_slugs):
-            user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
+        if self.request.can_access_all_locations and EMWF.show_all_owners_and_admin_demo_unknown_supply(mobile_user_and_group_slugs):
             ids_to_exclude = self.get_special_owner_ids(
                 admin=False,
                 unknown=False,
                 demo=False,
                 commtrack=False,
             )
-            if HQUserType.DEACTIVATED not in user_types:
-                deactivated_owner_ids = self.get_deactivated_owner_ids()
-                ids_to_exclude += deactivated_owner_ids
+            # deactivated_owner_ids = self.get_deactivated_owner_ids()
+            # ids_to_exclude += deactivated_owner_ids
             query = query.NOT(case_es.owner(ids_to_exclude))
-        elif self.request.can_access_all_locations and EMWF.show_all_active_owners(mobile_user_and_group_slugs):
+        elif self.request.can_access_all_locations and EMWF.show_all_owners(mobile_user_and_group_slugs):
             # Show everything but stuff we know for sure to exclude
             user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
             ids_to_exclude = self.get_special_owner_ids(
@@ -85,9 +83,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 demo=HQUserType.DEMO_USER not in user_types,
                 commtrack=False,
             )
-            if HQUserType.DEACTIVATED not in user_types:
-                deactivated_owner_ids = self.get_deactivated_owner_ids()
-                ids_to_exclude += deactivated_owner_ids
+            # deactivated_owner_ids = self.get_deactivated_owner_ids()
+            # ids_to_exclude += deactivated_owner_ids
             query = query.NOT(case_es.owner(ids_to_exclude))
         else:  # Only show explicit matches
             query = query.owner(self.case_owners)
