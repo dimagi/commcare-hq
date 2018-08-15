@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import json
 import os
 from io import BytesIO
+import datetime
 
 from botocore.response import StreamingBody
 from django.test import TestCase
@@ -85,7 +86,8 @@ class DataFileDownloadDetailTest(ViewTestCase):
             description='all of the foo',
             content_type='text/plain',
             blob_id='abc',
-            content_length=len(cls.content)
+            content_length=len(cls.content),
+            delete_after=datetime.datetime.utcnow() + datetime.timedelta(days=3),
         )
         cls.data_file.save()
 
@@ -95,15 +97,24 @@ class DataFileDownloadDetailTest(ViewTestCase):
         cls.data_file.delete()
         _db.pop()
 
-    def test_data_file_download(self):
-        data_file_url = reverse(DataFileDownloadDetail.urlname, kwargs={
+    def setUp(self):
+        super(DataFileDownloadDetailTest, self).setUp()
+        self.data_file_url = reverse(DataFileDownloadDetail.urlname, kwargs={
             'domain': self.domain.name, 'pk': self.data_file.pk, 'filename': 'foo.txt'
         })
+
+    def test_data_file_download(self):
         try:
-            resp = self.client.get(data_file_url)
+            resp = self.client.get(self.data_file_url)
         except TypeError as err:
             self.fail('Getting a data file raised a TypeError: {}'.format(err))
         self.assertEqual(resp.getvalue(), self.content)
+
+    def test_data_file_download_expired(self):
+        self.data_file.delete_after = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
+        self.data_file.save()
+        resp = self.client.get(self.data_file_url)
+        self.assertEqual(resp.status_code, 404)
 
 
 @generate_cases([
@@ -112,16 +123,13 @@ class DataFileDownloadDetailTest(ViewTestCase):
     (12000, None)
 ], DataFileDownloadDetailTest)
 def test_data_file_download_partial(self, start, end):
-    data_file_url = reverse(DataFileDownloadDetail.urlname, kwargs={
-        'domain': self.domain, 'pk': self.data_file.pk, 'filename': 'foo.txt'
-    })
     content_length = len(self.content)
     if end:
         range = '{}-{}'.format(start, end)
     else:
         range = '{}-'.format(start)
 
-    resp = self.client.get(data_file_url, HTTP_RANGE='bytes={}'.format(range))
+    resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes={}'.format(range))
     self.assertEqual(resp.status_code, 206)
     expected_range_header = 'bytes {}-{}/{}'.format(start, end or (content_length - 1), content_length)
     self.assertEqual(resp['Content-Range'], expected_range_header)
