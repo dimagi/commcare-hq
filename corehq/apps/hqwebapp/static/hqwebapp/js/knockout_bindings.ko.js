@@ -2,12 +2,10 @@
 hqDefine("hqwebapp/js/knockout_bindings.ko", [
     'jquery',
     'knockout',
-    'hqwebapp/js/main',
     'jquery-ui/ui/sortable',
 ], function(
     $,
-    ko,
-    hqMain
+    ko
 ) {
     ko.bindingHandlers.hqbSubmitReady = {
         update: function(element, valueAccessor) {
@@ -358,61 +356,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
         },
     };
 
-    ko.bindingHandlers.saveButton = {
-        init: function(element, getSaveButton) {
-            getSaveButton().ui.appendTo(element);
-        },
-    };
-
-    ko.bindingHandlers.saveButton2 = {
-        init: function(element, valueAccessor, allBindingsAccessor) {
-            var saveOptions = allBindingsAccessor().saveOptions,
-                state = valueAccessor(),
-                saveButton;
-
-            saveButton = hqMain.initSaveButton({
-                save: function() {
-                    saveButton.ajax(saveOptions());
-                },
-            });
-            $(element).css('vertical-align', 'top').css('display', 'inline-block');
-
-            saveButton.ui.appendTo(element);
-            element.saveButton = saveButton;
-            saveButton.on('state:change', function() {
-                state(saveButton.state);
-            });
-        },
-        update: function(element, valueAccessor) {
-            var state = ko.utils.unwrapObservable(valueAccessor());
-            element.saveButton.setStateWhenReady(state);
-        },
-    };
-
-    ko.bindingHandlers.deleteButton = {
-        init: function(element, valueAccessor, allBindingsAccessor) {
-            var saveOptions = allBindingsAccessor().saveOptions,
-                state = valueAccessor(),
-                deleteButton;
-
-            deleteButton = hqMain.initDeleteButton({
-                save: function() {
-                    deleteButton.ajax(saveOptions());
-                },
-            });
-            $(element).css('vertical-align', 'top').css('display', 'inline-block');
-            deleteButton.ui.appendTo(element);
-            element.deleteButton = deleteButton;
-            deleteButton.on('state:change', function() {
-                state(deleteButton.state);
-            });
-        },
-        update: function(element, valueAccessor) {
-            var state = ko.utils.unwrapObservable(valueAccessor());
-            element.deleteButton.setStateWhenReady(state);
-        },
-    };
-
     ko.bindingHandlers.modal = {
         init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             $(element).addClass('modal fade').modal({
@@ -529,23 +472,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
             setTimeout(function() {
                 $('ul.nav > li.active > a', element).each(activate);
             }, 0);
-        },
-    };
-
-    ko.bindingHandlers.makeHqHelp = {
-        update: function(element, valueAccessor) {
-            var opts = valueAccessor(),
-                name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
-                description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
-                placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
-                format = ko.utils.unwrapObservable(opts.format);
-            $(element).find('.hq-help').remove();
-            hqMain.makeHqHelp({
-                title: name,
-                content: description,
-                html: format === 'html',
-                placement: placement || 'right',
-            }).appendTo(element);
         },
     };
 
