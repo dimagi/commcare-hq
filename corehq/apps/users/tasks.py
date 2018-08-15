@@ -30,6 +30,7 @@ from six.moves import map
 logger = get_task_logger(__name__)
 
 
+@task
 @sensitive_variables('user_specs', 'group_specs')
 def bulk_upload_async(domain, user_specs, group_specs):
     from corehq.apps.users.bulkupload import create_or_update_users_and_groups
