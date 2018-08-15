@@ -299,6 +299,11 @@ function Form(json) {
             var container = $(event.currentTarget).closest(".caption");
             container.find(".modal").modal('show');
         });
+
+        $(".unsupported-question-type-trigger").click(function() {
+            var container = $(event.currentTarget).closest(".widget");
+            container.find(".modal").modal('show');
+        });
     };
 
     $.unsubscribe('session');
