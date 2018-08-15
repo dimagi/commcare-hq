@@ -3,8 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SumColumn, SimpleColumn
-from sqlagg.filters import OR, RawFilter
+from sqlagg.columns import SumWhen, SumColumn, SimpleColumn
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
@@ -54,44 +53,24 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
         agg_columns = [
             DatabaseColumn(
                 'num_children_0_6mo_enrolled_for_services',
-                SumColumn(
-                    'valid_in_month',
-                    filters=self.filters + [
-                        OR([
-                            RawFilter("age_tranche = '0'"),
-                            RawFilter("age_tranche = '6'")
-                        ])
-                    ],
+                SumWhen(
+                    whens={"age_tranche = '0' OR age_tranche = '6'": 'valid_in_month'},
                     alias='num_children_0_6mo_enrolled_for_services'
                 ),
                 slug='num_children_0_6mo_enrolled_for_services'
             ),
             DatabaseColumn(
                 'num_children_6mo3yr_enrolled_for_services',
-                SumColumn(
-                    'valid_in_month',
-                    filters=self.filters + [
-                        OR([
-                            RawFilter("age_tranche = '12'"),
-                            RawFilter("age_tranche = '24'"),
-                            RawFilter("age_tranche = '36'")
-                        ])
-                    ],
+                SumWhen(
+                    whens={"age_tranche = '12' OR age_tranche = '24' OR age_tranche = '36'": 'valid_in_month'},
                     alias='num_children_6mo3yr_enrolled_for_services'
                 ),
                 slug='num_children_6mo3yr_enrolled_for_services'
             ),
             DatabaseColumn(
                 'num_children_3yr6yr_enrolled_for_services',
-                SumColumn(
-                    'valid_in_month',
-                    filters=self.filters + [
-                        OR([
-                            RawFilter("age_tranche = '48'"),
-                            RawFilter("age_tranche = '60'"),
-                            RawFilter("age_tranche = '72'")
-                        ])
-                    ],
+                SumWhen(
+                    whens={"age_tranche = '48' OR age_tranche = '60' OR age_tranche = '72'": 'valid_in_month'},
                     alias='num_children_3yr6yr_enrolled_for_services'
                 ),
                 slug='num_children_3yr6yr_enrolled_for_services'

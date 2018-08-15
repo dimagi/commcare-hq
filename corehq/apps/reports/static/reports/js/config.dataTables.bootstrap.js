@@ -92,7 +92,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
             }
             applyBootstrapMagic();
 
-            var dataTablesDom = "frt<'row dataTables_control'<'col-sm-5'il><'col-sm-7'p>>";
+            var dataTablesDom = "frt<'row dataTables_control'<'col-sm-5'il><'col-sm-7 text-right'p>>";
             $(self.dataTableElem).each(function(){
                 var params = {
                     sDom: dataTablesDom,

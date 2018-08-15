@@ -107,9 +107,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                     SumColumn('nutrition_status_severely_underweight', filters=filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    SumColumn('nutrition_status_weighed', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
+                    AliasColumn('nutrition_status_weighed')
                 ],
                 slug='severely_underweight'
             ),
@@ -120,9 +118,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                     SumColumn('nutrition_status_moderately_underweight', filters=filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    SumColumn('nutrition_status_weighed', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
+                    AliasColumn('nutrition_status_weighed')
                 ],
                 slug='moderately_underweight'
             ),
@@ -133,9 +129,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                     SumColumn('nutrition_status_normal', filters=filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    SumColumn('nutrition_status_weighed', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
+                    AliasColumn('nutrition_status_weighed')
                 ],
                 slug='status_normal'
             ),

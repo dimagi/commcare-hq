@@ -4,12 +4,11 @@
 #
 #    make requirements
 #
--e git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect
+git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect==0.5.7a2
 alembic==0.8.6
 amqp==1.4.9
 anyjson==0.3.3
 appdirs==1.4.3
-appnope==0.1.0            # via ipython
 asn1crypto==0.24.0
 attrs==18.1.0
 babel==2.6.0
@@ -94,7 +93,7 @@ jinja2==2.8
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.6
+jsonobject-couchdbkit==0.9.7
 jsonobject==0.9.3
 jsonpath-rw==1.4.0
 kafka-python==0.9.5
@@ -126,7 +125,7 @@ py-kissmetrics==1.0.1
 pyasn1==0.4.3
 pycco==0.5.1
 pycparser==2.18
-pycryptodome==3.6.4
+pycryptodome==3.6.5
 pygithub==1.35
 pygments==2.0.2
 pygooglechart==0.4.0
@@ -162,7 +161,7 @@ singledispatch==3.4.0.3   # via tornado
 six==1.11.0
 smartypants==2.0.1
 socketpool==0.5.3
-sqlagg==0.9.1
+sqlagg==0.10.1
 sqlalchemy==1.2.9
 stripe==1.67.0
 suds-jurko==0.6

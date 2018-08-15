@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import inspect
 from collections import defaultdict
 import importlib
 import os
@@ -848,7 +850,7 @@ ZIPLINE_API_PASSWORD = ''
 # Set to the list of domain names for which we will run the ICDS SMS indicators
 ICDS_SMS_INDICATOR_DOMAINS = []
 
-KAFKA_URL = 'localhost:9092'
+KAFKA_BROKERS = None
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
@@ -929,43 +931,6 @@ except ImportError as error:
     from dev_settings import *
 
 
-def _determine_couch_databases(couch_databases):
-    from dev_settings import COUCH_DATABASES as DEFAULT_COUCH_DATABASES_VALUE
-    if 'COUCH_SERVER_ROOT' in globals() and \
-            couch_databases in (None, DEFAULT_COUCH_DATABASES_VALUE):
-        import warnings
-        couch_databases = {
-            'default': {
-                'COUCH_HTTPS': COUCH_HTTPS,
-                'COUCH_SERVER_ROOT': COUCH_SERVER_ROOT,
-                'COUCH_USERNAME': COUCH_USERNAME,
-                'COUCH_PASSWORD': COUCH_PASSWORD,
-                'COUCH_DATABASE_NAME': COUCH_DATABASE_NAME,
-            },
-        }
-        warnings.warn("""COUCH_SERVER_ROOT and related variables are deprecated
-
-Please replace your COUCH_* settings with
-
-COUCH_DATABASES = {
-    'default': {
-        'COUCH_HTTPS': %(COUCH_HTTPS)r,
-        'COUCH_SERVER_ROOT': %(COUCH_SERVER_ROOT)r,
-        'COUCH_USERNAME': %(COUCH_USERNAME)r,
-        'COUCH_PASSWORD': %(COUCH_PASSWORD)r,
-        'COUCH_DATABASE_NAME': %(COUCH_DATABASE_NAME)r,
-    },
-}
-""" % globals(), DeprecationWarning)
-
-    return couch_databases
-
-
-try:
-    COUCH_DATABASES = _determine_couch_databases(COUCH_DATABASES)
-except NameError:
-    COUCH_DATABASES = _determine_couch_databases(None)
-
 COUCH_DATABASES['default'] = {
     k: v.encode('utf-8') if isinstance(v, six.text_type) else v
     for (k, v) in COUCH_DATABASES['default'].items()
@@ -985,6 +950,17 @@ for database in DATABASES.values():
 _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
+
+if not KAFKA_BROKERS and 'KAFKA_URL' in globals():
+    import warnings
+    warnings.warn(inspect.cleandoc("""KAFKA_URL is deprecated
+
+    Please replace KAFKA_URL with KAFKA_BROKERS as follows:
+
+        KAFKA_BROKERS = ['%s']
+    """) % KAFKA_URL, DeprecationWarning)
+
+    KAFKA_BROKERS = [KAFKA_URL]
 
 TEMPLATES = [
     {
@@ -1572,6 +1548,9 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_LS_6":
         ["custom.icds.messaging.custom_content.ls_6",
          "ICDS: Weekly AWC Submission Performance to LS"],
+    "ICDS_PHASE2_AWW_1":
+        ["custom.icds.messaging.custom_content.phase2_aww_1",
+         "ICDS: Weekly AWC VHND Performance to AWW"],
 }
 
 # Used by the old reminders framework
@@ -1592,6 +1571,10 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE':
         ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_ccs_record_case',
          "ICDS: Mother person case from ccs_record case"],
+    'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE_EXCL_MIGRATED_OR_OPTED_OUT':
+        ['custom.icds.messaging.custom_recipients'
+         '.recipient_mother_person_case_from_ccs_record_case_excl_migrated_or_opted_out',
+         "ICDS: Mother person case from ccs_record case (excluding migrated and not registered mothers)"],
     'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE':
         ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_health_case',
          "ICDS: Mother person case from child_health case"],
