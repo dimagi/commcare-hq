@@ -1548,6 +1548,9 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_LS_6":
         ["custom.icds.messaging.custom_content.ls_6",
          "ICDS: Weekly AWC Submission Performance to LS"],
+    "ICDS_PHASE2_AWW_1":
+        ["custom.icds.messaging.custom_content.phase2_aww_1",
+         "ICDS: Weekly AWC VHND Performance to AWW"],
 }
 
 # Used by the old reminders framework
@@ -1568,6 +1571,10 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE':
         ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_ccs_record_case',
          "ICDS: Mother person case from ccs_record case"],
+    'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE_EXCL_MIGRATED_OR_OPTED_OUT':
+        ['custom.icds.messaging.custom_recipients'
+         '.recipient_mother_person_case_from_ccs_record_case_excl_migrated_or_opted_out',
+         "ICDS: Mother person case from ccs_record case (excluding migrated and not registered mothers)"],
     'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE':
         ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_health_case',
          "ICDS: Mother person case from child_health case"],
