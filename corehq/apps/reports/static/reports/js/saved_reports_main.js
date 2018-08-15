@@ -6,7 +6,7 @@ hqDefine("reports/js/saved_reports_main", [
 ], function(
     $,
     initialPageData,
-    reportConfigModels,
+    reportConfigModels
 ) {
     $(function() {
         var $configList = $("#ko-report-config-list");
