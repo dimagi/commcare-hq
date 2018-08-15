@@ -462,7 +462,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
-    ko.bindingHandlers.visibleFade = {
+    ko.bindingHandlers.slideVisible = {
         'update': function(element, valueAccessor) {
             var value = ko.utils.unwrapObservable(valueAccessor());
             if (value) {
