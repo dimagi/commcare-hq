@@ -473,38 +473,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
-    ko.bindingHandlers.starred = {
-        init: function(element) {
-            $(element).addClass('icon fa');
-        },
-        update: function(element, valueAccessor) {
-            var value = ko.utils.unwrapObservable(valueAccessor()),
-                $element = $(element);
-            value = value + '';
-            $element.addClass('icon pointer');
-
-            var unselected = 'icon-star-empty fa-star-o';
-            var selected = 'icon-star icon-large fa-star released';
-            var pending = 'icon-refresh icon-spin fa-spin fa-spinner';
-            var error = 'icon-ban-circle';
-
-            var suffix = error;
-            if (value === 'false') {
-                suffix = unselected;
-            } else if (value === 'true') {
-                suffix = selected;
-            } else if (value === 'pending') {
-                suffix = pending;
-            }
-
-            $element.removeClass(unselected);
-            $element.removeClass(selected);
-            $element.removeClass(pending);
-            $element.removeClass(error);
-            $element.addClass(suffix);
-        },
-    };
-
     ko.bindingHandlers.bootstrapTabs = {
         init: function(element) {
             var tabLinkSelector = 'ul.nav > li > a';
