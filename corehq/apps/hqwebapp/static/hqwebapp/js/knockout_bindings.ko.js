@@ -568,35 +568,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
-    ko.bindingHandlers.edit = {
-        update: function(element, valueAccessor) {
-            var editable = ko.utils.unwrapObservable(valueAccessor());
-
-            function getValue(e) {
-                if ($(e).is('select')) {
-                    return $('option[value="' + $(e).val() + '"]', e).text() || $(e).val();
-                }
-                return $(e).val();
-            }
-            if (editable) {
-                $(element).show();
-                $(element).next('.ko-no-edit').hide();
-            } else {
-                $(element).hide();
-                var no_edit = $(element).next('.ko-no-edit');
-                if (!no_edit.length) {
-                    if ($(element).hasClass('code')) {
-                        no_edit = $('<code></code>');
-                    } else {
-                        no_edit = $('<span></span>');
-                    }
-                    no_edit.addClass('ko-no-edit').insertAfter(element);
-                }
-                no_edit.text(getValue(element)).removeClass().addClass($(element).attr('class')).addClass('ko-no-edit').addClass('ko-no-edit-' + element.tagName.toLowerCase());
-            }
-        },
-    };
-
     /**
      * Converts the bound element to a select2 widget. The value of the binding is
      * a list of strings, or a list of objects with the keys 'id' and 'text' used
