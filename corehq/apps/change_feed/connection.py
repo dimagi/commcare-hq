@@ -8,7 +8,7 @@ import logging
 
 def get_kafka_client():
     # todo: we may want to make this more configurable
-    return KafkaClient(settings.KAFKA_URL)
+    return KafkaClient(settings.KAFKA_BROKERS)
 
 
 def get_kafka_client_or_none():

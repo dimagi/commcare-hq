@@ -18,6 +18,7 @@ from jsonpath_rw import Child, parse, Fields, Slice, Where
 
 from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.jsonpath import Cmp
+from corehq.motech.value_source import recurse_subclasses
 from dimagi.ext.couchdbkit import (
     DecimalProperty,
     DocumentSchema,
@@ -39,7 +40,6 @@ class PatientFinder(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
-        from corehq.motech.openmrs.openmrs_config import recurse_subclasses
 
         if cls is PatientFinder:
             return {

@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from corehq.sql_db.routers import db_for_read_write
 from corehq.util.exceptions import AccessRestricted
 from django.db import models
+from django.db.models.query import RawQuerySet
 
 
 def raise_access_restricted():
@@ -83,6 +85,17 @@ class RequireDBManager(models.Manager):
         return self.using(self.get_db(partition_value))
 
 
+class RestrictedManager(RequireDBManager):
+
+    def raw(self, raw_query, params=None, translations=None, using=None):
+        if not using:
+            using = db_for_read_write(self.model)
+        return RawQuerySet(
+            raw_query, model=self.model,
+            params=params, translations=translations, using=using
+        )
+
+
 class PartitionedModel(models.Model):
     """
     This makes it so that you must specify a database name when
@@ -122,6 +135,7 @@ class PartitionedModel(models.Model):
 
     def _add_routing(self, kwargs):
         if 'using' in kwargs:
-            assert kwargs['using'] == self.db
+            assert kwargs['using'] == self.db, \
+                "using=%r, expected %r" % (kwargs['using'], self.db)
         else:
             kwargs['using'] = self.db

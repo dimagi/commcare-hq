@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import Counter
 
+import dateutil
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps import es
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type, get_doc_ids_in_domain_by_type
@@ -21,6 +23,30 @@ def get_es_counts_by_doc_type(domain, es_indices=None, extra_filters=None):
         counter += get_index_counts_by_domain_doc_type(es_query, domain, extra_filters)
 
     return counter
+
+
+def get_es_case_counts(domain, doc_type, gte, lt):
+    ex = es.cases.server_modified_range(gte=gte, lt=lt)
+    return es.cases.CaseES().domain(domain).filter(ex).filter(
+        es.filters.OR(
+            es.filters.doc_type(doc_type),
+            es.filters.doc_type(doc_type.lower()),
+        )
+    ).count()
+
+
+def get_es_case_range(domain):
+    def descending_query(order):
+        result = es.CaseES().domain(domain).sort(
+            'server_modified_on', desc=order).size(1).run().raw_hits
+        if len(result) == 0:
+            return None
+        else:
+            return dateutil.parser.parse(result[0]['_source']['server_modified_on'])
+    return (
+        descending_query(order=False),
+        descending_query(order=True)
+    )
 
 
 def get_index_counts_by_domain_doc_type(es_query_class, domain, extra_filters=None):

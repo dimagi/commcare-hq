@@ -424,7 +424,7 @@ class CustomEventForm(ContentForm):
     # Corresponds to TimedEvent.time or RandomTimedEvent.time
     time = CharField(
         required=False,
-        label='',
+        label=ugettext_lazy("HH:MM"),
     )
 
     # Corresponds to RandomTimedEvent.window_length
@@ -928,7 +928,7 @@ class ScheduleForm(Form):
             (TimedSchedule.EVENT_RANDOM_TIME, ugettext_lazy("A random time")),
         )
     )
-    send_time = CharField(required=False)
+    send_time = CharField(required=False, label=ugettext_lazy("HH:MM"))
     window_length = IntegerField(
         required=False,
         min_value=1,
@@ -1523,6 +1523,13 @@ class ScheduleForm(Form):
                     *self.get_extra_timing_fields(),
                     data_bind="visible: showSharedTimeInput"
                 ),
+                crispy.Div(
+                    crispy.HTML(
+                        '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
+                        _("Define the send times in the events below.")
+                    ),
+                    data_bind="visible: send_frequency() === '%s'" % self.SEND_CUSTOM_DAILY,
+                ),
                 data_bind="visible: usesTimedSchedule()"
             ),
             hqcrispy.B3MultiField(
@@ -1759,6 +1766,10 @@ class ScheduleForm(Form):
         return list(result)
 
     @property
+    def use_case(self):
+        raise NotImplementedError()
+
+    @property
     def current_values(self):
         values = {}
         for field_name in self.fields.keys():
@@ -1766,6 +1777,7 @@ class ScheduleForm(Form):
         values['standalone_content_form'] = self.standalone_content_form.current_values
         values['custom_event_formset'] = [form.current_values for form in self.custom_event_formset]
         values['editing_custom_immediate_schedule'] = self.editing_custom_immediate_schedule
+        values['use_case'] = self.use_case
         return values
 
     @property
@@ -2401,9 +2413,11 @@ class ScheduleForm(Form):
 
 class BroadcastForm(ScheduleForm):
 
+    use_case = 'broadcast'
+
     schedule_name = CharField(
         required=True,
-        label=ugettext_lazy('Schedule Name'),
+        label=ugettext_lazy("Broadcast Name"),
         max_length=1000,
     )
 
@@ -2540,6 +2554,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
 
+    use_case = 'conditional_alert'
+
     # start_date is defined on the superclass but cleaning it in this subclass
     # depends on start_date_type, which depends on send_frequency
     field_order = [
@@ -2657,9 +2673,28 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
     )
 
+    stop_date_case_property_enabled = ChoiceField(
+        required=True,
+        choices=(
+            (ScheduleForm.NO, ugettext_lazy("No")),
+            (ScheduleForm.YES, ugettext_lazy("Yes")),
+        ),
+    )
+
+    stop_date_case_property_name = TrimmedCharField(
+        label='',
+        required=False,
+    )
+
+    skip_running_rule_post_save = BooleanField(
+        required=False,
+        label=ugettext_lazy("Skip running rule post save"),
+    )
+
     allow_custom_immediate_schedule = True
 
     def __init__(self, domain, schedule, can_use_sms_surveys, rule, criteria_form, *args, **kwargs):
+        self.new_reminders_migrator = kwargs.pop('new_reminders_migrator', False)
         self.initial_rule = rule
         self.criteria_form = criteria_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
@@ -2851,6 +2886,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 if schedule.start_day_of_week >= 0:
                     result['start_day_of_week'] = six.text_type(schedule.start_day_of_week)
 
+            if schedule.stop_date_case_property_name:
+                result['stop_date_case_property_enabled'] = self.YES
+                result['stop_date_case_property_name'] = schedule.stop_date_case_property_name
+
             self.add_initial_for_custom_metadata(result)
 
         return result
@@ -2965,6 +3004,24 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     css_class='col-sm-4',
                 ),
             ),
+            hqcrispy.B3MultiField(
+                _("Use case property stop date"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'stop_date_case_property_enabled',
+                        data_bind='value: stop_date_case_property_enabled',
+                    ),
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'stop_date_case_property_name',
+                        placeholder=_("case property"),
+                    ),
+                    data_bind="visible: stop_date_case_property_enabled() === '%s'" % self.YES,
+                    css_class='col-sm-8',
+                ),
+            ),
         ])
 
         if (
@@ -2992,6 +3049,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: capture_custom_metadata_item() === 'Y'",
                 ),
             ])
+
+        if self.new_reminders_migrator:
+            result.append(crispy.Field('skip_running_rule_post_save'))
 
         return result
 
@@ -3092,6 +3152,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return validate_case_property_name(
             self.cleaned_data.get('reset_case_property_name'),
+            allow_parent_case_references=False,
+        )
+
+    def clean_stop_date_case_property_name(self):
+        if self.cleaned_data.get('stop_date_case_property_enabled') != self.YES:
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('stop_date_case_property_name'),
             allow_parent_case_references=False,
         )
 
@@ -3293,6 +3362,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             }
         else:
             extra_options['custom_metadata'] = {}
+
+        extra_options['stop_date_case_property_name'] = self.cleaned_data['stop_date_case_property_name']
 
         return extra_options
 

@@ -27,6 +27,7 @@ from corehq.motech.openmrs.const import (
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.serializers import to_timestamp
 from corehq.motech.openmrs.workflow import WorkflowTask
+from corehq.motech.value_source import CaseTriggerInfo
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
 
@@ -425,7 +426,7 @@ class UpdatePersonNameTask(WorkflowTask):
         start of the workflow.
         """
         properties = {
-            property_: self.person['preferredName'][property_]
+            property_: self.person['preferredName'].get(property_)
             for property_ in self.openmrs_config.case_config.person_preferred_name.keys()
             if property_ in NAME_PROPERTIES
         }
@@ -503,7 +504,7 @@ class UpdatePersonAddressTask(WorkflowTask):
 
     def rollback(self):
         properties = {
-            property_: self.person['preferredAddress'][property_]
+            property_: self.person['preferredAddress'].get(property_)
             for property_ in self.openmrs_config.case_config.person_preferred_address.keys()
             if property_ in ADDRESS_PROPERTIES
         }
@@ -606,7 +607,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         start of the workflow.
         """
         properties = {
-            property_: self.person[property_]
+            property_: self.person.get(property_)
             for property_ in self.openmrs_config.case_config.person_properties.keys()
             if property_ in PERSON_PROPERTIES
         }
@@ -616,46 +617,6 @@ class UpdatePersonPropertiesTask(WorkflowTask):
                 json=serialize(properties),
                 raise_for_status=True,
             )
-
-
-CaseTriggerInfo = namedtuple('CaseTriggerInfo',
-                             ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])
-
-
-def get_form_question_values(form_json):
-    """
-    Returns question-value pairs to result where questions are given as "/data/foo/bar"
-
-    >>> values = get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
-    >>> values == {'/data/foo/bar': 'baz'}
-    True
-
-    """
-    _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
-
-    def _recurse_form_questions(form_dict, path, result_):
-        for key, value in form_dict.items():
-            if key in _reserved_keys:
-                continue
-            new_path = path + [key]
-            if isinstance(value, list):
-                # Repeat group
-                for v in value:
-                    assert isinstance(v, dict)
-                    _recurse_form_questions(v, new_path, result_)
-            elif isinstance(value, dict):
-                # Group
-                _recurse_form_questions(value, new_path, result_)
-            else:
-                # key is a question and value is its answer
-                question = '/'.join((p.decode('utf8') if isinstance(p, bytes) else p for p in new_path))
-                result_[question] = value
-
-    result = {}
-    _recurse_form_questions(form_json['form'], [b'/data'], result)  # "/data" is just convention, hopefully
-    # familiar from form builder. The form's data will usually be immediately under "form_json['form']" but not
-    # necessarily. If this causes problems we may need a more reliable way to get to it.
-    return result
 
 
 def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields):

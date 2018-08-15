@@ -98,6 +98,11 @@ MESSAGING_DASHBOARD = StaticUINotify(
     only_visible_for_users_created_before=datetime(2018, 5, 25),
 )
 
+NEW_REMINDERS_FRAMEWORK = StaticUINotify(
+    'new_reminders_framework_aug2018',
+    ends_on=datetime(2018, 11, 1),
+)
+
 ABILITY_TO_HIDE_TRANSLATIONS = StaticUINotify(
     'ability_to_hide_translations',
 )

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.urls import reverse
 from corehq.apps.reminders.forms import BroadcastForm
 from corehq.apps.reminders.models import (RECIPIENT_USER_GROUP, RECIPIENT_LOCATION)
-from corehq.apps.users.forms import SupplyPointSelectWidget
+from corehq.apps.locations.forms import LocationSelectWidget
 from crispy_forms import layout as crispy
 from django import forms
 from django.core.exceptions import ValidationError
@@ -90,7 +90,7 @@ class EWSUserSettings(forms.Form):
             del kwargs['domain']
         super(EWSUserSettings, self).__init__(*args, **kwargs)
         query_url = reverse('non_administrative_locations_for_select2', args=[domain])
-        self.fields['facility'].widget = SupplyPointSelectWidget(domain=domain, id='facility', query_url=query_url)
+        self.fields['facility'].widget = LocationSelectWidget(domain=domain, id='facility', query_url=query_url)
 
     def save(self, user, domain):
         ews_extension = EWSExtension.objects.get_or_create(user_id=user.get_id, domain=domain)[0]

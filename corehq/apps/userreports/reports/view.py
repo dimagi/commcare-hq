@@ -189,7 +189,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def has_viable_configuration(self):
         try:
             self.spec
-        except DocumentNotFound:
+        except (DocumentNotFound, BadSpecError):
             return False
         else:
             return True
@@ -594,7 +594,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         report_config_id = subreport_slug
         try:
             report_class = self._report_class(domain, report_config_id)
-        except BadSpecError:
+        except (BadSpecError, DocumentNotFound):
             raise Http404
         return report_class.as_view()(request, domain=domain, subreport_slug=report_config_id, **kwargs)
 

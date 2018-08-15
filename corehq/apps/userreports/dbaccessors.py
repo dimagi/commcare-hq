@@ -34,8 +34,8 @@ def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=
     datasources = sorted(
         DataSourceConfiguration.view(
             'userreports/data_sources_by_build_info',
-            start_key=key,
-            end_key=key + [{}],
+            startkey=key,
+            endkey=key + [{}],
             reduce=False,
             include_docs=True
         ),

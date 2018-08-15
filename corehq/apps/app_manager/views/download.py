@@ -259,7 +259,7 @@ def download_file(request, domain, app_id, path):
                 # look for file guaranteed to exist if profile is created
                 request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
             except ResourceNotFound:
-                request.app.create_build_files(save=True, build_profile_id=build_profile)
+                request.app.create_build_files(build_profile_id=build_profile)
                 request.app.save()
         except ResourceConflict:
             if is_retry:
@@ -445,7 +445,7 @@ def download_index_files(app, build_profile_id=None):
                                            path.split('/')[1] not in profiles)
         if not (prefix + 'profile.ccpr') in app.blobs:
             # profile hasnt been built yet
-            app.create_build_files(save=True, build_profile_id=build_profile_id)
+            app.create_build_files(build_profile_id=build_profile_id)
             app.save()
         files = [(path[len(prefix):], app.fetch_attachment(path))
                  for path in app.blobs if needed_for_CCZ(path)]

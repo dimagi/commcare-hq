@@ -30,6 +30,7 @@ class TestBlobDownload(SimpleTestCase):
 
         expose_blob_download(
             self.identifier,
+            expiry=60,
             content_disposition=content_disposition,
             download_id=download_id
         )

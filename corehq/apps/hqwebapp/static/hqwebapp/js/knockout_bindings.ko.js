@@ -171,6 +171,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
+    // Loosely based on https://jsfiddle.net/hQnWG/614/
     ko.bindingHandlers.multirow_sortable = {
         updateSortableList: function(itemList) {
             _(itemList()).each(function(item, index) {
@@ -202,16 +203,35 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             };
             list.subscribe(forceUpdate);
 
-            // based on https://jsfiddle.net/hQnWG/614/
+            $(element).on('click', '.send-to-top', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+                moveRowToIndex(row, 0);
+            });
+
+            $(element).on('click', '.send-to-bottom', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+                moveRowToIndex(row, list().length - 1);
+            });
+
+            $(element).on('click', '.export-table-checkbox', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+            });
 
             $(element).on('click', 'tr', function (e) {
                 if ($(this).hasClass('ignore-click')) {
+                    // Don't do anything if send-to-top, send-to-bottom, or select-for-export was clicked.
                     $(this).removeClass('ignore-click');
                 } else if (e.ctrlKey || e.metaKey) {
+                    // CTRL-clicking (CMD on OSX) toggles whether a row is highlighted for sorting.
                     var exportColumn = getExportColumnByRow($(this));
                     exportColumn.selectedForSort(!exportColumn.selectedForSort());
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
+                    // Clicking the shift key highlights all rows between the shift-clicked row
+                    // and the previously clicked row.
                     var shiftSelectedIndex = getIndexFromRow($(this)),
                         lastClickedIndex = 0,
                         start = null,
@@ -230,6 +250,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                         list()[i].selectedForSort(true);
                     }
                 } else {
+                    // Clicking a row selects it for sorting and unselects all other rows.
                     $(this).addClass('last-clicked').siblings().removeClass('last-clicked');
                     for (var i = 0; i < list().length; i++) {
                         list()[i].selectedForSort(false);
@@ -237,6 +258,65 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     getExportColumnByRow($(this)).selectedForSort(true);
                 }
             });
+
+            $(element).sortable({
+                delay: 150,
+                helper: function (e, item) {
+                    // If the dragged row isn't selected for sorting, select it and unselect all other rows.
+                    var exportColumn = getExportColumnByRow(item);
+                    if (!exportColumn.selectedForSort()) {
+                        for (var i = 0; i < list().length; i++) {
+                            list()[i].selectedForSort(false);
+                        }
+                        exportColumn.selectedForSort(true);
+                    }
+                    // Only show the row that is clicked and dragged.
+                    item.siblings('.selected-for-sort').hide();
+                    return item;
+                },
+                // Drop the rows in the chosen location.
+                // Maintain the original order of the selected rows.
+                stop: function (e, ui) {
+                    ui.item.after($('.selected-for-sort'));
+
+                    var previousRow = ui.item.prev()[0],
+                        previousIndex = null;
+                    if(previousRow) {
+                        previousIndex = parseInt(previousRow.attributes['data-order'].value);
+                    }
+
+                    var movedIndices = [];
+                    $('.selected-for-sort').each(function (index, element) {
+                        movedIndices.push(parseInt(element.attributes['data-order'].value));
+                    });
+                    movedIndices.sort();
+
+                    var originalList = list.splice(0, list().length);
+
+                    var insertDraggedElements = function() {
+                        movedIndices.forEach(function (movedIndex) {
+                            list.push(originalList[movedIndex]);
+                        });
+                    };
+
+                    // Insert rows at top of list.
+                    if (previousIndex === null) {
+                        insertDraggedElements();
+                    }
+                    originalList.forEach(function(originalListElement, originalListIndex) {
+                        // Other rows stay in their original order.
+                        if (!movedIndices.includes(originalListIndex)) {
+                            list.push(originalListElement);
+                        }
+                        // Insert rows in the middle of the list.
+                        if (originalListIndex === previousIndex) {
+                            insertDraggedElements();
+                        }
+                    });
+                },
+            });
+
+            // Helper functions
 
             var getIndexFromRow = function (row) {
                 return parseInt(row[0].attributes['data-order'].value);
@@ -261,72 +341,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 list.splice(newIndex, 0, currentListItem);
             };
 
-            $(element).on('click', '.send-to-top', function () {
-                var row = getRowFromClickedElement($(this));
-                setIgnoreClick(row);
-                moveRowToIndex(row, 0);
-            });
-
-            $(element).on('click', '.send-to-bottom', function () {
-                var row = getRowFromClickedElement($(this));
-                setIgnoreClick(row);
-                moveRowToIndex(row, list().length - 1);
-            });
-
-            $(element).on('click', '.export-table-checkbox', function () {
-                var row = getRowFromClickedElement($(this));
-                setIgnoreClick(row);
-            });
-
-            $(element).sortable({
-                delay: 150,
-                helper: function (e, item) {
-                    var exportColumn = getExportColumnByRow(item);
-                    if (!exportColumn.selectedForSort()) {
-                        for (var i = 0; i < list().length; i++) {
-                            list()[i].selectedForSort(false);
-                        }
-                        exportColumn.selectedForSort(true);
-                    }
-                    item.siblings('.selected-for-sort').hide();
-                    return item;
-                },
-                stop: function (e, ui) {
-                    ui.item.after($('.selected-for-sort'));
-
-                    var previousRow = ui.item.prev()[0],
-                        previousIndex = null;
-                    if(previousRow) {
-                        previousIndex = parseInt(previousRow.attributes['data-order'].value);
-                    }
-
-                    var movedIndices = [];
-                    $('.selected-for-sort').each(function (index, element) {
-                        movedIndices.push(parseInt(element.attributes['data-order'].value));
-                    });
-                    movedIndices.sort();
-
-                    var originalList = list.splice(0, list().length);
-
-                    var insertDraggedElements = function() {
-                        movedIndices.forEach(function (movedIndex) {
-                            list.push(originalList[movedIndex]);
-                        });
-                    };
-
-                    if (previousIndex === null) {
-                        insertDraggedElements();
-                    }
-                    originalList.forEach(function(originalListElement, originalListIndex) {
-                        if (!movedIndices.includes(originalListIndex)) {
-                            list.push(originalListElement);
-                        }
-                        if (originalListIndex === previousIndex) {
-                            insertDraggedElements();
-                        }
-                    });
-                },
-            });
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
         update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -886,7 +900,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     ko.bindingHandlers.popover = {
         update: function(element, valueAccessor) {
             var options = ko.utils.unwrapObservable(valueAccessor());
-            if (options.title || options.context) { // don't show empty popovers
+            if (options.title || options.content) { // don't show empty popovers
                 $(element).popover(options);
             }
         },

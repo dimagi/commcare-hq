@@ -105,7 +105,7 @@ class AppManagerTest(TestCase):
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def testCreateJadJar(self, mock):
         self.app.build_spec = BuildSpec(**self.build1)
-        self.app.create_build_files(save=True)
+        self.app.create_build_files()
         self.app.save(increment_version=False)
         # get a fresh one from the db to make sure attachments aren't cached
         # since that's closer to the real situation

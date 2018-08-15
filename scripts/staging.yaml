@@ -49,13 +49,20 @@
 trunk: master
 name: autostaging
 branches:
-  - jls/requirejs-locations  # Jenny June 22
-  - nh/omrs/levenshtein # Norman June 29
-  - dmr/tweak-s3db-timings  # Danny Jul 11
-  - es/location-upload  # Ethan July 6
-  - jls/unify-tab-history  # Jenny July 10
-  - emord-patch-1  # J$ upgrade pillow
-  - jls/appcues-template-apps  # Jenny July 16
+  - jls/requirejs-case-importer  # Jenny July 17
+  - revert-21236-fr/add-secure-urllib3  # Danny July 18
+  - jls/requirejs-domain-billing  # Jenny July 19
+  - jls/enterprise-settings  # Jenny July 23
+#  - nh/fix_staging/why  # Norman July 24
+#  - jls/requirejs-login  # Jenny July 22
+#  - dmr/fix-package-security-vulnerabilities+nh/omrs/atom+leven
+  - dmr/fix-package-security-vulnerabilities  # Danny July 21
+#  - nh/omrs/atom+leven  # Norman July 31
+#  - nh/motech/set_repeater  # Norman Aug 6
+  - 30-day-minimum-subscription # Gabriella Aug 7
+  - rn_sending_report_to_celery_task # Rohit Aug 8
+  - jls/requirejs-my-saved-reports  # Jenny Aug 15
+  - np/celery-mail  # Nick P Aug 15
 submodules:
   submodules/django-digest-src:
     branches: []

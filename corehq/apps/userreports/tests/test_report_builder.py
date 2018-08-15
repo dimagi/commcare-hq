@@ -49,13 +49,27 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
         self.assertEqual('XFormInstance', builder.source_doc_type)
         expected_filter = {
-            "operator": "eq",
-            "expression": {
-                "type": "property_name",
-                "property_name": "xmlns"
-            },
-            "type": "boolean_expression",
-            "property_value": self.form.xmlns
+            "type": "and",
+            "filters": [
+                {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "property_value": self.form.xmlns,
+                },
+                {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "app_id"
+                    },
+                    "property_value": self.app.get_id,
+                }
+            ]
         }
         self.assertEqual(expected_filter, builder.filter)
 

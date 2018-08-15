@@ -150,8 +150,6 @@ class MobileRecoveryMeasure(models.Model):
                 "OTA update from there)"),
         Measure('app_update', "Update App",
                 "Update the current CommCare app"),
-        Measure('clear_data', "Clear User Data",
-                "Clear data for the app's last logged in user"),
         Measure('cc_reinstall', "CC Reinstall Needed",
                 "Notify the user that CommCare needs to be reinstalled"),
         Measure('cc_update', "CC Update Needed",

@@ -67,7 +67,7 @@
             {% trans "Sorry, you don't have permission to do this action!" %}
         </span>
         <span data-bind="visible: buildErrorCode() !== 403">
-            {% trans "Whoops, that didn't go through. Reload the page and click Make New Version to try again." %}
+            {% trans "An error occurred. Reload the page and click Make New Version to try again." %}
         </span>
     </div>
 
@@ -78,22 +78,18 @@
 
     <div class="alert alert-danger hide"
          data-bind="visible: fetchState() === 'error', css: {hide: false}">
-        {% trans "Whoops, we couldn't get those versions for you. Could you try that again?" %}
+        {% trans "An error occurred while fetching versions. Reload the page to try again." %}
     </div>
 
     <div class="releases-container"
          data-bind="css: {hide: false},
-                    template: {
-                        foreach: savedApps,
-                        afterAdd: function(elem) { $(elem).hide().fadeIn() },
-                        beforeRemove: function(elem) { if (elem.nodeType === 1) { $(elem).fadeOut(); } }
-                    }" >
+                    template: {foreach: savedApps}" >
 
         <div class="panel panel-release"
              data-bind="css: {
                 'build-released': is_released(),
                 'build-unreleased': !is_released(),
-                'build-latest-release': id() === $root.latestReleaseId(),
+                'build-latest-release': version() === $root.latestReleasedVersion(),
                 'error': build_broken
             }">
           <div class="panel-heading">
@@ -123,7 +119,7 @@
                   <!--ko if: is_released() != 'error' -->
 
                   <span class="label label-info"
-                        data-bind="visible: id() === $root.latestReleaseId()">{% trans "Latest" %}</span>
+                        data-bind="visible: version() === $root.latestReleasedVersion()">{% trans "Latest" %}</span>
                   <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
                   <div class="btn-group">
                       <button type="button"
@@ -207,12 +203,10 @@
         </div><!-- .panel-release -->
     </div> <!-- .releases-container -->
 
-    <p data-bind="visible: fetchState() !== 'pending' && !doneFetching(), css: {hide: false}" class="hide">
-        <a href="#" class="btn btn-default btn-block" data-bind="click: function() { getMoreSavedApps(true); }">
-            {% trans "View More" %}
-        </a>
-    </p>
-
+    <pagination data-apply-bindings="false"
+                params="goToPage: goToPage,
+                        perPage: fetchLimit,
+                        totalItems: totalItems"></pagination>
     <script type="text/html" id="delete-build-modal-template">
         <div class="modal-dialog">
             <div class="modal-content">

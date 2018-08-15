@@ -145,6 +145,7 @@ def _record_metrics(tags, submission_type, response, result=None, timer=None):
     datadog_counter('commcare.xform_submissions.count', tags=tags)
 
 
+@location_safe
 @csrf_exempt
 @require_POST
 @check_domain_migration

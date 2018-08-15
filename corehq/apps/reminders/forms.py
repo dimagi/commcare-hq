@@ -28,7 +28,7 @@ from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.models import Keyword
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.users.forms import SupplyPointSelectWidget
+from corehq.apps.locations.forms import LocationSelectWidget
 from corehq import toggles
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs
@@ -2488,7 +2488,7 @@ class BroadcastForm(Form):
         self.fields['form_unique_id'].choices = form_choices(self.domain)
         self.fields['case_group_id'].choices = get_case_group_meta_in_domain(self.domain)
         self.fields['user_group_id'].choices = user_group_choices(self.domain)
-        self.fields['location_ids'].widget = SupplyPointSelectWidget(
+        self.fields['location_ids'].widget = LocationSelectWidget(
             self.domain,
             multiselect=True,
         )

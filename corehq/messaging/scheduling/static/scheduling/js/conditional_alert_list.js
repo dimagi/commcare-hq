@@ -1,8 +1,11 @@
-hqDefine("scheduling/js/conditional_alert_list", function() {
+hqDefine("scheduling/js/conditional_alert_list", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+], function($, initialPageData) {
     var table = null;
 
     $(function() {
-        var conditonal_alert_list_url = hqImport("hqwebapp/js/initial_page_data").reverse("conditional_alert_list");
+        var conditonalAlterListUrl = initialPageData.reverse("conditional_alert_list");
 
         table = $("#conditional-alert-list").dataTable({
             "lengthChange": false,
@@ -11,7 +14,7 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
             "displayLength": 10,
             "processing": false,
             "serverSide": true,
-            "ajaxSource": conditonal_alert_list_url,
+            "ajaxSource": conditonalAlterListUrl,
             "fnServerParams": function(aoData) {
                 aoData.push({"name": "action", "value": "list_conditional_alerts"});
             },
@@ -36,8 +39,8 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                         var button_id = 'delete-button-for-' + row.id;
                         var disabled = row.locked_for_editing ? 'disabled' : '';
                         return '<button id="' + button_id + '" \
-                                        class="btn btn-danger" \
-                                        onclick="hqImport(\'scheduling/js/conditional_alert_list\').deleteAlert(' + row.id + ')" \
+                                        class="btn btn-danger alert-delete" \
+                                        data-id="'+row.id+'"\
                                         ' + disabled + '> \
                                 <i class="fa fa-remove"></i></button>';
                     },
@@ -45,7 +48,7 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 {
                     "targets": [1],
                     "render": function(data, type, row) {
-                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_conditional_alert', row.id);
+                        var url = initialPageData.reverse('edit_conditional_alert', row.id);
                         return "<a href='" + url + "'>" + row.name + "</a>";
                     },
                 },
@@ -70,25 +73,39 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 {
                     "targets": [4],
                     "render": function(data, type, row) {
+                        var html = null;
                         var button_id = 'activate-button-for-' + row.id;
                         var disabled = (row.locked_for_editing || !row.editable) ? 'disabled' : '';
                         if(row.active) {
-                            return '<button id="' + button_id + '" \
-                                            class="btn btn-default" \
-                                            onclick="hqImport(\'scheduling/js/conditional_alert_list\').deactivateAlert(' + row.id + ')" \
+                            html = '<button id="' + button_id + '" \
+                                            class="btn btn-default alert-activate" \
+                                            data-id="'+row.id+'"\
+                                            data-action="deactivate"\
                                             ' + disabled + '> \
                                    ' + gettext("Deactivate") + '</button>';
                         } else {
-                            return '<button id="' + button_id + '" + \
-                                            class="btn btn-default" + \
-                                            onclick="hqImport(\'scheduling/js/conditional_alert_list\').activateAlert(' + row.id + ')" \
+                            html = '<button id="' + button_id + '" + \
+                                            class="btn btn-default alert-activate" + \
+                                            data-action="activate"\
+                                            data-id="'+row.id+'"\
                                             ' + disabled + '> \
                                    ' + gettext("Activate") + '</button>';
                         }
+
+                        if(row.locked_for_editing) {
+                            html += ' <button class="btn btn-default alert-restart" data-id="'+row.id+'" >';
+                            html += '<i class="fa fa-refresh"></i> ' + gettext("Restart Rule") + '</button>';
+                        }
+
+                        return html;
                     },
                 },
             ],
         });
+
+        $(document).on('click', '.alert-delete', deleteAlert);
+        $(document).on('click', '.alert-activate', activateAlert);
+        $(document).on('click', '.alert-restart', restartRule);
 
         function reloadTable() {
             table.fnDraw(false);
@@ -105,7 +122,7 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
         if(action === 'delete') {
             deleteButton.disableButton();
             activateButton.prop('disabled', true);
-        } else {
+        } else if (action === 'activate' || action === 'deactivate') {
             activateButton.disableButton();
             deleteButton.prop('disabled', true);
         }
@@ -119,28 +136,53 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 rule_id: rule_id,
             },
         })
+            .done(function(result) {
+                if(action === 'restart') {
+                    if(result.status === 'success') {
+                        alert(gettext("This rule has been restarted."));
+                    } else if(result.status === 'error') {
+                        var text = gettext(
+                            "Unable to restart rule. Rules can only be started every two hours and there are " +
+                            "%s minute(s) remaining before this rule can be started again."
+                        );
+                        text = interpolate(text, [result.minutes_remaining]);
+                        alert(text);
+                    }
+                }
+            })
             .always(function() {
                 table.fnDraw(false);
             });
     }
 
-    function activateAlert(rule_id) {
-        alertAction('activate', rule_id);
+    function activateAlert() {
+        alertAction($(this).data("action"), $(this).data("id"));
     }
 
-    function deactivateAlert(rule_id) {
-        alertAction('deactivate', rule_id);
-    }
 
-    function deleteAlert(rule_id) {
+    function deleteAlert() {
         if(confirm(gettext("Are you sure you want to delete this conditional message?"))) {
-            alertAction('delete', rule_id);
+            alertAction('delete', $(this).data("id"));
         }
     }
 
-    return {
-        activateAlert: activateAlert,
-        deactivateAlert: deactivateAlert,
-        deleteAlert: deleteAlert,
-    };
+    function restartRule(rule_id) {
+        var prompt = null;
+        if(initialPageData.get("limit_rule_restarts")) {
+            prompt = gettext(
+                "A rule should only be restarted when you believe it is stuck and is not progressing. " +
+                "You will only be able to restart this rule once every two hours. Restart this rule?"
+            );
+        } else {
+            prompt = gettext(
+                "A rule should only be restarted when you believe it is stuck and is not progressing. " +
+                "Your user is able to restart as many times as you like, but restarting too many times without " +
+                "finishing can place a burden on the system. Restart this rule?"
+            );
+        }
+        if(confirm(prompt)) {
+            alertAction('restart', $(this).data("id"));
+        }
+    }
+
 });
