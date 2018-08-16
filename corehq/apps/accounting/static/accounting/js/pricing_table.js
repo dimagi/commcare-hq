@@ -64,13 +64,14 @@ hqDefine('accounting/js/pricing_table', [
             var oldPlan = self.capitalizeString(self.currentEdition);
             var newPlan = self.capitalizeString(self.selected_edition());
             var newStartDate = self.startDateAfterMinimumSubscription;
+            var mailto = "<a href=\'mailto:billing-support@dimagi.com\'>billing-support@dimagi.com</a>";
             if (self.isDowngrade(oldPlan, newPlan) && self.subscriptionBelowMinimum) {
                 var $modal = $("#modal-minimum-subscription");
                 $modal.find('.modal-body')[0].innerHTML =
-                    "CommCare is billed on a monthly basis. If you proceed, your subscription will downgrade " +
-                    "to the " + newPlan + " plan on " + newStartDate + ". You will still have full access " +
-                    "to your " + oldPlan + " subscription until " + newStartDate +
-                    ". Would you still like to schedule this downgrade?";
+                    "All CommCare subscriptions require a 30 day minimum commitment. Your current subscription " +
+                    "will be downgraded to " + newPlan + " on " + newStartDate + ".If you have questions or if " +
+                    "you would like to speak to someone about your subscription, please reach out to "
+                    + mailto + ".";
                 $modal.modal('show');
             } else {
                 self.form.submit();
