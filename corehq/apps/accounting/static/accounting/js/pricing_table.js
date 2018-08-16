@@ -9,12 +9,13 @@ hqDefine('accounting/js/pricing_table', [
     _,
     initialPageData
 ) {
-    var pricingTableModel = function (editions, currentEdition, isRenewal, isSubscriptionBelowMin) {
+    var pricingTableModel = function (editions, currentEdition, isRenewal, startDate, isSubscriptionBelowMin) {
         'use strict';
         var self = {};
 
         self.currentEdition = currentEdition;
         self.isRenewal = isRenewal;
+        self.startDateAfterMinimumSubscription = startDate;
         self.subscriptionBelowMinimum = isSubscriptionBelowMin;
         self.editions = ko.observableArray(_.map(editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
@@ -62,10 +63,22 @@ hqDefine('accounting/js/pricing_table', [
 
             var oldPlan = self.capitalizeString(self.currentEdition);
             var newPlan = self.capitalizeString(self.selected_edition());
+            var newStartDate = self.startDateAfterMinimumSubscription;
             if (self.isDowngrade(oldPlan, newPlan) && self.subscriptionBelowMinimum) {
                 var $modal = $("#modal-minimum-subscription");
+                $modal.find('.modal-body')[0].innerHTML =
+                    "CommCare is billed on a monthly basis. If you proceed, your subscription will downgrade " +
+                    "to the " + newPlan + " plan on " + newStartDate + ". You will still have full access " +
+                    "to your " + oldPlan + " subscription until " + newStartDate +
+                    ". Would you still like to schedule this downgrade?";
                 $modal.modal('show');
             } else {
+                self.form.submit();
+            }
+        };
+
+        self.submitDowngradeForm = function () {
+            if (self.form) {
                 self.form.submit();
             }
         };
@@ -117,6 +130,7 @@ hqDefine('accounting/js/pricing_table', [
             initialPageData.get('editions'),
             initialPageData.get('current_edition'),
             initialPageData.get('is_renewal'),
+            initialPageData.get('start_date_after_minimum_subscription'),
             initialPageData.get('subscription_below_minimum')
         );
 
