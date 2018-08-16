@@ -1,12 +1,12 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% include 'app_manager/partials/case_list_missing_warning.html' %}
+{% include 'app_manager/partials/modules/case_list_missing_warning.html' %}
 
 <div data-bind="saveButton: longScreen.saveButton"></div>
 
 
-{% include 'app_manager/partials/custom_detail_variables.html' with screen='longScreen'%}
+{% include 'app_manager/partials/modules/custom_detail_variables.html' with screen='longScreen'%}
 
 <div class="panel panel-appmanager">
     <div class="panel-heading">
@@ -19,7 +19,7 @@
         </h4>
     </div>
     <div class="panel-body" data-bind="with: longScreen">
-        {% include 'app_manager/partials/case_list_properties.html' %}
+        {% include 'app_manager/partials/modules/case_list_properties.html' %}
     </div>
 </div>
 

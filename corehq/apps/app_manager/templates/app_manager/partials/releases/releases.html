@@ -45,7 +45,7 @@
  {% endif %}
 
 {% if not build_profile_access and not enable_update_prompts %}
-    {% include 'app_manager/partials/releases_table.html' %}
+    {% include 'app_manager/partials/releases/releases_table.html' %}
 {% else%}
     <div class="tabbable">
         <ul class="nav nav-tabs sticky-tabs">
@@ -62,7 +62,7 @@
         <div class="spacer"></div>
         <div class="tab-content">
             <div id="versions-tab" class="tab-pane">
-                {% include 'app_manager/partials/releases_table.html' %}
+                {% include 'app_manager/partials/releases/releases_table.html' %}
             </div>
             {% if enable_update_prompts %}
                 <div id="prompt-settings-tab" class="tab-pane">
@@ -72,7 +72,7 @@
             {% endif %}
             {% if build_profile_access %}
                 <div id="profiles-tab" class="tab-pane">
-                    {% include 'app_manager/partials/build_profiles.html' %}
+                    {% include 'app_manager/partials/releases/build_profiles.html' %}
                 </div>
             {% endif %}
         </div>
@@ -81,6 +81,6 @@
 
 {% endif %}<!-- intro_only condition -->
 
-{% include 'app_manager/partials/app_diff_modal.html' %}
+{% include 'app_manager/partials/releases/app_diff_modal.html' %}
 <!-- Async Download Modals -->
 {% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' %}
