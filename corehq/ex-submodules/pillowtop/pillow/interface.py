@@ -206,10 +206,11 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                             change_ids=[c.id for c in changes_chunk],
                             ex=ex
                         ))
-                    # fall back to processing one by one
-                    reprocess_serially(changes_chunk, processor)
+                    self._record_batch_exception_in_datadog(processor)
                     for change in set(changes_chunk) - set(retry_changes):
                         self._record_change_success_in_datadog(change, processor)
+                    # fall back to processing one by one
+                    reprocess_serially(changes_chunk, processor)
                 else:
                     # fall back to processing one by one for failed changes
                     for change, exception in change_exceptions:
@@ -309,6 +310,14 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
 
     def _record_change_in_datadog(self, change, processing_time):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, processing_time=processing_time)
+
+    def _record_batch_exception_in_datadog(self, processor):
+        datadog_counter(
+            "commcare.change_feed.batch_processor_exceptions",
+            tags=[
+                'pillow_name:{}'.format(self.get_name()),
+                'processor:{}'.format(processor.__class__.__name__ if processor else "all_processors"),
+            ])
 
     def _record_change_success_in_datadog(self, change, processor):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change, processor)
