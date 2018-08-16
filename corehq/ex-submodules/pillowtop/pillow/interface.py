@@ -138,13 +138,12 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         def process_offset_chunk(chunk, context):
             if not chunk:
                 return
-            failed_changes, processing_time = self._batch_process_with_error_handling(chunk)
-            self._record_datadog_metrics(chunk, failed_changes, processing_time)
+            processing_time = self._batch_process_with_error_handling(chunk)
+            self._record_datadog_metrics(chunk, processing_time)
             self._update_checkpoint(chunk[-1], context)
 
         # keep track of results for batch processors
         changes_chunk = []
-        failed_changes = set()
         serial_processing_time = 0
         last_process_time = datetime.utcnow()
 
@@ -152,30 +151,26 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
                 context.changes_seen += 1
                 if change:
-                    # process change on all serial_processors
-                    is_success, processing_time = self.process_with_error_handling(
-                        change, update_datadog=not self.batch_processors)
+                    # process change on all serial_processors and record datadog success/fail
+                    processing_time = self.process_with_error_handling(change)
                     serial_processing_time += processing_time
                     # queue and process on all batch_processors
                     if self.batch_processors:
-                        if not is_success:
-                            failed_changes.add(change)
                         changes_chunk.append(change)
                         chunk_full = len(changes_chunk) == self.processor_chunk_size
                         time_elapsed = (datetime.utcnow() - last_process_time).seconds > min_wait_seconds
                         if chunk_full or time_elapsed:
                             last_process_time = datetime.utcnow()
-                            failed, processing_time = self._batch_process_with_error_handling(changes_chunk)
-                            failed_changes.update(failed)
+                            batch_processing_time = self._batch_process_with_error_handling(changes_chunk)
                             self._record_datadog_metrics(
-                                changes_chunk, failed_changes, serial_processing_time + processing_time)
+                                changes_chunk, serial_processing_time + batch_processing_time)
                             # update checkpoint for just the latest change
                             self._update_checkpoint(changes_chunk[-1], context)
                             # reset for next chunk
                             changes_chunk = []
-                            failed_changes = set()
                             serial_processing_time = 0
                     else:
+                        self._record_change_in_datadog(change, serial_processing_time)
                         self._update_checkpoint(change, context)
                 else:
                     self._update_checkpoint(None, None)
@@ -189,17 +184,13 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         Pass given changes_chunk to batch processors.
 
             If there is an exception in chunked processing, falls back
-            to serial processing.
+            to serial processing. Returns total time it took to process the changes
         """
-        failed_changes = set()
         total_processing_time = 0
 
         def reprocess_serially(chunk, processor):
             for change in chunk:
-                is_success, _ = self.process_with_error_handling(
-                    change, processor, update_datadog=False)
-                if not is_success:
-                    failed_changes.add(change)
+                self.process_with_error_handling(change, processor)
 
         for processor in self.batch_processors:
             if not changes_chunk:
@@ -219,20 +210,18 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                         ))
                     # fall back to processing one by one
                     reprocess_serially(changes_chunk, processor)
+                    # todo; log datadog error
                 else:
                     # fall back to processing one by one for failed changes
                     for change, exception in change_exceptions:
                         handle_pillow_error(self, change, exception)
                     reprocess_serially(retry_changes, processor)
                 total_processing_time += timer.duration
-        return failed_changes, total_processing_time
+        return total_processing_time
 
-    def _record_datadog_metrics(self, changes_chunk, failed_changes, processing_time):
+    def _record_datadog_metrics(self, changes_chunk, processing_time):
         tags = ["pillow_name:{}".format(self.get_name()), "mode:chunked"]
         datadog_counter('commcare.change_feed.changes.count', len(changes_chunk), tags=tags)
-        datadog_counter('commcare.change_feed.changes.exception', len(failed_changes), tags=tags)
-        datadog_counter('commcare.change_feed.changes.suceess',
-            len(set(changes_chunk) - set(failed_changes)), tags=tags)
 
         max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).seconds
         min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).seconds
@@ -267,13 +256,11 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                     self.get_name(), e,
                 ))
                 raise
-        if update_datadog:
-            self._record_change_in_datadog(change, timer.duration)
-            if is_success:
-                self._record_change_success_in_datadog(change)
-            else:
-                self._record_change_exception_in_datadog(change)
-        return is_success, timer.duration
+        if is_success:
+            self._record_change_success_in_datadog(change, processor)
+        else:
+            self._record_change_exception_in_datadog(change, processor)
+        return timer.duration
 
     @abstractmethod
     def process_change(self, change):
@@ -318,20 +305,21 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             ])
 
     def _record_change_in_datadog(self, change, processing_time):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, processing_time)
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, processing_time=processing_time)
 
-    def _record_change_success_in_datadog(self, change):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change)
+    def _record_change_success_in_datadog(self, change, processor):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change, processor)
 
-    def _record_change_exception_in_datadog(self, change):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change)
+    def _record_change_exception_in_datadog(self, change, processor):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change, processor)
 
-    def __record_change_metric_in_datadog(self, metric, change, processing_time=None):
+    def __record_change_metric_in_datadog(self, metric, change, processor=None, processing_time=None):
         if change.metadata is not None:
             tags = [
                 'datasource:{}'.format(change.metadata.data_source_name),
                 'is_deletion:{}'.format(change.metadata.is_deletion),
                 'pillow_name:{}'.format(self.get_name()),
+                'processor:{}'.format(processor.__class__.__name__ if processor else "all_processors"),
             ]
             datadog_counter(metric, tags=tags)
 
