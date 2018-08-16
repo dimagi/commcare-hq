@@ -126,12 +126,12 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                 (self.get_static_options_size, self.get_static_options),
                 (self.get_groups_size, self.get_groups),
                 (self.get_locations_size, self.get_locations),
-                (self.get_users_size, self.get_users),
+                (self.get_all_users_size, self.get_all_users),
             ]
         else:
             return [
                 (self.get_locations_size, self.get_locations),
-                (self.get_users_size, self.get_users),
+                (self.get_all_users_size, self.get_all_users),
             ]
 
     def get_options(self):
@@ -169,10 +169,10 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                 .domain(self.domain)
                 .search_string_query(query, default_fields=search_fields))
 
-    def get_users_size(self, query):
+    def get_all_users_size(self, query):
         return self.all_user_es_query(query).count()
 
-    def get_users(self, query, start, size):
+    def get_all_users(self, query, start, size):
         users = (self.all_user_es_query(query)
                  .fields(SimplifiedUserInfo.ES_FIELDS)
                  .start(start)
@@ -261,7 +261,7 @@ class MobileWorkersOptionsView(EmwfOptionsView):
     @property
     def data_sources(self):
         return [
-            (self.get_users_size, self.get_users),
+            (self.get_all_users_size, self.get_all_users),
         ]
 
     def active_user_es_query(self, query):
@@ -285,12 +285,12 @@ class CaseListFilterOptions(EmwfOptionsView):
                 (self.get_groups_size, self.get_groups),
                 (self.get_sharing_groups_size, self.get_sharing_groups),
                 (self.get_locations_size, self.get_locations),
-                (self.get_users_size, self.get_users),
+                (self.get_all_users_size, self.get_all_users),
             ]
         else:
             return [
                 (self.get_locations_size, self.get_locations),
-                (self.get_users_size, self.get_users),
+                (self.get_all_users_size, self.get_all_users),
             ]
 
     def get_sharing_groups_size(self, query):
@@ -317,7 +317,7 @@ class ReassignCaseOptions(CaseListFilterOptions):
         if self.request.can_access_all_locations:
             sources.append((self.get_sharing_groups_size, self.get_sharing_groups))
         sources.append((self.get_locations_size, self.get_locations))
-        sources.append((self.get_users_size, self.get_users))
+        sources.append((self.get_all_users_size, self.get_all_users))
         return sources
 
 

@@ -111,7 +111,7 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
         for group_name in self.group_names:
             group = Group.by_name(self.domain, group_name)
             if group:
-                users = group.get_users(is_active=True, only_commcare=True)
+                users = group.get_all_users(is_active=True, only_commcare=True)
                 options.extend([(u.user_id, u.username_in_report) for u in users])
         return options
 
