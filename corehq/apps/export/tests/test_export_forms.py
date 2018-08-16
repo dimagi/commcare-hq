@@ -219,7 +219,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         }
         self.assertEqual(group_filter.to_es_filter(), expected_filter)
 
-    @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.REGISTERED])
+    @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.ACTIVE])
     @patch.object(filter_builder, 'get_user_ids_for_user_types')
     def test_get_user_type_filter_for_mobile(self, fetch_user_ids_patch):
         self.filter_export = self.subject(self.domain, pytz.utc)
@@ -241,7 +241,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
         self.assertEqual(user_filters[0].submitted_by, self.user_ids)
 
-    @patch.object(form, '_get_selected_es_user_types', return_value=[HQUserType.REGISTERED, HQUserType.ADMIN])
+    @patch.object(form, '_get_selected_es_user_types', return_value=[HQUserType.ACTIVE, HQUserType.ADMIN])
     @patch.object(filter_builder, 'get_user_ids_for_user_types')
     def test_get_user_type_filter_for_admin_and_mobile(self, fetch_user_ids_patch, *patches):
         self.filter_export = self.subject(self.domain, pytz.utc)

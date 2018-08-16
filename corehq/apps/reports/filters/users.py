@@ -351,7 +351,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                                       .accessible_to_user(domain, request_user)
                                       .location_ids())),
             )
-        elif HQUserType.REGISTERED in user_types or HQUserType.DEACTIVATED in user_types:
+        elif HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
             # return all users with selected user_types
             user_type_filters.append(user_es.mobile_users())
             return q.OR(*user_type_filters)

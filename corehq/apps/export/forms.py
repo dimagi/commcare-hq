@@ -881,7 +881,7 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         """
         if user_types:
             form_filters = []
-            if HQUserType.REGISTERED in user_types:
+            if HQUserType.ACTIVE in user_types:
                 # TODO: This
                 form_filters.append(UserTypeFilter(BaseFilterExportDownloadForm._USER_MOBILE))
             user_ids = self.get_user_ids_for_user_types(
@@ -1117,7 +1117,7 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
 
     def _get_mapped_user_types(self, selected_user_types):
         user_types = []
-        if HQUserType.REGISTERED in selected_user_types:
+        if HQUserType.ACTIVE in selected_user_types:
             user_types.append(BaseFilterExportDownloadForm._USER_MOBILE)
         if HQUserType.ADMIN in selected_user_types:
             user_types.append(BaseFilterExportDownloadForm._USER_ADMIN)
