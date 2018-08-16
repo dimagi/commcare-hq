@@ -6,7 +6,7 @@ from datetime import timedelta
 
 import six
 from dateutil.parser import parse as parse_date
-from leven import levenshtein
+from Levenshtein import distance
 
 
 def le_days_diff(max_days, date1, date2):
@@ -48,6 +48,6 @@ def le_levenshtein_percent(percent, string1, string2):
     """
     if not 0 <= percent < 1:
         raise ValueError('percent must be greater that or equal to 0 and less than 1')
-    distance = levenshtein(string1, string2)
+    dist = distance(string1, string2)
     max_len = max(len(string1), len(string2))
-    return distance / max_len <= percent
+    return dist / max_len <= percent
