@@ -26,7 +26,6 @@ hqDefine("dashboard/js/dashboard", [
         if (self.hasItemList()) {
             self.itemsPerPage = 5;
             self.currentPage = ko.observable();         // 1-indexed
-            self.pageList = ko.observableArray();
 
             // Set via ajax
             self.grandTotal = ko.observable(0);
@@ -54,25 +53,6 @@ hqDefine("dashboard/js/dashboard", [
 
         // Paging
         if (self.hasItemList()) {
-            // Tiles with a lot of pages can't list them all out in the pagination widget.
-            // This function determines which page numbers to display.
-            self.updatePagination = function() {
-                var maxPages = 6,
-                    midpoint = Math.floor(maxPages / 2),
-                    lowestPage = 1,
-                    highestPage = Math.min(self.totalPages(), maxPages);
-
-                // If current page is getting close to the edge of visible pages,
-                // bump up which pages are visible. The exact math isn't important, just
-                // that the page above and below currentPage, if they exist, are visible.
-                if (self.totalPages() > maxPages && self.currentPage() > midpoint) {
-                    highestPage = Math.min(self.totalPages(), maxPages + self.currentPage() - midpoint);
-                    lowestPage = highestPage - maxPages;
-                }
-
-                self.pageList(_.range(lowestPage, highestPage + 1));
-            };
-
             self.currentPage.subscribe(function(newValue) {
                 // If request takes a noticeable amount of time, clear items, which will show spinner
                 var done = false;
@@ -101,9 +81,7 @@ hqDefine("dashboard/js/dashboard", [
 
                 // Total number of pages is also a separate request, but it only needs to run once
                 // and then self.totalPages() never changes again
-                if (self.totalPages()) {
-                    self.updatePagination();
-                } else {
+                if (!self.grandTotal()) {
                     var totalPagesRequest = $.ajax({
                         method: "GET",
                         url: initialPageData.reverse('dashboard_tile_total', self.slug),
@@ -118,31 +96,11 @@ hqDefine("dashboard/js/dashboard", [
                             self.hasError(true);
                         },
                     });
-                    $.when(itemRequest, totalPagesRequest).then(function() {
-                        self.updatePagination();
-                    });
                 }
             });
 
-            self.incrementPage = function(increment) {
-                var newCurrentPage = self.currentPage() + increment;
-                if (newCurrentPage <= 0 || newCurrentPage > self.totalPages()) {
-                    return;
-                }
-                self.currentPage(newCurrentPage);
-            };
-
-
-
-
-            self.goToPage = function(newPage) {
-                self.currentPage(newPage);
-            };
-
-            self.goToPage(1);
-
             // Initialize with first page of data
-            //self.currentPage(1);
+            self.currentPage(1);
         }
 
         return self;
