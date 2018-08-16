@@ -3,7 +3,7 @@ hqDefine('hqadmin/js/admin_restore',[
     "jquery",
     "jquery-treetable/jquery.treetable",
     "ace-builds/src-min-noconflict/mode-xml",
-    "ace-builds/src-min-noconflict/ext-searchbox"
+    "ace-builds/src-min-noconflict/ext-searchbox",
 ],function ($) {
     $(function() {
         $("#timingTable").treetable();
