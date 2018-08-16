@@ -34,6 +34,8 @@ from custom.icds_reports.utils.aggregation import (
     THRFormsCcsRecordAggregationHelper,
     InactiveAwwsAggregationHelper,
     DeliveryFormsAggregationHelper,
+    AggCcsRecordAggregationHelper,
+    CcsRecordMonthlyAggregationHelper
 )
 from six.moves import range
 
@@ -88,10 +90,57 @@ class CcsRecordMonthly(models.Model):
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
     add = models.DateField(blank=True, null=True)
     anc_in_month = models.SmallIntegerField(blank=True, null=True)
+    caste = models.TextField(blank=True, null=True)
+    disabled = models.TextField(blank=True, null=True)
+    minority = models.TextField(blank=True, null=True)
+    resident = models.TextField(blank=True, null=True)
+    anc_weight = models.SmallIntegerField(blank=True, null=True)
+    anc_blood_pressure = models.SmallIntegerField(blank=True, null=True)
+    bp_sys = models.SmallIntegerField(blank=True, null=True)
+    bp_dia = models.SmallIntegerField(blank=True, null=True)
+    anc_hemoglobin = models.DecimalField(max_digits=64, decimal_places=20, blank=True, null=True)
+    bleeding = models.SmallIntegerField(blank=True, null=True)
+    swelling = models.SmallIntegerField(blank=True, null=True)
+    blurred_vision = models.SmallIntegerField(blank=True, null=True)
+    convulsions = models.SmallIntegerField(blank=True, null=True)
+    rupture = models.SmallIntegerField(blank=True, null=True)
+    anemia = models.SmallIntegerField(blank=True, null=True)
+    eating_extra = models.SmallIntegerField(blank=True, null=True)
+    resting = models.SmallIntegerField(blank=True, null=True)
+    immediate_breastfeeding = models.SmallIntegerField(blank=True, null=True)
+    person_name = models.TextField(blank=True, null=True)
+    edd = models.DateField(blank=True, null=True)
+    delivery_nature = models.SmallIntegerField(blank=True, null=True)
+    is_ebf = models.SmallIntegerField(blank=True, null=True)
+    breastfed_at_birth = models.SmallIntegerField(blank=True, null=True)
+    anc_1 = models.DateField(blank=True, null=True)
+    anc_2 = models.DateField(blank=True, null=True)
+    anc_3 = models.DateField(blank=True, null=True)
+    anc_4 = models.DateField(blank=True, null=True)
+    tt_1 = models.DateField(blank=True, null=True)
+    tt_2 = models.DateField(blank=True, null=True)
+    valid_in_month = models.SmallIntegerField(blank=True, null=True)
+    mobile_number = models.TextField(blank=True, null=True)
+    preg_order = models.SmallIntegerField(blank=True, null=True)
+    home_visit_date = models.DateField(blank=True, null=True)
+    num_pnc_visits = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
         db_table = 'ccs_record_monthly'
+
+    @classmethod
+    def aggregate(cls, month):
+        helper = CcsRecordMonthlyAggregationHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        index_queries = helper.indexes()
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic():
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(agg_query, agg_params)
+                for query in index_queries:
+                    cursor.execute(query)
 
 
 class AwcLocation(models.Model):
@@ -414,6 +463,23 @@ class AggCcsRecord(models.Model):
     class Meta:
         managed = False
         db_table = 'agg_ccs_record'
+
+    @classmethod
+    def aggregate(cls, month):
+        helper = AggCcsRecordAggregationHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic():
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(agg_query, agg_params)
+                for query in rollup_queries:
+                    cursor.execute(query)
+                for query in index_queries:
+                    cursor.execute(query)
 
 
 class AggChildHealth(models.Model):
@@ -762,8 +828,6 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     A row exists for every case that has ever had a Complementary Feeding Form
     submitted against it.
-
-    Note this is not actually used in the dashboard, so the aggreagtion is not run
     """
 
     # partitioned based on these fields

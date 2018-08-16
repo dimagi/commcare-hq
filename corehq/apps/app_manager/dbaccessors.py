@@ -3,8 +3,7 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from itertools import chain
 
-from couchdbkit.exceptions import DocTypeError
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
 from corehq.util.quickcache import quickcache
 from django.http import Http404

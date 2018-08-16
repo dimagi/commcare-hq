@@ -3,7 +3,7 @@
 {% load app_manager_extras %}
 {% load xforms_extras %}
 
-{% include 'app_manager/partials/case_list_missing_warning.html' %}
+{% include 'app_manager/partials/modules/case_list_missing_warning.html' %}
 
 <div data-bind="saveButton: shortScreen.saveButton"></div>
 
@@ -24,7 +24,7 @@
   </div>
 </div>
 
-{% include 'app_manager/partials/custom_detail_variables.html' with screen='shortScreen'%}
+{% include 'app_manager/partials/modules/custom_detail_variables.html' with screen='shortScreen'%}
 
 
 <div class="panel panel-appmanager">
@@ -110,7 +110,7 @@
                 </label>
             </div>
         </div>
-        {% include 'app_manager/partials/case_list_properties.html' %}
+        {% include 'app_manager/partials/modules/case_list_properties.html' %}
     </div>
   </div>
 </div>
@@ -124,7 +124,7 @@
     </h4>
   </div>
   <div class="panel-body">
-    {% include 'app_manager/partials/case_list_filtering.html' %}
+    {% include 'app_manager/partials/modules/case_list_filtering.html' %}
     <div data-bind="with: sortRows">
         {% if app.enable_multi_sort %}
             <div class="ui-sortable">
@@ -317,14 +317,14 @@
 
 {{ request|toggle_tag_info:"CASE_LIST_LOOKUP" }}
 {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
-    {% include "app_manager/partials/case_list_lookup.html" %}
+    {% include "app_manager/partials/modules/case_list_lookup.html" %}
 {% endif %}
 
 {{ request|toggle_tag_info:"FIXTURE_CASE_SELECTION" }}
 {% if detail.fixture_select and request|toggle_enabled:"FIXTURE_CASE_SELECTION" %}
-    {% include "app_manager/partials/fixture_case_selection.html" %}
+    {% include "app_manager/partials/modules/fixture_case_selection.html" %}
 {% endif %}
 
 {% if detail.type == 'case' and js_options.is_search_enabled %}
-{% include 'app_manager/partials/case_search_properties.html' %}
+{% include 'app_manager/partials/modules/case_search_properties.html' %}
 {% endif %}

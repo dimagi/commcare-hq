@@ -264,7 +264,7 @@
                     <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_sms'}">
                         <div class="panel-body">
                             <div data-bind="if: !reveal_java_download()">
-                                {% include 'app_manager/partials/releases_deploy_modal_sms.html' with is_odk=True %}
+                                {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=True %}
                             </div>
                             <div data-bind="if: reveal_java_download(), bootstrapTabs: true">
                                 <div class="tabbable">
@@ -277,10 +277,10 @@
                                         </li>
                                     </ul>
                                     <div class="tab-content">
-                                        {% include 'app_manager/partials/releases_deploy_modal_sms.html' with is_odk=False %}
+                                        {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=False %}
                                     </div>
                                     <div class="tab-content">
-                                        {% include 'app_manager/partials/releases_deploy_modal_sms.html' with is_odk=True %}
+                                        {% include 'app_manager/partials/releases/releases_deploy_modal_sms.html' with is_odk=True %}
                                     </div>
                                 </div>
                             </div>

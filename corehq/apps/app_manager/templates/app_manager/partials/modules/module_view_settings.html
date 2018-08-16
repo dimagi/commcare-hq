@@ -46,7 +46,7 @@
             </div>
             <div class="panel-body">
               {% if not module.is_surveys and module.module_type != 'shadow' %}
-                {% include "app_manager/partials/module_view_case_type.html" %}
+                {% include "app_manager/partials/modules/module_view_case_type.html" %}
               {% endif %}
 
               {% if child_module_enabled and not module.is_training_module%}
@@ -141,7 +141,7 @@
               </div>
               {% endif %}
 
-              {% include "app_manager/partials/module_filter.html" %}
+              {% include "app_manager/partials/modules/module_filter.html" %}
 
             </div>
           </div>
@@ -163,12 +163,12 @@
                 <h4 class="panel-title panel-title-nolink">{% trans "Advanced" %}</h4>
               </div>
               <div class="panel-body">
-                {% include 'app_manager/partials/case_list_form_setting.html' %}
+                {% include 'app_manager/partials/modules/case_list_form_setting.html' %}
 
-                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+                {% include 'app_manager/partials/modules/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
 
                 {% if module.module_type == 'basic' and request.project.survey_management_enabled or module.task_list.show %}
-                    {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
+                    {% include 'app_manager/partials/modules/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
                 {% endif %}
 
                 {% if module.doc_type == "AdvancedModule" %}
