@@ -56,7 +56,6 @@ branches:
 #  - nh/fix_staging/why  # Norman July 24
 #  - jls/requirejs-login  # Jenny July 22
 #  - dmr/fix-package-security-vulnerabilities+nh/omrs/atom+leven
-  - dmr/fix-package-security-vulnerabilities  # Danny July 21
 #  - nh/omrs/atom+leven  # Norman July 31
 #  - nh/motech/set_repeater  # Norman Aug 6
   - 30-day-minimum-subscription # Gabriella Aug 7
