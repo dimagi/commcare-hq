@@ -4,6 +4,7 @@ from io import BytesIO
 from shutil import rmtree
 from tempfile import mkdtemp
 
+from django.db import connections
 from django.test import TestCase
 
 import corehq.blobs.fsdb as fsdb
@@ -11,6 +12,7 @@ from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import get_meta, new_meta
 from corehq.form_processor.tests.utils import only_run_with_partitioned_database
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 
 
 class TestMetaDB(TestCase):
@@ -52,6 +54,24 @@ class TestMetaDB(TestCase):
         saved = get_meta(meta)
         self.assertTrue(saved is not meta)
         self.assertEqual(saved.key, meta.key)
+
+    def test_save_properties(self):
+        meta = new_meta(properties={"mood": "Vangelis"})
+        self.db.put(BytesIO(b"content"), meta=meta)
+        self.assertEqual(get_meta(meta).properties, {"mood": "Vangelis"})
+
+    def test_save_empty_properties(self):
+        meta = new_meta()
+        self.assertEqual(meta.properties, {})
+        self.db.put(BytesIO(b"content"), meta=meta)
+        self.assertEqual(get_meta(meta).properties, {})
+        dbname = get_db_alias_for_partitioned_doc(meta.parent_id)
+        with connections[dbname].cursor() as cursor:
+            cursor.execute(
+                "SELECT id, properties FROM blobs_blobmeta WHERE id = %s",
+                [meta.id],
+            )
+            self.assertEqual(cursor.fetchall(), [(meta.id, None)])
 
     def test_delete(self):
         meta = new_meta()

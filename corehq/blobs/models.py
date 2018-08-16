@@ -13,10 +13,11 @@ from django.db.models import (
     PositiveIntegerField,
     PositiveSmallIntegerField,
 )
-from jsonfield import JSONField
 from partial_index import PartialIndex
 
 from corehq.sql_db.models import PartitionedModel, RestrictedManager
+
+from .util import NullJsonField
 
 
 def uuid4_hex():
@@ -59,7 +60,7 @@ class BlobMeta(PartitionedModel, Model):
     )
     content_length = PositiveIntegerField()
     content_type = CharField(max_length=255, null=True)
-    properties = JSONField()
+    properties = NullJsonField(default=dict)
     created_on = DateTimeField(default=datetime.utcnow)
     expires_on = DateTimeField(default=None, null=True)
 

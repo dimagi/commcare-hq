@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                 ('type_code', models.PositiveSmallIntegerField(help_text='Blob type code. See `corehq.blobs.CODES`.')),
                 ('content_length', models.PositiveIntegerField()),
                 ('content_type', models.CharField(max_length=255, null=True)),
-                ('properties', jsonfield.fields.JSONField()),
+                ('properties', corehq.blobs.util.NullJsonField(default=dict)),
                 ('created_on', models.DateTimeField(default=datetime.datetime.utcnow)),
                 ('expires_on', models.DateTimeField(default=None, null=True)),
             ],
