@@ -2667,6 +2667,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         raise IncompatibleFormTypeException()
 
+    def update_app_case_meta(self, app_case_meta):
+        pass
+
 
 class ModuleDetailsMixin(object):
 
@@ -2951,6 +2954,12 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     def grid_display_style(self):
         return self.display_style == 'grid'
+
+    def update_app_case_meta(self, meta):
+        for column in self.case_details.long.columns:
+            meta.add_property_detail('long', self.case_type, self.unique_id, column)
+        for column in self.case_details.short.columns:
+            meta.add_property_detail('short', self.case_type, self.unique_id, column)
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -3874,6 +3883,12 @@ class AdvancedModule(ModuleBase):
                 list(self.get_schedule_phases())[id].change_anchor(new_anchor)
             except IndexError:
                 pass  # That phase wasn't found, so we can't change it's anchor. Ignore it
+
+    def update_app_case_meta(self, meta):
+        for column in self.case_details.long.columns:
+            meta.add_property_detail('long', self.case_type, self.unique_id, column)
+        for column in self.case_details.short.columns:
+            meta.add_property_detail('short', self.case_type, self.unique_id, column)
 
 
 class ReportAppFilter(DocumentSchema):
@@ -6315,6 +6330,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             type_meta.relationships = relationships
 
         for module in self.get_modules():
+            module.update_app_case_meta(meta)
             for form in module.get_forms():
                 form.update_app_case_meta(meta)
 
