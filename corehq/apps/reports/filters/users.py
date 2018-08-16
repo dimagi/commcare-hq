@@ -203,7 +203,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
     slug = "emw"
-    label = ugettext_lazy("Groups or Users")
+    label = ugettext_lazy("User(s)")
     default_options = None
     placeholder = ugettext_lazy(
         "Specify groups and users to include in the report")

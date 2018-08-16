@@ -429,12 +429,12 @@ class DashboardFeedFilterForm(forms.Form):
     A form used to configure the filters on a Dashboard Feed export
     """
     emwf_case_filter = forms.Field(
-        label=ugettext_lazy("Groups or Users"),
+        label=ugettext_lazy("Case Owner(s)"),
         required=False,
         widget=Select2Ajax(multiple=True),
     )
     emwf_form_filter = forms.Field(
-        label=ugettext_lazy("Groups or Users"),
+        label=ugettext_lazy("User(s)"),
         required=False,
         widget=Select2Ajax(multiple=True),
     )

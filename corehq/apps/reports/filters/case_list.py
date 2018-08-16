@@ -34,6 +34,8 @@ class CaseListFilterUtils(EmwfUtils):
 
 @location_safe
 class CaseListFilter(ExpandedMobileWorkerFilter):
+
+    label = _("Case Owner(s)")
     slug = 'case_list_filter'
     options_url = 'case_list_options'
     default_selections = [('project_data', _("[All Owners (Active + Deactivated)]"))]
