@@ -12,7 +12,6 @@ from corehq.util.datadog.gauges import datadog_counter
 RATE_LIMITED_EXCEPTIONS = {
     'dimagi.utils.couch.bulk.BulkFetchException': 'couchdb',
     'socketpool.pool.MaxTriesError': 'couchdb',
-    'http_parser.http.NoMoreData': 'couchdb',
 
     'corehq.elastic.ESError': 'elastic',
 
