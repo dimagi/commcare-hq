@@ -43,11 +43,6 @@ hqDefine("domain/js/my_project_settings", [
         compareGlobalUserTimezones();
         $userTimezone.change(compareGlobalUserTimezones);
 
-        $('#update-proj-settings').click(function () {
-            if ($(this).hasClass('disabled'))
-                return false;
-        });
-
         function compareGlobalUserTimezones() {
             if($globalTimezone.val() === $userTimezone.val()) {
                 $userTimezone.parent().parent().addClass('has-success').removeClass('has-warning');
