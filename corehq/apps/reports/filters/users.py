@@ -337,7 +337,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if HQUserType.DEMO_USER in user_types:
             user_type_filters.append(user_es.demo_users())
 
-        if HQUserType.DEACTIVATED in user_types:
+        if HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
+            q = user_es.UserES().show_inactive().domain(domain)
+        elif HQUserType.DEACTIVATED in user_types:
             q = user_es.UserES().show_only_inactive().domain(domain)
         else:
             q = user_es.UserES().domain(domain)
