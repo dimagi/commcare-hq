@@ -426,7 +426,7 @@ class UpdatePersonNameTask(WorkflowTask):
         start of the workflow.
         """
         properties = {
-            property_: self.person['preferredName'][property_]
+            property_: self.person['preferredName'].get(property_)
             for property_ in self.openmrs_config.case_config.person_preferred_name.keys()
             if property_ in NAME_PROPERTIES
         }
@@ -504,7 +504,7 @@ class UpdatePersonAddressTask(WorkflowTask):
 
     def rollback(self):
         properties = {
-            property_: self.person['preferredAddress'][property_]
+            property_: self.person['preferredAddress'].get(property_)
             for property_ in self.openmrs_config.case_config.person_preferred_address.keys()
             if property_ in ADDRESS_PROPERTIES
         }
@@ -607,7 +607,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         start of the workflow.
         """
         properties = {
-            property_: self.person[property_]
+            property_: self.person.get(property_)
             for property_ in self.openmrs_config.case_config.person_properties.keys()
             if property_ in PERSON_PROPERTIES
         }

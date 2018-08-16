@@ -20,6 +20,7 @@ from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.const import SAVED_EXPORTS_QUEUE
+from corehq.apps.users.models import CouchUser
 from corehq.util.log import send_HTML_email
 from corehq.apps.reports.util import send_report_download_email
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -30,6 +31,10 @@ from couchexport.tasks import cache_file_to_be_served
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request
+from django.http import HttpRequest
+from django.utils.translation import ugettext as _
+
 from soil import DownloadBase
 from soil.util import expose_download
 
@@ -52,10 +57,12 @@ from .analytics.esaccessors import (
 )
 from .export import save_metadata_export_to_tempfile
 from .models import (
+    ReportConfig,
     FormExportSchema,
     ReportNotification,
     UnsupportedScheduledReportError,
 )
+
 from .scheduled import get_scheduled_report_ids
 import six
 from six.moves import map
@@ -204,25 +211,73 @@ def apps_update_calculated_properties():
 
 
 @task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_email_report(self, recipient_list, request, body, subject, config):
-    '''
+def send_email_report(self, recipient_emails, domain, report_slug, report_type,
+                      request_data, once, cleaned_data):
+    """
     Function invokes send_HTML_email to email the html text report.
     If the report is too large to fit into email then a download link is
     sent via email to download report
     :Parameter recipient_list:
             list of recipient to whom email is to be sent
-    :Parameter request:
-            request object which contains request details
-    :Parameter body:
-            body content of the email
-    :Parameter subject:
-            subject of the email
-    :Parameter config:
-            object of ReportConfig. Contains the report configuration
-            like reportslug, report_type etc
-    '''
+    :Parameter domain:
+            domain name
+    :Parameter report_slug:
+            report slug
+    :Parameter report_type:
+            type of the report
+    :Parameter request_data:
+            Dict containing request data
+    :Parameter once
+            boolean argument specifying whether the report is once off report
+            or scheduled report
+    :Parameter cleaned_data:
+            Dict containing cleaned data from the submitted form
+    """
+    from corehq.apps.reports.views import _render_report_configs, render_full_report_notification
+
+    user_id = request_data['couch_user']
+    couch_user = CouchUser.get_by_user_id(user_id)
+    mock_request = HttpRequest()
+
+    mock_request.method = 'GET'
+    mock_request.GET = request_data['GET']
+
+    config = ReportConfig()
+
+    # see ReportConfig.query_string()
+    object.__setattr__(config, '_id', 'dummy')
+    config.name = _("Emailed report")
+    config.report_type = report_type
+    config.report_slug = report_slug
+    config.owner_id = user_id
+    config.domain = domain
+
+    config.start_date = request_data['datespan'].startdate.date()
+    if request_data['datespan'].enddate:
+        config.date_range = 'range'
+        config.end_date = request_data['datespan'].enddate.date()
+    else:
+        config.date_range = 'since'
+
+    GET = dict(request_data['GET'].iterlists())
+    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
+    filters = {}
+    for field in GET:
+        if field not in exclude:
+            filters[field] = GET.get(field)
+
+    config.filters = filters
+
+    subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
+
+    content = _render_report_configs(
+        mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
+        notes=cleaned_data['notes'], once=once
+    )[0]
+    body = render_full_report_notification(None, content).content
+
     try:
-        for recipient in recipient_list:
+        for recipient in recipient_emails:
             send_HTML_email(subject, recipient,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
                             smtp_exception_skip_list=[522])
@@ -231,27 +286,13 @@ def send_email_report(self, recipient_list, request, body, subject, config):
         if getattr(er, 'smtp_code', None) == 522:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
-            email_large_report(request, config, recipient_list)
+            report_state = dict(request=request_data,
+                                request_params=json_request(request_data['GET']),
+                                domain=domain,
+                                context={})
+            export_all_rows_task(config.report, report_state, recipient_list=recipient_emails)
         else:
             self.retry(exc=er)
-
-
-def email_large_report(request, config, recipient_list):
-    """
-    Function sends the requested report download link in the email.
-    This function is invoked when user tries to email very large report.
-
-    :Parameter request:
-        request object which contains request details
-    :Parameter config:
-            object of ReportConfig. Contains the report configuration
-            like reportslug, report_type etc
-    :Parameter recipient:
-            recipient to whom email is to be sent
-    """
-    report = config.report(request, domain=config.domain)
-    report.rendered_as = 'export'
-    export_all_rows_task(report.__class__, report.__getstate__(), recipient_list=recipient_list)
 
 
 @task(ignore_result=True)

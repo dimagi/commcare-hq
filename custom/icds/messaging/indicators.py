@@ -269,6 +269,30 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
         return []
 
 
+class AWWVHNDSurveyIndicator(AWWIndicator):
+    template = 'aww_vhnd_survey.txt'
+    slug = 'phase2_aww_1'
+
+    def __init__(self, domain, user):
+        super(AWWVHNDSurveyIndicator, self).__init__(domain, user)
+
+        self.forms = get_last_form_submissions_by_user(
+            domain, [self.user.get_id], xmlns=VHND_SURVEY_XMLNS
+        )
+
+    def get_messages(self, language_code=None):
+        now_date = self.now.date()
+        for forms in self.forms.values():
+            vhnd_date = forms[0]['form'].get('vhsnd_date_past_month')
+            if vhnd_date is None:
+                continue
+            if (now_date - string_to_datetime(vhnd_date).date()).days < 37:
+                # AWW has VHND form submission in last 37 days -> no message
+                return []
+
+        return [self.render_template({}, language_code=language_code)]
+
+
 class LSSubmissionPerformanceIndicator(LSIndicator):
     template = 'ls_no_submissions.txt'
     slug = 'ls_6'
@@ -326,14 +350,13 @@ class LSVHNDSurveyIndicator(LSIndicator):
         )
 
     def get_messages(self, language_code=None):
-        def convert_to_date(date):
-            return string_to_datetime(date).date() if date else None
-
         now_date = self.now.date()
         user_ids_with_forms_in_time_frame = set()
         for user_id, forms in self.forms.items():
-            vhnd_date = convert_to_date(forms[0]['form']['vhsnd_date_past_month'])
-            if (now_date - vhnd_date).days < 37:
+            vhnd_date = forms[0]['form'].get('vhsnd_date_past_month')
+            if vhnd_date is None:
+                continue
+            if (now_date - string_to_datetime(vhnd_date).date()).days < 37:
                 user_ids_with_forms_in_time_frame.add(user_id)
 
         awc_ids = {

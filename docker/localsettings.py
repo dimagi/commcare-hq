@@ -138,7 +138,7 @@ S3_BLOB_DB_SETTINGS = {
     },
 }
 
-KAFKA_URL = 'kafka:9092'
+KAFKA_BROKERS = ['kafka:9092']
 
 SHARED_DRIVE_ROOT = '/sharedfiles'
 
@@ -233,7 +233,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     UNIT_TESTING = False
     ADMINS = (('Admin', 'admin@example.com'),)
 
-    CELERY_SEND_TASK_ERROR_EMAILS = True
     LESS_DEBUG = True
     COMPRESS_OFFLINE = False
 

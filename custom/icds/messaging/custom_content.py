@@ -21,6 +21,7 @@ from custom.icds.messaging.indicators import (
     LSIndicator,
     AWWSubmissionPerformanceIndicator,
     AWWAggregatePerformanceIndicator,
+    AWWVHNDSurveyIndicator,
     LSAggregatePerformanceIndicator,
     LSVHNDSurveyIndicator,
     LSSubmissionPerformanceIndicator,
@@ -275,6 +276,10 @@ def aww_1(recipient, case_schedule_instance):
 
 def aww_2(recipient, case_schedule_instance):
     return run_indicator_for_usercase(case_schedule_instance.case, AWWAggregatePerformanceIndicator)
+
+
+def phase2_aww_1(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, AWWVHNDSurveyIndicator)
 
 
 def ls_1(recipient, case_schedule_instance):

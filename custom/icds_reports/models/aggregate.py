@@ -10,14 +10,18 @@ from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
+    AGG_CCS_RECORD_BP_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,
+    AGG_CCS_RECORD_THR_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
+    AGG_CCS_RECORD_DELIVERY_TABLE,
     AGG_INFRASTRUCTURE_TABLE,
 )
 from custom.icds_reports.utils.aggregation import (
+    BirthPreparednessFormsAggregationHelper,
     AggChildHealthAggregationHelper,
     AwcInfrastructureAggregationHelper,
     ChildHealthMonthlyAggregationHelper,
@@ -27,7 +31,11 @@ from custom.icds_reports.utils.aggregation import (
     PostnatalCareFormsChildHealthAggregationHelper,
     PostnatalCareFormsCcsRecordAggregationHelper,
     THRFormsChildHealthAggregationHelper,
+    THRFormsCcsRecordAggregationHelper,
     InactiveAwwsAggregationHelper,
+    DeliveryFormsAggregationHelper,
+    AggCcsRecordAggregationHelper,
+    CcsRecordMonthlyAggregationHelper
 )
 from six.moves import range
 
@@ -82,10 +90,57 @@ class CcsRecordMonthly(models.Model):
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
     add = models.DateField(blank=True, null=True)
     anc_in_month = models.SmallIntegerField(blank=True, null=True)
+    caste = models.TextField(blank=True, null=True)
+    disabled = models.TextField(blank=True, null=True)
+    minority = models.TextField(blank=True, null=True)
+    resident = models.TextField(blank=True, null=True)
+    anc_weight = models.SmallIntegerField(blank=True, null=True)
+    anc_blood_pressure = models.SmallIntegerField(blank=True, null=True)
+    bp_sys = models.SmallIntegerField(blank=True, null=True)
+    bp_dia = models.SmallIntegerField(blank=True, null=True)
+    anc_hemoglobin = models.DecimalField(max_digits=64, decimal_places=20, blank=True, null=True)
+    bleeding = models.SmallIntegerField(blank=True, null=True)
+    swelling = models.SmallIntegerField(blank=True, null=True)
+    blurred_vision = models.SmallIntegerField(blank=True, null=True)
+    convulsions = models.SmallIntegerField(blank=True, null=True)
+    rupture = models.SmallIntegerField(blank=True, null=True)
+    anemia = models.SmallIntegerField(blank=True, null=True)
+    eating_extra = models.SmallIntegerField(blank=True, null=True)
+    resting = models.SmallIntegerField(blank=True, null=True)
+    immediate_breastfeeding = models.SmallIntegerField(blank=True, null=True)
+    person_name = models.TextField(blank=True, null=True)
+    edd = models.DateField(blank=True, null=True)
+    delivery_nature = models.SmallIntegerField(blank=True, null=True)
+    is_ebf = models.SmallIntegerField(blank=True, null=True)
+    breastfed_at_birth = models.SmallIntegerField(blank=True, null=True)
+    anc_1 = models.DateField(blank=True, null=True)
+    anc_2 = models.DateField(blank=True, null=True)
+    anc_3 = models.DateField(blank=True, null=True)
+    anc_4 = models.DateField(blank=True, null=True)
+    tt_1 = models.DateField(blank=True, null=True)
+    tt_2 = models.DateField(blank=True, null=True)
+    valid_in_month = models.SmallIntegerField(blank=True, null=True)
+    mobile_number = models.TextField(blank=True, null=True)
+    preg_order = models.SmallIntegerField(blank=True, null=True)
+    home_visit_date = models.DateField(blank=True, null=True)
+    num_pnc_visits = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
         db_table = 'ccs_record_monthly'
+
+    @classmethod
+    def aggregate(cls, month):
+        helper = CcsRecordMonthlyAggregationHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        index_queries = helper.indexes()
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic():
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(agg_query, agg_params)
+                for query in index_queries:
+                    cursor.execute(query)
 
 
 class AwcLocation(models.Model):
@@ -409,6 +464,23 @@ class AggCcsRecord(models.Model):
         managed = False
         db_table = 'agg_ccs_record'
 
+    @classmethod
+    def aggregate(cls, month):
+        helper = AggCcsRecordAggregationHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic():
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(agg_query, agg_params)
+                for query in rollup_queries:
+                    cursor.execute(query)
+                for query in index_queries:
+                    cursor.execute(query)
+
 
 class AggChildHealth(models.Model):
     state_id = models.TextField()
@@ -623,7 +695,6 @@ class AggregateComplementaryFeedingForms(models.Model):
     )
 
     class Meta(object):
-        managed = False
         db_table = AGG_COMP_FEEDING_TABLE
 
     @classmethod
@@ -722,7 +793,6 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
     )
 
     class Meta(object):
-        managed = False
         db_table = AGG_CHILD_HEALTH_PNC_TABLE
 
     @classmethod
@@ -758,8 +828,6 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     A row exists for every case that has ever had a Complementary Feeding Form
     submitted against it.
-
-    Note this is not actually used in the dashboard, so the aggreagtion is not run
     """
 
     # partitioned based on these fields
@@ -776,9 +844,12 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
         null=True,
         help_text="Counseling about family planning methods has ever occurred"
     )
+    is_ebf = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Whether child was exclusively breastfed at last visit"
+    )
 
     class Meta(object):
-        managed = False
         db_table = AGG_CCS_RECORD_PNC_TABLE
 
     @classmethod
@@ -825,12 +896,51 @@ class AggregateChildHealthTHRForms(models.Model):
     )
 
     class Meta(object):
-        managed = False
         db_table = AGG_CHILD_HEALTH_THR_TABLE
 
     @classmethod
     def aggregate(cls, state_id, month):
         helper = THRFormsChildHealthAggregationHelper(state_id, month)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+
+
+class AggregateCcsRecordTHRForms(models.Model):
+    """Aggregated data for ccs_record cases based on
+    Take Home Ration forms
+
+    A child table exists for each state_id and month.
+
+    A row exists for every ccs_record case that has had a THR Form
+    submitted against it this month.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+    days_ration_given_mother = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of days the mother has been given rations this month"
+    )
+
+    class Meta(object):
+        db_table = AGG_CCS_RECORD_THR_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = THRFormsCcsRecordAggregationHelper(state_id, month)
         curr_month_query, curr_month_params = helper.create_table_query()
         agg_query, agg_params = helper.aggregation_query()
 
@@ -905,7 +1015,6 @@ class AggregateGrowthMonitoringForms(models.Model):
     )
 
     class Meta(object):
-        managed = False
         db_table = AGG_GROWTH_MONITORING_TABLE
 
     @classmethod
@@ -930,6 +1039,145 @@ class AggregateGrowthMonitoringForms(models.Model):
             cursor.execute(query, params)
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
+
+
+class AggregateBirthPreparednesForms(models.Model):
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+
+    immediate_breastfeeding = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Has ever had /data/bp2/immediate_breastfeeding = 'yes'"
+    )
+    anemia = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of /data/bp1/anemia. severe=1, moderate=2, normal=3"
+    )
+    eating_extra = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of /data/bp1/eating_extra = 'yes'."
+    )
+    resting = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of /data/bp1/resting = 'yes'."
+    )
+    # anc_details path is /data/bp1/iteration/item/filter/anc_details
+    anc_weight = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of anc_details/anc_weight"
+    )
+    anc_blood_pressure = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of anc_details/anc_blood_pressure. normal=1, high=2, not_measured=3"
+    )
+    bp_sys = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of anc_details/bp_sys"
+    )
+    bp_dia = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of anc_details/bp_dia"
+    )
+    anc_hemoglobin = models.DecimalField(
+        max_digits=64,
+        decimal_places=20,
+        null=True,
+        help_text="Last value of anc_details/anc_hemoglobin"
+    )
+    bleeding = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of /data/bp2/bleeding = 'yes'"
+    )
+    swelling = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of /data/bp2/swelling = 'yes'"
+    )
+    blurred_vision = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of /data/bp2/blurred_vision = 'yes'"
+    )
+    convulsions = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of /data/bp2/convulsions = 'yes'"
+    )
+    rupture = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of /data/bp2/rupture = 'yes'"
+    )
+
+    class Meta(object):
+        db_table = AGG_CCS_RECORD_BP_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = BirthPreparednessFormsAggregationHelper(state_id, month)
+        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(prev_month_query, prev_month_params)
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+
+    @classmethod
+    def compare_with_old_data(cls, state_id, month):
+        helper = BirthPreparednessFormsAggregationHelper(state_id, month)
+        query, params = helper.compare_with_old_data_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(query, params)
+            rows = fetchall_as_namedtuple(cursor)
+            return [row.case_id for row in rows]
+
+
+class AggregateCcsRecordDeliveryForms(models.Model):
+    """Aggregated data for ccs_record cases based on
+    Delivery forms
+
+    A child table exists for each state_id and month.
+
+    A row exists for every ccs_record case that has had a Delivery Form
+    submitted against it this month.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+    breastfed_at_birth = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="whether any child was breastfed at birth"
+    )
+
+    class Meta(object):
+        db_table = AGG_CCS_RECORD_DELIVERY_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = DeliveryFormsAggregationHelper(state_id, month)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
 
 
 class AggregateInactiveAWW(models.Model):

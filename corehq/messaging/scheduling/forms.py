@@ -424,7 +424,7 @@ class CustomEventForm(ContentForm):
     # Corresponds to TimedEvent.time or RandomTimedEvent.time
     time = CharField(
         required=False,
-        label='',
+        label=ugettext_lazy("HH:MM"),
     )
 
     # Corresponds to RandomTimedEvent.window_length
@@ -928,7 +928,7 @@ class ScheduleForm(Form):
             (TimedSchedule.EVENT_RANDOM_TIME, ugettext_lazy("A random time")),
         )
     )
-    send_time = CharField(required=False)
+    send_time = CharField(required=False, label=ugettext_lazy("HH:MM"))
     window_length = IntegerField(
         required=False,
         min_value=1,
@@ -1523,6 +1523,13 @@ class ScheduleForm(Form):
                     *self.get_extra_timing_fields(),
                     data_bind="visible: showSharedTimeInput"
                 ),
+                crispy.Div(
+                    crispy.HTML(
+                        '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
+                        _("Define the send times in the events below.")
+                    ),
+                    data_bind="visible: send_frequency() === '%s'" % self.SEND_CUSTOM_DAILY,
+                ),
                 data_bind="visible: usesTimedSchedule()"
             ),
             hqcrispy.B3MultiField(
@@ -1759,6 +1766,10 @@ class ScheduleForm(Form):
         return list(result)
 
     @property
+    def use_case(self):
+        raise NotImplementedError()
+
+    @property
     def current_values(self):
         values = {}
         for field_name in self.fields.keys():
@@ -1766,6 +1777,7 @@ class ScheduleForm(Form):
         values['standalone_content_form'] = self.standalone_content_form.current_values
         values['custom_event_formset'] = [form.current_values for form in self.custom_event_formset]
         values['editing_custom_immediate_schedule'] = self.editing_custom_immediate_schedule
+        values['use_case'] = self.use_case
         return values
 
     @property
@@ -2401,9 +2413,11 @@ class ScheduleForm(Form):
 
 class BroadcastForm(ScheduleForm):
 
+    use_case = 'broadcast'
+
     schedule_name = CharField(
         required=True,
-        label=ugettext_lazy('Schedule Name'),
+        label=ugettext_lazy("Broadcast Name"),
         max_length=1000,
     )
 
@@ -2539,6 +2553,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     START_OFFSET_ZERO = 'ZERO'
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
+
+    use_case = 'conditional_alert'
 
     # start_date is defined on the superclass but cleaning it in this subclass
     # depends on start_date_type, which depends on send_frequency

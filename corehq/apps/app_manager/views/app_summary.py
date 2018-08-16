@@ -14,10 +14,11 @@ from dimagi.utils.web import json_response
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.util import get_form_data
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views import LoginAndDomainMixin
-from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.reports.formdetails.readable import FormQuestionResponse
 from corehq.apps.hqwebapp.decorators import use_angular_js
 from couchexport.export import export_raw
@@ -27,12 +28,11 @@ import six
 from six.moves import range
 
 
-class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
+class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
     template_name = 'app_manager/summary.html'
 
-    @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
@@ -49,10 +49,13 @@ class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, App
         if not self.app or self.app.doc_type == 'RemoteApp':
             raise Http404()
 
+        lang, langs = get_langs(self.request, self.app)
         return {
             'VELLUM_TYPES': VELLUM_TYPES,
             'form_name_map': _get_name_map(self.app),
-            'langs': self.app.langs,
+            'lang': lang,
+            'langs': langs,
+            'app_langs': self.app.langs,
             'app_id': self.app.id,
             'app_name': self.app.name,
             'read_only': self.app.doc_type == 'LinkedApplication',
@@ -75,21 +78,37 @@ class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, App
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.app_id])
 
-    @allow_remote_invocation
-    def get_case_data(self, in_data):
-        return {
-            'response': self.app.get_case_metadata().to_json(),
-            'success': True,
-        }
 
-    @allow_remote_invocation
-    def get_form_data(self, in_data):
+class AppCaseSummaryView(AppSummaryView):
+    urlname = 'app_case_summary'
+    page_title = ugettext_noop("Case Summary")
+    template_name = 'app_manager/case_summary.html'
+
+    @property
+    def page_context(self):
+        context = super(AppCaseSummaryView, self).page_context
+        context.update({
+            'is_case_summary': True,
+            'case_metadata': self.app.get_case_metadata().to_json(),
+        })
+        return context
+
+
+class AppFormSummaryView(AppSummaryView):
+    urlname = 'app_form_summary'
+    page_title = ugettext_noop("Form Summary")
+    template_name = 'app_manager/form_summary.html'
+
+    @property
+    def page_context(self):
+        context = super(AppFormSummaryView, self).page_context
         modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
-        return {
-            'response': modules,
+        context.update({
+            'is_form_summary': True,
+            'modules': modules,
             'errors': errors,
-            'success': True,
-        }
+        })
+        return context
 
 
 class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
@@ -128,7 +147,7 @@ def _get_name_map(app):
             module_url = reverse('view_module', kwargs=keywords)
             del keywords['module_unique_id']
             keywords['form_unique_id'] = form.unique_id
-            form_url = reverse('view_form', kwargs=keywords)
+            form_url = reverse('form_source', kwargs=keywords)
 
             name_map[form.unique_id] = {
                 'form_name': form.name,

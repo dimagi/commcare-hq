@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from __future__ import print_function
 from collections import OrderedDict
 
 from django.template.defaultfilters import slugify
@@ -284,6 +285,19 @@ class SqlData(ReportDataSource):
     @property
     def data(self):
         return self._get_data()
+
+    def get_sql_queries(self):
+        qc = self.query_context()
+        for c in self.columns:
+            qc.append_column(c.view)
+
+        session_helper = connection_manager.get_session_helper(self.engine_id)
+        with session_helper.session_context() as session:
+            return qc.get_query_strings(session.connection())
+
+    def print_sql_queries(self):
+        for query in self.get_sql_queries():
+            print(query)
 
 
 class SqlTabularReport(GenericTabularReport, SqlData):
