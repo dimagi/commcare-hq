@@ -22,4 +22,12 @@ class BulkPillowProcessor(PillowProcessor):
 
     @abstractmethod
     def process_changes_chunk(self, pillow_instance, changes_chunk):
+        """
+        Should process given changes_chunk.
+
+            Must return a tuple with first element as set of failed changes that
+            should be reprocessed serially by pillow and second element as a list
+            of (change, exception) tuples for failed changes that should not be
+            reprocessed but for which exceptions are to be handled by handle_pillow_error
+        """
         pass

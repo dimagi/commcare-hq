@@ -208,7 +208,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             timer = TimingContext()
             with timer:
                 try:
-                    retry_changes = processor.process_changes_chunk(self, changes_chunk)
+                    retry_changes, change_exceptions = processor.process_changes_chunk(self, changes_chunk)
                 except Exception as ex:
                     notify_exception(
                         None,
@@ -221,6 +221,8 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                     reprocess_serially(changes_chunk, processor)
                 else:
                     # fall back to processing one by one for failed changes
+                    for change, exception in change_exceptions:
+                        handle_pillow_error(self, change, exception)
                     reprocess_serially(retry_changes, processor)
                 total_processing_time += timer.duration
         return failed_changes, total_processing_time

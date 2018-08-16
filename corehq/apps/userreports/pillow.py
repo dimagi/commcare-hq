@@ -210,16 +210,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             # remove it until the next bootstrap call
             self.table_adapters_by_domain[domain].remove(table)
 
-    def _get_ucr_values(self, domain, table, doc, eval_context):
-        try:
-            return table.get_all_values(doc, eval_context)
-        except Exception as e:
-            try:
-                table.handle_exception(doc, e)
-            except UserReportsWarning:
-                # remove it until the next bootstrap call
-                self.table_adapters_by_domain[domain].remove(table)
-
     def process_changes_chunk(self, pillow_instance, changes):
         """
         Update UCR tables in bulk by breaking up changes per domain per UCR table.
@@ -235,39 +225,42 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 changes_by_domain[change.metadata.domain].append(change)
 
         retry_changes = set()
+        change_exceptions = []
         for domain, changes_chunk in six.iteritems(changes_by_domain):
-            failed = self._process_chunk_for_domain(domain, changes_chunk)
+            failed, exceptions = self._process_chunk_for_domain(domain, changes_chunk)
             retry_changes.update(failed)
+            change_exceptions.extend(exceptions)
 
-        return retry_changes
+        return retry_changes, change_exceptions
 
     def _process_chunk_for_domain(self, domain, changes_chunk):
-        all_adapters = list(self.table_adapters_by_domain[domain])
+        adapters = list(self.table_adapters_by_domain[domain])
+        changes_by_id = {change.id: change for change in changes_chunk}
         to_delete_by_adapter = defaultdict(list)
         rows_to_save_by_adapter = defaultdict(list)
         async_configs_by_doc_id = defaultdict(list)
         to_update = {change for change in changes_chunk if not change.deleted}
         retry_changes, docs = self.get_docs_for_changes(to_update, domain)
+        change_exceptions = []
 
         for doc in docs:
-            # make a shallow copy so that adapters can be removed
-            adapters = list(self.table_adapters_by_domain[domain])
             eval_context = EvaluationContext(doc)
             for adapter in adapters:
                 if adapter.config.filter(doc):
                     if adapter.run_asynchronous:
                         async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                     else:
-                        # below call may remove an adapter on error
-                        ucr_values = self._get_ucr_values(domain, adapter, doc, eval_context)
-                        rows_to_save_by_adapter[adapter].extend(ucr_values or [])
+                        try:
+                            rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                        except Exception as e:
+                            change_exceptions.append((changes_by_id[doc["_id"]], e))
                 elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
                     to_delete_by_adapter[adapter].append(doc['_id'])
             eval_context.reset_iteration()
 
         # bulk delete by adapter
         to_delete = [c.id for c in changes_chunk if c.deleted]
-        for adapter in all_adapters:
+        for adapter in adapters:
             delete_ids = to_delete_by_adapter[adapter] + to_delete
             try:
                 adapter.bulk_delete(delete_ids)
@@ -286,14 +279,13 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                         ids=[c.id for c in to_update], ex=ex))
                 retry_changes.update(to_update)
         if async_configs_by_doc_id:
-            changes_by_id = {change.id: change for change in changes_chunk}
             doc_type_by_id = {
                 _id: changes_by_id[_id].metadata.document_type
                 for _id in async_configs_by_doc_id.keys()
             }
             AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
 
-        return retry_changes
+        return retry_changes, change_exceptions
 
     @staticmethod
     def get_docs_for_changes(changes, domain):
