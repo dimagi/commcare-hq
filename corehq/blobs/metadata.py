@@ -7,6 +7,7 @@ from itertools import chain
 
 from corehq.sql_db.routers import get_cursor
 from corehq.sql_db.util import split_list_by_db_partition
+from corehq.util.datadog.gauges import datadog_counter
 
 from .models import BlobMeta
 
@@ -15,9 +16,6 @@ class MetaDB(object):
     """Blob metadata database interface
 
     This class manages persistence of blob metadata in a SQL database.
-    It uses a separate connection from the default database connection
-    to prevent default connection transaction rollback from affecting
-    blob metadata persistence.
     """
 
     def new(self, **blob_meta_args):
@@ -45,7 +43,7 @@ class MetaDB(object):
         if timeout is not None:
             if "expires_on" in blob_meta_args:
                 raise ValueError("pass one: timeout or expires_on")
-            meta.expires_on = datetime.utcnow() + timedelta(minutes=timeout)
+            meta.expires_on = _utcnow() + timedelta(minutes=timeout)
         return meta
 
     def put(self, meta):

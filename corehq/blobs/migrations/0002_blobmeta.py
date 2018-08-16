@@ -54,4 +54,5 @@ class Migration(migrations.Migration):
             unique_together=set([('key',)]),
         ),
         migrator.get_migration('delete_blob_meta.sql'),
+        migrator.get_migration('get_expired_blobs.sql'),
     ]
