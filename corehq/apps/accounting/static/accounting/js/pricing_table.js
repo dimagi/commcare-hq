@@ -9,12 +9,13 @@ hqDefine('accounting/js/pricing_table', [
     _,
     initialPageData
 ) {
-    var pricingTableModel = function (editions, currentEdition, isRenewal, isSubscriptionBelowMin) {
+    var pricingTableModel = function (editions, currentEdition, isRenewal, startDate, isSubscriptionBelowMin) {
         'use strict';
         var self = {};
 
         self.currentEdition = currentEdition;
         self.isRenewal = isRenewal;
+        self.startDateAfterMinimumSubscription = startDate;
         self.subscriptionBelowMinimum = isSubscriptionBelowMin;
         self.editions = ko.observableArray(_.map(editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
@@ -77,6 +78,12 @@ hqDefine('accounting/js/pricing_table', [
             }
         };
 
+        self.submitDowngradeForm = function () {
+            if (self.form) {
+                self.form.submit();
+            }
+        };
+
         self.init = function () {
             $('.col-edition').click(function () {
                 self.selected_edition($(this).data('edition'));
@@ -124,6 +131,7 @@ hqDefine('accounting/js/pricing_table', [
             initialPageData.get('editions'),
             initialPageData.get('current_edition'),
             initialPageData.get('is_renewal'),
+            initialPageData.get('start_date_after_minimum_subscription'),
             initialPageData.get('subscription_below_minimum')
         );
 

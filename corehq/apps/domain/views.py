@@ -1468,6 +1468,24 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return False
 
     @property
+    def is_downgrade_before_minimum(self):
+        if self.is_upgrade:
+            return False
+        elif self.current_subscription is None or self.current_subscription.is_trial:
+            return False
+        elif self.current_subscription.is_below_minimum_subscription:
+            return True
+        else:
+            return False
+
+    @property
+    def current_subscription_end_date(self):
+        if self.is_downgrade_before_minimum:
+            return self.current_subscription.date_start + datetime.timedelta(days=30)
+        else:
+            return datetime.date.today()
+
+    @property
     def next_invoice_date(self):
         # Next invoice date is the first day of the next month
         return datetime.date.today().replace(day=1) + dateutil.relativedelta.relativedelta(months=1)
@@ -1493,7 +1511,9 @@ class ConfirmSelectedPlanView(SelectPlanView):
             'current_plan': (self.current_subscription.plan_version.user_facing_description
                              if self.current_subscription is not None else None),
             'show_community_notice': (self.edition == SoftwarePlanEdition.COMMUNITY
-                                      and self.current_subscription is None)
+                                      and self.current_subscription is None),
+            'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
+            'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT)
         }
 
     @property
@@ -1607,6 +1627,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                     message = _(
                         "Your project has been successfully subscribed to the %s Software Plan."
                     ) % software_plan_name
+                messages.success(
+                    request, message
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
