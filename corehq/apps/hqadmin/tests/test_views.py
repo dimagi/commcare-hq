@@ -1,15 +1,21 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from mock import patch, Mock
+import os
+
 from django.http import HttpResponse
 from django.test import SimpleTestCase
-from mock import patch, Mock
+from lxml import etree
 
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.hqadmin.views.users import AdminRestoreView
 
 
-class AdminRestoreViewTests(SimpleTestCase):
+class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
+    root = os.path.dirname(__file__)
+    file_path = ['data']
 
-    def test_get_context_data(self):
+    def test_bad_restore(self):
         user = Mock()
         user.domain = None
         app_id = None
@@ -28,15 +34,26 @@ class AdminRestoreViewTests(SimpleTestCase):
                 'view': 'AdminRestoreView',
                 'payload': '<error>Unexpected restore response 500: bad response. If you believe this is a bug '
                            'please report an issue.</error>\n',
-                'restore_id': None,
                 'status_code': 500,
                 'timing_data': [],
-                'num_cases': 0,
-                'num_locations': 0,
-                'num_reports': 0,
                 'hide_xml': False,
-                'case_type_counts': {},
-                'location_type_counts': {},
-                'report_row_counts': {},
-                'num_ledger_entries': 0,
             })
+
+    def test_admin_restore_counts(self):
+        xml_payload = etree.fromstring(self.get_xml('restore'))
+        self.assertEqual(AdminRestoreView.get_stats_from_xml(xml_payload), {
+            'restore_id': None,
+            'num_cases': 2,
+            'num_locations': 7,
+            'num_reports': 0,
+            'case_type_counts': {},
+            'location_type_counts': {
+                'country': 1,
+                'state': 1,
+                'county': 1,
+                'city': 1,
+                'neighborhood': 3,
+            },
+            'report_row_counts': {},
+            'num_ledger_entries': 0,
+        })
