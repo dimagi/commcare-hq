@@ -93,7 +93,7 @@ hqDefine('builds/js/edit-builds', [
 
     var buildsMenu = menuModel();
     $("#menu-form").koApplyBindings(buildsMenu);
-    $("#menu-form").find('tbody').sortable()
+    $("#menu-form").find('tbody').sortable();
 
     function postGo(url, params) {
         var $form = $("#submit-menu-form")
