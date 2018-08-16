@@ -1,6 +1,7 @@
 (function () {
     var components = {
         'inline-edit': 'hqwebapp/js/components/inline_edit',
+        'pagination': 'hqwebapp/js/components/pagination',
     };
 
     _.each(components, function(moduleName, elementName) {
@@ -11,7 +12,7 @@
         _.each(_.keys(components), function(elementName) {
             _.each($(elementName), function(el) {
                 var $el = $(el);
-                if (!$el.closest('.ko-template').length) {
+                if (!($el.data('apply-bindings') === false)) {
                     $(el).koApplyBindings();
                 }
             });
