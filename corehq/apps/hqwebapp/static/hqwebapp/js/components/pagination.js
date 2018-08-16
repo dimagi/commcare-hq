@@ -6,7 +6,13 @@
 // See releases_table.html for an example.
 // This component must be nested within another element that has had knockout bindings applied to it.
 
-hqDefine('hqwebapp/js/components/pagination', function() {
+hqDefine('hqwebapp/js/components/pagination', [
+    'knockout',
+    'underscore',
+], function(
+    ko,
+    _
+) {
     return {
         viewModel: function(params){
             var self = {};
