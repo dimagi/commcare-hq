@@ -21,8 +21,8 @@ class CaseListFilterUtils(EmwfUtils):
         assert options[0][0] == "t__0"
         assert options[1][0] == "t__5"
         return [
-            ("all_data", _("[All Owners (Active + Deactivated)] and [admin], [demo_user], [Unknown Users], and [CommCare Supply]")),
-            ('project_data', _("[All Owners (Active + Deactivated)]"))
+            ("all_data", _("All Data (Active & Deactivated Owners)")),
+            ('project_data', _("Project Data (Active & Deactivated Owners)]"))
         ] + options[2:]
 
     def _group_to_choice_tuple(self, group):
