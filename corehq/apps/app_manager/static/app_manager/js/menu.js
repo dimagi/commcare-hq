@@ -10,8 +10,11 @@ hqDefine("app_manager/js/menu", function() {
 
     var initLangs = function () {
         $('#langs select').change(function () {
-            var lang = $(this).find('option:selected').attr('value');
-            $(document).attr('location', window.location.href + (window.location.search ? '&' : '?') + 'lang=' + lang);
+            var lang = $(this).find('option:selected').attr('value'),
+                loc = window.location,
+                baseUrl = loc.origin + loc.pathname,
+                querystring = loc.search + (loc.search ? '&' : '?') + "lang=" + lang;
+            $(document).attr('location', baseUrl + querystring + loc.hash);
         });
     };
 
