@@ -1,11 +1,13 @@
 hqDefine("scheduling/js/conditional_alert_list", [
     'jquery',
     'hqwebapp/js/initial_page_data',
+    'datatables'
 ], function($, initialPageData) {
     var table = null;
 
     $(function() {
         var conditonalAlterListUrl = initialPageData.reverse("conditional_alert_list");
+        var createConditonalAlterListUrl = initialPageData.reverse("create_conditional_alert");
 
         table = $("#conditional-alert-list").dataTable({
             "lengthChange": false,
@@ -106,6 +108,9 @@ hqDefine("scheduling/js/conditional_alert_list", [
         $(document).on('click', '.alert-delete', deleteAlert);
         $(document).on('click', '.alert-activate', activateAlert);
         $(document).on('click', '.alert-restart', restartRule);
+        $('#action-button').koApplyBindings({
+            createAlertUrl:createConditonalAlterListUrl
+        });
 
         function reloadTable() {
             table.fnDraw(false);

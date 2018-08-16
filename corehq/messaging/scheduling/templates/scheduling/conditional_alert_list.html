@@ -2,9 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "scheduling/js/conditional_alert_list.js" %}"></script>
-{% endblock %}
+{% requirejs_main "scheduling/js/conditional_alert_list" %}
 
 {% block stylesheets %}{{ block.super }}
 <style>
@@ -15,12 +13,13 @@
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl 'create_conditional_alert' domain %}
     {% registerurl 'conditional_alert_list' domain %}
     {% registerurl 'edit_conditional_alert' domain '---' %}
     {% initial_page_data 'limit_rule_restarts' limit_rule_restarts %}
 
-    <div class="btn-group">
-        <a href="{% url 'create_conditional_alert' domain %}" class="btn btn-success">
+    <div class="btn-group" id="action-button">
+        <a data-bind="attr: {href: createAlertUrl}" class="btn btn-success">
             <i class="fa fa-plus"></i>
             {% trans "New Conditional Alert" %}
         </a>
