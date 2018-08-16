@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load compress %}
 
-{% block title %}{% trans "Download Data Files" %}{% endblock %}
+{% block title %}{% trans "Download Files" %}{% endblock %}
 
 {% block js %}{{ block.super }}
     <script src="{% static 'export/js/download_data_files.js' %}"></script>
@@ -13,7 +13,7 @@
 {% block page_content %}
     {% block main_column_content %}
 
-<h2>{% trans "Download Data Files" %}</h2>
+<h2>{% trans "Download Files" %}</h2>
 
 {% if data_files %}
 <div class="row">
@@ -73,7 +73,7 @@
         <form action="#" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <fieldset>
-                <legend>Upload a data file</legend>
+                <legend>{% trans "Upload file for transfer" %}</legend>
 
                 <div class="row">
                     <div class="form-group">
