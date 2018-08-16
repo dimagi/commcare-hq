@@ -71,6 +71,7 @@ def domain(request):
 
 def domain_billing_context(request):
     is_domain_billing_admin = False
+    restrict_domain_creation = settings.RESTRICT_DOMAIN_CREATION
     if getattr(request, 'couch_user', None) and getattr(request, 'domain', None):
         account = BillingAccount.get_account_by_domain(request.domain)
         if account:
@@ -78,8 +79,11 @@ def domain_billing_context(request):
                 is_domain_billing_admin = True
             elif account.has_enterprise_admin(request.couch_user.username):
                 is_domain_billing_admin = True
+            if not is_domain_billing_admin:
+                restrict_domain_creation = restrict_domain_creation or account.restrict_domain_creation
     return {
         'IS_DOMAIN_BILLING_ADMIN': is_domain_billing_admin,
+        'restrict_domain_creation': restrict_domain_creation,
     }
 
 
@@ -127,7 +131,6 @@ def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE,
         'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
-        'restrict_domain_creation': settings.RESTRICT_DOMAIN_CREATION,
     }
 
 
