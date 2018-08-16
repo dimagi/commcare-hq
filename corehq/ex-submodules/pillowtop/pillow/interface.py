@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractproperty, abstractmethod
 from datetime import datetime
+from memoized import memoized
 
 import sys
 
@@ -111,6 +112,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             self._record_checkpoint_in_datadog()
 
     @property
+    @memoized
     def batch_processors(self):
         if self.processor_chunk_size > 0:
             return [processor for processor in self.processors if processor.supports_batch_processing]
@@ -118,6 +120,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             return []
 
     @property
+    @memoized
     def serial_processors(self):
         if self.processor_chunk_size > 0:
             return [processor for processor in self.processors if not processor.supports_batch_processing]
