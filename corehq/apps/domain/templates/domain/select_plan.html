@@ -116,11 +116,14 @@
                 <h4 class="modal-title">Downgrading?</h4>
             </div>
             <div class="modal-body">
-                <br><br>
+                <br>All CommCare subscriptions require a 30 day minimum commitment. Your current subscription may
+                not be downgraded until {{  start_date_after_minimum_subscription }}. If you have questions or if
+                you would like to speak to someone about your subscription, please reach out to
+                <a href='mailto:billing-support@dimagi.com'>billing-support@dimagi.com</a>.
+                <br>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal" style="float: left;">{% trans "Dismiss" %}</button>
-                <button type="button" class="btn btn-danger" data-bind="click: submitDowngradeForm">{% trans "Schedule Downgrade" %}</button>
             </div>
         </div>
     </div>
