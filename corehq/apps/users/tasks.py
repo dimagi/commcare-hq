@@ -41,6 +41,7 @@ def bulk_upload_async(domain, user_specs, group_specs):
         task=task,
     )
     DownloadBase.set_progress(task, 100, 100)
+    raise Exception('bulk_upload_async')
     return {
         'messages': results
     }
