@@ -25,10 +25,9 @@ hqDefine("dashboard/js/dashboard", [
 
         if (self.hasItemList()) {
             self.itemsPerPage = 5;
-            self.currentPage = ko.observable();         // 1-indexed
 
             // Set via ajax
-            self.grandTotal = ko.observable(0);
+            self.totalItems = ko.observable();
             self.totalPages = ko.observable();
             self.items = ko.observableArray();
         }
@@ -53,7 +52,7 @@ hqDefine("dashboard/js/dashboard", [
 
         // Paging
         if (self.hasItemList()) {
-            self.currentPage.subscribe(function(newValue) {
+            self.goToPage = function(page) {
                 // If request takes a noticeable amount of time, clear items, which will show spinner
                 var done = false;
                 _.delay(function() {
@@ -68,7 +67,7 @@ hqDefine("dashboard/js/dashboard", [
                     url: initialPageData.reverse('dashboard_tile', self.slug),
                     data: {
                         itemsPerPage: self.itemsPerPage,
-                        currentPage: newValue,
+                        currentPage: page,
                     },
                     success: function(data) {
                         self.items(data.items);
@@ -81,12 +80,12 @@ hqDefine("dashboard/js/dashboard", [
 
                 // Total number of pages is also a separate request, but it only needs to run once
                 // and then self.totalPages() never changes again
-                if (!self.grandTotal()) {
+                if (self.totalItems() === undefined) {
                     var totalPagesRequest = $.ajax({
                         method: "GET",
                         url: initialPageData.reverse('dashboard_tile_total', self.slug),
                         success: function(data) {
-                            self.grandTotal(data.total);
+                            self.totalItems(data.total);
                             self.totalPages(Math.ceil(data.total / self.itemsPerPage) );
                             if (data.total === 0) {
                                 self.hasItemList(false);
@@ -97,10 +96,10 @@ hqDefine("dashboard/js/dashboard", [
                         },
                     });
                 }
-            });
+            };
 
             // Initialize with first page of data
-            self.currentPage(1);
+            self.goToPage(1);
         }
 
         return self;
