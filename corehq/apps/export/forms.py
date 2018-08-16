@@ -598,8 +598,8 @@ class DashboardFeedFilterForm(forms.Form):
             can_access_all_locations=can_access_all_locations,
             accessible_location_ids=accessible_location_ids,
             sharing_groups=CaseListFilter.selected_sharing_group_ids(emwf_selections),
-            show_all_data=CaseListFilter.show_all_owners_and_admin_demo_unknown_supply(emwf_selections),
-            show_project_data=CaseListFilter.show_all_owners(emwf_selections),
+            show_all_data=CaseListFilter.show_all_data(emwf_selections),
+            show_project_data=CaseListFilter.show_project_data(emwf_selections),
         )
 
     def _to_form_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
@@ -1205,8 +1205,8 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
         return filter_builder.get_filters(
             can_access_all_locations,
             accessible_location_ids,
-            self.dynamic_filter_class.show_all_owners_and_admin_demo_unknown_supply(mobile_user_and_group_slugs),
-            self.dynamic_filter_class.show_all_owners(mobile_user_and_group_slugs),
+            self.dynamic_filter_class.show_all_data(mobile_user_and_group_slugs),
+            self.dynamic_filter_class.show_project_data(mobile_user_and_group_slugs),
             self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs),
             self.cleaned_data['date_range'],
             self._get_group_ids(mobile_user_and_group_slugs),

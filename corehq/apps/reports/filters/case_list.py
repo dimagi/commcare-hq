@@ -21,8 +21,8 @@ class CaseListFilterUtils(EmwfUtils):
         assert options[0][0] == "t__0"
         assert options[1][0] == "t__5"
         return [
-            ("all_data", _("All Data (Active & Deactivated Owners)")),
-            ('project_data', _("Project Data (Active & Deactivated Owners)]"))
+            ("all_data", _("[All Data (Active & Deactivated Owners)]")),
+            ('project_data', _("[Project Data (Active & Deactivated Owners)]"))
         ] + options[2:]
 
     def _group_to_choice_tuple(self, group):
@@ -46,11 +46,11 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
         return CaseListFilterUtils(self.domain)
 
     @staticmethod
-    def show_all_owners_and_admin_demo_unknown_supply(mobile_user_and_group_slugs):
+    def show_all_data(mobile_user_and_group_slugs):
         return 'all_data' in mobile_user_and_group_slugs
 
     @staticmethod
-    def show_all_owners(mobile_user_and_group_slugs):
+    def show_project_data(mobile_user_and_group_slugs):
         return 'project_data' in mobile_user_and_group_slugs
 
     @staticmethod
