@@ -10,11 +10,8 @@ from corehq.util.cache_utils import is_rate_limited
 from corehq.util.datadog.gauges import datadog_counter
 
 RATE_LIMITED_EXCEPTIONS = {
-    'restkit.errors.RequestError': 'couchdb',
-    'restkit.errors.RequestFailed': 'couchdb',
     'dimagi.utils.couch.bulk.BulkFetchException': 'couchdb',
     'socketpool.pool.MaxTriesError': 'couchdb',
-    'http_parser.http.NoMoreData': 'couchdb',
 
     'corehq.elastic.ESError': 'elastic',
 

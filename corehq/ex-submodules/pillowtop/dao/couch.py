@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import six
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs
 from .interface import DocumentStore
@@ -20,7 +21,7 @@ class CouchDocumentStore(DocumentStore):
         try:
             return self._couch_db.get(doc_id)
         except ResourceNotFound as e:
-            if e.msg == 'missing':
+            if six.text_type(e) == 'missing':
                 raise DocumentMissingError()
             else:
                 raise DocumentDeletedError()

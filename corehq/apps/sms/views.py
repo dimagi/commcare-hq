@@ -99,7 +99,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache import cache_core
 from django.conf import settings
 from django_prbac.utils import has_privilege
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from couchexport.models import Format
 from couchexport.export import export_raw
 from couchexport.shortcuts import export_response

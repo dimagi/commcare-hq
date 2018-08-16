@@ -2,20 +2,25 @@
 /* global $, sinon */
 
 describe('App Releases', function() {
-    function get_saved_apps(num, extraProps) {
+    function getSavedApps(num, extraProps, releasesMain) {
         extraProps = extraProps || {};
-        return _.map(_.range(num), function (version) {
-            return _.extend({
-                id: version,
-                version: version,
-                doc_type: 'Application',
-                build_comment: '',
-                build_broken: false,
-                is_released: false,
-                domain: 'test-domain',
-                target_commcare_flavor: false,
-            }, extraProps);
-        });
+        var savedAppModel = hqImport('app_manager/js/releases/releases').savedAppModel,
+            savedApps = [];
+        for (var version = 0; version <= num; version ++){
+            savedApps.push(savedAppModel(
+                _.extend({
+                    id: version,
+                    version: version,
+                    doc_type: 'Application',
+                    build_comment: '',
+                    build_broken: false,
+                    is_released: false,
+                    domain: 'test-domain',
+                    target_commcare_flavor: false,
+                }, extraProps),
+                releasesMain));
+        }
+        return savedApps;
     }
     var urls = {
             download_zip: 'download_zip_url ___',
@@ -43,7 +48,7 @@ describe('App Releases', function() {
             registerUrl("download_multimedia_zip", "/a/test-domain/apps/download/---/multimedia/commcare.zip");
             ajax_stub = sinon.stub($, 'ajax');
             releases = releasesMainModel(options);
-            releases.addSavedApps(get_saved_apps(releases.fetchLimit));
+            releases.savedApps(getSavedApps(releases.fetchLimit(), {}, releases));
         });
 
         afterEach(function() {
@@ -111,7 +116,7 @@ describe('App Releases', function() {
         it('should correctly load media url', function() {
             var props = { include_media: true };
             props[savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL] = null;
-            releases.addSavedApps(get_saved_apps(1, props));
+            releases.savedApps(getSavedApps(1, props, releases));
 
             savedApp = releases.savedApps()[0];
 
@@ -128,7 +133,7 @@ describe('App Releases', function() {
         it('should correctly load non media url', function() {
             var props = { include_media: false };
             props[savedAppModel.URL_TYPES.SHORT_ODK_URL] = null;
-            releases.addSavedApps(get_saved_apps(1, props));
+            releases.savedApps(getSavedApps(1, props, releases));
 
             savedApp = releases.savedApps()[0];
 
@@ -147,7 +152,7 @@ describe('App Releases', function() {
 
             props[savedAppModel.URL_TYPES.SHORT_ODK_URL] = null;
             props[savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL] = null;
-            releases.addSavedApps(get_saved_apps(1, props));
+            releases.savedApps(getSavedApps(1, props, releases));
             savedApp = releases.savedApps()[0];
 
             savedApp.get_app_code();

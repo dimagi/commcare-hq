@@ -8,7 +8,6 @@ git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect==0.5.7a2
 -e git+git://github.com/dimagi/couchdbkit-debugpanel.git#egg=couchdbkit-debugpanel
 -e git+git://github.com/millerdev/django-nose@fast-first-1.4.4#egg=django-nose
 -e git+git://github.com/nickpell/django-package-monitor@np/handle-no-semver#egg=django-package-monitor
-git+https://github.com/Legrandin/pycryptodome@0df6211#egg=pycryptodome==3.6.5a1
 alabaster==0.7.11         # via sphinx
 alembic==0.8.6
 amqp==1.4.9
@@ -26,7 +25,7 @@ billiard==3.3.0.23
 boto3==1.4.4
 botocore==1.5.95
 cached-property==1.4.3
-celery==3.1.18
+celery==3.1.25
 cffi==1.11.5
 chardet==3.0.4
 click==6.7                # via pip-tools
@@ -94,7 +93,7 @@ greenlet==0.4.12
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0b8
-http-parser==0.8.3
+http-parser==0.8.3        # via restkit
 httpagentparser==1.7.8
 idna==2.7
 ipaddress==1.0.22
@@ -109,7 +108,7 @@ jinja2==2.8
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.7
+jsonobject-couchdbkit==0.9.8
 jsonobject==0.9.3
 jsonpath-rw==1.4.0
 kafka-python==0.9.5
@@ -148,6 +147,7 @@ py-kissmetrics==1.0.1
 pyasn1==0.4.3
 pycco==0.5.1
 pycparser==2.18
+pycryptodome==3.6.5
 pygithub==1.35
 pygments==2.0.2
 pygooglechart==0.4.0
