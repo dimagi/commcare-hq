@@ -17,12 +17,13 @@ class CaseListFilterUtils(EmwfUtils):
     @memoized
     def static_options(self):
         options = super(CaseListFilterUtils, self).static_options
-        # replace [All mobile workers] with case-list-specific options
+        # replace [Active Mobile Workers] and [Deactivated Mobile Workers] with case-list-specific options
         assert options[0][0] == "t__0"
+        assert options[1][0] == "t__5"
         return [
             ("all_data", _("[All Owners (Active + Deactivated)] and [admin], [demo_user], [Unknown Users], and [CommCare Supply]")),
             ('project_data', _("[All Owners (Active + Deactivated)]"))
-        ] + options[1:]
+        ] + options[2:]
 
     def _group_to_choice_tuple(self, group):
         if group.case_sharing:
