@@ -506,7 +506,9 @@ class ProjectDataTab(UITab):
     @property
     def _is_viewable(self):
         return self.domain and (
-            self.can_edit_commcare_data or self.can_export_data or can_download_data_files(self.domain, self.couch_user)
+            self.can_edit_commcare_data
+            or self.can_export_data
+            or can_download_data_files(self.domain, self.couch_user)
         )
 
     @property
