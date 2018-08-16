@@ -114,7 +114,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
     @property
     @memoized
     def batch_processors(self):
-        if self.processor_chunk_size > 0:
+        if self.processor_chunk_size:
             return [processor for processor in self.processors if processor.supports_batch_processing]
         else:
             return []
@@ -122,7 +122,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
     @property
     @memoized
     def serial_processors(self):
-        if self.processor_chunk_size > 0:
+        if self.processor_chunk_size:
             return [processor for processor in self.processors if not processor.supports_batch_processing]
         else:
             return self.processors
