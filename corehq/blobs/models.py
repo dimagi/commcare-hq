@@ -7,7 +7,6 @@ from django.db.models import (
     BooleanField,
     CharField,
     DateTimeField,
-    Index,
     IntegerField,
     Model,
     PositiveIntegerField,

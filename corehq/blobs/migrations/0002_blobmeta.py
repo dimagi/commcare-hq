@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 
 import datetime
 
-import jsonfield.fields
 import partial_index
 from django.db import migrations, models
 
@@ -30,10 +29,10 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('domain', models.CharField(max_length=255)),
-                ('parent_id', models.CharField(help_text='Parent primary key or unique identifier', max_length=255)),
-                ('name', models.CharField(default='', help_text='Optional blob name.\n\n        This field is intended to be used by doc types having multiple\n        blobs associated with a single document.\n        ', max_length=255),),
-                ('key', models.CharField(default=corehq.blobs.models.uuid4_hex, help_text="Blob key in the external blob store.\n\n        This must be a globally unique value. Historically this was\n        `blob_bucket + '/' + identifier` for blobs associated with a\n        couch document. Could be a UUID or the result of\n        `util.random_url_id(16)`. Defaults to `uuid4().hex`.\n        ", max_length=255)),
-                ('type_code', models.PositiveSmallIntegerField(help_text='Blob type code. See `corehq.blobs.CODES`.')),
+                ('parent_id', models.CharField(help_text='Parent primary key or unique identifier', max_length=255)),  # noqa: E501
+                ('name', models.CharField(default='', help_text='Optional blob name.\n\n        This field is intended to be used by doc types having multiple\n        blobs associated with a single document.\n        ', max_length=255),),  # noqa: E501
+                ('key', models.CharField(default=corehq.blobs.models.uuid4_hex, help_text="Blob key in the external blob store.\n\n        This must be a globally unique value. Historically this was\n        `blob_bucket + '/' + identifier` for blobs associated with a\n        couch document. Could be a UUID or the result of\n        `util.random_url_id(16)`. Defaults to `uuid4().hex`.\n        ", max_length=255)),  # noqa: E501
+                ('type_code', models.PositiveSmallIntegerField(help_text='Blob type code. See `corehq.blobs.CODES`.')),  # noqa: E501
                 ('content_length', models.PositiveIntegerField()),
                 ('content_type', models.CharField(max_length=255, null=True)),
                 ('properties', corehq.blobs.util.NullJsonField(default=dict)),
@@ -43,7 +42,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='blobmeta',
-            index=partial_index.PartialIndex(fields=['expires_on'], name='blobs_blobm_expires_64b92d_partial', unique=False, where='expires_on IS NOT NULL', where_postgresql=b'', where_sqlite=b''),
+            index=partial_index.PartialIndex(fields=['expires_on'], name='blobs_blobm_expires_64b92d_partial', unique=False, where='expires_on IS NOT NULL', where_postgresql=b'', where_sqlite=b''),  # noqa: E501
         ),
         migrations.AlterIndexTogether(
             name='blobmeta',
