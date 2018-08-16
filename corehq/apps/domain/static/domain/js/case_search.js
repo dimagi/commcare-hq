@@ -1,26 +1,17 @@
-hqDefine('domain/js/case_search', [
-    'jquery',
-    'knockout',
-    'underscore',
-    'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/main',
-], function (
-    $,
-    ko,
-    _,
-    initialPageData,
-    hqMain
-) {
+/* globals hqDefine, ko, $, _, hqImport */
+
+hqDefine('domain/js/case_search', function () {
+    'use strict';
+
     var module = {};
 
     var Property = function (name) {
-        var self = {};
+        var self = this;
         self.name = ko.observable(name);
-        return self;
     };
 
     var CaseTypeProps = function (caseType, properties) {
-        var self = {};
+        var self = this;
 
         self.caseType = ko.observable(caseType);
         self.properties = ko.observableArray(
@@ -33,25 +24,21 @@ hqDefine('domain/js/case_search', [
         self.removeProperty = function (property) {
             self.properties.remove(property);
         };
-
-        return self;
     };
 
     var IgnorePatterns = function(caseType, caseProperty, regex){
-        var self = {};
+        var self = this;
 
         self.caseType = ko.observable(caseType);
         self.caseProperty = ko.observable(caseProperty);
         self.regex = ko.observable(regex);
-
-        return self;
     };
 
     /**
      * Returns a viewModel for domain/admin/case_search.html
      */
     module.CaseSearchConfig = function (options) {
-        var self = {};
+        var self = this;
         var initialValues = options.values;
 
         self.caseTypes = options.caseTypes;
@@ -94,12 +81,12 @@ hqDefine('domain/js/case_search', [
             self.change();
         };
 
-        self.saveButton = hqMain.initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: "You have unchanged settings",
             save: function() {
                 self.saveButton.ajax({
                     type: 'post',
-                    url: initialPageData.reverse("case_search_config"),
+                    url: hqImport("hqwebapp/js/initial_page_data").reverse("case_search_config"),
                     data: JSON.stringify(self.serialize()),
                     dataType: 'json',
                     contentType: "application/json; charset=utf-8",
@@ -130,8 +117,6 @@ hqDefine('domain/js/case_search', [
                 }),
             };
         };
-
-        return self;
     };
 
     return module;
