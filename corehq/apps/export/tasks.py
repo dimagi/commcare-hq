@@ -214,4 +214,5 @@ def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier)
 
 @periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"))
 def delete_expired_datafile_blobs():
-    DataFile.objects.filter(delete_after__lte=datetime.utcnow()).delete()
+    for data_file in DataFile.objects.filter(delete_after__lte=datetime.utcnow()):
+        data_file.delete()
