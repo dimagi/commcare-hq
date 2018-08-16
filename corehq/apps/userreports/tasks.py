@@ -443,10 +443,9 @@ def _build_async_indicators(indicator_doc_ids):
         datadog_counter('commcare.async_indicator.processed_success', len(processed_indicators))
         datadog_counter('commcare.async_indicator.processed_fail', len(failed_indicators))
         datadog_histogram(
-            'commcare.async_indicator.processing_time', timer.duration,
+            'commcare.async_indicator.processing_time', timer.duration / len(indicator_doc_ids),
             tags=[
                 'config_ids:{}'.format(config_ids),
-                'batch_size:{}'.format(len(indicator_doc_ids))
             ]
         )
 
