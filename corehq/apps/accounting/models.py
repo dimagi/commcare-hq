@@ -1715,9 +1715,6 @@ class Subscription(models.Model):
         elif self.date_start <= datetime.date(2018, 7, 1): # TODO: Set this date to be the date we launch this feature
             # Only block upgrades for subscriptions created after the date we launched the 30-Day Minimum
             return False
-        elif self.date_start >= datetime.date.today() - datetime.timedelta(days=2):
-            # 1-2 day grace period (because you cannot compare date and datetime)
-            return False
         elif self.date_start + datetime.timedelta(days=30) >= datetime.date.today():
             return True
         else:

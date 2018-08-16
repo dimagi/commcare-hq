@@ -1616,7 +1616,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                     ) % software_plan_name
                 )
             else:
-                if self.is_downgrade_before_minimum:
+                if self.current_subscription.next_subscription is not None:
+                    # New subscription has been scheduled for the future
                     start_date = self.current_subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT)
                     message = _(
                         "You have successfully scheduled a subscription to the %s Software Plan, "
