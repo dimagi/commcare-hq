@@ -1,15 +1,27 @@
-hqDefine('accounting/js/pricing_table', function () {
-    var pricingTableModel = function (editions, current_edition, isRenewal) {
+hqDefine('accounting/js/pricing_table', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData
+) {
+    var pricingTableModel = function (editions, currentEdition, isRenewal, startDate, isSubscriptionBelowMin) {
         'use strict';
         var self = {};
 
-        self.currentEdition = current_edition;
+        self.currentEdition = currentEdition;
         self.isRenewal = isRenewal;
+        self.startDateAfterMinimumSubscription = startDate;
+        self.subscriptionBelowMinimum = isSubscriptionBelowMin;
         self.editions = ko.observableArray(_.map(editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
         }));
 
-        self.selected_edition = ko.observable(isRenewal ? current_edition : false);
+        self.selected_edition = ko.observable(isRenewal ? currentEdition : false);
         self.isSubmitVisible = ko.computed(function () {
             if (isRenewal){
                 return true;
@@ -19,39 +31,57 @@ hqDefine('accounting/js/pricing_table', function () {
         self.selectCurrentPlan = function () {
             self.selected_edition(self.currentEdition);
         };
+        self.capitalizeString = function (s) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        };
+        self.isDowngrade = function (oldPlan, newPlan) {
+            if (oldPlan === 'Enterprise') {
+                if (newPlan === 'Advanced' || newPlan === 'Pro' ||
+                    newPlan === 'Standard' || newPlan === 'Community') {
+                    return true;
+                }
+            }
+            else if (oldPlan === 'Advanced') {
+                if (newPlan === 'Pro' || newPlan === 'Standard' || newPlan === 'Community') {
+                    return true;
+                }
+            } else if (oldPlan === 'Pro') {
+                if (newPlan === 'Standard' || newPlan === 'Community') {
+                    return true;
+                }
+            } else if (oldPlan === 'Standard') {
+                if (newPlan === 'Community') {
+                    return true;
+                }
+            }
+            return false;
+        };
 
         self.form = undefined;
-        self.openDowngradeModal = function(pricingTable, e) {
-            var editionSlugs = _.map(self.editions(), function(e) { return e.slug(); });
+        self.openMinimumSubscriptionModal = function (pricingTable, e) {
             self.form = $(e.currentTarget).closest("form");
-            if (editionSlugs.indexOf(self.selected_edition()) < editionSlugs.indexOf(self.currentEdition)) {
-                var $modal = $("#modal-downgrade");
+
+            var oldPlan = self.capitalizeString(self.currentEdition);
+            var newPlan = self.capitalizeString(self.selected_edition());
+            var newStartDate = self.startDateAfterMinimumSubscription;
+            var mailto = "<a href=\'mailto:billing-support@dimagi.com\'>billing-support@dimagi.com</a>";
+            if (self.isDowngrade(oldPlan, newPlan) && self.subscriptionBelowMinimum) {
+                var $modal = $("#modal-minimum-subscription");
+                $modal.find('.modal-body')[0].innerHTML =
+                    "All CommCare subscriptions require a 30 day minimum commitment. Your current subscription " +
+                    "will be downgraded to " + newPlan + " on " + newStartDate + ".If you have questions or if " +
+                    "you would like to speak to someone about your subscription, please reach out to "
+                    + mailto + ".";
                 $modal.modal('show');
             } else {
                 self.form.submit();
             }
         };
 
-        self.submitDowngrade = function(pricingTable, e) {
-            var finish = function() {
-                if (self.form) {
-                    self.form.submit();
-                }
-            };
-
-            var $button = $(e.currentTarget);
-            $button.disableButton();
-            $.ajax({
-                method: "POST",
-                url: hqImport('hqwebapp/js/initial_page_data').reverse('email_on_downgrade'),
-                data: {
-                    old_plan: self.currentEdition,
-                    new_plan: self.selected_edition(),
-                    note: $button.closest(".modal").find("textarea").val(),
-                },
-                success: finish,
-                error: finish,
-            });
+        self.submitDowngradeForm = function () {
+            if (self.form) {
+                self.form.submit();
+            }
         };
 
         self.init = function () {
@@ -63,14 +93,14 @@ hqDefine('accounting/js/pricing_table', function () {
         return self;
     };
 
-    var pricingTableEditionModel = function (data, current_edition) {
+    var pricingTableEditionModel = function (data, currentEdition) {
         'use strict';
         var self = {};
 
         self.slug = ko.observable(data[0]);
         self.name = ko.observable(data[1].name);
         self.description = ko.observable(data[1].description);
-        self.currentEdition = ko.observable(data[0] === current_edition);
+        self.currentEdition = ko.observable(data[0] === currentEdition);
         self.notCurrentEdition = ko.computed(function (){
             return !self.currentEdition();
         });
@@ -97,18 +127,19 @@ hqDefine('accounting/js/pricing_table', function () {
     };
 
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            pricingTable = pricingTableModel(
-                initial_page_data('editions'),
-                initial_page_data('current_edition'),
-                initial_page_data('is_renewal')
-            );
+        var pricingTable = pricingTableModel(
+            initialPageData.get('editions'),
+            initialPageData.get('current_edition'),
+            initialPageData.get('is_renewal'),
+            initialPageData.get('start_date_after_minimum_subscription'),
+            initialPageData.get('subscription_below_minimum')
+        );
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
         $('#pricing-table').koApplyBindings(pricingTable);
-        $('#modal-downgrade').koApplyBindings(pricingTable);
+        $('#modal-minimum-subscription').koApplyBindings(pricingTable);
 
         pricingTable.init();
-    }());
+    });
 });
