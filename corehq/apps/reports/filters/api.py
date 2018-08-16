@@ -156,6 +156,12 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             tokens = query.split()
             return ['%s*' % tokens.pop()] + tokens
 
+    def active_user_es_query(self, query):
+        search_fields = ["first_name", "last_name", "base_username"]
+        return (UserES()
+                .domain(self.domain)
+                .search_string_query(query, default_fields=search_fields))
+
     def all_user_es_query(self, query):
         search_fields = ["first_name", "last_name", "base_username"]
         return (UserES()
@@ -257,6 +263,10 @@ class MobileWorkersOptionsView(EmwfOptionsView):
         return [
             (self.get_users_size, self.get_users),
         ]
+
+    def active_user_es_query(self, query):
+        query = super(MobileWorkersOptionsView, self).active_user_es_query(query)
+        return query.mobile_users()
 
 
 @location_safe

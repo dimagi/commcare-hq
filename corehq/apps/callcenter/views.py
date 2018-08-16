@@ -69,7 +69,7 @@ class CallCenterOwnerOptionsView(EmwfOptionsView):
         ]
 
     def active_user_es_query(self, query):
-        q = super(CallCenterOwnerOptionsView, self).all_user_es_query(query)
+        q = super(CallCenterOwnerOptionsView, self).active_user_es_query(query)
         return q.mobile_users()
 
     @staticmethod
