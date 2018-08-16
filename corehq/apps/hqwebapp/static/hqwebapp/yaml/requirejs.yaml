@@ -7,6 +7,9 @@ keepBuildDir: true
 skipDirOptimize: true   # could turn this off to minify everything
 generateSourceMaps: true
 fileExclusionRegExp: ^\.|\.css$
+paths:
+  # Stripe is always fetched from stripe.com rather than stored locally, so the build should ignore it
+  stripe: "empty:"
 modules:
   # The build_requirejs script creates a bundle in each javascript directory that is
   # named bundle.js and includes all files in that directory. The modules below are
