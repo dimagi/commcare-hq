@@ -8,6 +8,8 @@
 {% initial_page_data 'next_invoice_date' next_invoice_date %}
 {% initial_page_data 'current_plan' current_plan %}
 {% initial_page_data 'new_plan' plan.name %}
+{% initial_page_data 'is_downgrade_before_minimum' is_downgrade_before_minimum %}
+{% initial_page_data 'current_subscription_end_date' current_subscription_end_date %}
 {% registerurl 'email_on_downgrade' domain %}
 {% registerurl 'confirm_billing_account_info' domain %}
     <p class="lead">
@@ -49,6 +51,15 @@
                 <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>.
             </p>
             <input type="checkbox" id="user-agreement" value="True"> I understand and wish to continue.<br>
+            {% endblocktrans %}
+        </div>
+        {% elif is_downgrade_before_minimum %}
+        <hr />
+        <div class="alert alert-danger">
+            {% blocktrans with current_plan.name as p %}
+            <h4>Note: Continuing will change your current subscription.</h4>
+            <p>We’re sorry to see you go! You’ll have access to the features on your
+            <strong>{{ p }} Software Plan </strong> through {{ current_subscription_end_date }}.</p>
             {% endblocktrans %}
         </div>
         {% else %}
@@ -123,7 +134,7 @@
             </div>
             <div class="modal-body">
                 {% blocktrans %}
-                    We're sorry to see you go! We'd love to make CommCare work better for you.
+                    We'd love to make CommCare work better for you.
                     Let us know what we can do to improve, or why you're downgrading.
                 {% endblocktrans %}
                 <br><br>
