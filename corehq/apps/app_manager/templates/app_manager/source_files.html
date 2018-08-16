@@ -52,6 +52,28 @@
         {% endfor %}
     </table>
     {% block post_files %}{% endblock %}
+
+    <h2>Module/Form Mapping</h2>
+    <ul>
+    {% for module in app.modules %}
+        <li><strong>m{{ module.id }}</strong>:
+            {% for lang, name in module.name.items %}
+                {% if module.name|length > 1 %}<span class="label label-default">{{ lang }}</span>{% endif %}
+                {{ name }}
+            {% endfor %}
+        </li>
+        {% for form in module.forms %}
+            <ul>
+                <li><strong>f{{form.id}}</strong>:
+                    {% for lang, name in form.name.items %}
+                        {% if form.name|length > 1 %}<span class="label label-default">{{ lang }}</span>{% endif %}
+                        {{ name }}
+                    {% endfor %}
+                </li>
+            </ul>
+        {% endfor %}
+    {% endfor %}
+    </ul>
 {% endblock page_content %}
 
 {% block js %}{{ block.super }}
