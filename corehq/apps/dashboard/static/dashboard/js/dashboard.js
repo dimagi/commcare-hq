@@ -3,8 +3,8 @@ hqDefine("dashboard/js/dashboard", [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    // Just importing main.py so the post-link function is accessible, function parameter not needed
-    'hqwebapp/js/main',
+    'hqwebapp/js/components.ko',    // pagination widget
+    'hqwebapp/js/main',     // post-link function
 ], function(
     $,
     ko,
@@ -29,6 +29,7 @@ hqDefine("dashboard/js/dashboard", [
             self.pageList = ko.observableArray();
 
             // Set via ajax
+            self.grandTotal = ko.observable(0);
             self.totalPages = ko.observable();
             self.items = ko.observableArray();
         }
@@ -107,6 +108,7 @@ hqDefine("dashboard/js/dashboard", [
                         method: "GET",
                         url: initialPageData.reverse('dashboard_tile_total', self.slug),
                         success: function(data) {
+                            self.grandTotal(data.total);
                             self.totalPages(Math.ceil(data.total / self.itemsPerPage) );
                             if (data.total === 0) {
                                 self.hasItemList(false);
@@ -130,8 +132,17 @@ hqDefine("dashboard/js/dashboard", [
                 self.currentPage(newCurrentPage);
             };
 
+
+
+
+            self.goToPage = function(newPage) {
+                self.currentPage(newPage);
+            };
+
+            self.goToPage(1);
+
             // Initialize with first page of data
-            self.currentPage(1);
+            //self.currentPage(1);
         }
 
         return self;

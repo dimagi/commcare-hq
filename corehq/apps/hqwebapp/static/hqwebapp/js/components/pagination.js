@@ -19,13 +19,14 @@ hqDefine('hqwebapp/js/components/pagination', [
 
             self.currentPage = ko.observable(params.currentPage || 1);
             self.totalItems = params.totalItems;
-            self.perPage = params.perPage;
+            self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);
             self.numPages = ko.computed(function(){
                 return Math.ceil(self.totalItems() / self.perPage());
             });
             self.perPage.subscribe(function(){
                 self.goToPage(1);
             });
+            self.inlinePageListOnly = !!params.inlinePageListOnly;
             self.maxPagesShown = params.maxPagesShown || 9;
 
             self.nextPage = function(){
