@@ -30,7 +30,7 @@ from corehq.apps.export.views import (
     EditNewCustomFormExportView,
 )
 from corehq.blobs import _db
-from corehq.util.test_utils import generate_cases
+from corehq.util.test_utils import flag_enabled, generate_cases
 from io import open
 
 
@@ -103,6 +103,7 @@ class DataFileDownloadDetailTest(ViewTestCase):
             'domain': self.domain.name, 'pk': self.data_file.pk, 'filename': 'foo.txt'
         })
 
+    @flag_enabled('DATA_FILE_DOWNLOAD')
     def test_data_file_download(self):
         try:
             resp = self.client.get(self.data_file_url)
@@ -110,6 +111,7 @@ class DataFileDownloadDetailTest(ViewTestCase):
             self.fail('Getting a data file raised a TypeError: {}'.format(err))
         self.assertEqual(resp.getvalue(), self.content)
 
+    @flag_enabled('DATA_FILE_DOWNLOAD')
     def test_data_file_download_expired(self):
         self.data_file.delete_after = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
         self.data_file.save()
@@ -122,6 +124,7 @@ class DataFileDownloadDetailTest(ViewTestCase):
     (1000, 1999),
     (12000, None)
 ], DataFileDownloadDetailTest)
+@flag_enabled('DATA_FILE_DOWNLOAD')
 def test_data_file_download_partial(self, start, end):
     content_length = len(self.content)
     if end:

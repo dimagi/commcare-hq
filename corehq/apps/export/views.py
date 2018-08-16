@@ -110,8 +110,13 @@ from corehq.apps.hqwebapp.decorators import (
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions, CouchUser, WebUser
-from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
-    DEID_EXPORT_PERMISSION, has_permission_to_view_report
+from corehq.apps.users.permissions import (
+    can_download_data_files,
+    CASE_EXPORT_PERMISSION,
+    DEID_EXPORT_PERMISSION,
+    FORM_EXPORT_PERMISSION,
+    has_permission_to_view_report,
+)
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -1240,6 +1245,12 @@ class DataFileDownloadList(BaseProjectDataView):
     template_name = 'export/download_data_files.html'
     page_title = ugettext_lazy("Download Data Files")
 
+    def dispatch(self, request, *args, **kwargs):
+        if can_download_data_files(self.domain, request.couch_user):
+            return super(DataFileDownloadList, self).dispatch(request, *args, **kwargs)
+        else:
+            raise Http404
+
     def get_context_data(self, **kwargs):
         context = super(DataFileDownloadList, self).get_context_data(**kwargs)
         context.update({
@@ -1286,6 +1297,12 @@ class DataFileDownloadList(BaseProjectDataView):
 @method_decorator(api_auth, name='dispatch')
 class DataFileDownloadDetail(BaseProjectDataView):
     urlname = 'download_data_file'
+
+    def dispatch(self, request, *args, **kwargs):
+        if can_download_data_files(self.domain, request.couch_user):
+            return super(DataFileDownloadDetail, self).dispatch(request, *args, **kwargs)
+        else:
+            raise Http404
 
     def get(self, request, *args, **kwargs):
         try:

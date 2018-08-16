@@ -481,10 +481,9 @@ COPY_FORM_TO_APP = StaticToggle(
 
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
-    'UW: Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
-    TAG_DEPRECATED,
+    'Offer hosting and sharing data files for downloading from a secure dropzone',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
-    # TODO: Create Confluence docs and add help link
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
