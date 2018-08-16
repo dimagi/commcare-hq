@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from django.contrib import messages
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from elasticsearch import TransportError
@@ -27,6 +29,7 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
 from corehq.elastic import ESError
+from corehq.toggles import CASE_LIST_EXPLORER
 
 from .data_sources import CaseInfo, CaseDisplay
 
@@ -258,6 +261,16 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     name = ugettext_lazy('Case List')
     slug = 'case_list'
+
+    @property
+    def view_response(self):
+        if self.request.couch_user.is_dimagi and not CASE_LIST_EXPLORER.enabled(self.domain):
+            messages.warning(
+                self.request,
+                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/ccinternal/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
+                extra_tags='html',
+            )
+        return super(CaseListReport, self).view_response
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
