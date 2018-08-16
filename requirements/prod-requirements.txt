@@ -9,6 +9,7 @@ alembic==0.8.6
 amqp==1.4.9
 anyjson==0.3.3
 appdirs==1.4.3
+appnope==0.1.0            # via ipython
 asn1crypto==0.24.0
 attrs==18.1.0
 babel==2.6.0
@@ -80,7 +81,6 @@ greenlet==0.4.12
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0b8
-http-parser==0.8.3
 httpagentparser==1.7.8
 idna==2.7
 ipaddress==1.0.22
@@ -93,7 +93,7 @@ jinja2==2.8
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.7
+jsonobject-couchdbkit==0.9.8
 jsonobject==0.9.3
 jsonpath-rw==1.4.0
 kafka-python==0.9.5
@@ -148,7 +148,6 @@ redis==2.10.5
 reportlab==3.0
 requests-toolbelt==0.8.0
 requests[security]==2.10.0
-restkit==4.2.2
 rjsmin==1.0.12
 s3transfer==0.1.13
 scandir==1.7              # via pathlib2

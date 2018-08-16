@@ -23,7 +23,7 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.cache import cache_control
 
 import ghdiff
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from dimagi.utils.web import json_response
 from phonelog.models import UserErrorEntry
 
