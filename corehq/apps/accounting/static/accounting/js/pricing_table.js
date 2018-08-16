@@ -36,7 +36,7 @@ hqDefine('accounting/js/pricing_table', [
         };
         self.isDowngrade = function (oldPlan, newPlan) {
             if (oldPlan === 'Enterprise') {
-                if (newPlan === 'Enterprise' || newPlan === 'Pro' ||
+                if (newPlan === 'Advanced' || newPlan === 'Pro' ||
                     newPlan === 'Standard' || newPlan === 'Community') {
                     return true;
                 }
