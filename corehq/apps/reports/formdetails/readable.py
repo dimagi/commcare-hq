@@ -237,6 +237,8 @@ class AppCaseMetadata(JsonObject):
         return prop
 
     def add_property_detail(self, detail_type, root_case_type, module_id, column):
+        if column.useXpathExpression:
+            return column.field
         prop = self.get_property(root_case_type, column.field)
         prop.add_detail(detail_type, module_id, column.header, column.format)
         return prop
