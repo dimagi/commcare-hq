@@ -1,7 +1,10 @@
 /* globals hqDefine, django, $ */
-hqDefine("export/js/download_data_files", function() {
-    var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
-
+hqDefine("export/js/download_data_files",[
+    'jquery',
+    'hqwebapp/js/alert_user',
+    'hqwebapp/js/initial_page_data'
+], function($, alertUser, initialPageData) {
+    var alert_user = alertUser.alert_user;
     /**
      * Copies the URL of a data file to the clipboard
      *
@@ -12,7 +15,10 @@ hqDefine("export/js/download_data_files", function() {
      * @param url: The URL to be copied to the clipboard
      * @param textareaElem: A hidden <textarea> element containing the URL
      */
-    var copyDataFileUrl = function (url, textareaElem) {
+    var copyDataFileUrl = function () {
+        var url = window.location.origin + initialPageData.reverse('download_data_file',$(this).data("id"), $(this).data("name"));
+        var textareaElem = $('#url_'.concat($(this).data("id")))
+
         var showCopyDialog = function () {
             window.prompt(django.gettext("Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"), url);
         };
@@ -39,7 +45,10 @@ hqDefine("export/js/download_data_files", function() {
      * @param url: The URL to send the DELETE request to
      * @param rowElem: The <tr> element of the data file to remove on successful deletion
      */
-    var deleteDataFile = function (url, rowElem) {
+    var deleteDataFile = function () {
+        var url = window.location.origin + initialPageData.reverse('download_data_file', $(this).data("id"), $(this).data("name"));
+        var rowElem = $('#row_'.concat($(this).data("id")));
+
         $.ajax({
             url: url,
             type: "DELETE",
@@ -50,8 +59,8 @@ hqDefine("export/js/download_data_files", function() {
         });
     };
 
-    return {
-        copyDataFileUrl: copyDataFileUrl,
-        deleteDataFile: deleteDataFile,
-    };
+
+$(document).on('click', '.copy-data-file', copyDataFileUrl);
+$(document).on('click', '.delete-data-file', deleteDataFile);
+
 });

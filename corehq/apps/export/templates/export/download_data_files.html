@@ -6,11 +6,12 @@
 
 {% block title %}{% trans "Download Files" %}{% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'export/js/download_data_files.js' %}"></script>
-{% endblock %}
+
+  {% requirejs_main 'export/js/download_data_files' %}
+
 
 {% block page_content %}
+    {% registerurl 'download_data_file' domain '---' '---' %}
     {% block main_column_content %}
 
 <h2>{% trans "Download Files" %}</h2>
@@ -36,10 +37,10 @@
                 </td>
                 <td style="width: 6em; text-align: right;">
                     <a href="#"
-                       onclick="hqImport('export/js/download_data_files').copyDataFileUrl(
-                                    '{{ url_base }}{% url 'download_data_file' domain data_file.id data_file.filename %}',
-                                    $('#url_{{ data_file.id }}')
-                                )">
+                       class="copy-data-file"
+                        data-id={{ data_file.id }}
+                        data-name={{ data_file.filename }}
+                    >
                         <i class="fa fa-link text-info"></i>
                     </a>
 
@@ -49,10 +50,10 @@
 
                     {% if is_admin %}
                     <a href="#"
-                       onclick="hqImport('export/js/download_data_files').deleteDataFile(
-                                    '{% url 'download_data_file' domain data_file.id data_file.filename %}',
-                                    $('#row_{{ data_file.id }}')
-                                )">
+                       class="delete-data-file"
+                        data-id={{ data_file.id }}
+                        data-name={{ data_file.filename }}
+                       >
                         <i class="fa fa-close text-danger"></i>
                     </a>
                     {% endif %}
