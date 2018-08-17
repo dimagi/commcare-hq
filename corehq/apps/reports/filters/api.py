@@ -126,12 +126,12 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                 (self.get_static_options_size, self.get_static_options),
                 (self.get_groups_size, self.get_groups),
                 (self.get_locations_size, self.get_locations),
-                (self.get_all_users_size, self.get_all_users),
+                (self.get_active_users_size, self.get_active_users),
             ]
         else:
             return [
                 (self.get_locations_size, self.get_locations),
-                (self.get_all_users_size, self.get_all_users),
+                (self.get_active_users_size, self.get_active_users),
             ]
 
     def get_options(self):
@@ -170,6 +170,21 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     def get_all_users(self, query, start, size):
         users = (self.all_user_es_query(query)
+                 .fields(SimplifiedUserInfo.ES_FIELDS)
+                 .start(start)
+                 .size(size)
+                 .sort("username.exact"))
+        if not self.request.can_access_all_locations:
+            accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
+                self.request.domain, self.request.couch_user)
+            users = users.location(accessible_location_ids)
+        return [self.utils.user_tuple(u) for u in users.run().hits]
+
+    def get_active_users_size(self, query):
+        return self.active_user_es_query(query).count()
+
+    def get_active_users(self, query, start, size):
+        users = (self.active_user_es_query(query)
                  .fields(SimplifiedUserInfo.ES_FIELDS)
                  .start(start)
                  .size(size)
@@ -257,7 +272,7 @@ class MobileWorkersOptionsView(EmwfOptionsView):
     @property
     def data_sources(self):
         return [
-            (self.get_all_users_size, self.get_all_users),
+            (self.get_active_users_size(), self.get_active_users()),
         ]
 
     def active_user_es_query(self, query):

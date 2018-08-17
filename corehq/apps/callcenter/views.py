@@ -65,7 +65,7 @@ class CallCenterOwnerOptionsView(EmwfOptionsView):
             (self.get_static_options_size, self.get_static_options),
             (self.get_groups_size, self.get_groups),
             (self.get_locations_size, self.get_locations),
-            (self.get_all_users_size, self.get_all_users),
+            (self.get_active_users, self.get_active_users),
         ]
 
     def active_user_es_query(self, query):
