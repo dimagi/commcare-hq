@@ -1465,8 +1465,6 @@ class ConfirmSelectedPlanView(SelectPlanView):
         elif current_edition == 'Pro':
             if new_edition == "Advanced":
                 return True
-        elif current_edition == "Enterprise":
-            return True
         return False
 
     @property
@@ -1610,12 +1608,12 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
             if not is_saved:
+                downgrade_date = self.current_subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT)
                 messages.error(
                     request, _(
-                        "It appears there was an issue subscribing your project to the %s Software Plan. You "
-                        "may try resubmitting, but if that doesn't work, rest assured someone will be "
-                        "contacting you shortly."
-                    ) % software_plan_name
+                        "You have already scheduled a downgrade to the %s Software Plan on %s. If this is a "
+                        "mistake, please reach out to billing-support@dimagi.com."
+                    ) % (software_plan_name, downgrade_date)
                 )
             else:
                 if self.current_subscription.next_subscription is not None:
