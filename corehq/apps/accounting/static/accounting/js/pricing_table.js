@@ -1,5 +1,5 @@
 hqDefine('accounting/js/pricing_table', function () {
-    var pricingTableModel = function (editions, current_edition, isRenewal) {
+    var pricingTableModel = function (editions, current_edition, isRenewal, isAnnualPricing) {
         'use strict';
         var self = {};
 
@@ -19,6 +19,8 @@ hqDefine('accounting/js/pricing_table', function () {
         self.selectCurrentPlan = function () {
             self.selected_edition(self.currentEdition);
         };
+
+        self.isAnnualPricing = ko.observable(isAnnualPricing);
 
         self.form = undefined;
         self.openDowngradeModal = function(pricingTable, e) {
@@ -52,6 +54,26 @@ hqDefine('accounting/js/pricing_table', function () {
                 success: finish,
                 error: finish,
             });
+        };
+
+        self.updateIsAnnualPricing = function () {
+            self.isAnnualPricing(true);
+            console.log(self.isAnnualPricing())
+        };
+        self.updateIsMonthlyPricing = function () {
+            self.isAnnualPricing(false);
+            console.log(self.isAnnualPricing())
+        };
+
+        self.openContactSalesModal = function (pricingTable, e) {
+            var $modal = $("#modal-contact-sales");
+            $modal.modal('show');
+        };
+        self.contactSales = function (pricingTable, e) {
+            // TODO: Send email to sales and HubSpot form
+            $("#modal-contact-sales").hide();
+            var $modal = $("#modal-thank-you");
+            $modal.modal('show');
         };
 
         self.init = function () {
@@ -101,13 +123,17 @@ hqDefine('accounting/js/pricing_table', function () {
             pricingTable = pricingTableModel(
                 initial_page_data('editions'),
                 initial_page_data('current_edition'),
-                initial_page_data('is_renewal')
+                initial_page_data('is_renewal'),
+                true
             );
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
         $('#pricing-table').koApplyBindings(pricingTable);
         $('#modal-downgrade').koApplyBindings(pricingTable);
+        $('#toggle-annual-pricing').koApplyBindings(pricingTable);
+        $('#annual-pricing-table').koApplyBindings(pricingTable);
+        $('#modal-contact-sales').koApplyBindings(pricingTable);
 
         pricingTable.init();
     }());

@@ -1,0 +1,109 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="pricing-table-bg-container">
+    <div class="pricing-table-bg">
+        <div class="row">
+            <div class="col-sm-10 col-sm-offset-2 col-bg"></div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-xs-2 col-xs-offset-2 pricing-col-community">
+        <h3 class="pricing-header text-uppercase">
+            {% trans 'Community' %}
+        </h3>
+    </div>
+    <div class="col-xs-2 pricing-col-standard">
+        <h3 class="pricing-header text-uppercase">
+            {% trans 'Standard' %}
+        </h3>
+    </div>
+    <div class="col-xs-2 pricing-col-pro">
+        <h3 class="pricing-header text-uppercase">
+            {% trans 'Pro' %}
+        </h3>
+    </div>
+    <div class="col-xs-2 pricing-col-advanced">
+        <h3 class="pricing-header text-uppercase">
+            {% trans 'Advanced' %}
+        </h3>
+    </div>
+    <div class="col-xs-2 pricing-col-enterprise">
+        <h3 class="pricing-header text-uppercase">
+            {% trans 'Enterprise' %}
+        </h3>
+    </div>
+</div>
+<div class="row pricing-row pricing-row-1x-lg">
+    <div class="col-xs-2">
+        <h4>{% trans 'Pricing' %}</h4>
+    </div>
+    <div class="col-xs-2 pricing-col-community">
+        <div class="pricing-cost text-uppercase">
+            {% trans 'Free' %}
+        </div>
+        <div class="billed-annually-text">
+            {% trans 'Billed Annually' %}
+        </div>
+    </div>
+    <div class="col-xs-2 pricing-col-standard">
+        <div class="pricing-cost">
+            {% trans '$250 /month' %}
+        </div>
+        <div class="billed-annually-text">
+            {% trans 'Billed Annually' %}
+        </div>
+    </div>
+    <div class="col-xs-2 pricing-col-pro">
+        <div class="pricing-cost">
+            {% trans '$500 /month' %}
+        </div>
+        <div class="billed-annually-text">
+            {% trans 'Billed Annually' %}
+        </div>
+    </div>
+    <div class="col-xs-2 pricing-col-advanced">
+        <div class="pricing-cost">
+            {% trans '$1,000 /month' %}
+        </div>
+        <div class="billed-annually-text">
+            {% trans 'Billed Annually' %}
+        </div>
+    </div>
+    <div class="col-xs-2 pricing-col-enterprise">
+        <div class="pricing-cost">
+            {% trans 'Contact Us' %}
+        </div>
+        <div class="billed-annually-text">
+            {% trans 'Billed Annually' %}
+        </div>
+    </div>
+</div>
+<div class="row pricing-row pricing-row-more">
+    <div class="col-xs-2 col-xs-offset-2">
+        <div class="pricing-more">
+            <a target="_blank" href="{% prelogin_url 'public_pricing' %}">{% trans "See More..." %}</a>
+        </div>
+    </div>
+    <div class="col-xs-2">
+        <div class="pricing-more">
+            <a target="_blank" href="{% prelogin_url 'public_pricing' %}">{% trans "See More..." %}</a>
+        </div>
+    </div>
+    <div class="col-xs-2">
+        <div class="pricing-more">
+            <a target="_blank" href="{% prelogin_url 'public_pricing' %}">{% trans "See More..." %}</a>
+        </div>
+    </div>
+    <div class="col-xs-2">
+        <div class="pricing-more">
+            <a target="_blank" href="{% prelogin_url 'public_pricing' %}">{% trans "See More..." %}</a>
+        </div>
+    </div>
+    <div class="col-xs-2">
+        <div class="pricing-more">
+            <a target="_blank" href="{% prelogin_url 'public_pricing' %}">{% trans "See More..." %}</a>
+        </div>
+    </div>
+</div>
