@@ -33,6 +33,7 @@ def get_session_key():
             session_id = None
 
     if session_id:
+        session_id = session_id.encode('utf-8')
         # hash it so that similar numbers end up very different (esp. because we're truncating)
         return hashlib.md5(session_id).hexdigest()[:7]
     else:
