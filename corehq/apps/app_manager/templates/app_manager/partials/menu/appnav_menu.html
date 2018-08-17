@@ -15,9 +15,9 @@
             <li class="edit-module-li js-sorted-li" data-index="{{ module.id }}" data-indexvar="moduleid">
 
                 <div class="appnav-item {% ifequal module.unique_id selected_module.unique_id %}{% if not form %}active{% endif %}{% endifequal %}">
-                  {% include 'app_manager/partials/confirm_delete_module.html' %}
-                  {% include 'app_manager/partials/module_link_primary.html' %}
-                  {% include 'app_manager/partials/module_link_secondary.html' %}
+                  {% include 'app_manager/partials/menu/confirm_delete_module.html' %}
+                  {% include 'app_manager/partials/menu/module_link_primary.html' %}
+                  {% include 'app_manager/partials/menu/module_link_secondary.html' %}
                 </div>
 
                 <ul class="appnav-menu appnav-menu-nested see {% ifequal module.unique_id selected_module.unique_id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}" data-parentvar="moduleid">
@@ -38,9 +38,9 @@
                             >
                                 <!--[F]-->
                                 <div class="appnav-item {% ifequal form selected_form %} active{% if not formdesigner %} settings-view{% endif %}{% endifequal %}">
-                                    {% include 'app_manager/partials/confirm_delete_form.html' %}
-                                    {% include 'app_manager/partials/form_link_primary.html' %}
-                                    {% include 'app_manager/partials/form_link_secondary.html' %}
+                                    {% include 'app_manager/partials/menu/confirm_delete_form.html' %}
+                                    {% include 'app_manager/partials/menu/form_link_primary.html' %}
+                                    {% include 'app_manager/partials/menu/form_link_secondary.html' %}
                                 </div>
                             </li>
                         {% endfor %}

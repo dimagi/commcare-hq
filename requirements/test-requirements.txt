@@ -19,7 +19,7 @@ billiard==3.3.0.23
 boto3==1.4.4
 botocore==1.5.95
 cached-property==1.4.3
-celery==3.1.18
+celery==3.1.25
 cffi==1.11.5
 chardet==3.0.4
 cloudant==2.7.0
@@ -79,7 +79,6 @@ greenlet==0.4.12
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0b8
-http-parser==0.8.3
 httpagentparser==1.7.8
 idna==2.7
 ipaddress==1.0.22
@@ -90,7 +89,7 @@ jinja2==2.8
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.7
+jsonobject-couchdbkit==0.9.8
 jsonobject==0.9.3
 jsonpath-rw==1.4.0
 kafka-python==0.9.5
@@ -143,7 +142,6 @@ reportlab==3.0
 requests-mock==1.5.2
 requests-toolbelt==0.8.0
 requests[security]==2.10.0
-restkit==4.2.2
 rjsmin==1.0.12
 s3transfer==0.1.13
 sh==1.09
