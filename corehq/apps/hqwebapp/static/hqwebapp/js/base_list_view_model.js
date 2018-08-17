@@ -3,20 +3,20 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
         'use strict';
         var view_model = {};
 
-        view_model.initial_load = ko.observable(false);
+        view_model.initialLoad = ko.observable(false);
 
-        view_model.data_list = ko.observableArray();
+        view_model.dataList = ko.observableArray();
 
         // track any items that were archived/unarchived asynchronously
-        view_model.archive_action_items = ko.observableArray();
+        view_model.archiveActionItems = ko.observableArray();
 
-        view_model.show_inactive = o.show_inactive;
-        view_model.list_url = o.list_url;
+        view_model.showInactive = o.show_inactive;
+        view_model.listURL = o.list_url;
 
         view_model.total = ko.observable(o.total);
-        view_model.page_limit = ko.observable(o.limit);
+        view_model.pageLimit = ko.observable(o.limit);
         view_model.max_page = ko.computed(function () {
-            return Math.ceil(view_model.total()/view_model.page_limit());
+            return Math.ceil(view_model.total()/view_model.pageLimit());
         });
         view_model.current_page = ko.observable(o.start_page);
         view_model.next_page = ko.computed(function () {
@@ -45,12 +45,12 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
 
         view_model.update_limit = function (model, event) {
             var elem = $(event.currentTarget);
-            view_model.page_limit(elem.val());
+            view_model.pageLimit(elem.val());
             view_model.change_page(1);
         };
 
         view_model.get_data_index = function (index) {
-            return index() + ((view_model.current_page() - 1) * view_model.page_limit()) + 1;
+            return index() + ((view_model.current_page() - 1) * view_model.pageLimit()) + 1;
         };
 
         view_model.take_archive_action = function (action_url, button, data_index) {
@@ -60,7 +60,7 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
                 type: 'POST',
                 url: action_url,
                 dataType: 'json',
-                error: view_model.unsuccessful_archive_action(button),
+                error: view_model.unsuccessfulArchiveAction(button),
                 success: view_model.successful_archive_action(button, data_index),
             });
         };
@@ -71,21 +71,21 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
                     var $modal = $(button).parent().parent().parent().parent();
                     $modal.modal('hide');
                     $modal.on('hidden.bs.modal', function () {
-                        var data_list = view_model.data_list(),
-                            actioned = view_model.archive_action_items();
+                        var data_list = view_model.dataList(),
+                            actioned = view_model.archiveActionItems();
                         actioned.push(data_list[index]);
                         data_list = _.difference(data_list, actioned);
                         view_model.total(view_model.total()-1);
-                        view_model.data_list(data_list);
-                        view_model.archive_action_items(actioned);
+                        view_model.dataList(data_list);
+                        view_model.archiveActionItems(actioned);
                     });
                 } else {
-                    view_model.unsuccessful_archive_action(button)(data);
+                    view_model.unsuccessfulArchiveAction(button)(data);
                 }
             };
         };
 
-        view_model.unsuccessful_archive_action = function (button) {
+        view_model.unsuccessfulArchiveAction = function (button) {
             return function () {
                 $(button).button('unsuccessful');
             };
