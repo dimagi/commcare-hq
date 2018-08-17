@@ -37,6 +37,8 @@ from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
+from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import json_error
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds.tasks import (
     push_translation_files_to_transifex,
@@ -51,6 +53,7 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
 from custom.icds_reports.forms import AppTranslationsForm
 from custom.icds_reports.models.helper import IcdsFile
+from custom.icds_reports.models.views import DishaIndicatorView, AwcLocationMonths
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -1718,3 +1721,63 @@ class InactiveAWW(View):
             return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
         except NotFound:
             raise Http404
+
+
+class DishaAPIView(View):
+
+    def message(self, message_name):
+        state_names = ", ".join(self.valid_state_names)
+        error_messages = {
+            "missing_date": "Please specify valid month and year",
+            "invalid_month": "Please specify a month that's older than a month and 5 days",
+            "invalid_state": "Please specify one of {} as state_name".format(state_names),
+            "data_is_unavailable": "No data is available for this month"
+        }
+        return {"message": error_messages[message_name]}
+
+    @method_decorator(api_auth)
+    @json_error
+    def get(self, request, *args, **kwargs):
+        # Todo; add disha API permission
+        try:
+            month = int(request.GET.get('month'))
+            year = int(request.GET.get('year'))
+        except (ValueError, TypeError):
+            return JsonResponse(self.messages('missing_date'), status=400)
+
+        # Can return only one month old data if today is after 5th, otherwise
+        #   can return two month's old data
+        query_month = date(year, month, 1)
+        today = date.today()
+        current_month = today - relativedelta(months=1) if today.day <= 5 else today
+        if query_month > current_month:
+            return JsonResponse(self.messages('invalid_month'), status=400)
+
+        state_name = self.request.GET.get('state_name')
+        if state_name not in self.valid_state_names:
+            return JsonResponse(self.messages('invalid_state'), status=400)
+
+        return self._get_json_data(query_month, state_name)
+
+    @property
+    @quickcache([])
+    def valid_state_names(self):
+        return AwcLocationMonths.objects.values_list('state_name', flat=True)
+
+    def _get_json_data(self, query_month, state_name):
+        # Todo; cache monthly payloads
+        columns = [field.name for field in DishaIndicatorView._meta.fields]
+        columns.remove("month")
+        data = DishaIndicatorView.objects.filter(
+            month=query_month,
+            state_name__iexact=state_name
+        ).values_list(*columns)
+        if not len(data):
+            return JsonResponse(self.messages('data_is_unavailable'), status=404)
+        response = {
+            "month": str(query_month),
+            "state_name": state_name,
+            "column_names": columns,
+            "rows": list(data)
+        }
+        return JsonResponse(response)
