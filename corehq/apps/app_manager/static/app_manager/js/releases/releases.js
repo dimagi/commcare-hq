@@ -409,7 +409,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     $('#build-errors-wrapper').html(data.error_html);
                     if (data.saved_app) {
                         var app = savedAppModel(data.saved_app, self);
-                        self.addSavedApp(app, true);
+                        self.savedApps.unshift(app);
                     }
                     self.buildState('');
                     self.buildErrorCode('');
