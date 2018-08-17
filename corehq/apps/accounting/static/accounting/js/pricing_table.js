@@ -69,7 +69,7 @@ hqDefine('accounting/js/pricing_table', [
                 var $modal = $("#modal-minimum-subscription");
                 $modal.find('.modal-body')[0].innerHTML =
                     "All CommCare subscriptions require a 30 day minimum commitment. Your current subscription " +
-                    "will be downgraded to " + newPlan + " on " + newStartDate + ".If you have questions or if " +
+                    "will be downgraded to " + newPlan + " on " + newStartDate + ". If you have questions or if " +
                     "you would like to speak to someone about your subscription, please reach out to "
                     + mailto + ".";
                 $modal.modal('show');
