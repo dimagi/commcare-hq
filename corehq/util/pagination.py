@@ -31,15 +31,6 @@ class PaginationEventHandler(object):
         """
         pass
 
-    def page_exception(self, exception):
-        """Called on the load if it raises an exception
-
-        :param exception: the exception that was raised
-
-        returns a boolean of whether the exception was handled
-        """
-        return False
-
 
 class DelegatingPaginationEventHandler(PaginationEventHandler):
     def __init__(self, handlers=None):
@@ -112,13 +103,7 @@ def paginate_function(data_function, args_provider, event_handler=None):
         event_handler.page_start(total_emitted, *args, **kwargs)
         results = data_function(*args, **kwargs)
         start_time = datetime.utcnow()
-        try:  # this is where the results are loaded, since it's lazy
-            len_results = len(results)
-        except Exception as e:
-            if event_handler.page_exception(e):
-                continue
-            else:
-                raise
+        len_results = len(results)
 
         for item in results:
             yield item

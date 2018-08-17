@@ -49,7 +49,7 @@
         <td class="col-md-3">
             <strong data-bind="text: user_name"></strong>
             <!--ko if: upload_comment_edit_allowed-->
-            <inline-edit params="
+            <inline-edit data-apply-bindings="false" params="
                 value: comment,
                 url: hqImport('hqwebapp/js/initial_page_data').reverse('case_importer_update_upload_comment', upload_id),
                 rows: 1,

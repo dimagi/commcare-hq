@@ -6,7 +6,6 @@
 #
 git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect==0.5.7a2
 -e git+git://github.com/millerdev/django-nose@fast-first-1.4.4#egg=django-nose
-git+https://github.com/Legrandin/pycryptodome@0df6211#egg=pycryptodome==3.6.5a1
 alembic==0.8.6
 amqp==1.4.9
 anyjson==0.3.3
@@ -20,7 +19,7 @@ billiard==3.3.0.23
 boto3==1.4.4
 botocore==1.5.95
 cached-property==1.4.3
-celery==3.1.18
+celery==3.1.25
 cffi==1.11.5
 chardet==3.0.4
 cloudant==2.7.0
@@ -120,6 +119,7 @@ py-kissmetrics==1.0.1
 pyasn1==0.4.3
 pycco==0.5.1
 pycparser==2.18
+pycryptodome==3.6.5
 pygithub==1.35
 pygments==2.0.2
 pygooglechart==0.4.0
