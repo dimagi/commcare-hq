@@ -163,11 +163,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                 .search_string_query(query, default_fields=search_fields))
 
     def all_user_es_query(self, query):
-        search_fields = ["first_name", "last_name", "base_username"]
-        return (UserES()
-                .show_inactive()
-                .domain(self.domain)
-                .search_string_query(query, default_fields=search_fields))
+        return self.active_user_es_query(query).show_inactive()
 
     def get_all_users_size(self, query):
         return self.all_user_es_query(query).count()
