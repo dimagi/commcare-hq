@@ -34,6 +34,7 @@ django-angular==0.7.16
 django-appconf==1.0.2     # via django-compressor, django-statici18n
 django-braces==1.8.1
 django-bulk-update==1.1.10
+django-celery-results==1.0.1
 django-compressor==2.1
 django-countries==4.6
 django-crispy-forms==1.7.0

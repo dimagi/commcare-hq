@@ -185,6 +185,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'django_celery_results',
     'django_prbac',
     'djangular',
     'captcha',
@@ -534,6 +535,8 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 # celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+CELERY_RESULT_BACKEND = 'django-db'
 
 CELERY_TASK_ANNOTATIONS = {
     '*': {
