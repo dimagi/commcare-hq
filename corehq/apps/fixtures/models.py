@@ -333,7 +333,7 @@ class FixtureDataItem(Document):
         else:
             group_ids = set()
         users_in_groups = [
-            group.get_all_users(only_commcare=True)
+            group.get_users(only_commcare=True)
             for group in Group.view(
                 '_all_docs',
                 keys=list(group_ids),

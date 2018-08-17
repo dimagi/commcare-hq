@@ -25,7 +25,7 @@ def users_locations():
     except ResourceNotFound:
         return set()
     location_ids = set()
-    for user in group.get_all_users():
+    for user in group.get_users():
         location_ids.add(user.location_id)
     return location_ids
 

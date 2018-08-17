@@ -106,7 +106,7 @@ class CommCareUserResource(UserResource):
             group = Group.get(group_id)
             if not group or group.domain != domain:
                 raise BadRequest('Project %s has no group with id=%s' % (domain, group_id))
-            return list(group.get_all_users(only_commcare=True))
+            return list(group.get_users(only_commcare=True))
         else:
             return UserQuerySetAdapter(domain, show_archived=show_archived)
 
