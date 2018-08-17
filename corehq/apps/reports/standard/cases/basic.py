@@ -113,11 +113,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             raise e
 
     def get_deactivated_owner_ids(self, ):
-        user_filters = [user_es.mobile_users()]
         owner_ids = (user_es.UserES()
                      .show_only_inactive()
                      .domain(self.domain)
-                     .OR(*user_filters)
+                     .mobile_users()
                      .get_ids())
         return owner_ids
 
