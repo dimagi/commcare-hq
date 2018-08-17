@@ -528,7 +528,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def config(self):
-        return get_datasource_config(self.config_id, self.domain)[0]
+        return get_datasource_config(self.config_id, self.domain, self.data_source_type)[0]
 
     @property
     @memoized
