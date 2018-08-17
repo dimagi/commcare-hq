@@ -75,9 +75,8 @@ ghdiff==0.4
 greenlet==0.4.12
 gunicorn==19.9.0
 hiredis==0.2.0
-html5lib==1.0.1
+html5lib==1.0b8
 httpagentparser==1.7.8
-httplib2==0.11.3
 idna==2.7
 imagesize==1.0.0          # via sphinx
 ipaddress==1.0.22
@@ -165,9 +164,8 @@ ua-parser==0.8.0
 unidecode==0.04.20
 urllib3==1.23
 user-agents==1.1.0
-webencodings==0.5.1
 werkzeug==0.11.15
-xhtml2pdf==0.2.2
+xhtml2pdf==0.0.6
 xlrd==1.0.0
 xlwt==1.3.0
 zeep==1.6.0
