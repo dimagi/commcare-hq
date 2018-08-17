@@ -171,7 +171,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         special_owner_ids, selected_sharing_group_ids, selected_reporting_group_users = [], [], []
         sharing_group_ids, location_owner_ids, assigned_user_ids_at_selected_locations = [], [], []
-        deactivated_owner_ids = []
         if self.request.can_access_all_locations:
             user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
             special_owner_ids = self.get_special_owner_ids(
@@ -180,8 +179,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 demo=HQUserType.DEMO_USER in user_types,
                 commtrack=HQUserType.COMMTRACK in user_types,
             )
-            if HQUserType.DEACTIVATED in user_types:
-                deactivated_owner_ids = self.get_deactivated_owner_ids()
 
             # Get group ids for each group that was specified
             selected_reporting_group_ids = EMWF.selected_reporting_group_ids(mobile_user_and_group_slugs)
@@ -235,7 +232,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             sharing_group_ids,
             location_owner_ids,
             assigned_user_ids_at_selected_locations,
-            deactivated_owner_ids,
         ))
         return owner_ids
 
