@@ -1,11 +1,23 @@
-(function () {
+hqDefine("hqwebapp/js/components.ko", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/components/inline_edit',
+    'hqwebapp/js/components/pagination',
+], function(
+    $,
+    ko,
+    _,
+    inlineEdit,
+    pagination
+) {
     var components = {
-        'inline-edit': 'hqwebapp/js/components/inline_edit',
-        'pagination': 'hqwebapp/js/components/pagination',
+        'inline-edit': inlineEdit,
+        'pagination': pagination,
     };
 
     _.each(components, function(moduleName, elementName) {
-        ko.components.register(elementName, hqImport(moduleName));
+        ko.components.register(elementName, moduleName);
     });
 
     $(function() {
@@ -18,4 +30,4 @@
             });
         });
     });
-}());
+});

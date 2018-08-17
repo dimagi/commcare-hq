@@ -6,20 +6,27 @@
 // See releases_table.html for an example.
 // This component must be nested within another element that has had knockout bindings applied to it.
 
-hqDefine('hqwebapp/js/components/pagination', function() {
+hqDefine('hqwebapp/js/components/pagination', [
+    'knockout',
+    'underscore',
+], function(
+    ko,
+    _
+) {
     return {
         viewModel: function(params){
             var self = {};
 
             self.currentPage = ko.observable(params.currentPage || 1);
             self.totalItems = params.totalItems;
-            self.perPage = params.perPage;
+            self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);
             self.numPages = ko.computed(function(){
                 return Math.ceil(self.totalItems() / self.perPage());
             });
             self.perPage.subscribe(function(){
                 self.goToPage(1);
             });
+            self.inlinePageListOnly = !!params.inlinePageListOnly;
             self.maxPagesShown = params.maxPagesShown || 9;
 
             self.nextPage = function(){
