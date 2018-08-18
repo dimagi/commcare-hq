@@ -17,7 +17,6 @@ class Command(BaseCommand):
         parser.add_argument('zipname')
 
     def handle(self, zipname, **options):
-        # do we need to import BlobMeta records too?
         from_zip = zipfile.ZipFile(zipname)
         to_db = get_blob_db()
         for key in from_zip.namelist():

@@ -24,8 +24,6 @@ class MetaDB(object):
         :param **blob_meta_args: See `AbstractBlobDB.put` for argument
         documentation. If the given `meta` argument is a `BlobMeta`
         object it will be returned instead of creating a new instance.
-        :raises: `ValueError` if the given `meta` object is a `BlobMeta`
-        instance that has already been saved.
         """
         if "meta" in blob_meta_args:
             if len(blob_meta_args) > 1:
