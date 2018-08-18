@@ -11,8 +11,8 @@ from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath,
 
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
-from corehq.blobs.interface import AbstractBlobDB, SAFENAME
-from corehq.blobs.util import set_blob_expire_object
+from corehq.blobs.interface import AbstractBlobDB
+from corehq.blobs.util import check_safe_key, set_blob_expire_object
 from corehq.util.datadog.gauges import datadog_counter
 from io import open
 
@@ -183,11 +183,7 @@ class FilesystemBlobDB(AbstractBlobDB):
 def safejoin(root, subpath):
     """Join root to subpath ensuring that the result is actually inside root
     """
-    if (subpath.startswith(("/", ".")) or
-            "/../" in subpath or
-            subpath.endswith("/..") or
-            not SAFENAME.match(subpath)):
-        raise BadName("unsafe path name: %r" % subpath)
+    check_safe_key(subpath)
     root = realpath(root)
     path = realpath(join(root, subpath))
     if commonprefix([root + sep, path]) != root + sep:

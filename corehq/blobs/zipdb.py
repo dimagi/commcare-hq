@@ -5,7 +5,8 @@ import zipfile
 
 from corehq.blobs import DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName
-from corehq.blobs.interface import AbstractBlobDB, SAFENAME
+from corehq.blobs.interface import AbstractBlobDB
+from corehq.blobs.util import SAFENAME
 
 
 class ZipBlobDB(AbstractBlobDB):

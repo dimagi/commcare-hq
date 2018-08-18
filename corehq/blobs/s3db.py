@@ -6,9 +6,13 @@ from contextlib import contextmanager
 from io import UnsupportedOperation
 
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
-from corehq.blobs.exceptions import BadName, NotFound
-from corehq.blobs.interface import AbstractBlobDB, SAFENAME
-from corehq.blobs.util import ClosingContextProxy, set_blob_expire_object
+from corehq.blobs.exceptions import NotFound
+from corehq.blobs.interface import AbstractBlobDB
+from corehq.blobs.util import (
+    check_safe_key,
+    ClosingContextProxy,
+    set_blob_expire_object,
+)
 from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
 from dimagi.utils.logging import notify_exception
 
@@ -239,14 +243,6 @@ class BlobStream(ClosingContextProxy):
     @property
     def blob_db(self):
         return self._blob_db()
-
-
-def check_safe_key(key):
-    if (key.startswith(("/", ".")) or
-            "/../" in key or
-            key.endswith("/..") or
-            not SAFENAME.match(key)):
-        raise BadName("unsafe key: %r" % key)
 
 
 def safejoin(root, subpath):

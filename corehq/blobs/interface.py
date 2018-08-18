@@ -1,13 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import re
 from abc import ABCMeta, abstractmethod
 
 from . import DEFAULT_BUCKET
 from .metadata import MetaDB
 import six
 
-SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
 NOT_SET = object()
 
 

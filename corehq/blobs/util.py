@@ -1,12 +1,16 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
+import re
 from base64 import urlsafe_b64encode
 from datetime import datetime, timedelta
 
 from jsonfield import JSONField
 
+from corehq.blobs.exceptions import BadName
 from corehq.util.datadog.gauges import datadog_counter
+
+SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
 
 
 class NullJsonField(JSONField):
@@ -87,6 +91,22 @@ def random_url_id(nbytes):
     :returns: A URL-safe string.
     """
     return urlsafe_b64encode(os.urandom(nbytes)).decode('ascii').rstrip('=')
+
+
+def check_safe_key(key):
+    """Perform some basic checks on a potential blob key
+
+    This method makes a best-effort attempt to verify that the key is
+    safe for all blob db backends. It will not necessarily detect all
+    unsafe keys.
+
+    :raises: BadName if key is unsafe.
+    """
+    if (key.startswith(("/", ".")) or
+            "/../" in key or
+            key.endswith("/..") or
+            not SAFENAME.match(key)):
+        raise BadName("unsafe key: %r" % key)
 
 
 def set_blob_expire_object(bucket, identifier, length, timeout):
