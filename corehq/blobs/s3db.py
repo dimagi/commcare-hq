@@ -136,17 +136,12 @@ class S3BlobDB(AbstractBlobDB):
             return False
 
     def delete(self, *args, **kw):
-        if "key" in kw:
-            assert set(kw) == {"key"} and not args, (args, kw)
-            key = kw["key"]
-        else:
-            # legacy: can be removed with old API
-            identifier, bucket = self.get_args_for_delete(*args, **kw)
-            key = self.get_path(identifier, bucket)
-        check_safe_key(key)
         s3_bucket = self._s3_bucket()
         deleted_bytes = 0
         if "key" in kw:
+            assert set(kw) == {"key"} and not args, (args, kw)
+            key = kw["key"]
+            check_safe_key(key)
             success = False
             with maybe_not_found():
                 success = True
@@ -158,6 +153,9 @@ class S3BlobDB(AbstractBlobDB):
             self.metadb.delete(key, deleted_bytes)
             return success
         # legacy: can be removed with old API
+        identifier, bucket = self.get_args_for_delete(*args, **kw)
+        key = self.get_path(identifier, bucket)
+        check_safe_key(key)
         with maybe_not_found():
             success = True
             if identifier is None:
