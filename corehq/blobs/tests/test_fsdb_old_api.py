@@ -1,13 +1,16 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
+from datetime import datetime, timedelta
 import os
 from os.path import isdir, join
 from shutil import rmtree
 from tempfile import mkdtemp
-from unittest import TestCase
 from io import BytesIO
 
+from django.test import TestCase
+
 import corehq.blobs.fsdb as mod
+from corehq.blobs.models import BlobExpiration
 from corehq.blobs.tests.util import get_id
 from corehq.util.test_utils import generate_cases, patch_datadog
 from six.moves import zip
@@ -31,6 +34,16 @@ class _BlobDBTests(object):
         self.assertEqual(sum(s for s in stats["commcare.blobs.added.count"]), 1)
         self.assertEqual(sum(s for s in stats["commcare.blobs.added.bytes"]), size)
         self.assertEqual(self.db.size(info.identifier), size)
+
+    def test_put_with_timeout(self):
+        info = self.db.put(BytesIO(b"content"), identifier=get_id(), timeout=60)
+        with self.db.get(identifier=info.identifier) as fh:
+            self.assertEqual(fh.read(), b"content")
+        exp = BlobExpiration.objects.get(identifier=info.identifier)
+        self.assertLessEqual(
+            exp.expires_on - datetime.utcnow(),
+            timedelta(minutes=60),
+        )
 
     def test_put_and_get_with_unicode_names(self):
         bucket = "doc.4500"

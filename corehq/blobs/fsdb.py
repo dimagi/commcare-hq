@@ -34,7 +34,7 @@ class FilesystemBlobDB(AbstractBlobDB):
             path = self.get_path(key=meta.key)
         else:
             # legacy: can be removed with old API
-            assert not blob_meta_args, blob_meta_args
+            assert set(blob_meta_args).issubset({"timeout"}), blob_meta_args
             meta = None
             path = self.get_path(identifier, bucket)
         dirpath = dirname(path)

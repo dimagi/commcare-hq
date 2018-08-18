@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 import os
+from datetime import datetime, timedelta
 from io import BytesIO, open
 from os.path import isdir, join
 from shutil import rmtree
@@ -8,6 +9,7 @@ from tempfile import mkdtemp
 from django.test import TestCase
 
 import corehq.blobs.fsdb as mod
+from corehq.blobs import CODES
 from corehq.blobs.tests.util import new_meta
 from corehq.util.test_utils import generate_cases, patch_datadog
 
@@ -29,6 +31,21 @@ class _BlobDBTests(object):
         self.assertEqual(sum(s for s in stats["commcare.blobs.added.count"]), 1)
         self.assertEqual(sum(s for s in stats["commcare.blobs.added.bytes"]), size)
         self.assertEqual(self.db.size(key=meta.key), size)
+
+    def test_put_with_timeout(self):
+        meta = self.db.put(
+            BytesIO(b"content"),
+            domain="test",
+            parent_id="test",
+            type_code=CODES.tempfile,
+            timeout=60,
+        )
+        with self.db.get(key=meta.key) as fh:
+            self.assertEqual(fh.read(), b"content")
+        self.assertLessEqual(
+            meta.expires_on - datetime.utcnow(),
+            timedelta(minutes=60),
+        )
 
     def test_put_and_get_with_unicode_names(self):
         meta = self.db.put(BytesIO(b"content"), meta=new_meta())

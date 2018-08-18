@@ -67,7 +67,7 @@ class S3BlobDB(AbstractBlobDB):
             key = meta.key
         else:
             # legacy: can be removed with old API
-            assert not blob_meta_args, blob_meta_args
+            assert set(blob_meta_args).issubset({"timeout"}), blob_meta_args
             meta = None
             key = self.get_path(identifier, bucket)
         check_safe_key(key)

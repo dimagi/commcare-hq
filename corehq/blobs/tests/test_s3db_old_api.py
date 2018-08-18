@@ -2,10 +2,10 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from os.path import join
-from unittest import TestCase
 from io import BytesIO
 
 from django.conf import settings
+from django.test import TestCase
 
 from corehq.blobs.tests.util import get_id, TemporaryS3BlobDB
 from corehq.blobs.tests.test_fsdb_old_api import _BlobDBTests
