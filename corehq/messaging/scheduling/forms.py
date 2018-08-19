@@ -1499,7 +1499,7 @@ class ScheduleForm(Form):
 
             if self.initial_schedule.memoized_uses_sms_callback:
                 self.fields['content'].choices += [
-                    (self.CONTENT_SMS_CALLBACK, _("SMS Callback")),
+                    (self.CONTENT_SMS_CALLBACK, _("SMS Expecting Callback")),
                 ]
 
     @property
