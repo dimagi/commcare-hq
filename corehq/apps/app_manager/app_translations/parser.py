@@ -40,7 +40,14 @@ class TranslationsParser(object):
         elif 'module' in sheet_name and 'form' in sheet_name:
             self._add_form_sheet(ws, po_entries)
         else:
-            raise Exception("Got unexpected sheet name %s" % sheet_name)
+            self._add_generic_sheet(ws, po_entries)
+
+    def _add_generic_sheet(self, ws, po_entries):
+        # add header
+        ws.append(["context", self.key_lang_str, self.source_lang_str])
+        # add rows
+        for po_entry in po_entries:
+            ws.append([po_entry.msgctxt, po_entry.msgid, po_entry.msgstr])
 
     def _add_module_and_form_sheet(self, ws, po_entries):
         context_regex = CONTEXT_REGEXS['module_and_forms_sheet']

@@ -115,7 +115,8 @@ class Transifex(object):
         pull translations from transifex
         :return: dict of resource_slug mapped to POEntry objects
         """
-        self._ensure_resources_belong_to_version()
+        if self.version:
+            self._ensure_resources_belong_to_version()
         po_entries = {}
         for resource_slug in self.resource_slugs:
             po_entries[resource_slug] = self.client.get_translation(resource_slug, self.source_lang,
