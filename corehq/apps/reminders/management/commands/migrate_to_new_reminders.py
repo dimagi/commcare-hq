@@ -54,6 +54,8 @@ from corehq.messaging.scheduling.models import (
     SMSContent,
     EmailContent,
     SMSSurveyContent,
+    IVRSurveyContent,
+    SMSCallbackContent,
     MigratedReminder,
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances
@@ -434,6 +436,24 @@ def get_content(handler, event, translated=True):
             submit_partially_completed_forms=submit_partially_completed_forms,
             include_case_updates_in_partial_submissions=include_case_updates_in_partial_submissions,
         )
+    elif handler.method == METHOD_IVR_SURVEY:
+        return IVRSurveyContent(
+            form_unique_id=event.form_unique_id,
+            reminder_intervals=event.callback_timeout_intervals,
+            submit_partially_completed_forms=handler.submit_partial_forms,
+            include_case_updates_in_partial_submissions=handler.include_case_side_effects,
+            max_question_attempts=handler.max_question_retries,
+        )
+    elif handler.method == METHOD_SMS_CALLBACK:
+        if translated:
+            message = event.message
+        else:
+            message = {'*': get_single_dict_value(event.message)}
+
+        return SMSCallbackContent(
+            message=message,
+            reminder_intervals=event.callback_timeout_intervals,
+        )
     else:
         raise ValueError("Unexpected method '%s'" % handler.method)
 
@@ -732,7 +752,16 @@ class Command(BaseCommand):
         if handler.start_condition_type != CASE_CRITERIA:
             return None
 
-        if handler.method not in (METHOD_SMS, METHOD_EMAIL, METHOD_SMS_SURVEY):
+        if handler.method not in (
+            METHOD_SMS,
+            METHOD_EMAIL,
+            METHOD_SMS_SURVEY,
+            METHOD_IVR_SURVEY,
+            METHOD_SMS_CALLBACK,
+        ):
+            return None
+
+        if handler.active and handler.method in (METHOD_IVR_SURVEY, METHOD_SMS_CALLBACK):
             return None
 
         event_timeout_lengths = [len(event.callback_timeout_intervals) for event in handler.events]
@@ -755,7 +784,7 @@ class Command(BaseCommand):
                 if handler.method == METHOD_EMAIL:
                     check_days_until(event.subject)
 
-                if handler.method in (METHOD_SMS, METHOD_EMAIL):
+                if handler.method in (METHOD_SMS, METHOD_EMAIL, METHOD_SMS_CALLBACK):
                     check_days_until(event.message)
             except ValueError:
                 return None
