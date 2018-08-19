@@ -6,15 +6,21 @@ import tempfile
 
 from io import open
 from memoized import memoized
+from openpyxl import Workbook
 
-from django.urls import reverse
 from django.http import HttpResponse
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.contrib import messages
 
-from corehq.apps.translations.forms import ConvertTranslationsForm
+from corehq.apps.translations.forms import (
+    ConvertTranslationsForm,
+    PullResourceForm,
+)
 from corehq.apps.app_manager.app_translations.generators import Translation, PoFileGenerator
 from corehq.util.files import safe_filename_header
 from corehq.apps.domain.views import BaseDomainView
+from custom.icds.translations.integrations.exceptions import ResourceMissing
+from custom.icds.translations.integrations.transifex import Transifex
 
 
 class ConvertTranslations(BaseDomainView):
@@ -108,14 +114,64 @@ class ConvertTranslations(BaseDomainView):
                 return self._excel_file_response()
         return self.get(request, *args, **kwargs)
 
-    @property
-    @memoized
-    def page_url(self):
-        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
-
     def section_url(self):
         return self.page_url
 
     @property
     def page_context(self):
         return {'convert_translations_form': self.convert_translation_form}
+
+
+class PullResource(BaseDomainView):
+    page_title = _('Pull Resource')
+    urlname = 'pull_resource'
+    template_name = 'pull_resource.html'
+    section_name = ugettext_noop("Translations")
+
+    def section_url(self):
+        return self.page_url
+
+    @property
+    @memoized
+    def pull_resource_form(self):
+        if self.request.POST:
+            return PullResourceForm(self.domain, self.request.POST)
+        else:
+            return PullResourceForm(self.domain)
+
+    @property
+    def page_context(self):
+        return {'pull_resource_form': self.pull_resource_form}
+
+    def _generate_excel_file(self, domain, resource_slug):
+        target_lang = self.pull_resource_form.cleaned_data['target_lang']
+        transifex = Transifex(domain=domain, app_id=None,
+                              source_lang=target_lang,
+                              project_slug=self.pull_resource_form.cleaned_data['transifex_project_slug'],
+                              version=None)
+        wb = Workbook(write_only=True)
+        ws = wb.create_sheet(title='translations')
+        ws.append(['context', 'source', 'translation', 'occurrence'])
+        for po_entry in transifex.client.get_translation(resource_slug, target_lang, False):
+            ws.append([po_entry.msgctxt, po_entry.msgid, po_entry.msgstr,
+                       po_entry.occurrences[0][0] if po_entry.occurrences else ''])
+        return wb
+
+    def _pull_resource(self, request):
+        resource_slug = self.pull_resource_form.cleaned_data['resource_slug']
+        wb = self._generate_excel_file(request.domain, resource_slug)
+        with tempfile.TemporaryFile(suffix='.xlsx') as f:
+            wb.save(f)
+            f.seek(0)
+            content = f.read()
+        response = HttpResponse(content, content_type="text/html; charset=utf-8")
+        response['Content-Disposition'] = safe_filename_header(resource_slug, 'xlsx')
+        return response
+
+    def post(self, request, *args, **kwargs):
+        if self.pull_resource_form.is_valid():
+            try:
+                return self._pull_resource(request)
+            except ResourceMissing:
+                messages.add_message(request, messages.ERROR, 'Resource not found')
+        return self.get(request, *args, **kwargs)

@@ -157,7 +157,7 @@ class TransifexApiClient(object):
         )
         response = requests.get(url, auth=self._auth, stream=True)
         if response.status_code != 200:
-            return response
+            raise ResourceMissing
         temp_file = tempfile.NamedTemporaryFile()
         with open(temp_file.name, 'w', encoding='utf-8') as f:
             f.write(response.content.decode(encoding='utf-8'))

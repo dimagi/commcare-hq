@@ -3,16 +3,25 @@
 {% load hq_shared_tags %}
 
 {% block page_navigation %}
-    <h2 class="text-hq-nav-header">{% trans "Manage Translations" %}</h2>
+    <h2 class="text-hq-nav-header">{% trans "TOOLS" %}</h2>
     <ul class="nav nav-hq-sidebar">
         <li>
             <a href="{% url 'convert_translations' domain %}">
                 {% trans "Convert Translations" %}
             </a>
         </li>
+    </ul>
+
+    <h2 class="text-hq-nav-header">{% trans "TRANSIFEX" %}</h2>
+    <ul class="nav nav-hq-sidebar">
         <li>
             <a href="{% url 'icds_app_translations' domain %}">
-                {% trans "Transifex Integration" %}
+                {% trans "Manage App Translations" %}
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'pull_resource' domain %}">
+                {% trans "Pull Resource" %}
             </a>
         </li>
     </ul>
