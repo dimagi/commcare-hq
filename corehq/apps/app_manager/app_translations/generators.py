@@ -88,7 +88,10 @@ class POFileGenerator:
             )
 
     def _get_filename(self, sheet_name):
-        return sheet_name + '_v' + str(self.version)
+        if self.version:
+            return sheet_name + '_v' + str(self.version)
+        else:
+            return sheet_name
 
     def _get_header_index(self, sheet_name, column_name):
         for index, _column_name in enumerate(self.headers[sheet_name]):
@@ -151,8 +154,6 @@ class POFileGenerator:
         """
         from corehq.apps.app_manager.dbaccessors import get_current_app
         app = get_current_app(self.domain, self.app_id_to_build)
-        if self.version is None:
-            self.version = app.version
 
         rows = self._translation_data(app)
 
