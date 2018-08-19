@@ -161,6 +161,34 @@ class Schedule(models.Model):
 
         return False
 
+    @cached_property
+    def memoized_uses_ivr_survey(self):
+        """
+        Prefixed with memoized_ to make it obvious that this property is
+        memoized and also relies on self.memoized_events.
+        """
+        from corehq.messaging.scheduling.models import IVRSurveyContent
+
+        for event in self.memoized_events:
+            if isinstance(event.content, IVRSurveyContent):
+                return True
+
+        return False
+
+    @cached_property
+    def memoized_uses_sms_callback(self):
+        """
+        Prefixed with memoized_ to make it obvious that this property is
+        memoized and also relies on self.memoized_events.
+        """
+        from corehq.messaging.scheduling.models import SMSCallbackContent
+
+        for event in self.memoized_events:
+            if isinstance(event.content, SMSCallbackContent):
+                return True
+
+        return False
+
     @property
     def references_parent_case(self):
         return False
