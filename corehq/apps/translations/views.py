@@ -33,9 +33,9 @@ class ConvertTranslations(BaseDomainView):
     @memoized
     def convert_translation_form(self):
         if self.request.POST:
-            return ConvertTranslationsForm(self.domain, self.request.POST, self.request.FILES)
+            return ConvertTranslationsForm(self.request.POST, self.request.FILES)
         else:
-            return ConvertTranslationsForm(self.domain)
+            return ConvertTranslationsForm()
 
     @property
     @memoized

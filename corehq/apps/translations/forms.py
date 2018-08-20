@@ -14,9 +14,9 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 
 
 class ConvertTranslationsForm(forms.Form):
-    upload_file = forms.FileField(label="")
+    upload_file = forms.FileField(label="", required=True)
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(ConvertTranslationsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = 'post'
@@ -28,8 +28,6 @@ class ConvertTranslationsForm(forms.Form):
             StrictButton(
                 ugettext_lazy('Convert'),
                 css_class='btn-primary',
-                data_bind='disable: !file()',
-                onclick='this.disabled=true;this.form.submit();',
                 type='submit',
             ),
         )
@@ -84,7 +82,7 @@ class PullResourceForm(forms.Form):
                 twbscrispy.StrictButton(
                     ugettext_lazy("Submit"),
                     type="submit",
-                    css_class="btn btn-primary btn-lg",
+                    css_class="btn-primary",
                 )
             )
         )
