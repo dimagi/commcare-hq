@@ -1,0 +1,14 @@
+{% extends "domain/base_change_plan.html" %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block form_content %}
+    <p class="lead">
+        {% blocktrans %}
+        Dimagi handles Annually-billed plans on a case-by-case basis. Please fill out your information
+        below to request a quote.
+        {% endblocktrans %}
+    </p>
+
+    {% crispy annual_plan_contact_form %}
+{% endblock %}

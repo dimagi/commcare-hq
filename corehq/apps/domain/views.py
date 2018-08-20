@@ -68,7 +68,7 @@ from corehq.apps.accounting.payment_handlers import (
     InvoiceStripePaymentHandler,
 )
 from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
-from corehq.apps.accounting.forms import EnterprisePlanContactForm
+from corehq.apps.accounting.forms import EnterprisePlanContactForm, AnnualPlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
@@ -1405,6 +1405,48 @@ class SelectedEnterprisePlanView(SelectPlanView):
     def post(self, request, *args, **kwargs):
         if self.is_not_redirect and self.enterprise_contact_form.is_valid():
             self.enterprise_contact_form.send_message()
+            messages.success(request, _("Your request was sent to Dimagi. "
+                                        "We will try our best to follow up in a timely manner."))
+            return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class SelectedAnnualPlanView(SelectPlanView):
+    template_name = 'domain/selected_annual_plan.html'
+    urlname = 'annual_plan_request_quote'
+    step_title = ugettext_lazy("Contact Dimagi")
+    edition = None
+
+    @property
+    def steps(self):
+        last_steps = super(SelectedAnnualPlanView, self).steps
+        last_steps.append({
+            'title': _("2. Contact Dimagi"),
+            'url': reverse(SelectedAnnualPlanView.urlname, args=[self.domain]),
+        })
+        return last_steps
+
+    @property
+    @memoized
+    def is_not_redirect(self):
+        return not 'plan_edition' in self.request.POST
+
+    @property
+    @memoized
+    def annual_plan_contact_form(self):
+        if self.request.method == 'POST' and self.is_not_redirect:
+            return AnnualPlanContactForm(self.domain, self.request.couch_user, data=self.request.POST)
+        return AnnualPlanContactForm(self.domain, self.request.couch_user)
+
+    @property
+    def page_context(self):
+        return {
+            'annual_plan_contact_form': self.annual_plan_contact_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.is_not_redirect and self.annual_plan_contact_form.is_valid():
+            self.annual_plan_contact_form.send_message()
             messages.success(request, _("Your request was sent to Dimagi. "
                                         "We will try our best to follow up in a timely manner."))
             return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
