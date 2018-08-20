@@ -640,7 +640,8 @@ def url_replace(context, field, value):
 
 @register.filter
 def view_pdb(element):
-    import ipdb; ipdb.sset_trace()
+    import ipdb
+    ipdb.sset_trace()
     return element
 
 
