@@ -65,9 +65,6 @@ hqDefine("reports/js/data_corrections", [
         // Core data, and the order in which it should be displayed
         self.properties = {};                       // map of name => PropertyModel, populated in init
         self.propertyNames = ko.observableArray();  // populated in init, whether names were provided in options or via ajax
-        self.grandTotal = ko.computed(function() {
-            return self.propertyNames().length;
-        });
 
         // Handle modal size: small, large or full-screen, with one, two, or three columns, respectively.
         self.itemsPerColumn = 12;
@@ -149,25 +146,6 @@ hqDefine("reports/js/data_corrections", [
             }
         };
 
-        // Pagination
-        self.currentPage = ko.observable();
-        self.totalPages = ko.observable();  // observable because it will change if there's a search query
-        self.incrementPage = function(increment) {
-            var newCurrentPage = self.currentPage() + increment;
-            if (newCurrentPage <= 0 || newCurrentPage > self.totalPages()) {
-                return;
-            }
-            self.currentPage(newCurrentPage);
-        };
-
-        // Track an array of page numbers, e.g., [1, 2, 3], used by the pagination UI.
-        // Having it as an array makes knockout rendering simpler.
-        self.visiblePages = ko.observableArray([]);
-        self.totalPages.subscribe(function(newValue) {
-            self.visiblePages(_.map(_.range(newValue), function(p) { return p + 1; }));
-        });
-        self.currentPage.subscribe(self.render);
-
         // Search
         self.query = ko.observable();
         self.matchesQuery = function(propertyName) {
@@ -178,7 +156,7 @@ hqDefine("reports/js/data_corrections", [
         };
         self.query.subscribe(function() {
             self.currentPage(1);
-            self.totalPages(Math.ceil(_.filter(self.searchableNames, self.matchesQuery).length / self.itemsPerPage()) || 1);
+            self.totalFilteredItems(Math.ceil(_.filter(self.searchableNames, self.matchesQuery).length) || 1);
             self.render();
         });
 
@@ -200,6 +178,14 @@ hqDefine("reports/js/data_corrections", [
                 });
             }
         };
+
+        // Pagination
+        self.currentPage = ko.observable();
+        self.totalFilteredItems = ko.observable();
+        self.totalItems = ko.computed(function() {  // how many items to display in pagination
+            return self.query() ? self.totalFilteredItems() : self.propertyNames().length;
+        });
+        self.currentPage.subscribe(self.render);
 
         // Saving
         self.submitForm = function(model, e) {
