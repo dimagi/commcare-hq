@@ -5,10 +5,10 @@ from django.utils.translation import ugettext as _
 from memoized import memoized
 
 from corehq.apps.locations.permissions import location_safe
-from .users import ExpandedMobileWorkerFilter, EmwfUtils
+from .users import ExpandedMobileWorkerFilter, EmwfUtilsAllUsers
 
 
-class CaseListFilterUtils(EmwfUtils):
+class CaseListFilterUtils(EmwfUtilsAllUsers):
 
     def sharing_group_tuple(self, g):
         return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])
