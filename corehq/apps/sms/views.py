@@ -137,6 +137,10 @@ class BaseMessagingSectionView(BaseDomainView):
     def can_use_inbound_sms(self):
         return has_privilege(self.request, privileges.INBOUND_SMS)
 
+    @cached_property
+    def is_system_admin(self):
+        return self.request.couch_user.is_superuser
+
     @method_decorator(require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(Permissions.edit_data))
     def dispatch(self, request, *args, **kwargs):

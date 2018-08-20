@@ -933,6 +933,7 @@ class ScheduleForm(Form):
 
     YES = 'Y'
     NO = 'N'
+    JSON = 'J'
 
     REPEAT_NO = 'no'
     REPEAT_EVERY_1 = 'repeat_every_1'
@@ -1312,13 +1313,17 @@ class ScheduleForm(Form):
                 else self.LANGUAGE_PROJECT_DEFAULT
             )
             if schedule.user_data_filter:
-                # The only structure created with these UIs is of the form {name: [value]}
+                # The only structure created with these UIs is of the form
+                # {name: [value]} or {name: [value1, value2, ...]}
                 # See Schedule.user_data_filter for an explanation of the full possible
                 # structure.
                 name = list(schedule.user_data_filter)[0]
-                result['use_user_data_filter'] = self.YES
+                values = schedule.user_data_filter[name]
+                choice = self.YES if len(values) == 1 else self.JSON
+                value = values[0] if len(values) == 1 else json.dumps(values)
+                result['use_user_data_filter'] = choice
                 result['user_data_property_name'] = name
-                result['user_data_property_value'] = schedule.user_data_filter[name][0]
+                result['user_data_property_value'] = value
 
             result['use_utc_as_default_timezone'] = schedule.use_utc_as_default_timezone
             if isinstance(schedule, AlertSchedule):
@@ -1408,6 +1413,7 @@ class ScheduleForm(Form):
         self.domain = domain
         self.initial_schedule = schedule
         self.can_use_sms_surveys = can_use_sms_surveys
+        self.is_system_admin = kwargs.pop("is_system_admin")
 
         if kwargs.get('initial'):
             raise ValueError("Initial values are set by the form")
@@ -1449,6 +1455,7 @@ class ScheduleForm(Form):
         self.add_additional_content_types()
         self.set_default_language_code_choices()
         self.update_send_frequency_choices(schedule_form_initial.get('send_frequency'))
+        self.enable_json_user_data_filter(schedule_form_initial)
 
         self.before_content = self.create_form_helper()
         self.before_content.layout = crispy.Layout(*self.get_before_content_layout_fields())
@@ -1501,6 +1508,12 @@ class ScheduleForm(Form):
                 self.fields['content'].choices += [
                     (self.CONTENT_SMS_CALLBACK, _("SMS Expecting Callback")),
                 ]
+
+    def enable_json_user_data_filter(self, initial):
+        if self.is_system_admin or initial.get('use_user_data_filter') == self.JSON:
+            self.fields['use_user_data_filter'].choices += [
+                (self.JSON, _("JSON: list of strings")),
+            ]
 
     @property
     def scheduling_fieldset_legend(self):
@@ -1818,7 +1831,7 @@ class ScheduleForm(Form):
             crispy.Div(
                 crispy.Field('user_data_property_name'),
                 crispy.Field('user_data_property_value'),
-                data_bind="visible: use_user_data_filter() === 'Y'",
+                data_bind="visible: use_user_data_filter() !== 'N'",
             ),
         ]
 
@@ -2209,7 +2222,7 @@ class ScheduleForm(Form):
         return validate_int(self.cleaned_data.get('occurrences'), 2)
 
     def clean_user_data_property_name(self):
-        if self.cleaned_data.get('use_user_data_filter') != self.YES:
+        if self.cleaned_data.get('use_user_data_filter') == self.NO:
             return None
 
         value = self.cleaned_data.get('user_data_property_name')
@@ -2219,12 +2232,25 @@ class ScheduleForm(Form):
         return value
 
     def clean_user_data_property_value(self):
-        if self.cleaned_data.get('use_user_data_filter') != self.YES:
+        use_user_data_filter = self.cleaned_data.get('use_user_data_filter')
+        if use_user_data_filter == self.NO:
             return None
 
         value = self.cleaned_data.get('user_data_property_value')
         if not value:
             raise ValidationError(_("This field is required."))
+
+        if use_user_data_filter == self.JSON:
+            err = _("Invalid JSON value. Expected a list of strings.")
+            try:
+                value = json.loads(value)
+            except Exception:
+                raise ValidationError(err)
+            if (not isinstance(value, list) or
+                    any(not isinstance(v, six.text_type) for v in value)):
+                raise ValidationError(err)
+        else:
+            value = [value]
 
         return value
 
@@ -2278,12 +2304,12 @@ class ScheduleForm(Form):
         }
 
     def distill_user_data_filter(self):
-        if self.cleaned_data['use_user_data_filter'] != self.YES:
+        if self.cleaned_data['use_user_data_filter'] == self.NO:
             return {}
 
         name = self.cleaned_data['user_data_property_name']
         value = self.cleaned_data['user_data_property_value']
-        return {name: [value]}
+        return {name: value}
 
     def distill_start_offset(self):
         raise NotImplementedError()
@@ -2800,7 +2826,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         super(ConditionalAlertScheduleForm, self).add_additional_content_types()
 
         if (
-            self.criteria_form.is_system_admin or
+            self.is_system_admin or
             self.initial.get('content') == self.CONTENT_CUSTOM_SMS
         ):
             self.fields['content'].choices += [
@@ -2871,7 +2897,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         new_choices.extend(self.fields['recipient_types'].choices)
 
         if (
-            self.criteria_form.is_system_admin or
+            self.is_system_admin or
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
         ):
             new_choices.extend([
@@ -2882,7 +2908,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def update_start_date_type_choices(self):
         if (
-            self.criteria_form.is_system_admin or
+            self.is_system_admin or
             self.initial.get('start_date_type') == self.START_DATE_FROM_VISIT_SCHEDULER
         ):
             self.fields['start_date_type'].choices += [
@@ -3108,7 +3134,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ])
 
         if (
-            self.criteria_form.is_system_admin or
+            self.is_system_admin or
             self.initial.get('capture_custom_metadata_item') == self.YES
         ):
             result.extend([
