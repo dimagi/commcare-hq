@@ -99,7 +99,7 @@
                                    data-bind="value: query"
                                    placeholder="{% trans "Filter Users..." %}">
                             <span class="input-group-btn">
-                                <button class="btn btn-default" type="button" data-bind="click: fetchUsers">
+                                <button class="btn btn-default" type="button" data-bind="click: function() { goToPage(1); }">
                                     <i class="fa fa-search"></i>
                                 </button>
                             </span>
@@ -193,16 +193,11 @@
                         </tr>
                     </tbody>
                 </table>
-                {% comment %}
-                <pagination direction-links="true"
-                            total-items="total"
-                            items-per-page="limit"
-                            previous-text="&laquo;"
-                            next-text="&raquo;"
-                            max-size="maxSize"
-                            ng-model="currentPage"
-                            ng-change="pageChanged()"></pagination>
-                {% endcomment %}
+                <pagination data-apply-bindings="false"
+                            params="goToPage: goToPage,
+                                    perPage: itemsPerPage,
+                                    maxPagesShown: 10,
+                                    totalItems: totalItems"></pagination>
 
                 {% if uses_locations and request|toggle_enabled:"RESTRICT_WEB_USERS_BY_LOCATION" %}
                     <div class="checkbox">

@@ -2,21 +2,29 @@ hqDefine("users/js/web_users", function() {
     var webUsersList = function() {
         var self = {};
         self.users = ko.observableArray([]);
+
         self.query = ko.observable('');
+
+        self.itemsPerPage = ko.observable();
+        self.totalItems = ko.observable();
+
         self.showSpinner = ko.observable(true);
 
-        self.fetchUsers = function() {
+        self.goToPage = function(page) {
             self.users.removeAll();
             self.showSpinner(true);
             $.ajax({
                 method: 'GET',
                 url: hqImport("hqwebapp/js/initial_page_data").reverse('paginate_web_users'),
                 data: {
-                    page: 1,    // TODO
+                    page: page,
                     query: self.query() || '',
+                    limit: self.itemsPerPage(),
                 },
                 success: function(data) {
                     self.showSpinner(false);
+                    self.totalItems(data.total);
+                    self.users.removeAll();     // just in case there are multiple goToPage calls simultaneously
                     _.each(data.users, function(user) {
                         self.users.push(user);
                     });
@@ -26,9 +34,6 @@ hqDefine("users/js/web_users", function() {
                 },
             });
         };
-
-        // Initial page of users
-        self.fetchUsers();
 
         return self;
     };
