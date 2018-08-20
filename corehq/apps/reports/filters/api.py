@@ -289,6 +289,7 @@ class CaseListFilterOptions(EmwfOptionsView):
         return CaseListFilterUtils(self.domain)
 
     @property
+    # Case list shows all users, instead of just active users
     def data_sources(self):
         if self.request.can_access_all_locations:
             return [
