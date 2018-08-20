@@ -20,10 +20,9 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from django_otp.plugins.otp_static.models import StaticToken
-from djangular.views.mixins import allow_remote_invocation
 
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.landing_pages import get_allowed_landing_pages
@@ -392,75 +391,6 @@ class ListWebUsersView(BaseUserSettingsView):
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
 
-    def query_es(self, limit, skip, query=None):
-        web_user_filter = [
-            {"term": {"user.domain_memberships.domain": self.domain}},
-        ]
-        web_user_filter.extend(ADD_TO_ES_FILTER['web_users'])
-
-        q = {
-            "filter": {"and": web_user_filter},
-            "sort": {'username.exact': 'asc'},
-        }
-        default_fields = ["username", "last_name", "first_name"]
-        q["query"] = search_string_query(query, default_fields)
-        return es_query(
-            params={}, q=q, es_index='users',
-            size=limit, start_at=skip,
-        )
-
-    '''
-    @allow_remote_invocation
-    def get_users(self, in_data):
-        if not isinstance(in_data, dict):
-            return {
-                'success': False,
-                'error': _("Please provide pagination info."),
-            }
-        try:
-            limit = in_data.get('limit', 10)
-            page = in_data.get('page', 1)
-            skip = limit * (page - 1)
-            query = in_data.get('query')
-
-            web_users_query = self.query_es(limit, skip, query=query)
-            total = web_users_query.get('hits', {}).get('total', 0)
-            results = web_users_query.get('hits', {}).get('hits', [])
-
-            web_users = [WebUser.wrap(w['_source']) for w in results]
-
-            def _fmt_result(domain, u):
-                return {
-                    'email': u.get_email(),
-                    'domain': domain,
-                    'name': u.full_name,
-                    'role': u.role_label(domain),
-                    'phoneNumbers': u.phone_numbers,
-                    'id': u.get_id,
-                    'editUrl': reverse('user_account', args=[domain, u.get_id]),
-                    'removeUrl': (
-                        reverse('remove_web_user', args=[domain, u.user_id])
-                        if self.request.user.username != u.username else None
-                    ),
-                }
-            web_users_fmt = [_fmt_result(self.domain, u) for u in web_users]
-
-            return {
-                'response': {
-                    'users': web_users_fmt,
-                    'total': total,
-                    'page': page,
-                    'query': query,
-                },
-                'success': True,
-            }
-        except Exception as e:
-            return {
-                'error': e.message,
-                'success': False,
-            }
-    '''
-
     @property
     @memoized
     def can_restrict_access_by_location(self):
@@ -561,6 +491,68 @@ class ListWebUsersView(BaseUserSettingsView):
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
         }
+
+
+@require_can_edit_web_users
+@require_GET
+@location_safe_for_ews_ils
+def paginate_web_users(request, domain):
+    def _query_es(limit, skip, query=None):
+        web_user_filter = [
+            {"term": {"user.domain_memberships.domain": domain}},
+        ]
+        web_user_filter.extend(ADD_TO_ES_FILTER['web_users'])
+
+        q = {
+            "filter": {"and": web_user_filter},
+            "sort": {'username.exact': 'asc'},
+        }
+        default_fields = ["username", "last_name", "first_name"]
+        q["query"] = search_string_query(query, default_fields)
+        return es_query(
+            params={}, q=q, es_index='users',
+            size=limit, start_at=skip,
+        )
+
+    try:
+        limit = request.GET.get('limit', 10)
+        page = request.GET.get('page', 1)
+        skip = limit * (page - 1)
+        query = request.GET.get('query')
+
+        web_users_query = _query_es(limit, skip, query=query)
+        total = web_users_query.get('hits', {}).get('total', 0)
+        results = web_users_query.get('hits', {}).get('hits', [])
+
+        web_users = [WebUser.wrap(w['_source']) for w in results]
+
+        def _fmt_result(domain, u):
+            return {
+                'email': u.get_email(),
+                'domain': domain,
+                'name': u.full_name,
+                'role': u.role_label(domain),
+                'phoneNumbers': u.phone_numbers,
+                'id': u.get_id,
+                'editUrl': reverse('user_account', args=[domain, u.get_id]),
+                'removeUrl': (
+                    reverse('remove_web_user', args=[domain, u.user_id])
+                    if request.user.username != u.username else None
+                ),
+            }
+        web_users_fmt = [_fmt_result(domain, u) for u in web_users]
+
+        response = {
+            'users': web_users_fmt,
+            'total': total,
+            'page': page,
+            'query': query,
+        }
+    except Exception as e:  # TODO: don't wrap this all in a try?
+        response = {
+            'error': e.message,
+        }
+    return json_response(response)
 
 
 @require_can_edit_web_users
