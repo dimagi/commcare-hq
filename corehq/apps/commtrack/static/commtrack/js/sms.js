@@ -18,7 +18,7 @@ hqDefine('commtrack/js/sms', function () {
 
         this.load = function (data) {
             this.actions($.map(data.actions, function (e) {
-                return new ActionModel(e);
+                return actionModel(e);
             }));
         };
 
@@ -29,7 +29,7 @@ hqDefine('commtrack/js/sms', function () {
         };
 
         this.new_action = function () {
-            settings.actions.push(new ActionModel({}));
+            settings.actions.push(actionModel({}));
         };
 
         this.validate = function () {
@@ -84,7 +84,7 @@ hqDefine('commtrack/js/sms', function () {
         this.validate_sms = function (model, attr, type, id) {
             var conflict = this.sms_code_uniqueness(model[attr](), type, id);
             if (conflict) {
-                model[attr + '_error']('conficts with ' + conflict.name);
+                model[attr + 'Error']('conficts with ' + conflict.name);
                 return false;
             }
             return true;
@@ -97,45 +97,48 @@ hqDefine('commtrack/js/sms', function () {
         };
     }
 
-    function ActionModel(data) {
-        this.keyword = ko.observable(data.keyword);
-        this.caption = ko.observable(data.caption);
-        this.type = ko.observable(data.type);
-        this.name = data.name;
+    function actionModel(data) {
+        let self = {};
+        self.keyword = ko.observable(data.keyword);
+        self.caption = ko.observable(data.caption);
+        self.type = ko.observable(data.type);
+        self.name = data.name;
 
-        this.keyword_error = ko.observable();
-        this.caption_error = ko.observable();
+        self.keywordError = ko.observable();
+        self.captionError = ko.observable();
 
-        this.validate = function (root) {
-            this.keyword_error(null);
-            this.caption_error(null);
+        self.validate = function (root) {
+            self.keywordError(null);
+            self.captionError(null);
 
-            var valid = true;
+            let valid = true;
 
-            if (!this.keyword()) {
-                this.keyword_error('required');
+            if (!self.keyword()) {
+                self.keywordError('required');
                 valid = false;
             }
-            if (!this.caption()) {
-                this.caption_error('required');
+            if (!self.caption()) {
+                self.captionError('required');
                 valid = false;
             }
 
-            if (!root.validate_sms(this, 'keyword', 'action', root.actions().indexOf(this))) {
+            if (!root.validate_sms(self, 'keyword', 'action', root.actions().indexOf(self))) {
                 valid = false;
             }
 
             return valid;
         };
 
-        this.to_json = function () {
+        self.to_json = function () {
             return {
-                keyword: this.keyword(),
-                caption: this.caption(),
-                type: this.type(),
-                name: this.name,
+                keyword: self.keyword(),
+                caption: self.caption(),
+                type: self.type(),
+                name: self.name,
             };
         };
+
+        return self;
     }
 
     function initCommtrackSettingsView($element, settings, other_sms_codes) {
