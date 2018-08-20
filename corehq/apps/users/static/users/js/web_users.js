@@ -1,15 +1,25 @@
 hqDefine("users/js/web_users", function() {
-    /*'use strict';
-    var usersApp = window.angular.module('usersApp', ['hq.web_users']);
-    usersApp.config(['$httpProvider', function($httpProvider) {
-        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
-    }]);
-    usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
-        djangoRMIProvider.configure(hqImport("hqwebapp/js/initial_page_data").get("djng_current_rmi"));
-    }]);*/
+    $(function() {
+        var $userTableBody = $("#web-users-table tbody"),
+            userTemplate = _.template($userTableBody.find("script").remove().html());
+        $.ajax({
+            method: 'GET',
+            url: hqImport("hqwebapp/js/initial_page_data").reverse('paginate_web_users'),
+            data: {
+                page: 1,    // TODO
+                query: '',  // TODO
+            },
+            success: function(data) {
+                $userTableBody.empty();
+                _.each(data.users, function(user) {
+                    $userTableBody.append(userTemplate(user));
+                });
+            },
+            error: function() {
+                // TODO
+            },
+        });
+    });
 
     $(function() {
         function selectText(element) {

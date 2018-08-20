@@ -515,8 +515,8 @@ def paginate_web_users(request, domain):
         )
 
     try:
-        limit = request.GET.get('limit', 10)
-        page = request.GET.get('page', 1)
+        limit = int(request.GET.get('limit', 10))
+        page = int(request.GET.get('page', 1))
         skip = limit * (page - 1)
         query = request.GET.get('query')
 
