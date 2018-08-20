@@ -59,6 +59,8 @@ from custom.icds_reports.models import (
     UcrTableNameMapping)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
+from custom.icds_reports.models.views import AwcLocationMonths
+from custom.icds_reports.reports.disha import DishaDump
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
@@ -789,6 +791,17 @@ def collect_inactive_awws():
     sync.store_file_in_blobdb(export_file)
     sync.save()
     celery_task_logger.info("Ended updating the Inactive AWW")
+
+
+@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='20'), acks_late=True)
+def build_disha_dump():
+    states = AwcLocationMonths.objects.values_list('state_name', flat=True).distinct()
+    last_month = date.today().replace(day=1)
+
+    for state_name in states:
+        celery_task_logger.info("Started dumping DISHA data {}".format(state_name))
+        DishaDump(state_name, last_month).build()
+        celery_task_logger.info("Finished dumping DISHA data")
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')

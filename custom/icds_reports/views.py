@@ -74,6 +74,7 @@ from custom.icds_reports.reports.children_initiated_data import get_children_ini
 from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
     get_clean_water_sector_data
 from custom.icds_reports.reports.demographics_data import get_demographics_data
+from custom.icds_reports.reports.disha import DishaDump
 from custom.icds_reports.reports.early_initiation_breastfeeding import get_early_initiation_breastfeeding_chart,\
     get_early_initiation_breastfeeding_data, get_early_initiation_breastfeeding_map
 from custom.icds_reports.reports.enrolled_children import get_enrolled_children_data_chart,\
@@ -1756,25 +1757,12 @@ class DishaAPIView(View):
         if state_name not in self.valid_state_names:
             return JsonResponse(self.message('invalid_state'), status=400)
 
-        return self._get_json_data(query_month, state_name)
+        data = DishaDump(state_name, query_month).get_data()
+        if not data:
+            return JsonResponse({"message": "Data is not updated for this month"})
+        return HttpResponse(data, content_type='application/json')
 
     @property
     @quickcache([])
     def valid_state_names(self):
-        return AwcLocationMonths.objects.values_list('state_name', flat=True)
-
-    def _get_json_data(self, query_month, state_name):
-        # Todo; cache monthly payloads
-        columns = [field.name for field in DishaIndicatorView._meta.fields]
-        columns.remove("month")
-        data = DishaIndicatorView.objects.filter(
-            month=query_month,
-            state_name__iexact=state_name
-        ).values_list(*columns)
-        response = {
-            "month": str(query_month),
-            "state_name": state_name,
-            "column_names": columns,
-            "rows": list(data)
-        }
-        return JsonResponse(response)
+        return AwcLocationMonths.objects.values_list('state_name', flat=True).distinct()
