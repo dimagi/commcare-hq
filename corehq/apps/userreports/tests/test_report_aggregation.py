@@ -861,7 +861,6 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                 {
                     'type': 'conditional_aggregation',
                     'display': 'age_range',
-                    'field': 'age_at_registration',
                     'column_id': 'age_range',
                     'whens': {
                         "age_at_registration between 0 and 6": "0-6",

@@ -18,164 +18,118 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "display": "Date Case Opened",
         "slug": "opened_on",
-        "field": "opened_on",
         "type": "date",
-        "display": "Date Case Opened"
+        "field": "opened_on",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "datatype": "integer",
-        "required": false,
+        "display": "Age at Registration Low Bound",
         "slug": "age_at_reg",
-        "field": "age_at_reg",
         "type": "numeric",
-        "display": "Age at Registration Low Bound"
+        "field": "age_at_reg",
+        "datatype": "integer"
       },
       {
-        "compare_as_string": false,
-        "datatype": "integer",
-        "required": false,
+        "display": "Age at Registration High Bound",
         "slug": "age_at_reg1",
-        "field": "age_at_reg",
         "type": "numeric",
-        "display": "Age at Registration High Bound"
+        "field": "age_at_reg",
+        "datatype": "integer"
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "choice_provider": {
-          "type": "location"
-        },
-        "required": false,
         "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
-        "type": "dynamic_choice_list",
-        "slug": "awc_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
-        "type": "dynamic_choice_list",
-        "slug": "supervisor_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
-        "type": "dynamic_choice_list",
-        "slug": "block_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by District",
-        "field": "district_id",
+        "slug": "district_id",
         "type": "dynamic_choice_list",
-        "slug": "district_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
+        "field": "district_id",
         "choice_provider": {
           "type": "location"
-        },
-        "required": false,
+        }
+      },
+      {
         "display": "Filter by State",
-        "field": "state_id",
+        "slug": "state_id",
         "type": "dynamic_choice_list",
-        "slug": "state_id"
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
       }
     ],
     "columns": [
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "owner_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "owner_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_resident_count",
         "column_id": "F_resident_count",
+        "type": "field",
         "field": "F_resident_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "F_resident_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_resident_count",
         "column_id": "M_resident_count",
+        "type": "field",
         "field": "M_resident_count",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "M_resident_count"
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_migrant_count",
         "column_id": "F_migrant_count",
-        "field": "F_migrant_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "F_migrant_count"
+        "field": "F_migrant_count",
+        "aggregation": "sum",
+        "calculate_total": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_migrant_count",
         "column_id": "M_migrant_count",
-        "field": "M_migrant_count",
-        "transform": {},
-        "calculate_total": true,
         "type": "field",
-        "display": "M_migrant_count"
+        "field": "M_migrant_count",
+        "aggregation": "sum",
+        "calculate_total": true
       }
     ],
     "sort_expression": [],
