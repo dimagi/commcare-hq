@@ -1770,15 +1770,22 @@ class AnnualPlanContactForm(forms.Form):
         widget=forms.Textarea
     )
 
-    def __init__(self, domain, web_user, data=None, *args, **kwargs):
+    def __init__(self, domain, web_user, on_annual_plan, data=None, *args, **kwargs):
         self.domain = domain
         self.web_user = web_user
         super(AnnualPlanContactForm, self).__init__(data, *args, **kwargs)
-        from corehq.apps.domain.views import SelectPlanView
+        from corehq.apps.domain.views import SelectPlanView, DomainSubscriptionView
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = "form-horizontal"
+        import ipdb; ipdb.set_trace()
+        if on_annual_plan:
+            back_button_text = "Back to my Subscription"
+            urlname = DomainSubscriptionView.urlname
+        else:
+            back_button_text = "Select different plan"
+            urlname = SelectPlanView.urlname
         self.helper.layout = crispy.Layout(
             'name',
             'company_name',
@@ -1790,8 +1797,8 @@ class AnnualPlanContactForm(forms.Form):
                     css_class="btn-primary",
                 ),
                 hqcrispy.LinkButton(
-                    _("Select different plan"),
-                    reverse(SelectPlanView.urlname, args=[self.domain]),
+                    _(back_button_text),
+                    reverse(urlname, args=[self.domain]),
                     css_class="btn btn-default"
                 ),
             )

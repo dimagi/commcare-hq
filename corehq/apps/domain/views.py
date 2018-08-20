@@ -629,7 +629,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_end': date_end,
             'cards': cards,
             'next_subscription': next_subscription,
-            'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line
+            'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line,
+            'is_annual_plan': plan_version.plan.is_annual_plan
         }
         info['has_account_level_credit'] = (
             any(
@@ -1427,6 +1428,13 @@ class SelectedAnnualPlanView(SelectPlanView):
         return last_steps
 
     @property
+    def on_annual_plan(self):
+        if self.current_subscription is None:
+            return False
+        else:
+            return self.current_subscription.plan_version.plan.is_annual_plan
+
+    @property
     @memoized
     def is_not_redirect(self):
         return not 'plan_edition' in self.request.POST
@@ -1435,8 +1443,9 @@ class SelectedAnnualPlanView(SelectPlanView):
     @memoized
     def annual_plan_contact_form(self):
         if self.request.method == 'POST' and self.is_not_redirect:
-            return AnnualPlanContactForm(self.domain, self.request.couch_user, data=self.request.POST)
-        return AnnualPlanContactForm(self.domain, self.request.couch_user)
+            return AnnualPlanContactForm(self.domain, self.request.couch_user, self.on_annual_plan,
+                                         data=self.request.POST)
+        return AnnualPlanContactForm(self.domain, self.request.couch_user, self.on_annual_plan)
 
     @property
     def page_context(self):

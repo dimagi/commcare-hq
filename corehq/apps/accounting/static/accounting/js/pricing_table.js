@@ -1,5 +1,5 @@
 hqDefine('accounting/js/pricing_table', function () {
-    var pricingTableModel = function (editions, current_edition, isRenewal, isAnnualPricing) {
+    var pricingTableModel = function (editions, current_edition, isRenewal, showMonthlyPricing) {
         'use strict';
         var self = {};
 
@@ -20,7 +20,7 @@ hqDefine('accounting/js/pricing_table', function () {
             self.selected_edition(self.currentEdition);
         };
 
-        self.isAnnualPricing = ko.observable(isAnnualPricing);
+        self.showMonthlyPricing = ko.observable(showMonthlyPricing);
 
         self.form = undefined;
         self.openDowngradeModal = function(pricingTable, e) {
@@ -61,19 +61,28 @@ hqDefine('accounting/js/pricing_table', function () {
             console.log(self.isAnnualPricing())
         };
         self.updateIsMonthlyPricing = function () {
-            self.isAnnualPricing(false);
+            self.isAnnualPricing(true);
             console.log(self.isAnnualPricing())
         };
-
-        self.openContactSalesModal = function (pricingTable, e) {
-            var $modal = $("#modal-contact-sales");
-            $modal.modal('show');
+        self.updatePricing = function () {
+            debugger;
+            self.showMonthlyPricing($('#pricing-toggle')[0].checked);
+            console.log(self.showMonthlyPricing());
         };
+        self.annualPricing = function () {    // TODO: Get rid of this in favor of the toggle button
+            self.showMonthlyPricing(false);
+        };
+        self.monthlyPricing = function () {   // TODO: Get rid of this in favor of the toggle button
+            self.showMonthlyPricing(true);
+        };
+
         self.contactSales = function (pricingTable, e) {
-            // TODO: Send email to sales and HubSpot form
-            $("#modal-contact-sales").hide();
-            var $modal = $("#modal-thank-you");
-            $modal.modal('show');
+            var $button = $(e.currentTarget);
+            $button.disableButton();
+
+            self.form = $(e.currentTarget).closest("form");
+            self.currentEdition = self.currentEdition + " - annual pricing";
+            self.form.submit();
         };
 
         self.init = function () {
@@ -124,16 +133,17 @@ hqDefine('accounting/js/pricing_table', function () {
                 initial_page_data('editions'),
                 initial_page_data('current_edition'),
                 initial_page_data('is_renewal'),
-                true
+                false
             );
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
         $('#pricing-table').koApplyBindings(pricingTable);
         $('#modal-downgrade').koApplyBindings(pricingTable);
-        $('#toggle-annual-pricing').koApplyBindings(pricingTable);
         $('#annual-pricing-table').koApplyBindings(pricingTable);
-        $('#modal-contact-sales').koApplyBindings(pricingTable);
+
+        $('#toggle-annual-pricing').koApplyBindings(pricingTable);
+        $('#plans').koApplyBindings(pricingTable);
 
         pricingTable.init();
     }());
