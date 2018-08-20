@@ -1731,7 +1731,6 @@ class DishaAPIView(View):
             "missing_date": "Please specify valid month and year",
             "invalid_month": "Please specify a month that's older than a month and 5 days",
             "invalid_state": "Please specify one of {} as state_name".format(state_names),
-            "data_is_unavailable": "No data is available for this month"
         }
         return {"message": error_messages[message_name]}
 
@@ -1772,8 +1771,6 @@ class DishaAPIView(View):
             month=query_month,
             state_name__iexact=state_name
         ).values_list(*columns)
-        if not len(data):
-            return JsonResponse(self.message('data_is_unavailable'), status=404)
         response = {
             "month": str(query_month),
             "state_name": state_name,
