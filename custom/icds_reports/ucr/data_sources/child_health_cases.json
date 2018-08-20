@@ -553,7 +553,7 @@
       {
         "display_name": null,
         "property_path": [],
-        "datatype": "decimal",
+        "datatype": "integer",
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "birth_weight",
