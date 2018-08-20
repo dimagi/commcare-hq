@@ -29,7 +29,7 @@ from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_succ
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilterAllUsers
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, ExpandedMobileWorkerFilterAllUsers
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, SubmitHistoryFilter
 from corehq.apps.reports.views import should_update_export
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
@@ -2081,7 +2081,7 @@ class GenericDownloadNewExportMixin(object):
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
-    export_filter_class = ExpandedMobileWorkerFilterAllUsers
+    export_filter_class = SubmitHistoryFilter
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)

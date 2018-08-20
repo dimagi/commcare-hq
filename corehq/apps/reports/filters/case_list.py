@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 from memoized import memoized
 
 from corehq.apps.locations.permissions import location_safe
-from .users import ExpandedMobileWorkerFilter, EmwfUtilsAllUsers, EmwfUtils
+from .users import ExpandedMobileWorkerFilter, SubmitHistoryUtils, EmwfUtils
 
 
 class CaseListFilterUtils(EmwfUtils):
@@ -31,7 +31,7 @@ class CaseListFilterUtils(EmwfUtils):
             return self.reporting_group_tuple(group)
 
 
-class CaseListFilterUtilsAllUsers(EmwfUtilsAllUsers):
+class CaseListFilterUtilsAllUsers(SubmitHistoryUtils):
 
     def sharing_group_tuple(self, g):
         return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])

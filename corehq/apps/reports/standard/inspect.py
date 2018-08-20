@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_noop, get_language
 from corehq.apps.es import forms as form_es, filters as es_filters
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilterAllUsers as EMWF
+from corehq.apps.reports.filters.users import SubmitHistoryFilter as EMWF
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -48,7 +48,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilterAllUsers',
+        'corehq.apps.reports.filters.users.SubmitHistoryFilters',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',

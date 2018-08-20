@@ -183,7 +183,7 @@ class EmwfUtils(object):
         return ret
 
 
-class EmwfUtilsAllUsers(EmwfUtils):
+class SubmitHistoryUtils(EmwfUtils):
     @property
     @memoized
     def static_options(self):
@@ -208,8 +208,7 @@ class UsersUtils(EmwfUtils):
         return (uid, name)
 
 
-class UsersUtilsAllUsers(EmwfUtilsAllUsers):
-
+class UsersUtilsAllUsers(SubmitHistoryUtils):
     def user_tuple(self, u):
         user = util._report_user_dict(u)
         uid = "%s" % user['user_id']
@@ -441,17 +440,17 @@ def get_user_toggle(request):
     return toggle, show_filter
 
 
-class ExpandedMobileWorkerFilterAllUsers(ExpandedMobileWorkerFilter):
+class SubmitHistoryFilter(ExpandedMobileWorkerFilter):
     options_url = 'emwf_options_all_users'
 
     @property
     @memoized
     def utils(self):
-        return EmwfUtilsAllUsers(self.domain)
+        return SubmitHistoryUtils(self.domain)
 
     @property
     def filter_context(self):
-        context = super(ExpandedMobileWorkerFilterAllUsers, self).filter_context
+        context = super(SubmitHistoryFilter, self).filter_context
         url = reverse(self.options_url, args=[self.domain])
         context.update({'endpoint': url})
         if self.request.project.uses_locations:
