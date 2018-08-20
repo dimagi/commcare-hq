@@ -443,6 +443,8 @@ def get_user_toggle(request):
 
 
 class ExpandedMobileWorkerFilterAllUsers(ExpandedMobileWorkerFilter):
+    options_url = 'emwf_options_all_users'
+
     @property
     @memoized
     def utils(self):
