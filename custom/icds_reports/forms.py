@@ -23,7 +23,7 @@ class AppTranslationsForm(forms.Form):
         ],
         widget=forms.CheckboxSelectMultiple(),
         required=False,
-        initial='use_version_postfix',
+        initial='yes',
     )
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
