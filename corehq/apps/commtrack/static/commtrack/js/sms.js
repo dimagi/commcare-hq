@@ -2,7 +2,7 @@
 hqDefine('commtrack/js/sms', function () {
     'use strict';
     function commtrackSettingsViewModel(other_sms_codes) {
-        let self = {};
+        var self = {};
         self.actions = ko.observableArray();
 
         self.json_payload = ko.observable();
@@ -34,8 +34,8 @@ hqDefine('commtrack/js/sms', function () {
         self.validate = function () {
             self.keyword_error(null);
 
-            let that = self;
-            let valid = true;
+            var that = self;
+            var valid = true;
 
             $.each(self.actions(), function (i, e) {
                 if (!e.validate(that)) {
@@ -51,12 +51,12 @@ hqDefine('commtrack/js/sms', function () {
                 return false;
             }
 
-            let payload = self.to_json();
+            var payload = self.to_json();
             self.json_payload(JSON.stringify(payload));
         };
 
         self.all_sms_codes = function () {
-            let keywords = [];
+            var keywords = [];
 
             $.each(other_sms_codes, function (k, v) {
                 keywords.push({keyword: k, type: v[0], name: 'product "' + v[1] + '"', id: null});
@@ -70,7 +70,7 @@ hqDefine('commtrack/js/sms', function () {
         };
 
         self.sms_code_uniqueness = function (keyword, type, id) {
-            let conflict = null;
+            var conflict = null;
             $.each(self.all_sms_codes(), function (i, e) {
                 if (keyword === e.keyword && !(type === e.type && id === e.id)) {
                     conflict = e;
@@ -81,7 +81,7 @@ hqDefine('commtrack/js/sms', function () {
         };
 
         self.validate_sms = function (model, attr, type, id) {
-            let conflict = self.sms_code_uniqueness(model[attr](), type, id);
+            var conflict = self.sms_code_uniqueness(model[attr](), type, id);
             if (conflict) {
                 model[attr + 'Error']('conficts with ' + conflict.name);
                 return false;
@@ -99,7 +99,7 @@ hqDefine('commtrack/js/sms', function () {
     }
 
     function actionModel(data) {
-        let self = {};
+        var self = {};
         self.keyword = ko.observable(data.keyword);
         self.caption = ko.observable(data.caption);
         self.type = ko.observable(data.type);
@@ -112,7 +112,7 @@ hqDefine('commtrack/js/sms', function () {
             self.keywordError(null);
             self.captionError(null);
 
-            let valid = true;
+            var valid = true;
 
             if (!self.keyword()) {
                 self.keywordError('required');

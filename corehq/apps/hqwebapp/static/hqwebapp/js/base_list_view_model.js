@@ -1,97 +1,97 @@
 hqDefine("hqwebapp/js/base_list_view_model", function() {
     var BaseListViewModel = function (o) {
         'use strict';
-        var view_model = {};
+        var self = {};
 
-        view_model.initialLoad = ko.observable(false);
+        self.initialLoad = ko.observable(false);
 
-        view_model.dataList = ko.observableArray();
+        self.dataList = ko.observableArray();
 
         // track any items that were archived/unarchived asynchronously
-        view_model.archiveActionItems = ko.observableArray();
+        self.archiveActionItems = ko.observableArray();
 
-        view_model.showInactive = o.show_inactive;
-        view_model.listURL = o.list_url;
+        self.showInactive = o.show_inactive;
+        self.listURL = o.list_url;
 
-        view_model.total = ko.observable(o.total);
-        view_model.pageLimit = ko.observable(o.limit);
-        view_model.max_page = ko.computed(function () {
-            return Math.ceil(view_model.total()/view_model.pageLimit());
+        self.total = ko.observable(o.total);
+        self.pageLimit = ko.observable(o.limit);
+        self.max_page = ko.computed(function () {
+            return Math.ceil(self.total()/self.pageLimit());
         });
-        view_model.current_page = ko.observable(o.start_page);
-        view_model.next_page = ko.computed(function () {
-            var page = view_model.current_page() + 1;
-            if (page > view_model.max_page()) {
+        self.current_page = ko.observable(o.start_page);
+        self.next_page = ko.computed(function () {
+            var page = self.current_page() + 1;
+            if (page > self.max_page()) {
                 return undefined;
             }
             return page;
         });
-        view_model.previous_page = ko.computed(function () {
-            var page = view_model.current_page() - 1;
+        self.previous_page = ko.computed(function () {
+            var page = self.current_page() - 1;
             if (page < 1) {
                 return undefined;
             }
             return page;
         });
 
-        view_model.all_pages = ko.computed(function () {
-            var last_ind = view_model.max_page()+1;
-            if (view_model.max_page() <= 5 || view_model.current_page() <= 3)
+        self.all_pages = ko.computed(function () {
+            var last_ind = self.max_page()+1;
+            if (self.max_page() <= 5 || self.current_page() <= 3)
                 return _.range(1, Math.min(last_ind, 6));
-            if (view_model.current_page() >= view_model.max_page()-2)
-                return _.range(view_model.max_page()-4, last_ind);
-            return _.range(view_model.current_page()-2, Math.min(last_ind, view_model.current_page()+3));
+            if (self.current_page() >= self.max_page()-2)
+                return _.range(self.max_page()-4, last_ind);
+            return _.range(self.current_page()-2, Math.min(last_ind, self.current_page()+3));
         });
 
-        view_model.update_limit = function (model, event) {
+        self.update_limit = function (model, event) {
             var elem = $(event.currentTarget);
-            view_model.pageLimit(elem.val());
-            view_model.change_page(1);
+            self.pageLimit(elem.val());
+            self.change_page(1);
         };
 
-        view_model.get_data_index = function (index) {
-            return index() + ((view_model.current_page() - 1) * view_model.pageLimit()) + 1;
+        self.getDataIndex = function (index) {
+            return index() + ((self.current_page() - 1) * self.pageLimit()) + 1;
         };
 
-        view_model.take_archive_action = function (action_url, button, data_index) {
+        self.takeArchiveAction = function (action_url, button, data_index) {
             $(button).button('loading');
             data_index = ko.utils.unwrapObservable(data_index);
             $.ajax({
                 type: 'POST',
                 url: action_url,
                 dataType: 'json',
-                error: view_model.unsuccessfulArchiveAction(button),
-                success: view_model.successful_archive_action(button, data_index),
+                error: self.unsuccessfulArchiveAction(button),
+                success: self.successfulArchiveAction(button, data_index),
             });
         };
 
-        view_model.successful_archive_action = function (button, index) {
+        self.successfulArchiveAction = function (button, index) {
             return function (data) {
                 if (data.success) {
                     var $modal = $(button).parent().parent().parent().parent();
                     $modal.modal('hide');
                     $modal.on('hidden.bs.modal', function () {
-                        var data_list = view_model.dataList(),
-                            actioned = view_model.archiveActionItems();
-                        actioned.push(data_list[index]);
-                        data_list = _.difference(data_list, actioned);
-                        view_model.total(view_model.total()-1);
-                        view_model.dataList(data_list);
-                        view_model.archiveActionItems(actioned);
+                        var dataList = self.dataList(),
+                            actioned = self.archiveActionItems();
+                        actioned.push(dataList[index]);
+                        dataList = _.difference(dataList, actioned);
+                        self.total(self.total()-1);
+                        self.dataList(dataList);
+                        self.archiveActionItems(actioned);
                     });
                 } else {
-                    view_model.unsuccessfulArchiveAction(button)(data);
+                    self.unsuccessfulArchiveAction(button)(data);
                 }
             };
         };
 
-        view_model.unsuccessfulArchiveAction = function (button) {
+        self.unsuccessfulArchiveAction = function (button) {
             return function () {
                 $(button).button('unsuccessful');
             };
         };
 
-        return view_model;
+        return self;
     };
 
     return {
