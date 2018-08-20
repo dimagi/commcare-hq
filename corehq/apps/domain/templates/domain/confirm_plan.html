@@ -1,8 +1,17 @@
 {% extends "domain/base_change_plan.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% requirejs_main 'accounting/js/confirm_plan' %}
 
 {% block form_content %}
+{% initial_page_data 'is_upgrade' is_upgrade|BOOL %}
+{% initial_page_data 'next_invoice_date' next_invoice_date %}
+{% initial_page_data 'current_plan' current_plan %}
+{% initial_page_data 'new_plan' plan.name %}
+{% initial_page_data 'is_downgrade_before_minimum' is_downgrade_before_minimum %}
+{% initial_page_data 'current_subscription_end_date' current_subscription_end_date %}
+{% registerurl 'email_on_downgrade' domain %}
+{% registerurl 'confirm_billing_account_info' domain %}
     <p class="lead">
         {% blocktrans with plan.name as p %}
         You have selected the <strong>{{ p }} Software Plan</strong>.
@@ -31,13 +40,36 @@
     </p>
     {% endif %}
     {% if current_plan %}
-    <hr />
-    <div class="alert alert-danger">
-        {% blocktrans with current_plan.name as p %}
-        <h4>Note: Continuing will change your current subscription.</h4>
-        <p>You are currently subscribed to the <strong>{{ p }} Software Plan</strong></p>
-        {% endblocktrans %}
-    </div>
+        {% if is_upgrade %}
+        <hr />
+        <div class="alert alert-danger">
+            {% blocktrans with next_invoice_date as invoice_date %}
+            <h4>Note: Continuing will change your current subscription.</h4>
+            <p>CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.
+                You should expect your first invoice on {{ invoice_date }}, or you can prepay for your
+                subscription by following the instructions
+                <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>.
+            </p>
+            <input type="checkbox" id="user-agreement" value="True"> I understand and wish to continue.<br>
+            {% endblocktrans %}
+        </div>
+        {% elif is_downgrade_before_minimum %}
+        <hr />
+        <div class="alert alert-danger">
+            {% blocktrans with current_plan.name as p %}
+            <p>We’re sorry to see you downgrade. You’ll have access to the features on your
+            <strong>{{ p }} Software Plan </strong> through {{ current_subscription_end_date }}.</p>
+            {% endblocktrans %}
+        </div>
+        {% else %}
+        <hr />
+        <div class="alert alert-danger">
+            {% blocktrans with current_plan.name as p %}
+            <h4>Note: Continuing will change your current subscription.</h4>
+            <p>You are currently subscribed to the <strong>{{ p }} Software Plan</strong></p>
+            {% endblocktrans %}
+        </div>
+        {% endif %}
     {% endif %}
 
     {% if downgrade_messages %}
@@ -69,21 +101,48 @@
     {% else %}
     <form action="{% url 'confirm_billing_account_info' domain %}" method="post" class="form">
         {% csrf_token %}
-        <hr />
         <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
+        <hr />
         <p>
             {% blocktrans %}
-            Clicking the 'Select this Plan' button below will bring you to a page where you can enter basic billing information.
+            Clicking the 'Confirm Plan' button below will bring you to a page where you can confirm your billing information.
             {% endblocktrans %}
         </p>
         <div class="form-actions">
             <div class="col-sm-6">
                 <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
-                <button type="submit" class="btn btn-primary">
-                    {% trans 'Select this Plan' %}
+                <button class="btn btn-primary" id="confirm-plan" data-bind="click: openDowngradeModal">
+                    {% trans 'Confirm Plan' %}
                 </button>
             </div>
         </div>
     </form>
     {% endif %}
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+<div class="modal fade" id="modal-downgrade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">{% trans "Close" %}</span>
+                </button>
+                <h4 class="modal-title">Downgrading?</h4>
+            </div>
+            <div class="modal-body">
+                {% blocktrans %}
+                    We'd love to make CommCare work better for you.
+                    Let us know what we can do to improve, or why you're downgrading.
+                {% endblocktrans %}
+                <br><br>
+                <textarea class="form-control"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade">{% trans "OK" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -1153,6 +1153,7 @@ class Subscription(models.Model):
         """
         assert date_start is not None
         for sub in Subscription.visible_objects.filter(
+            Q(date_end__isnull=True) | Q(date_end__gt=F('date_start')),
             subscriber=self.subscriber,
         ).exclude(
             id=self.id,
@@ -1737,6 +1738,18 @@ class Subscription(models.Model):
             last_subscription.account.pk == account.pk and
             last_subscription.plan_version.pk == plan_version.pk
         ), last_subscription
+
+    @property
+    def is_below_minimum_subscription(self):
+        if self.is_trial:
+            return False
+        elif self.date_start <= datetime.date(2018, 7, 1): # TODO: Set this date to be the date we launch this feature
+            # Only block upgrades for subscriptions created after the date we launched the 30-Day Minimum
+            return False
+        elif self.date_start + datetime.timedelta(days=30) >= datetime.date.today():
+            return True
+        else:
+            return False
 
 
 class InvoiceBaseManager(models.Manager):
