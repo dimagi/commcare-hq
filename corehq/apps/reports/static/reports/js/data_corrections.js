@@ -29,6 +29,7 @@ hqDefine("reports/js/data_corrections", [
     "underscore",
     "hqwebapp/js/assert_properties",
     "analytix/js/kissmetrix",
+    "hqwebapp/js/components.ko",     // pagination
 ], function(
     $,
     ko,
@@ -64,6 +65,9 @@ hqDefine("reports/js/data_corrections", [
         // Core data, and the order in which it should be displayed
         self.properties = {};                       // map of name => PropertyModel, populated in init
         self.propertyNames = ko.observableArray();  // populated in init, whether names were provided in options or via ajax
+        self.grandTotal = ko.computed(function() {
+            return self.propertyNames().length;
+        });
 
         // Handle modal size: small, large or full-screen, with one, two, or three columns, respectively.
         self.itemsPerColumn = 12;
