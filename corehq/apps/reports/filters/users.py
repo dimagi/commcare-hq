@@ -207,15 +207,6 @@ class UsersUtils(EmwfUtils):
         name = "%s" % user['username_in_report']
         return (uid, name)
 
-
-class UsersUtilsAllUsers(SubmitHistoryUtils):
-    def user_tuple(self, u):
-        user = util._report_user_dict(u)
-        uid = "%s" % user['user_id']
-        name = "%s" % user['username_in_report']
-        return (uid, name)
-
-
 class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
     To get raw filter results:
