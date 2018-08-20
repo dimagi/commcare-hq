@@ -1,4 +1,8 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 from django.core.serializers.json import DjangoJSONEncoder
+from io import BytesIO
 
 import json
 
