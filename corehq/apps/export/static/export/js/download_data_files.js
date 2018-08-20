@@ -3,8 +3,8 @@ hqDefine("export/js/download_data_files",[
     'jquery',
     'hqwebapp/js/alert_user',
     'hqwebapp/js/initial_page_data',
-], function($, alertUser, initialPageData) {
-    var alertUser = alertUser.alert_user;
+], function($, alertUserModule, initialPageData) {
+    var alertUser = alertUserModule.alert_user;
     /**
      * Copies the URL of a data file to the clipboard
      *

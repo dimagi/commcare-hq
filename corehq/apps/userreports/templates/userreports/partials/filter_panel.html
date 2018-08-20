@@ -137,7 +137,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-bind="click: $root.unsetConfigBeingEdited">{% trans 'Cancel' %}</button>
-                                <div class="btn-group" data-bind='click: $root.trackSaveReport'
+                                <div class="btn-group save-report-modal"
                                      data-report="{createdByBuilder:{{ report.spec.report_meta.created_by_builder }}, reportType:{{ report.spec.report_meta.builder_report_type }}}">
                                     <span data-bind="saveButton2: $root.modalSaveButton.state, saveOptions: $root.modalSaveButton.saveOptions" id="save-configurable-repor"></span>
                                 </div>
