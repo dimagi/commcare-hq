@@ -20,7 +20,7 @@ from corehq.elastic import ESError
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils, UsersUtilsAllUsers
+from corehq.apps.reports.filters.users import EmwfUtils, EmwfUtilsAllUsers, UsersUtils, UsersUtilsAllUsers
 from corehq.apps.es import UserES, GroupES, groups
 from corehq.apps.locations.models import SQLLocation
 
@@ -241,7 +241,7 @@ class EmwfOptionsViewAllUsers(EmwfOptionsView):
     @property
     @memoized
     def utils(self):
-        return UsersUtilsAllUsers(self.domain)
+        return EmwfUtilsAllUsers(self.domain)
 
 
 class MobileWorkersOptionsView(EmwfOptionsView):
