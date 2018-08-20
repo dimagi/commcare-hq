@@ -15,7 +15,7 @@ hqDefine("app_manager/js/menu", function() {
                 params = {},
                 searchString = "";
             if (loc.search) {
-              params = $.unparam(loc.search.slice(1));
+                params = $.unparam(loc.search.slice(1));
             }
             params['lang'] = lang;
             searchString = "?" + $.param(params);
