@@ -1,5 +1,5 @@
 hqDefine("users/js/web_users", function() {
-    'use strict';
+    /*'use strict';
     var usersApp = window.angular.module('usersApp', ['hq.web_users']);
     usersApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
@@ -9,7 +9,7 @@ hqDefine("users/js/web_users", function() {
     }]);
     usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure(hqImport("hqwebapp/js/initial_page_data").get("djng_current_rmi"));
-    }]);
+    }]);*/
 
     $(function() {
         function selectText(element) {
@@ -48,7 +48,7 @@ hqDefine("users/js/web_users", function() {
         });
         $('#save_restrict_option').click(function(e) {
             var post_url = url("location_restriction_for_users");
-            $(this).text('Saving ...');
+            $(this).text(gettext('Saving ...'));
             $.post(post_url, {
                 restrict_users: $('#restrict_users')[0].checked,
             },

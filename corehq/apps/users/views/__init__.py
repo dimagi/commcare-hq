@@ -48,7 +48,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
-from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin, logout
+from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (location_safe, user_can_access_other_user,
                                                conditionally_location_safe)
 from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
@@ -383,12 +383,11 @@ def get_domain_languages(domain):
 
 
 @location_safe_for_ews_ils
-class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
+class ListWebUsersView(BaseUserSettingsView):
     template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
 
-    @use_angular_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
@@ -410,6 +409,7 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
             size=limit, start_at=skip,
         )
 
+    '''
     @allow_remote_invocation
     def get_users(self, in_data):
         if not isinstance(in_data, dict):
@@ -459,6 +459,7 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
                 'error': e.message,
                 'success': False,
             }
+    '''
 
     @property
     @memoized

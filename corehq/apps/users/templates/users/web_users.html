@@ -2,11 +2,10 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load djangular_tags %}
 
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/roles.js' %}"></script>
-    <script src="{% static 'users/js/web_users_list.ng.js' %}"></script>
+    <!--script src="{% static 'users/js/web_users_list.ng.js' %}"></script-->
     <script src="{% static 'users/js/web_users.js' %}"></script>
 {% endblock %}
 
@@ -17,7 +16,6 @@
     {% registerurl "delete_user_role" domain %}
     {% registerurl "location_restriction_for_users" domain %}
     {% registerurl "reinvite_web_user" domain %}
-    {% initial_page_data "djng_current_rmi" djng_current_rmi %}
     {% initial_page_data "user_roles" user_roles %}
     {% initial_page_data "default_role" default_role %}
     {% initial_page_data "report_list" report_list %}
@@ -113,6 +111,7 @@
                 </div>
             </div>
             <div class="panel-body">
+                {% comment %}
                 <table class="table table-striped table-responsive"
                        style="margin-bottom: 0;">
                     <thead>
@@ -201,6 +200,7 @@
                             max-size="maxSize"
                             ng-model="currentPage"
                             ng-change="pageChanged()"></pagination>
+                {% endcomment %}
 
                 {% if uses_locations and request|toggle_enabled:"RESTRICT_WEB_USERS_BY_LOCATION" %}
                     <div class="checkbox">
