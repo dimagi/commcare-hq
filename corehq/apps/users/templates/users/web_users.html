@@ -56,30 +56,30 @@
                         </tr>
                     </thead>
                     <tbody>
-                    {% for req in requests %}
-                        <tr>
-                            <td>
-                                {{ req.full_name }}
-                            </td>
-                            <td>
-                                {{ req.email }}
-                            </td>
-                            <td>
-                                <div>
-                                    <a href="{% url "invite_web_user" domain %}?request_id={{ req.id }}"
-                                        class="approve-request btn btn-default">
-                                        <i class="fa fa-check-square-o"></i>
-                                        {% trans "Approve Request" %}
-                                    </a>
-                                    <a href="#" class="btn btn-danger delete-request"
-                                       data-id={{ req.id }}>
-                                        <i class="fa fa-trash"></i>
-                                        {% trans "Delete Request" %}
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
+                        {% for req in requests %}
+                            <tr>
+                                <td>
+                                    {{ req.full_name }}
+                                </td>
+                                <td>
+                                    {{ req.email }}
+                                </td>
+                                <td>
+                                    <div>
+                                        <a href="{% url "invite_web_user" domain %}?request_id={{ req.id }}"
+                                            class="approve-request btn btn-default">
+                                            <i class="fa fa-check-square-o"></i>
+                                            {% trans "Approve Request" %}
+                                        </a>
+                                        <a href="#" class="btn btn-danger delete-request"
+                                           data-id={{ req.id }}>
+                                            <i class="fa fa-trash"></i>
+                                            {% trans "Delete Request" %}
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -87,20 +87,19 @@
     {% endif %}
 
     <div>
-        <div class="panel panel-default">
+        <div class="panel panel-default" id="web-users-panel">
             <div class="panel-heading">
                 <div class="row">
                     <div class="col-sm-6">
                         <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Current Users' %}</h3>
                     </div>
                     <div class="col-sm-6">
-                        <div class="input-group" id="search-box">
-                            <input type="text"
-                                   class="form-control"
+                        <div class="input-group">
+                            <input type="text" class="form-control"
+                                   data-bind="value: query"
                                    placeholder="{% trans "Filter Users..." %}">
                             <span class="input-group-btn">
-                                <button class="btn btn-default"
-                                        type="button">
+                                <button class="btn btn-default" type="button" data-bind="click: fetchUsers">
                                     <i class="fa fa-search"></i>
                                 </button>
                             </span>
@@ -109,8 +108,12 @@
                 </div>
             </div>
             <div class="panel-body">
+                <div data-bind="visible: showSpinner">
+                    <i class="fa fa-spin fa-spinner"></i>
+                    {% trans "Loading Users..." %}
+                </div>
                 <table class="table table-striped table-responsive"
-                       id="web-users-table"
+                       data-bind="visible: !showSpinner()"
                        style="margin-bottom: 0;">
                     <thead>
                         <tr>
@@ -121,85 +124,73 @@
                             <th>{% trans "Remove" %}</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody data-bind="foreach: users">
                         <tr>
-                            <td colspan="5">
-                                <i class="fa fa-spin fa-spinner"></i>
-                                {% trans "Loading Users..." %}
+                            <td>
+                                <a data-bind="attr: {href: editUrl}, text: email"></a>
+                            </td>
+                            <td data-bind="text: role"></td>
+                            <td data-bind="text: name"></td>
+                            <td>
+                                <ul data-bind="foreach: phoneNumbers">
+                                    <li data-bind="text: $data"></li>
+                                </ul>
+                            </td>
+                            <td>
+                                TODO: delete button
+                                {% verbatim %}
+                                    <!--div ng-show="user.removeUrl">
+                                        <button type="button"
+                                                class="btn btn-danger"
+                                                data-toggle="modal"
+                                                data-target="#remove_membership_{{ user.id }}">
+                                            <i class="fa fa-remove"></i> {% trans "Remove Membership" %}
+                                        </button>
+                                        <div id="remove_membership_{{ user.id }}"
+                                             class="modal fade">
+                                            <div class="modal-dialog">
+                                                <form class="modal-content"
+                                                      action="{{ user.removeUrl }}"
+                                                      method="post">
+                                                      {% csrf_token %}
+                                                    <div class="modal-header">
+                                                        <button type="button" class="close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                            <span class="sr-only">{% trans "Close" %}</span>
+                                                        </button>
+                                                        <h4 class="modal-title">{% trans "Remove User Membership" %}: {{ user.name }}</h4>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p class="lead">{% trans "Are you sure you want to remove this users's membership?" %}</p>
+                                                        <ul class="dl-horizontal">
+                                                            <dt>{% trans "E-mail" %}</dt>
+                                                            <dd>{{ user.email }}</dd>
+                                                            <dt>{% trans "Name" %}</dt>
+                                                            <dd>{{ user.name }}</dd>
+                                                            <dt>{% trans "Membership" %}</dt>
+                                                            <dd>{{ user.domain }}</dd>
+                                                            <dt>{% trans "Role" %}</dt>
+                                                            <dd>{{ user.role }}</dd>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button"
+                                                                class="btn btn-default"
+                                                                data-dismiss="modal">
+                                                            {% trans "Cancel" %}
+                                                        </button>
+                                                        <button type="submit"
+                                                                class="btn btn-danger">
+                                                            {% trans "Remove Membership" %}
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div-->
+                                {% endverbatim %}
                             </td>
                         </tr>
-                        <script type="text/html">
-                            <tr>
-                                <td>
-                                    <a href="<%= editUrl %>">
-                                        <%= email %>
-                                    </a>
-                                </td>
-                                <td><%= role %></td>
-                                <td><%= name %></td>
-                                <td>
-                                    <ul>
-                                        <% _.each(phoneNumbers, function(phoneNumber) { %>
-                                            <li><%= phoneNumber %></li>
-                                        <% }) %>
-                                    </ul>
-                                </td>
-                                <td>
-                                    TODO: delete button
-                                    {% verbatim %}
-                                        <!--div ng-show="user.removeUrl">
-                                            <button type="button"
-                                                    class="btn btn-danger"
-                                                    data-toggle="modal"
-                                                    data-target="#remove_membership_{{ user.id }}">
-                                                <i class="fa fa-remove"></i> {% trans "Remove Membership" %}
-                                            </button>
-                                            <div id="remove_membership_{{ user.id }}"
-                                                 class="modal fade">
-                                                <div class="modal-dialog">
-                                                    <form class="modal-content"
-                                                          action="{{ user.removeUrl }}"
-                                                          method="post">
-                                                          {% csrf_token %}
-                                                        <div class="modal-header">
-                                                            <button type="button" class="close">
-                                                                <span aria-hidden="true">&times;</span>
-                                                                <span class="sr-only">{% trans "Close" %}</span>
-                                                            </button>
-                                                            <h4 class="modal-title">{% trans "Remove User Membership" %}: {{ user.name }}</h4>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <p class="lead">{% trans "Are you sure you want to remove this users's membership?" %}</p>
-                                                            <ul class="dl-horizontal">
-                                                                <dt>{% trans "E-mail" %}</dt>
-                                                                <dd>{{ user.email }}</dd>
-                                                                <dt>{% trans "Name" %}</dt>
-                                                                <dd>{{ user.name }}</dd>
-                                                                <dt>{% trans "Membership" %}</dt>
-                                                                <dd>{{ user.domain }}</dd>
-                                                                <dt>{% trans "Role" %}</dt>
-                                                                <dd>{{ user.role }}</dd>
-                                                            </ul>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button"
-                                                                    class="btn btn-default"
-                                                                    data-dismiss="modal">
-                                                                {% trans "Cancel" %}
-                                                            </button>
-                                                            <button type="submit"
-                                                                    class="btn btn-danger">
-                                                                {% trans "Remove Membership" %}
-                                                            </button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div-->
-                                    {% endverbatim %}
-                                </td>
-                            </tr>
-                        </script>
                     </tbody>
                 </table>
                 {% comment %}

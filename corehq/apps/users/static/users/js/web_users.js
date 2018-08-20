@@ -1,34 +1,40 @@
 hqDefine("users/js/web_users", function() {
-    var fetchUsers = function(userTemplate, $userContainer, query) {
-        $.ajax({
-            method: 'GET',
-            url: hqImport("hqwebapp/js/initial_page_data").reverse('paginate_web_users'),
-            data: {
-                page: 1,    // TODO
-                query: query || '',
-            },
-            success: function(data) {
-                $userContainer.empty();
-                _.each(data.users, function(user) {
-                    $userContainer.append(userTemplate(user));
-                });
-            },
-            error: function() {
-                // TODO
-            },
-        });
+    var webUsersList = function() {
+        var self = {};
+        self.users = ko.observableArray([]);
+        self.query = ko.observable('');
+        self.showSpinner = ko.observable(true);
+
+        self.fetchUsers = function() {
+            self.users.removeAll();
+            self.showSpinner(true);
+            $.ajax({
+                method: 'GET',
+                url: hqImport("hqwebapp/js/initial_page_data").reverse('paginate_web_users'),
+                data: {
+                    page: 1,    // TODO
+                    query: self.query() || '',
+                },
+                success: function(data) {
+                    self.showSpinner(false);
+                    _.each(data.users, function(user) {
+                        self.users.push(user);
+                    });
+                },
+                error: function() {
+                    // TODO
+                },
+            });
+        };
+
+        // Initial page of users
+        self.fetchUsers();
+
+        return self;
     };
 
     $(function() {
-        var $userTableBody = $("#web-users-table tbody"),
-            userTemplate = _.template($userTableBody.find("script").remove().html()),
-            $searchBox = $("#search-box");
-
-        $searchBox.find(".btn").click(function() {
-            fetchUsers(userTemplate, $userTableBody, $searchBox.find("input").val());
-        });
-
-        fetchUsers(userTemplate, $userTableBody);
+        $("#web-users-panel").koApplyBindings(webUsersList());
     });
 
     $(function() {
