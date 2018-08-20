@@ -221,6 +221,24 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return [self.utils.reporting_group_tuple(g) for g in groups.run().hits]
 
 
+@location_safe
+class EmwfOptionsViewAllUsers(EmwfOptionsView):
+    @property
+    def data_sources(self):
+        if self.request.can_access_all_locations:
+            return [
+                (self.get_static_options_size, self.get_static_options),
+                (self.get_groups_size, self.get_groups),
+                (self.get_locations_size, self.get_locations),
+                (self.get_all_users_size, self.get_all_users),
+            ]
+        else:
+            return [
+                (self.get_locations_size, self.get_locations),
+                (self.get_all_users_size, self.get_all_users),
+            ]
+
+
 class MobileWorkersOptionsView(EmwfOptionsView):
     """
     Paginated Options for the Mobile Workers selection tool
