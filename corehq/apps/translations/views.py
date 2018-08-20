@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import openpyxl
 import polib
-import tempfile
 
 from io import open
 from memoized import memoized
@@ -21,6 +20,7 @@ from corehq.util.files import safe_filename_header
 from corehq.apps.domain.views import BaseDomainView
 from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
+from custom.icds.translations.integrations.utils import get_file_content_from_workbook
 
 
 class ConvertTranslations(BaseDomainView):
@@ -45,6 +45,9 @@ class ConvertTranslations(BaseDomainView):
 
     @staticmethod
     def _parse_excel_sheet(worksheet):
+        """
+        :return: the rows and the index for expected columns
+        """
         rows = [row for row in worksheet.iter_rows()]
         headers = [cell.value for cell in rows[0]]
         source = headers.index('source')
@@ -54,6 +57,9 @@ class ConvertTranslations(BaseDomainView):
         return rows, source, translation, occurrence, context
 
     def _generate_translations_for_po(self, worksheet):
+        """
+        :return: a list of Translation objects
+        """
         rows, source, translation, occurrence, context = self._parse_excel_sheet(worksheet)
         translations = {worksheet.title: []}
         for index, row in enumerate(rows[1:]):
@@ -69,12 +75,20 @@ class ConvertTranslations(BaseDomainView):
         return translations
 
     def _generate_po_file(self, worksheet):
+        """
+        extract translations from worksheet and converts to a po file
+        :return: PoFileGenerator object
+        """
         translations = self._generate_translations_for_po(worksheet)
         po_file_generator = PoFileGenerator()
         po_file_generator.generate_translation_files(translations, {})
         return po_file_generator
 
     def _generate_excel_file(self):
+        """
+        extract translations from po file and converts to a xlsx file
+        :return: Workbook object
+        """
         uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
         po_file = polib.pofile(uploaded_file.read())
         wb = openpyxl.Workbook()
@@ -97,10 +111,7 @@ class ConvertTranslations(BaseDomainView):
 
     def _excel_file_response(self):
         wb = self._generate_excel_file()
-        with tempfile.TemporaryFile(suffix='.xlsx') as f:
-            wb.save(f)
-            f.seek(0)
-            content = f.read()
+        content = get_file_content_from_workbook(wb)
         response = HttpResponse(content, content_type="text/html; charset=utf-8")
         response['Content-Disposition'] = safe_filename_header(self._uploaded_file_name.split('.po')[0], 'xlsx')
         return response
@@ -144,6 +155,10 @@ class PullResource(BaseDomainView):
         return {'pull_resource_form': self.pull_resource_form}
 
     def _generate_excel_file(self, domain, resource_slug):
+        """
+        extract translations from po file pulled from transifex and converts to a xlsx file
+        :return: Workbook object
+        """
         target_lang = self.pull_resource_form.cleaned_data['target_lang']
         transifex = Transifex(domain=domain, app_id=None,
                               source_lang=target_lang,
@@ -160,10 +175,7 @@ class PullResource(BaseDomainView):
     def _pull_resource(self, request):
         resource_slug = self.pull_resource_form.cleaned_data['resource_slug']
         wb = self._generate_excel_file(request.domain, resource_slug)
-        with tempfile.TemporaryFile(suffix='.xlsx') as f:
-            wb.save(f)
-            f.seek(0)
-            content = f.read()
+        content = get_file_content_from_workbook(wb)
         response = HttpResponse(content, content_type="text/html; charset=utf-8")
         response['Content-Disposition'] = safe_filename_header(resource_slug, 'xlsx')
         return response

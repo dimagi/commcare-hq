@@ -40,6 +40,7 @@ class ConvertTranslationsForm(forms.Form):
                 worksheet = workbook.worksheets[0]
                 rows = [row for row in worksheet.iter_rows()]
                 headers = [cell.value for cell in rows[0]]
+                # ensure mandatory columns in the excel sheet
                 if 'source' not in headers or 'translation' not in headers:
                     raise forms.ValidationError(_("Please ensure columns 'source' and 'translation' in the sheet"))
                 return uploaded_file
