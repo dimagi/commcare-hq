@@ -30,6 +30,7 @@ class CaseListFilterUtils(EmwfUtils):
         else:
             return self.reporting_group_tuple(group)
 
+
 class CaseListFilterUtilsAllUsers(EmwfUtilsAllUsers):
 
     def sharing_group_tuple(self, g):

@@ -1,14 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import functools
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
 from corehq.apps.es import forms as form_es, filters as es_filters
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
-from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilterAllUsers as EMWF
 
 from corehq.apps.reports.models import HQUserType
