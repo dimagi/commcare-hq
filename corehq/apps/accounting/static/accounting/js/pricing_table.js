@@ -91,7 +91,6 @@ hqDefine('accounting/js/pricing_table', [
                 success: _submitForm,
                 error: _submitForm,
             });
-
         };
 
         self.contactSales = function (pricingTable, e) {
@@ -175,9 +174,6 @@ hqDefine('accounting/js/pricing_table', [
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
         $('#plans').koApplyBindings(pricingTable);
         $('#modal-downgrade').koApplyBindings(pricingTable);
-        $('#toggle-annual-pricing').koApplyBindings(pricingTable);
-        $('#annual-pricing-table').koApplyBindings(pricingTable);
-        $('#modal-contact-sales').koApplyBindings(pricingTable);
 
         pricingTable.init();
     });
