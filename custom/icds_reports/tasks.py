@@ -793,7 +793,7 @@ def collect_inactive_awws():
     celery_task_logger.info("Ended updating the Inactive AWW")
 
 
-@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='20'), acks_late=True)
+@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='20'), acks_late=True, queue='icds_aggregation_queue')
 def build_disha_dump():
     states = AwcLocationMonths.objects.values_list('state_name', flat=True).distinct()
     last_month = date.today().replace(day=1)
