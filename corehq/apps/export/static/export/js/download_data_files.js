@@ -2,9 +2,9 @@
 hqDefine("export/js/download_data_files",[
     'jquery',
     'hqwebapp/js/alert_user',
-    'hqwebapp/js/initial_page_data'
+    'hqwebapp/js/initial_page_data',
 ], function($, alertUser, initialPageData) {
-    var alert_user = alertUser.alert_user;
+    var alertUser = alertUser.alert_user;
     /**
      * Copies the URL of a data file to the clipboard
      *
@@ -17,7 +17,7 @@ hqDefine("export/js/download_data_files",[
      */
     var copyDataFileUrl = function () {
         var url = window.location.origin + initialPageData.reverse('download_data_file',$(this).data("id"), $(this).data("name"));
-        var textareaElem = $('#url_'.concat($(this).data("id")))
+        var textareaElem = $('#url_'.concat($(this).data("id")));
 
         var showCopyDialog = function () {
             window.prompt(django.gettext("Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"), url);
@@ -29,7 +29,7 @@ hqDefine("export/js/download_data_files",[
             var copied = document.execCommand("copy");
             textareaElem.hide();
             if (copied) {
-                alert_user(django.gettext("Data file URL copied to clipboard."), "success", true);
+                alertUser(django.gettext("Data file URL copied to clipboard."), "success", true);
             } else {
                 showCopyDialog();
             }
@@ -54,13 +54,11 @@ hqDefine("export/js/download_data_files",[
             type: "DELETE",
             success: function () {
                 rowElem.remove();
-                alert_user(django.gettext("Data file deleted."), "success", true);
+                alertUser(django.gettext("Data file deleted."), "success", true);
             },
         });
     };
-
-
-$(document).on('click', '.copy-data-file', copyDataFileUrl);
-$(document).on('click', '.delete-data-file', deleteDataFile);
+    $(document).on('click', '.copy-data-file', copyDataFileUrl);
+    $(document).on('click', '.delete-data-file', deleteDataFile);
 
 });
