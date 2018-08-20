@@ -1735,10 +1735,10 @@ class DishaAPIView(View):
         }
         return {"message": error_messages[message_name]}
 
-    @method_decorator(api_auth)
-    @json_error
+    from corehq import toggles
+
+    @method_decorator([api_auth, toggles.ICDS_DISHA_API.required_decorator()])
     def get(self, request, *args, **kwargs):
-        # Todo; add disha API permission
         try:
             month = int(request.GET.get('month'))
             year = int(request.GET.get('year'))
