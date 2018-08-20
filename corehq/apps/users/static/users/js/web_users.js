@@ -8,11 +8,17 @@ hqDefine("users/js/web_users", function() {
         self.itemsPerPage = ko.observable();
         self.totalItems = ko.observable();
 
+        self.error = ko.observable();
         self.showSpinner = ko.observable(true);
+        self.showUsers = ko.computed(function() {
+            return !self.showSpinner() && !self.error();
+        });
 
         self.goToPage = function(page) {
             self.users.removeAll();
             self.showSpinner(true);
+            self.error('');
+
             $.ajax({
                 method: 'GET',
                 url: hqImport("hqwebapp/js/initial_page_data").reverse('paginate_web_users'),
@@ -30,7 +36,8 @@ hqDefine("users/js/web_users", function() {
                     });
                 },
                 error: function() {
-                    // TODO
+                    self.showSpinner(false);
+                    self.error(gettext("Could not load users. Please try again later or report an issue if this problem persists."));
                 },
             });
         };

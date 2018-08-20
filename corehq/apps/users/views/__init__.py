@@ -514,45 +514,39 @@ def paginate_web_users(request, domain):
             size=limit, start_at=skip,
         )
 
-    try:
-        limit = int(request.GET.get('limit', 10))
-        page = int(request.GET.get('page', 1))
-        skip = limit * (page - 1)
-        query = request.GET.get('query')
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    skip = limit * (page - 1)
+    query = request.GET.get('query')
 
-        web_users_query = _query_es(limit, skip, query=query)
-        total = web_users_query.get('hits', {}).get('total', 0)
-        results = web_users_query.get('hits', {}).get('hits', [])
+    web_users_query = _query_es(limit, skip, query=query)
+    total = web_users_query.get('hits', {}).get('total', 0)
+    results = web_users_query.get('hits', {}).get('hits', [])
 
-        web_users = [WebUser.wrap(w['_source']) for w in results]
+    web_users = [WebUser.wrap(w['_source']) for w in results]
 
-        def _fmt_result(domain, u):
-            return {
-                'email': u.get_email(),
-                'domain': domain,
-                'name': u.full_name,
-                'role': u.role_label(domain),
-                'phoneNumbers': u.phone_numbers,
-                'id': u.get_id,
-                'editUrl': reverse('user_account', args=[domain, u.get_id]),
-                'removeUrl': (
-                    reverse('remove_web_user', args=[domain, u.user_id])
-                    if request.user.username != u.username else None
-                ),
-            }
-        web_users_fmt = [_fmt_result(domain, u) for u in web_users]
-
-        response = {
-            'users': web_users_fmt,
-            'total': total,
-            'page': page,
-            'query': query,
+    def _fmt_result(domain, u):
+        return {
+            'email': u.get_email(),
+            'domain': domain,
+            'name': u.full_name,
+            'role': u.role_label(domain),
+            'phoneNumbers': u.phone_numbers,
+            'id': u.get_id,
+            'editUrl': reverse('user_account', args=[domain, u.get_id]),
+            'removeUrl': (
+                reverse('remove_web_user', args=[domain, u.user_id])
+                if request.user.username != u.username else None
+            ),
         }
-    except Exception as e:  # TODO: don't wrap this all in a try?
-        response = {
-            'error': e.message,
-        }
-    return json_response(response)
+    web_users_fmt = [_fmt_result(domain, u) for u in web_users]
+
+    return json_response({
+        'users': web_users_fmt,
+        'total': total,
+        'page': page,
+        'query': query,
+    })
 
 
 @require_can_edit_web_users
