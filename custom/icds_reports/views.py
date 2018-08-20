@@ -1743,7 +1743,7 @@ class DishaAPIView(View):
             month = int(request.GET.get('month'))
             year = int(request.GET.get('year'))
         except (ValueError, TypeError):
-            return JsonResponse(self.messages('missing_date'), status=400)
+            return JsonResponse(self.message('missing_date'), status=400)
 
         # Can return only one month old data if today is after 5th, otherwise
         #   can return two month's old data
@@ -1751,11 +1751,11 @@ class DishaAPIView(View):
         today = date.today()
         current_month = today - relativedelta(months=1) if today.day <= 5 else today
         if query_month > current_month:
-            return JsonResponse(self.messages('invalid_month'), status=400)
+            return JsonResponse(self.message('invalid_month'), status=400)
 
         state_name = self.request.GET.get('state_name')
         if state_name not in self.valid_state_names:
-            return JsonResponse(self.messages('invalid_state'), status=400)
+            return JsonResponse(self.message('invalid_state'), status=400)
 
         return self._get_json_data(query_month, state_name)
 
@@ -1773,7 +1773,7 @@ class DishaAPIView(View):
             state_name__iexact=state_name
         ).values_list(*columns)
         if not len(data):
-            return JsonResponse(self.messages('data_is_unavailable'), status=404)
+            return JsonResponse(self.message('data_is_unavailable'), status=404)
         response = {
             "month": str(query_month),
             "state_name": state_name,
