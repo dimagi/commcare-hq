@@ -13,7 +13,7 @@ from braces.views import JSONResponseMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
-from corehq.apps.reports.filters.case_list import CaseListFilterUtils
+from corehq.apps.reports.filters.case_list import CaseListFilterUtils, CaseListFilterUtilsAllUsers
 from corehq.apps.reports.util import SimplifiedUserInfo
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
@@ -320,12 +320,12 @@ class CaseListFilterOptions(EmwfOptionsView):
                 (self.get_groups_size, self.get_groups),
                 (self.get_sharing_groups_size, self.get_sharing_groups),
                 (self.get_locations_size, self.get_locations),
-                (self.get_all_users_size, self.get_all_users),
+                (self.get_active_users_size, self.get_active_users),
             ]
         else:
             return [
                 (self.get_locations_size, self.get_locations),
-                (self.get_all_users_size, self.get_all_users),
+                (self.get_active_users_size, self.get_active_users),
             ]
 
     def get_sharing_groups_size(self, query):
@@ -338,6 +338,31 @@ class CaseListFilterOptions(EmwfOptionsView):
                   .size(size)
                   .sort("name.exact"))
         return list(map(self.utils.sharing_group_tuple, groups.run().hits))
+
+
+@location_safe
+class CaseListFilterOptionsAllUsers(CaseListFilterOptions):
+    @property
+    @memoized
+    def utils(self):
+        return CaseListFilterUtilsAllUsers(self.domain)
+
+    @property
+    # Case list shows all users, instead of just active users
+    def data_sources(self):
+        if self.request.can_access_all_locations:
+            return [
+                (self.get_static_options_size, self.get_static_options),
+                (self.get_groups_size, self.get_groups),
+                (self.get_sharing_groups_size, self.get_sharing_groups),
+                (self.get_locations_size, self.get_locations),
+                (self.get_all_users_size, self.get_all_users),
+            ]
+        else:
+            return [
+                (self.get_locations_size, self.get_locations),
+                (self.get_all, self.get_all_users),
+            ]
 
 
 @location_safe

@@ -5,10 +5,10 @@ from django.utils.translation import ugettext as _
 from memoized import memoized
 
 from corehq.apps.locations.permissions import location_safe
-from .users import ExpandedMobileWorkerFilter, EmwfUtilsAllUsers
+from .users import ExpandedMobileWorkerFilter, EmwfUtilsAllUsers, EmwfUtils
 
 
-class CaseListFilterUtils(EmwfUtilsAllUsers):
+class CaseListFilterUtils(EmwfUtils):
 
     def sharing_group_tuple(self, g):
         return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])
@@ -17,6 +17,28 @@ class CaseListFilterUtils(EmwfUtilsAllUsers):
     @memoized
     def static_options(self):
         options = super(CaseListFilterUtils, self).static_options
+        # replace [Active Mobile Workers] and [Deactivated Mobile Workers] with case-list-specific options
+        assert options[0][0] == "t__0"
+        return [
+            ("all_data", _("[All Data (Active & Deactivated Owners)]")),
+            ('project_data', _("[Project Data (Active & Deactivated Owners)]"))
+        ] + options[1:]
+
+    def _group_to_choice_tuple(self, group):
+        if group.case_sharing:
+            return self.sharing_group_tuple(group)
+        else:
+            return self.reporting_group_tuple(group)
+
+class CaseListFilterUtilsAllUsers(EmwfUtilsAllUsers):
+
+    def sharing_group_tuple(self, g):
+        return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])
+
+    @property
+    @memoized
+    def static_options(self):
+        options = super(CaseListFilterUtilsAllUsers, self).static_options
         # replace [Active Mobile Workers] and [Deactivated Mobile Workers] with case-list-specific options
         assert options[0][0] == "t__0"
         assert options[1][0] == "t__5"
@@ -77,3 +99,19 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
             return self.default_selections
         else:
             return self._get_assigned_locations_default()
+
+
+@location_safe
+class CaseListFilterAllUsers(CaseListFilter):
+
+    options_url = 'case_list_options_all_users'
+
+    @property
+    @memoized
+    def utils(self):
+        return CaseListFilterUtilsAllUsers(self.domain)
+
+    @classmethod
+    def selected_group_ids(cls, mobile_user_and_group_slugs):
+        return (super(CaseListFilterAllUsers, cls).selected_group_ids(mobile_user_and_group_slugs) +
+                cls.selected_sharing_group_ids(mobile_user_and_group_slugs))
