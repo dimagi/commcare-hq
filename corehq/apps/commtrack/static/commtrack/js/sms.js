@@ -1,44 +1,43 @@
 /*globals hqDefine, ko, $ */
 hqDefine('commtrack/js/sms', function () {
     'use strict';
-    function CommtrackSettingsViewModel(other_sms_codes) {
-        this.actions = ko.observableArray();
+    function commtrackSettingsViewModel(other_sms_codes) {
+        let self = {};
+        self.actions = ko.observableArray();
 
-        this.json_payload = ko.observable();
+        self.json_payload = ko.observable();
 
-        this.keyword_error = ko.observable();
+        self.keyword_error = ko.observable();
 
         // TODO: sort out possibly removing this redundant declaration in js
-        this.action_types = [
+        self.action_types = [
             {label: 'Stock on hand', value: 'stockonhand'},
             {label: 'Receipts', value: 'receipts'},
             {label: 'Consumption', value: 'consumption'},
             {label: 'Stock out', value: 'stockout'},
         ];
 
-        this.load = function (data) {
-            this.actions($.map(data.actions, function (e) {
+        self.load = function (data) {
+            self.actions($.map(data.actions, function (e) {
                 return actionModel(e);
             }));
         };
 
-        var settings = this;
-
-        this.remove_action = function (action) {
-            settings.actions.remove(action);
+        self.remove_action = function (action) {
+            self.actions.remove(action);
         };
 
-        this.new_action = function () {
-            settings.actions.push(actionModel({}));
+        self.new_action = function () {
+            self.actions.push(actionModel({}));
         };
 
-        this.validate = function () {
-            this.keyword_error(null);
+        self.validate = function () {
+            self.keyword_error(null);
 
-            var that = this;
-            var valid = true;
+            let that = self;
+            let valid = true;
 
-            $.each(this.actions(), function (i, e) {
+            $.each(self.actions(), function (i, e) {
                 if (!e.validate(that)) {
                     valid = false;
                 }
@@ -47,32 +46,32 @@ hqDefine('commtrack/js/sms', function () {
             return valid;
         };
 
-        this.presubmit = function () {
-            if (!this.validate()) {
+        self.presubmit = function () {
+            if (!self.validate()) {
                 return false;
             }
 
-            var payload = this.to_json();
-            this.json_payload(JSON.stringify(payload));
+            let payload = self.to_json();
+            self.json_payload(JSON.stringify(payload));
         };
 
-        this.all_sms_codes = function () {
-            var keywords = [];
+        self.all_sms_codes = function () {
+            let keywords = [];
 
             $.each(other_sms_codes, function (k, v) {
                 keywords.push({keyword: k, type: v[0], name: 'product "' + v[1] + '"', id: null});
             });
 
-            $.each(this.actions(), function (i, e) {
+            $.each(self.actions(), function (i, e) {
                 keywords.push({keyword: e.keyword(), type: 'action', name: e.caption(), id: i});
             });
 
             return keywords;
         };
 
-        this.sms_code_uniqueness = function (keyword, type, id) {
-            var conflict = null;
-            $.each(this.all_sms_codes(), function (i, e) {
+        self.sms_code_uniqueness = function (keyword, type, id) {
+            let conflict = null;
+            $.each(self.all_sms_codes(), function (i, e) {
                 if (keyword === e.keyword && !(type === e.type && id === e.id)) {
                     conflict = e;
                     return false;
@@ -81,8 +80,8 @@ hqDefine('commtrack/js/sms', function () {
             return conflict;
         };
 
-        this.validate_sms = function (model, attr, type, id) {
-            var conflict = this.sms_code_uniqueness(model[attr](), type, id);
+        self.validate_sms = function (model, attr, type, id) {
+            let conflict = self.sms_code_uniqueness(model[attr](), type, id);
             if (conflict) {
                 model[attr + 'Error']('conficts with ' + conflict.name);
                 return false;
@@ -90,11 +89,13 @@ hqDefine('commtrack/js/sms', function () {
             return true;
         };
 
-        this.to_json = function () {
+        self.to_json = function () {
             return {
-                actions: $.map(this.actions(), function (e) { return e.to_json(); }),
+                actions: $.map(self.actions(), function (e) { return e.to_json(); }),
             };
         };
+
+        return self;
     }
 
     function actionModel(data) {
@@ -142,7 +143,7 @@ hqDefine('commtrack/js/sms', function () {
     }
 
     function initCommtrackSettingsView($element, settings, other_sms_codes) {
-        var model = new CommtrackSettingsViewModel(other_sms_codes);
+        var model = commtrackSettingsViewModel(other_sms_codes);
         $element.submit(function () {
             return model.presubmit();
         });
