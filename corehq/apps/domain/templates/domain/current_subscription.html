@@ -43,11 +43,21 @@
                             {% endblocktrans %}
                             </div>
                         {% endif %}
-                        <p>
-                            <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
-                                {% trans "Change Plan" %}
-                            </a>
-                        </p>
+                        {% if plan.is_annual_plan %}
+                        <form action="{% url 'annual_plan_request_quote' domain %}">
+                            Got questions about your plan?
+                            <div class="col-xs-offset-2">
+                                <button class="btn btn-primary btn-lg" data-bind="click: contactSales">{% trans 'Talk to Sales' %}</button>
+                            </div>
+                        </form>
+                        {% else %}
+                            <p>
+                                <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
+                                    {% trans "Change Plan" %}
+                                </a>
+                            </p>
+                        {% endif %}
+
                         {% if plan.is_trial %}
                             <div class="alert alert-info">
                                 <i class="fa fa-info-circle"></i>
