@@ -12,9 +12,14 @@ hqDefine("app_manager/js/menu", function() {
         $('#langs select').change(function () {
             var lang = $(this).find('option:selected').attr('value'),
                 loc = window.location,
-                params = $.unparam(loc.search.slice(1));
+                params = {},
+                searchString = "";
+            if (loc.search) {
+              params = $.unparam(loc.search.slice(1));
+            }
             params['lang'] = lang;
-            $(document).attr('location', loc.pathname + '?' + $.param(params) + loc.hash);
+            searchString = "?" + $.param(params);
+            $(document).attr('location', loc.pathname + searchString + loc.hash);
         });
     };
 
