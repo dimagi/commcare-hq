@@ -1,24 +1,34 @@
 hqDefine("users/js/web_users", function() {
-    $(function() {
-        var $userTableBody = $("#web-users-table tbody"),
-            userTemplate = _.template($userTableBody.find("script").remove().html());
+    var fetchUsers = function(userTemplate, $userContainer, query) {
         $.ajax({
             method: 'GET',
             url: hqImport("hqwebapp/js/initial_page_data").reverse('paginate_web_users'),
             data: {
                 page: 1,    // TODO
-                query: '',  // TODO
+                query: query || '',
             },
             success: function(data) {
-                $userTableBody.empty();
+                $userContainer.empty();
                 _.each(data.users, function(user) {
-                    $userTableBody.append(userTemplate(user));
+                    $userContainer.append(userTemplate(user));
                 });
             },
             error: function() {
                 // TODO
             },
         });
+    };
+
+    $(function() {
+        var $userTableBody = $("#web-users-table tbody"),
+            userTemplate = _.template($userTableBody.find("script").remove().html()),
+            $searchBox = $("#search-box");
+
+        $searchBox.find(".btn").click(function() {
+            fetchUsers(userTemplate, $userTableBody, $searchBox.find("input").val());
+        });
+
+        fetchUsers(userTemplate, $userTableBody);
     });
 
     $(function() {

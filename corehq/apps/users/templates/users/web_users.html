@@ -86,23 +86,20 @@
         </div>
     {% endif %}
 
-    <div ng-app="usersApp">
-        <div class="panel panel-default" ng-controller="paginatedListController">
+    <div>
+        <div class="panel panel-default">
             <div class="panel-heading">
                 <div class="row">
                     <div class="col-sm-6">
                         <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Current Users' %}</h3>
                     </div>
                     <div class="col-sm-6">
-                        <div class="input-group">
+                        <div class="input-group" id="search-box">
                             <input type="text"
                                    class="form-control"
-                                   ng-keypress="updateOnEnter($event)"
-                                   ng-model="query"
                                    placeholder="{% trans "Filter Users..." %}">
                             <span class="input-group-btn">
                                 <button class="btn btn-default"
-                                        ng-click="filterUsers()"
                                         type="button">
                                     <i class="fa fa-search"></i>
                                 </button>
