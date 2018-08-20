@@ -1756,6 +1756,70 @@ class EnterprisePlanContactForm(forms.Form):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
+class AnnualPlanContactForm(forms.Form):
+    name = forms.CharField(
+        label=ugettext_noop("Name")
+    )
+    company_name = forms.CharField(
+        required=False,
+        label=ugettext_noop("Company / Organization")
+    )
+    message = forms.CharField(
+        required=False,
+        label=ugettext_noop("Message"),
+        widget=forms.Textarea
+    )
+
+    def __init__(self, domain, web_user, data=None, *args, **kwargs):
+        self.domain = domain
+        self.web_user = web_user
+        super(AnnualPlanContactForm, self).__init__(data, *args, **kwargs)
+        from corehq.apps.domain.views import SelectPlanView
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = "form-horizontal"
+        self.helper.layout = crispy.Layout(
+            'name',
+            'company_name',
+            'message',
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Request Quote"),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+                hqcrispy.LinkButton(
+                    _("Select different plan"),
+                    reverse(SelectPlanView.urlname, args=[self.domain]),
+                    css_class="btn btn-default"
+                ),
+            )
+        )
+
+    def send_message(self):
+        subject = "[Annual Plan Request] %s" % self.domain
+        context = {
+            'name': self.cleaned_data['name'],
+            'company': self.cleaned_data['company_name'],
+            'message': self.cleaned_data['message'],
+            'domain': self.domain,
+            'email': self.web_user.email
+        }
+        html_content = render_to_string('accounting/email/annual_request.html', context)
+        text_content = """
+        Email: %(email)s
+        Name: %(name)s
+        Company: %(company)s
+        Domain: %(domain)s
+        Message:
+        %(message)s
+        """ % context
+        send_html_email_async.delay(subject, settings.BILLING_EMAIL,
+                                    html_content, text_content,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
+
+
 class TriggerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
