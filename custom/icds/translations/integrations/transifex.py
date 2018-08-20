@@ -36,15 +36,15 @@ class Transifex(object):
         self.is_source_file = is_source_file
         self.source_lang = source_lang
         self.lock_translations = lock_translations
-        self.po_file_generator = TransifexPOFileGenerator(domain, app_id, version, self.key_lang, source_lang, lang_prefix,
-                                                 exclude_if_default)
+        self.transifex_po_file_generator = TransifexPOFileGenerator(domain, app_id, version, self.key_lang, source_lang, lang_prefix,
+                                                          exclude_if_default)
 
     def send_translation_files(self):
         """
         submit files to transifex for performing translations
         """
         try:
-            self.po_file_generator.generate_translation_files()
+            self.transifex_po_file_generator.generate_translation_files()
             file_uploads = self._send_files_to_transifex()
             self._cleanup()
             return file_uploads
@@ -68,7 +68,7 @@ class Transifex(object):
 
     def _send_files_to_transifex(self):
         file_uploads = {}
-        for resource_name, path_to_file in self.po_file_generator.generated_files:
+        for resource_name, path_to_file in self.transifex_po_file_generator.generated_files:
             if self.is_source_file:
                 response = self.client.upload_resource(
                     path_to_file,
@@ -87,9 +87,7 @@ class Transifex(object):
         return file_uploads
 
     def _cleanup(self):
-        for resource_name, filepath in self.po_file_generator.generated_files:
-            if os.path.exists(filepath):
-                os.remove(filepath)
+        self.transifex_po_file_generator.po_file_generator.cleanup()
 
     @property
     @memoized

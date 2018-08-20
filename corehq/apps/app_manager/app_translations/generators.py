@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import os
 import polib
 import datetime
 import tempfile
@@ -185,6 +186,7 @@ class TransifexPOFileGenerator:
         self._build_translations()
         self.po_file_generator.generate_translation_files(self.translations, self._metadata)
 
+    @property
     def generated_files(self):
         return self.po_file_generator.generated_files
 
@@ -212,3 +214,8 @@ class PoFileGenerator(object):
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             po.save(temp_file.name)
             self.generated_files.append((file_name, temp_file.name))
+
+    def cleanup(self):
+        for resource_name, filepath in self.generated_files:
+            if os.path.exists(filepath):
+                os.remove(filepath)
