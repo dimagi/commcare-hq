@@ -16,11 +16,12 @@ from io import open
 
 
 class TransifexApiClient(object):
-    def __init__(self, token, organization, project):
+    def __init__(self, token, organization, project, use_version_postfix=True):
         self.username = API_USER
         self.token = token
         self.organization = organization
         self.project = project
+        self.use_version_postfix = use_version_postfix
 
     @property
     def _auth(self):
@@ -38,7 +39,7 @@ class TransifexApiClient(object):
         :return: list of resource slugs corresponding to version
         """
         all_resources = self.list_resources().json()
-        if version:
+        if version and self.use_version_postfix:
             return [r['slug']
                     for r in self.list_resources().json()
                     if r['slug'].endswith("v%s" % version)]
