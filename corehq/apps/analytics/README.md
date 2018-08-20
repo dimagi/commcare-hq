@@ -29,9 +29,9 @@ New tests need to be added to [ab_tests](https://github.com/dimagi/commcare-hq/b
 
 In production, analytics are tracked only\* on SaaS servers - that is, on [www.commcarehq.org](http://www.commcarehq.org). This is controlled by the `isEnabled` property in [global.html](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/templates/analytics/initial/global.html). All other servers bypass the setup code.
 
-Analytics run in staging via a debug flag. This debug flag, along with the necessary API keys, can be set in localsettings to enable analytics on your local server:
+Analytics are run in staging via a debug flag. This debug flag, along with the necessary API keys, can be set in localsettings to enable analytics on your local server:
 - `ANALYTICS_IDS`: Analytics code doesn't run if the relevant API key isn't provided. For most purposes, setting the key to a dummy value is sufficient. We have test API keys for Google Analytics and Kissmetrics; you can pull these from the [staging vault](https://github.com/dimagi/commcare-cloud/tree/master/src/commcare_cloud/ansible/README.md#managing-secrets-with-vault).
-- `ANALYTICS_CONFIG.DEBUG`: Set `DEBUG` to `True` to enable analytics, overriding the server-specific checks (you still need to set the API keys, too).
+- `ANALYTICS_CONFIG.DEBUG`: Set `DEBUG` to `True` to enable analytics and override the server-specific checks (you still need to set the API keys, too).
 - `ANALYTICS_CONFIG.LOG_LEVEL`: Controls the client-side logging. Turning it up to `verbose` can help debug.
 
 \* ICDS also tracks some analytics, but this happens outside of the main analytics framework described in these docs.
