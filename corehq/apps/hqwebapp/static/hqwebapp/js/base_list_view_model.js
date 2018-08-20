@@ -35,12 +35,12 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
         });
 
         self.all_pages = ko.computed(function () {
-            var last_ind = self.max_page()+1;
+            var lastInd = self.max_page()+1;
             if (self.max_page() <= 5 || self.current_page() <= 3)
-                return _.range(1, Math.min(last_ind, 6));
+                return _.range(1, Math.min(lastInd, 6));
             if (self.current_page() >= self.max_page()-2)
-                return _.range(self.max_page()-4, last_ind);
-            return _.range(self.current_page()-2, Math.min(last_ind, self.current_page()+3));
+                return _.range(self.max_page()-4, lastInd);
+            return _.range(self.current_page()-2, Math.min(lastInd, self.current_page()+3));
         });
 
         self.update_limit = function (model, event) {
@@ -53,15 +53,15 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
             return index() + ((self.current_page() - 1) * self.pageLimit()) + 1;
         };
 
-        self.takeArchiveAction = function (action_url, button, data_index) {
+        self.takeArchiveAction = function (actionUrl, button, dataIndex) {
             $(button).button('loading');
-            data_index = ko.utils.unwrapObservable(data_index);
+            dataIndex = ko.utils.unwrapObservable(dataIndex);
             $.ajax({
                 type: 'POST',
-                url: action_url,
+                url: actionUrl,
                 dataType: 'json',
                 error: self.unsuccessfulArchiveAction(button),
-                success: self.successfulArchiveAction(button, data_index),
+                success: self.successfulArchiveAction(button, dataIndex),
             });
         };
 

@@ -1,7 +1,7 @@
 /*globals hqDefine, ko, $ */
 hqDefine('commtrack/js/sms', function () {
     'use strict';
-    function commtrackSettingsViewModel(other_sms_codes) {
+    function commtrackSettingsViewModel(otherSmsCodes) {
         var self = {};
         self.actions = ko.observableArray();
 
@@ -58,7 +58,7 @@ hqDefine('commtrack/js/sms', function () {
         self.all_sms_codes = function () {
             var keywords = [];
 
-            $.each(other_sms_codes, function (k, v) {
+            $.each(otherSmsCodes, function (k, v) {
                 keywords.push({keyword: k, type: v[0], name: 'product "' + v[1] + '"', id: null});
             });
 
@@ -142,8 +142,8 @@ hqDefine('commtrack/js/sms', function () {
         return self;
     }
 
-    function initCommtrackSettingsView($element, settings, other_sms_codes) {
-        var model = commtrackSettingsViewModel(other_sms_codes);
+    function initCommtrackSettingsView($element, settings, otherSmsCodes) {
+        var model = commtrackSettingsViewModel(otherSmsCodes);
         $element.submit(function () {
             return model.presubmit();
         });
@@ -155,7 +155,7 @@ hqDefine('commtrack/js/sms', function () {
     $(function () {
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
         var settings = initial_page_data('settings');
-        var other_sms_codes = initial_page_data('other_sms_codes');
-        initCommtrackSettingsView($('#settings'), settings, other_sms_codes);
+        var otherSmsCodes = initial_page_data('other_sms_codes');
+        initCommtrackSettingsView($('#settings'), settings, otherSmsCodes);
     });
 });
