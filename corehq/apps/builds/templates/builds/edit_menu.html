@@ -3,9 +3,7 @@
 {% load compress %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-       {% requirejs_main 'builds/js/edit-builds' %}
-{% endblock %}
+{% requirejs_main 'builds/js/edit-builds' %}
 
 {% block stylesheets %}
     <style type="text/css">
@@ -49,7 +47,7 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody data-bind="foreach: versions">
+                    <tbody data-bind="sortable: versions">
                         <tr>
                             <td class="sortable-handle">
                                 <i class="fa fa-arrows-v"></i>

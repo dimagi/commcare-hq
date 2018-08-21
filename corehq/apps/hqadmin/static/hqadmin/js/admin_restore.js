@@ -1,10 +1,9 @@
 /* globals hqDefine ace */
 hqDefine('hqadmin/js/admin_restore',[
     "jquery",
+    "ace-builds/src-min-noconflict/ace",
     "jquery-treetable/jquery.treetable",
-    "ace-builds/src-min-noconflict/mode-xml",
-    "ace-builds/src-min-noconflict/ext-searchbox",
-],function ($) {
+],function ($,ace) {
     $(function() {
         $("#timingTable").treetable();
         var element = document.getElementById("payload");

@@ -8,10 +8,7 @@
     <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
 {% endblock stylesheets %}
 
-{% block js %}{{ block.super }}
-
-  {% requirejs_main 'hqadmin/js/admin_restore' %}
-{% endblock %}
+{% requirejs_main 'hqadmin/js/admin_restore' %}
 
 {% block content %}
     <div class="container-fluid">
