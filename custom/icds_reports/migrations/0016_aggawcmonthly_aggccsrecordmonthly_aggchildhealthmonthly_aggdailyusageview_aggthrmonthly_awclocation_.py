@@ -4,25 +4,6 @@ from __future__ import unicode_literals
 
 from __future__ import absolute_import
 from django.db import migrations, models
-from corehq.sql_db.operations import RawSQLMigration
-
-
-def get_view_migrations():
-    sql_views = [
-        'awc_location_months.sql',
-        'agg_awc_monthly.sql',
-        'agg_ccs_record_monthly.sql',
-        'agg_child_health_monthly.sql',
-        'daily_attendance.sql',
-        'agg_awc_daily.sql',
-        'child_health_monthly.sql',
-    ]
-
-    migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
-    operations = []
-    for view in sql_views:
-        operations.append(migrator.get_migration(view))
-    return operations
 
 
 class Migration(migrations.Migration):
@@ -33,7 +14,7 @@ class Migration(migrations.Migration):
         ('icds_reports', '0015_add_aggregation_level'),
     ]
 
-    operations = get_view_migrations() + [
+    operations = [
         migrations.CreateModel(
             name='AggAwcMonthly',
             fields=[

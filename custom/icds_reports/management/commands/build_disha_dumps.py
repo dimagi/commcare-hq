@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 import argparse
 
 from django.core.management.base import BaseCommand
@@ -12,7 +12,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         def valid_date(s):
             try:
-                return date.strptime(s, "%Y-%m-%d").date().replace(day=1)
+                return datetime.strptime(s, "%Y-%m-%d").date().replace(day=1)
             except ValueError:
                 msg = "Not a valid date: '{0}'.".format(s)
                 raise argparse.ArgumentTypeError(msg)
@@ -23,5 +23,7 @@ class Command(BaseCommand):
             help="Month of DISHA dump - format = YYYY-MM-DD",
         )
 
-    def handle(self, month):
+    def handle(self, month, *args, **kwargs):
+        print "Creating dumps"
         build_dumps_for_month(month)
+        print "Finished"
