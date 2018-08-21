@@ -23,7 +23,7 @@ from corehq.apps.export.models.new import (
     FormExportInstanceFilters,
     CaseExportInstanceFilters,
 )
-from corehq.apps.reports.filters.case_list import CaseListFilterAllUsers, CaseListFilterUtilsAllUsers
+from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilterUtils
 from corehq.apps.reports.filters.users import SubmitHistoryFilter, SubmitHistoryUtils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
@@ -474,7 +474,7 @@ class DashboardFeedFilterForm(forms.Form):
         super(DashboardFeedFilterForm, self).__init__(*args, **kwargs)
 
         self.fields['emwf_case_filter'].widget.set_url(
-            reverse(CaseListFilterAllUsers.options_url, args=(self.domain_object.name,))
+            reverse(CaseListFilter.options_url, args=(self.domain_object.name,))
         )
         self.fields['emwf_form_filter'].widget.set_url(
             reverse(SubmitHistoryFilter.options_url, args=(self.domain_object.name,))
@@ -591,15 +591,15 @@ class DashboardFeedFilterForm(forms.Form):
                 begin=self.cleaned_data['start_date'],
                 end=self.cleaned_data['end_date'],
             ),
-            users=CaseListFilterAllUsers.selected_user_ids(emwf_selections),
-            reporting_groups=CaseListFilterAllUsers.selected_reporting_group_ids(emwf_selections),
-            locations=CaseListFilterAllUsers.selected_location_ids(emwf_selections),
-            user_types=CaseListFilterAllUsers.selected_user_types(emwf_selections),
+            users=CaseListFilter.selected_user_ids(emwf_selections),
+            reporting_groups=CaseListFilter.selected_reporting_group_ids(emwf_selections),
+            locations=CaseListFilter.selected_location_ids(emwf_selections),
+            user_types=CaseListFilter.selected_user_types(emwf_selections),
             can_access_all_locations=can_access_all_locations,
             accessible_location_ids=accessible_location_ids,
-            sharing_groups=CaseListFilterAllUsers.selected_sharing_group_ids(emwf_selections),
-            show_all_data=CaseListFilterAllUsers.show_all_data(emwf_selections),
-            show_project_data=CaseListFilterAllUsers.show_project_data(emwf_selections),
+            sharing_groups=CaseListFilter.selected_sharing_group_ids(emwf_selections),
+            show_all_data=CaseListFilter.show_all_data(emwf_selections),
+            show_project_data=CaseListFilter.show_project_data(emwf_selections),
         )
 
     def _to_form_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
@@ -643,7 +643,7 @@ class DashboardFeedFilterForm(forms.Form):
                     (["project_data"] if export_instance_filters.show_project_data else [])
                 )
 
-            emwf_utils_class = CaseListFilterUtilsAllUsers if export_type is CaseExportInstance else \
+            emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else \
                 SubmitHistoryUtils
             emwf_data = []
             for item in selected_items:
@@ -1163,7 +1163,7 @@ class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
 
 class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExportDownloadForm):
     export_user_filter = OwnerFilter
-    dynamic_filter_class = CaseListFilterAllUsers
+    dynamic_filter_class = CaseListFilter
 
     _export_type = 'case'
 

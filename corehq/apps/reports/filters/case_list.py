@@ -31,21 +31,6 @@ class CaseListFilterUtils(EmwfUtils):
             return self.reporting_group_tuple(group)
 
 
-class CaseListFilterUtilsAllUsers(SubmitHistoryUtils):
-
-    @property
-    @memoized
-    def static_options(self):
-        options = super(CaseListFilterUtilsAllUsers, self).static_options
-        # replace [Active Mobile Workers] and [Deactivated Mobile Workers] with case-list-specific options
-        assert options[0][0] == "t__0"
-        assert options[1][0] == "t__5"
-        return [
-            ("all_data", _("[All Data (Active & Deactivated Owners)]")),
-            ('project_data', _("[Project Data (Active & Deactivated Owners)]"))
-        ] + options[2:]
-
-
 @location_safe
 class CaseListFilter(ExpandedMobileWorkerFilter):
 
@@ -91,19 +76,3 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
             return self.default_selections
         else:
             return self._get_assigned_locations_default()
-
-
-@location_safe
-class CaseListFilterAllUsers(CaseListFilter):
-
-    options_url = 'case_list_options_all_users'
-
-    @property
-    @memoized
-    def utils(self):
-        return CaseListFilterUtilsAllUsers(self.domain)
-
-    @classmethod
-    def selected_group_ids(cls, mobile_user_and_group_slugs):
-        return (super(CaseListFilterAllUsers, cls).selected_group_ids(mobile_user_and_group_slugs) +
-                cls.selected_sharing_group_ids(mobile_user_and_group_slugs))

@@ -21,7 +21,7 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
-from corehq.apps.reports.filters.case_list import CaseListFilterAllUsers as EMWF
+from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
@@ -33,7 +33,7 @@ from .data_sources import CaseInfo, CaseDisplay
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
-        'corehq.apps.reports.filters.case_list.CaseListFilterAllUsers',
+        'corehq.apps.reports.filters.case_list.CaseListFilter',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
         'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',

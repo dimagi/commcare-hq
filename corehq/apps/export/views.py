@@ -28,7 +28,7 @@ from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
-from corehq.apps.reports.filters.case_list import CaseListFilterAllUsers
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, SubmitHistoryFilter
 from corehq.apps.reports.views import should_update_export
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
@@ -2132,7 +2132,7 @@ class BulkDownloadNewFormExportView(DownloadNewFormExportView):
 class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExportView):
     urlname = 'new_export_download_cases'
     filter_form_class = FilterCaseESExportDownloadForm
-    export_filter_class = CaseListFilterAllUsers
+    export_filter_class = CaseListFilter
 
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
