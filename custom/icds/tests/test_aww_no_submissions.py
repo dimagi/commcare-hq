@@ -20,10 +20,7 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
         cls.domain_obj = create_domain(cls.domain)
 
         def make_user(name, location):
-            try:
-                user = CommCareUser.create(cls.domain, name, 'password')
-            except Exception:
-                user = CommCareUser.get_by_username(name)
+            user = CommCareUser.create(cls.domain, name, 'password')
             user.set_location(location)
             return user
 
