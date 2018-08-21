@@ -643,7 +643,8 @@ class DashboardFeedFilterForm(forms.Form):
                     (["project_data"] if export_instance_filters.show_project_data else [])
                 )
 
-            emwf_utils_class = CaseListFilterUtilsAllUsers if export_type is CaseExportInstance else SubmitHistoryUtils
+            emwf_utils_class = CaseListFilterUtilsAllUsers if export_type is CaseExportInstance else \
+                SubmitHistoryUtils
             emwf_data = []
             for item in selected_items:
                 choice_tuple = emwf_utils_class(domain).id_to_choice_tuple(str(item))
