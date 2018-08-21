@@ -7,9 +7,11 @@
 {% initial_page_data 'is_upgrade' is_upgrade|BOOL %}
 {% initial_page_data 'next_invoice_date' next_invoice_date %}
 {% initial_page_data 'current_plan' current_plan %}
-{% initial_page_data 'new_plan' plan.name %}
+{% initial_page_data 'new_plan_edition' new_plan_edition %}
+{% initial_page_data 'new_plan_name' plan.name %}
 {% initial_page_data 'is_downgrade_before_minimum' is_downgrade_before_minimum %}
 {% initial_page_data 'current_subscription_end_date' current_subscription_end_date %}
+{% initial_page_data 'start_date_after_minimum_subscription' start_date_after_minimum_subscription %}
 {% registerurl 'email_on_downgrade' domain %}
 {% registerurl 'confirm_billing_account_info' domain %}
     <p class="lead">
@@ -56,9 +58,11 @@
         {% elif is_downgrade_before_minimum %}
         <hr />
         <div class="alert alert-danger">
-            {% blocktrans with current_plan.name as p %}
-            <p>We’re sorry to see you downgrade. You’ll have access to the features on your
-            <strong>{{ p }} Software Plan </strong> through {{ current_subscription_end_date }}.</p>
+            {% blocktrans with current_plan as p %}
+            <p>You’ll have access to the features on your <strong>{{ p }} Edition Software Plan </strong>
+            through {{ current_subscription_end_date }}. On {{ start_date_after_minimum_subscription }} your
+            current subscription will be downgraded to the {{ new_plan_edition }} Edition Software Plan.
+            </p>
             {% endblocktrans %}
         </div>
         {% else %}
@@ -72,27 +76,6 @@
         {% endif %}
     {% endif %}
 
-    {% if downgrade_messages %}
-    <hr />
-    <h4>
-        {% if show_community_notice %}
-        {% trans 'Note: If you do not upgrade from the Community Plan the following changes will take place.' %}
-        {% else %}
-        {% trans 'Note: Selecting this plan will result in the following changes to your project.' %}
-        {% endif %}
-    </h4>
-    {% endif %}
-
-    {% for message in downgrade_messages %}
-        <div class="alert alert-warning">
-            {{ message.message }}
-            <ul>
-            {% for detail in message.details %}
-                <li>{{ detail|safe }}</li>
-            {% endfor %}
-            </ul>
-        </div>
-    {% endfor %}
     {% if show_community_notice %}
     <div class="form-actions">
         <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>

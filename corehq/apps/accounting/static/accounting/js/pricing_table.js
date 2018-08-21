@@ -9,7 +9,8 @@ hqDefine('accounting/js/pricing_table', [
     _,
     initialPageData
 ) {
-    var pricingTableModel = function (editions, currentEdition, isRenewal, startDate, isSubscriptionBelowMin) {
+    var pricingTableModel = function (editions, currentEdition, isRenewal, startDate, isSubscriptionBelowMin,
+    nextSubscription) {
         'use strict';
         var self = {};
 
@@ -17,6 +18,7 @@ hqDefine('accounting/js/pricing_table', [
         self.isRenewal = isRenewal;
         self.startDateAfterMinimumSubscription = startDate;
         self.subscriptionBelowMinimum = isSubscriptionBelowMin;
+        self.nextSubscription = nextSubscription;
         self.editions = ko.observableArray(_.map(editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
         }));
@@ -66,12 +68,17 @@ hqDefine('accounting/js/pricing_table', [
             var newStartDate = self.startDateAfterMinimumSubscription;
             var mailto = "<a href=\'mailto:billing-support@dimagi.com\'>billing-support@dimagi.com</a>";
             if (self.isDowngrade(oldPlan, newPlan) && self.subscriptionBelowMinimum) {
+                var message = "All CommCare subscriptions require a 30 day minimum commitment.";
+                if (self.nextSubscription) {
+                    message += " Your current " + oldPlan + " Edition Plan subscription is scheduled to be " +
+                        "downgraded to the " + self.nextSubscription + " Edition Plan on " + newStartDate + ". ";
+                }
+                message += " Continuing ahead will allow you to schedule your current " + oldPlan + " Edition " +
+                    "Plan subscription to be downgraded to the " + newPlan + " Edition Plan on " + newStartDate +
+                    ". If you have questions or if you would like to speak to us about your subscription, " +
+                    "please reach out to " + mailto + ".";
                 var $modal = $("#modal-minimum-subscription");
-                $modal.find('.modal-body')[0].innerHTML =
-                    "All CommCare subscriptions require a 30 day minimum commitment. Your current subscription " +
-                    "will be downgraded to " + newPlan + " on " + newStartDate + ". If you have questions or if " +
-                    "you would like to speak to someone about your subscription, please reach out to "
-                    + mailto + ".";
+                $modal.find('.modal-body')[0].innerHTML = message;
                 $modal.modal('show');
             } else {
                 self.form.submit();
@@ -132,7 +139,8 @@ hqDefine('accounting/js/pricing_table', [
             initialPageData.get('current_edition'),
             initialPageData.get('is_renewal'),
             initialPageData.get('start_date_after_minimum_subscription'),
-            initialPageData.get('subscription_below_minimum')
+            initialPageData.get('subscription_below_minimum'),
+            initialPageData.get('next_subscription')
         );
 
         // Applying bindings is a bit weird here, because we need logic in the modal,

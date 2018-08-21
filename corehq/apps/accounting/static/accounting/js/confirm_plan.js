@@ -68,7 +68,7 @@ hqDefine('accounting/js/confirm_plan', [
         var confirmPlan = confirmPlanModel(
             initialPageData.get('is_upgrade'),
             initialPageData.get('current_plan'),
-            initialPageData.get('new_plan')
+            initialPageData.get('new_plan_name')
         );
 
         $('#confirm-plan').koApplyBindings(confirmPlan);

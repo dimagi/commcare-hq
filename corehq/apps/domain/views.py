@@ -1279,8 +1279,17 @@ class SelectPlanView(DomainAccountingSettings):
         elif self.current_subscription.is_trial:
             return ""
         else:
-            new_start_date = self.current_subscription.date_start + datetime.timedelta(days=30)
+            new_start_date = self.current_subscription.date_start + datetime.timedelta(days=31)
             return new_start_date.strftime(USER_DATE_FORMAT)
+
+    @property
+    def next_subscription(self):
+        if self.current_subscription is None:
+            return None
+        elif self.current_subscription.next_subscription is None:
+            return None
+        else:
+            return self.current_subscription.next_subscription.plan_version.plan.edition
 
     @property
     def edition_name(self):
@@ -1337,7 +1346,8 @@ class SelectPlanView(DomainAccountingSettings):
                                 else ""),
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
-                                           if self.current_subscription is not None else False)
+                                           if self.current_subscription is not None else False),
+            'next_subscription': self.next_subscription
         }
 
 
@@ -1456,7 +1466,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
         current_edition = self.current_subscription.plan_version.plan.edition
         new_edition = self.edition
 
-        if current_edition == 'Community':
+        if self.current_subscription.is_trial or current_edition == 'Community':
             if new_edition == 'Standard' or new_edition == 'Pro' or new_edition == 'Advanced':
                 return True
         elif current_edition == 'Standard':
@@ -1491,29 +1501,18 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return datetime.date.today().replace(day=1) + dateutil.relativedelta.relativedelta(months=1)
 
     @property
-    def downgrade_messages(self):
-        subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        downgrades = get_change_status(
-            subscription.plan_version if subscription else None,
-            self.selected_plan_version
-        )[1]
-        downgrade_handler = DomainDowngradeStatusHandler(
-            self.domain_object, self.selected_plan_version, downgrades,
-        )
-        return downgrade_handler.get_response()
-
-    @property
     def page_context(self):
         return {
             'is_upgrade': self.is_upgrade,
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
-            'downgrade_messages': self.downgrade_messages,
-            'current_plan': (self.current_subscription.plan_version.user_facing_description
+            'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
             'show_community_notice': (self.edition == SoftwarePlanEdition.COMMUNITY
                                       and self.current_subscription is None),
             'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
-            'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT)
+            'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
+            'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
+            'new_plan_edition': self.edition
         }
 
     @property
@@ -1618,14 +1617,21 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             else:
                 if self.current_subscription.next_subscription is not None:
                     # New subscription has been scheduled for the future
+                    current_subscription = self.current_subscription.plan_version.plan.edition
                     start_date = self.current_subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT)
+                    # You have successfully scheduled your current Advanced Edition Plan
+                    # subscription to downgrade to the Pro Edition Plan on Sep 19, 2018.
                     message = _(
                         "You have successfully scheduled a subscription to the %s Software Plan, "
                         "set to start on %s."
                     ) % (software_plan_name, start_date)
+                    message = _(
+                        "You have successfully scheduled your current %s Edition Plan subscription to "
+                        "downgrade to the %s Edition Plan on %s."
+                    ) % (current_subscription, software_plan_name, start_date)
                 else:
                     message = _(
-                        "Your project has been successfully subscribed to the %s Software Plan."
+                        "Your project has been successfully subscribed to the %s Edition Plan."
                     ) % software_plan_name
                 messages.success(
                     request, message
