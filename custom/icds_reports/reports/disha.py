@@ -6,8 +6,11 @@ from io import BytesIO
 
 import json
 
-from custom.icds_reports.models.views import DishaIndicatorView
+from custom.icds_reports.models.views import AwcLocationMonths, DishaIndicatorView
 from custom.icds_reports.models.helper import IcdsFile
+
+
+DISHA_DUMP_EXPIRY = 60 * 60 * 24 * 360  # 1 year
 
 
 class DishaDump(object):
@@ -41,5 +44,12 @@ class DishaDump(object):
         }
         file = BytesIO(json.dumps(data, cls=DjangoJSONEncoder))
         blob_ref = IcdsFile.objects.get_or_create(blob_id=self._blob_id(), data_type='disha_dumps')
-        blob_ref.store_file_in_blobdb(file)
+        blob_ref.store_file_in_blobdb(file, expired=DISHA_DUMP_EXPIRY)
         blob_ref.save()
+
+
+def build_dumps_for_month(month):
+    states = AwcLocationMonths.objects.values_list('state_name', flat=True).distinct()
+
+    for state_name in states:
+        DishaDump(state_name, month).build()
