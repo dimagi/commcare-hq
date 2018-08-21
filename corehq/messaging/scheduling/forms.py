@@ -2867,6 +2867,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, _("The Case's Owner")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, _("The Case's Last Submitting User")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, _("The Case's Parent Case")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES, _("The Case's Child Cases")),
         ]
         new_choices.extend(self.fields['recipient_types'].choices)
 
@@ -3414,6 +3415,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES,
         ):
             if recipient_type_without_id in recipient_types:
                 result.append((recipient_type_without_id, None))
