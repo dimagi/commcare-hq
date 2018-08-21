@@ -27,6 +27,7 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
         cls.loc_types = setup_location_types(cls.domain, ['awc'])
         cls.loc = make_loc('awc', type='awc', domain=cls.domain)
         cls.user = make_user('user', cls.loc)
+        cls.user_sans_app_status = make_user('user_sans_app_status', cls.loc)
         cls.batch = Batch.objects.create(
             start_datetime=datetime.now(),
             end_datetime=datetime.now(),
@@ -104,5 +105,14 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
         self.app_fact.last_form_submission_date = None
         self.app_fact.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
+        self.assertEqual(len(messages), 1)
+        self.assertIn('one month', messages[0])
+
+    def test_no_app_status_fact(self):
+        messages = run_indicator_for_user(
+            self.user_sans_app_status,
+            AWWSubmissionPerformanceIndicator,
+            language_code='en',
+        )
         self.assertEqual(len(messages), 1)
         self.assertIn('one month', messages[0])
