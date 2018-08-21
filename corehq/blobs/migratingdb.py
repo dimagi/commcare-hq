@@ -12,6 +12,10 @@ class MigratingBlobDB(object):
     def __init__(self, new_db, old_db):
         self.new_db = new_db
         self.old_db = old_db
+        assert new_db.metadb is not old_db.metadb
+        # prevent over-reporting of deleted blobs on bulk delete
+        # new_db.bulk_delete will delete the metadata
+        old_db.metadb.bulk_delete = lambda metas: None
 
     def put(self, *args, **kw):
         return self.new_db.put(*args, **kw)
@@ -36,13 +40,13 @@ class MigratingBlobDB(object):
         old_result = self.old_db.delete(*args, **kw)
         return new_result or old_result
 
-    def bulk_delete(self, paths):
-        new_result = self.new_db.bulk_delete(paths)
-        old_result = self.old_db.bulk_delete(paths)
+    def bulk_delete(self, *args, **kw):
+        new_result = self.new_db.bulk_delete(*args, **kw)
+        old_result = self.old_db.bulk_delete(*args, **kw)
         return new_result or old_result
 
     def get_path(self, *args, **kw):
         return self.new_db.get_path(*args, **kw)
 
-    def copy_blob(self, content, info, bucket):
-        self.new_db.copy_blob(content, info, bucket)
+    def copy_blob(self, *args, **kw):
+        self.new_db.copy_blob(*args, **kw)

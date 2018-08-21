@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.test import TestCase
+from unittest import TestCase
 from io import BytesIO
 
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import InvalidContext, NotFound
-from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
+from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, get_id
 
 
 class TestAtomicBlobs(TestCase):
@@ -22,36 +22,36 @@ class TestAtomicBlobs(TestCase):
 
     def test_put(self):
         with AtomicBlobs(self.db) as db:
-            meta = db.put(BytesIO(b"content"), meta=new_meta())
-        with self.db.get(key=meta.key) as fh:
+            info = db.put(BytesIO(b"content"), get_id())
+        with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_failed(self):
         with self.assertRaises(Boom), AtomicBlobs(self.db) as db:
-            meta = db.put(BytesIO(b"content"), meta=new_meta())
+            info = db.put(BytesIO(b"content"), get_id())
             raise Boom()
         with self.assertRaises(NotFound):
-            self.db.get(key=meta.key)
+            self.db.get(info.identifier)
 
     def test_put_outside_context(self):
         with AtomicBlobs(self.db) as db:
             pass
         with self.assertRaises(InvalidContext):
-            db.put(BytesIO(b"content"), meta=new_meta())
+            db.put(BytesIO(b"content"), get_id())
 
     def test_delete(self):
-        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        info = self.db.put(BytesIO(b"content"), get_id())
         with AtomicBlobs(self.db) as db:
-            db.delete(key=meta.key)
+            db.delete(info.identifier)
         with self.assertRaises(NotFound):
-            self.db.get(key=meta.key)
+            self.db.get(info.identifier)
 
     def test_delete_failed(self):
-        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        info = self.db.put(BytesIO(b"content"), get_id())
         with self.assertRaises(Boom), AtomicBlobs(self.db) as db:
-            db.delete(key=meta.key)
+            db.delete(info.identifier)
             raise Boom()
-        with self.db.get(key=meta.key) as fh:
+        with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_delete_outside_context(self):
