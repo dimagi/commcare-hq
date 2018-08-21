@@ -22,6 +22,7 @@ describe('Registered Household Directive', function () {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
+        window.ga = function(action, event, labels) {return};
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('registered_household').respond(200, {

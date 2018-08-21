@@ -38,6 +38,7 @@ describe('Prevalence Of Severe Directive feature flag disable', function () {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
+        window.ga = function(action, event, labels) {return};
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('prevalence_of_severe').respond(200, {
