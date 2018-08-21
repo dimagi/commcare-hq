@@ -13,7 +13,7 @@ SELECT
     "awc_monthly"."state_name" AS "state_name",
     "awc_monthly"."aggregation_level" AS "aggregation_level",
     "awc_monthly"."month" AS "month",
-    "agg_awc"."cases_household",
+    "awc_monthly"."cases_household",
     "awc_monthly"."cases_person_all",
     "awc_monthly"."cases_person",
     "awc_monthly"."cases_ccs_pregnant_all",
@@ -72,15 +72,6 @@ SELECT
     CASE WHEN  "child_health"."fully_immunized_eligible"=0 THEN null 
         ELSE 100 * ("child_health"."fully_immunized_on_time" + "child_health"."fully_immunized_late")/ "child_health"."fully_immunized_eligible" END as "immunized_percent"    
 FROM "agg_awc_monthly" "awc_monthly"
-LEFT JOIN "agg_awc" ON (
-        ("awc_monthly"."month" = "agg_awc"."month") AND
-        ("awc_monthly"."aggregation_level" = "agg_awc"."aggregation_level") AND
-        ("awc_monthly"."state_id" = "agg_awc"."state_id") AND
-        ("awc_monthly"."district_id" = "agg_awc"."district_id") AND
-        ("awc_monthly"."block_id" = "agg_awc"."block_id") AND
-        ("awc_monthly"."supervisor_id" = "agg_awc"."supervisor_id") AND
-        ("awc_monthly"."awc_id" = "agg_awc"."awc_id")
-    )
 LEFT JOIN "agg_ccs_record_monthly" "ccs_record" ON (
         ("awc_monthly"."month" = "ccs_record"."month") AND
         ("awc_monthly"."aggregation_level" = "ccs_record"."aggregation_level") AND
