@@ -104,6 +104,10 @@
         "column_id": "birth_weight",
         "field": "birth_weight",
         "type": "field",
+        "transform": {
+          "format_string": "{0:.0f}", 
+          "type": "number_format"
+        }, 
         "display": {
           "mar": "मुलाचे जन्म वजन आहे",
           "tel": "బిడ్డ యొక్క బరువు",
