@@ -95,7 +95,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
         window.ga('send', 'event', {
             'eventCategory': 'Location Filter',
             'eventAction': 'Location Changed',
-            'eventLabel': vm.selectedLocationId.location_id
+            'eventLabel': vm.selectedLocationId.location_id,
         });
         $uibModalInstance.close(vm.selectedLocations);
     };

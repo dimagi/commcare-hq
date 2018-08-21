@@ -6,7 +6,7 @@ window.angular.module('icdsApp').factory('progressReportService', ['$http', func
             window.ga('send', 'event', {
                 'eventCategory': 'Progress Report Service',
                 'eventAction': 'Fetching data started',
-                'eventLabel': 'getData'
+                'eventLabel': 'getData',
             });
             var get_url = url('fact_sheets', '---');
             return  $http({
@@ -18,7 +18,7 @@ window.angular.module('icdsApp').factory('progressReportService', ['$http', func
                     window.ga('send', 'event', {
                         'eventCategory': 'Progress Report Service',
                         'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'getData'
+                        'eventLabel': 'getData',
                     });
                     return response;
                 },
@@ -26,7 +26,7 @@ window.angular.module('icdsApp').factory('progressReportService', ['$http', func
                     window.ga('send', 'event', {
                         'eventCategory': 'Progress Report Service',
                         'eventAction': 'Fetching data failed',
-                        'eventLabel': 'getData'
+                        'eventLabel': 'getData',
                     });
                 }
             );

@@ -6,7 +6,7 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
             window.ga('send', 'event', {
                 'eventCategory': 'ISSNIP Service',
                 'eventAction': 'Fetching data started',
-                'eventLabel': 'Creating Task'
+                'eventLabel': 'Creating Task',
             });
             return $http.post(url('icds_export_indicator'),
                 $.param(data),
@@ -16,7 +16,7 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
                     window.ga('send', 'event', {
                         'eventCategory': 'ISSNIP Service',
                         'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'Creating Task'
+                        'eventLabel': 'Creating Task',
                     });
                     return response.data;
                 },
@@ -24,7 +24,7 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
                     window.ga('send', 'event', {
                         'eventCategory': 'ISSNIP Service',
                         'eventAction': 'Fetching data failed',
-                        'eventLabel': 'Creating Task'
+                        'eventLabel': 'Creating Task',
                     });
                 }
             );
@@ -33,7 +33,7 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
             window.ga('send', 'event', {
                 'eventCategory': 'ISSNIP Service',
                 'eventAction': 'Fetching data started',
-                'eventLabel': 'Checking Status'
+                'eventLabel': 'Checking Status',
             });
             return $http.get(url('issnip_pdf_status'), {
                 params: {task_id: task_id},
@@ -42,7 +42,7 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
                     window.ga('send', 'event', {
                         'eventCategory': 'ISSNIP Service',
                         'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'Checking Status'
+                        'eventLabel': 'Checking Status',
                     });
                     return response.data;
                 },
@@ -50,7 +50,7 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
                     window.ga('send', 'event', {
                         'eventCategory': 'ISSNIP Service',
                         'eventAction': 'Fetching data failed',
-                        'eventLabel': 'Checking Status'
+                        'eventLabel': 'Checking Status',
                     });
                 }
             );

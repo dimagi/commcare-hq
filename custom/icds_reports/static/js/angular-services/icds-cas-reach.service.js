@@ -6,7 +6,7 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
             window.ga('send', 'event', {
                 'eventCategory': 'ICDS CAS Reach Service',
                 'eventAction': 'Fetching data started',
-                'eventLabel': 'Awc Daily Status'
+                'eventLabel': 'Awc Daily Status',
             });
             var get_url = url('awc_daily_status', step);
             return  $http({
@@ -18,7 +18,7 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
                     window.ga('send', 'event', {
                         'eventCategory': 'ICDS CAS Reach Service',
                         'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'Awc Daily Status'
+                        'eventLabel': 'Awc Daily Status',
                     });
                     return response;
                 },
@@ -26,7 +26,7 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
                     window.ga('send', 'event', {
                         'eventCategory': 'ICDS CAS Reach Service',
                         'eventAction': 'Fetching data failed',
-                        'eventLabel': 'Awc Daily Status'
+                        'eventLabel': 'Awc Daily Status',
                     });
                 }
             );
@@ -35,7 +35,7 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
             window.ga('send', 'event', {
                 'eventCategory': 'ICDS CAS Reach Service',
                 'eventAction': 'Fetching data started',
-                'eventLabel': 'Awcs Covered'
+                'eventLabel': 'Awcs Covered',
             });
             var get_url = url('awcs_covered', step);
             return  $http({
@@ -47,7 +47,7 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
                     window.ga('send', 'event', {
                         'eventCategory': 'ICDS CAS Reach Service',
                         'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'Awcs Covered'
+                        'eventLabel': 'Awcs Covered',
                     });
                     return response;
                 },
@@ -55,7 +55,7 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
                     window.ga('send', 'event', {
                         'eventCategory': 'ICDS CAS Reach Service',
                         'eventAction': 'Fetching data failed',
-                        'eventLabel': 'Awcs Covered'
+                        'eventLabel': 'Awcs Covered',
                     });
                 }
             );

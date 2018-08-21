@@ -24,7 +24,7 @@ function AdditionalModalController($location, $uibModalInstance, $window, filter
         $window.ga('send', 'event', {
             'eventCategory': 'Additional Filter',
             'eventAction': 'Filter Changed',
-            'eventLabel': ''
+            'eventLabel': '',
         });
         $uibModalInstance.close({
             gender: vm.selectedGender,

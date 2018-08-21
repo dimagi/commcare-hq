@@ -22,7 +22,7 @@ describe('Additional Filter Controller', function () {
             $location = _$location_;
             scope = $rootScope.$new();
             storageService = _storageService_;
-            window.ga = function(action, event, labels) {};
+            window.ga = function() {};
 
             controller = $controller(AdditionalFilterController, {
                 $scope: scope,

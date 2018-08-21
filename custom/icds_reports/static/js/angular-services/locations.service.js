@@ -10,7 +10,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             window.ga('send', 'event', {
                 'eventCategory': 'Location Service',
                 'eventAction': 'Fetching data started',
-                'eventLabel': 'getChildren'
+                'eventLabel': 'getChildren',
             });
             return $http.get(url('icds_locations'), {
                 params: {parent_id: parentId, include_test: includeTest},
@@ -19,7 +19,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     window.ga('send', 'event', {
                         'eventCategory': 'Location Service',
                         'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'getChildren'
+                        'eventLabel': 'getChildren',
                     });
                     return response.data;
                 },
@@ -27,7 +27,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     window.ga('send', 'event', {
                         'eventCategory': 'Location Service',
                         'eventAction': 'Fetching data failed',
-                        'eventLabel': 'getChildren'
+                        'eventLabel': 'getChildren',
                     });
                 }
             );
@@ -37,7 +37,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             window.ga('send', 'event', {
                 'eventCategory': 'Location Service',
                 'eventAction': 'Fetching data started',
-                'eventLabel': 'getAncestors'
+                'eventLabel': 'getAncestors',
             });
             return $http.get(url('icds_locations_ancestors'), {
                 params: {location_id: locationId, include_test: includeTest},
@@ -46,7 +46,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     window.ga('send', 'event', {
                         'eventCategory': 'Location Service',
                         'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'getAncestors'
+                        'eventLabel': 'getAncestors',
                     });
                     return response.data;
                 },
@@ -54,7 +54,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     window.ga('send', 'event', {
                         'eventCategory': 'Location Service',
                         'eventAction': 'Fetching data failed',
-                        'eventLabel': 'getAncestors'
+                        'eventLabel': 'getAncestors',
                     });
                 }
             );
@@ -64,7 +64,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             window.ga('send', 'event', {
                 'eventCategory': 'Location Service',
                 'eventAction': 'Fetching data started',
-                'eventLabel': 'getLocation'
+                'eventLabel': 'getLocation',
             });
             return $http.get(url('icds_locations'), {
                 params: {location_id: locationId, include_test: includeTest},
@@ -73,7 +73,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     window.ga('send', 'event', {
                         'eventCategory': 'Location Service',
                         'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'getLocation'
+                        'eventLabel': 'getLocation',
                     });
                     return response.data;
                 },
@@ -81,7 +81,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     window.ga('send', 'event', {
                         'eventCategory': 'Location Service',
                         'eventAction': 'Fetching data failed',
-                        'eventLabel': 'getLocation'
+                        'eventLabel': 'getLocation',
                     });
                 }
             );
@@ -91,7 +91,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             window.ga('send', 'event', {
                 'eventCategory': 'Location Service',
                 'eventAction': 'Fetching data started',
-                'eventLabel': 'getLocationByNameAndParent'
+                'eventLabel': 'getLocationByNameAndParent',
             });
             return $http.get(url('icds_locations'), {
                 params: {name: name, parent_id: parentId, include_test: includeTest},
@@ -100,7 +100,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     window.ga('send', 'event', {
                         'eventCategory': 'Location Service',
                         'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'getLocationByNameAndParent'
+                        'eventLabel': 'getLocationByNameAndParent',
                     });
                     return response.data.locations;
                 },
@@ -108,7 +108,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     window.ga('send', 'event', {
                         'eventCategory': 'Location Service',
                         'eventAction': 'Fetching data failed',
-                        'eventLabel': 'getLocationByNameAndParent'
+                        'eventLabel': 'getLocationByNameAndParent',
                     });
                 }
             );
@@ -117,7 +117,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             window.ga('send', 'event', {
                 'eventCategory': 'Location Service',
                 'eventAction': 'Fetching data started',
-                'eventLabel': 'getAwcLocations'
+                'eventLabel': 'getAwcLocations',
             });
             return $http.get(url('awc_locations'), {
                 params: {location_id: locationId},
@@ -126,7 +126,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     window.ga('send', 'event', {
                         'eventCategory': 'Location Service',
                         'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'getAwcLocations'
+                        'eventLabel': 'getAwcLocations',
                     });
                     return response.data.locations;
                 },
@@ -134,7 +134,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     window.ga('send', 'event', {
                         'eventCategory': 'Location Service',
                         'eventAction': 'Fetching data failed',
-                        'eventLabel': 'getAwcLocations'
+                        'eventLabel': 'getAwcLocations',
                     });
                 }
             );
