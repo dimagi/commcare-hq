@@ -135,6 +135,7 @@ pypdf2==1.26.0
 pystache==0.5.4
 python-dateutil==2.6.1
 python-editor==1.0.3
+python-levenshtein==0.12.0
 python-magic==0.4.13
 python-mimeparse==1.6.0
 pytz==2017.2
@@ -184,4 +185,4 @@ zeep==1.6.0
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==10.0.1
-setuptools==40.0.0        # via django-simple-captcha, django-websocket-redis, ipython
+setuptools==40.0.0        # via django-simple-captcha, django-websocket-redis, ipython, python-levenshtein

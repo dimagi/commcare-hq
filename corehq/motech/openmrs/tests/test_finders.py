@@ -1,9 +1,12 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
+import doctest
+
 from django.test import SimpleTestCase
 
 from corehq.motech.openmrs.finders import PatientFinder, WeightedPropertyPatientFinder
+import corehq.motech.openmrs.finders_utils
 
 
 PATIENT = {
@@ -105,9 +108,19 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
             'doc_type': 'WeightedPropertyPatientFinder',
             'searchable_properties': ['last_name'],
             'property_weights': [
-                {"case_property": "first_name", "weight": 0.45},
+                {
+                    "case_property": "first_name",
+                    "weight": 0.45,
+                    "match_type": "levenshtein",
+                    "match_params": [0.2]
+                },
                 {"case_property": "last_name", "weight": 0.45},
-                {"case_property": "dob", "weight": 0.2},
+                {
+                    "case_property": "dob",
+                    "weight": 0.2,
+                    "match_type": "days_diff",
+                    "match_params": [364]
+                },
                 {"case_property": "address_2", "weight": 0.2},
             ],
         })
@@ -175,11 +188,11 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
 
     def test_get_score_ge_1(self):
         case = CaseMock({
-            'first_name': 'Mahapajapati',
+            'first_name': 'Mapajapati',
             'last_name': 'Gotami',
             'address_1': '56 Barnet Street',
             'address_2': 'Gardens',
-            'dob': '1984-01-01T00:00:00.000+0200',
+            'dob': '1984-12-03T00:00:00.000-0400',
         })
         score = self.finder.get_score(PATIENT, case)
         self.assertGreaterEqual(score, 1)
@@ -190,7 +203,14 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
             'last_name': 'Gotami',
             'address_1': '585 Massachusetts Ave',
             'address_2': 'Cambridge',
-            'dob': '1984-12-03T00:00:00.000-0400',
+            'dob': '1983-01-01T00:00:00.000+0200',
         })
         score = self.finder.get_score(PATIENT, case)
         self.assertLess(score, 1)
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(corehq.motech.openmrs.finders_utils)
+        self.assertEqual(results.failed, 0)
