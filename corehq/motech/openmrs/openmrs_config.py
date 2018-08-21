@@ -7,7 +7,7 @@ from operator import eq
 
 from jsonpath_rw import Child, Fields, Slice, Where, parse as parse_jsonpath
 
-from corehq.motech.openmrs.const import PERSON_PROPERTIES, OPENMRS_PROPERTIES
+from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.jsonpath import Cmp
 from corehq.motech.value_source import ValueSource

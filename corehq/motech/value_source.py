@@ -40,13 +40,13 @@ class ValueSource(DocumentSchema):
             return super(ValueSource, cls).wrap(data)
 
     def serialize(self, value):
-        serializer = serializers.get((self.commcare_data_type, self.external_data_type)) or \
-                     serializers.get((None, self.external_data_type))
+        serializer = (serializers.get((self.commcare_data_type, self.external_data_type)) or
+                      serializers.get((None, self.external_data_type)))
         return serializer(value) if serializer else value
 
     def deserialize(self, external_value):
-        serializer = serializers.get((self.external_data_type, self.commcare_data_type)) or \
-                     serializers.get((None, self.commcare_data_type))
+        serializer = (serializers.get((self.external_data_type, self.commcare_data_type)) or
+                      serializers.get((None, self.commcare_data_type)))
         return serializer(external_value) if serializer else external_value
 
     def get_value(self, case_trigger_info):
