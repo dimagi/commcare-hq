@@ -105,7 +105,6 @@ hqDefine('accounting/js/pricing_table', [
         self.init = function () {
             self.form = $("#select-plan-form");
         }
-
     };
 
     var PlanOption = function (data, parent) {
