@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import logging
+from itertools import chain
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -71,41 +72,48 @@ OPENMRS_DATA_TYPES = (
     OPENMRS_DATA_TYPE_BOOLEAN,
 )
 
-# Standard OpenMRS property names, and serializers
+# Standard OpenMRS property names and their data types
 PERSON_PROPERTIES = {
-    'gender': None,
-    'age': None,
-    'birthdate': to_timestamp,
-    'birthdateEstimated': None,
-    'dead': None,
-    'deathDate': to_timestamp,
-    'deathdateEstimated': None,
-    'causeOfDeath': None,
+    'gender': OPENMRS_DATA_TYPE_TEXT,
+    'age': OPENMRS_DATA_TYPE_NUMERIC,
+    'birthdate': OPENMRS_DATA_TYPE_DATETIME,
+    'birthdateEstimated': OPENMRS_DATA_TYPE_BOOLEAN,
+    'dead': OPENMRS_DATA_TYPE_BOOLEAN,
+    'deathDate': OPENMRS_DATA_TYPE_DATETIME,
+    'deathdateEstimated': OPENMRS_DATA_TYPE_BOOLEAN,
+    'causeOfDeath': OPENMRS_DATA_TYPE_TEXT,
 }
 NAME_PROPERTIES = {
-    'givenName': to_name,
-    'familyName': to_name,
-    'middleName': to_name,
-    'familyName2': to_name,
-    'prefix': None,
-    'familyNamePrefix': None,
-    'familyNameSuffix': None,
-    'degree': None,
+    'givenName': OPENMRS_DATA_TYPE_TEXT,
+    'familyName': OPENMRS_DATA_TYPE_TEXT,
+    'middleName': OPENMRS_DATA_TYPE_TEXT,
+    'familyName2': OPENMRS_DATA_TYPE_TEXT,
+    'prefix': OPENMRS_DATA_TYPE_TEXT,
+    'familyNamePrefix': OPENMRS_DATA_TYPE_TEXT,
+    'familyNameSuffix': OPENMRS_DATA_TYPE_TEXT,
+    'degree': OPENMRS_DATA_TYPE_TEXT,
 }
 ADDRESS_PROPERTIES = {
-    'address1': None,
-    'address2': None,
-    'cityVillage': None,
-    'stateProvince': None,
-    'country': None,
-    'postalCode': None,
-    'latitude': None,
-    'longitude': None,
-    'countyDistrict': None,
-    'address3': None,
-    'address4': None,
-    'address5': None,
-    'address6': None,
-    'startDate': to_timestamp,
-    'endDate': to_timestamp,
+    'address1': OPENMRS_DATA_TYPE_TEXT,
+    'address2': OPENMRS_DATA_TYPE_TEXT,
+    'cityVillage': OPENMRS_DATA_TYPE_TEXT,
+    'stateProvince': OPENMRS_DATA_TYPE_TEXT,
+    'country': OPENMRS_DATA_TYPE_TEXT,
+    'postalCode': OPENMRS_DATA_TYPE_TEXT,
+    'latitude': OPENMRS_DATA_TYPE_NUMERIC,
+    'longitude': OPENMRS_DATA_TYPE_NUMERIC,
+    'countyDistrict': OPENMRS_DATA_TYPE_TEXT,
+    'address3': OPENMRS_DATA_TYPE_TEXT,
+    'address4': OPENMRS_DATA_TYPE_TEXT,
+    'address5': OPENMRS_DATA_TYPE_TEXT,
+    'address6': OPENMRS_DATA_TYPE_TEXT,
+    'startDate': OPENMRS_DATA_TYPE_DATETIME,
+    'endDate': OPENMRS_DATA_TYPE_DATETIME,
 }
+OPENMRS_PROPERTIES = dict(chain(
+    # pylint: disable=W1654
+    # Disable "dict.items referenced when not iterating" warning, because `chain` is iterating
+    PERSON_PROPERTIES.items(),
+    NAME_PROPERTIES.items(),
+    ADDRESS_PROPERTIES.items(),
+))
