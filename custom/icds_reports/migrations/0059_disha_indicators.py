@@ -7,23 +7,7 @@ from django.db import migrations, models
 from corehq.sql_db.operations import RawSQLMigration
 
 
-def get_view_migrations():
-    sql_views = [
-        'awc_location_months.sql',
-        'agg_awc_monthly.sql',
-        'agg_ccs_record_monthly.sql',
-        'agg_child_health_monthly.sql',
-        'daily_attendance.sql',
-        'agg_awc_daily.sql',
-        'child_health_monthly.sql',
-        'disha_indicators.sql',
-    ]
-
-    migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
-    operations = []
-    for view in sql_views:
-        operations.append(migrator.get_migration(view))
-    return operations
+migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
 
 class Migration(migrations.Migration):
@@ -32,7 +16,8 @@ class Migration(migrations.Migration):
         ('icds_reports', '0058_new_agg_ccs_columns'),
     ]
 
-    operations = get_view_migrations() + [
+    operations = [
+        migrator.get_migration('disha_indicators.sql'),
         migrations.CreateModel(
             name='DishaIndicatorView',
             fields=[
