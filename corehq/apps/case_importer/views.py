@@ -76,7 +76,8 @@ def excel_config(request, domain):
 
     # stash content in the default storage for subsequent views
     case_upload = CaseUpload.create(uploaded_file_handle,
-                                    filename=uploaded_file_handle.name)
+                                    filename=uploaded_file_handle.name,
+                                    domain=domain)
 
     request.session[EXCEL_SESSION_ID] = case_upload.upload_id
     try:

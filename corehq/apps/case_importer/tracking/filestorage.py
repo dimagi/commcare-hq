@@ -6,7 +6,7 @@ from tempfile import mkstemp
 import uuid
 from django.core.cache import caches
 from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
-from corehq.blobs import get_blob_db
+from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.util import random_url_id
 from corehq.util.files import file_extention_from_filename
 from memoized import memoized
@@ -23,22 +23,26 @@ class PersistentFileStore(object):
     which is returned by write_file
 
     """
-    def __init__(self, bucket, meta_model):
+    def __init__(self, meta_model):
         """
         :meta_model is a django model used to store meta info
             must contain columns identifier, filename, length
         """
-
-        self._bucket = bucket
         self._db = get_blob_db()
         self._meta_model = meta_model
 
-    def write_file(self, f, filename):
+    def write_file(self, f, filename, domain):
         identifier = random_url_id(16)
-        blob_info = self._db.put(f, bucket=self._bucket, identifier=identifier)
-        assert identifier == blob_info.identifier
+        meta = self._db.put(
+            f,
+            domain=domain,
+            parent_id=domain,
+            type_code=CODES.data_import,
+            key=identifier
+        )
+        assert identifier == meta.key, (identifier, meta.key)
         file_meta = self._meta_model(identifier=identifier, filename=filename,
-                                     length=blob_info.length)
+                                     length=meta.content_length)
         file_meta.save()
         return file_meta
 
@@ -46,7 +50,7 @@ class PersistentFileStore(object):
     def get_tempfile_ref_for_contents(self, identifier):
         filename = self.get_filename(identifier)
         suffix = file_extention_from_filename(filename)
-        content = self._db.get(identifier, bucket=self._bucket).read()
+        content = self._db.get(key=identifier).read()
         return make_temp_file(content, suffix)
 
     @memoized
@@ -73,7 +77,7 @@ class TransientFileStore(object):
     def _get_filename_key(self, identifier):
         return '{}/{}/filename'.format(self._bucket, identifier)
 
-    def write_file(self, f, filename):
+    def write_file(self, f, filename, domain):
         identifier = str(uuid.uuid4())
         contents = f.read()
         content_length = len(contents)
@@ -107,5 +111,5 @@ def make_temp_file(content, suffix):
     return filename
 
 
-persistent_file_store = PersistentFileStore(BUCKET, CaseUploadFileMeta)
+persistent_file_store = PersistentFileStore(CaseUploadFileMeta)
 transient_file_store = TransientFileStore(BUCKET, timeout=1 * 60 * 60)
