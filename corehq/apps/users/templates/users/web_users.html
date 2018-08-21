@@ -708,6 +708,22 @@
                                             </div>
                                         </div>
                                     </div>
+                                    {% if request|toggle_enabled:"DATA_FILE_DOWNLOAD" %}
+                                        <div class="form-group">
+                                            <label class="col-sm-4 control-label">
+                                                {% trans "View File Dropzone" %}
+                                            </label>
+                                            <div class="col-sm-8 controls">
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox"
+                                                               data-bind="checked: permissions.view_file_dropzone" />
+                                                        {% trans "Allow role to upload and download files from dropzone." %}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="modal-footer">
