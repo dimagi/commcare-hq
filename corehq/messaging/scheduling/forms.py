@@ -2246,7 +2246,7 @@ class ScheduleForm(Form):
                 value = json.loads(value)
             except Exception:
                 raise ValidationError(err)
-            if (not isinstance(value, list) or
+            if (not isinstance(value, list) or not value or
                     any(not isinstance(v, six.text_type) for v in value)):
                 raise ValidationError(err)
         else:
