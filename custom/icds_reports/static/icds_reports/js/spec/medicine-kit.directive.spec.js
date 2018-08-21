@@ -22,7 +22,7 @@ describe('Medicine Kit Directive', function () {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
-        window.ga = function(action, event, labels) {return};
+        window.ga = function(action, event, labels) {};
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('medicine_kit').respond(200, {

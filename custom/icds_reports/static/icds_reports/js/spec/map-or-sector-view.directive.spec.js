@@ -18,7 +18,7 @@ describe('Map Or Sector View Directive', function () {
     beforeEach(inject(function ($controller, _$location_, storageService, locationsService) {
         $location = _$location_;
 
-        window.ga = function(action, event, labels) {return};
+        window.ga = function(action, event, labels) {};
         controller = $controller(MapOrSectorController, {
             $location: $location,
             storageService: storageService,

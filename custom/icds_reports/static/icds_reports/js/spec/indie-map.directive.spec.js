@@ -49,7 +49,7 @@ describe('Indie Map Directive', function () {
         $location = _$location_;
         $httpBackend = _$httpBackend_;
         $storageService = storageService;
-        window.ga = function(action, event, labels) {return};
+        window.ga = function(action, event, labels) {};
 
         $httpBackend.expectGET('icds_locations').respond(200, mockLocation);
 

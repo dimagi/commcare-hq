@@ -22,7 +22,7 @@ describe('Month Filter Controller', function () {
             $location = _$location_;
             scope = $rootScope.$new();
             storageService = _storageService_;
-            window.ga = function(action, event, labels) {return};
+            window.ga = function(action, event, labels) {};
 
             controller = $controller(MonthFilterController, {
                 $scope: scope,
