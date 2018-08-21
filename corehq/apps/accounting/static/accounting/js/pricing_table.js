@@ -1,15 +1,15 @@
 hqDefine('accounting/js/pricing_table', function () {
-    var pricingTableModel = function (editions, current_edition, isRenewal, showMonthlyPricing) {
+    var pricingTableModel = function (editions, currentEdition, isRenewal, showMonthlyPricing) {
         'use strict';
         var self = {};
 
-        self.currentEdition = current_edition;
+        self.currentEdition = currentEdition;
         self.isRenewal = isRenewal;
         self.editions = ko.observableArray(_.map(editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
         }));
 
-        self.selected_edition = ko.observable(isRenewal ? current_edition : false);
+        self.selected_edition = ko.observable(isRenewal ? currentEdition : false);
         self.isSubmitVisible = ko.computed(function () {
             if (isRenewal){
                 return true;
@@ -58,16 +58,12 @@ hqDefine('accounting/js/pricing_table', function () {
 
         self.updateIsAnnualPricing = function () {
             self.isAnnualPricing(true);
-            console.log(self.isAnnualPricing())
         };
         self.updateIsMonthlyPricing = function () {
             self.isAnnualPricing(true);
-            console.log(self.isAnnualPricing())
         };
         self.updatePricing = function () {
-            debugger;
             self.showMonthlyPricing($('#pricing-toggle')[0].checked);
-            console.log(self.showMonthlyPricing());
         };
         self.annualPricing = function () {    // TODO: Get rid of this in favor of the toggle button
             self.showMonthlyPricing(false);

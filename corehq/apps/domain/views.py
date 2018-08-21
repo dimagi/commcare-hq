@@ -1388,7 +1388,7 @@ class SelectedEnterprisePlanView(SelectPlanView):
     @property
     @memoized
     def is_not_redirect(self):
-        return not 'plan_edition' in self.request.POST
+        return 'plan_edition' not in self.request.POST
 
     @property
     @memoized

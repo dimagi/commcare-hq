@@ -1779,7 +1779,6 @@ class AnnualPlanContactForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = "form-horizontal"
-        import ipdb; ipdb.set_trace()
         if on_annual_plan:
             back_button_text = "Back to my Subscription"
             urlname = DomainSubscriptionView.urlname
