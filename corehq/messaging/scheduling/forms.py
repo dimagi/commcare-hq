@@ -59,6 +59,8 @@ from corehq.messaging.scheduling.models import (
     EmailContent,
     SMSSurveyContent,
     CustomContent,
+    IVRSurveyContent,
+    SMSCallbackContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from couchdbkit import ResourceNotFound
@@ -163,6 +165,25 @@ class ContentForm(Form):
         required=False,
         label=ugettext_lazy("Custom SMS Content"),
         choices=[('', '')] + [(k, v[1]) for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT.items()],
+    )
+    ivr_intervals = CharField(
+        required=False,
+        label=ugettext_lazy("IVR Intervals"),
+    )
+    max_question_attempts = ChoiceField(
+        required=False,
+        label=ugettext_lazy("Maximum Question Prompt Attempts"),
+        choices=(
+            (1, "1"),
+            (2, "2"),
+            (3, "3"),
+            (4, "4"),
+            (5, "5"),
+        ),
+    )
+    sms_callback_intervals = CharField(
+        required=False,
+        label=ugettext_lazy("Intervals"),
     )
 
     def __init__(self, *args, **kwargs):
@@ -269,6 +290,24 @@ class ContentForm(Form):
 
         return value
 
+    def clean_ivr_intervals(self):
+        if self.schedule_form.cleaned_data['content'] != ScheduleForm.CONTENT_IVR_SURVEY:
+            return None
+
+        raise NotImplementedError("IVR is no longer supported")
+
+    def clean_max_question_attempts(self):
+        if self.schedule_form.cleaned_data['content'] != ScheduleForm.CONTENT_IVR_SURVEY:
+            return None
+
+        raise NotImplementedError("IVR is no longer supported")
+
+    def clean_sms_callback_intervals(self):
+        if self.schedule_form.cleaned_data['content'] != ScheduleForm.CONTENT_SMS_CALLBACK:
+            return None
+
+        raise NotImplementedError("SMS / Callback is no longer supported")
+
     def distill_content(self):
         if self.schedule_form.cleaned_data['content'] == ScheduleForm.CONTENT_SMS:
             return SMSContent(
@@ -321,12 +360,18 @@ class ContentForm(Form):
                     data_bind='with: message',
                 ),
                 data_bind=(
-                    "visible: $root.content() === '%s' || $root.content() === '%s'" %
-                    (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL)
+                    "visible: $root.content() === '%s' || $root.content() === '%s' || $root.content() === '%s'" %
+                    (ScheduleForm.CONTENT_SMS, ScheduleForm.CONTENT_EMAIL, ScheduleForm.CONTENT_SMS_CALLBACK)
                 ),
             ),
             crispy.Div(
                 crispy.Field('form_unique_id'),
+                data_bind=(
+                    "visible: $root.content() === '%s' || $root.content() === '%s'" %
+                    (ScheduleForm.CONTENT_SMS_SURVEY, ScheduleForm.CONTENT_IVR_SURVEY)
+                ),
+            ),
+            crispy.Div(
                 hqcrispy.B3MultiField(
                     _("Expire After"),
                     crispy.Div(
@@ -365,6 +410,15 @@ class ContentForm(Form):
                 ),
                 data_bind="visible: $root.content() === '%s'" % ScheduleForm.CONTENT_SMS_SURVEY,
             ),
+            crispy.Div(
+                crispy.Field('ivr_intervals'),
+                crispy.Field('max_question_attempts'),
+                data_bind="visible: $root.content() === '%s'" % ScheduleForm.CONTENT_IVR_SURVEY,
+            ),
+            crispy.Div(
+                crispy.Field('sms_callback_intervals'),
+                data_bind="visible: $root.content() === '%s'" % ScheduleForm.CONTENT_SMS_CALLBACK,
+            ),
             hqcrispy.B3MultiField(
                 _("Custom SMS Content"),
                 twbscrispy.InlineField('custom_sms_content_id'),
@@ -396,6 +450,13 @@ class ContentForm(Form):
                 result['survey_reminder_intervals_enabled'] = 'N'
         elif isinstance(content, CustomContent):
             result['custom_sms_content_id'] = content.custom_content_id
+        elif isinstance(content, IVRSurveyContent):
+            result['form_unique_id'] = content.form_unique_id
+            result['ivr_intervals'] = ', '.join(six.text_type(i) for i in content.reminder_intervals)
+            result['max_question_attempts'] = content.max_question_attempts
+        elif isinstance(content, SMSCallbackContent):
+            result['message'] = content.message
+            result['sms_callback_intervals'] = ', '.join(six.text_type(i) for i in content.reminder_intervals)
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -867,6 +928,7 @@ class ScheduleForm(Form):
     CONTENT_EMAIL = 'email'
     CONTENT_SMS_SURVEY = 'sms_survey'
     CONTENT_IVR_SURVEY = 'ivr_survey'
+    CONTENT_SMS_CALLBACK = 'sms_callback'
     CONTENT_CUSTOM_SMS = 'custom_sms'
 
     YES = 'Y'
@@ -1229,6 +1291,13 @@ class ScheduleForm(Form):
                 content.include_case_updates_in_partial_submissions
         elif isinstance(content, CustomContent):
             initial['content'] = self.CONTENT_CUSTOM_SMS
+        elif isinstance(content, IVRSurveyContent):
+            initial['content'] = self.CONTENT_IVR_SURVEY
+            initial['submit_partially_completed_forms'] = content.submit_partially_completed_forms
+            initial['include_case_updates_in_partial_submissions'] = \
+                content.include_case_updates_in_partial_submissions
+        elif isinstance(content, SMSCallbackContent):
+            initial['content'] = self.CONTENT_SMS_CALLBACK
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -1422,6 +1491,17 @@ class ScheduleForm(Form):
                 (self.CONTENT_SMS_SURVEY, _("SMS Survey")),
             ]
 
+        if self.initial_schedule:
+            if self.initial_schedule.memoized_uses_ivr_survey:
+                self.fields['content'].choices += [
+                    (self.CONTENT_IVR_SURVEY, _("IVR Survey")),
+                ]
+
+            if self.initial_schedule.memoized_uses_sms_callback:
+                self.fields['content'].choices += [
+                    (self.CONTENT_SMS_CALLBACK, _("SMS Expecting Callback")),
+                ]
+
     @property
     def scheduling_fieldset_legend(self):
         return _("Scheduling")
@@ -1466,7 +1546,10 @@ class ScheduleForm(Form):
             crispy.Fieldset(
                 _("Advanced Survey Options"),
                 *self.get_advanced_survey_layout_fields(),
-                data_bind="visible: content() === '%s'" % self.CONTENT_SMS_SURVEY
+                data_bind=(
+                    "visible: content() === '%s' || content() === '%s'" %
+                    (self.CONTENT_SMS_SURVEY, self.CONTENT_IVR_SURVEY)
+                )
             ),
             crispy.Fieldset(
                 _("Advanced"),

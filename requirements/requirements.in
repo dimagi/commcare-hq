@@ -34,6 +34,7 @@ pycryptodome
 py-KISSmetrics==1.0.1
 pygooglechart==0.4.0
 python-dateutil==2.6.1
+python-Levenshtein
 python-magic==0.4.13
 pytz==2017.2
 PyYAML==3.12

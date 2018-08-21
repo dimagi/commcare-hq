@@ -13,6 +13,7 @@ alembic==0.8.6
 amqp==1.4.9
 anyjson==0.3.3
 appdirs==1.4.3
+appnope==0.1.0            # via ipython
 argparse==1.4.0
 asn1crypto==0.24.0
 attrs==18.1.0
@@ -157,6 +158,7 @@ pypdf2==1.26.0
 pystache==0.5.4
 python-dateutil==2.6.1
 python-editor==1.0.3
+python-levenshtein==0.12.0
 python-magic==0.4.13
 python-mimeparse==1.6.0
 python-termstyle==0.1.10  # via sniffer
