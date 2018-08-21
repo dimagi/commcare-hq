@@ -125,12 +125,12 @@ class CasePropertyMap(CaseProperty):
 
     def get_value(self, case_trigger_info):
         value = super(CasePropertyMap, self).get_value(case_trigger_info)
-        try:
-            return self.value_map[value]  # Don't bother serializing. self.value_map does that already.
-        except KeyError:
-            # We don't care if some CommCare answers are not mapped to OpenMRS concepts, e.g. when only the "yes"
-            # value of a yes-no question in CommCare is mapped to a concept in OpenMRS.
-            return None
+        # Using `.get()` because it's OK if some CommCare answers are
+        # not mapped to OpenMRS concepts, e.g. when only the "yes" value
+        # of a yes-no question in CommCare is mapped to a concept in
+        # OpenMRS.
+        # Don't bother serializing. self.value_map does that already.
+        return self.value_map.get(value)
 
 
 class FormQuestionMap(FormQuestion):
@@ -145,10 +145,7 @@ class FormQuestionMap(FormQuestion):
 
     def get_value(self, case_trigger_info):
         value = super(FormQuestionMap, self).get_value(case_trigger_info)
-        try:
-            return self.value_map[value]
-        except KeyError:
-            return None
+        return self.value_map.get(value)
 
 
 def get_form_question_values(form_json):
