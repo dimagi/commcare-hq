@@ -650,6 +650,13 @@ class SqlModelMigrator(Migrator):
 
 
 MIGRATIONS = {m.slug: m for m in [
+    # Kept for reference when writing new migrations.
+    # Migrator("applications", [
+    #    apps.Application,
+    #    apps.RemoteApp,
+    #    ("Application-Deleted", apps.Application),
+    #    ("RemoteApp-Deleted", apps.RemoteApp),
+    # ], CouchAttachmentMigrator),
     MultiDbMigrator("migrate_backend",
         couch_types=[
             apps.Application,
