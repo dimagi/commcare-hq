@@ -14,6 +14,7 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
@@ -241,6 +242,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
        see data, reports, charts, etc."""
+
+    _blobdb_type_code = BLOB_CODES.domain
 
     name = StringProperty()
     is_active = BooleanProperty()
@@ -1015,6 +1018,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             self.fetch_attachment(LOGO_ATTACHMENT),
             self.blobs[LOGO_ATTACHMENT].content_type
         )
+
+    def put_attachment(self, *args, **kw):
+        return super(Domain, self).put_attachment(domain=self.name, *args, **kw)
 
     def get_case_display(self, case):
         """Get the properties display definition for a given case"""
