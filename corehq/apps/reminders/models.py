@@ -1490,10 +1490,10 @@ class CaseReminderHandler(Document):
                     "non-negative")
 
         if self.recipient == RECIPIENT_SUBCASE:
-            check_attr("recipient_case_match_property")
-            check_attr("recipient_case_match_type")
-            if self.recipient_case_match_type != MATCH_ANY_VALUE:
-                check_attr("recipient_case_match_value")
+            if self.recipient_case_match_property != '_id' or self.recipient_case_match_type != MATCH_ANY_VALUE:
+                raise IllegalModelStateException(
+                    "must send to all child cases if child case recipients are chosen"
+                )
 
         if (self.custom_content_handler and self.custom_content_handler not in
             settings.ALLOWED_CUSTOM_CONTENT_HANDLERS):

@@ -502,6 +502,8 @@ def get_rule_recipients(handler):
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, None)]
     elif handler.recipient == RECIPIENT_PARENT_CASE:
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, None)]
+    elif handler.recipient == RECIPIENT_SUBCASE:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES, None)]
     elif handler.recipient == RECIPIENT_USER_GROUP:
         return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
     elif handler.recipient in CUSTOM_RECIPIENTS:
@@ -795,7 +797,14 @@ class Command(BaseCommand):
             RECIPIENT_USER_GROUP,
             RECIPIENT_USER,
             RECIPIENT_PARENT_CASE,
+            RECIPIENT_SUBCASE,
         )):
+            return None
+
+        if handler.recipient == RECIPIENT_SUBCASE and not (
+            handler.recipient_case_match_property == '_id' and
+            handler.recipient_case_match_type == MATCH_ANY_VALUE
+        ):
             return None
 
         if handler.recipient == RECIPIENT_USER_GROUP and not handler.user_group_id:
