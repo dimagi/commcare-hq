@@ -25,9 +25,9 @@
 {% block form_content %}
 {% initial_page_data 'editions' editions %}
 {% initial_page_data 'current_edition' current_edition %}
-{% initial_page_data 'is_renewal' is_renewal|BOOL %}
+{% initial_page_data 'is_renewal' is_renewal %}
 {% initial_page_data 'start_date_after_minimum_subscription' start_date_after_minimum_subscription %}
-{% initial_page_data 'subscription_below_minimum' subscription_below_minimum|BOOL %}
+{% initial_page_data 'subscription_below_minimum' subscription_below_minimum %}
 {% initial_page_data 'next_subscription' next_subscription %}
 {% registerurl 'email_on_downgrade' domain %}
 <p class="lead">

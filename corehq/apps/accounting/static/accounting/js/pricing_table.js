@@ -3,12 +3,20 @@ hqDefine('accounting/js/pricing_table', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/main',
 ], function (
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
+    utils
 ) {
+    var ENTERPRISE = 'enterprise';
+    var ADVANCED = 'advanced';
+    var PRO = 'pro';
+    var STANDARD = 'standard';
+    var COMMUNITY = 'community';
+
     var pricingTableModel = function (editions, currentEdition, isRenewal, startDate, isSubscriptionBelowMin,
     nextSubscription) {
         'use strict';
@@ -33,26 +41,23 @@ hqDefine('accounting/js/pricing_table', [
         self.selectCurrentPlan = function () {
             self.selected_edition(self.currentEdition);
         };
-        self.capitalizeString = function (s) {
-            return s.charAt(0).toUpperCase() + s.slice(1);
-        };
         self.isDowngrade = function (oldPlan, newPlan) {
-            if (oldPlan === 'Enterprise') {
-                if (newPlan === 'Advanced' || newPlan === 'Pro' ||
-                    newPlan === 'Standard' || newPlan === 'Community') {
+            if (oldPlan === ENTERPRISE) {
+                if (_.contains([ADVANCED, PRO, STANDARD, COMMUNITY], newPlan)) {
                     return true;
                 }
             }
-            else if (oldPlan === 'Advanced') {
-                if (newPlan === 'Pro' || newPlan === 'Standard' || newPlan === 'Community') {
+            else if (oldPlan === ADVANCED) {
+                if (_.contains([PRO, STANDARD, COMMUNITY], newPlan)) {
                     return true;
                 }
-            } else if (oldPlan === 'Pro') {
-                if (newPlan === 'Standard' || newPlan === 'Community') {
+            }
+            else if (oldPlan === PRO) {
+                if (_.contains([STANDARD, COMMUNITY], newPlan)) {
                     return true;
                 }
-            } else if (oldPlan === 'Standard') {
-                if (newPlan === 'Community') {
+            } else if (oldPlan === STANDARD) {
+                if (newPlan === COMMUNITY) {
                     return true;
                 }
             }
@@ -63,20 +68,24 @@ hqDefine('accounting/js/pricing_table', [
         self.openMinimumSubscriptionModal = function (pricingTable, e) {
             self.form = $(e.currentTarget).closest("form");
 
-            var oldPlan = self.capitalizeString(self.currentEdition);
-            var newPlan = self.capitalizeString(self.selected_edition());
-            var newStartDate = self.startDateAfterMinimumSubscription;
             var mailto = "<a href=\'mailto:billing-support@dimagi.com\'>billing-support@dimagi.com</a>";
-            if (self.isDowngrade(oldPlan, newPlan) && self.subscriptionBelowMinimum) {
-                var message = "All CommCare subscriptions require a 30 day minimum commitment.";
+            if (self.isDowngrade(self.currentEdition, self.selected_edition()) && self.subscriptionBelowMinimum) {
+                var oldPlan = utils.capitalize(self.currentEdition);
+                var newPlan = utils.capitalize(self.selected_edition());
+                var newStartDate = self.startDateAfterMinimumSubscription;
+
+                var message = _(gettext("All CommCare subscriptions require a 30 day minimum commitment."));
                 if (self.nextSubscription) {
-                    message += " Your current " + oldPlan + " Edition Plan subscription is scheduled to be " +
-                        "downgraded to the " + self.nextSubscription + " Edition Plan on " + newStartDate + ". ";
+                    message += _.template(gettext(" Your current <%= oldPlan %> Edition Plan subscription is " +
+                        "scheduled to be downgraded to the <%= nextSubscription %> Edition Plan on <%= date %>."))
+                    ({oldPlan: oldPlan, nextSubscription: self.nextSubscription, date: newStartDate});
                 }
-                message += " Continuing ahead will allow you to schedule your current " + oldPlan + " Edition " +
-                    "Plan subscription to be downgraded to the " + newPlan + " Edition Plan on " + newStartDate +
-                    ". If you have questions or if you would like to speak to us about your subscription, " +
-                    "please reach out to " + mailto + ".";
+                message += _.template(gettext(" Continuing ahead will allow you to schedule your current " +
+                    "<%= oldPlan %> Edition Plan subscription to be downgraded to the <%= newPlan %> Edition " +
+                    "Plan on <%= date %>.  If you have questions or if you would like to speak to us about your " +
+                    "subscription, please reach out to "))
+                ({oldPlan: oldPlan, newPlan: newPlan, date: newStartDate});
+                message += mailto + " .";
                 var $modal = $("#modal-minimum-subscription");
                 $modal.find('.modal-body')[0].innerHTML = message;
                 $modal.modal('show');
@@ -115,19 +124,19 @@ hqDefine('accounting/js/pricing_table', [
             return 'col-edition col-edition-' + self.slug();
         });
         self.isCommunity = ko.computed(function () {
-            return self.slug() === 'community';
+            return self.slug() === COMMUNITY;
         });
         self.isStandard = ko.computed(function () {
-            return self.slug() === 'standard';
+            return self.slug() === STANDARD;
         });
         self.isPro = ko.computed(function () {
-            return self.slug() === 'pro';
+            return self.slug() === PRO;
         });
         self.isAdvanced = ko.computed(function () {
-            return self.slug() === 'advanced';
+            return self.slug() === ADVANCED;
         });
         self.isEnterprise = ko.computed(function () {
-            return self.slug() === 'enterprise';
+            return self.slug() === ENTERPRISE;
         });
 
         return self;

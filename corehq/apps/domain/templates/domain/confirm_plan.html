@@ -4,7 +4,7 @@
 {% requirejs_main 'accounting/js/confirm_plan' %}
 
 {% block form_content %}
-{% initial_page_data 'is_upgrade' is_upgrade|BOOL %}
+{% initial_page_data 'is_upgrade' is_upgrade %}
 {% initial_page_data 'next_invoice_date' next_invoice_date %}
 {% initial_page_data 'current_plan' current_plan %}
 {% initial_page_data 'new_plan_edition' new_plan_edition %}
@@ -112,7 +112,7 @@
                     <span aria-hidden="true">&times;</span>
                     <span class="sr-only">{% trans "Close" %}</span>
                 </button>
-                <h4 class="modal-title">Downgrading?</h4>
+                <h4 class="modal-title">{% trans 'Downgrading?' %}</h4>
             </div>
             <div class="modal-body">
                 {% blocktrans %}
