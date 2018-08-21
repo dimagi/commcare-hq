@@ -96,19 +96,6 @@ function _run_tests() {
     TEST=$1
     shift
     if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
-        function _test_make_requirements {
-            make requirements
-            git diff
-            git update-index -q --refresh
-            if git diff-index --quiet HEAD --; then
-                # No changes
-                exit 0
-            else
-                # Changes
-                exit 1
-            fi
-        }
-        _test_make_requirements  # included here just as a way of getting it to run on only one job
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
         TESTS="--attr=sql_backend"
