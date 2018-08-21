@@ -9,7 +9,6 @@ import postgres_copy
 import sqlalchemy
 
 from django.conf import settings
-from django.db import connections
 from django.test.utils import override_settings
 
 from corehq.apps.domain.models import Domain
@@ -19,7 +18,6 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
-    create_views,
     move_ucr_data_into_aggregation_tables,
     _aggregate_child_health_pnc_forms)
 from io import open
@@ -136,9 +134,6 @@ def setUpModule():
             raise
         finally:
             _call_center_domain_mock.stop()
-
-        with connections['icds-ucr'].cursor() as cursor:
-            create_views(cursor)
 
 
 def tearDownModule():
