@@ -149,11 +149,11 @@ def get_addpatient_caseblock(case_type, owner, patient, repeater):
     property_map = get_property_map(repeater.openmrs_config.case_config)
 
     fields_to_update = {}
-    for prop, (jsonpath, value_map) in property_map.items():
+    for prop, (jsonpath, value_source) in property_map.items():
         matches = jsonpath.find(patient)
         if matches:
             patient_value = matches[0].value
-            new_value = value_map.get(patient_value, patient_value)
+            new_value = value_source.deserialize(patient_value)
             fields_to_update[prop] = new_value
 
     if fields_to_update:
@@ -175,12 +175,12 @@ def get_updatepatient_caseblock(case, patient, repeater):
     property_map = get_property_map(repeater.openmrs_config.case_config)
 
     fields_to_update = {}
-    for prop, (jsonpath, value_map) in property_map.items():
+    for prop, (jsonpath, value_source) in property_map.items():
         matches = jsonpath.find(patient)
         if matches:
             patient_value = matches[0].value
             case_value = case.get_case_property(prop)
-            new_value = value_map.get(patient_value, patient_value)
+            new_value = value_source.deserialize(patient_value)
             if case_value != new_value:
                 fields_to_update[prop] = new_value
 
