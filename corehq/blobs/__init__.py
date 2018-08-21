@@ -92,3 +92,9 @@ class CODES:
     invoice = 11        # InvoicePdf
     restore = 12
     fixture = 13        # domain-fixtures
+    demo_user_restore = 14  # DemoUserRestore
+    data_file = 15      # domain data file (see DataFile class)
+
+
+CODES.name_of = {code: name
+    for name, code in vars(CODES).items() if isinstance(code, int)}.get
