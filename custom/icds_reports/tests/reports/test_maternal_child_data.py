@@ -6,6 +6,7 @@ from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 
 
 class TestMaternalChildData(TestCase):
+    maxDiff = None
     def test_data_underweight_weight_for_age(self):
         self.assertDictEqual(
             get_maternal_child_data(
@@ -47,7 +48,7 @@ class TestMaternalChildData(TestCase):
             {
                 "redirect": "wasting",
                 "color": "green",
-                "all": 0,
+                "all": 27,
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": "Of the children enrolled for Anganwadi services, whose weight and height was "
@@ -58,7 +59,7 @@ class TestMaternalChildData(TestCase):
                              "undernutrition usually as a consequence of insufficient food intake or a high "
                              "incidence of infectious diseases.",
                 "percent": 0,
-                "value": 1,
+                "value": 9,
                 "label": "Wasting (Weight-for-Height)"
             }
         )
@@ -77,8 +78,8 @@ class TestMaternalChildData(TestCase):
             )['records'][1][0],
             {
                 "redirect": "stunting",
-                "color": "red",
-                "all": 0,
+                "color": "green",
+                "all": 32,
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": "Of the children whose height was measured, the percentage of children between "
@@ -86,8 +87,8 @@ class TestMaternalChildData(TestCase):
                              "<br/><br/>"
                              "Stunting is a sign of chronic undernutrition and has long lasting harmful "
                              "consequences on the growth of a child",
-                "percent": "Data in the previous reporting period was 0",
-                "value": 0,
+                "percent": -14.236111111111107,
+                "value": 19,
                 "label": "Stunting (Height-for-Age)"
             }
         )
