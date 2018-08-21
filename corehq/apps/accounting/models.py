@@ -61,7 +61,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
@@ -2809,9 +2809,11 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
     date_created = DateTimeProperty()
     is_wire = BooleanProperty(default=False)
     is_customer = BooleanProperty(default=False)
+    _blobdb_type_code = CODES.invoice
 
     def generate_pdf(self, invoice):
         self.save()
+        domain = invoice.get_domain()
         pdf_data = NamedTemporaryFile()
         account_name = ''
         if invoice.is_customer_invoice:
@@ -2820,7 +2822,7 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             pdf_data.name,
             invoice_number=invoice.invoice_number,
             to_address=get_address_from_invoice(invoice),
-            project_name=invoice.get_domain(),
+            project_name=domain,
             invoice_date=invoice.date_created.date(),
             due_date=invoice.date_due,
             date_start=invoice.date_start,
@@ -2874,12 +2876,13 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
 
         template.get_pdf()
         filename = self.get_filename(invoice)
+        blob_domain = domain or "<unknown>"
         # this is slow and not unit tested
         # best to just skip during unit tests for speed
         if not settings.UNIT_TESTING:
-            self.put_attachment(pdf_data, filename, 'application/pdf')
+            self.put_attachment(pdf_data, filename, 'application/pdf', domain=blob_domain)
         else:
-            self.put_attachment('', filename, 'application/pdf')
+            self.put_attachment('', filename, 'application/pdf', domain=blob_domain)
         pdf_data.close()
 
         self.invoice_id = str(invoice.id)
