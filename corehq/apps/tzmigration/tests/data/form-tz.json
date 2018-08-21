@@ -8,8 +8,7 @@
         "form.xml": {
             "content_length": 3410,
             "content_type": "text/xml",
-            "digest": "md5-sc+xBvC3EgJfoDOmLcAOqg==",
-            "doc_type": "BlobMeta"
+            "doc_type": "BlobMetaPointer"
         }
     },
     "form": {
