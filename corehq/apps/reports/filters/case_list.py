@@ -33,9 +33,6 @@ class CaseListFilterUtils(EmwfUtils):
 
 class CaseListFilterUtilsAllUsers(SubmitHistoryUtils):
 
-    def sharing_group_tuple(self, g):
-        return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])
-
     @property
     @memoized
     def static_options(self):
@@ -47,12 +44,6 @@ class CaseListFilterUtilsAllUsers(SubmitHistoryUtils):
             ("all_data", _("[All Data (Active & Deactivated Owners)]")),
             ('project_data', _("[Project Data (Active & Deactivated Owners)]"))
         ] + options[2:]
-
-    def _group_to_choice_tuple(self, group):
-        if group.case_sharing:
-            return self.sharing_group_tuple(group)
-        else:
-            return self.reporting_group_tuple(group)
 
 
 @location_safe
