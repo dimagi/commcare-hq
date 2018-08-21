@@ -254,9 +254,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                             rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
                         except Exception as e:
                             change_exceptions.append((changes_by_id[doc["_id"]], e))
+                        eval_context.reset_iteration()
                 elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
                     to_delete_by_adapter[adapter].append(doc['_id'])
-            eval_context.reset_iteration()
 
         # bulk delete by adapter
         to_delete = [c.id for c in changes_chunk if c.deleted]
