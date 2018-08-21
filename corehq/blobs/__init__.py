@@ -76,7 +76,7 @@ class CODES:
 
     # SQL forms + XFormInstance, XFormArchived, XFormDeprecated,
     # XFormDuplicate, XFormInstance-Deleted
-    form = 2
+    form_xml = 2
     form_attachment = 3
 
     domain = 4          # Domain
