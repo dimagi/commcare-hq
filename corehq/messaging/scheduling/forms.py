@@ -2722,8 +2722,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     custom_recipient = ChoiceField(
         required=False,
         choices=(
-            (k, v[1])
-            for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.items()
+            [('', '')] +
+            [(k, v[1]) for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.items()]
         )
     )
 
