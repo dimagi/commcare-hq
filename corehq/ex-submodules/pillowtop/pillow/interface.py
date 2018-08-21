@@ -233,8 +233,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                     processor.process_change(self, change)
                 else:
                     # process on serial processors
-                    for processor in self.serial_processors:
-                        self.process_change(change)
+                    self.process_change(change, serial_only=True)
             is_success = True
         except Exception as ex:
             try:
@@ -405,8 +404,9 @@ class ConstructedPillow(PillowBase):
     def get_change_feed(self):
         return self._change_feed
 
-    def process_change(self, change):
-        for processor in self.processors:
+    def process_change(self, change, serial_only=False):
+        processors = self.serial_processors if serial_only else self.processors
+        for processor in processors:
             processor.process_change(self, change)
 
     def update_checkpoint(self, change, context):
