@@ -4,10 +4,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-from corehq.sql_db.operations import RawSQLMigration
-
-
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
 
 class Migration(migrations.Migration):
@@ -17,7 +13,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('disha_indicators.sql'),
         migrations.CreateModel(
             name='DishaIndicatorView',
             fields=[
