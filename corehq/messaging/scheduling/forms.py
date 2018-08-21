@@ -119,12 +119,15 @@ class CommaSeparatedListField(CharField):
         return value.split(',')
 
 
-def get_system_admin_label():
+def get_system_admin_label(data_bind=""):
+    if data_bind:
+        assert '"' not in data_bind, data_bind
+        data_bind = ' data-bind="%s"' % data_bind
     return crispy.HTML("""
-        <label class="col-xs-1 control-label">
+        <label class="col-xs-1 control-label"%s>
             <span class="label label-primary">%s</span>
         </label>
-    """ % _("Requires System Admin"))
+    """ % (data_bind, _("Requires System Admin")))
 
 
 class ContentForm(Form):
@@ -1825,6 +1828,7 @@ class ScheduleForm(Form):
                         'use_user_data_filter',
                         data_bind='value: use_user_data_filter',
                     ),
+                    get_system_admin_label("visible: use_user_data_filter() === '%s'" % self.JSON),
                     css_class='col-sm-4',
                 ),
             ),
