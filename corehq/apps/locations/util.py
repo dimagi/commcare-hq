@@ -301,7 +301,7 @@ def dump_locations(domain, download_id, include_consumption, headers_only, task=
         db.put(
             file_,
             domain=domain,
-            parent_id="BlobDownload",
+            parent_id=domain,
             type_code=CODES.tempfile,
             key=download_id,
             timeout=expiry_mins,

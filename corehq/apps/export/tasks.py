@@ -61,7 +61,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
             db.put(
                 file_,
                 domain=domain,
-                parent_id="BlobDownload",
+                parent_id=domain,
                 type_code=CODES.data_export,
                 key=download_id,
                 timeout=expiry,

@@ -183,7 +183,7 @@ def expose_zipped_blob_download(data_path, filename, format, domain):
             get_blob_db().put(
                 file_,
                 domain=domain,
-                parent_id="BlobDownload",
+                parent_id=domain,
                 type_code=CODES.tempfile,
                 key=ref.download_id,
                 timeout=expiry_mins
