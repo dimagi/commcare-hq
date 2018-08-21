@@ -1,15 +1,37 @@
-hqDefine('accounting/js/pricing_table', function () {
-    var pricingTableModel = function (editions, current_edition, isRenewal) {
+hqDefine('accounting/js/pricing_table', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/main',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    utils
+) {
+    var ENTERPRISE = 'enterprise';
+    var ADVANCED = 'advanced';
+    var PRO = 'pro';
+    var STANDARD = 'standard';
+    var COMMUNITY = 'community';
+
+    var pricingTableModel = function (editions, currentEdition, isRenewal, startDate, isSubscriptionBelowMin,
+    nextSubscription) {
         'use strict';
         var self = {};
 
-        self.currentEdition = current_edition;
+        self.currentEdition = currentEdition;
         self.isRenewal = isRenewal;
+        self.startDateAfterMinimumSubscription = startDate;
+        self.subscriptionBelowMinimum = isSubscriptionBelowMin;
+        self.nextSubscription = nextSubscription;
         self.editions = ko.observableArray(_.map(editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
         }));
 
-        self.selected_edition = ko.observable(isRenewal ? current_edition : false);
+        self.selected_edition = ko.observable(isRenewal ? currentEdition : false);
         self.isSubmitVisible = ko.computed(function () {
             if (isRenewal){
                 return true;
@@ -19,39 +41,63 @@ hqDefine('accounting/js/pricing_table', function () {
         self.selectCurrentPlan = function () {
             self.selected_edition(self.currentEdition);
         };
+        self.isDowngrade = function (oldPlan, newPlan) {
+            if (oldPlan === ENTERPRISE) {
+                if (_.contains([ADVANCED, PRO, STANDARD, COMMUNITY], newPlan)) {
+                    return true;
+                }
+            }
+            else if (oldPlan === ADVANCED) {
+                if (_.contains([PRO, STANDARD, COMMUNITY], newPlan)) {
+                    return true;
+                }
+            }
+            else if (oldPlan === PRO) {
+                if (_.contains([STANDARD, COMMUNITY], newPlan)) {
+                    return true;
+                }
+            } else if (oldPlan === STANDARD) {
+                if (newPlan === COMMUNITY) {
+                    return true;
+                }
+            }
+            return false;
+        };
 
         self.form = undefined;
-        self.openDowngradeModal = function(pricingTable, e) {
-            var editionSlugs = _.map(self.editions(), function(e) { return e.slug(); });
+        self.openMinimumSubscriptionModal = function (pricingTable, e) {
             self.form = $(e.currentTarget).closest("form");
-            if (editionSlugs.indexOf(self.selected_edition()) < editionSlugs.indexOf(self.currentEdition)) {
-                var $modal = $("#modal-downgrade");
+
+            var mailto = "<a href=\'mailto:billing-support@dimagi.com\'>billing-support@dimagi.com</a>";
+            if (self.isDowngrade(self.currentEdition, self.selected_edition()) && self.subscriptionBelowMinimum) {
+                var oldPlan = utils.capitalize(self.currentEdition);
+                var newPlan = utils.capitalize(self.selected_edition());
+                var newStartDate = self.startDateAfterMinimumSubscription;
+
+                var message = _(gettext("All CommCare subscriptions require a 30 day minimum commitment."));
+                if (self.nextSubscription) {
+                    message += _.template(gettext(" Your current <%= oldPlan %> Edition Plan subscription is " +
+                        "scheduled to be downgraded to the <%= nextSubscription %> Edition Plan on <%= date %>."))
+                    ({oldPlan: oldPlan, nextSubscription: self.nextSubscription, date: newStartDate});
+                }
+                message += _.template(gettext(" Continuing ahead will allow you to schedule your current " +
+                    "<%= oldPlan %> Edition Plan subscription to be downgraded to the <%= newPlan %> Edition " +
+                    "Plan on <%= date %>.  If you have questions or if you would like to speak to us about your " +
+                    "subscription, please reach out to "))
+                ({oldPlan: oldPlan, newPlan: newPlan, date: newStartDate});
+                message += mailto + " .";
+                var $modal = $("#modal-minimum-subscription");
+                $modal.find('.modal-body')[0].innerHTML = message;
                 $modal.modal('show');
             } else {
                 self.form.submit();
             }
         };
 
-        self.submitDowngrade = function(pricingTable, e) {
-            var finish = function() {
-                if (self.form) {
-                    self.form.submit();
-                }
-            };
-
-            var $button = $(e.currentTarget);
-            $button.disableButton();
-            $.ajax({
-                method: "POST",
-                url: hqImport('hqwebapp/js/initial_page_data').reverse('email_on_downgrade'),
-                data: {
-                    old_plan: self.currentEdition,
-                    new_plan: self.selected_edition(),
-                    note: $button.closest(".modal").find("textarea").val(),
-                },
-                success: finish,
-                error: finish,
-            });
+        self.submitDowngradeForm = function () {
+            if (self.form) {
+                self.form.submit();
+            }
         };
 
         self.init = function () {
@@ -63,14 +109,14 @@ hqDefine('accounting/js/pricing_table', function () {
         return self;
     };
 
-    var pricingTableEditionModel = function (data, current_edition) {
+    var pricingTableEditionModel = function (data, currentEdition) {
         'use strict';
         var self = {};
 
         self.slug = ko.observable(data[0]);
         self.name = ko.observable(data[1].name);
         self.description = ko.observable(data[1].description);
-        self.currentEdition = ko.observable(data[0] === current_edition);
+        self.currentEdition = ko.observable(data[0] === currentEdition);
         self.notCurrentEdition = ko.computed(function (){
             return !self.currentEdition();
         });
@@ -78,37 +124,39 @@ hqDefine('accounting/js/pricing_table', function () {
             return 'col-edition col-edition-' + self.slug();
         });
         self.isCommunity = ko.computed(function () {
-            return self.slug() === 'community';
+            return self.slug() === COMMUNITY;
         });
         self.isStandard = ko.computed(function () {
-            return self.slug() === 'standard';
+            return self.slug() === STANDARD;
         });
         self.isPro = ko.computed(function () {
-            return self.slug() === 'pro';
+            return self.slug() === PRO;
         });
         self.isAdvanced = ko.computed(function () {
-            return self.slug() === 'advanced';
+            return self.slug() === ADVANCED;
         });
         self.isEnterprise = ko.computed(function () {
-            return self.slug() === 'enterprise';
+            return self.slug() === ENTERPRISE;
         });
 
         return self;
     };
 
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            pricingTable = pricingTableModel(
-                initial_page_data('editions'),
-                initial_page_data('current_edition'),
-                initial_page_data('is_renewal')
-            );
+        var pricingTable = pricingTableModel(
+            initialPageData.get('editions'),
+            initialPageData.get('current_edition'),
+            initialPageData.get('is_renewal'),
+            initialPageData.get('start_date_after_minimum_subscription'),
+            initialPageData.get('subscription_below_minimum'),
+            initialPageData.get('next_subscription')
+        );
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
         $('#pricing-table').koApplyBindings(pricingTable);
-        $('#modal-downgrade').koApplyBindings(pricingTable);
+        $('#modal-minimum-subscription').koApplyBindings(pricingTable);
 
         pricingTable.init();
-    }());
+    });
 });
