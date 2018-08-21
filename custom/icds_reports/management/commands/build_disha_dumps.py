@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 from datetime import datetime
 import argparse
 
@@ -24,6 +27,4 @@ class Command(BaseCommand):
         )
 
     def handle(self, month, *args, **kwargs):
-        print "Creating dumps"
         build_dumps_for_month(month)
-        print "Finished"
