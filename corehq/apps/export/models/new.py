@@ -2634,7 +2634,7 @@ class DataFile(object):
     id = _meta_property("id")
     domain = _meta_property("parent_id")
     filename = _meta_property("name")
-    blob_id = _meta_property("path")
+    blob_id = _meta_property("key")
     content_type = _meta_property("content_type")
     content_length = _meta_property("content_length")
     delete_after = _meta_property("expires_on")

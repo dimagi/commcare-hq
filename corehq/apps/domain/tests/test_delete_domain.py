@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import random
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
 from mock import patch
@@ -543,7 +543,7 @@ class TestDeleteDomain(TestCase):
                 filename="data.csv",
                 description="data file",
                 content_type="text/csv",
-                delete_after=datetime.utcnow(),
+                delete_after=datetime.utcnow() + timedelta(minutes=10),
             ))
             EmailExportWhenDoneRequest.objects.create(domain=domain_name)
             self._assert_export_counts(domain_name, 1)
