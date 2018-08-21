@@ -11,7 +11,7 @@ from django.forms.widgets import (
     MultiWidget,
 )
 from django.template.loader import render_to_string
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 import json
 from django.utils.translation import ugettext_noop
@@ -38,7 +38,7 @@ class BootstrapCheckboxInput(CheckboxInput):
             final_attrs['checked'] = 'checked'
         if value not in ('', True, False, None):
             # Only add the 'value' attribute if a value is non-empty.
-            final_attrs['value'] = force_unicode(value)
+            final_attrs['value'] = force_text(value)
         return mark_safe('<label class="checkbox"><input%s /> %s</label>' %
                          (flatatt(final_attrs), self.inline_label))
 

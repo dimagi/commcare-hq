@@ -14,7 +14,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling import util
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
-from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule, IVRSurveyContent, SMSCallbackContent
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
@@ -278,6 +278,12 @@ class ScheduleInstance(PartitionedModel):
     def send_current_event_content_to_recipients(self):
         client = get_redis_client()
         content = self.memoized_schedule.get_current_event_content(self)
+
+        if isinstance(content, (IVRSurveyContent, SMSCallbackContent)):
+            raise TypeError(
+                "IVR and Callback use cases are no longer supported. "
+                "How did this schedule instance end up as active?"
+            )
 
         if isinstance(self, CaseScheduleInstanceMixin):
             content.set_context(case=self.case, schedule_instance=self)

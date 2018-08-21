@@ -162,7 +162,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with severe acute malnutrition (weight-for-height)'},
-                    {'html': 100.0, 'sort_key': 100.0},
+                    {'html': 0.0, 'sort_key': 0.0},
                     {'html': 0.0, 'sort_key': 0.0},
                     {'html': 0}
                 ],
@@ -271,7 +271,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with normal height-for-age'},
-                    {'html': 100.0, 'sort_key': 100.0},
+                    {'html': 0.0, 'sort_key': 0.0},
                     {'html': 0.0, 'sort_key': 0.0},
                     {'html': 0}
                 ],

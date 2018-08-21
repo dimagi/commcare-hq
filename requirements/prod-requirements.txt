@@ -8,6 +8,7 @@ git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect==0.5.7a2
 alembic==0.8.6
 amqp==2.3.2
 appdirs==1.4.3
+appnope==0.1.0            # via ipython
 asn1crypto==0.24.0
 attrs==18.1.0
 babel==2.6.0
@@ -44,6 +45,7 @@ django-crispy-forms==1.7.0
 django-cte==1.1.4
 django-formtools==2.0
 django-otp==0.3.13
+django-partial-index==0.4.0
 django-phonenumber-field==1.3.0
 django-prbac==0.0.7
 django-ranged-response==0.2.0
@@ -133,6 +135,7 @@ pypdf2==1.26.0
 pystache==0.5.4
 python-dateutil==2.6.1
 python-editor==1.0.3
+python-levenshtein==0.12.0
 python-magic==0.4.13
 python-mimeparse==1.6.0
 pytz==2017.2
@@ -183,4 +186,4 @@ zeep==1.6.0
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==10.0.1
-setuptools==40.0.0        # via django-simple-captcha, django-websocket-redis, ipython
+setuptools==40.0.0        # via django-simple-captcha, django-websocket-redis, ipython, python-levenshtein

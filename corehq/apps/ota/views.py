@@ -50,8 +50,8 @@ from .utils import (
 from corehq.apps.users.util import update_device_meta, update_latest_builds, update_last_sync
 
 
-PROFILE_PROBABILITY = float(os.getenv(b'COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
-PROFILE_LIMIT = os.getenv(b'COMMCARE_PROFILE_RESTORE_LIMIT')
+PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
+PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 

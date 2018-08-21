@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import hashlib
 import json
-from exceptions import NotImplementedError
 
 from django.core.serializers.json import DjangoJSONEncoder
 from jsonobject.base_properties import DefaultProperty
