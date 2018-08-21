@@ -3,11 +3,9 @@ from __future__ import unicode_literals
 
 from collections import namedtuple, defaultdict
 from datetime import timedelta
-from itertools import chain
 import re
 
 from requests import RequestException
-import six
 from six.moves import zip
 
 from casexml.apps.case.mock import CaseBlock
@@ -25,25 +23,11 @@ from corehq.motech.openmrs.const import (
     XMLNS_OPENMRS,
 )
 from corehq.motech.openmrs.finders import PatientFinder
-from corehq.motech.openmrs.serializers import to_timestamp
+from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask
 from corehq.motech.value_source import CaseTriggerInfo
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
-
-
-def serialize(data):
-    """
-    Convert values in data to a format OpenMRS will accept.
-
-    >>> serialize({'birthdate': '2017-06-27'}) == {'birthdate': '2017-06-27T00:00:00.000+0000'}
-    True
-
-    """
-    # We can get away with not worrying about namespaces because these
-    # property names are fixed and unique.
-    serializers = dict(chain(six.iteritems(ADDRESS_PROPERTIES), six.iteritems(NAME_PROPERTIES), six.iteritems(PERSON_PROPERTIES)))
-    return {p: serializers[p](v) if serializers[p] else v for p, v in data.items()}
 
 
 def get_case_location(case):
@@ -429,7 +413,7 @@ class UpdatePersonNameTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -450,7 +434,7 @@ class UpdatePersonNameTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -474,7 +458,7 @@ class CreatePersonAddressTask(WorkflowTask):
         if properties:
             response = self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/address/'.format(person_uuid=self.person_uuid),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
             self.address_uuid = response.json()['uuid']
@@ -512,7 +496,7 @@ class UpdatePersonAddressTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -528,7 +512,7 @@ class UpdatePersonAddressTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -659,7 +643,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         if properties:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -677,7 +661,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         if properties:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
