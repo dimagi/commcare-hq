@@ -4,6 +4,6 @@ from django.conf import settings
 
 from celery import Celery
 
-app = Celery('commcare-hq')
+app = Celery()
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
