@@ -92,3 +92,4 @@ class CODES:
     invoice = 11        # InvoicePdf
     restore = 12
     fixture = 13        # domain-fixtures
+    demo_user_restore = 14  # DemoUserRestore
