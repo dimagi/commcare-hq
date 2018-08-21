@@ -2,7 +2,6 @@ hqDefine("scheduling/js/dashboard",[
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'd3/d3.min',
     'nvd3/nv.d3.min',
 ], function($, ko, initialPageData) {
     var dashboardUrl = initialPageData.reverse("messaging_dashboard");

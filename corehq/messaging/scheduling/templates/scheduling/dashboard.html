@@ -16,7 +16,7 @@
     <div id="messaging_dashboard" class="container-fluid">
         <div data-bind="visible: !bindingApplied()">
             <img src="/static/hqwebapp/images/ajax-loader.gif" />
-            <span data-bind="text: gettext('SMS Status:')"></span>
+            <span>{% trans "Loading..." %}</span>
         </div>
         {# Prevent flicker by hiding and using bindingApplied to make visible #}
         <div style="display: none;" data-bind="visible: bindingApplied">
@@ -29,10 +29,10 @@
                         <strong class="text-danger" data-bind="visible: !is_sms_currently_allowed(), text: gettext('Processing Paused')"></strong>
                         <span data-bind="visible: queued_sms_count() > 0 || !is_sms_currently_allowed()">
                             (<span data-bind="text: queued_sms_count"></span>
-                            {% trans "SMS queued" %})
+                            <span data-bind="text: gettext('SMS queued')"></span>)
                         </span>
                         <span class="hq-help-template"
-                              data-title="gettext('SMS Status')"
+                              data-title="{% trans 'SMS Status' %}"
                               data-container="body"
                               data-content="{% blocktrans %}
                               <p><strong>Processing Complete:</strong> All queued messages have been processed.</p>
@@ -71,9 +71,9 @@
                             <span>/</span>
                             <span data-bind="text: daily_outbound_sms_limit"></span>
                             <span class="hq-help-template"
-                                  data-title="gettext('Daily Usage')"
+                                  data-title="{% trans 'Daily Usage' %}"
                                   data-container="body"
-                                  data-content="gettext('The number of SMS sent today out of the total daily limit for your project. If you require a higher limit, contact support.')"
+                                  data-content="{% trans 'The number of SMS sent today out of the total daily limit for your project. If you require a higher limit, contact support.' %}"
                                   data-placement="left">
                             </span>
                         </div>
@@ -118,10 +118,11 @@
                         <strong class="text-warning" data-bind="visible: events_pending() > 0,text: gettext('Processing In Progress')"></strong>
                         <span data-bind="visible: events_pending() > 0">
                             <span data-bind="text: events_pending"></span>
-                            {% trans "event(s) queued" %}
+                            <span data-bind="text: gettext('event(s) queued')"></span>
+
                         </span>
                         <span class="hq-help-template"
-                              data-title="gettext('All Messaging Events Status')"
+                              data-title="{% trans 'All Messaging Events Status' %}"
                               data-container="body"
                               data-content="{% blocktrans %}
                               <p><strong>Processing Complete:</strong> All due events have been processed.</p>
@@ -142,11 +143,11 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong data-bind="text:gettext('Incoming / Outgoing SMS')"></strong>
+                        <strong data-bind="text: gettext('Incoming / Outgoing SMS')"></strong>
                         <span class="hq-help-template"
-                              data-title="gettext('Incoming / Outgoing SMS')"
+                              data-title="{% trans 'Incoming / Outgoing SMS' %}"
                               data-container="body"
-                              data-content="gettext('Summary of SMS activity. Outgoing SMS represent SMS successfully handed off to an SMS gateway for delivery.')"
+                              data-content="{% trans 'Summary of SMS activity. Outgoing SMS represent SMS successfully handed off to an SMS gateway for delivery.' %}"
                               data-placement="left">
                         </span>
                     </h3>
@@ -162,7 +163,7 @@
                     </div>
                     <div class="pull-right">
                         <p class="help-block">
-                            <i class="fa fa-info-circle"></i> {% trans "Dates are presented in YYYY-MM-DD format" %}
+                            <i class="fa fa-info-circle"></i> <span data-bind="text:gettext('Dates are presented in YYYY-MM-DD format')"></span>
                         </p>
                     </div>
                 </div>
@@ -172,9 +173,9 @@
                     <h3 class="panel-title">
                         <strong data-bind="text: gettext('Messaging Events (Success / Error)')"></strong>
                         <span class="hq-help-template"
-                              data-title="gettext('Messaging Events (Success / Error)')"
+                              data-title="{% trans 'Messaging Events (Success / Error)' %}"
                               data-container="body"
-                              data-content="gettext('Shows the counts of messaging events that completed successfully as well as those that had errors.')"
+                              data-content="{% trans 'Shows the counts of messaging events that completed successfully as well as those that had errors.' %}"
                               data-placement="left">
                         </span>
                     </h3>
@@ -190,7 +191,7 @@
                     </div>
                     <div class="pull-right">
                         <p class="help-block">
-                            <i class="fa fa-info-circle"></i> {% trans "Dates are presented in YYYY-MM-DD format" %}
+                            <i class="fa fa-info-circle"></i> <span data-bind="text:gettext('Dates are presented in YYYY-MM-DD format')"></span>
                         </p>
                     </div>
                 </div>
@@ -200,9 +201,9 @@
                     <h3 class="panel-title">
                         <strong data-bind="text:gettext('Messaging Event Error Summary')"></strong>
                         <span class="hq-help-template"
-                              data-title="gettext('Messaging Event Error Summary')"
+                              data-title="{% trans 'Messaging Event Error Summary' %}"
                               data-container="body"
-                              data-content="gettext('Gives a breakdown of messaging event errors and the counts of their occurrences. Hover over a bar to see the error.')"
+                              data-content="{% trans 'Gives a breakdown of messaging event errors and the counts of their occurrences. Hover over a bar to see the error.' %}"
                               data-placement="left">
                         </span>
                     </h3>

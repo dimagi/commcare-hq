@@ -22,6 +22,7 @@ requirejs.config({
             exports: 'RMI',
         },
         "accounting/js/lib/stripe": { exports: 'Stripe' },
+        "nvd3/nv.d3.min":{deps:['d3/d3.min']},
     },
     map: {
         "datatables.fixedColumns": {
