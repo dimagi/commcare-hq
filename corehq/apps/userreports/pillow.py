@@ -43,6 +43,7 @@ from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
+UCR_PROCESSING_CHUNK_SIZE = 10
 
 
 def time_ucr_process_change(method):
@@ -419,7 +420,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
                          num_processes=1, process_num=0,
-                         processor_chunk_size=100, **kwargs):
+                         processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(
@@ -441,7 +442,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
                                 num_processes=1, process_num=0,
-                                processor_chunk_size=100, **kwargs):
+                                processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(
