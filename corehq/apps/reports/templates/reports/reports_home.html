@@ -1,18 +1,12 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "reports/base_template.html" %}
 {% load case_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load report_tags %}
 {% load compress %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'reports/js/saved_reports.js' %}"></script>
-{% endblock %}
-
 {% block page_content %}
 {% initial_page_data 'configs' configs %}
-{% registerurl 'add_report_config' domain %}
-
 <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
     <li><a href="#ko-report-config-list" data-toggle="tab">{% trans "My Saved Reports" %}</a></li>
     <li><a href="#scheduled-reports" data-toggle="tab">
