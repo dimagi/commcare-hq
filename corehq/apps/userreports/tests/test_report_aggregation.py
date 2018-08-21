@@ -563,10 +563,10 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
     @classmethod
     def _create_data(cls):
         for row in [
-            {"state": "MA", "city": "Boston", "number": 4},
-            {"state": "MA", "city": "Boston", "number": 3},
-            {"state": "MA", "city": "Cambridge", "number": 2},
-            {"state": "TN", "city": "Nashville", "number": 1},
+            {"state": "MA", "city": "Boston", "number": 4, "date": "2018-01-03"},
+            {"state": "MA", "city": "Boston", "number": 3, "date": "2018-02-18"},
+            {"state": "MA", "city": "Cambridge", "number": 2, "date": "2018-01-22"},
+            {"state": "TN", "city": "Nashville", "number": 1, "date": "2017-01-03"},
         ]:
             cls._new_case(row).save()
 
@@ -615,6 +615,15 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     },
                     "column_id": 'indicator_col_id_number',
                     "datatype": "integer"
+                },
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'date'
+                    },
+                    "column_id": 'date',
+                    "datatype": "date"
                 },
             ],
         )
@@ -738,4 +747,46 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     ['MA', 'Cambridge', 2],
                 ]
             ]]
+        )
+
+    def test_aggregate_date(self):
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+                'month',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'report_column_display_state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'report_column_col_id_state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'aggregate_date',
+                    'display': 'month',
+                    'field': 'date',
+                    'column_id': 'month',
+                    'aggregation': 'simple',
+                    'format': '%Y-%m'
+                },
+                {
+                    'type': 'field',
+                    'display': 'report_column_display_number',
+                    'field': 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'sum'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        self.assertEqual(
+            view.export_table,
+            [['foo',
+              [['report_column_display_state', 'month', 'report_column_display_number'],
+               ['MA', '2018-01', 6],
+               ['MA', '2018-02', 3],
+               ['TN', '2017-01', 1]]]]
         )
