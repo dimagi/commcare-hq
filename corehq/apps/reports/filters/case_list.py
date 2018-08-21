@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 from memoized import memoized
 
 from corehq.apps.locations.permissions import location_safe
-from .users import ExpandedMobileWorkerFilter, SubmitHistoryUtils, EmwfUtils
+from .users import ExpandedMobileWorkerFilter, EmwfUtils
 
 
 class CaseListFilterUtils(EmwfUtils):
