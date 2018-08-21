@@ -59,18 +59,20 @@
         <hr />
         <div class="alert alert-danger">
             {% blocktrans with current_plan as p %}
-            <p>You’ll have access to the features on your <strong>{{ p }} Edition Software Plan </strong>
-            through {{ current_subscription_end_date }}. On {{ start_date_after_minimum_subscription }} your
-            current subscription will be downgraded to the {{ new_plan_edition }} Edition Software Plan.
+            <p>We're sorry to see you downgrade! You’ll have access to the features on your
+            <strong>{{ p }} Edition Software Plan </strong> through {{ current_subscription_end_date }}.
+            On {{ start_date_after_minimum_subscription }} your current subscription will be downgraded
+            to the {{ new_plan_edition }} Edition Software Plan.
             </p>
             {% endblocktrans %}
         </div>
         {% else %}
         <hr />
         <div class="alert alert-danger">
-            {% blocktrans with current_plan.name as p %}
+            {% blocktrans with current_plan as p %}
             <h4>Note: Continuing will change your current subscription.</h4>
-            <p>You are currently subscribed to the <strong>{{ p }} Software Plan</strong></p>
+            <p>We're sorry to see you downgrade! You are currently subscribed to the
+            <strong>{{ p }} Software Plan</strong></p>
             {% endblocktrans %}
         </div>
         {% endif %}
