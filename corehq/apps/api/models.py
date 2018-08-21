@@ -124,20 +124,18 @@ class ESXFormInstance(DictObject):
 
     @property
     def blobs(self):
-        from corehq.blobs.mixin import BlobMeta
+        from corehq.blobs.mixin import BlobMetaPointer
         blobs = {}
         if self._attachments:
             blobs.update({
-                name: BlobMeta(
-                    id=None,
+                name: BlobMetaPointer(
                     content_length=info.get("length", None),
                     content_type=info.get("content_type", None),
-                    digest=info.get("digest", None),
                 ) for name, info in six.iteritems(self._attachments)
             })
         if self.external_blobs:
             blobs.update({
-                name: BlobMeta.wrap(info)
+                name: BlobMetaPointer.wrap(info)
                 for name, info in six.iteritems(self.external_blobs)
             })
 
