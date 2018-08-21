@@ -28,7 +28,7 @@ from .dbaccessors import (
     get_all_daily_saved_export_instance_ids,
 )
 from .export import get_export_file, rebuild_export, should_rebuild_export
-from .models.new import DataFile, EmailExportWhenDoneRequest
+from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 
 from six.moves import filter
@@ -210,9 +210,3 @@ def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier)
         only_process_current_builds=False,
         task=self,
     )
-
-
-@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"))
-def delete_expired_datafile_blobs():
-    for data_file in DataFile.objects.filter(delete_after__lte=datetime.utcnow()):
-        data_file.delete()

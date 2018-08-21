@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
 
-from .exceptions import Error
+from .exceptions import Error, NotFound  # noqa: F401
 
 DEFAULT_BUCKET = "_default"
 _db = []  # singleton/global, stack for tests to push temporary dbs
@@ -93,3 +93,4 @@ class CODES:
     restore = 12
     fixture = 13        # domain-fixtures
     demo_user_restore = 14  # DemoUserRestore
+    data_file = 15      # domain data file (see DataFile class)
