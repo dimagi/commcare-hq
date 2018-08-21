@@ -92,23 +92,22 @@ function send_metric_to_datadog() {
     "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}" || true
 }
 
-function _test_make_requirements {
-    make requirements
-    git diff
-    git update-index -q --refresh
-    if git diff-index --quiet HEAD --; then
-        # No changes
-        exit 0
-    else
-        # Changes
-        exit 1
-    fi
-}
-
 function _run_tests() {
     TEST=$1
     shift
     if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
+        function _test_make_requirements {
+            make requirements
+            git diff
+            git update-index -q --refresh
+            if git diff-index --quiet HEAD --; then
+                # No changes
+                exit 0
+            else
+                # Changes
+                exit 1
+            fi
+        }
         _test_make_requirements  # included here just as a way of getting it to run on only one job
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
