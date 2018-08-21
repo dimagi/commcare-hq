@@ -6,7 +6,7 @@ window.angular.module('icdsApp').factory('systemUsageService', ['$http', functio
             window.ga('send', 'event', {
                 'eventCategory': 'System Usage Service',
                 'eventAction': 'Fetching data started',
-                'eventLabel': 'getAwcOpenedData'
+                'eventLabel': 'getAwcOpenedData',
             });
             var get_url = url('awc_opened', step);
             return  $http({
@@ -18,7 +18,7 @@ window.angular.module('icdsApp').factory('systemUsageService', ['$http', functio
                     window.ga('send', 'event', {
                         'eventCategory': 'System Usage Service',
                         'eventAction': 'Fetching data succeeded',
-                        'eventLabel': 'getAwcOpenedData'
+                        'eventLabel': 'getAwcOpenedData',
                     });
                     return response;
                 },
@@ -26,7 +26,7 @@ window.angular.module('icdsApp').factory('systemUsageService', ['$http', functio
                     window.ga('send', 'event', {
                         'eventCategory': 'System Usage Service',
                         'eventAction': 'Fetching data failed',
-                        'eventLabel': 'getAwcOpenedData'
+                        'eventLabel': 'getAwcOpenedData',
                     });
                 }
             );

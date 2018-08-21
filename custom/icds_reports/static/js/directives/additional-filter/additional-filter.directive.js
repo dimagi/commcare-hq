@@ -1,4 +1,4 @@
-function AdditionalModalController($location, $uibModalInstance, $window, filters, genders, ages, haveAccessToFeatures) {
+function AdditionalModalController($location, $uibModalInstance, filters, genders, ages, haveAccessToFeatures) {
     var vm = this;
     vm.filters = filters;
 
@@ -21,7 +21,7 @@ function AdditionalModalController($location, $uibModalInstance, $window, filter
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
 
     vm.apply = function() {
-        $window.ga('send', 'event', {
+        window.ga('send', 'event', {
             'eventCategory': 'Additional Filter',
             'eventAction': 'Filter Changed',
             'eventLabel': '',
@@ -105,7 +105,7 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
 }
 
 AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
-AdditionalModalController.$inject = ['$location', '$uibModalInstance', '$window', 'filters', 'genders', 'ages', 'haveAccessToFeatures'];
+AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters', 'genders', 'ages', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive("additionalFilter", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
