@@ -63,7 +63,7 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from couchdbkit import ResourceNotFound
 from corehq import toggles, privileges
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
@@ -4811,6 +4811,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     See note at top of file for high-level overview.
     """
 
+    _blobdb_type_code = CODES.application
     recipients = StringProperty(default="")
 
     # this is the supported way of specifying which commcare build to use
