@@ -46,7 +46,8 @@ class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
             'restore_id': None,
             'num_cases': 2,
             'num_locations': 7,
-            'num_reports': 2,
+            'num_v1_reports': 2,
+            'num_v2_reports': 2,
             'case_type_counts': {},
             'location_type_counts': {
                 'country': 1,
@@ -55,7 +56,11 @@ class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
                 'city': 1,
                 'neighborhood': 3,
             },
-            'report_row_counts': {
+            'v1_report_row_counts': {
+                '0dc41ff3e342d3ac94c06bb5c6cdd416': 3,
+                'f1761733213601f7f77defc3bc2e2c87': 3,
+            },
+            'v2_report_row_counts': {
                 '0dc41ff3e342d3ac94c06bb5c6cdd416': 3,
                 'f1761733213601f7f77defc3bc2e2c87': 3,
             },

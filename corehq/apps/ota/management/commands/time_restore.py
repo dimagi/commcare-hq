@@ -68,7 +68,8 @@ def _get_headers_and_rows(domain, users, app_id):
             'total_duration': timing_dict['duration'],
             'num_cases': stats['num_cases'],
             'num_locations': stats['num_locations'],
-            'num_reports': stats['num_reports'],
+            'num_v1_reports': stats['num_v1_reports'],
+            'num_v2_reports': stats['num_v2_reports'],
             'num_ledger_entries': stats['num_ledger_entries'],
         }
         for provider in timing_dict['subs']:
@@ -87,7 +88,8 @@ def _get_headers_and_rows(domain, users, app_id):
         'total_duration',
         'num_cases',
         'num_locations',
-        'num_reports',
+        'num_v1_reports',
+        'num_v2_reports',
         'num_ledger_entries',
         'RegistrationElementProvider',
         'CasePayloadProvider',

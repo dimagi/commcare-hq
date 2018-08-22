@@ -183,6 +183,16 @@ class AdminRestoreView(TemplateView):
         )
 
     @staticmethod
+    def _parse_reports(xpath, xml_payload):
+        reports = xml_payload.findall(xpath)
+        report_row_counts = {
+            report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
+            for report in reports
+            if 'report_id' in report.attrib
+        }
+        return len(reports), report_row_counts
+
+    @staticmethod
     def get_stats_from_xml(xml_payload):
         restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
         restore_id = restore_id_element.text if restore_id_element else None
@@ -207,15 +217,14 @@ class AdminRestoreView(TemplateView):
         num_locations = len(locations)
         location_type_counts = dict(Counter(location.attrib['type'] for location in locations))
 
-        reports = xml_payload.findall(
-            "{{{0}}}fixture[@id='commcare:reports']/{{{0}}}reports/".format(RESPONSE_XMLNS)
+        num_v1_reports, v1_report_row_counts = AdminRestoreView._parse_reports(
+            "{{{0}}}fixture[@id='commcare:reports']/{{{0}}}reports/".format(RESPONSE_XMLNS), xml_payload
         )
-        num_reports = len(reports)
-        report_row_counts = {
-            report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
-            for report in reports
-            if 'report_id' in report.attrib
-        }
+
+        num_v2_reports, v2_report_row_counts = AdminRestoreView._parse_reports(
+            # the @id is dynamic, so we can't search for it directly - instead, look for the right format
+            "{{{0}}}fixture[@report_id][{{{0}}}rows]".format(RESPONSE_XMLNS), xml_payload
+        )
 
         num_ledger_entries = len(xml_payload.findall(
             "{{{0}}}balance/{{{0}}}entry".format(COMMTRACK_REPORT_XMLNS)
@@ -224,10 +233,12 @@ class AdminRestoreView(TemplateView):
             'restore_id': restore_id,
             'num_cases': num_cases,
             'num_locations': num_locations,
-            'num_reports': num_reports,
+            'num_v1_reports': num_v1_reports,
+            'num_v2_reports': num_v2_reports,
             'case_type_counts': case_type_counts,
             'location_type_counts': location_type_counts,
-            'report_row_counts': report_row_counts,
+            'v1_report_row_counts': v1_report_row_counts,
+            'v2_report_row_counts': v2_report_row_counts,
             'num_ledger_entries': num_ledger_entries,
         }
 
