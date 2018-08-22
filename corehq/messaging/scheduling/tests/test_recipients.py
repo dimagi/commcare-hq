@@ -270,6 +270,27 @@ class SchedulingRecipientTest(TestCase):
             self.assertEqual(instance.recipient.case_id, parent.case_id)
 
     @run_with_all_backends
+    def test_child_case_recipient(self):
+        with create_case(self.domain, 'person') as child_1, \
+                create_case(self.domain, 'person') as child_2, \
+                create_case(self.domain, 'person') as parent:
+
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=parent.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES)
+            self.assertIsInstance(instance.recipient, list)
+            self.assertEqual(len(instance.recipient), 0)
+
+            set_parent_case(self.domain, child_1, parent, relationship='child', identifier='parent')
+            set_parent_case(self.domain, child_2, parent, relationship='child', identifier='parent')
+
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=parent.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES)
+
+            self.assertIsInstance(instance.recipient, list)
+            self.assertEqual(len(instance.recipient), 2)
+            self.assertItemsEqual([c.case_id for c in instance.recipient], [child_1.case_id, child_2.case_id])
+
+    @run_with_all_backends
     def test_host_case_owner_location(self):
         with create_test_case(self.domain, 'test-extension-case', 'name') as extension_case:
             with create_test_case(self.domain, 'test-host-case', 'name') as host_case:

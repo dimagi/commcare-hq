@@ -667,7 +667,7 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
     def setUpClass(cls):
         super(RelatedLocationFixturesTest, cls).setUpClass()
         cls.user = create_restore_user(cls.domain, 'user', '123')
-        LocationRelation.objects.create(
+        cls.relation = LocationRelation.objects.create(
             location_a=cls.locations["Cambridge"],
             location_b=cls.locations["Boston"]
         )
@@ -677,10 +677,24 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
         cls.user._couch_user.delete()
         super(RelatedLocationFixturesTest, cls).tearDownClass()
 
+    def tearDown(self):
+        self.user._couch_user.reset_locations([])
+
     def test_related_locations(self, *args):
         self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
         self._assert_fixture_matches_file(
             'related_location',
+            ['Massachusetts', 'Middlesex', 'Cambridge'],
+            related=True
+        )
+
+    def test_related_locations_with_distance(self, *args):
+        self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
+        self.relation.distance = 5
+        self.relation.save()
+        self.addCleanup(lambda: LocationRelation.objects.filter(pk=self.relation.pk).update(distance=None))
+        self._assert_fixture_matches_file(
+            'related_location_with_distance',
             ['Massachusetts', 'Middlesex', 'Cambridge'],
             related=True
         )

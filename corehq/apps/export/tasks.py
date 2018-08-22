@@ -19,7 +19,6 @@ from corehq.util.files import safe_filename_header, TransientTempfile
 from corehq.util.quickcache import quickcache
 from couchexport.groupexports import export_for_group
 from couchexport.models import Format
-from dimagi.utils.couch import CriticalSection
 from soil.util import expose_blob_download, process_email_request
 
 from .const import SAVED_EXPORTS_QUEUE, EXPORT_DOWNLOAD_QUEUE
@@ -29,7 +28,7 @@ from .dbaccessors import (
     get_all_daily_saved_export_instance_ids,
 )
 from .export import get_export_file, rebuild_export, should_rebuild_export
-from .models.new import EmailExportWhenDoneRequest
+from .models.new import DataFile, EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 
 from six.moves import filter
@@ -211,3 +210,9 @@ def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier)
         only_process_current_builds=False,
         task=self,
     )
+
+
+@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"))
+def delete_expired_datafile_blobs():
+    for data_file in DataFile.objects.filter(delete_after__lte=datetime.utcnow()):
+        data_file.delete()

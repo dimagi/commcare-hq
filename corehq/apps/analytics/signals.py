@@ -4,15 +4,15 @@ from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.accounting.utils import ensure_domain_instance
 from corehq.apps.analytics.tasks import (
-    track_user_sign_in_on_hubspot,
+    track_user_sign_in_on_hubspot_v2,
     HUBSPOT_COOKIE,
-    update_hubspot_properties,
+    update_hubspot_properties_v2,
+    identify_v2,
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.registration.views import ProcessRegistrationView
 from corehq.util.decorators import handle_uncaught_exceptions
 from corehq.util.soft_assert import soft_assert
-from .tasks import identify
 
 from django.dispatch import receiver
 from django.urls import reverse
@@ -46,8 +46,8 @@ def user_save_callback(sender, **kwargs):
         properties = {}
         properties.update(get_subscription_properties_by_user(couch_user))
         properties.update(get_domain_membership_properties(couch_user))
-        identify.delay(couch_user.username, properties)
-        update_hubspot_properties(couch_user, properties)
+        identify_v2.delay(couch_user.username, properties)
+        update_hubspot_properties_v2(couch_user, properties)
 
 
 @receiver(commcare_domain_post_save)
@@ -60,8 +60,8 @@ def domain_save_callback(sender, domain, **kwargs):
 
 def update_subscription_properties_by_user(couch_user):
     properties = get_subscription_properties_by_user(couch_user)
-    identify.delay(couch_user.username, properties)
-    update_hubspot_properties(couch_user, properties)
+    identify_v2.delay(couch_user.username, properties)
+    update_hubspot_properties_v2(couch_user, properties)
 
 
 def get_subscription_properties_by_user(couch_user):
@@ -164,4 +164,4 @@ def track_user_login(sender, request, user, **kwargs):
                 return
 
         meta = get_meta(request)
-        track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta, request.path)
+        track_user_sign_in_on_hubspot_v2.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta, request.path)

@@ -12,9 +12,9 @@ from collections import defaultdict, OrderedDict, namedtuple
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
+from django.core.exceptions import ValidationError
 from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
-from django.urls import reverse
 from django.db import models
 from django.http import Http404
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
@@ -32,7 +32,6 @@ from soil.progress import set_task_progress
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_domain
 from memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
@@ -59,7 +58,6 @@ from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.web import get_url_base
 from dimagi.ext.couchdbkit import (
     Document,
     DocumentSchema,
@@ -2624,6 +2622,13 @@ class DailySavedExportNotification(models.Model):
         )
 
 
+class ActiveDataFileManager(models.Manager):
+    def get_queryset(self):
+        return super(ActiveDataFileManager, self).get_queryset().filter(
+            models.Q(delete_after__isnull=True) | models.Q(delete_after__gte=datetime.utcnow())
+        )
+
+
 class DataFile(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     filename = models.CharField(max_length=255)
@@ -2631,9 +2636,20 @@ class DataFile(models.Model):
     content_type = models.CharField(max_length=255)
     blob_id = models.CharField(max_length=255)
     content_length = models.IntegerField(null=True)
+    delete_after = models.DateTimeField(null=True)
+
+    objects = models.Manager()
+    active_objects = ActiveDataFileManager()
 
     class Meta(object):
         app_label = 'export'
+
+    def save(self, *args, **kwargs):
+        if self.delete_after is None:
+            raise ValidationError(
+                'delete_after can be None only for legacy files that were added before August 2018'
+            )
+        super(DataFile, self).save(*args, **kwargs)
 
     def get_blob(self):
         db = get_blob_db()

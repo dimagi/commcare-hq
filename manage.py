@@ -125,7 +125,6 @@ if __name__ == "__main__":
         GeventCommand('migrate_multiple_domains_from_couch_to_sql', None),
     )
     if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
-        from restkit.session import set_session; set_session(b"gevent")
         from gevent.monkey import patch_all; patch_all(subprocess=True)
         from psycogreen.gevent import patch_psycopg; patch_psycopg()
 

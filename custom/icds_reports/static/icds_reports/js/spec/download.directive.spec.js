@@ -39,6 +39,7 @@ describe('Download Directive', function () {
             var fakeDate = new Date(2016, 9, 1);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
 
+            window.ga = function() {};
             var element = window.angular.element("<download data='test'></download>");
             var compiled = $compile(element)($scope);
 

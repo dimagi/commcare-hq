@@ -571,9 +571,6 @@ that you have a 32bit version of Python installed.
   + [Pillow][pillow]
   + [psycopg2][psycopg2]
   + [greenlet][greenlet]
-+ Install http-parser by adding MinGW/bin to the path and running `pip install http-parser`. You may also need to alter
-  $PYTHON_HOME/Lib/distutils/cygwincompiler.py to remove all instances of '-mno-cygwin' which is a depreciated compiler
-  option. The http-parser package is required by restkit.
 + Having installed those packages you can comment them out of the requirements/requirements.txt file.
 + Now run
 

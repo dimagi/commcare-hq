@@ -1,4 +1,3 @@
-/* global DOMPurify */
 /*
  * Component for an inline editing widget: a piece of text that, when clicked on, turns into an input (textarea or
  * text input). The input is accompanied by a save button capable of saving the new value to the server via ajax.
@@ -18,7 +17,17 @@
  *  - errorMessage: Message to display if server returns an error.
  */
 
-hqDefine('hqwebapp/js/components/inline_edit', function() {
+hqDefine('hqwebapp/js/components/inline_edit', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'DOMPurify/dist/purify.min',
+], function(
+    $,
+    ko,
+    _,
+    DOMPurify
+) {
     return {
         viewModel: function(params) {
             var self = this;
