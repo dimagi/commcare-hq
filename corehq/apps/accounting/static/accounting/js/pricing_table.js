@@ -74,18 +74,36 @@ hqDefine('accounting/js/pricing_table', [
                 var newPlan = utils.capitalize(self.selected_edition());
                 var newStartDate = self.startDateAfterMinimumSubscription;
 
-                var message = _(gettext("All CommCare subscriptions require a 30 day minimum commitment."));
+                var message = "";
                 if (self.nextSubscription) {
-                    message += _.template(gettext(" Your current <%= oldPlan %> Edition Plan subscription is " +
-                        "scheduled to be downgraded to the <%= nextSubscription %> Edition Plan on <%= date %>."))
-                    ({oldPlan: oldPlan, nextSubscription: self.nextSubscription, date: newStartDate});
+                    message = _.template(gettext(
+                        "All CommCare subscriptions require a 30 day minimum commitment. Your current " +
+                        "<%= oldPlan %> Edition Plan subscription is scheduled to be downgraded to the " +
+                        "<%= nextSubscription %> Edition Plan on <%= date %>. Continuing ahead will allow you " +
+                        "to schedule your current <%= oldPlan %> Edition Plan subscription to be downgraded to " +
+                        "the <%= newPlan %> Edition Plan on <%= date %>.  If you have questions or if you would " +
+                        "like to speak to us about your subscription, please reach out to <%= email %>."
+                    ))({
+                        oldPlan: oldPlan,
+                        nextSubscription: self.nextSubscription,
+                        date: newStartDate,
+                        newPlan: newPlan,
+                        email: mailto
+                    });
+                } else {
+                    message = _.template(gettext(
+                        "All CommCare subscriptions require a 30 day minimum commitment. Continuing ahead will " +
+                        "allow you to schedule your current <%= oldPlan %> Edition Plan subscription to be " +
+                        "downgraded to the <%= newPlan %> Edition Plan on <%= date %>.  If you have questions " +
+                        "or if you would like to speak to us about your subscription, please reach out to " +
+                        "<%= email %>."
+                    ))({
+                        oldPlan: oldPlan,
+                        date: newStartDate,
+                        newPlan: newPlan,
+                        email: mailto
+                    });
                 }
-                message += _.template(gettext(" Continuing ahead will allow you to schedule your current " +
-                    "<%= oldPlan %> Edition Plan subscription to be downgraded to the <%= newPlan %> Edition " +
-                    "Plan on <%= date %>.  If you have questions or if you would like to speak to us about your " +
-                    "subscription, please reach out to "))
-                ({oldPlan: oldPlan, newPlan: newPlan, date: newStartDate});
-                message += mailto + " .";
                 var $modal = $("#modal-minimum-subscription");
                 $modal.find('.modal-body')[0].innerHTML = message;
                 $modal.modal('show');
