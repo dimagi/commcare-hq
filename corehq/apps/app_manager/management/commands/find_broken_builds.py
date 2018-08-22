@@ -47,9 +47,10 @@ def form_filter_error(build):
 
 def broken_suite_files(build):
     db = Application.get_db()
+    code = Application._blobdb_type_code
     error = None
     try:
-        suite = BlobHelper(build, db).fetch_attachment('files/suite.xml')
+        suite = BlobHelper(build, db, code).fetch_attachment('files/suite.xml')
     except ResourceNotFound:
         error = 'build has no attachment files/suite.xml'
     else:

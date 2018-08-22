@@ -19,7 +19,7 @@ from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser
-from corehq.blobs.mixin import BlobHelper
+from corehq.blobs.mixin import BlobHelper, CODES
 from couchforms.models import XFormInstance
 import localsettings
 from pact.dot_data import get_dots_case_json
@@ -146,7 +146,7 @@ class PactFormAPI(DomainAPI):
 #                if data_row['script_case_id'] not in active_patients:
 #                    continue
                 try:
-                    xml_str = (BlobHelper(data_row, db)
+                    xml_str = (BlobHelper(data_row, db, CODES.form_xml)
                         .fetch_attachment('form.xml')
                         .replace("<?xml version=\'1.0\' ?>", '')
                         .replace("<?xml version='1.0' encoding='UTF-8' ?>", ''))
