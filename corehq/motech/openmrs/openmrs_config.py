@@ -182,42 +182,6 @@ class OpenmrsConfig(DocumentSchema):
     form_configs = ListProperty(OpenmrsFormConfig)
 
 
-# JsonpathValueMap is for comparing OpenMRS patients with CommCare
-# cases.
-#
-# The `jsonpath` attribute is used for retrieving values from an
-# OpenMRS patient and the `value_map` attribute is for converting
-# OpenMRS concept UUIDs to CommCare property values, if necessary.
-JsonpathValuesource = namedtuple('JsonpathValuesource', ['jsonpath', 'value_source'])
-
-
-def get_caseproperty_jsonpathvaluesource(jsonpath, value_source_config):
-    """
-    Used for updating _property_map to map case properties to OpenMRS
-    patient property-, attribute- and concept values.
-
-    i.e. Allows us to answer the question, "If we know the case property how
-    do we find the OpenMRS value?"
-
-    :param jsonpath: The path to a value in an OpenMRS patient JSON object
-    :param value_source_config: A case_config ValueSource instance
-    :return: A single-item dictionary with the name of the case
-             property as key, and a JsonpathValuesource as value. If
-             value_source_config is a ConstantString, then there is no
-             corresponding case property, so the function returns an
-             empty dictionary.
-    """
-    if value_source_config['doc_type'] == 'ConstantString':
-        return {}
-    if value_source_config['doc_type'] in ('CaseProperty', 'CasePropertyMap'):
-        value_source = ValueSource.wrap(value_source_config)
-        return {value_source_config['case_property']: JsonpathValuesource(jsonpath, value_source)}
-    raise ValueError(
-        '"{}" is not a recognised ValueSource for setting OpenMRS patient values from CommCare case properties. '
-        'Please check your OpenMRS case config.'.format(value_source_config['doc_type'])
-    )
-
-
 def get_property_map(case_config):
     """
     Returns a map of case properties to OpenMRS patient properties and
@@ -225,11 +189,12 @@ def get_property_map(case_config):
     """
     property_map = {}
 
-    for person_prop, value_source_config in case_config['person_properties'].items():
-        jsonpath = parse_jsonpath('person.' + person_prop)
-        property_map.update(get_caseproperty_jsonpathvaluesource(jsonpath, value_source_config))
+    for person_prop, value_source in case_config['person_properties'].items():
+        if 'case_property' in value_source:
+            jsonpath = parse_jsonpath('person.' + person_prop)
+            property_map[value_source['case_property']] = (jsonpath, value_source)
 
-    for attr_uuid, value_source_config in case_config['person_attributes'].items():
+    for attr_uuid, value_source in case_config['person_attributes'].items():
         # jsonpath_rw offers programmatic JSONPath expressions. For details on how to create JSONPath
         # expressions programmatically see the
         # `jsonpath_rw documentation <https://github.com/kennknowles/python-jsonpath-rw#programmatic-jsonpath>`__
@@ -242,40 +207,44 @@ def get_property_map(case_config):
         #
         # This `for` loop will let us extract the person attribute values where their attribute type UUIDs
         # match those configured in case_config['person_attributes']
-        jsonpath = Child(
-            Where(
-                Child(Child(Fields('person'), Fields('attributes')), Slice()),
-                Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_uuid)
-            ),
-            Fields('value')
-        )
-        property_map.update(get_caseproperty_jsonpathvaluesource(jsonpath, value_source_config))
-
-    for name_prop, value_source_config in case_config['person_preferred_name'].items():
-        jsonpath = parse_jsonpath('person.preferredName.' + name_prop)
-        property_map.update(get_caseproperty_jsonpathvaluesource(jsonpath, value_source_config))
-
-    for addr_prop, value_source_config in case_config['person_preferred_address'].items():
-        jsonpath = parse_jsonpath('person.preferredAddress.' + addr_prop)
-        property_map.update(get_caseproperty_jsonpathvaluesource(jsonpath, value_source_config))
-
-    for id_type_uuid, value_source_config in case_config['patient_identifiers'].items():
-        if id_type_uuid == 'uuid':
-            jsonpath = parse_jsonpath('uuid')
-        else:
-            # The JSONPath expression below is the equivalent of::
-            #
-            #     (identifiers[*] where identifierType.uuid eq id_type_uuid).identifier
-            #
-            # Similar to `person_attributes` above, this will extract the person identifier values where
-            # their identifier type UUIDs match those configured in case_config['patient_identifiers']
+        if 'case_property' in value_source:
             jsonpath = Child(
                 Where(
-                    Child(Fields('identifiers'), Slice()),
-                    Cmp(Child(Fields('identifierType'), Fields('uuid')), eq, id_type_uuid)
+                    Child(Child(Fields('person'), Fields('attributes')), Slice()),
+                    Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_uuid)
                 ),
-                Fields('identifier')
+                Fields('value')
             )
-        property_map.update(get_caseproperty_jsonpathvaluesource(jsonpath, value_source_config))
+            property_map[value_source['case_property']] = (jsonpath, value_source)
+
+    for name_prop, value_source in case_config['person_preferred_name'].items():
+        if 'case_property' in value_source:
+            jsonpath = parse_jsonpath('person.preferredName.' + name_prop)
+            property_map[value_source['case_property']] = (jsonpath, value_source)
+
+    for addr_prop, value_source in case_config['person_preferred_address'].items():
+        if 'case_property' in value_source:
+            jsonpath = parse_jsonpath('person.preferredAddress.' + addr_prop)
+            property_map[value_source['case_property']] = (jsonpath, value_source)
+
+    for id_type_uuid, value_source in case_config['patient_identifiers'].items():
+        if 'case_property' in value_source:
+            if id_type_uuid == 'uuid':
+                jsonpath = parse_jsonpath('uuid')
+            else:
+                # The JSONPath expression below is the equivalent of::
+                #
+                #     (identifiers[*] where identifierType.uuid eq id_type_uuid).identifier
+                #
+                # Similar to `person_attributes` above, this will extract the person identifier values where
+                # their identifier type UUIDs match those configured in case_config['patient_identifiers']
+                jsonpath = Child(
+                    Where(
+                        Child(Fields('identifiers'), Slice()),
+                        Cmp(Child(Fields('identifierType'), Fields('uuid')), eq, id_type_uuid)
+                    ),
+                    Fields('identifier')
+                )
+            property_map[value_source['case_property']] = (jsonpath, value_source)
 
     return property_map
