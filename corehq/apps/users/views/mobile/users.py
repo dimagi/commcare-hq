@@ -23,7 +23,7 @@ from django.views.generic import View, TemplateView
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djangular.views.mixins import JSONResponseMixin
 import re
 
 from memoized import memoized
@@ -49,7 +49,6 @@ from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
@@ -58,7 +57,6 @@ from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
-    use_angular_js,
     use_multiselect,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
@@ -540,13 +538,12 @@ def update_user_data(request, domain, couch_user_id):
 
 
 @location_safe
-class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
+class MobileWorkerListView(BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
     @use_select2
-    @use_angular_js
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
@@ -583,7 +580,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
-            angular_model="mobileWorker.customFields",
+            angular_model="mobileWorker.customFields",  # TODO
         )
 
     @property
@@ -646,6 +643,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             user_es = user_es.location(list(loc_ids))
         return user_es.mobile_users()
 
+    '''
     @allow_remote_invocation
     def get_pagination_data(self, in_data):
         if not isinstance(in_data, dict):
@@ -824,6 +822,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             return form_data
         except Exception as e:
             raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
+    '''
 
 
 class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
