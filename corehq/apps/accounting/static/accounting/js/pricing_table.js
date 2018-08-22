@@ -4,12 +4,14 @@ hqDefine('accounting/js/pricing_table', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/main',
+    "hqwebapp/js/assert_properties"
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    utils
+    utils,
+    assertProperties
 ) {
     var ENTERPRISE = 'enterprise';
     var ADVANCED = 'advanced';
@@ -17,23 +19,25 @@ hqDefine('accounting/js/pricing_table', [
     var STANDARD = 'standard';
     var COMMUNITY = 'community';
 
-    var pricingTableModel = function (editions, currentEdition, isRenewal, startDate, isSubscriptionBelowMin,
-    nextSubscription) {
+    var pricingTableModel = function (options) {
+        assertProperties.assert(options, ['editions', 'currentEdition', 'isRenewal', 'startDateAfterMinimum',
+            'isSubscriptionBelowMin', 'nextSubscription']);
+
         'use strict';
         var self = {};
 
-        self.currentEdition = currentEdition;
-        self.isRenewal = isRenewal;
-        self.startDateAfterMinimumSubscription = startDate;
-        self.subscriptionBelowMinimum = isSubscriptionBelowMin;
-        self.nextSubscription = nextSubscription;
-        self.editions = ko.observableArray(_.map(editions, function (edition) {
+        self.currentEdition = options.currentEdition;
+        self.isRenewal = options.isRenewal;
+        self.startDateAfterMinimumSubscription = options.startDateAfterMinimum;
+        self.subscriptionBelowMinimum = options.isSubscriptionBelowMin;
+        self.nextSubscription = options.nextSubscription;
+        self.editions = ko.observableArray(_.map(options.editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
         }));
 
-        self.selected_edition = ko.observable(isRenewal ? currentEdition : false);
+        self.selected_edition = ko.observable(options.isRenewal ? options.currentEdition : false);
         self.isSubmitVisible = ko.computed(function () {
-            if (isRenewal){
+            if (self.isRenewal){
                 return true;
             }
             return !! self.selected_edition() && !(self.selected_edition() === self.currentEdition);
@@ -88,7 +92,7 @@ hqDefine('accounting/js/pricing_table', [
                         nextSubscription: self.nextSubscription,
                         date: newStartDate,
                         newPlan: newPlan,
-                        email: mailto
+                        email: mailto,
                     });
                 } else {
                     message = _.template(gettext(
@@ -101,7 +105,7 @@ hqDefine('accounting/js/pricing_table', [
                         oldPlan: oldPlan,
                         date: newStartDate,
                         newPlan: newPlan,
-                        email: mailto
+                        email: mailto,
                     });
                 }
                 var $modal = $("#modal-minimum-subscription");
@@ -161,14 +165,14 @@ hqDefine('accounting/js/pricing_table', [
     };
 
     $(function () {
-        var pricingTable = pricingTableModel(
-            initialPageData.get('editions'),
-            initialPageData.get('current_edition'),
-            initialPageData.get('is_renewal'),
-            initialPageData.get('start_date_after_minimum_subscription'),
-            initialPageData.get('subscription_below_minimum'),
-            initialPageData.get('next_subscription')
-        );
+        var pricingTable = pricingTableModel({
+            editions: initialPageData.get('editions'),
+            currentEdition: initialPageData.get('current_edition'),
+            isRenewal: initialPageData.get('is_renewal'),
+            startDateAfterMinimum: initialPageData.get('start_date_after_minimum_subscription'),
+            isSubscriptionBelowMin: initialPageData.get('subscription_below_minimum'),
+            nextSubscription: initialPageData.get('next_subscription')
+        });
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
