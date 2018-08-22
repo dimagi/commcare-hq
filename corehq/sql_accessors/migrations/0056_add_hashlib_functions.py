@@ -3,7 +3,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from django.db import migrations
-from corehq.sql_db.operations import HqRunSQL
+from corehq.sql_db.operations import noop_migration
 
 
 class Migration(migrations.Migration):
@@ -13,8 +13,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL(
-            'CREATE EXTENSION IF NOT EXISTS hashlib',
-            'DROP EXTENSION hashlib'
-        ),
+        # this originally installed the hashlib extension
+        # but commcare-cloud does that where possible already
+        # and Amazon RDS doesn't allow it
+        noop_migration()
     ]
