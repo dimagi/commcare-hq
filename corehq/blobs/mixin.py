@@ -40,7 +40,7 @@ class BlobMetaPointer(DocumentSchema):
 
     @property
     def info(self):
-        return BlobInfo(self.key, self.content_length)
+        return BlobInfo(self.key, self.content_length, "unknown-md5")
 
     @classmethod
     def _from_attachment(cls, data):

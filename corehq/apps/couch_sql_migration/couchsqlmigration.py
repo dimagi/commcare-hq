@@ -484,9 +484,9 @@ def _migrate_form_attachments(sql_form, couch_form):
             attachment_id=uuid.uuid4().hex,
             content_type=blob.content_type,
             content_length=blob.content_length,
-            blob_id=blob.id,
-            blob_bucket=couch_form._blobdb_bucket(),
-            md5=blob.info.md5_hash
+            blob_id=blob.key,
+            blob_bucket="",  # temporary/special value -> new blob db API
+            md5=blob.info.md5_hash,
         ))
     sql_form.unsaved_attachments = attachments
 
