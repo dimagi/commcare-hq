@@ -14,6 +14,7 @@
 {% initial_page_data 'start_date_after_minimum_subscription' start_date_after_minimum_subscription %}
 {% registerurl 'email_on_downgrade' domain %}
 {% registerurl 'confirm_billing_account_info' domain %}
+<div class="container" id="hq-content">
     <p class="lead">
         {% blocktrans with plan.name as p %}
         You have selected the <strong>{{ p }} Software Plan</strong>.
@@ -52,7 +53,7 @@
                 subscription by following the instructions
                 <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>.
             </p>
-            <input type="checkbox" id="user-agreement" value="True"> I understand and wish to continue.<br>
+            <input type="checkbox" data-bind="checked: userAgreementSigned"> I understand and wish to continue.<br>
             {% endblocktrans %}
         </div>
         {% elif is_downgrade_before_minimum %}
@@ -96,7 +97,7 @@
         <div class="form-actions">
             <div class="col-sm-6">
                 <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
-                <button class="btn btn-primary" id="confirm-plan" data-bind="click: openDowngradeModal">
+                <button class="btn btn-primary" data-bind="enable: userAgreementSigned, click: openDowngradeModal">
                     {% trans 'Confirm Plan' %}
                 </button>
             </div>
@@ -104,6 +105,7 @@
     </form>
     {% endif %}
 {% endblock %}
+</div>
 
 {% block modals %}{{ block.super }}
 <div class="modal fade" id="modal-downgrade">

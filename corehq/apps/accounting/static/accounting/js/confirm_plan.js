@@ -17,6 +17,9 @@ hqDefine('accounting/js/confirm_plan', [
         self.currentPlan = currentPlan;
         self.newPlan = newPlan;
 
+        // If the user is upgrading, don't let them continue until they have agreed to the therms
+        self.userAgreementSigned = ko.observable(!isUpgrade);
+
         self.form = undefined;
         self.openDowngradeModal = function(confirmPlanModel, e) {
             self.form = $(e.currentTarget).closest("form");
@@ -49,17 +52,6 @@ hqDefine('accounting/js/confirm_plan', [
             });
         };
 
-        self.init = function () {
-            var userAgreementCheckBox = document.getElementById('user-agreement');
-            var confirmPlanButton = document.getElementById('confirm-plan');
-            if (userAgreementCheckBox !== null) {
-                confirmPlanButton.disabled = true;
-                userAgreementCheckBox.onchange = function () {
-                    confirmPlanButton.disabled = !this.checked;
-                };
-            }
-        };
-
         return self;
     };
 
@@ -71,9 +63,7 @@ hqDefine('accounting/js/confirm_plan', [
             initialPageData.get('new_plan_name')
         );
 
-        $('#confirm-plan').koApplyBindings(confirmPlan);
+        $('#hq-content').koApplyBindings(confirmPlan);
         $('#modal-downgrade').koApplyBindings(confirmPlan);
-
-        confirmPlan.init();
     });
 });
