@@ -44,11 +44,9 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
@@ -70,7 +68,7 @@ from corehq.apps.users.bulkupload import (
     check_headers,
     UserUploadError,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids, user_exists
+from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
@@ -85,7 +83,7 @@ from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
-from corehq.toggles import SUPPORT, FILTERED_BULK_USER_DOWNLOAD
+from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
 from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
     InvalidExcelFileException
