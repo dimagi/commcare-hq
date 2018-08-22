@@ -4,7 +4,6 @@ from collections import namedtuple
 
 from .exceptions import Error, NotFound  # noqa: F401
 
-DEFAULT_BUCKET = "_default"
 _db = []  # singleton/global, stack for tests to push temporary dbs
 
 
