@@ -11,3 +11,4 @@ ExtraPreindexPlugin.register('domain', __file__, (
 ))
 
 SHARED_DOMAIN = "<shared>"
+UNKNOWN_DOMAIN = "<unknown>"

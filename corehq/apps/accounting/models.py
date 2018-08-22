@@ -58,6 +58,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
     quantize_accounting_decimal,
 )
+from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
@@ -2876,7 +2877,7 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
 
         template.get_pdf()
         filename = self.get_filename(invoice)
-        blob_domain = domain or "<unknown>"
+        blob_domain = domain or UNKNOWN_DOMAIN
         # this is slow and not unit tested
         # best to just skip during unit tests for speed
         if not settings.UNIT_TESTING:

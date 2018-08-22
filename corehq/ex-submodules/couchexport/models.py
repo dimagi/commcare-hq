@@ -12,6 +12,7 @@ from dimagi.ext.couchdbkit import Document, DictProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty, IntegerProperty
 import json
 import couchexport
+from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.blobs.mixin import BlobMixin, CODES
 from couchexport.exceptions import CustomExportValidationError
 from couchexport.files import ExportFiles
@@ -973,8 +974,7 @@ class SavedBasicExport(BlobMixin, Document):
         # According to @esoergel this code is slated for removal in the near
         # future, so I didn't think it was worth it to try to pass the domain
         # in here.
-        domain = "<unknown>"
-        self.put_attachment(payload, self.get_attachment_name(), domain=domain)
+        self.put_attachment(payload, self.get_attachment_name(), domain=UNKNOWN_DOMAIN)
 
     def get_payload(self, stream=False):
         return self.fetch_attachment(self.get_attachment_name(), stream=stream)
