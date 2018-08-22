@@ -295,7 +295,7 @@ class MobileWorkersOptionsView(EmwfOptionsView):
     @property
     def data_sources(self):
         return [
-            (self.get_active_users_size(), self.get_active_users()),
+            (self.get_active_users_size, self.get_active_users),
         ]
 
     def active_user_es_query(self, query):
