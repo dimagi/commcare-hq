@@ -1,17 +1,31 @@
-hqDefine('accounting/js/pricing_table', function () {
-    var pricingTableModel = function (editions, currentEdition, isRenewal, showMonthlyPricing) {
+hqDefine('accounting/js/pricing_table', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    "hqwebapp/js/assert_properties",
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    assertProperties
+) {
+    var pricingTableModel = function (options) {
+        assertProperties.assert(options, ['editions', 'currentEdition', 'isRenewal', 'showMonthlyPricing']);
+
         'use strict';
         var self = {};
 
-        self.currentEdition = currentEdition;
-        self.isRenewal = isRenewal;
-        self.editions = ko.observableArray(_.map(editions, function (edition) {
+        self.currentEdition = options.currentEdition;
+        self.isRenewal = options.isRenewal;
+        self.editions = ko.observableArray(_.map(options.editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
         }));
 
-        self.selected_edition = ko.observable(isRenewal ? currentEdition : false);
+        self.selected_edition = ko.observable(options.isRenewal ? options.currentEdition : false);
         self.isSubmitVisible = ko.computed(function () {
-            if (isRenewal){
+            if (self.isRenewal){
                 return true;
             }
             return !! self.selected_edition() && !(self.selected_edition() === self.currentEdition);
@@ -20,7 +34,7 @@ hqDefine('accounting/js/pricing_table', function () {
             self.selected_edition(self.currentEdition);
         };
 
-        self.showMonthlyPricing = ko.observable(showMonthlyPricing);
+        self.showMonthlyPricing = ko.observable(options.showMonthlyPricing);
 
         self.form = undefined;
         self.openDowngradeModal = function(pricingTable, e) {
@@ -115,13 +129,12 @@ hqDefine('accounting/js/pricing_table', function () {
     };
 
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            pricingTable = pricingTableModel(
-                initial_page_data('editions'),
-                initial_page_data('current_edition'),
-                initial_page_data('is_renewal'),
-                false
-            );
+        var pricingTable = pricingTableModel({
+            editions: initialPageData.get('editions'),
+            currentEdition: initialPageData.get('current_edition'),
+            isRenewal: initialPageData.get('is_renewal'),
+            showMonthlyPricing: false,
+        });
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
@@ -129,5 +142,5 @@ hqDefine('accounting/js/pricing_table', function () {
         $('#modal-downgrade').koApplyBindings(pricingTable);
 
         pricingTable.init();
-    }());
+    });
 });

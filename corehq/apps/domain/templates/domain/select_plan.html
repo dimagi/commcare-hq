@@ -20,9 +20,7 @@
 {% endif %}
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/pricing_table.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'accounting/js/pricing_table' %}
 
 {% block form_content %}
 {% initial_page_data 'editions' editions %}
@@ -41,7 +39,7 @@
 </p>
 
 <section class="plans accent-gray-bg border-bottom" id="plans">
-    <div class="content pad-bottom-medium pad-top-medium align-center">
+    <div class="content pad-bottom-medium pad-top-medium align-center pull-right">
         <p class="switch-label">
             {% trans "Pay Annually" %}
             <label class="switch">
@@ -54,14 +52,15 @@
         <p class="gap-bottom-base">
             {% blocktrans %} Save close to 20% when you pay annually. {% endblocktrans %}
         </p>
+
+        <p class="refund-text" data-bind="visible: !showMonthlyPricing()">
+            <i class="fa fa-check"></i>
+            <a href="https://dimagi.com/terms/latest/tos/"
+               class="check-icon blue">
+                {% trans '90 day refund policy' %}
+            </a>
+        </p>
     </div>
-    <p class="refund-text" data-bind="visible: !showMonthlyPricing()">
-        <i class="fa fa-check"></i>
-        <a href="https://dimagi.com/terms/latest/tos/"
-           class="check-icon blue">
-            {% trans '90 day refund policy' %}
-        </a>
-    </p>
 
     <!-- Annual Pricing Table -->
     <div class="row">
@@ -70,7 +69,7 @@
 
             <form action="{% url 'annual_plan_request_quote' domain %}">
                 <div class="form-actions">
-                    Interested in Annual Billing?
+                    {% trans 'Interested in Annual Billing?' %}
                     <div class="col-xs-offset-2">
                         <button class="btn btn-primary btn-lg" data-bind="click: contactSales">{% trans 'Talk to Sales' %}</button>
                     </div>
