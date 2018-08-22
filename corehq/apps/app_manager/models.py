@@ -38,6 +38,7 @@ from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSui
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
+from corehq.apps.reports.formdetails.readable import CaseMetaException
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -2957,9 +2958,15 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     def update_app_case_meta(self, meta):
         for column in self.case_details.long.columns:
-            meta.add_property_detail('long', self.case_type, self.unique_id, column)
+            try:
+                meta.add_property_detail('long', self.case_type, self.unique_id, column)
+            except CaseMetaException:
+                pass
         for column in self.case_details.short.columns:
-            meta.add_property_detail('short', self.case_type, self.unique_id, column)
+            try:
+                meta.add_property_detail('short', self.case_type, self.unique_id, column)
+            except CaseMetaException:
+                pass
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
