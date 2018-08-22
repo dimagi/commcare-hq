@@ -428,7 +428,12 @@ def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-        res = km.record(email, event, properties if properties else {}, timestamp)
+        res = km.record(
+            email,
+            event,
+            {k.encode('utf-8'): v.encode('utf-8') for k, v in six.iteritems(properties)} or {},
+            timestamp
+        )
         _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
         # TODO: Consider adding some better error handling for bad/failed requests.
         _raise_for_urllib3_response(res)
