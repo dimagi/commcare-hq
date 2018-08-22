@@ -436,7 +436,7 @@ def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
         res = km.record(
             email,
             event,
-            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in six.iteritems(properties)} or {},
+            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in six.iteritems(properties)} if properties else {},
             timestamp
         )
         _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
