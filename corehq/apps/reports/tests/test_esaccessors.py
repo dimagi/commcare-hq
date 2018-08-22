@@ -5,7 +5,7 @@ import uuid
 from mock import patch
 
 from datetime import datetime, timedelta
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
@@ -24,7 +24,7 @@ from elasticsearch.exceptions import ConnectionError
 from corehq.util.elastic import ensure_index_deleted
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
-from corehq.blobs.mixin import BlobMeta
+from corehq.blobs.mixin import BlobMetaPointer
 from corehq.form_processor.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
@@ -62,7 +62,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 import six
 
 
-class BaseESAccessorsTest(SimpleTestCase):
+class BaseESAccessorsTest(TestCase):
     es_index_info = None
 
     def setUp(self):
@@ -111,7 +111,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         form_pair = make_es_ready_form(metadata)
         if attachment_dict:
-            form_pair.wrapped_form.external_blobs = {name: BlobMeta(**meta)
+            form_pair.wrapped_form.external_blobs = {name: BlobMetaPointer(**meta)
                 for name, meta in six.iteritems(attachment_dict)}
             form_pair.json_form['external_blobs'] = attachment_dict
 
