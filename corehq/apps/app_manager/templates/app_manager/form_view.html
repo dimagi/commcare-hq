@@ -33,11 +33,7 @@
     {% if module.doc_type == 'AdvancedModule' %}
         {% compress js %}
         <script src="{% static 'app_manager/js/forms/advanced/case_properties.js' %}"></script>
-        {% if request|toggle_enabled:"ALLOW_BLANK_CASE_TAGS" %}
-            <script src="{% static 'app_manager/js/forms/advanced/actions_allow_blank_case_tags.js' %}"></script>
-        {% else %}
-            <script src="{% static 'app_manager/js/forms/advanced/actions.js' %}"></script>
-        {% endblock %}
+        <script src="{% static 'app_manager/js/forms/advanced/actions.js' %}"></script>
         <script src="{% static 'app_manager/js/forms/advanced/case_config_ui.js' %}"></script>
         <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
         {% endcompress %}
