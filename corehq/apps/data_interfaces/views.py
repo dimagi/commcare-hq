@@ -87,7 +87,7 @@ def default_data_view_url(request, domain):
     if user_can_view_deid_exports(domain, request.couch_user):
         return reverse(DeIdFormExportListView.urlname, args=[domain])
 
-    if can_download_data_files(domain):
+    if can_download_data_files(domain, request.couch_user):
         return reverse(DataFileDownloadList.urlname, args=[domain])
 
     raise Http404()
@@ -99,6 +99,7 @@ class BulkUploadCasesException(Exception):
 
 class DataInterfaceSection(BaseDomainView):
     section_name = ugettext_noop("Data")
+    urlname = 'data_interfaces_default'
 
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
@@ -106,7 +107,7 @@ class DataInterfaceSection(BaseDomainView):
 
     @property
     def section_url(self):
-        return reverse("data_interfaces_default", args=[self.domain])
+        return reverse(self.urlname, args=[self.domain])
 
 
 class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):

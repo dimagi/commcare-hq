@@ -533,7 +533,7 @@ class TestDeleteDomain(TestCase):
     def test_export_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             DailySavedExportNotification.objects.create(domain=domain_name)
-            DataFile.objects.create(domain=domain_name)
+            DataFile.objects.create(domain=domain_name, delete_after=datetime.utcnow())
             EmailExportWhenDoneRequest.objects.create(domain=domain_name)
             self._assert_export_counts(domain_name, 1)
 
