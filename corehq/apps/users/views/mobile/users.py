@@ -828,27 +828,6 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
 
 
-class DeletedMobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
-    template_name = 'users/deleted_mobile_workers.html'
-    urlname = 'deleted_mobile_workers'
-    page_title = ugettext_noop("Deleted Mobile Workers")
-
-    @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, request, *args, **kwargs):
-        if not SUPPORT.enabled(request.user.username):
-            raise Http404()
-        return super(DeletedMobileWorkerListView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        mobile_users = get_mobile_user_ids(self.domain)
-        everyone = set(get_doc_ids_in_domain_by_class(self.domain, CommCareUser))
-        deleted = everyone - mobile_users
-        return {
-            'deleted_mobile_workers': [get_doc_info_by_id(self.domain, id_) for id_ in deleted]
-        }
-
-
 class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     template_name = "users/new_mobile_worker_modal.html"
     urlname = 'new_mobile_worker_modal'
