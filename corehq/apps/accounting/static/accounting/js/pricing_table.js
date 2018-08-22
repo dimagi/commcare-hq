@@ -62,15 +62,6 @@ hqDefine('accounting/js/pricing_table', function () {
         self.updateIsMonthlyPricing = function () {
             self.isAnnualPricing(true);
         };
-        self.updatePricing = function () {
-            self.showMonthlyPricing($('#pricing-toggle')[0].checked);
-        };
-        self.annualPricing = function () {    // TODO: Get rid of this in favor of the toggle button
-            self.showMonthlyPricing(false);
-        };
-        self.monthlyPricing = function () {   // TODO: Get rid of this in favor of the toggle button
-            self.showMonthlyPricing(true);
-        };
 
         self.contactSales = function (pricingTable, e) {
             var $button = $(e.currentTarget);
@@ -134,12 +125,8 @@ hqDefine('accounting/js/pricing_table', function () {
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
-        $('#pricing-table').koApplyBindings(pricingTable);
-        $('#modal-downgrade').koApplyBindings(pricingTable);
-        $('#annual-pricing-table').koApplyBindings(pricingTable);
-
-        $('#toggle-annual-pricing').koApplyBindings(pricingTable);
         $('#plans').koApplyBindings(pricingTable);
+        $('#modal-downgrade').koApplyBindings(pricingTable);
 
         pricingTable.init();
     }());

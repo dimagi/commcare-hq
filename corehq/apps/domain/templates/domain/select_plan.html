@@ -40,14 +40,12 @@
 {% endblocktrans %}
 </p>
 
-
-
 <section class="plans accent-gray-bg border-bottom" id="plans">
     <div class="content pad-bottom-medium pad-top-medium align-center">
         <p class="switch-label">
             {% trans "Pay Annually" %}
             <label class="switch">
-                <input type="checkbox" id="pricing-toggle" data-bind="{checked: showMonthlyPricing(), click: updatePricing}">
+                <input type="checkbox" id="pricing-toggle" data-bind="{checked: showMonthlyPricing}">
                 <span class="slider round slider-blue slider-blue-on"></span>
             </label>
             {% trans "Pay Monthly" %}
@@ -57,7 +55,6 @@
             {% blocktrans %} Save close to 20% when you pay annually. {% endblocktrans %}
         </p>
     </div>
-
     <p class="refund-text" data-bind="visible: !showMonthlyPricing()">
         <i class="fa fa-check"></i>
         <a href="https://dimagi.com/terms/latest/tos/"
@@ -65,64 +62,52 @@
             {% trans '90 day refund policy' %}
         </a>
     </p>
+
+    <!-- Annual Pricing Table -->
+    <div class="row">
+        <div class="col-sm-12" data-bind="visible: !showMonthlyPricing()">
+            {% include 'accounting/partials/pricing_table_annual.html' %}
+
+            <form action="{% url 'annual_plan_request_quote' domain %}">
+                <div class="form-actions">
+                    Interested in Annual Billing?
+                    <div class="col-xs-offset-2">
+                        <button class="btn btn-primary btn-lg" data-bind="click: contactSales">{% trans 'Talk to Sales' %}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Monthly Pricing Table -->
+    <div class="row">
+        <div class="col-sm-12" data-bind="visible: showMonthlyPricing">
+            <form
+                {% if is_renewal %}
+                    action="{% url 'domain_subscription_renewal_confirmation' domain %}"
+                {% else %}
+                    action="{% url 'confirm_selected_plan' domain %}"
+                {% endif %}
+                method="post"
+                class="form"
+            >{% csrf_token %}
+                {% if is_renewal %}
+                <input type="hidden" name="from_plan_page" value="true">
+                {% endif %}
+                <input type="hidden" name="plan_edition" data-bind="value: selected_edition">
+
+                {% include 'accounting/partials/pricing_table.html' %}
+
+
+                <div class="form-actions" data-bind="visible: isSubmitVisible">
+                    <div class="col-xs-offset-2">
+                        <button type="submit" class="btn btn-primary btn-lg" data-bind="click: openDowngradeModal">{% trans 'Next' %}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </section>
-<div style="float: right;">
-    <div class="btn-group btn-group-toggle" id="toggle-annual-pricing" data-toggle="buttons">
-        <label class="btn btn-primary active" data-bind="click: annualPricing">
-            <input type="radio" autocomplete="off" checked> Pay Annually
-        </label>
-        <label class="btn btn-primary" data-bind="click: monthlyPricing">
-            <input type="radio" autocomplete="off"> Pay Monthly
-        </label>
-    </div>
-    <div>
-        Save close to %20 when you pay annually
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-sm-12" id="annual-pricing-table" data-bind="visible: !showMonthlyPricing()">
-        {% include 'accounting/partials/pricing_table_annual.html' %}
-
-        <form action="{% url 'annual_plan_request_quote' domain %}">
-            <div class="form-actions">
-                Interested in Annual Billing?
-                <div class="col-xs-offset-2">
-                    <button class="btn btn-primary btn-lg" data-bind="click: contactSales">{% trans 'Talk to Sales' %}</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-sm-12" id="pricing-table" data-bind="visible: showMonthlyPricing()">
-        <form
-            {% if is_renewal %}
-                action="{% url 'domain_subscription_renewal_confirmation' domain %}"
-            {% else %}
-                action="{% url 'confirm_selected_plan' domain %}"
-            {% endif %}
-            method="post"
-            class="form"
-        >{% csrf_token %}
-            {% if is_renewal %}
-            <input type="hidden" name="from_plan_page" value="true">
-            {% endif %}
-            <input type="hidden" name="plan_edition" data-bind="value: selected_edition">
-
-            {% include 'accounting/partials/pricing_table.html' %}
-
-
-            <div class="form-actions" data-bind="visible: isSubmitVisible">
-                <div class="col-xs-offset-2">
-                    <button type="submit" class="btn btn-primary btn-lg" data-bind="click: openDowngradeModal">{% trans 'Next' %}</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
 
 <script type="text/html" id="select-plan-template">
     <!-- ko foreach: pt.editions -->
