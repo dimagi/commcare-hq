@@ -32,6 +32,7 @@ from corehq.messaging.scheduling.models import (
     SMSContent,
     EmailContent,
     SMSSurveyContent,
+    CustomContent,
 )
 from corehq.messaging.scheduling.tasks import (
     refresh_case_alert_schedule_instances,
@@ -212,7 +213,7 @@ class AutomaticUpdateRule(models.Model):
 
         return False
 
-    def conditional_alert_can_be_copied(self, allow_sms_surveys=False):
+    def conditional_alert_can_be_copied(self, allow_sms_surveys=False, allow_custom_references=False):
         """
         Only scheduling rules (conditional alerts) are copied to the exchange now,
         so all of the validation in this method pertains to scheduling rules only.
@@ -229,21 +230,30 @@ class AutomaticUpdateRule(models.Model):
         if self.workflow != self.WORKFLOW_SCHEDULING:
             return False
 
+        allowed_criteria_definitions = (MatchPropertyDefinition, )
+        if allow_custom_references:
+            allowed_criteria_definitions += (CustomMatchDefinition, )
+
         for criterion in self.memoized_criteria:
             definition = criterion.definition
-            if not isinstance(definition, MatchPropertyDefinition):
+            if not isinstance(definition, allowed_criteria_definitions):
                 return False
 
         action_definition = self.get_messaging_rule_action_definition()
 
+        allowed_recipient_types = (
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES,
+        )
+
+        if allow_custom_references:
+            allowed_recipient_types += (RECIPIENT_TYPE_CUSTOM, )
+
         for recipient_type, recipient_id in action_definition.recipients:
-            if recipient_type not in (
-                CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF,
-                CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
-                CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
-                CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE,
-                CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES,
-            ):
+            if recipient_type not in allowed_recipient_types:
                 return False
 
         if action_definition.get_scheduler_module_info().enabled:
@@ -268,13 +278,17 @@ class AutomaticUpdateRule(models.Model):
         if allow_sms_surveys:
             allowed_content_types += (SMSSurveyContent, )
 
+        if allow_custom_references:
+            allowed_content_types += (CustomContent, )
+
         for event in schedule.memoized_events:
             if not isinstance(event.content, allowed_content_types):
                 return False
 
         return True
 
-    def copy_conditional_alert(self, to_domain, convert_form_unique_id_function=None):
+    def copy_conditional_alert(self, to_domain, convert_form_unique_id_function=None,
+            allow_custom_references=False):
         """
         Attempts to copy this rule, which should be a conditional alert, to the given domain.
         If it cannot be copied, it returns None. Otherwise the new alert is returned.
@@ -287,7 +301,10 @@ class AutomaticUpdateRule(models.Model):
         will not be copied.
         """
         allow_sms_surveys = convert_form_unique_id_function is not None
-        if not self.conditional_alert_can_be_copied(allow_sms_surveys=allow_sms_surveys):
+        if not self.conditional_alert_can_be_copied(
+            allow_sms_surveys=allow_sms_surveys,
+            allow_custom_references=allow_custom_references,
+        ):
             return None
 
         with transaction.atomic():
@@ -304,17 +321,22 @@ class AutomaticUpdateRule(models.Model):
 
             for criterion in self.memoized_criteria:
                 definition = criterion.definition
-                if not isinstance(definition, MatchPropertyDefinition):
-                    raise TypeError(
-                        "Expected MatchPropertyDefinition. Did conditional_alert_can_be_copied() get called?"
+                if isinstance(definition, MatchPropertyDefinition):
+                    new_rule.add_criteria(
+                        MatchPropertyDefinition,
+                        property_name=definition.property_name,
+                        property_value=definition.property_value,
+                        match_type=definition.match_type,
                     )
-
-                new_rule.add_criteria(
-                    MatchPropertyDefinition,
-                    property_name=definition.property_name,
-                    property_value=definition.property_value,
-                    match_type=definition.match_type,
-                )
+                elif isinstance(definition, CustomMatchDefinition):
+                    new_rule.add_criteria(
+                        CustomMatchDefinition,
+                        name=definition.name,
+                    )
+                else:
+                    raise TypeError(
+                        "Unexpected criteria definition. Did conditional_alert_can_be_copied() get called?"
+                    )
 
             action_definition = self.get_messaging_rule_action_definition()
             schedule = action_definition.schedule

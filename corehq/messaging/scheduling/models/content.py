@@ -407,6 +407,14 @@ class CustomContent(Content):
     # messsages to send to the recipient.
     custom_content_id = models.CharField(max_length=126)
 
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return CustomContent(
+            custom_content_id=self.custom_content_id,
+        )
+
     def get_list_of_messages(self, recipient):
         if not self.schedule_instance:
             raise ValueError(
