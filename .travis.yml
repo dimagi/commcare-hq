@@ -35,6 +35,7 @@ script:
   - export DATADOG_API_KEY=$DATADOG_API_KEY
   - |
     function _test_make_requirements {
+        pip install pip-tools
         make requirements
         git diff
         git update-index -q --refresh
@@ -46,7 +47,10 @@ script:
             exit 1
         fi
     }
-    [[ "$TEST_MAKE_REQUIREMENTS" == "yes" ]] && _test_make_requirements
+    if [[ "$TEST_MAKE_REQUIREMENTS" == "yes" ]]
+    then
+      _test_make_requirements
+    fi
   - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
 after_success:
   # create symlink so artifacts are available
