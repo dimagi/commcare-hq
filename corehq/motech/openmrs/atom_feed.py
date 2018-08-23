@@ -145,8 +145,8 @@ def get_addpatient_caseblock(case_type, owner, patient, repeater):
     fields_to_update = {}
     for prop, (jsonpath, value_source) in property_map.items():
         matches = jsonpath.find(patient)
-        for match in matches:
-            patient_value = match.value
+        if matches:
+            patient_value = matches[0].value
             new_value = value_source.deserialize(patient_value)
             fields_to_update[prop] = new_value
 
@@ -171,8 +171,8 @@ def get_updatepatient_caseblock(case, patient, repeater):
     fields_to_update = {}
     for prop, (jsonpath, value_source) in property_map.items():
         matches = jsonpath.find(patient)
-        for match in matches:
-            patient_value = match.value
+        if matches:
+            patient_value = matches[0].value
             case_value = case.get_case_property(prop)
             new_value = value_source.deserialize(patient_value)
             if case_value != new_value:
