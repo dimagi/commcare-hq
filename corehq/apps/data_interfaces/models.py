@@ -265,7 +265,7 @@ class AutomaticUpdateRule(models.Model):
         )
 
         if allow_custom_references:
-            allowed_recipient_types += (RECIPIENT_TYPE_CUSTOM, )
+            allowed_recipient_types += (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, )
 
         for recipient_type, recipient_id in action_definition.recipients:
             if recipient_type not in allowed_recipient_types:
@@ -460,7 +460,7 @@ class AutomaticUpdateRule(models.Model):
                     event_and_content_objects,
                     total_iterations=schedule.total_iterations,
                     start_offset=schedule.start_offset,
-                    start_day_of_week=start_offset.start_day_of_week,
+                    start_day_of_week=schedule.start_day_of_week,
                     extra_options=extra_scheduling_options,
                     repeat_every=schedule.repeat_every,
                 )

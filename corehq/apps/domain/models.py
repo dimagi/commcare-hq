@@ -764,6 +764,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 copy_data_items(doc_id, component._id)
 
             def convert_form_unique_id_function(form_unique_id):
+                from corehq.apps.app_manager.models import FormBase
                 form = FormBase.get_form(form_unique_id)
                 form_app = form.get_app()
                 m_index, f_index = form_app.get_form_location(form.unique_id)
@@ -801,7 +802,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 """
                 Change the form_unique_id to the proper form for each event in a newly copied CaseReminderHandler
                 """
-                from corehq.apps.app_manager.models import FormBase
                 for event in handler.events:
                     if not event.form_unique_id:
                         continue
