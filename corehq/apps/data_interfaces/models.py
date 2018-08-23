@@ -421,6 +421,9 @@ class AutomaticUpdateRule(models.Model):
                     repeat_every=schedule.repeat_every,
                 )
             elif schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
+                if (schedule.repeat_every % 7) != 0 or schedule.repeat_every < 7:
+                    raise ValueError("Invalid schedule.repeat_every for a weekly schedule")
+
                 return TimedSchedule.create_simple_weekly_schedule(
                     to_domain,
                     model_event,
@@ -429,9 +432,12 @@ class AutomaticUpdateRule(models.Model):
                     schedule.start_day_of_week,
                     total_iterations=schedule.total_iterations,
                     extra_options=extra_scheduling_options,
-                    repeat_every=schedule.repeat_every,
+                    repeat_every=schedule.repeat_every // 7,
                 )
             elif schedule.ui_type == Schedule.UI_TYPE_MONTHLY:
+                if schedule.repeat_every >= 0:
+                    raise ValueError("Invalid schedule.repeat_every for a monthly schedule")
+
                 return TimedSchedule.create_simple_monthly_schedule(
                     to_domain,
                     model_event,
@@ -439,7 +445,7 @@ class AutomaticUpdateRule(models.Model):
                     model_content,
                     total_iterations=schedule.total_iterations,
                     extra_options=extra_scheduling_options,
-                    repeat_every=schedule.repeat_every,
+                    repeat_every=schedule.repeat_every * -1,
                 )
         elif schedule.ui_type in (
             Schedule.UI_TYPE_CUSTOM_DAILY,
