@@ -23,7 +23,7 @@ IMPORT_FREQUENCY_CHOICES = (
 
 # device_id for cases added/updated by an OpenmrsImporter.
 # OpenmrsImporter ID is appended to this.
-OPENMRS_IMPORTER_DEVICE_ID = 'openmrs-importer-'
+OPENMRS_IMPORTER_DEVICE_ID_PREFIX = 'openmrs-importer-'
 
 # XMLNS to indicate that a form was imported from OpenMRS
 XMLNS_OPENMRS = 'http://commcarehq.org/openmrs-integration'
