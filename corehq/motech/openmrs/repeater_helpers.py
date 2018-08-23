@@ -87,6 +87,7 @@ class CreatePersonAttributeTask(WorkflowTask):
         response = self.requests.post(
             '/ws/rest/v1/person/{person_uuid}/attribute'.format(person_uuid=self.person_uuid),
             json={'attributeType': self.attribute_type_uuid, 'value': self.value},
+            raise_for_status=True,
         )
         self.attribute_uuid = response.json()['uuid']
 
@@ -119,7 +120,8 @@ class UpdatePersonAttributeTask(WorkflowTask):
             json={
                 'value': self.value,
                 'attributeType': self.attribute_type_uuid,
-            }
+            },
+            raise_for_status=True,
         )
 
     def rollback(self):
@@ -130,7 +132,8 @@ class UpdatePersonAttributeTask(WorkflowTask):
             json={
                 'value': self.existing_value,
                 'attributeType': self.attribute_type_uuid,
-            }
+            },
+            raise_for_status=True,
         )
 
 
@@ -147,6 +150,7 @@ class CreatePatientIdentifierTask(WorkflowTask):
         response = self.requests.post(
             '/ws/rest/v1/patient/{patient_uuid}/identifier'.format(patient_uuid=self.patient_uuid),
             json={'identifierType': self.identifier_type_uuid, 'identifier': self.identifier},
+            raise_for_status=True,
         )
         self.identifier_uuid = response.json()['uuid']
 
@@ -179,7 +183,8 @@ class UpdatePatientIdentifierTask(WorkflowTask):
             json={
                 'identifier': self.identifier,
                 'identifierType': self.identifier_type_uuid,
-            }
+            },
+            raise_for_status=True,
         )
 
     def rollback(self):
@@ -190,7 +195,8 @@ class UpdatePatientIdentifierTask(WorkflowTask):
             json={
                 'identifier': self.existing_identifier,
                 'identifierType': self.identifier_type_uuid,
-            }
+            },
+            raise_for_status=True,
         )
 
 

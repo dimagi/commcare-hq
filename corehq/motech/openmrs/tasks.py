@@ -26,9 +26,10 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.openmrs.atom_feed import get_updated_patients, update_patient
 from corehq.motech.openmrs.const import (
-    IMPORT_FREQUENCY_WEEKLY,
     IMPORT_FREQUENCY_MONTHLY,
+    IMPORT_FREQUENCY_WEEKLY,
     OPENMRS_ATOM_FEED_POLL_INTERVAL,
+    OPENMRS_IMPORTER_DEVICE_ID_PREFIX,
     XMLNS_OPENMRS,
 )
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
@@ -145,7 +146,7 @@ def import_patients_of_owner(requests, importer, domain_name, owner, location=No
     submit_case_blocks(
         [cb.case.as_string() for cb in case_blocks],
         domain_name,
-        username=owner.username,
+        device_id='{}{}'.format(OPENMRS_IMPORTER_DEVICE_ID_PREFIX, importer.get_id),
         user_id=owner.user_id,
         xmlns=XMLNS_OPENMRS,
     )
