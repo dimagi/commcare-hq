@@ -173,11 +173,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 if domain in account.enterprise_restricted_signup_domains:
                     restricted_by_domain = domain
                     message = account.restrict_signup_message
-                    message += _("""
-                        <br>Please contact <a href='mailto:{}?subject={}'>{}</a> to register for an account.
-                    """).format(account.restrict_signup_email,
-                                _("CommCareHQ account request"),
-                                account.restrict_signup_email)
                     break
         return {
             'isValid': message is None,
