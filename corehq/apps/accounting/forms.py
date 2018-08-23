@@ -2419,7 +2419,8 @@ class EnterpriseSettingsForm(forms.Form):
     restrict_domain_creation = forms.BooleanField(
         label=ugettext_lazy("Restrict Project Space Creation"),
         required=False,
-        help_text=ugettext_lazy("Do not allow non-admins to create new project spaces"),
+        help_text=ugettext_lazy("Do not allow current web users, other than enterprise admins, "
+            "to create new project spaces."),
     )
     restrict_signup = forms.BooleanField(
         label=ugettext_lazy("Restrict User Signups"),
