@@ -527,8 +527,7 @@ def save_match_ids(case, case_config, patient):
     def get_patient_id_type_uuids_values(patient_):
         yield PERSON_UUID_IDENTIFIER_TYPE_ID, patient_['uuid']
         for identifier in patient_['identifiers']:
-            if 'identifier' in identifier:
-                yield identifier['identifierType']['uuid'], identifier['identifier']
+            yield identifier['identifierType']['uuid'], identifier['identifier']
 
     case_config_ids = case_config['patient_identifiers']
     case_update = {}
@@ -588,7 +587,9 @@ def create_patient(requests, info, case_config):
             json=patient,
         )
         if 200 <= response.status_code < 300:
-            return response.json()
+            # response.json() is not the full patient record. We need
+            # the patient's identifiers and attributes.
+            return get_patient_by_uuid(requests, response.json()['uuid'])
 
 
 def find_patient(requests, domain, info, openmrs_config):
