@@ -226,7 +226,7 @@ class AutomaticUpdateRule(models.Model):
                 if isinstance(event.content, SMSSurveyContent):
                     result.append(event.content.form_unique_id)
 
-        return result
+        return list(set(result))
 
     def conditional_alert_can_be_copied(self, allow_sms_surveys=False, allow_custom_references=False):
         """
