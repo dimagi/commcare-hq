@@ -14,7 +14,14 @@ value in `to_data_type`.
 
 """
 from __future__ import absolute_import
-from corehq.motech.const import COMMCARE_DATA_TYPE_DECIMAL, COMMCARE_DATA_TYPE_INTEGER
+
+import six
+
+from corehq.motech.const import (
+    COMMCARE_DATA_TYPE_DECIMAL,
+    COMMCARE_DATA_TYPE_INTEGER,
+    COMMCARE_DATA_TYPE_TEXT,
+)
 
 
 def to_decimal(value):
@@ -31,7 +38,17 @@ def to_integer(value):
         return None
 
 
+def to_text(value):
+    if value is None:
+        return ''
+    if not isinstance(value, six.string_types):
+        return six.text_type(value)
+    return value
+
+
 serializers = {
+    # (from_data_type, to_data_type): function
     (None, COMMCARE_DATA_TYPE_DECIMAL): to_decimal,
     (None, COMMCARE_DATA_TYPE_INTEGER): to_integer,
+    (None, COMMCARE_DATA_TYPE_TEXT): to_text,
 }
