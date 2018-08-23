@@ -112,14 +112,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                         raise BadRequestError()
             raise e
 
-    def get_deactivated_owner_ids(self, ):
-        owner_ids = (user_es.UserES()
-                     .show_only_inactive()
-                     .domain(self.domain)
-                     .mobile_users()
-                     .get_ids())
-        return owner_ids
-
     def get_special_owner_ids(self, admin, unknown, demo, commtrack):
         if not any([admin, unknown, demo, commtrack]):
             return []
