@@ -213,6 +213,21 @@ class AutomaticUpdateRule(models.Model):
 
         return False
 
+    @classmethod
+    def get_referenced_form_unique_ids_from_sms_surveys(cls, domain):
+        """
+        Examines all of the scheduling rules in the given domain and returns
+        all form_unique_ids that are referenced from SMS Surveys.
+        """
+        result = []
+        for rule in cls.by_domain(domain, cls.WORKFLOW_SCHEDULING, active_only=False):
+            schedule = rule.get_messaging_rule_schedule()
+            for event in schedule.memoized_events:
+                if isinstance(event.content, SMSSurveyContent):
+                    result.append(event.content.form_unique_id)
+
+        return result
+
     def conditional_alert_can_be_copied(self, allow_sms_surveys=False, allow_custom_references=False):
         """
         Only scheduling rules (conditional alerts) are copied to the exchange now,
