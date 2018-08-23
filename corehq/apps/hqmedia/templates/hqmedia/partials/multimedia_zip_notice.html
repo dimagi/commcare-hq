@@ -15,7 +15,7 @@
                 onclick="hqImport('app_manager/js/download_async_modal').downloadApplicationZip()"
             }
             {% else %}
-                {# This happens when the template gets included in app_manager/partials/releases.html #}
+                {# This happens when the template gets included in app_manager/partials/releases/releases.html #}
                 {# See app_manager/js/releases/releases.js #}
                 data-bind="click: function () {
                     download_application_zip(true, build_profile());

@@ -17,7 +17,7 @@ Unique_ID = namedtuple('UniqueID', 'type id')
 
 class TransifexPOFileGenerator:
     def __init__(self, domain, app_id, version, key_lang, source_lang, lang_prefix,
-                 exclude_if_default=False):
+                 exclude_if_default=False, use_version_postfix=True):
         """
         Generates PO files for source/default lang files and also for translated files
         :param domain: domain name
@@ -30,6 +30,7 @@ class TransifexPOFileGenerator:
         :param lang_prefix: usually default_
         :param exclude_if_default: set this to skip adding msgstr in case its same as the
         default language. For details: https://github.com/dimagi/commcare-hq/pull/20706
+        :param use_version_postfix: use version number at the end of resource slugs
         """
         if key_lang == source_lang and exclude_if_default:
             raise Exception("Looks like you are setting up the file for default language "
@@ -43,6 +44,7 @@ class TransifexPOFileGenerator:
         self.exclude_if_default = exclude_if_default
         self.translations = OrderedDict()
         self.version = version
+        self.use_version_postfix = use_version_postfix
         self.headers = dict()  # headers for each sheet name
         self.po_file_generator = PoFileGenerator()
         self.sheet_name_to_module_or_form_type_and_id = dict()
@@ -89,7 +91,10 @@ class TransifexPOFileGenerator:
             )
 
     def _get_filename(self, sheet_name):
-        return sheet_name + '_v' + str(self.version)
+        if self.version and self.use_version_postfix:
+            return sheet_name + '_v' + str(self.version)
+        else:
+            return sheet_name
 
     def _get_header_index(self, sheet_name, column_name):
         for index, _column_name in enumerate(self.headers[sheet_name]):
@@ -152,9 +157,9 @@ class TransifexPOFileGenerator:
         """
         from corehq.apps.app_manager.dbaccessors import get_current_app
         app = get_current_app(self.domain, self.app_id_to_build)
+
         if self.version is None:
             self.version = app.version
-
         rows = self._translation_data(app)
 
         for sheet_name in rows:

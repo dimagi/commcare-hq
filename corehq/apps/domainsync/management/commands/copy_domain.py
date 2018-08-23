@@ -8,7 +8,6 @@ from six.moves.urllib.parse import urlparse
 from couchdbkit import ResourceNotFound, ResourceConflict
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from http_parser.http import ParserError
 from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
 from corehq.util.couchdb_management import CouchConfig
@@ -334,7 +333,7 @@ def copy_doc(doc, count, sourcedb, target_couch, exclude_types, total, simulate,
                 try:
                     save(dt, target_couch)
                     break
-                except (ResourceConflict, ParserError, TypeError):
+                except (ResourceConflict, TypeError):
                     if i == 0:
                         raise
     print("     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"]))

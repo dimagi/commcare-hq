@@ -20,13 +20,7 @@
         <div class="alert alert-block alert-danger" data-bind="visible: show_add_action_warning() && selected_case_action_id() !== 'select-one'">
             <span class="help-block"><strong>{% trans "Please click Add action or clear the dropdown" %}</strong></span>
         </div>
-        <div class="col-xs-2 col-xs-offset-1 text-right">
-            <button class="btn btn-success" data-bind="click: add_action">
-                <i class="fa fa-plus"></i>
-                {% trans "Add action for" %}
-            </button>
-        </div>
-        <div class="col-xs-3">
+        <div class="col-xs-3 col-xs-offset-3">
             <select class="select form-control" data-bind="value: selected_case_action_id">
                 <option value="select-one">{% trans "(Select one and click Add action)" %}</option>
                 <option value="close-case-action">{% trans "Close the case" %}</option>
@@ -35,6 +29,12 @@
                 <option value="custom-action">{% trans "Custom action" %}</option>
                 {% endif %}
             </select>
+        </div>
+        <div class="col-xs-2">
+            <button class="btn btn-success" data-bind="click: add_action">
+                <i class="fa fa-plus"></i>
+                {% trans "Add action" %}
+            </button>
         </div>
     </div>
 </script>

@@ -155,7 +155,7 @@ class ProjectSettingsForm(forms.Form):
                     _("Update My Settings"),
                     type="submit",
                     css_id="update-proj-settings",
-                    css_class='btn-primary disabled',
+                    css_class='btn-primary',
                     data_bind="hqbSubmitReady: form_is_ready"
                 )
             )

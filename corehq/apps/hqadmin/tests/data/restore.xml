@@ -1,0 +1,234 @@
+<OpenRosaResponse xmlns="http://openrosa.org/http/response">
+  <message nature="ota_restore_success">Successfully restored account test_user!</message>
+  <Sync xmlns="http://commcarehq.org/sync">
+    <restore_id>02bbfb3ea17711e8adb9bc764e203eaf</restore_id>
+  </Sync>
+  <Registration xmlns="http://openrosa.org/user/registration">
+    <username>test_user</username>
+    <password>sha1$notarealpassword</password>
+    <uuid>fe0bbcf36cfd93a1ebb43e50ca1c3174</uuid>
+    <date>2016-10-31</date>
+    <user_data>
+      <data key="commcare_location_id">999dc78d9ca84ea8749dc75b4453ff5b</data>
+      <data key="commcare_primary_case_sharing_id">999dc78d9ca84ea8749dc75b4453ff5b</data>
+      <data key="commcare_location_ids">999dc78d9ca84ea8749dc75b4453ff5b</data>
+      <data key="commcare_project">ethan-test</data>
+      <data key="commcare_last_name"/>
+      <data key="commcare_first_name"/>
+      <data key="commcare_phone_number"/>
+    </user_data>
+  </Registration>
+  <fixture id="user-groups" user_id="b43e50ca1c3174fe0bbcf36cfd93a1eb">
+    <groups/>
+  </fixture>
+  <schema id="locations">
+    <indices>
+      <index>@city_id</index>
+      <index>@country_id</index>
+      <index>@county_id</index>
+      <index>@id</index>
+      <index>@neighborhood_id</index>
+      <index>@state_id</index>
+      <index>@type</index>
+      <index>name</index>
+    </indices>
+  </schema>
+  <fixture id="locations" indexed="true" user_id="b43e50ca1c3174fe0bbcf36cfd93a1eb">
+    <locations>
+      <location city_id="999dc78d9ca84ea8749dc75b4453ff5b" country_id="999dc78d9ca84ea8749dc75b44542332" county_id="999dc78d9ca84ea8749dc75b44540257" id="999dc78d9ca84ea8749dc75b4453ff5b" neighborhood_id="" state_id="999dc78d9ca84ea8749dc75b44541bdc" type="city">
+        <name>Cambridge</name>
+        <site_code>cambridge</site_code>
+        <external_id/>
+        <latitude/>
+        <longitude/>
+        <location_type>city</location_type>
+        <supply_point_id/>
+        <location_data>
+          <name-en>Cambridge</name-en>
+          <name-es>El Cambridge</name-es>
+          <is_test/>
+        </location_data>
+      </location>
+      <location city_id="999dc78d9ca84ea8749dc75b4453ff5b" country_id="999dc78d9ca84ea8749dc75b44542332" county_id="999dc78d9ca84ea8749dc75b44540257" id="999dc78d9ca84ea8749dc75b4453f6e6" neighborhood_id="999dc78d9ca84ea8749dc75b4453f6e6" state_id="999dc78d9ca84ea8749dc75b44541bdc" type="neighborhood">
+        <name>Cambridgeport</name>
+        <site_code>cambridgeport</site_code>
+        <external_id/>
+        <latitude/>
+        <longitude/>
+        <location_type>neighborhood</location_type>
+        <supply_point_id/>
+        <location_data>
+          <name-en>Cambridgeport</name-en>
+          <name-es>Cambridgeport</name-es>
+          <is_test/>
+        </location_data>
+      </location>
+      <location city_id="999dc78d9ca84ea8749dc75b4453ff5b" country_id="999dc78d9ca84ea8749dc75b44542332" county_id="999dc78d9ca84ea8749dc75b44540257" id="999dc78d9ca84ea8749dc75b4453e2a4" neighborhood_id="999dc78d9ca84ea8749dc75b4453e2a4" state_id="999dc78d9ca84ea8749dc75b44541bdc" type="neighborhood">
+        <name>Inman</name>
+        <site_code>inman</site_code>
+        <external_id/>
+        <latitude/>
+        <longitude/>
+        <location_type>neighborhood</location_type>
+        <supply_point_id/>
+        <location_data>
+          <name-en>Inman</name-en>
+          <name-es>Inman</name-es>
+          <is_test/>
+        </location_data>
+      </location>
+      <location city_id="999dc78d9ca84ea8749dc75b4453ff5b" country_id="999dc78d9ca84ea8749dc75b44542332" county_id="999dc78d9ca84ea8749dc75b44540257" id="999dc78d9ca84ea8749dc75b4453ee92" neighborhood_id="999dc78d9ca84ea8749dc75b4453ee92" state_id="999dc78d9ca84ea8749dc75b44541bdc" type="neighborhood">
+        <name>Kendall</name>
+        <site_code>kendall</site_code>
+        <external_id/>
+        <latitude/>
+        <longitude/>
+        <location_type>neighborhood</location_type>
+        <supply_point_id/>
+        <location_data>
+          <name-en>Kendall</name-en>
+          <name-es>Kendall</name-es>
+          <is_test/>
+        </location_data>
+      </location>
+      <location city_id="" country_id="999dc78d9ca84ea8749dc75b44542332" county_id="" id="999dc78d9ca84ea8749dc75b44541bdc" neighborhood_id="" state_id="999dc78d9ca84ea8749dc75b44541bdc" type="state">
+        <name>Massachusetts</name>
+        <site_code>massachusetts</site_code>
+        <external_id/>
+        <latitude/>
+        <longitude/>
+        <location_type>state</location_type>
+        <supply_point_id/>
+        <location_data>
+          <name-en>Massachusetts</name-en>
+          <name-es>Massachusetts</name-es>
+          <is_test/>
+        </location_data>
+      </location>
+      <location city_id="" country_id="999dc78d9ca84ea8749dc75b44542332" county_id="999dc78d9ca84ea8749dc75b44540257" id="999dc78d9ca84ea8749dc75b44540257" neighborhood_id="" state_id="999dc78d9ca84ea8749dc75b44541bdc" type="county">
+        <name>Middlesex</name>
+        <site_code>middlesex</site_code>
+        <external_id/>
+        <latitude/>
+        <longitude/>
+        <location_type>county</location_type>
+        <supply_point_id/>
+        <location_data>
+          <name-en>Middlesex</name-en>
+          <name-es>Middlesex</name-es>
+          <is_test/>
+        </location_data>
+      </location>
+      <location city_id="" country_id="999dc78d9ca84ea8749dc75b44542332" county_id="" id="999dc78d9ca84ea8749dc75b44542332" neighborhood_id="" state_id="" type="country">
+        <name>USA</name>
+        <site_code>usa</site_code>
+        <external_id/>
+        <latitude/>
+        <longitude/>
+        <location_type>country</location_type>
+        <supply_point_id/>
+        <location_data>
+          <name-en>USA</name-en>
+          <name-es>USA</name-es>
+          <is_test/>
+        </location_data>
+      </location>
+    </locations>
+  </fixture>
+  <fixture id="commcare:reports" user_id="0cf186bad6b44bb5afca9feb737290d9">
+    <reports last_sync="2018-08-22T16:34:24.326325+00:00">
+      <report id="e009c3dc89b0250a8accd09b9641c3250f4e38d0" report_id="0dc41ff3e342d3ac94c06bb5c6cdd416">
+        <filters/>
+        <rows>
+          <row index="0" is_total_row="False">
+            <column id="column_0">Andinet</column>
+            <column id="column_1">100</column>
+          </row>
+          <row index="1" is_total_row="False">
+            <column id="column_0">Meketa</column>
+            <column id="column_1">5</column>
+          </row>
+          <row index="2" is_total_row="False">
+            <column id="column_0">Melesa</column>
+            <column id="column_1">52</column>
+          </row>
+        </rows>
+      </report>
+      <report id="42dc83c562a474b7e5faba4fc3190ca37bd4777f" report_id="f1761733213601f7f77defc3bc2e2c87">
+        <filters/>
+        <rows>
+          <row index="0" is_total_row="False">
+            <column id="column_0">1</column>
+            <column id="column_1"/>
+          </row>
+          <row index="1" is_total_row="False">
+            <column id="column_0">3</column>
+            <column id="column_1"/>
+          </row>
+          <row index="2" is_total_row="False">
+            <column id="column_0">4</column>
+            <column id="column_1"/>
+          </row>
+        </rows>
+      </report>
+    </reports>
+  </fixture>
+  <fixture id="commcare-reports-filters:e009c3dc89b0250a8accd09b9641c3250f4e38d0">
+    <filters/>
+  </fixture>
+  <fixture id="commcare-reports:e009c3dc89b0250a8accd09b9641c3250f4e38d0" indexed="true" report_id="0dc41ff3e342d3ac94c06bb5c6cdd416" user_id="0cf186bad6b44bb5afca9feb737290d9">
+    <rows last_sync="2018-08-22T16:34:25.575930+00:00">
+      <row index="0" is_total_row="False">
+        <column_0>Andinet</column_0>
+        <column_1>100</column_1>
+      </row>
+      <row index="1" is_total_row="False">
+        <column_0>Meketa</column_0>
+        <column_1>5</column_1>
+      </row>
+      <row index="2" is_total_row="False">
+        <column_0>Melesa</column_0>
+        <column_1>52</column_1>
+      </row>
+    </rows>
+  </fixture>
+  <fixture id="commcare-reports-filters:42dc83c562a474b7e5faba4fc3190ca37bd4777f">
+    <filters/>
+  </fixture>
+  <fixture id="commcare-reports:42dc83c562a474b7e5faba4fc3190ca37bd4777f" indexed="true" report_id="f1761733213601f7f77defc3bc2e2c87" user_id="0cf186bad6b44bb5afca9feb737290d9">
+    <rows last_sync="2018-08-22T16:34:25.710505+00:00">
+      <row index="0" is_total_row="False">
+        <column_0>1</column_0>
+        <column_1/>
+      </row>
+      <row index="1" is_total_row="False">
+        <column_0>3</column_0>
+        <column_1/>
+      </row>
+      <row index="2" is_total_row="False">
+        <column_0>4</column_0>
+        <column_1/>
+      </row>
+    </rows>
+  </fixture>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="b3861bab907c62de6a9c5932960e6cf8" date_modified="2016-10-31T20:05:16.423033Z" user_id="">
+    <create>
+      <case_type>person</case_type>
+      <case_name>Joe</case_name>
+      <owner_id>b43e50ca1c3174fe0bbcf36cfd93a1eb</owner_id>
+    </create>
+    <update>
+      <date_opened>2016-10-31</date_opened>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="b3861bab907c62de6a9c5932960e6cf7" date_modified="2016-10-31T20:05:16.423033Z" user_id="">
+    <create>
+      <case_type>person</case_type>
+      <case_name>Jane</case_name>
+      <owner_id>b43e50ca1c3174fe0bbcf36cfd93a1eb</owner_id>
+    </create>
+    <update>
+      <date_opened>2016-10-31</date_opened>
+    </update>
+  </case>
+</OpenRosaResponse>
