@@ -15,6 +15,7 @@ from corehq.apps.userreports.models import ReportConfiguration, StaticReportConf
 from corehq.apps.userreports.reports.filters import specs
 
 COLUMN_PARAMS_ORDER = [
+    'comment',
     'display',
     'column_id',
     'description',
@@ -41,6 +42,7 @@ FILTER_SPECS = {
     'location_drilldown': specs.LocationDrilldownFilterSpec,
 }
 FILTER_PARAMS_ORDER = [
+    'comment',
     'display',
     'slug',
     'type',
