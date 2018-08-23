@@ -1,6 +1,6 @@
 hqDefine('translations/js/setup', [
     'jquery',
-    'select2-3.5.2-legacy/select2'
+    'select2-3.5.2-legacy/select2',
 ], function($){
     $(function() {
         $("#id_source_lang").select2();
