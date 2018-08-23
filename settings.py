@@ -536,6 +536,9 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 # celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
+# https://github.com/celery/celery/issues/4226
+CELERY_BROKER_POOL_LIMIT = None
+
 CELERY_RESULT_BACKEND = 'django-db'
 
 CELERY_TASK_ANNOTATIONS = {
