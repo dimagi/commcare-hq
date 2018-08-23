@@ -1,6 +1,9 @@
 {% extends 'translations/base_template.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+{% requirejs_main "translations/js/setup" %}
 
 {% block page_content %}
     {% if not integration_available %}

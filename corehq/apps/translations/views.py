@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.contrib import messages
 
+from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.translations.forms import (
     ConvertTranslationsForm,
     PullResourceForm,
@@ -139,6 +140,10 @@ class PullResource(BaseDomainView):
     urlname = 'pull_resource'
     template_name = 'pull_resource.html'
     section_name = ugettext_noop("Translations")
+
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(PullResource, self).dispatch(request, *args, **kwargs)
 
     def section_url(self):
         return self.page_url

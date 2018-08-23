@@ -30,7 +30,10 @@ from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
-from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.decorators import (
+    use_daterangepicker,
+    use_select2,
+)
 from corehq.apps.translations.views import ConvertTranslations
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import UserRole, Permissions
@@ -1601,6 +1604,10 @@ class ICDSAppTranslations(BaseDomainView):
     urlname = 'icds_app_translations'
     template_name = 'icds_reports/icds_app/app_translations.html'
     section_name = ugettext_noop("Translations")
+
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(ICDSAppTranslations, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

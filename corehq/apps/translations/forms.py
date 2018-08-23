@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import openpyxl
+import langcodes
 
 from django import forms
 from django.conf import settings
@@ -53,12 +54,8 @@ class PullResourceForm(forms.Form):
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
     target_lang = forms.ChoiceField(label=ugettext_lazy("Target Language"),
-                                    choices=[(None, ugettext_lazy('Select Target Language')),
-                                             ('en', ugettext_lazy('English')),
-                                             ('ori', ugettext_lazy('Oriya')),
-                                             ('hin', ugettext_lazy('Hindi')),
-                                             ('mr', ugettext_lazy('Marathi')),
-                                             ('te', ugettext_lazy('Telugu'))],
+                                    choices=langcodes.get_all_langs_for_select(),
+                                    initial="en"
                                     )
     resource_slug = forms.CharField(label=_("Resource Slug"))
 
