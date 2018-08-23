@@ -165,35 +165,33 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     def all_user_es_query(self, query):
         return self.active_user_es_query(query).show_inactive()
 
+    def get_all_users(self, query, start, size):
+        return self._get_users(query, start, size, include_inactive=True)
+
+    def get_active_users(self, query, start, size):
+        return self._get_users(query, start, size, include_inactive=False)
+
+    def _get_users(self, query, start, size, include_inactive=False):
+        if include_inactive:
+            user_query = self.all_user_es_query(query)
+        else:
+            user_query = self.active_user_es_query(query)
+        users = (user_query
+                 .fields(SimplifiedUserInfo.ES_FIELDS)
+                 .start(start)
+                 .size(size)
+                 .sort("username.exact"))
+        if not self.request.can_access_all_locations:
+            accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
+                self.request.domain, self.request.couch_user)
+            users = users.location(accessible_location_ids)
+        return [self.utils.user_tuple(u) for u in users.run().hits]
+
     def get_all_users_size(self, query):
         return self.all_user_es_query(query).count()
 
-    def get_all_users(self, query, start, size):
-        users = (self.all_user_es_query(query)
-                 .fields(SimplifiedUserInfo.ES_FIELDS)
-                 .start(start)
-                 .size(size)
-                 .sort("username.exact"))
-        if not self.request.can_access_all_locations:
-            accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
-                self.request.domain, self.request.couch_user)
-            users = users.location(accessible_location_ids)
-        return [self.utils.user_tuple(u) for u in users.run().hits]
-
     def get_active_users_size(self, query):
         return self.active_user_es_query(query).count()
-
-    def get_active_users(self, query, start, size):
-        users = (self.active_user_es_query(query)
-                 .fields(SimplifiedUserInfo.ES_FIELDS)
-                 .start(start)
-                 .size(size)
-                 .sort("username.exact"))
-        if not self.request.can_access_all_locations:
-            accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
-                self.request.domain, self.request.couch_user)
-            users = users.location(accessible_location_ids)
-        return [self.utils.user_tuple(u) for u in users.run().hits]
 
     def get_groups_size(self, query):
         return self.group_es_query(query).count()
