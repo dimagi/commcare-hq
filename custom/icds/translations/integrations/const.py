@@ -6,8 +6,12 @@ SOURCE_LANGUAGE_MAPPING = {
     'hin': 'hi',  # hindi
     'ori': 'or',  # oriya
     'tam': 'ta',  # tamil
-    'kha': 'km',  # khasi
-    'grt': 'lg',  # garo
-    'lus': 'mi',  # mizo
+    'kha': 'km',  # khasi. Can be removed once we move ICDS CAS translation to new project on transifex
+    'grt': 'lg',  # garo. Can be removed once we move ICDS CAS translation to new project on transifex
+    'lus': 'mi',  # mizo. Can be removed once we move ICDS CAS translation to new project on transifex
     'pan': 'pa',  # punjabi
+    'asm': 'as',  # assamese
+    'ben': 'bn',  # bengali
+    'guj': 'gu',  # gujarati
+    'mal': 'ml',  # malayalam
 }
