@@ -37,9 +37,9 @@ class TransifexApiClient(object):
         """
         :return: list of resource slugs corresponding to version
         """
-        return [r['slug']
+        return [r['name']
                 for r in self.list_resources().json()
-                if r['slug'].endswith("v%s" % version)]
+                if r['name'].endswith("v%s" % version)]
 
     def lock_resource(self, resource_slug):
         """
