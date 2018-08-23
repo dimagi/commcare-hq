@@ -1,15 +1,21 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from collections import namedtuple
 from itertools import chain
 from operator import eq
 
-from jsonpath_rw import Child, Fields, Slice, Where, parse as parse_jsonpath
+from jsonpath_rw import (
+    Child,
+    Fields,
+    Slice,
+    Union,
+    Where,
+    parse as parse_jsonpath,
+)
 
 from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
-from corehq.motech.openmrs.jsonpath import Cmp
+from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
 from corehq.motech.value_source import ValueSource
 from dimagi.ext.couchdbkit import (
     DocumentSchema,
@@ -201,19 +207,33 @@ def get_property_map(case_config):
         #
         # The `Where` JSONPath expression "*jsonpath1* `where` *jsonpath2*" returns nodes matching *jsonpath1*
         # where a child matches *jsonpath2*. `Cmp` does a comparison in *jsonpath2*. It accepts a
-        # comparison operator and a value. The JSONPath expression below is the equivalent of::
+        # comparison operator and a value. The JSONPath expression for matching simple attribute values is::
         #
         #     (person.attributes[*] where attributeType.uuid eq attr_uuid).value
         #
-        # This `for` loop will let us extract the person attribute values where their attribute type UUIDs
-        # match those configured in case_config['person_attributes']
+        # This extracts the person attribute values where their attribute type UUIDs match those configured in
+        # case_config['person_attributes'].
+        #
+        # Person attributes with Concept values have UUIDs. The following JSONPath uses Union to match both simple
+        # values and Concept values.
         if 'case_property' in value_source:
-            jsonpath = Child(
-                Where(
-                    Child(Child(Fields('person'), Fields('attributes')), Slice()),
-                    Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_uuid)
+            jsonpath = Union(
+                # Simple values: Return value if it has no children.
+                Child(
+                    Where(
+                        Child(Child(Fields('person'), Fields('attributes')), Slice()),
+                        Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_uuid)
+                    ),
+                    WhereNot(Fields('value'), Fields('*'))
                 ),
-                Fields('value')
+                # Concept values: Return value.uuid if value.uuid exists:
+                Child(
+                    Where(
+                        Child(Child(Fields('person'), Fields('attributes')), Slice()),
+                        Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_uuid)
+                    ),
+                    Child(Fields('value'), Fields('uuid'))
+                )
             )
             property_map[value_source['case_property']] = (jsonpath, value_source)
 
