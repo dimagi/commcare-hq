@@ -439,15 +439,6 @@ class SubmitHistoryFilter(ExpandedMobileWorkerFilter):
     def utils(self):
         return SubmitHistoryUtils(self.domain)
 
-    @property
-    def filter_context(self):
-        context = super(SubmitHistoryFilter, self).filter_context
-        url = reverse(self.options_url, args=[self.domain])
-        context.update({'endpoint': url})
-        if self.request.project.uses_locations:
-            context.update({'search_help_inline': self.search_help_inline})
-        return context
-
     @classmethod
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
