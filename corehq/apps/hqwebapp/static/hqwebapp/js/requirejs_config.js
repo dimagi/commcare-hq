@@ -10,6 +10,7 @@ requirejs.config({
         "datatables": "datatables/media/js/jquery.dataTables.min",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
+        "stripe": "https://js.stripe.com/v2/?noext",
     },
     shim: {
         "bootstrap": { deps: ['jquery'] },
@@ -20,6 +21,7 @@ requirejs.config({
             deps: ['jquery', 'knockout', 'underscore'],
             exports: 'RMI',
         },
+        "stripe": { exports: 'Stripe' },
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
     },
     map: {

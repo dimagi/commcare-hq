@@ -1,10 +1,18 @@
-/* global Stripe */
-hqDefine("domain/js/billing_statements", function() {
-
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        paymentMethodHandlers = hqImport("accounting/js/payment_method_handler"),
-        CRUDPaginatedList = hqImport("hqwebapp/js/crud_paginated_list");
-
+hqDefine("domain/js/billing_statements", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'accounting/js/payment_method_handler',
+    'hqwebapp/js/crud_paginated_list',
+    'stripe',
+], function(
+    $,
+    ko,
+    initialPageData,
+    paymentMethodHandlers,
+    CRUDPaginatedList,
+    Stripe
+) {
     Stripe.setPublishableKey(initialPageData.get("stripe_options").stripe_public_key);
     var WireInvoiceHandler = paymentMethodHandlers.WireInvoiceHandler;
     var PaymentMethodHandler = paymentMethodHandlers.PaymentMethodHandler;
@@ -23,7 +31,7 @@ hqDefine("domain/js/billing_statements", function() {
     );
 
     $(function () {
-        ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
+        $('#editable-paginated-list').koApplyBindings(paginatedListModel);
     });
 
     var bulkPaymentHandler = new PaymentMethodHandler(
