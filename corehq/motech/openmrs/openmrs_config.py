@@ -2,123 +2,19 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from corehq.motech.openmrs.finders import PatientFinder
+from corehq.motech.value_source import ValueSource
 from dimagi.ext.couchdbkit import (
-    DictProperty,
     DocumentSchema,
     ListProperty,
     SchemaDictProperty,
-    SchemaListProperty,
     SchemaProperty,
     StringProperty,
 )
 
 
-def recurse_subclasses(cls):
-    return (
-        cls.__subclasses__() +
-        [subsub for sub in cls.__subclasses__() for subsub in recurse_subclasses(sub)]
-    )
-
-
 class IdMatcher(DocumentSchema):
     case_property = StringProperty()
     identifier_type_id = StringProperty()
-
-
-class ValueSource(DocumentSchema):
-    @classmethod
-    def wrap(cls, data):
-        if cls is ValueSource:
-            return {
-                sub._doc_type: sub for sub in recurse_subclasses(cls)
-            }[data['doc_type']].wrap(data)
-        else:
-            return super(ValueSource, cls).wrap(data)
-
-    def get_value(self, case_trigger_info):
-        raise NotImplementedError()
-
-
-class CaseProperty(ValueSource):
-    # Example "person_property" value::
-    #
-    #     {
-    #       "birthdate": {
-    #         "doc_type": "CaseProperty",
-    #         "case_property": "dob"
-    #       }
-    #     }
-    #
-    case_property = StringProperty()
-
-    def get_value(self, case_trigger_info):
-        return case_trigger_info.updates.get(self.case_property)
-
-
-class FormQuestion(ValueSource):
-    form_question = StringProperty()  # e.g. "/data/foo/bar"
-
-    def get_value(self, case_trigger_info):
-        return case_trigger_info.form_question_values.get(self.form_question)
-
-
-class ConstantString(ValueSource):
-    # Example "person_property" value::
-    #
-    #     {
-    #       "birthdate": {
-    #         "doc_type": "ConstantString",
-    #         "value": "Sep 7, 3761 BC"
-    #       }
-    #     }
-    #
-    value = StringProperty()
-
-    def get_value(self, case_trigger_info):
-        return self.value
-
-
-class CasePropertyMap(CaseProperty):
-    """
-    Maps case property values to OpenMRS values or concept UUIDs
-    """
-    # Example "person_attribute" value::
-    #
-    #     {
-    #       "00000000-771d-0000-0000-000000000000": {
-    #         "doc_type": "CasePropertyMap",
-    #         "case_property": "pill"
-    #         "value_map": {
-    #           "red": "00ff0000-771d-0000-0000-000000000000",
-    #           "blue": "000000ff-771d-0000-0000-000000000000",
-    #         }
-    #       }
-    #     }
-    #
-    value_map = DictProperty()
-
-    def get_value(self, case_trigger_info):
-        value = super(CasePropertyMap, self).get_value(case_trigger_info)
-        try:
-            return self.value_map[value]
-        except KeyError:
-            # We don't care if some CommCare answers are not mapped to OpenMRS concepts, e.g. when only the "yes"
-            # value of a yes-no question in CommCare is mapped to a concept in OpenMRS.
-            return None
-
-
-class FormQuestionMap(FormQuestion):
-    """
-    Maps form question values to OpenMRS values or concept UUIDs
-    """
-    value_map = DictProperty()
-
-    def get_value(self, case_trigger_info):
-        value = super(FormQuestionMap, self).get_value(case_trigger_info)
-        try:
-            return self.value_map[value]
-        except KeyError:
-            return None
 
 
 class OpenmrsCaseConfig(DocumentSchema):
@@ -156,10 +52,25 @@ class OpenmrsCaseConfig(DocumentSchema):
     #     "searchable_properties": ["nid", "family_name"],
     #     "property_weights": [
     #         {"case_property": "nid", "weight": 0.9},
+    #         // if "match_type" is not given it defaults to "exact"
     #         {"case_property": "family_name", "weight": 0.4},
-    #         {"case_property": "given_name", "weight": 0.3},
+    #         {
+    #             "case_property": "given_name",
+    #             "weight": 0.3,
+    #             "match_type": "levenshtein",
+    #             // levenshtein function takes edit_distance / len
+    #             "match_params": [0.2]
+    #             // i.e. 0.2 (20%) is one edit for every 5 characters
+    #             // e.g. "Riyaz" matches "Riaz" but not "Riazz"
+    #         },
     #         {"case_property": "city", "weight": 0.2},
-    #         {"case_property": "dob", "weight": 0.3}
+    #         {
+    #             "case_property": "dob",
+    #             "weight": 0.3,
+    #             "match_type": "days_diff",
+    #             // days_diff matches based on days difference from given date
+    #             "match_params": [364]
+    #         }
     #     ]
     # }
     patient_finder = PatientFinder(required=False)

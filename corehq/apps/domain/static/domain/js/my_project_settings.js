@@ -29,6 +29,11 @@ hqDefine("domain/js/my_project_settings", [
             $userTimezone = $('#id_user_timezone'),
             $overrideGlobalTimezone = $('#id_override_global_tz');
 
+        $overrideGlobalTimezone.click(function () {
+            $userTimezone.val($globalTimezone.val());
+            $userTimezone.change();
+        });
+
         var $matchMessage = $('<span class="help-block" />');
         $userTimezone.parent().append($matchMessage);
 
@@ -42,11 +47,6 @@ hqDefine("domain/js/my_project_settings", [
 
         compareGlobalUserTimezones();
         $userTimezone.change(compareGlobalUserTimezones);
-
-        $('#update-proj-settings').click(function () {
-            if ($(this).hasClass('disabled'))
-                return false;
-        });
 
         function compareGlobalUserTimezones() {
             if($globalTimezone.val() === $userTimezone.val()) {

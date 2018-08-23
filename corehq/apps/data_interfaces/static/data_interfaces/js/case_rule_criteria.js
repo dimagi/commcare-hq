@@ -1,6 +1,10 @@
 /* globals ko, $ */
 
-hqDefine("data_interfaces/js/case_rule_criteria", function() {
+hqDefine("data_interfaces/js/case_rule_criteria", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+], function($, ko, initialPageData) {
 
     var CaseRuleCriteria = function(initial, constants) {
         'use strict';
@@ -103,6 +107,11 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
             return false;
         };
 
+        self.disableCriteriaField = function(){
+            if(initialPageData.get('read_only_mode')) {
+                $('.main-form :input').prop('disabled', true);
+            }
+        };
         self.add_filter = function() {
             var case_filter_id = self.selected_case_filter_id();
             if(case_filter_id === 'select-one') {
@@ -236,8 +245,8 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
 
     $(function() {
         criteria_model = new CaseRuleCriteria(
-            hqImport("hqwebapp/js/initial_page_data").get('criteria_initial'),
-            hqImport("hqwebapp/js/initial_page_data").get('criteria_constants')
+            initialPageData.get('criteria_initial'),
+            initialPageData.get('criteria_constants')
         );
         $('#rule-criteria').koApplyBindings(criteria_model);
         criteria_model.load_initial();

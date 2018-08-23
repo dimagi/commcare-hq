@@ -119,7 +119,6 @@ DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
 LOG_FILE = "/tmp/commcare-hq.log"
 SHARED_DRIVE_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sharedfiles")
 
-CELERY_SEND_TASK_ERROR_EMAILS = True
 CELERY_PERIODIC_QUEUE = 'celery' # change this to something else if you want a different queue for periodic tasks
 CELERY_FLOWER_URL = 'http://127.0.0.1:5555'
 

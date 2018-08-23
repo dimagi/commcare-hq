@@ -32,14 +32,14 @@
 
     <div class="tab-pane">
         <div class="tabbable">
-            <ul class="nav nav-tabs">
-                <li class="active"><a href="#supported-languages" data-toggle="tab">{% trans "Language List" %}</a></li>
+            <ul class="nav nav-tabs sticky-tabs">
+                <li><a href="#supported-languages" data-toggle="tab">{% trans "Language List" %}</a></li>
                 <li><a href="#translations-tab" data-toggle="tab">{% trans "Messaging Translations" %}</a></li>
             </ul>
         </div>
         <div class="tab-content">
-            <div id="supported-languages" class="tab-pane active">
-                    {% include "app_manager/partials/supported-languages.html" %}
+            <div id="supported-languages" class="tab-pane">
+                    {% include "app_manager/partials/settings/supported_languages.html" %}
             </div>
             <div id="translations-tab" class="tab-pane">
                 <div>

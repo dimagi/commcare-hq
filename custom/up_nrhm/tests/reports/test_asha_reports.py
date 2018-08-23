@@ -127,7 +127,9 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
                 ],
                 [
                     '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
-                    {'sort_key': 0.0, 'html': '0/17 (0%)'}, {'sort_key': 17, 'html': 17}, ''
+                    {'sort_key': 0.0, 'html': '0/0 (0%)'},
+                    {'sort_key': 17, 'html': 17},
+                    ''
                 ]
             ], 17, 0
         )
@@ -201,10 +203,10 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
                 ],
                 [
                     '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
-                    {'sort_key': 64.70588235294117, 'html': '11/17 (64%)'},
-                    {'sort_key': 0.0, 'html': '0/17 (0%)'}, {'sort_key': 0.0, 'html': '0/17 (0%)'},
-                    {'sort_key': 21.56862745098039, 'html': '3/17 (21%)'}
-                ],
+                    {'sort_key': 84.61538461538461, 'html': '11/13 (84%)'},
+                    {'sort_key': 0.0, 'html': '0/0 (0%)'},
+                    {'sort_key': 0.0, 'html': '0/0 (0%)'},
+                    {'sort_key': 28.2051282051282, 'html': '3/13 (28%)'}],
                 [
                     '<b>Total number of ASHAs who did not report/not known</b>',
                     {'sort_key': 17, 'html': 17},
@@ -322,16 +324,16 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
                 ],
                 [
                     '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
-                    {'sort_key': 25.925925925925927, 'html': '4/18 (25%)'},
-                    {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
-                    {'sort_key': 25.0, 'html': '4/16 (25%)'},
-                    {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
-                    {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
-                    {'sort_key': 25.49019607843137, 'html': '4/17 (25%)'},
-                    {'sort_key': 19.607843137254903, 'html': '3/17 (19%)'},
-                    {'sort_key': 23.809523809523814, 'html': '3/14 (23%)'},
-                    {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
-                    {'sort_key': 21, 'html': '30/142 (21%)'}
+                    {'sort_key': 33.333333333333336, 'html': '4/14 (33%)'},
+                    {'sort_key': 33.33333333333333, 'html': '3/11 (33%)'},
+                    {'sort_key': 28.571428571428573, 'html': '4/14 (28%)'},
+                    {'sort_key': 33.33333333333333, 'html': '3/11 (33%)'},
+                    {'sort_key': 33.33333333333333, 'html': '3/11 (33%)'},
+                    {'sort_key': 27.083333333333332, 'html': '4/16 (27%)'},
+                    {'sort_key': 25.641025641025642, 'html': '3/13 (25%)'},
+                    {'sort_key': 33.333333333333336, 'html': '3/10 (33%)'},
+                    {'sort_key': 30.555555555555554, 'html': '3/12 (30%)'},
+                    {'sort_key': 26, 'html': '30/112 (26%)'}
                 ],
                 [
                     '<b>Total number of ASHAs who did not report/not known</b>',
@@ -492,14 +494,14 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
                 ],
                 [
                     '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
-                    {'sort_key': 21, 'html': '30/142 (21%)'}, {'sort_key': 'D', 'html': 'D'},
-                    {'sort_key': 18, 'html': '24/129 (18%)'}, {'sort_key': 'D', 'html': 'D'},
-                    {'sort_key': 18, 'html': '18/100 (18%)'}, {'sort_key': 'D', 'html': 'D'},
-                    {'sort_key': 20, 'html': '26/124 (20%)'}, {'sort_key': 'D', 'html': 'D'},
-                    {'sort_key': 19, 'html': '37/189 (19%)'}, {'sort_key': 'D', 'html': 'D'},
-                    {'sort_key': 23, 'html': '31/134 (23%)'}, {'sort_key': 'D', 'html': 'D'},
-                    {'sort_key': 21, 'html': '27/126 (21%)'}, {'sort_key': 'D', 'html': 'D'},
-                    {'sort_key': 21, 'html': '28/129 (21%)'}, {'sort_key': 'D', 'html': 'D'}
+                    {'sort_key': 26, 'html': '30/112 (26%)'}, {'sort_key': 'C', 'html': 'C'},
+                    {'sort_key': 25, 'html': '24/96 (25%)'}, {'sort_key': 'C', 'html': 'C'},
+                    {'sort_key': 24, 'html': '18/74 (24%)'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': 25, 'html': '26/103 (25%)'}, {'sort_key': 'C', 'html': 'C'},
+                    {'sort_key': 25, 'html': '37/145 (25%)'}, {'sort_key': 'C', 'html': 'C'},
+                    {'sort_key': 26, 'html': '31/117 (26%)'}, {'sort_key': 'C', 'html': 'C'},
+                    {'sort_key': 28, 'html': '27/96 (28%)'}, {'sort_key': 'C', 'html': 'C'},
+                    {'sort_key': 27, 'html': '28/103 (27%)'}, {'sort_key': 'C', 'html': 'C'}
                 ]
             ], 0)
         self.assertEqual(len(rows), len(expected))

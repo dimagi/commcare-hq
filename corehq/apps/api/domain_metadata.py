@@ -5,7 +5,7 @@ import logging
 from corehq.apps.api.resources.auth import AdminAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.serializers import XFormInstanceSerializer
-from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
@@ -120,6 +120,31 @@ class MaltResource(ModelResource):
         fields = ['id', 'month', 'user_id', 'username', 'email', 'user_type',
                   'domain_name', 'num_of_forms', 'app_id', 'device_id',
                   'is_app_deleted', 'wam', 'pam', 'use_threshold', 'experienced_threshold']
+        include_resource_uri = False
+        filtering = {
+            'month': ['gt', 'gte', 'lt', 'lte'],
+            'domain_name': ['exact']
+        }
+
+
+class GIRResource(ModelResource):
+
+    class Meta(CustomResourceMeta):
+        authentication = AdminAuthentication()
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        queryset = GIRRow.objects.all().order_by('pk')
+        resource_name = 'gir_tables'
+        fields = [
+            'id', 'month', 'domain_name', 'country', 'sector', 'subsector', 'bu',
+            'self_service', 'test_domain', 'start_date', 'device_id', 'pam',
+            'wams_current', 'active_users', 'using_and_performing', 'not_performing',
+            'inactive_experienced', 'inactive_not_experienced', 'not_experienced',
+            'not_performing_not_experienced', 'active_ever', 'possibly_exp', 'ever_exp',
+            'exp_and_active_ever', 'active_in_span', 'eligible_forms', 'performance_threshold',
+            'experienced_threshold',
+
+        ]
         include_resource_uri = False
         filtering = {
             'month': ['gt', 'gte', 'lt', 'lte'],

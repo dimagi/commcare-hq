@@ -20,8 +20,8 @@ from django.views.generic.base import TemplateView
 from couchdbkit import ResourceConflict
 
 from casexml.apps.phone.fixtures import generator
+from corehq.apps.analytics.ab_tests import appcues_template_app_test
 from corehq.apps.users.util import format_username
-from custom.enikshay.login_as_context import get_enikshay_login_as_context
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base
 from xml2json.lib import xml2json
@@ -170,6 +170,7 @@ class FormplayerMain(View):
             "domain": domain,
             "language": language,
             "apps": apps,
+            "appcues_test": appcues_template_app_test(request),
             "maps_api_key": settings.GMAPS_API_KEY,
             "username": request.couch_user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
@@ -304,12 +305,6 @@ class LoginAsUsers(View):
 
     def _user_query(self, search_string, page, limit):
         user_data_fields = []
-        if toggles.ENIKSHAY.enabled(self.domain):
-            user_data_fields = [
-                'id_issuer_number',
-                'id_issuer_body',
-                'agency_id_legacy',
-            ]
         return login_as_user_query(
             self.domain,
             self.couch_user,
@@ -330,10 +325,6 @@ class LoginAsUsers(View):
             'user_id': user.user_id,
             'location': user.sql_location.to_json() if user.sql_location else None,
         }
-        if toggles.ENIKSHAY.enabled(self.domain):
-            formatted_user.update({
-                'enikshay': get_enikshay_login_as_context(user)
-            })
         return formatted_user
 
 
@@ -386,68 +377,6 @@ def form_context(request, domain, app_id, module_id, form_id):
 
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
-
-
-@cloudcare_api
-def get_cases(request, domain):
-    request_params = request.GET
-
-    if request.couch_user.is_commcare_user():
-        user_id = request.couch_user.get_id
-    else:
-        user_id = request_params.get("user_id", "")
-
-    if not user_id and not request.couch_user.is_web_user():
-        return HttpResponseBadRequest("Must specify user_id!")
-
-    ids_only = string_to_boolean(request_params.get("ids_only", "false"))
-    case_id = request_params.get("case_id", "")
-    footprint = string_to_boolean(request_params.get("footprint", "false"))
-    accessor = CaseAccessors(domain)
-
-    if case_id and not footprint:
-        # short circuit everything else and just return the case
-        # NOTE: this allows any user in the domain to access any case given
-        # they know its ID, which is slightly different from the previous
-        # behavior (can only access things you own + footprint). If we want to
-        # change this contract we would need to update this to check the
-        # owned case list + footprint
-        case = accessor.get_case(case_id)
-        assert case.domain == domain
-        cases = [CaseAPIResult(domain=domain, id=case_id, couch_doc=case, id_only=ids_only)]
-    else:
-        filters = get_filters_from_request_params(request_params)
-        status = api_closed_to_status(request_params.get('closed', 'false'))
-        case_type = filters.get('properties/case_type', None)
-        cases = get_filtered_cases(domain, status=status, case_type=case_type,
-                                   user_id=user_id, filters=filters,
-                                   footprint=footprint, ids_only=ids_only,
-                                   strip_history=True)
-    return json_response(cases)
-
-
-@cloudcare_api
-@cache_page(60 * 30)
-def get_fixtures(request, domain, user_id, fixture_id):
-    try:
-        user = CommCareUser.get_by_user_id(user_id)
-    except CouchUser.AccountTypeError:
-        err = ("You can't use case sharing or fixtures as a %s. "
-               "Login as a mobile worker and try again.") % settings.WEB_USER_TERM,
-        return HttpResponse(err, status=412, content_type="text/plain")
-
-    if not user:
-        raise Http404
-
-    assert user.is_member_of(domain)
-    restore_user = user.to_ota_restore_user()
-    fixture = generator.get_fixture_by_id(fixture_id, restore_user)
-    if not fixture:
-        raise Http404
-    assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
-        fixture_id, len(fixture.getchildren())
-    )
-    return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
 
 
 class ReadableQuestions(View):

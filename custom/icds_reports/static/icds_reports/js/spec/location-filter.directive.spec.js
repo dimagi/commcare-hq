@@ -56,6 +56,7 @@ describe('Location Filter Controller', function () {
             storageService = _storageService_;
             locationsService = _locationsService_;
 
+            window.ga = function() {};
             controller = $controller(LocationFilterController, {
                 $scope: scope,
                 $uibModal: $uibModal,

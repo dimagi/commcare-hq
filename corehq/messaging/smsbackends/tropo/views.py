@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 from .models import SQLTropoBackend
-from tropo import Tropo
 from corehq.apps.sms.api import incoming as incoming_sms
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
@@ -17,6 +16,7 @@ def sms_in(request):
     """
     Handles tropo messaging requests
     """
+    from tropo import Tropo
     if request.method == "POST":
         data = json.loads(request.body)
         session = data["session"]
@@ -53,6 +53,7 @@ def ivr_in(request):
     """
     Handles tropo call requests
     """
+    from tropo import Tropo
     if request.method == "POST":
         data = json.loads(request.body)
         phone_number = data["session"]["from"]["id"]

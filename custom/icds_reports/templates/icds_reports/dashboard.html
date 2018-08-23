@@ -70,7 +70,7 @@
         <script src="{% static 'js/angular-services/icds-cas-reach.service.js' %}"></script>
         <script src="{% static 'js/angular-services/demographics.service.js' %}"></script>
         <script src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/issnip.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/download.service.js' %}"></script>
         <script src="{% static 'js/angular-services/baseControllers.service.js' %}"></script>
 
         <script src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
@@ -304,13 +304,13 @@
     ]);
     angular.module('icdsApp').constant('ages', [
         {id: '', name: 'All'},
-        {id: '6', name: '0-6 months'},
-        {id: '12', name: '6-12 months'},
-        {id: '24', name: '12-24 months'},
-        {id: '36', name: '24-36 months'},
-        {id: '48', name: '36-48 months'},
-        {id: '60', name: '48-60 months'},
-        {id: '72', name: '60-72 months'},
+        {id: '6', name: '0-6 months (0-180 days)'},
+        {id: '12', name: '6-12 months (181-365 days)'},
+        {id: '24', name: '12-24 months (366-730 days)'},
+        {id: '36', name: '24-36 months (731-1095 days)'},
+        {id: '48', name: '36-48 months (1096-1460 days)'},
+        {id: '60', name: '48-60 months (1461-1825 days)'},
+        {id: '72', name: '60-72 months (1826-2190 days)'},
     ]);
     angular.module('icdsApp').value('cgBusyDefaults', {
       message:'Loading data',

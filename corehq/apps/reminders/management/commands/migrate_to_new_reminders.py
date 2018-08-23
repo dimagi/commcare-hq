@@ -54,6 +54,8 @@ from corehq.messaging.scheduling.models import (
     SMSContent,
     EmailContent,
     SMSSurveyContent,
+    IVRSurveyContent,
+    SMSCallbackContent,
     MigratedReminder,
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances
@@ -66,6 +68,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from corehq.messaging.tasks import initiate_messaging_rule_run
+from corehq.messaging.util import project_is_on_new_reminders
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from datetime import time, datetime, timedelta
@@ -281,6 +284,28 @@ class CaseReminderHandlerMigrator(BaseMigrator):
         initiate_messaging_rule_run(self.rule.domain, self.rule.pk)
 
 
+class ManualCaseReminderHandlerMigrator(CaseReminderHandlerMigrator):
+
+    def __init__(self, handler, rule_id):
+        self.handler = handler
+        self.source_duplicate_count = 0
+
+        try:
+            self.rule = AutomaticUpdateRule.objects.get(
+                pk=rule_id,
+                domain=handler.domain,
+                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                deleted=False,
+            )
+        except AutomaticUpdateRule.DoesNotExist:
+            raise ValueError("Invalid rule_id given: %s" % rule_id)
+
+        self.schedule = self.rule.get_messaging_rule_schedule()
+
+    def migrate(self):
+        pass
+
+
 class BroadcastMigrator(BaseMigrator):
 
     def __init__(self, handler, broadcast_migration_function):
@@ -411,6 +436,24 @@ def get_content(handler, event, translated=True):
             submit_partially_completed_forms=submit_partially_completed_forms,
             include_case_updates_in_partial_submissions=include_case_updates_in_partial_submissions,
         )
+    elif handler.method == METHOD_IVR_SURVEY:
+        return IVRSurveyContent(
+            form_unique_id=event.form_unique_id,
+            reminder_intervals=event.callback_timeout_intervals,
+            submit_partially_completed_forms=handler.submit_partial_forms,
+            include_case_updates_in_partial_submissions=handler.include_case_side_effects,
+            max_question_attempts=handler.max_question_retries,
+        )
+    elif handler.method == METHOD_SMS_CALLBACK:
+        if translated:
+            message = event.message
+        else:
+            message = {'*': get_single_dict_value(event.message)}
+
+        return SMSCallbackContent(
+            message=message,
+            reminder_intervals=event.callback_timeout_intervals,
+        )
     else:
         raise ValueError("Unexpected method '%s'" % handler.method)
 
@@ -459,6 +502,8 @@ def get_rule_recipients(handler):
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, None)]
     elif handler.recipient == RECIPIENT_PARENT_CASE:
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, None)]
+    elif handler.recipient == RECIPIENT_SUBCASE:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES, None)]
     elif handler.recipient == RECIPIENT_USER_GROUP:
         return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
     elif handler.recipient in CUSTOM_RECIPIENTS:
@@ -703,16 +748,22 @@ class Command(BaseCommand):
         if handler.active and handler.uses_parent_case_property:
             return None
 
-        if handler.active and handler.start_date and handler.use_today_if_start_date_is_blank:
-            return None
-
         return migrate_rule
 
     def get_rule_schedule_migration_function(self, handler):
         if handler.start_condition_type != CASE_CRITERIA:
             return None
 
-        if handler.method not in (METHOD_SMS, METHOD_EMAIL, METHOD_SMS_SURVEY):
+        if handler.method not in (
+            METHOD_SMS,
+            METHOD_EMAIL,
+            METHOD_SMS_SURVEY,
+            METHOD_IVR_SURVEY,
+            METHOD_SMS_CALLBACK,
+        ):
+            return None
+
+        if handler.active and handler.method in (METHOD_IVR_SURVEY, METHOD_SMS_CALLBACK):
             return None
 
         event_timeout_lengths = [len(event.callback_timeout_intervals) for event in handler.events]
@@ -735,7 +786,7 @@ class Command(BaseCommand):
                 if handler.method == METHOD_EMAIL:
                     check_days_until(event.subject)
 
-                if handler.method in (METHOD_SMS, METHOD_EMAIL):
+                if handler.method in (METHOD_SMS, METHOD_EMAIL, METHOD_SMS_CALLBACK):
                     check_days_until(event.message)
             except ValueError:
                 return None
@@ -746,7 +797,14 @@ class Command(BaseCommand):
             RECIPIENT_USER_GROUP,
             RECIPIENT_USER,
             RECIPIENT_PARENT_CASE,
+            RECIPIENT_SUBCASE,
         )):
+            return None
+
+        if handler.recipient == RECIPIENT_SUBCASE and not (
+            handler.recipient_case_match_property == '_id' and
+            handler.recipient_case_match_type == MATCH_ANY_VALUE
+        ):
             return None
 
         if handler.recipient == RECIPIENT_USER_GROUP and not handler.user_group_id:
@@ -883,7 +941,7 @@ class Command(BaseCommand):
             return None
 
         if (
-            (len(reminder_result) == 0 or not reminder_result[0].active) and
+            (len(reminder_result) == 0 or not reminder_result[0].active or reminder_result[0].error) and
             handler.start_datetime and
             handler.start_datetime < datetime.utcnow() and
             handler.event_interpretation == EVENT_AS_OFFSET and
@@ -900,7 +958,10 @@ class Command(BaseCommand):
             return None
 
         if handler.use_today_if_start_date_is_blank and handler.active and handler.start_date:
-            return None
+            if not self.confirm(
+                "Ok to treat use_today_if_start_date_is_blank as False for %s? y/n " % handler._id
+            ):
+                return None
 
         if handler.reminder_type == REMINDER_TYPE_DEFAULT:
             for event in handler.events:
@@ -920,6 +981,12 @@ class Command(BaseCommand):
                 return CaseReminderHandlerMigrator(handler, rule_migration_function, schedule_migration_function,
                     until_references_timestamp)
 
+            if self.confirm(
+                "A suitable migrator could not be found for %s. Use manual migrator? y/n " % handler._id
+            ):
+                rule_id = self.get_int("Enter rule id for %s: " % handler._id)
+                return ManualCaseReminderHandlerMigrator(handler, rule_id)
+
             return None
         elif handler.reminder_type == REMINDER_TYPE_ONE_TIME:
             broadcast_migration_function = self.get_broadcast_migration_function(handler)
@@ -932,7 +999,7 @@ class Command(BaseCommand):
         return handler.reminder_type in (REMINDER_TYPE_KEYWORD_INITIATED, REMINDER_TYPE_SURVEY_MANAGEMENT)
 
     def migration_already_done(self, domain_obj):
-        if domain_obj.uses_new_reminders:
+        if project_is_on_new_reminders(domain_obj):
             log("'%s' already uses new reminders, nothing to do" % domain_obj.name)
             return True
 

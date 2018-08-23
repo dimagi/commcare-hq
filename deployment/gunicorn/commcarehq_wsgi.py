@@ -10,11 +10,9 @@ _set_source_root(os.path.join('corehq', 'ex-submodules'))
 _set_source_root(os.path.join('custom', '_legacy'))
 
 # patch gevent
-from restkit.session import set_session
 from gevent.monkey import patch_all
 from psycogreen.gevent import patch_psycopg
 
-set_session(b"gevent")
 patch_all(subprocess=True)
 patch_psycopg()
 

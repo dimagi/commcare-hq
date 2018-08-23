@@ -155,7 +155,7 @@ class ProjectSettingsForm(forms.Form):
                     _("Update My Settings"),
                     type="submit",
                     css_id="update-proj-settings",
-                    css_class='btn-primary disabled',
+                    css_class='btn-primary',
                     data_bind="hqbSubmitReady: form_is_ready"
                 )
             )
@@ -1063,6 +1063,11 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         min_value=1000,
     )
+    granted_messaging_access = forms.BooleanField(
+        label="Enable Messaging",
+        required=False,
+        help_text="Check this box to enable messaging.",  # TODO through non-test gateways
+    )
 
     def __init__(self, domain, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -1133,6 +1138,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     crispy.Field('auto_case_update_limit'),
                     data_bind="visible: use_custom_auto_case_update_limit() === 'Y'",
                 ),
+                'granted_messaging_access',
             ),
             crispy.Fieldset(
                 _("Salesforce Details"),
@@ -1208,6 +1214,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
         domain.is_test = self.cleaned_data['is_test']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
+        domain.granted_messaging_access = self.cleaned_data['granted_messaging_access']
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],

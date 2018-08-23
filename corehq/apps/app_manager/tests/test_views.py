@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-import os
 import re
 from contextlib import contextmanager
 
@@ -9,11 +8,14 @@ from django.urls import reverse
 from django.test import TestCase
 from mock import patch
 
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.tests.util import add_build
-from corehq.apps.app_manager.views import AppSummaryView
+from corehq.apps.app_manager.views import AppCaseSummaryView, AppFormSummaryView
 from corehq.apps.app_manager.views.forms import get_apps_modules
 from corehq.apps.builds.models import BuildSpec
+from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 
 from corehq import toggles
 from corehq.apps.linked_domain.applications import create_linked_app
@@ -45,6 +47,9 @@ class TestViews(TestCase):
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
+        cls.es = get_es_new()
+        initialize_index_and_mapping(cls.es, APP_INDEX_INFO)
+
         toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.project.name), True)
 
     def setUp(self):
@@ -134,10 +139,15 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 200)
         return json.loads(response.content)
 
+    def _send_to_es(self, app):
+        send_to_elasticsearch('apps', app.to_json())
+        self.es.indices.refresh(APP_INDEX_INFO.index)
+
     def test_basic_app(self, mock):
         module = self.app.add_module(Module.new_module("Module0", "en"))
         form = self.app.new_form(module.id, "Form0", "en", attachment=BLANK_TEMPLATE.format(xmlns='xmlns-0.0'))
         self.app.save()
+        self._send_to_es(self.app)
 
         kwargs = {
             'domain': self.project.name,
@@ -146,17 +156,22 @@ class TestViews(TestCase):
         self._test_status_codes([
             'view_app',
             'release_manager',
-            AppSummaryView.urlname,
+            AppCaseSummaryView.urlname,
+            AppFormSummaryView.urlname,
         ], kwargs)
 
         build = self.app.make_build()
         build.save()
+        self._send_to_es(build)
+
         content = self._json_content_from_get('current_app_version', {
             'domain': self.project.name,
             'app_id': self.app.id,
         })
         self.assertEqual(content['currentVersion'], 1)
         self.app.save()
+        self._send_to_es(self.app)
+
         content = self._json_content_from_get('current_app_version', {
             'domain': self.project.name,
             'app_id': self.app.id,
@@ -167,8 +182,8 @@ class TestViews(TestCase):
             'domain': self.project.name,
             'app_id': self.app.id,
         }, {'limit': 5})
-        self.assertEqual(len(content), 1)
-        content = content[0]
+        self.assertEqual(len(content['apps']), 1)
+        content = content['apps'][0]
         self.assertEqual(content['copy_of'], self.app.id)
 
         kwargs['module_unique_id'] = module.unique_id
@@ -219,7 +234,7 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 302)
         redirect_location = response['Location']
         [app_id] = re.compile(r'[a-fA-F0-9]{32}').findall(redirect_location)
-        expected = '/apps/view/{}/?appcues=1'.format(app_id)    # Remove get param when APPCUES_AB_TEST is over
+        expected = '/apps/view/{}/'.format(app_id)
         self.assertTrue(redirect_location.endswith(expected))
         self.addCleanup(lambda: Application.get_db().delete_doc(app_id))
 

@@ -146,6 +146,12 @@ class AbstractUCRDataSource(object):
     sql_column_indexes: a list of SQLColumnIndexes
     sql_settings: a SQLSettings object
     """
+    @property
+    def data_source_id(self):
+        """
+        The data source's ID
+        """
+        raise NotImplementedError()
 
     def get_columns(self):
         raise NotImplementedError()
@@ -187,6 +193,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
     def save(self, **params):
         self.last_modified = datetime.utcnow()
         super(DataSourceConfiguration, self).save(**params)
+
+    @property
+    def data_source_id(self):
+        return self._id
 
     def filter(self, document):
         filter_fn = self._get_main_filter()
@@ -518,7 +528,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def config(self):
-        return get_datasource_config(self.config_id, self.domain)[0]
+        return get_datasource_config(self.config_id, self.domain, self.data_source_type)[0]
 
     @property
     @memoized
@@ -761,7 +771,8 @@ class StaticReportConfiguration(JsonObject):
                     for path in files:
                         yield _get_wrapped_object_from_file(path, cls)
 
-        return __get_all() if settings.UNIT_TESTING else _filter_by_server_env(__get_all())
+        filter_by_env = settings.UNIT_TESTING or settings.DEBUG
+        return __get_all() if filter_by_env else _filter_by_server_env(__get_all())
 
     @classmethod
     @memoized
@@ -791,12 +802,8 @@ class StaticReportConfiguration(JsonObject):
         ]
 
     @classmethod
-    def by_id(cls, config_id, domain=None):
-        """
-        Returns a ReportConfiguration object, NOT StaticReportConfigurations.
-
-        :param domain: Optionally specify domain name to validate access.
-                       Raises ``DocumentNotFound`` if domains don't match.
+    def by_id(cls, config_id, domain):
+        """Returns a ReportConfiguration object, NOT StaticReportConfigurations.
         """
         try:
             report_domain, wrapped = cls.by_id_mapping()[config_id]
@@ -810,7 +817,7 @@ class StaticReportConfiguration(JsonObject):
                 ReportConfiguration.__class__.__name__,
                 domain,
             ))
-        return cls._get_report_config(wrapped, domain)
+        return cls._get_report_config(wrapped, report_domain)
 
     @classmethod
     def by_ids(cls, config_ids):
