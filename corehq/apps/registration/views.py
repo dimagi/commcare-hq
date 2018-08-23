@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 import logging
+import re
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -173,6 +174,9 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 if domain in account.enterprise_restricted_signup_domains:
                     restricted_by_domain = domain
                     message = account.restrict_signup_message
+                    regex = r'(\b[a-zA-Z0-9_.+%-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b)'
+                    subject = _("CommCareHQ account request")
+                    message = re.sub(regex, "<a href='mailto:\\1?subject={}'>\\1</a>".format(subject), message)
                     break
         return {
             'isValid': message is None,
