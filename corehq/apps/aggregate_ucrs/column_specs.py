@@ -312,12 +312,12 @@ class SimpleAggregationAdapater(six.with_metaclass(ABCMeta, SecondaryColumnAdapt
 
 class SqlaggColumnAdapter(SimpleAggregationAdapater):
 
-    def get_sqlagg_column(self):
-        return SQLAGG_COLUMN_MAP[self._db_column.aggregation_type]
+    def _get_sqlagg_column(self):
+        return SQLAGG_COLUMN_MAP[self._db_column.aggregation_type](self._db_column.column_id)
 
     @property
     def sqlalchemy_fn(self):
-        return self.get_sqlagg_column().aggregate_fn
+        return self._get_sqlagg_column().aggregate_fn
 
     def get_datatype(self):
         # special case some columns to allow to e.g. count unique values from a string column
