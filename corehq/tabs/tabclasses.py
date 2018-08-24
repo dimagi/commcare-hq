@@ -1412,10 +1412,10 @@ class EnterpriseSettingsTab(UITab):
                 'title': _('Enterprise Dashboard'),
                 'url': reverse('enterprise_dashboard', args=[self.domain]),
             },
-            #{
-            #    'title': _('Enterprise Settings'),
-            #    'url': reverse('enterprise_settings', args=[self.domain]),
-            #},
+            {
+                'title': _('Enterprise Settings'),
+                'url': reverse('enterprise_settings', args=[self.domain]),
+            },
         ]))
         return items
 
