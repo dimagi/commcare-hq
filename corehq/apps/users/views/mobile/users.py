@@ -613,37 +613,6 @@ class MobileWorkerListView(BaseUserSettingsView):
 
     '''
     @allow_remote_invocation
-    def modify_user_status(self, in_data):
-        try:
-            user_id = in_data['user_id']
-        except KeyError:
-            return {
-                'error': _("Please provide a user_id."),
-            }
-        try:
-            is_active = in_data['is_active']
-        except KeyError:
-            return {
-                'error': _("Please provide an is_active status."),
-            }
-        user = CommCareUser.get_by_user_id(user_id, self.domain)
-        if (not _can_edit_workers_location(self.couch_user, user)
-                or (is_active and not self.can_add_extra_users)):
-            return {
-                'error': _("No Permission."),
-            }
-        if not is_active and user.user_location_id:
-            return {
-                'error': _("This is a location user, archive or delete the "
-                           "corresponding location to deactivate it."),
-            }
-        user.is_active = is_active
-        user.save()
-        return {
-            'success': True,
-        }
-
-    @allow_remote_invocation
     def check_username(self, in_data):
         try:
             username = in_data['username'].strip()
@@ -756,6 +725,35 @@ class MobileWorkerListView(BaseUserSettingsView):
             raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
     '''
 
+
+@require_can_edit_commcare_users
+@require_POST
+def activate_commcare_user(request, domain, user_id):
+    return _modify_user_status(request, domain, user_id, True)
+
+@require_can_edit_commcare_users
+@require_POST
+def deactivate_commcare_user(request, domain, user_id):
+    return _modify_user_status(request, domain, user_id, False)
+
+
+def _modify_user_status(request, domain, user_id, is_active):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    if (not _can_edit_workers_location(request.couch_user, user)
+            or (is_active and not can_add_extra_mobile_workers(request))):
+        return json_response({
+            'error': _("No Permission."),
+        })
+    if not is_active and user.user_location_id:
+        return json_response({
+            'error': _("This is a location user, archive or delete the "
+                       "corresponding location to deactivate it."),
+        })
+    user.is_active = is_active
+    user.save()
+    return json_response({
+        'success': True,
+    })
 
 @require_can_edit_commcare_users
 @require_GET

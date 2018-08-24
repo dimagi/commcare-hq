@@ -428,42 +428,6 @@
     mobileWorkerApp.constant('paginationCustomData', {
         customFormFieldNames: initial_page_data('custom_field_names'),
         showDeactivatedUsers: false,
-        activateUser: function (user, djangoRMI) {
-            $('#activate_' + user.user_id).modal('hide');
-            djangoRMI.modify_user_status({
-                user_id: user.user_id,
-                is_active: true,
-            })
-                .success(function (data) {
-                    if (data.success) {
-                        user.mark_activated = true;
-                        user.action_error = '';
-                    } else {
-                        user.action_error = data.error;
-                    }
-                })
-                .error(function () {
-                    user.action_error = gettext("Issue communicating with server. Try again.");
-                });
-        },
-        deactivateUser: function (user, djangoRMI) {
-            $('#deactivate_' + user.user_id).modal('hide');
-            djangoRMI.modify_user_status({
-                user_id: user.user_id,
-                is_active: false,
-            })
-                .success(function (data) {
-                    if (data.success) {
-                        user.mark_deactivated = true;
-                        user.action_error = '';
-                    } else {
-                        user.action_error = data.error;
-                    }
-                })
-                .error(function () {
-                    user.action_error = gettext("Issue communicating with server. Try again.");
-                });
-        },
     });
     mobileWorkerApp.constant('generateStrongPasswords', initial_page_data('strong_mobile_passwords'));
     mobileWorkerApp.constant('location_url', initial_page_data('location_url'));
