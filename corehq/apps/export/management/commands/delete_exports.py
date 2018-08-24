@@ -45,7 +45,7 @@ class Command(BaseCommand):
             for export in exports:
                 e = ExportInstance.get(export['id'])
                 if e.last_accessed and e.last_accessed <= inactive_since:
-                    inactive_exports.append(e)
+                    inactive_exports.append(export)
             if not inactive_exports:
                 print("No exports have been inactive for more than {days_inactive} days, exiting.".format(
                     days_inactive=options['days_inactive'])
