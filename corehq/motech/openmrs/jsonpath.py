@@ -39,6 +39,9 @@ class Cmp(JSONPath):
             other.operand == self.operand
         )
 
+    def __hash__(self):
+        return hash(str(self))
+
 
 class WhereNot(JSONPath):
     """
@@ -65,3 +68,6 @@ class WhereNot(JSONPath):
 
     def __eq__(self, other):
         return isinstance(other, WhereNot) and other.left == self.left and other.right == self.right
+
+    def __hash__(self):
+        return hash(str(self))
