@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
 import datetime
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from decimal import Decimal
 import logging
 import json
@@ -1265,6 +1265,12 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         return not self.slug_to_form[ContractedPartnerForm.slug].is_uneditable
 
 
+PlanOption = namedtuple(
+    'PlanOption',
+    ['name', 'monthly_price', 'annual_price', 'description']
+)
+
+
 class SelectPlanView(DomainAccountingSettings):
     template_name = 'domain/select_plan.html'
     urlname = 'domain_select_plan'
@@ -1272,6 +1278,42 @@ class SelectPlanView(DomainAccountingSettings):
     step_title = ugettext_lazy("Select Plan")
     edition = None
     lead_text = ugettext_lazy("Please select a plan below that fits your organization's needs.")
+
+    @property
+    def plan_options(self):
+        return [
+            PlanOption(
+                SoftwarePlanEdition.STANDARD,
+                "$300",
+                "$250",
+                _("Perfect to prove the value of CommCare in the pilot phase. "
+                  "Access case imports, API integrations, and better support.")
+            ),
+            PlanOption(
+                SoftwarePlanEdition.PRO,
+                "$600",
+                "$500",
+                _("Ideal for projects that need a complete mobile solution "
+                  "with data management tools, and access to priority email "
+                  "support.")
+            ),
+            PlanOption(
+                SoftwarePlanEdition.ADVANCED,
+                "$1200",
+                "$1000",
+                _("Ideal for projects that need a complete mobile solution "
+                  "with data management tools, and access to priority email "
+                  "support.")
+            ),
+            PlanOption(
+                SoftwarePlanEdition.ENTERPRISE,
+                _("Contact Us"),
+                _("Contact Us"),
+                _("Ideal for projects that need a complete mobile solution "
+                  "with data management tools, and access to priority email "
+                  "support.")
+            )
+        ]
 
     @property
     def start_date_after_minimum_subscription(self):
@@ -1342,6 +1384,7 @@ class SelectPlanView(DomainAccountingSettings):
                     SoftwarePlanEdition.ENTERPRISE,
                 ]
             ],
+            'plan_options': [p._asdict() for p in self.plan_options],
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
