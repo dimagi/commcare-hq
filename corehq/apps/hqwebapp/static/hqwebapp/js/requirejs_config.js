@@ -10,7 +10,6 @@ requirejs.config({
         "datatables": "datatables/media/js/jquery.dataTables.min",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
-        "stripe": "https://js.stripe.com/v2/?noext",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
