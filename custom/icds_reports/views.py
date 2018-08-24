@@ -54,8 +54,9 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
 from custom.icds_reports.forms import AppTranslationsForm
 from custom.icds_reports.models.helper import IcdsFile
-from custom.icds_reports.models.views import AwcLocationMonths
 
+from custom.icds_reports.models.views import AwcLocationMonths
+from custom.icds_reports.models import AggregateSQLProfile
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
     get_adolescent_girls_sector_data, get_adolescent_girls_data_chart
@@ -236,6 +237,10 @@ class DashboardView(TemplateView):
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
         )
+
+        last_indicator_time = AggregateSQLProfile.get_last_indicator_acknowledged()
+        kwargs["last_update_time"] = last_indicator_time.__str__()
+
         is_commcare_user = self.couch_user.is_commcare_user()
 
         if self.couch_user.is_web_user():

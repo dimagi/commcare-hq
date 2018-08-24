@@ -176,7 +176,7 @@ class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):
             updated_to = self.change_feed.get_current_checkpoint_offsets()
-            self.update_checkpoint(updated_to)
+            self.update_checkpoint(updated_to, change)
             return True
 
         return False

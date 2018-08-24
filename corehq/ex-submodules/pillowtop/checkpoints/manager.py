@@ -63,7 +63,7 @@ class PillowCheckpoint(object):
     def get_current_sequence_id(self):
         return get_or_create_checkpoint(self.checkpoint_id, self.sequence_format).sequence
 
-    def update_to(self, seq):
+    def update_to(self, seq, change=None):
         kafka_seq = None
         if isinstance(seq, dict):
             assert self.sequence_format == 'json'
@@ -75,6 +75,7 @@ class PillowCheckpoint(object):
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )
+        checkpoint_time = change.metadata.publish_timestamp if change else None
         with transaction.atomic():
             if kafka_seq:
                 for topic_partition, offset in kafka_seq.items():
@@ -82,7 +83,7 @@ class PillowCheckpoint(object):
                         checkpoint_id=self.checkpoint_id,
                         topic=topic_partition[0],
                         partition=topic_partition[1],
-                        defaults={'offset': offset}
+                        defaults={'offset': offset,'checkpoint_time': checkpoint_time}
                     )
             checkpoint = self.get_or_create_wrapped(verify_unchanged=True)
             checkpoint.sequence = seq
@@ -136,15 +137,15 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
             time_hit = seconds_since_last_update >= self.max_checkpoint_delay
         return frequency_hit or time_hit
 
-    def update_checkpoint(self, new_seq):
-        self.checkpoint.update_to(new_seq)
+    def update_checkpoint(self, new_seq, change=None):
+        self.checkpoint.update_to(new_seq, change)
         self.last_update = datetime.utcnow()
         if self.checkpoint_callback:
             self.checkpoint_callback.checkpoint_updated()
 
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):
-            self.update_checkpoint(change['seq'])
+            self.update_checkpoint(change['seq'], change)
             return True
 
         return False
@@ -195,7 +196,7 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
     def get_current_sequence_id(self):
         return kafka_seq_to_str(self.get_current_sequence_as_dict())
 
-    def update_to(self, seq):
+    def update_to(self, seq, change=None):
         if isinstance(seq, six.string_types):
             kafka_seq = str_to_kafka_seq(seq)
         else:
@@ -205,6 +206,8 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )
+        checkpoint_time = change.metadata.publish_timestamp if change else None
+
         with transaction.atomic():
             if kafka_seq:
                 for topic_partition, offset in kafka_seq.items():
@@ -212,7 +215,7 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
                         checkpoint_id=self.checkpoint_id,
                         topic=topic_partition[0],
                         partition=topic_partition[1],
-                        defaults={'offset': offset}
+                        defaults={'offset': offset, 'checkpoint_time': checkpoint_time}
                     )
 
     def touch(self, min_interval):

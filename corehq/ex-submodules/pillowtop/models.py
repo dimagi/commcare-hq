@@ -74,6 +74,7 @@ class KafkaCheckpoint(models.Model):
     topic = models.CharField(max_length=126)
     partition = models.IntegerField()
     offset = models.BigIntegerField()
+    checkpoint_time = models.DateTimeField(null=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta(object):
