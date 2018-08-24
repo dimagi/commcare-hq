@@ -8,9 +8,6 @@ findNestedDependencies: true
 skipDirOptimize: true   # could turn this off to minify everything
 generateSourceMaps: true
 fileExclusionRegExp: ^\.|\.css$
-paths:
-  # Stripe is always fetched from stripe.com rather than stored locally, so the build should ignore it
-  stripe: "empty:"
 modules:
   - name: hqwebapp/js/base_main
     include:
