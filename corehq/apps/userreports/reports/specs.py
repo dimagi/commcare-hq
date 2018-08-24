@@ -30,7 +30,7 @@ from sqlagg.columns import (
     MonthColumn,
     SimpleColumn,
     YearColumn,
-)
+    NonzeroSumColumn)
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.columns import ColumnConfig, get_expanded_column_config
 from corehq.apps.userreports.specs import TypeProperty
@@ -51,6 +51,7 @@ SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_SUM: SumColumn,
     const.AGGGREGATION_TYPE_SIMPLE: SimpleColumn,
     const.AGGGREGATION_TYPE_YEAR: YearColumn,
+    const.AGGGREGATION_TYPE_NONZERO_SUM: NonzeroSumColumn,
 }
 
 ES_AGG_MAP = {
