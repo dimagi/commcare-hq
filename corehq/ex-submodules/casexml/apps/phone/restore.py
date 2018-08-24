@@ -225,6 +225,8 @@ class CachedResponse(object):
             # Name template was 'restore-response-{}.xml' before new
             # blob metadata API was implemented. This can be removed
             # when all old responses have expired.
+            #
+            # '_default' is the bucket name from the old blob db API.
             name = "_default/" + name
         self.name = name
 

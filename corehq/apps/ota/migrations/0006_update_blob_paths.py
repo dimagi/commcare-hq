@@ -18,7 +18,9 @@ class Migration(migrations.Migration):
         HqRunSQL(
             # This migration is not reversible because blobs created
             # since the migration will no longer be accessible after
-            # reversing because the old blob db would use the wrong path
+            # reversing because the old blob db would use the wrong path.
+            #
+            # '_default' is the bucket name from the old blob db API.
             """
             UPDATE ota_demouserrestore
             SET restore_blob_id = '_default/' || restore_blob_id

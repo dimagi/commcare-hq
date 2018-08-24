@@ -16,6 +16,8 @@ def move_datafile_to_blobmeta(apps, schema_editor):
 
     # At time of writing there are only 91 DataFile rows on prod, 1 on icds-new
     # this may need to be changed if envs exist having many many more
+    #
+    # '_default' is the bucket name from the old blob db API.
     for datafile in DataFile.objects.all():
         db = get_db_alias_for_partitioned_doc(datafile.domain)
         BlobMeta(
