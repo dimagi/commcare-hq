@@ -41,7 +41,7 @@ class TestICDSCASReach(TestCase):
                             "percent": 127.27272727272728,
                             "value": 50,
                             "label": "Number of AWCs open for at least one day in month",
-                            "frequency": "day",
+                            "frequency": "month",
                             "help_text": (
                                 "Total Number of AWCs open for at least one day in month"
                             )
@@ -204,7 +204,7 @@ class TestICDSCASReach(TestCase):
                             "redirect": "awc_daily_status",
                             "color": "green",
                             "all": 50,
-                            "frequency": "day",
+                            "frequency": "month",
                             "format": "div",
                             "help_text": "Total Number of Angwanwadi Centers that"
                                          " were open yesterday by the AWW or the AWW helper",
