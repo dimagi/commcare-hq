@@ -11,6 +11,7 @@ from jsonobject.base_properties import DefaultProperty
 from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM
 from corehq.apps.aggregate_ucrs.query_column_providers import StandardQueryColumnProvider, \
     AggregationParamQueryColumnProvider
+from corehq.apps.userreports import const
 from corehq.apps.userreports.datatypes import DATA_TYPE_INTEGER, DataTypeProperty, DATA_TYPE_STRING, DATA_TYPE_DATE
 from corehq.apps.userreports.indicators import Column
 from corehq.apps.userreports.reports.specs import SQLAGG_COLUMN_MAP
@@ -256,11 +257,11 @@ class SqlColumnAdapter(PrimaryColumnAdapter):
         )
 
 
-SECONDARY_COLUMN_TYPE_SUM = 'sum'
-SECONDARY_COLUMN_TYPE_MIN = 'min'
 SECONDARY_COLUMN_TYPE_CHOICES = (
-    (SECONDARY_COLUMN_TYPE_SUM, _('Sum')),
-    (SECONDARY_COLUMN_TYPE_MIN, _('Min')),
+    (const.AGGGREGATION_TYPE_SUM, _('Sum')),
+    (const.AGGGREGATION_TYPE_MIN, _('Min')),
+    (const.AGGGREGATION_TYPE_MAX, _('Max')),
+    (const.AGGGREGATION_TYPE_AVG, _('Average')),
     # todo: add other aggregations, count, min, max, (first? last?)
 )
 
