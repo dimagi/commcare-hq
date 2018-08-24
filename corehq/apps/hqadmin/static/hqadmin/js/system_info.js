@@ -47,7 +47,7 @@ hqDefine('hqadmin/js/system_info', [
         }
     }
 
-    function refreshableViewModel(url, model, interval, sort_by) {
+    function refreshableViewModel(url, model, interval, sortBy) {
         var self = {};
         self.error = ko.observable();
         self.models = ko.observableArray();
@@ -79,8 +79,8 @@ hqDefine('hqadmin/js/system_info', [
                 var objects = _(data).map(function (item) {
                     return new model(item);
                 });
-                if (sort_by) {
-                    objects = _(objects).sortBy(function (x) { return x[sort_by]; });
+                if (sortBy) {
+                    objects = _(objects).sortBy(function (x) { return x[sortBy]; });
                 }
                 self.models(objects);
                 if (self.autoRefresh()) {
@@ -158,19 +158,19 @@ hqDefine('hqadmin/js/system_info', [
         return self;
     }
 
-    function pillowOperationViewModel(pillow_model, operation) {
+    function pillowOperationViewModel(pillowModel, operation) {
         var self = {};
-        self.pillow_model = pillow_model;
+        self.pillowModel = pillowModel;
         self.operation = operation;
-        self.title = operation + ' for ' + pillow_model.name();
+        self.title = operation + ' for ' + pillowModel.name();
 
         self.go = function () {
-            self.pillow_model.performOperation(operation);
+            self.pillowModel.performOperation(operation);
         };
         return self;
     }
 
-    function pillowProgress(name, db_offset, seq) {
+    function pillowProgress(name, dbOffset, seq) {
         var self = {};
         self.name = name;
         self.dbOffset = dbOffset;
@@ -223,7 +223,7 @@ hqDefine('hqadmin/js/system_info', [
 
             self.progress([]);
             if (self.seq_format() === 'json') {
-                _.each(self.offsets(), function(db_offset, key) {
+                _.each(self.offsets(), function(dbOffset, key) {
                     var value;
                     if (self.seq() === null || !self.seq().hasOwnProperty(key)) {
                         value = 0;
@@ -347,17 +347,17 @@ hqDefine('hqadmin/js/system_info', [
     }
 
     $(function () {
-        var celery_update = initialPageData.get("celery_update"),
-            couch_update = initialPageData.get("couch_update"),
-            system_ajax_url = initialPageData.reverse("system_ajax");
-        var celeryViewModel = refreshableViewModel(system_ajax_url + "?api=flower_poll", celeryTaskModel, celery_update);
+        var celeryUpdate = initialPageData.get("celery_update"),
+            couchUpdate = initialPageData.get("couch_update"),
+            systemAjaxUrl = initialPageData.reverse("system_ajax");
+        var celeryViewModel = refreshableViewModel(systemAjaxUrl + "?api=flower_poll", celeryTaskModel, celeryUpdate);
         var couchViewModel;
         if (initialPageData.get("is_bigcouch")) {
-            couchViewModel = refreshableViewModel(system_ajax_url + "?api=_active_tasks", designDocModel, couch_update, 'designDocument');
+            couchViewModel = refreshableViewModel(systemAjaxUrl + "?api=_active_tasks", designDocModel, couchUpdate, 'designDocument');
         } else {
-            couchViewModel = refreshableViewModel(system_ajax_url + "?api=_active_tasks", activeTaskModel, couch_update);
+            couchViewModel = refreshableViewModel(systemAjaxUrl + "?api=_active_tasks", activeTaskModel, couchUpdate);
         }
-        var pillowtopViewModel = refreshableViewModel(system_ajax_url + "?api=pillowtop", pillowModel, couch_update, 'name');
+        var pillowtopViewModel = refreshableViewModel(systemAjaxUrl + "?api=pillowtop", pillowModel, couchUpdate, 'name');
 
         var autoRefreshModel = function () {
             var self = {};
