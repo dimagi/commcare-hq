@@ -316,6 +316,13 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             self.put_attachment(decoded_payload, ATTACHMENT_NAME)
             return element
 
+    def put_attachment(self, content, name, **kw):
+        if kw.get("type_code") is None:
+            kw["type_code"] = (
+                CODES.form_xml if name == ATTACHMENT_NAME else CODES.form_attachment
+            )
+        return super(XFormInstance, self).put_attachment(content, name, **kw)
+
     @property
     def attachments(self):
         """

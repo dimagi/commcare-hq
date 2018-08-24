@@ -124,7 +124,7 @@ class BlobMixin(Document):
 
     @document_method
     def put_attachment(self, content, name=None, content_type=None,
-                       content_length=None, domain=None):
+                       content_length=None, domain=None, type_code=None):
         """Put attachment in blob database
 
         See `get_short_identifier()` for restrictions on the upper bound
@@ -159,7 +159,7 @@ class BlobMixin(Document):
             domain=domain or self.domain,
             parent_id=self._id,
             name=name,
-            type_code=self._blobdb_type_code,
+            type_code=(self._blobdb_type_code if type_code is None else type_code),
             content_type=content_type,
         )
         self.external_blobs[name] = BlobMetaPointer(
@@ -480,7 +480,7 @@ class DeferredBlobMixin(BlobMixin):
         return super(DeferredBlobMixin, self).delete_attachment(name) or deleted
 
     def deferred_put_attachment(self, content, name=None, content_type=None,
-                                content_length=None, domain=None):
+                                content_length=None, domain=None, type_code=None):
         """Queue attachment to be persisted on save
 
         WARNING this loads the entire blob content into memory. Use of
@@ -506,6 +506,7 @@ class DeferredBlobMixin(BlobMixin):
             "content_type": content_type,
             "content_length": length,
             "domain": domain or getattr(self, "domain", None),
+            "type_code": type_code,
         }
 
     def deferred_delete_attachment(self, name):
