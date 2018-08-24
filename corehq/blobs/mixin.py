@@ -32,7 +32,7 @@ from memoized import memoized
 import six
 
 
-class BlobMetaPointer(DocumentSchema):
+class BlobMetaRef(DocumentSchema):
     key = StringProperty()
     blobmeta_id = IntegerProperty()
     content_type = StringProperty()
@@ -66,7 +66,7 @@ class BlobMixin(Document):
         abstract = True
 
     # TODO evaluate all uses of `external_blobs`
-    external_blobs = DictProperty(BlobMetaPointer)
+    external_blobs = DictProperty(BlobMetaRef)
 
     # When true, fallback to couch on fetch and delete if blob is not
     # found in blobdb. Set this to True on subclasses that are in the
@@ -81,11 +81,11 @@ class BlobMixin(Document):
         if data.get("external_blobs"):
             doc_id = safe_id(data["_id"])
             dbname = _get_couchdb_name(cls)
-            normalize = BlobMetaPointer._normalize_json
+            normalize = BlobMetaRef._normalize_json
             blobs = {}
             normalized = False
             for key, value in data["external_blobs"].items():
-                if value["doc_type"] == "BlobMetaPointer":
+                if value["doc_type"] == "BlobMetaRef":
                     blobs[key] = value
                 else:
                     blobs[key] = normalize(dbname, doc_id, value)
@@ -110,14 +110,14 @@ class BlobMixin(Document):
 
     @property
     def blobs(self):
-        """Get a dictionary of BlobMetaPointer objects keyed by attachment name
+        """Get a dictionary of BlobMetaRef objects keyed by attachment name
 
         Includes CouchDB attachments if `_migrating_blobs_from_couch` is true.
         The returned value should not be mutated.
         """
         if not self._migrating_blobs_from_couch or not self._attachments:
             return self.external_blobs
-        value = {name: BlobMetaPointer._from_attachment(info)
+        value = {name: BlobMetaRef._from_attachment(info)
             for name, info in six.iteritems(self._attachments)}
         value.update(self.external_blobs)
         return value
@@ -162,7 +162,7 @@ class BlobMixin(Document):
             type_code=(self._blobdb_type_code if type_code is None else type_code),
             content_type=content_type,
         )
-        self.external_blobs[name] = BlobMetaPointer(
+        self.external_blobs[name] = BlobMetaRef(
             key=meta.key,
             blobmeta_id=meta.id,
             content_type=content_type,
@@ -331,8 +331,8 @@ class BlobHelper(object):
         self._migrating_blobs_from_couch = bool(doc.get("_attachments")) \
             and not self.couch_only
         self._attachments = doc.get("_attachments")
-        self.external_blobs = {n: BlobMetaPointer.wrap(
-            BlobMetaPointer._normalize_json(database.dbname, self._id, m.copy())
+        self.external_blobs = {n: BlobMetaRef.wrap(
+            BlobMetaRef._normalize_json(database.dbname, self._id, m.copy())
         ) for n, m in six.iteritems(doc.get("external_blobs", {}))}
 
     _atomic_blobs = None
@@ -426,7 +426,7 @@ class DeferredBlobMixin(BlobMixin):
             value = dict(value)
             for name, info in six.iteritems(self._deferred_blobs):
                 if info is not None:
-                    value[name] = BlobMetaPointer(
+                    value[name] = BlobMetaRef(
                         key=None,
                         content_type=info.get("content_type", None),
                         content_length=info.get("content_length", None),

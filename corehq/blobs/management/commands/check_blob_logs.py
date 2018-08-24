@@ -15,7 +15,7 @@ import corehq.apps.hqmedia.models as hqmedia
 from corehq.apps.export import models as exports
 from corehq.blobs import get_blob_db, CODES
 from corehq.blobs.migratingdb import MigratingBlobDB
-from corehq.blobs.mixin import BlobMetaPointer
+from corehq.blobs.mixin import BlobMetaRef
 from corehq.util.decorators import change_log_level
 from io import open
 
@@ -121,7 +121,7 @@ def check_blob(doc_type, rec, old_db, new_db, migrate=False):
             return "noref"
 
         for name, info in doc.get("external_blobs", {}).items():
-            data = BlobMetaPointer._normalize_json(couchdb.dbname, doc_id, info)
+            data = BlobMetaRef._normalize_json(couchdb.dbname, doc_id, info)
             if data["key"] == key:
                 print("Missing: {} blob info: {}: {}".format(
                     json.dumps(rec),

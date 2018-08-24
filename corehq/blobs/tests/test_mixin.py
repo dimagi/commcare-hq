@@ -513,7 +513,7 @@ class TestBlobMixin(BaseTestCase):
             },
         })
         meta = obj.external_blobs["file.txt"]
-        self.assertIsInstance(meta, mod.BlobMetaPointer)
+        self.assertIsInstance(meta, mod.BlobMetaRef)
         self.assertEqual(meta.key, "commcarehq_test/abc123/blobid")
         with self.assertRaises(AttributeError):
             meta.id
@@ -694,7 +694,7 @@ class TestBlobHelper(BaseTestCase):
                     "blobmeta_id": obj.blobs["file.txt"].blobmeta_id,
                     "content_type": "text/plain",
                     "content_length": 9,
-                    "doc_type": "BlobMetaPointer",
+                    "doc_type": "BlobMetaRef",
                 },
             },
         }])
@@ -755,7 +755,7 @@ class TestBlobHelper(BaseTestCase):
                     "blobmeta_id": obj.blobs["file.txt"].blobmeta_id,
                     "content_type": "text/plain",
                     "content_length": 4,
-                    "doc_type": "BlobMetaPointer",
+                    "doc_type": "BlobMetaRef",
                 },
             },
         }])
@@ -797,7 +797,7 @@ class TestBlobHelper(BaseTestCase):
                     "blobmeta_id": obj.blobs["doc.txt"].blobmeta_id,
                     "content_type": "text/plain",
                     "content_length": 3,
-                    "doc_type": "BlobMetaPointer",
+                    "doc_type": "BlobMetaRef",
                 },
             },
         }])
@@ -969,7 +969,7 @@ class BaseFakeDocument(Document):
 
     def save(self):
         # couchdbkit does this (essentially)
-        # it creates new BlobMetaPointer instances in self.external_blobs
+        # it creates new BlobMetaRef instances in self.external_blobs
         self._doc.update(deepcopy(self._doc))
         self.saved = True
 

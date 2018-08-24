@@ -24,7 +24,7 @@ from elasticsearch.exceptions import ConnectionError
 from corehq.util.elastic import ensure_index_deleted
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
-from corehq.blobs.mixin import BlobMetaPointer
+from corehq.blobs.mixin import BlobMetaRef
 from corehq.form_processor.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
@@ -111,7 +111,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         form_pair = make_es_ready_form(metadata)
         if attachment_dict:
-            form_pair.wrapped_form.external_blobs = {name: BlobMetaPointer(**meta)
+            form_pair.wrapped_form.external_blobs = {name: BlobMetaRef(**meta)
                 for name, meta in six.iteritems(attachment_dict)}
             form_pair.json_form['external_blobs'] = attachment_dict
 
