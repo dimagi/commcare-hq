@@ -262,6 +262,8 @@ SECONDARY_COLUMN_TYPE_CHOICES = (
     (const.AGGGREGATION_TYPE_MIN, _('Min')),
     (const.AGGGREGATION_TYPE_MAX, _('Max')),
     (const.AGGGREGATION_TYPE_AVG, _('Average')),
+    (const.AGGGREGATION_TYPE_COUNT, _('Count')),
+    (const.AGGGREGATION_TYPE_COUNT_UNIQUE, _('Count Unique')),
     # todo: add other aggregations, count, min, max, (first? last?)
 )
 
@@ -317,9 +319,13 @@ class SqlaggColumnAdapter(SimpleAggregationAdapater):
         return self.get_sqlagg_column().aggregate_fn
 
     def get_datatype(self):
-        # todo: this isn't always valid.
-        # for example, count_unique should always be an integer but the underlying column might be anything
-        # this will be handled as different column types are added/tested
+        # special case some columns to allow to e.g. count unique values from a string column
+        if self._db_column.aggregation_type in (
+                const.AGGGREGATION_TYPE_COUNT,
+                const.AGGGREGATION_TYPE_COUNT_UNIQUE
+        ):
+            return DATA_TYPE_INTEGER
+        # default to using the same column type as the source
         return _get_datatype_from_referenced_column(self._db_column, self.properties.referenced_column)
 
 
