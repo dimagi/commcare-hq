@@ -231,7 +231,7 @@ class CachedResponse(object):
         self.name = name
 
     @classmethod
-    def save_for_later(cls, fileobj, timeout, domain):
+    def save_for_later(cls, fileobj, timeout, domain, restore_user_id):
         """Save restore response for later
 
         :param fileobj: A file-like object.
@@ -242,7 +242,7 @@ class CachedResponse(object):
         get_blob_db().put(
             NoClose(fileobj),
             domain=domain,
-            parent_id=domain,
+            parent_id=restore_user_id,
             type_code=CODES.restore,
             key=name,
             timeout=max(timeout // 60, 60),
@@ -676,7 +676,12 @@ class RestoreConfig(object):
         is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
 
         if async or self.force_cache or is_long_restore or self.sync_log:
-            response = CachedResponse.save_for_later(fileobj, self.cache_timeout, self.domain)
+            response = CachedResponse.save_for_later(
+                fileobj,
+                self.cache_timeout,
+                self.domain,
+                self.restore_user.user_id,
+            )
             self.restore_payload_path_cache.set_value(response.name, self.cache_timeout)
             return response
         return None
