@@ -41,15 +41,21 @@ class ReportExport(object):
     """Export all the rows of a UCR report
     """
 
-    def __init__(self, report):
-        self.report = report
+    def __init__(self, domain, title, report_config, lang, filter_values):
+        self.domain = domain
+        self.title = title
+        self.report_config = report_config
+        self.lang = lang
+        self.filter_values = filter_values
 
     @property
     @memoized
     def data_source(self):
-        data_source = self.report.data_source
-        data_source.set_filter_values(self.report.filter_values)
-        data_source.set_order_by([(o['field'], o['order']) for o in self.report.spec.sort_expression])
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        data_source = ConfigurableReportDataSource.from_spec(self.report_config, include_prefilters=True)
+        data_source.lang = self.lang
+        data_source.set_filter_values(self.filter_values)
+        data_source.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
         return data_source
 
     def create_export(self, file_path, format_):
@@ -73,7 +79,7 @@ class ReportExport(object):
             self.data_source.config
         )
         column_ids = []
-        for column in self.report.spec.report_columns:
+        for column in self.report_config.report_columns:
             if column.visible:
                 column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
@@ -82,19 +88,19 @@ class ReportExport(object):
 
         export_table = [
             [
-                self.report.title,
+                self.title,
                 [headers] + rows + total_rows
             ]
         ]
 
-        if INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS.enabled(self.report.domain):
-            time_zone = get_timezone_for_domain(self.report.domain)
+        if INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS.enabled(self.domain):
+            time_zone = get_timezone_for_domain(self.domain)
             export_table.append([
                 'metadata',
                 [
-                    [_('Report Name'), self.report.title],
+                    [_('Report Name'), self.title],
                     [_('Generated On'), datetime.now(time_zone).strftime('%Y-%m-%d %H:%M')],
-                ] + list(self.report._get_filter_values())
+                ] + list(self._get_filter_values())
             ])
 
         return export_table
