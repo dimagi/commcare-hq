@@ -9,8 +9,16 @@
 {% requirejs_main "translations/js/setup" %}
 
 {% block page_content %}
-<form class="form form-horizontal" name="product" method="post" enctype="multipart/form-data">
-    <legend>{% trans "Pull Resource" %}</legend>
-    {% crispy pull_resource_form %}
-</form>
+    {% if not transifex_details_available %}
+        <p class="text-error">
+            <span class="label label-danger">
+                {% trans 'Transifex integration not set for this domain' %}
+            </span>
+        </p>
+    {% else %}
+        <form class="form form-horizontal" name="product" method="post" enctype="multipart/form-data">
+            <legend>{% trans "Pull Resource" %}</legend>
+            {% crispy pull_resource_form %}
+        </form>
+    {% endif %}
 {% endblock %}

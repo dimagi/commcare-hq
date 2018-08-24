@@ -12,18 +12,22 @@
         </li>
     </ul>
 
-    <h2 class="text-hq-nav-header">{% trans "TRANSIFEX" %}</h2>
-    <ul class="nav nav-hq-sidebar">
-        <li>
-            <a href="{% url 'icds_app_translations' domain %}">
-                {% trans "Manage App Translations" %}
-            </a>
-        </li>
-        <li>
-            <a href="{% url 'pull_resource' domain %}">
-                {% trans "Pull Resource" %}
-            </a>
-        </li>
-    </ul>
+    {% if transifex_details_available %}
+        {% if request|toggle_enabled:"APP_TRANSLATIONS_WITH_TRANSIFEX" %}
+            <h2 class="text-hq-nav-header">{% trans "TRANSIFEX" %}</h2>
+            <ul class="nav nav-hq-sidebar">
+                <li>
+                    <a href="{% url 'icds_app_translations' domain %}">
+                        {% trans "Manage App Translations" %}
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'pull_resource' domain %}">
+                        {% trans "Pull Resource" %}
+                    </a>
+                </li>
+            </ul>
+        {% endif %}
+    {% endif %}
 
 {% endblock %}

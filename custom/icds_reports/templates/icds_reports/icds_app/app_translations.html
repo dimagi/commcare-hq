@@ -6,7 +6,7 @@
 {% requirejs_main "translations/js/setup" %}
 
 {% block page_content %}
-    {% if not integration_available %}
+    {% if not transifex_details_available %}
         <p class="text-error">
             <span class="label label-danger">
                 {% trans 'Transifex integration not set for this domain' %}

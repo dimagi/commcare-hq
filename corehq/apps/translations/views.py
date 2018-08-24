@@ -10,7 +10,9 @@ from openpyxl import Workbook
 from django.http import HttpResponse
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.contrib import messages
+from django.utils.decorators import method_decorator
 
+from corehq import toggles
 from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.translations.forms import (
     ConvertTranslationsForm,
@@ -21,10 +23,27 @@ from corehq.util.files import safe_filename_header
 from corehq.apps.domain.views import BaseDomainView
 from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
-from custom.icds.translations.integrations.utils import get_file_content_from_workbook
+from custom.icds.translations.integrations.utils import get_file_content_from_workbook, \
+    transifex_details_available_for_domain
 
 
-class ConvertTranslations(BaseDomainView):
+class BaseTranslationsView(BaseDomainView):
+    @property
+    def page_context(self):
+        transifex_details_available = transifex_details_available_for_domain(self.domain)
+        context = {
+            'transifex_details_available': transifex_details_available,
+        }
+        return context
+
+    def transifex_integration_enabled(self, request):
+        if not transifex_details_available_for_domain(self.domain):
+            messages.error(request, _('Transifex integration not set for this domain'))
+            return False
+        return True
+
+
+class ConvertTranslations(BaseTranslationsView):
     page_title = _('Convert Translations')
     urlname = 'convert_translations'
     template_name = 'convert_translations.html'
@@ -132,10 +151,13 @@ class ConvertTranslations(BaseDomainView):
 
     @property
     def page_context(self):
-        return {'convert_translations_form': self.convert_translation_form}
+        context = super(ConvertTranslations, self).page_context
+        context['convert_translations_form'] = self.convert_translation_form
+        return context
 
 
-class PullResource(BaseDomainView):
+@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
+class PullResource(BaseTranslationsView):
     page_title = _('Pull Resource')
     urlname = 'pull_resource'
     template_name = 'pull_resource.html'
@@ -158,7 +180,10 @@ class PullResource(BaseDomainView):
 
     @property
     def page_context(self):
-        return {'pull_resource_form': self.pull_resource_form}
+        context = super(PullResource, self).page_context
+        if context['transifex_details_available']:
+            context['pull_resource_form'] = self.pull_resource_form
+        return context
 
     def _generate_excel_file(self, domain, resource_slug):
         """
@@ -187,9 +212,10 @@ class PullResource(BaseDomainView):
         return response
 
     def post(self, request, *args, **kwargs):
-        if self.pull_resource_form.is_valid():
-            try:
-                return self._pull_resource(request)
-            except ResourceMissing:
-                messages.add_message(request, messages.ERROR, 'Resource not found')
+        if self.transifex_integration_enabled(request):
+            if self.pull_resource_form.is_valid():
+                try:
+                    return self._pull_resource(request)
+                except ResourceMissing:
+                    messages.add_message(request, messages.ERROR, 'Resource not found')
         return self.get(request, *args, **kwargs)

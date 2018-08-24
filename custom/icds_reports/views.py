@@ -34,7 +34,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
     use_select2,
 )
-from corehq.apps.translations.views import ConvertTranslations
+from corehq.apps.translations.views import ConvertTranslations, BaseTranslationsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
@@ -1599,7 +1599,7 @@ class ICDSImagesAccessorAPI(View):
 
 @location_safe
 @method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
-class ICDSAppTranslations(BaseDomainView):
+class ICDSAppTranslations(BaseTranslationsView):
     page_title = ugettext_lazy('ICDS App Translations')
     urlname = 'icds_app_translations'
     template_name = 'icds_reports/icds_app/app_translations.html'
@@ -1619,9 +1619,8 @@ class ICDSAppTranslations(BaseDomainView):
 
     @property
     def page_context(self):
-        transifex_details_available = transifex_details_available_for_domain(self.domain)
-        context = {'integration_available': transifex_details_available}
-        if transifex_details_available:
+        context = super(ICDSAppTranslations, self).page_context
+        if context['transifex_details_available']:
             context['translations_form'] = self.translations_form
         return context
 
@@ -1701,9 +1700,7 @@ class ICDSAppTranslations(BaseDomainView):
                 return self.perform_delete_request(request, form_data)
 
     def post(self, request, *args, **kwargs):
-        if not transifex_details_available_for_domain(self.domain):
-            messages.error(request, _('Transifex account not set up for this environment'))
-        else:
+        if self.transifex_integration_enabled(request):
             form = self.translations_form
             if form.is_valid():
                 form_data = form.cleaned_data
