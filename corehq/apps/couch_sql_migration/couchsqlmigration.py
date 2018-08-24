@@ -53,7 +53,6 @@ from gevent import sleep
 import six
 import logging
 from collections import defaultdict, deque
-from http_parser import http
 from corehq.util import cache_utils
 _logger = logging.getLogger('main_couch_sql_datamigration')
 
@@ -632,15 +631,6 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
 
     def _cache_key(self):
         return "couchsqlmigration.%s" % self.domain
-
-    def page_exception(self, e):
-        if self.retries <= 0:
-            return False
-        self.retries -= 1
-        if isinstance(e, http.NoMoreData):
-            sleep(min(60, cache_utils.get_exponential(self._cache_key())))
-            return True
-        return False
 
     def page_end(self, total_emitted, duration, *args, **kwargs):
         self.retries = self.RETRIES

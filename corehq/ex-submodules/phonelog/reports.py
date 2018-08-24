@@ -97,7 +97,7 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
     @property
     @memoized
     def device_log_users(self):
-        return set([_f for _f in DeviceLogUsersFilter.get_value(self.request, self.domain)])
+        return set([_f for _f in DeviceLogUsersFilter.get_value(self.request, self.domain) if _f])
 
     @property
     @memoized

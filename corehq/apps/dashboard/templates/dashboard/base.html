@@ -72,15 +72,12 @@
                                     </div>
                                 </div>
 
-                                <ul class="pagination" data-bind="visible: totalPages() > 1">
-                                    <li><a data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
-                                    <!-- ko foreach: pageList -->
-                                        <li data-bind="css: {active: $parent.currentPage() == $data}">
-                                            <a data-bind="text: $data, click: function() { $parent.currentPage($data); }"></a>
-                                        </li>
-                                    <!-- /ko -->
-                                    <li><a data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
-                                </ul>
+                                <pagination data-apply-bindings="false"
+                                            params="goToPage: goToPage,
+                                                    perPage: itemsPerPage,
+                                                    maxPagesShown: 6,
+                                                    totalItems: totalItems,
+                                                    inlinePageListOnly: true"></pagination>
                             </div>
                         <!-- /ko -->
 

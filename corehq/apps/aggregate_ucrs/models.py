@@ -69,6 +69,10 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
         return '{} ({})'.format(self.display_name or self.table_id, self.domain)
 
     @property
+    def data_source_id(self):
+        return self.id
+
+    @property
     @memoized
     def data_source(self):
         return get_datasource_config(self.primary_data_source_id.hex, self.domain)[0]

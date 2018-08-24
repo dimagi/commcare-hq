@@ -362,8 +362,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
         choices=BillingAccountType.CHOICES,
     )
     is_active = models.BooleanField(default=True)
-    is_customer_billing_account = models.BooleanField(default=False)
+    is_customer_billing_account = models.BooleanField(default=False, db_index=True)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
+    enterprise_restricted_signup_domains = ArrayField(models.CharField(max_length=128), default=list, blank=True)
     invoicing_plan = models.CharField(
         max_length=25,
         default=InvoicingPlan.MONTHLY,
@@ -386,6 +387,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
         default=PreOrPostPay.NOT_SET,
         choices=PreOrPostPay.CHOICES,
     )
+
+    # Settings visible to external users
+    restrict_domain_creation = models.BooleanField(default=False)
+    restrict_signup = models.BooleanField(default=False, db_index=True)
+    restrict_signup_message = models.CharField(max_length=128, null=True, blank=True)
 
     class Meta(object):
         app_label = 'accounting'
@@ -448,6 +454,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
             )
             return cls.objects.filter(created_by_domain=domain).latest('date_created')
         return None
+
+    @classmethod
+    @quickcache([], timeout=60 * 60)
+    def get_enterprise_restricted_signup_accounts(cls):
+        return BillingAccount.objects.filter(is_customer_billing_account=True, restrict_signup=True)
 
     @property
     def autopay_card(self):

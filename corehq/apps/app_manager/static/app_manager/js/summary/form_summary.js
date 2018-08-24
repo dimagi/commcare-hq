@@ -87,9 +87,9 @@ hqDefine('app_manager/js/summary/form_summary', function() {
         self.url = hqImport("hqwebapp/js/initial_page_data").reverse("form_source", self.id);
         self.icon = utils.formIcon(self) + ' hq-icon';
         self.questions = _.map(self.questions, function(question) {
-            return models.contentItemModel(_.defaults({
+            return models.contentItemModel(_.defaults(question, {
                 options: [],
-            }, question));
+            }));
         });
 
         return self;

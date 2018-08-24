@@ -142,12 +142,9 @@ class MobileRecoveryMeasure(models.Model):
     Model representing a method of recovering from a fatal error on mobile.
     """
     MEASURES = (
-        Measure('app_reinstall_ota', "Reinstall App, OTA",
-                "Reinstall the current CommCare app by triggering an OTA install"),
-        Measure('app_reinstall_local', "Reinstall App, Local",
-                "Reinstall the current CommCare app (by triggering an offline install "
-                "with a default .ccz that's already on the device, and then doing an "
-                "OTA update from there)"),
+        Measure('app_reinstall_and_update', "Reinstall and Update App",
+                "Reinstall the current CommCare app either OTA or with a ccz, but "
+                "requiring an OTA update to the latest version before it may be used."),
         Measure('app_update', "Update App",
                 "Update the current CommCare app"),
         Measure('cc_reinstall', "CC Reinstall Needed",
