@@ -117,7 +117,10 @@ ADDRESS_PROPERTIES = {
     'endDate': OPENMRS_DATA_TYPE_DATETIME,
 }
 OPENMRS_PROPERTIES = dict(chain(
+    # pylint: disable=W1654
+    # Disable "dict.items referenced when not iterating"; `chain` is iterating
     PERSON_PROPERTIES.items(),
     NAME_PROPERTIES.items(),
     ADDRESS_PROPERTIES.items(),
+    # pylint: enable=W1654
 ))

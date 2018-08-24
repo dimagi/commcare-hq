@@ -65,7 +65,6 @@ def to_name(value):
     return nonalpha.sub(usually_hyphen, value)
 
 
-
 serializers.update({
     # (from_data_type, to_data_type): function
     (None, OPENMRS_DATA_TYPE_DATETIME): to_omrs_datetime,
