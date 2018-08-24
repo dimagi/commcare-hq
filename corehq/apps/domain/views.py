@@ -1505,7 +1505,7 @@ class SelectedAnnualPlanView(SelectPlanView):
     @property
     @memoized
     def is_not_redirect(self):
-        return not 'plan_edition' in self.request.POST
+        return 'plan_edition' not in self.request.POST
 
     @property
     @memoized
@@ -1752,12 +1752,6 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
     def lead_text(self):
         return ugettext_lazy("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
                              .format(plan=self.current_subscription.plan_version.plan.edition))
-
-    @property
-    def main_context(self):
-        context = super(SubscriptionRenewalView, self).main_context
-        context.update({'is_renewal': True})
-        return context
 
     @property
     def page_context(self):
