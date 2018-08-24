@@ -18,7 +18,7 @@ from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import View, TemplateView
 
 from braces.views import JsonRequestResponseMixin
@@ -611,75 +611,7 @@ class MobileWorkerListView(BaseUserSettingsView):
     def query(self):
         return self.request.GET.get('query')
 
-    def _format_user(self, user_json, include_location=False):
-        user = CouchUser.wrap_correctly(user_json)
-        user_data = {}
-        for field in self.custom_data.fields:
-            user_data[field.slug] = user.user_data.get(field.slug, '')
-        return {
-            'username': user.raw_username,
-            'customFields': user_data,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'phoneNumbers': user.phone_numbers,
-            'user_id': user.user_id,
-            'location': user.sql_location.to_json() if include_location and user.sql_location else None,
-            'mark_activated': False,
-            'mark_deactivated': False,
-            'dateRegistered': user.created_on.strftime(USER_DATE_FORMAT) if user.created_on else '',
-            'editUrl': reverse(EditCommCareUserView.urlname, args=[self.domain, user.user_id]),
-            'deactivateUrl': "#",
-            'actionText': _("Deactivate") if user.is_active else _("Activate"),
-            'action': 'deactivate' if user.is_active else 'activate',
-        }
-
-    def _user_query(self, search_string, page, limit):
-        user_es = get_search_users_in_domain_es_query(
-            domain=self.domain, search_string=search_string,
-            offset=page * limit, limit=limit)
-        if not self.can_access_all_locations:
-            loc_ids = (SQLLocation.objects.accessible_to_user(self.domain, self.couch_user)
-                                          .location_ids())
-            user_es = user_es.location(list(loc_ids))
-        return user_es.mobile_users()
-
     '''
-    @allow_remote_invocation
-    def get_pagination_data(self, in_data):
-        if not isinstance(in_data, dict):
-            return {
-                'success': False,
-                'error': _("Please provide pagination info."),
-            }
-        try:
-            limit = int(in_data.get('limit', 10))
-        except ValueError:
-            limit = 10
-
-        # front end pages start at one
-        page = in_data.get('page', 1)
-        query = in_data.get('query')
-        include_location = in_data.get('include_location', False)
-
-        # backend pages start at 0
-        users_query = self._user_query(query, page - 1, limit)
-
-        # run with a blank query to fetch total records with same scope as in search
-        total_records = self._user_query('', 0, 0).count()
-        if in_data.get('showDeactivatedUsers', False):
-            users_query = users_query.show_only_inactive()
-        users_data = users_query.run()
-        return {
-            'response': {
-                'itemList': [self._format_user(user, include_location) for user in users_data.hits],
-                'total': users_data.total,
-                'page': page,
-                'query': query,
-                'total_records': total_records
-            },
-            'success': True,
-        }
-
     @allow_remote_invocation
     def modify_user_status(self, in_data):
         try:
@@ -823,6 +755,66 @@ class MobileWorkerListView(BaseUserSettingsView):
         except Exception as e:
             raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
     '''
+
+
+@require_can_edit_commcare_users
+@require_GET
+def paginate_mobile_workers(request, domain):
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    query = request.GET.get('query')
+    include_location = request.GET.get('include_location', False)   # TODO: test
+    deactivated_only = request.GET.get('showDeactivatedUsers', False)  # TODO: test
+
+    def _user_query(search_string, page, limit):
+        user_es = get_search_users_in_domain_es_query(
+            domain=domain, search_string=search_string,
+            offset=page * limit, limit=limit)
+        if not request.couch_user.has_permission(domain, 'access_all_locations'):
+            loc_ids = (SQLLocation.objects.accessible_to_user(domain, request.couch_user)
+                                          .location_ids())
+            user_es = user_es.location(list(loc_ids))
+        return user_es.mobile_users()
+
+    def _format_user(user_json, include_location=False):
+        user = CouchUser.wrap_correctly(user_json)
+        user_data = {}
+        # TODO
+        #for field in self.custom_data.fields:
+        #    user_data[field.slug] = user.user_data.get(field.slug, '')
+        return {
+            'username': user.raw_username,
+            'customFields': user_data,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'phoneNumbers': user.phone_numbers,
+            'user_id': user.user_id,
+            'location': user.sql_location.to_json() if include_location and user.sql_location else None,
+            'mark_activated': False,
+            'mark_deactivated': False,
+            'dateRegistered': user.created_on.strftime(USER_DATE_FORMAT) if user.created_on else '',
+            'editUrl': reverse(EditCommCareUserView.urlname, args=[domain, user.user_id]),
+            'deactivateUrl': "#",
+            'actionText': _("Deactivate") if user.is_active else _("Activate"),
+            'action': 'deactivate' if user.is_active else 'activate',
+        }
+
+    # backend pages start at 0
+    users_query = _user_query(query, page - 1, limit)
+
+    # run with a blank query to fetch total records with same scope as in search
+    total_records = _user_query('', 0, 0).count()
+    if deactivated_only:
+        users_query = users_query.show_only_inactive()
+    users_data = users_query.run()
+
+    return json_response({
+        'itemList': [_format_user(user, include_location) for user in users_data.hits],
+        'total': users_data.total,
+        'page': page,
+        'query': query,
+        'total_records': total_records
+    })
 
 
 class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
