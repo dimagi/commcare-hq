@@ -13,6 +13,7 @@ from corehq.apps.aggregate_ucrs.query_column_providers import StandardQueryColum
     AggregationParamQueryColumnProvider
 from corehq.apps.userreports.datatypes import DATA_TYPE_INTEGER, DataTypeProperty, DATA_TYPE_STRING, DATA_TYPE_DATE
 from corehq.apps.userreports.indicators import Column
+from corehq.apps.userreports.reports.specs import SQLAGG_COLUMN_MAP
 from dimagi.ext import jsonobject
 
 
@@ -280,11 +281,8 @@ class SecondaryColumnAdapter(ColumnAdapater):
 
     @staticmethod
     def from_db_column(db_column):
-        type_to_class_mapping = {
-            SECONDARY_COLUMN_TYPE_SUM: SumColumnAdapter,
-            SECONDARY_COLUMN_TYPE_MIN: MinColumnAdapter,
-        }
-        return type_to_class_mapping[db_column.aggregation_type](db_column)
+        assert db_column.aggregation_type in SQLAGG_COLUMN_MAP
+        return SqlaggColumnAdapter(db_column)
 
     def is_groupable(self):
         return False
@@ -308,27 +306,19 @@ class SimpleAggregationAdapater(six.with_metaclass(ABCMeta, SecondaryColumnAdapt
         return self.sqlalchemy_fn(sqlalchemy_table.c[self.properties.referenced_column])
 
 
-class SumColumnAdapter(SimpleAggregationAdapater):
-    """
-    A SimpleAggregationAdapater that sums the values of a given column in the secondary table.
-    """
+class SqlaggColumnAdapter(SimpleAggregationAdapater):
+
+    def get_sqlagg_column(self):
+        return SQLAGG_COLUMN_MAP[self._db_column.aggregation_type]
+
     @property
     def sqlalchemy_fn(self):
-        return sqlalchemy.func.sum
+        return self.get_sqlagg_column().aggregate_fn
 
     def get_datatype(self):
-        return DATA_TYPE_INTEGER
-
-
-class MinColumnAdapter(SimpleAggregationAdapater):
-    """
-    A SimpleAggregationAdapater that returns the min value of a given column in the secondary table.
-    """
-    @property
-    def sqlalchemy_fn(self):
-        return sqlalchemy.func.min
-
-    def get_datatype(self):
+        # todo: this isn't always valid.
+        # for example, count_unique should always be an integer but the underlying column might be anything
+        # this will be handled as different column types are added/tested
         return _get_datatype_from_referenced_column(self._db_column, self.properties.referenced_column)
 
 

@@ -249,7 +249,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(SmallInteger, type(table.columns['pregnant_in_month'].type))
 
         # basic check on secondary column
-        self.assertEqual(Integer, type(table.columns['fu_forms_in_month'].type))
+        self.assertEqual(SmallInteger, type(table.columns['fu_forms_in_month'].type))
 
     def test_get_aggregation_start_period(self):
         self.assertEqual(self.case_date_opened,
