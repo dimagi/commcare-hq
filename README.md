@@ -124,7 +124,7 @@ names to the aliases.
 ### Installing Bower
 
 We use bower to manage our javascript dependencies. In order to download the required javascript packages,
-you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
+you'll need to install `bower` and run `bower install`. Follow these steps to install:
 
 1. If you do not already have npm:
 
