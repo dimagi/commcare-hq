@@ -216,7 +216,7 @@
         </div>
         <div class="panel-body">
             <div class="row">
-                <div class="col-sm-4">
+                <div class="col-sm-6">
                     <div class="input-group">
                         <input type="text" class="form-control" data-bind="value: query"
                                placeholder="{% trans "Filter Workers..." %}">
@@ -235,38 +235,16 @@
                         {% endblocktrans %}
                     </p>
                 </div>
-                <!-- TODO: controls -->
-                <!--div class="col-sm-4">
-                    <select class="form-control"
-                            ng-change="pageChanged()"
-                            ng-model="limit"
-                            ng-options="pl.value as pl.key for pl in paginationLimits">
-                    </select>
-                </div>
-                <div class="col-sm-4">
-                    <button type="button"
-                            class="btn btn-default pull-right"
-                            ng-click="showDeactivatedUsers = true; filterData();"
-                            ng-show="!showDeactivatedUsers">
+                <div class="col-sm-6">
+                    <button type="button" class="btn btn-default pull-right"
+                            data-bind="visible: !inactiveOnly(), click: function() { toggleInactiveOnly(true); }">
                         {% trans 'Show Deactivated Mobile Workers' %}
                     </button>
-                    <button type="button"
-                            class="btn btn-default pull-right"
-                            ng-click="showDeactivatedUsers = false; filterData();"
-                            ng-show="showDeactivatedUsers">
+                    <button type="button" class="btn btn-default pull-right"
+                            data-bind="visible: inactiveOnly(), click: function() { toggleInactiveOnly(false); }">
                         {% trans 'Show Active Mobile Workers' %}
                     </button>
-                    <div class="pull-right" style="clear: right;">
-                        <pagination direction-links="true"
-                                    total-items="total"
-                                    items-per-page="limit"
-                                    previous-text="&laquo;"
-                                    next-text="&raquo;"
-                                    max-size="maxSize"
-                                    ng-model="currentPage"
-                                    ng-change="pageChanged()"></pagination>
-                    </div>
-                </div-->
+                </div>
             </div>
             <div class="alert alert-info" data-bind="visible: showNoUsers">
                 {% blocktrans %}

@@ -3,7 +3,8 @@ hqDefine("users/js/mobile_workers", function() {
         var self = {};
         self.users = ko.observableArray([]);
 
-        self.query = ko.observable(''); // TODO
+        self.query = ko.observable('');
+        self.inactiveOnly = ko.observable(false);
 
         // Visibility of spinner, messages, and user table
         self.hasError = ko.observable(false);
@@ -26,6 +27,11 @@ hqDefine("users/js/mobile_workers", function() {
             return !self.notLoaded() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
         });
 
+        self.toggleInactiveOnly = function(inactiveOnly) {
+            self.inactiveOnly(inactiveOnly);
+            self.goToPage(1);
+        };
+
         self.goToPage = function(page) {
             self.users.removeAll();
 
@@ -38,6 +44,7 @@ hqDefine("users/js/mobile_workers", function() {
                     page: page || 1,
                     query: self.query(),
                     limit: 10,  // TODO
+                    showDeactivatedUsers: self.inactiveOnly() ? 1 : 0,
                 },
                 success: function(data) {
                     self.users.removeAll();     // just in case there are multiple goToPage calls simultaneously
