@@ -675,7 +675,7 @@ def track_time(func):
         AggregateSQLProfile.objects.create(
             name=func.__name__,
             duration=int(end - start),
-            latest_aggregation = latest_aggregation_time
+            latest_aggregation=latest_aggregation_time
         )
         return result
 

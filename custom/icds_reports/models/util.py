@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import architect
-from datetime import date
 import uuid
 
 from django.db import models
