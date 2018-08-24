@@ -32,7 +32,7 @@
     {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
     {% registerurl 'paginate_mobile_workers' domain %}
 
-<div id="mobile-workers-list">
+<div id="mobile-workers-list" class="ko-template">
     <div class="row">
         <div class="col-sm-12">
             <p class="lead">
@@ -273,21 +273,18 @@
                     </div>
                 </div>
             </div-->
-            <!-- TODO: list mobile workers -->
-            <!--div class="alert alert-info"
-                 ng-show="total_records != 0 && paginatedItems.length == 0 && !notLoaded && !hasError">
+            <div class="alert alert-info" data-bind="visible: showNoUsers">
                 {% blocktrans %}
-                No Mobile Workers were found that matched your query.
+                    No Mobile Workers were found that matched your query.
                 {% endblocktrans %}
             </div>
-            <div class="alert alert-info"
-                 ng-show="total_records == 0 && paginatedItems.length == 0 && !notLoaded && !hasError">
+            <div class="alert alert-info" data-bind="visible: showProjectHasNoUsers">
                 {% blocktrans %}
                     <strong>There are currently no Mobile Workers in this project.</strong>
                     Please Create a new Mobile Worker above to get started.
                 {% endblocktrans %}
-            </div-->
-            <table class="table table-striped table-responsive" style="margin-bottom: 0;">
+            </div>
+            <table class="table table-striped table-responsive" style="margin-bottom: 0;" data-bind="visible: showTable">
                 <thead>
                     <tr>
                         <th class="col-xs-3">{% trans "Username" %}</th>
@@ -448,23 +445,19 @@
                     </tr>
                 </tbody>
             </table>
-            <!-- TODO: loading indicator -->
-            <!--div class="alert alert-info"
-                 ng-show="!!notLoaded && !hasError">
-                <i class="fa fa-circle-o-notch fa-spin"></i>
+            <div class="alert alert-info" data-bind="visible: showSpinner">
+                <i class="fa fa-spin fa-spinner"></i>
                 {% trans "Loading Workers..." %}
-            </div-->
-            <!-- TODO: error handling -->
-            <!--div class="alert alert-danger"
-                 ng-show="!!hasError">
+            </div>
+            <div class="alert alert-danger" data-bind="visible: hasError">
                 {% blocktrans %}
                     <strong>There was an issue contacting the server.</strong>
                     Please check your internet connection.
                     If this issue continues, please
                     <a href="#modalReportIssue"
-                       data-toggle="modal">file a bug report</a>.
+                       data-toggle="modal">report an issue</a>.
                 {% endblocktrans %}
-            </div-->
+            </div>
             <!-- TODO: pagination -->
             <!--div class="pull-right">
                 <pagination direction-links="true"
