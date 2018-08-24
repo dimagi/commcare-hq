@@ -519,7 +519,7 @@ class NewMobileWorkerForm(forms.Form):
     username = forms.CharField(
         max_length=50,
         required=True,
-        help_text=_username_help,
+        #help_text=_username_help,  # TODO
         label=ugettext_noop("Username"),
     )
     first_name = forms.CharField(
@@ -561,7 +561,7 @@ class NewMobileWorkerForm(forms.Form):
                 validator = "validate_password_standard"
             self.fields['password'].widget = forms.TextInput(attrs={
                 validator: "",
-                "ng_keydown": "markNonDefault()",
+                #"ng_keydown": "markNonDefault()",  # TODO
                 "class": "default",
             })
             self.fields['password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
@@ -569,18 +569,18 @@ class NewMobileWorkerForm(forms.Form):
                 '<br />'
             ))
 
-        if project.uses_locations:
+        if False and project.uses_locations:    # TODO
             self.fields['location_id'].widget = AngularLocationSelectWidget(
                 require=not self.can_access_all_locations)
             location_field = crispy.Field(
                 'location_id',
-                ng_model='mobileWorker.location_id',
+                #ng_model='mobileWorker.location_id',   # TODO
             )
         else:
             location_field = crispy.Hidden(
                 'location_id',
                 '',
-                ng_model='mobileWorker.location_id',
+                #ng_model='mobileWorker.location_id',   # TODO
             )
 
         self.helper = FormHelper()
@@ -592,38 +592,42 @@ class NewMobileWorkerForm(forms.Form):
                 _('Basic Information'),
                 crispy.Field(
                     'username',
-                    ng_required="true",
-                    validate_username="",
+                    data_bind='value: mobileWorker.username',
+                    # TODO
+                    #ng_required="true",
+                    #validate_username="",
                     # What this says is, update as normal or when the element
                     # loses focus. If the update is normal, wait 300 ms to
                     # send the request again. If the update is on blur,
                     # send the request.
-                    ng_model_options="{ "
-                                      " updateOn: 'default blur', "
-                                      " debounce: {'default': 300, 'blur': 0} "
-                                      "}",
-                    ng_model='mobileWorker.username',
-                    ng_maxlength=max_chars_username,
-                    maxlength=max_chars_username,
+                    #ng_model_options="{ "
+                    #                  " updateOn: 'default blur', "
+                    #                  " debounce: {'default': 300, 'blur': 0} "
+                    #                  "}",
+                    #ng_maxlength=max_chars_username,
+                    #maxlength=max_chars_username,
                 ),
                 crispy.Field(
                     'first_name',
-                    ng_required="false",
-                    ng_model='mobileWorker.first_name',
-                    ng_maxlength="30",
+                    data_bind='value: mobileWorker.first_name',
+                    # TODO
+                    #ng_required="false",
+                    #ng_maxlength="30",
                 ),
                 crispy.Field(
                     'last_name',
-                    ng_required="false",
-                    ng_model='mobileWorker.last_name',
-                    ng_maxlength="30",
+                    data_bind='value: mobileWorker.last_name',
+                    # TODO
+                    #ng_required="false",
+                    #ng_maxlength="30",
                 ),
                 location_field,
                 crispy.Field(
                     'password',
-                    ng_required="true",
-                    ng_model='mobileWorker.password',
-                    data_bind="value: password, valueUpdate: 'input'",
+                    data_bind='value: mobileWorker.password',
+                    # TODO
+                    #ng_required="true",
+                    #data_bind="value: password, valueUpdate: 'input'",
                 ),
             )
         )

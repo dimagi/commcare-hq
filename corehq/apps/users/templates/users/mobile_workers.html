@@ -18,7 +18,7 @@
 {% if strong_mobile_passwords %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
 {% endif %}
-<script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
+<script src="{% static 'nic_compliance/js/encoder.js' %}"></script>{# TODO: don't break this #}
 <script src="{% static 'users/js/mobile_workers.js' %}"></script>
 {% endblock %}
 
@@ -53,14 +53,13 @@
                 {% endblocktrans %}
             </p>
             <div class="btn-toolbar" style="margin-bottom: 20px;">
-                <!-- TODO: create new mobile worker -->
-                <!--button type="button"
+                <button type="button"
                         class="btn btn-success"
                         data-toggle="modal"
                         data-target="#newMobileWorkerModal"
-                        ng-click="initializeMobileWorker()">
+                        data-bind="click: initializeMobileWorker">
                     <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
-                </button-->
+                </button>
                 {% if can_bulk_edit_users and can_access_all_locations %}
                     <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
                         <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
@@ -77,14 +76,10 @@
             </div>
         </div>
     </div><!-- end controls .row -->
-    <!-- TODO: create new mobile worker -->
-    <!--div class="modal fade" id="newMobileWorkerModal">
+    <div class="modal fade" id="newMobileWorkerModal">
         {% if can_add_extra_users %}
             <div class="modal-dialog">
-                <form id="newMobileWorkerForm"
-                      name="mobileWorkerForm"
-                      novalidate
-                      ng-submit="submitNewMobileWorker()">
+                <form id="newMobileWorkerForm" name="mobileWorkerForm" data-bind="submit: submitNewMobileWorker">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal">
@@ -97,16 +92,13 @@
                             <div class="form-horizontal">
                                 {% crispy new_mobile_worker_form %}
                                 {% if custom_fields_form.fields %}
-                                    {% crispy custom_fields_form %}
+                                {% crispy custom_fields_form %}{# TODO #}
                                 {% endif %}
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-default" ng-click="markDefault()" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                            <button type="submit"
-                                    ng-disabled="mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'"
-                                    ng-click="markDefault()"
-                                    class="btn btn-primary">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                            <button type="submit" class="btn btn-primary" data-bind="enable: allowMobileWorkerCreation">
                                 {% trans "Create" %}
                             </button>
                         </div>
@@ -154,7 +146,7 @@
                 </div>
             </div>
         {% endif %}
-    </div-->
+    </div>
 
     <!-- TODO: list new mobile workers -->
     <!--div class="panel panel-info"

@@ -1,10 +1,57 @@
 hqDefine("users/js/mobile_workers", function() {
-    var mobileWorker = function(options) {
-        var self = ko.mapping.fromJS(options);
+    var mobileWorkerModel = function(options) {
+        var self = {},
+            defaults = {
+                username: '',
+                password: '',
+                customFields: {},
+                first_name: '',
+                last_name: '',
+                phoneNumbers: [],
+                user_id: '',
+                location: null,
+                dateRegistered: '',
+                editUrl: '#',
+                action: 'deactivate',
+                mark_activated: false,
+                mark_deactivated: false,
+                action_error: '',
+            };
+        options = _.defaults(options || {}, defaults);
 
-        self.mark_activated = ko.observable(false);
-        self.mark_deactivated = ko.observable(false);
-        self.action_error = ko.observable('');
+        self.username = ko.observable(options.username);
+        self.password = ko.observable(options.password);
+        self.customFields = options.customFields;
+        self.first_name = ko.observable(options.first_name);
+        self.last_name = ko.observable(options.last_name);
+        self.phoneNumbers = ko.observableArray(options.phoneNumbers);
+        self.user_id = ko.observable(options.user_id);
+        self.location = ko.observable(options.location);
+        self.dateRegistered = ko.observable(options.dateRegistered);
+        self.editUrl = ko.observable(options.editUrl);
+        self.action = ko.observable(options.action);
+        self.mark_activated = ko.observable(options.mark_activated);
+        self.mark_deactivated = ko.observable(options.mark_deactivated);
+        self.action_error = ko.observable(options.action_error);
+
+        self.clear = function() {
+            self.username(defaults.username);
+            self.password(defaults.password);
+            self.customFields = defaults.customFields;
+            self.first_name(defaults.first_name);
+            self.last_name(defaults.last_name);
+            self.phoneNumbers.removeAll();
+            self.user_id(defaults.user_id);
+            self.location(defaults.location);
+            self.dateRegistered(defaults.dateRegistered);
+            self.editUrl(defaults.editUrl);
+            self.action(defaults.action);
+            self.mark_activated(defaults.mark_activated);
+            self.mark_deactivated(defaults.mark_deactivated);
+            self.action_error(defaults.action_error);
+
+            self.password('');
+        };
 
         self.showActivate = ko.computed(function() {
             return self.action() === 'activate';
@@ -99,7 +146,7 @@ hqDefine("users/js/mobile_workers", function() {
                     self.totalItems(data.total);
                     self.users.removeAll();     // just in case there are multiple goToPage calls simultaneously
                     _.each(data.users, function(user) {
-                        self.users.push(mobileWorker(user));
+                        self.users.push(mobileWorkerModel(user));
                     });
 
                     if (!self.query()) {
@@ -118,6 +165,22 @@ hqDefine("users/js/mobile_workers", function() {
         self.goToPage(1);
 
         return self;
+    };
+
+    self.mobileWorker = mobileWorkerModel();  // new worker being added
+    self.mobileWorker.clear();
+    self.initializeMobileWorker = function() {
+        self.mobileWorker.clear();
+        hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
+    };
+
+    self.allowMobileWorkerCreation = ko.computed(function() {
+        // TODO: mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'
+        return true;
+    });
+
+    self.submitNewMobileWorker = function() {
+        // TODO
     };
 
     $(function() {
