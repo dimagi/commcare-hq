@@ -4,7 +4,7 @@ hqDefine('accounting/js/pricing_table', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/main',
-    "hqwebapp/js/assert_properties"
+    "hqwebapp/js/assert_properties",
 ], function (
     $,
     ko,
@@ -171,7 +171,7 @@ hqDefine('accounting/js/pricing_table', [
             isRenewal: initialPageData.get('is_renewal'),
             startDateAfterMinimum: initialPageData.get('start_date_after_minimum_subscription'),
             isSubscriptionBelowMin: initialPageData.get('subscription_below_minimum'),
-            nextSubscription: initialPageData.get('next_subscription')
+            nextSubscription: initialPageData.get('next_subscription'),
         });
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
