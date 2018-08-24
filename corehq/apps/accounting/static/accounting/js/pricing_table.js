@@ -11,36 +11,60 @@ hqDefine('accounting/js/pricing_table', [
     initialPageData,
     assertProperties
 ) {
-    var pricingTableModel = function (options) {
-        assertProperties.assert(options, ['editions', 'currentEdition', 'isRenewal', 'showMonthlyPricing']);
+    var PricingTable = function (options) {
+        assertProperties.assert(options, [
+            'editions',
+            'planOptions',
+            'currentPlan',
+        ]);
 
         'use strict';
-        var self = {};
+        var self = this;
 
-        self.currentEdition = options.currentEdition;
-        self.isRenewal = options.isRenewal;
-        self.editions = ko.observableArray(_.map(options.editions, function (edition) {
-            return pricingTableEditionModel(edition, self.currentEdition);
-        }));
+        self.currentPlan = ko.observable(options.currentPlan);
+        self.editions = options.editions;
 
-        self.selected_edition = ko.observable(options.isRenewal ? options.currentEdition : false);
-        self.isSubmitVisible = ko.computed(function () {
-            if (self.isRenewal){
-                return true;
+        self.selectedPlan = ko.observable(options.currentPlan);
+
+        self.showMonthlyPricing = ko.observable(false);
+
+        self.refundCss = ko.computed(function () {
+            if (self.showMonthlyPricing()) {
+                return "hide-refund";
             }
-            return !! self.selected_edition() && !(self.selected_edition() === self.currentEdition);
+            return "";
         });
-        self.selectCurrentPlan = function () {
-            self.selected_edition(self.currentEdition);
+
+        self.isSubmitVisible = ko.computed(function () {
+            return !! self.selectedPlan() && !(self.selectedPlan() === self.currentPlan());
+        });
+
+        self.isCurrentPlanCommunity = ko.observable(options.currentPlan === 'community');
+
+        self.selectCommunityPlan = function () {
+            self.selectedPlan('community');
         };
 
-        self.showMonthlyPricing = ko.observable(options.showMonthlyPricing);
+        self.communityCss = ko.computed(function () {
+            if (self.selectedPlan() === 'community') {
+                return "selected-plan";
+            }
+            return "";
+        });
 
-        self.form = undefined;
+        self.planOptions = ko.observableArray(_.map(options.planOptions, function (opt) {
+          return new PlanOption(opt, self);
+        }));
+
+        self.showNext = ko.computed(function () {
+            return self.selectedPlan() === 'community' || self.showMonthlyPricing();
+        });
+
         self.openDowngradeModal = function(pricingTable, e) {
-            var editionSlugs = _.map(self.editions(), function(e) { return e.slug(); });
-            self.form = $(e.currentTarget).closest("form");
-            if (editionSlugs.indexOf(self.selected_edition()) < editionSlugs.indexOf(self.currentEdition)) {
+            if (
+                self.editions.indexOf(self.selectedPlan()) <
+                self.editions.indexOf(self.currentPlan())
+            ) {
                 var $modal = $("#modal-downgrade");
                 $modal.modal('show');
             } else {
@@ -49,32 +73,25 @@ hqDefine('accounting/js/pricing_table', [
         };
 
         self.submitDowngrade = function(pricingTable, e) {
-            var finish = function() {
-                if (self.form) {
-                    self.form.submit();
-                }
+            var _submitForm = function() {
+                self.submit();
             };
 
             var $button = $(e.currentTarget);
             $button.disableButton();
+
             $.ajax({
                 method: "POST",
                 url: hqImport('hqwebapp/js/initial_page_data').reverse('email_on_downgrade'),
                 data: {
-                    old_plan: self.currentEdition,
-                    new_plan: self.selected_edition(),
+                    old_plan: self.currentPlan(),
+                    new_plan: self.selectedPlan(),
                     note: $button.closest(".modal").find("textarea").val(),
                 },
-                success: finish,
-                error: finish,
+                success: _submitForm,
+                error: _submitForm,
             });
-        };
 
-        self.updateIsAnnualPricing = function () {
-            self.isAnnualPricing(true);
-        };
-        self.updateIsMonthlyPricing = function () {
-            self.isAnnualPricing(true);
         };
 
         self.contactSales = function (pricingTable, e) {
@@ -82,58 +99,76 @@ hqDefine('accounting/js/pricing_table', [
             $button.disableButton();
 
             self.form = $(e.currentTarget).closest("form");
-            self.currentEdition = self.currentEdition + " - annual pricing";
+            self.currentPlan = self.currentPlan + " - annual pricing";
             self.form.submit();
         };
 
         self.init = function () {
-            $('.col-edition').click(function () {
-                self.selected_edition($(this).data('edition'));
-            });
+            self.form = $("#select-plan-form");
+        }
+
+    };
+
+    var PlanOption = function (data, parent) {
+        'use strict';
+        var self = this;
+
+        self.name = ko.observable(data.name);
+        self.slug = ko.observable(data.name.toLowerCase());
+
+        self.monthlyPrice = ko.observable(data.monthly_price);
+        self.annualPrice = ko.observable(data.annual_price);
+        self.description = ko.observable(data.description);
+
+        self.isCurrentPlan = ko.computed(function () {
+            return self.slug() === parent.currentPlan();
+        });
+
+        self.isSelectedPlan = ko.computed(function () {
+            return self.slug() === parent.selectedPlan();
+        });
+
+        self.cssClass = ko.computed(function () {
+            var cssClass = "tile-" + self.slug();
+            if (self.isSelectedPlan()) {
+                cssClass = cssClass + " selected-plan";
+            }
+            return cssClass;
+        });
+
+        self.selectPlan = function () {
+            parent.selectedPlan(self.slug());
         };
 
-        return self;
+        self.pricingTypeText = ko.computed(function (){
+            if (parent.showMonthlyPricing()) {
+                return django.gettext("Billed Monthly");
+            }
+            return django.gettext("Billed Annually");
+        });
+
+        self.pricingTypeCssClass = ko.computed(function (){
+            if (parent.showMonthlyPricing()) {
+                return 'pricing-type-monthly';
+            }
+            return 'pricing-type-annual';
+        });
+
+        self.displayPrice = ko.computed(function () {
+            if (parent.showMonthlyPricing()) {
+                return self.monthlyPrice();
+            }
+            return self.annualPrice();
+        });
+
     };
 
-    var pricingTableEditionModel = function (data, current_edition) {
-        'use strict';
-        var self = {};
-
-        self.slug = ko.observable(data[0]);
-        self.name = ko.observable(data[1].name);
-        self.description = ko.observable(data[1].description);
-        self.currentEdition = ko.observable(data[0] === current_edition);
-        self.notCurrentEdition = ko.computed(function (){
-            return !self.currentEdition();
-        });
-        self.col_css = ko.computed(function () {
-            return 'col-edition col-edition-' + self.slug();
-        });
-        self.isCommunity = ko.computed(function () {
-            return self.slug() === 'community';
-        });
-        self.isStandard = ko.computed(function () {
-            return self.slug() === 'standard';
-        });
-        self.isPro = ko.computed(function () {
-            return self.slug() === 'pro';
-        });
-        self.isAdvanced = ko.computed(function () {
-            return self.slug() === 'advanced';
-        });
-        self.isEnterprise = ko.computed(function () {
-            return self.slug() === 'enterprise';
-        });
-
-        return self;
-    };
 
     $(function () {
-        var pricingTable = pricingTableModel({
+        var pricingTable = new PricingTable({
             editions: initialPageData.get('editions'),
-            currentEdition: initialPageData.get('current_edition'),
-            isRenewal: initialPageData.get('is_renewal'),
-            showMonthlyPricing: false,
+            planOptions: initialPageData.get('planOptions'),
+            currentPlan: initialPageData.get('currentPlan'),
         });
 
         // Applying bindings is a bit weird here, because we need logic in the modal,

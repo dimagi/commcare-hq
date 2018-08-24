@@ -24,8 +24,8 @@
 
 {% block form_content %}
 {% initial_page_data 'editions' editions %}
-{% initial_page_data 'current_edition' current_edition %}
-{% initial_page_data 'is_renewal' is_renewal|BOOL %}
+{% initial_page_data 'planOptions' plan_options|JSON %}
+{% initial_page_data 'currentPlan' current_edition %}
 {% registerurl 'email_on_downgrade' domain %}
 <p class="lead">
     {{ lead_text|safe }}
