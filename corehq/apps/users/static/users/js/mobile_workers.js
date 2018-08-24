@@ -6,6 +6,9 @@ hqDefine("users/js/mobile_workers", function() {
         self.query = ko.observable('');
         self.inactiveOnly = ko.observable(false);
 
+        self.itemsPerPage = ko.observable(5);
+        self.totalItems = ko.observable();
+
         // Visibility of spinner, messages, and user table
         self.hasError = ko.observable(false);
         self.notLoaded = ko.observable(true);
@@ -16,7 +19,7 @@ hqDefine("users/js/mobile_workers", function() {
         });
 
         self.showNoUsers = ko.computed(function() {
-            return !self.notLoaded() && !self.hasError() && !self.users().length && !self.showProjectHasNoUsers();
+            return !self.notLoaded() && !self.hasError() && !self.totalItems() && !self.showProjectHasNoUsers();
         });
 
         self.showSpinner = ko.computed(function() {
@@ -43,10 +46,11 @@ hqDefine("users/js/mobile_workers", function() {
                 data: {
                     page: page || 1,
                     query: self.query(),
-                    limit: 10,  // TODO
+                    limit: self.itemsPerPage(),
                     showDeactivatedUsers: self.inactiveOnly() ? 1 : 0,
                 },
                 success: function(data) {
+                    self.totalItems(data.total);
                     self.users.removeAll();     // just in case there are multiple goToPage calls simultaneously
                     _.each(data.users, function(user) {
                         self.users.push(user);
