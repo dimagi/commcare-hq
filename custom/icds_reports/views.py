@@ -20,7 +20,6 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
 from django.utils.translation import ugettext as _, ugettext_lazy
-from django.conf import settings
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
@@ -1733,8 +1732,6 @@ class DishaAPIView(View):
             "invalid_state": "Please specify one of {} as state_name".format(state_names),
         }
         return {"message": error_messages[message_name]}
-
-    from corehq import toggles
 
     @method_decorator([api_auth, toggles.ICDS_DISHA_API.required_decorator()])
     def get(self, request, *args, **kwargs):
