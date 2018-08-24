@@ -2631,6 +2631,7 @@ def _meta_property(name):
 
 
 class DataFile(object):
+    """DataFile is a thin wrapper around BlobMeta"""
     id = _meta_property("id")
     domain = _meta_property("parent_id")
     filename = _meta_property("name")
