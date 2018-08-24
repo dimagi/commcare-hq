@@ -9,11 +9,12 @@ from django.test import TestCase
 
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
-    get_awc_report_beneficiary
+    get_awc_report_beneficiary, get_awc_report_pregnant
 from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
 
 
 class TestAWCReport(TestCase):
+    maxDiff = None
     def test_beneficiary_details_recorded_weight_none(self):
         data = get_beneficiary_details(
             case_id='6b234c5b-883c-4849-9dfd-b1571af8717b',
@@ -2510,4 +2511,268 @@ class TestAWCReport(TestCase):
                 ['draw', 'last_month', 'recordsTotal', 'months', 'recordsFiltered', 'data'],
                 cls=DjangoJSONEncoder
             )
+        )
+
+    def test_awc_report_pregnant_first_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][0],
+            {
+                'age': 30,
+                'anemic': 'Unknown',
+                'beneficiary': 'No',
+                'case_id': '394a7f4a-7fe6-416d-8fd3-0cccdf84184a',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 0,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': None
+            }
+        )
+
+    def test_awc_report_pregnant_second_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][1],
+            {
+                'age': 30,
+                'anemic': 'Unknown',
+                'beneficiary': 'No',
+                'case_id': 'ebdb8cf8-268c-4291-8497-7df06517c7a5',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 0,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': None
+            }
+        )
+
+    def test_awc_report_pregnant_third_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][2],
+            {
+                'age': 20,
+                'anemic': 'Unknown',
+                'beneficiary': 'No',
+                'case_id': 'c412ee53-b848-41d7-9cf3-b6bf54bcdca7',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 0,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': None
+            }
+        )
+
+    def test_awc_report_pregnant_forth_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][3],
+            {
+                'age': 23,
+                'anemic': 'Unknown',
+                'beneficiary': 'Yes',
+                'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 0,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': 2
+            }
+        )
+
+    def test_awc_report_pregnant_fifth_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][4],
+            {
+                'age': 22,
+                'anemic': 'Unknown',
+                'beneficiary': 'No',
+                'case_id': '6e498873-a6d5-40ff-9d4d-2ab2e96f4594',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 0,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': None
+            }
+        )
+
+    def test_awc_report_pregnant_sixth_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][5],
+            {
+                'age': 28,
+                'anemic': 'Unknown',
+                'beneficiary': 'Yes',
+                'case_id': '3d1bdefc-a217-455d-af18-260f39f698f0',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 21,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': 3
+            }
+        )
+
+    def test_awc_report_pregnant_seventh_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][6],
+            {
+                'age': 30,
+                'anemic': 'Unknown',
+                'beneficiary': 'No',
+                'case_id': '394a7f4a-7fe6-416d-8fd3-0cccdf84184a',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 0,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': None
+            }
+        )
+
+    def test_awc_report_pregnant_eigth_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][7],
+            {
+                'age': 30,
+                'anemic': 'Unknown',
+                'beneficiary': 'No',
+                'case_id': 'ebdb8cf8-268c-4291-8497-7df06517c7a5',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 0,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': None
+            }
+        )
+
+    def test_awc_report_pregnant_nineth_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][8],
+            {
+                'age': 20,
+                'anemic': 'Unknown',
+                'beneficiary': 'No',
+                'case_id': 'c412ee53-b848-41d7-9cf3-b6bf54bcdca7',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 0,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': None
+            }
+        )
+
+    def test_awc_report_pregnant_tenth_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][9],
+            {
+                'age': 23,
+                'anemic': 'Unknown',
+                'beneficiary': 'No',
+                'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 0,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': None
+            }
+        )
+
+    def test_awc_report_pregnant_eleventh_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][10],
+            {
+                'age': 22,
+                'anemic': 'Unknown',
+                'beneficiary': 'No',
+                'case_id': '6e498873-a6d5-40ff-9d4d-2ab2e96f4594',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 0,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': None
+            }
+        )
+
+    def test_awc_report_pregnant_twelwe_record(self):
+        data = get_awc_report_pregnant(
+            order='-person_name',
+            awc_id='a15'
+        )
+        self.assertEqual(
+            data['data'][11],
+            {
+                'age': 28,
+                'anemic': 'Unknown',
+                'beneficiary': 'No',
+                'case_id': '3d1bdefc-a217-455d-af18-260f39f698f0',
+                'edd': None,
+                'last_date_thr': None,
+                'num_anc_complete': None,
+                'number_of_thrs_given': 0,
+                'opened_on': None,
+                'person_name': None,
+                'trimester': None
+            }
         )

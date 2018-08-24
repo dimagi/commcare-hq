@@ -64,9 +64,9 @@ from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scal
 from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_chart,\
     get_awc_daily_status_data_map, get_awc_daily_status_sector_data
 from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
-from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics,\
+from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics, \
     get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details, \
-    get_awc_report_infrastructure
+    get_awc_report_infrastructure, get_awc_report_pregnant, get_pregnant_details, get_awc_report_lactating
 from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data, \
     get_awcs_covered_data_chart
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
@@ -627,6 +627,46 @@ class AwcReportsView(BaseReportView):
                 config['awc_id'],
                 tuple(current_month.timetuple())[:3]
             )
+        elif step == 'pregnant':
+            if 'awc_id' in config:
+                icds_features_flag = icds_pre_release_features(self.request.couch_user)
+                order_by_number_column = request.GET.get('order[0][column]')
+                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
+                order_dir = request.GET.get('order[0][dir]', 'asc')
+                if order_by_name_column == 'age':
+                    order_by_name_column = 'age_in_months'
+                if order_by_name_column == 'beneficiary':
+                    order_by_name_column = 'pregnant'
+                if order_by_name_column == 'number_of_thrs_given':
+                    order_by_name_column = 'num_rations_distributed'
+                # todo remove when these indicators will be available
+                if order_by_name_column in ['opened_on', 'num_anc_complete', 'last_date_thr']:
+                    order_by_name_column = 'age_in_months'
+                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
+
+                data = get_awc_report_pregnant(
+                    order,
+                    config['awc_id']
+                )
+        elif step == 'pregnant_details':
+            data = get_pregnant_details(
+                self.request.GET.get('case_id'),
+                config['awc_id'],
+            )
+        elif step == 'lactating':
+            if 'awc_id' in config:
+                icds_features_flag = icds_pre_release_features(self.request.couch_user)
+                order_by_number_column = request.GET.get('order[0][column]')
+                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
+                order_dir = request.GET.get('order[0][dir]', 'asc')
+                if order_by_name_column == 'age':
+                    order_by_name_column = 'age_in_months'
+                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
+
+                data = get_awc_report_lactating(
+                    order,
+                    config['awc_id']
+                )
         return JsonResponse(data=data)
 
 

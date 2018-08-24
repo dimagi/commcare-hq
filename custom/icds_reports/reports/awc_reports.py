@@ -13,13 +13,13 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.messages import wasting_help_text, stunting_help_text
 from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
-    AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
+    AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView, CcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
     wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
     current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
-    chosen_filters_to_labels, default_age_interval
+    chosen_filters_to_labels, default_age_interval, get_anamic_status
 from custom.icds_reports.const import MapColors
 import six
 
@@ -1100,3 +1100,110 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
                 'y': float(recorded_weight) if row.recorded_height else 0
             })
     return beneficiary
+
+
+@quickcache([
+    'order', 'awc_id'
+], timeout=30 * 60)
+def get_awc_report_pregnant(order, awc_id):
+    if 'anemic' in order:
+        order_dir = ''
+        if order[0] == '-':
+            order_dir = '-'
+        data = CcsRecordMonthly.objects.filter(
+            awc_id=awc_id,
+        ).order_by('{}anemic_severe'.format(order_dir), '{}anemic_moderate'.format(order_dir),
+                   '{}anemic_normal'.format(order_dir), '{}anemic_unknown'.format(order_dir))
+    else:
+        data = CcsRecordMonthly.objects.filter(
+            awc_id=awc_id,
+        ).order_by(order)
+    data_count = data.count()
+    config = {
+        'data': [],
+    }
+
+    def base_data(row_data):
+        return dict(
+            case_id=row_data.case_id,
+            person_name=row_data.person_name,
+            age=row_data.age_in_months // 12 if row_data.age_in_months else row_data.age_in_months,
+            opened_on=None,  # todo change to opened_on when available in Model
+            edd=row_data.edd,
+            trimester=row_data.trimester,
+            anemic=get_anamic_status(row_data),
+            num_anc_complete=None,  # todo change to num_anc_complete when available in Model
+            beneficiary='Yes' if row_data.pregnant else 'No',
+            number_of_thrs_given=row_data.num_rations_distributed,
+            last_date_thr=None,  # todo change to last_date_thr when available in Model
+        )
+
+    for row in data:
+        config['data'].append(base_data(row))
+
+    config["recordsTotal"] = data_count
+    config["recordsFiltered"] = data_count
+
+    return config
+
+
+@quickcache(['case_id', 'awc_id'], timeout=30 * 60)
+def get_pregnant_details(case_id, awc_id):
+    data = CcsRecordMonthly.objects.filter(
+        case_id=case_id,
+        awc_id=awc_id,
+    )
+
+    config = {
+        'data': [],
+    }
+    for row_data in data:
+        config['data'].append(dict(
+            case_id=row_data.case_id,
+            person_name=row_data.person_name,
+            age=row_data.age_in_months // 12 if row_data.age_in_months else row_data.age_in_months,
+            add=row_data.add,
+            delivery_nature=row_data.delivery_nature,
+            institutional_delivery_in_month='Y' if row_data.institutional_delivery_in_month else 'N',
+            num_pnc_visits=row_data.num_pnc_visits,
+            breastfed_at_birth='Y' if row_data.breastfed_at_birth else 'N',
+            is_ebf='Y' if row_data.is_ebf else 'N',
+            num_rations_distributed=row_data.num_rations_distributed,
+        ))
+    return config
+
+
+@quickcache([
+    'order', 'awc_id'
+], timeout=30 * 60)
+def get_awc_report_lactating(order, awc_id):
+
+    data = CcsRecordMonthly.objects.filter(
+        awc_id=awc_id,
+    ).order_by(order)
+    data_count = data.count()
+    config = {
+        'data': [],
+    }
+
+    def base_data(row_data):
+        return dict(
+            case_id=row_data.case_id,
+            person_name=row_data.person_name,
+            age=row_data.age_in_months // 12 if row_data.age_in_months else row_data.age_in_months,
+            add=row_data.add,
+            delivery_nature=row_data.delivery_nature,
+            institutional_delivery_in_month='Y' if row_data.institutional_delivery_in_month else 'N',
+            num_pnc_visits=row_data.num_pnc_visits,
+            breastfed_at_birth='Y' if row_data.breastfed_at_birth else 'N',
+            is_ebf='Y' if row_data.is_ebf else 'N',
+            num_rations_distributed=row_data.num_rations_distributed,
+        )
+
+    for row in data:
+        config['data'].append(base_data(row))
+
+    config["recordsTotal"] = data_count
+    config["recordsFiltered"] = data_count
+
+    return config

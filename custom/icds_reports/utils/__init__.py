@@ -350,6 +350,19 @@ def get_status(value, second_part='', normal_value='', exportable=False, data_en
     return status if not exportable else status['value']
 
 
+def get_anamic_status(value):
+    if value.anemic_severe:
+        return 'Y'
+    elif value.anemic_moderate:
+        return 'Y'
+    elif value.anemic_normal:
+        return 'N'
+    elif value.anemic_unknown:
+        return 'Unknown'
+    else:
+        return 'Not entered'
+
+
 def current_age(dob, selected_date):
     age = relativedelta(selected_date, dob)
     age_format = ""
