@@ -72,7 +72,7 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error, domain_has_privilege,
+    log_accounting_error, domain_has_privilege, is_downgrade
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -1279,7 +1279,8 @@ class SelectPlanView(DomainAccountingSettings):
         elif self.current_subscription.is_trial:
             return ""
         else:
-            new_start_date = self.current_subscription.date_start + datetime.timedelta(days=31)
+            new_start_date = self.current_subscription.date_start + \
+                             datetime.timedelta(days=self.current_subscription.minimum_subscription_length + 1)
             return new_start_date.strftime(USER_DATE_FORMAT)
 
     @property
@@ -1347,7 +1348,8 @@ class SelectPlanView(DomainAccountingSettings):
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
                                            if self.current_subscription is not None else False),
-            'next_subscription': self.next_subscription
+            'next_subscription': self.next_subscription,
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL
         }
 
 
@@ -1463,19 +1465,13 @@ class ConfirmSelectedPlanView(SelectPlanView):
 
     @property
     def is_upgrade(self):
-        current_edition = self.current_subscription.plan_version.plan.edition
-        new_edition = self.edition
-
-        if self.current_subscription.is_trial or current_edition == 'Community':
-            if new_edition == 'Standard' or new_edition == 'Pro' or new_edition == 'Advanced':
-                return True
-        elif current_edition == 'Standard':
-            if new_edition == 'Pro' or new_edition == 'Advanced':
-                return True
-        elif current_edition == 'Pro':
-            if new_edition == "Advanced":
-                return True
-        return False
+        if self.current_subscription.is_trial:
+            return True
+        else:
+            return not is_downgrade(
+                current_edition=self.current_subscription.plan_version.plan.edition,
+                next_edition=self.edition
+            )
 
     @property
     def is_downgrade_before_minimum(self):
@@ -1491,7 +1487,8 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     def current_subscription_end_date(self):
         if self.is_downgrade_before_minimum:
-            return self.current_subscription.date_start + datetime.timedelta(days=30)
+            return self.current_subscription.date_start + \
+                   datetime.timedelta(days=self.current_subscription.minimum_subscription_length)
         else:
             return datetime.date.today()
 

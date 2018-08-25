@@ -21,7 +21,7 @@ hqDefine('accounting/js/pricing_table', [
 
     var pricingTableModel = function (options) {
         assertProperties.assert(options, ['editions', 'currentEdition', 'isRenewal', 'startDateAfterMinimum',
-            'isSubscriptionBelowMin', 'nextSubscription']);
+            'isSubscriptionBelowMin', 'nextSubscription', 'invoicing_contact']);
 
         'use strict';
         var self = {};
@@ -31,6 +31,7 @@ hqDefine('accounting/js/pricing_table', [
         self.startDateAfterMinimumSubscription = options.startDateAfterMinimum;
         self.subscriptionBelowMinimum = options.isSubscriptionBelowMin;
         self.nextSubscription = options.nextSubscription;
+        self.invoicing_contact = options.invoicing_contact;
         self.editions = ko.observableArray(_.map(options.editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
         }));
@@ -72,7 +73,7 @@ hqDefine('accounting/js/pricing_table', [
         self.openMinimumSubscriptionModal = function (pricingTable, e) {
             self.form = $(e.currentTarget).closest("form");
 
-            var mailto = "<a href=\'mailto:billing-support@dimagi.com\'>billing-support@dimagi.com</a>";
+            var mailto = "<a href=\'mailto:" + self.invoicing_contact + "'>billing-support@dimagi.com</a>";
             if (self.isDowngrade(self.currentEdition, self.selected_edition()) && self.subscriptionBelowMinimum) {
                 var oldPlan = utils.capitalize(self.currentEdition);
                 var newPlan = utils.capitalize(self.selected_edition());
@@ -172,6 +173,7 @@ hqDefine('accounting/js/pricing_table', [
             startDateAfterMinimum: initialPageData.get('start_date_after_minimum_subscription'),
             isSubscriptionBelowMin: initialPageData.get('subscription_below_minimum'),
             nextSubscription: initialPageData.get('next_subscription'),
+            invoicing_contact: initialPageData.get('invoicing_contact_email')
         });
 
         // Applying bindings is a bit weird here, because we need logic in the modal,

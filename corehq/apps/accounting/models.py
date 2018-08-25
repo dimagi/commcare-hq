@@ -79,6 +79,8 @@ SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
 
+MINIMUM_SUBSCRIPTION_LENGTH = 30
+
 _soft_assert_domain_not_loaded = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
     exponential_backoff=False,
@@ -1734,10 +1736,14 @@ class Subscription(models.Model):
         elif self.date_start < datetime.date(2018, 9, 3):
             # Only block upgrades for subscriptions created after the date we launched the 30-Day Minimum
             return False
-        elif self.date_start + datetime.timedelta(days=30) >= datetime.date.today():
+        elif self.date_start + datetime.timedelta(days=self.minimum_subscription_length) >= datetime.date.today():
             return True
         else:
             return False
+
+    @property
+    def minimum_subscription_length(self):
+        return MINIMUM_SUBSCRIPTION_LENGTH
 
 
 class InvoiceBaseManager(models.Manager):

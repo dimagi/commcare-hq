@@ -69,6 +69,7 @@ from corehq.apps.accounting.utils import (
     get_account_name_from_default_name,
     get_privileges,
     log_accounting_error,
+    is_downgrade
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
@@ -1670,20 +1671,11 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
     def is_downgrade(self):
         if self.current_subscription is None:
             return False
-
-        current_edition = self.current_subscription.plan_version.plan.edition
-        new_edition = self.plan_version.plan.edition
-
-        if current_edition == 'Advanced':
-            if new_edition == 'Pro' or new_edition == 'Standard' or new_edition == 'Community':
-                return True
-        if current_edition == 'Pro':
-            if new_edition == 'Standard' or new_edition == 'Community':
-                return True
-        if current_edition == 'Standard':
-            if new_edition == 'Community':
-                return True
-        return False
+        else:
+            is_downgrade(
+                current_edition=self.current_subscription.plan_version.plan.edition,
+                next_edition=self.plan_version.plan.edition
+            )
 
 
 class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
