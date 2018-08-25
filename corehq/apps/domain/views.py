@@ -1280,7 +1280,7 @@ class SelectPlanView(DomainAccountingSettings):
             return ""
         else:
             new_start_date = self.current_subscription.date_start + \
-                             datetime.timedelta(days=self.current_subscription.minimum_subscription_length + 1)
+                datetime.timedelta(days=self.current_subscription.minimum_subscription_length + 1)
             return new_start_date.strftime(USER_DATE_FORMAT)
 
     @property
@@ -1488,7 +1488,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     def current_subscription_end_date(self):
         if self.is_downgrade_before_minimum:
             return self.current_subscription.date_start + \
-                   datetime.timedelta(days=self.current_subscription.minimum_subscription_length)
+                datetime.timedelta(days=self.current_subscription.minimum_subscription_length)
         else:
             return datetime.date.today()
 

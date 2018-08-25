@@ -173,7 +173,7 @@ hqDefine('accounting/js/pricing_table', [
             startDateAfterMinimum: initialPageData.get('start_date_after_minimum_subscription'),
             isSubscriptionBelowMin: initialPageData.get('subscription_below_minimum'),
             nextSubscription: initialPageData.get('next_subscription'),
-            invoicing_contact: initialPageData.get('invoicing_contact_email')
+            invoicing_contact: initialPageData.get('invoicing_contact_email'),
         });
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
