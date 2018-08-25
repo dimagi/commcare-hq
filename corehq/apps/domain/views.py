@@ -1375,7 +1375,7 @@ class SelectPlanView(DomainAccountingSettings):
     def page_context(self):
         return {
             'editions': [
-                (edition.lower(), DESC_BY_EDITION[edition])
+                edition.lower()
                 for edition in [
                     SoftwarePlanEdition.COMMUNITY,
                     SoftwarePlanEdition.STANDARD,
