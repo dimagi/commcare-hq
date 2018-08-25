@@ -753,10 +753,6 @@ class SoftwarePlan(models.Model):
             subscription_count += Subscription.visible_objects.filter(plan_version=version, is_active=True).count()
         return subscription_count >= self.max_domains
 
-    @property
-    def is_annual_plan(self):
-        return "Annual" in self.name
-
 
 class DefaultProductPlan(models.Model):
     """
