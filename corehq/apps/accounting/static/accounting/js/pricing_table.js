@@ -74,7 +74,7 @@ hqDefine('accounting/js/pricing_table', [
 
         self.submitDowngrade = function(pricingTable, e) {
             var _submitForm = function() {
-                self.submit();
+                self.form.submit();
             };
 
             var $button = $(e.currentTarget);
@@ -82,7 +82,7 @@ hqDefine('accounting/js/pricing_table', [
 
             $.ajax({
                 method: "POST",
-                url: hqImport('hqwebapp/js/initial_page_data').reverse('email_on_downgrade'),
+                url: initialPageData.reverse('email_on_downgrade'),
                 data: {
                     old_plan: self.currentPlan(),
                     new_plan: self.selectedPlan(),
