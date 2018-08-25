@@ -92,6 +92,11 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
     vm.apply = function() {
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+        window.ga('send', 'event', {
+            'eventCategory': 'Location Filter',
+            'eventAction': 'Location Changed',
+            'eventLabel': vm.selectedLocationId.location_id,
+        });
         $uibModalInstance.close(vm.selectedLocations);
     };
 

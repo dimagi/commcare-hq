@@ -19,7 +19,7 @@
         </div>
     {% endif %}
     {% crispy criteria_form criteria_form.case_type_helper %}
-    <div data-bind="template: {name: get_ko_template_id, foreach: criteria}"></div>
+    <div data-bind="template: {name: get_ko_template_id, foreach: criteria, afterRender:disableCriteriaField}"></div>
     <div class="form-group" data-bind="template: {afterRender:disableCriteriaField}">
         <div class="alert alert-block alert-danger" data-bind="visible: show_add_filter_warning() && selected_case_filter_id() !== 'select-one'">
             <span class="help-block"><strong>{% trans "Please click Add filter or clear the dropdown" %}</strong></span>
