@@ -12,7 +12,8 @@ from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM
 from corehq.apps.aggregate_ucrs.query_column_providers import StandardQueryColumnProvider, \
     AggregationParamQueryColumnProvider
 from corehq.apps.userreports import const
-from corehq.apps.userreports.datatypes import DATA_TYPE_INTEGER, DataTypeProperty, DATA_TYPE_STRING, DATA_TYPE_DATE
+from corehq.apps.userreports.datatypes import DATA_TYPE_INTEGER, DataTypeProperty, DATA_TYPE_STRING, \
+    DATA_TYPE_DATE, DATA_TYPE_SMALL_INTEGER, DATA_TYPE_DECIMAL
 from corehq.apps.userreports.indicators import Column
 from corehq.apps.userreports.reports.specs import SQLAGG_COLUMN_MAP
 from dimagi.ext import jsonobject
@@ -325,8 +326,17 @@ class SqlaggColumnAdapter(SimpleAggregationAdapater):
                 const.AGGGREGATION_TYPE_COUNT_UNIQUE
         ):
             return DATA_TYPE_INTEGER
-        # default to using the same column type as the source
-        return _get_datatype_from_referenced_column(self._db_column, self.properties.referenced_column)
+        elif self._db_column.aggregation_type in (
+                const.AGGGREGATION_TYPE_NONZERO_SUM
+        ):
+            return DATA_TYPE_SMALL_INTEGER
+        elif self._db_column.aggregation_type in (
+                const.AGGGREGATION_TYPE_AVG
+        ):
+            return DATA_TYPE_DECIMAL
+        else:
+            # default to using the same column type as the source
+            return _get_datatype_from_referenced_column(self._db_column, self.properties.referenced_column)
 
 
 def _get_datatype_from_referenced_column(db_column, referenced_column):
