@@ -732,6 +732,7 @@ class SoftwarePlan(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     is_customer_software_plan = models.BooleanField(default=False)
     max_domains = models.IntegerField(blank=True, null=True)
+    is_annual_plan = models.BooleanField(default=False)
 
     class Meta(object):
         app_label = 'accounting'
@@ -751,10 +752,6 @@ class SoftwarePlan(models.Model):
         for version in self.softwareplanversion_set.all():
             subscription_count += Subscription.visible_objects.filter(plan_version=version, is_active=True).count()
         return subscription_count >= self.max_domains
-
-    @property
-    def is_annual_plan(self):
-        return "Annual" in self.name
 
 
 class DefaultProductPlan(models.Model):

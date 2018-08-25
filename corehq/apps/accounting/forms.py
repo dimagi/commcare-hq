@@ -1036,6 +1036,7 @@ class PlanInformationForm(forms.Form):
     visibility = forms.ChoiceField(choices=SoftwarePlanVisibility.CHOICES)
     max_domains = forms.IntegerField(required=False)
     is_customer_software_plan = forms.BooleanField(required=False)
+    is_annual_plan = forms.BooleanField(required=False)
 
     def __init__(self, plan, *args, **kwargs):
         self.plan = plan
@@ -1046,7 +1047,8 @@ class PlanInformationForm(forms.Form):
                 'edition': plan.edition,
                 'visibility': plan.visibility,
                 'max_domains': plan.max_domains,
-                'is_customer_software_plan': plan.is_customer_software_plan
+                'is_customer_software_plan': plan.is_customer_software_plan,
+                'is_annual_plan': plan.is_annual_plan
             }
         else:
             kwargs['initial'] = {
@@ -1065,7 +1067,8 @@ class PlanInformationForm(forms.Form):
                 'edition',
                 'visibility',
                 'max_domains',
-                'is_customer_software_plan'
+                'is_customer_software_plan',
+                'is_annual_plan'
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -1094,12 +1097,14 @@ class PlanInformationForm(forms.Form):
         visibility = self.cleaned_data['visibility']
         max_domains = self.cleaned_data['max_domains']
         is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
+        is_annual_plan = self.cleaned_data['is_annual_plan']
         plan = SoftwarePlan(name=name,
                             description=description,
                             edition=edition,
                             visibility=visibility,
                             max_domains=max_domains,
-                            is_customer_software_plan=is_customer_software_plan
+                            is_customer_software_plan=is_customer_software_plan,
+                            is_annual_plan=is_annual_plan
                             )
         plan.save()
         return plan
@@ -1114,6 +1119,7 @@ class PlanInformationForm(forms.Form):
             plan.visibility = self.cleaned_data['visibility']
             plan.max_domains = self.cleaned_data['max_domains']
             plan.is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
+            plan.is_annual_plan = self.cleaned_data['is_annual_plan']
             plan.save()
             messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
 
