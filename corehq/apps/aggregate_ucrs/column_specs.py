@@ -264,8 +264,7 @@ SECONDARY_COLUMN_TYPE_CHOICES = (
     (const.AGGGREGATION_TYPE_AVG, _('Average')),
     (const.AGGGREGATION_TYPE_COUNT, _('Count')),
     (const.AGGGREGATION_TYPE_COUNT_UNIQUE, _('Count Unique Values')),
-    (const.AGGGREGATION_TYPE_NONZERO_SUM, _('Nonzero sum? (1 if sum is nonzero else 0)')),
-    # todo: add other aggregations, count, min, max, (first? last?)
+    (const.AGGGREGATION_TYPE_NONZERO_SUM, _('Has a nonzero sum (1 if sum is nonzero else 0).')),
 )
 
 
