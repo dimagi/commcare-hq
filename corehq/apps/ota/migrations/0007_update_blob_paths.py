@@ -11,7 +11,7 @@ from corehq.sql_db.operations import HqRunSQL
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('ota', '0005_rm_max_length_from_integer'),
+        ('ota', '0006_one_reinstall_measure'),
     ]
 
     operations = [
