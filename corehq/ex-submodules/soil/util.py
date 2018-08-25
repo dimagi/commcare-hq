@@ -20,7 +20,7 @@ from soil.heartbeat import is_alive, heartbeat_enabled
 from soil.progress import get_task_status
 
 from corehq.util.view_utils import absolute_reverse
-from corehq.blobs import get_blob_db
+from corehq.blobs import CODES, get_blob_db
 from corehq.util.files import safe_filename_header
 
 from zipfile import ZipFile
@@ -45,7 +45,7 @@ def expose_file_download(path, expiry, **kwargs):
     """
     Expose a file download object that potentially uses the external drive
     """
-    ref = FileDownload.create(path, **kwargs)
+    ref = FileDownload(path, **kwargs)
     ref.save(expiry)
     return ref
 
@@ -59,7 +59,8 @@ def expose_blob_download(
     """
     Expose a blob object for download
     """
-    ref = BlobDownload.create(
+    # TODO add file parameter and refactor blob_db.put(...) into this method
+    ref = BlobDownload(
         identifier,
         mimetype=mimetype,
         content_disposition=content_disposition,
@@ -152,61 +153,46 @@ def expose_download(use_transfer, file_path, filename, download_id, file_type):
         )
 
 
-class ExposeBlobDownload:
-    """
-        Takes path to a file,
-        move its content to a ZipFile unless asked not to
-        stores it's contents in BlobDb
-        clean the input file after storing content to blobdb unless asked not to
-        returns a link to download the file
-    """
-    def __init__(self, zip_file=True, cleanup=True):
-        self.zip_file = zip_file
-        self.cleanup = cleanup
+def expose_zipped_blob_download(data_path, filename, format, domain):
+    """Expose zipped file content as a blob download
 
-    @staticmethod
-    def save_dump_to_blob(data_file_path, data_file_name, result_file_format):
+    :param data_path: Path to data file. Will be deleted.
+    :param filename: File name.
+    :param format: `couchexport.models.Format` constant.
+    :param domain: Domain name.
+    :returns: A link to download the file.
+    """
+    try:
+        _, zip_temp_path = tempfile.mkstemp(".zip")
+        with ZipFile(zip_temp_path, 'w') as zip_file_:
+            zip_file_.write(data_path, filename)
+    finally:
+        os.remove(data_path)
+
+    try:
         expiry_mins = 60 * 24
-        with open(data_file_path, 'rb') as file_:
-            blob_db = get_blob_db()
-            blob_db.put(
-                file_,
-                data_file_name,
-                timeout=expiry_mins)
-        file_format = Format.from_format(result_file_format)
-        file_name_header = safe_filename_header(
-            data_file_name, file_format.extension)
-        blob_dl_object = expose_blob_download(
-            data_file_name,
+        file_format = Format.from_format(format)
+        file_name_header = safe_filename_header(filename, file_format.extension)
+        ref = expose_blob_download(
+            filename,
             expiry=expiry_mins * 60,
             mimetype=file_format.mimetype,
             content_disposition=file_name_header
         )
-        return blob_dl_object.download_id
+        with open(zip_temp_path, 'rb') as file_:
+            get_blob_db().put(
+                file_,
+                domain=domain,
+                parent_id=domain,
+                type_code=CODES.tempfile,
+                key=ref.download_id,
+                timeout=expiry_mins
+            )
+    finally:
+        os.remove(zip_temp_path)
 
-    @staticmethod
-    def zip_dump(data_file_path, data_file_name):
-        _, zip_temp_path = tempfile.mkstemp(".zip")
-        with ZipFile(zip_temp_path, 'w') as zip_file_:
-            zip_file_.write(data_file_path, data_file_name)
-
-        return zip_temp_path
-
-    @staticmethod
-    def clean_temp_files(*temp_file_paths):
-        for file_path in temp_file_paths:
-            os.remove(file_path)
-
-    def get_link(self, data_file_path, data_file_name, result_file_format):
-        if self.zip_file:
-            temp_zip_path = self.zip_dump(data_file_path, data_file_name)
-            download_id = self.save_dump_to_blob(temp_zip_path, data_file_name, result_file_format)
-            self.clean_temp_files(temp_zip_path)
-        else:
-            download_id = self.save_dump_to_blob(data_file_path, data_file_name, result_file_format)
-        if self.cleanup:
-            self.clean_temp_files(data_file_path)
-        url = "%s%s?%s" % (get_url_base(),
-                           reverse('retrieve_download', kwargs={'download_id': download_id}),
-                           "get_file")  # downloads immediately, rather than rendering page
-        return url
+    return "%s%s?%s" % (
+        get_url_base(),
+        reverse('retrieve_download', kwargs={'download_id': ref.download_id}),
+        "get_file"  # download immediately rather than rendering page
+    )
