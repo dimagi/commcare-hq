@@ -5,7 +5,8 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds-new",
+    "icds"
   ],
   "report_id": "static-custom_sql_mpr_2a_person_cases",
   "data_source_table": "static-person_cases_v2",

@@ -457,7 +457,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.request.method == 'POST':
             args.append(self.request.POST)
 
-        return BroadcastForm(*args)
+        return BroadcastForm(*args, is_system_admin=self.is_system_admin)
 
     @property
     def page_context(self):
@@ -774,7 +774,8 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
         return ConditionalAlertScheduleForm(
             *args,
-            new_reminders_migrator=self.new_reminders_migrator
+            new_reminders_migrator=self.new_reminders_migrator,
+            is_system_admin=self.is_system_admin
         )
 
     @property
@@ -784,10 +785,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @property
     def rule(self):
         return None
-
-    @cached_property
-    def is_system_admin(self):
-        return self.request.couch_user.is_superuser
 
     @cached_property
     def basic_info_form(self):

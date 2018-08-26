@@ -107,6 +107,11 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             return false;
         };
 
+        self.disableCriteriaField = function(){
+            if(initialPageData.get('read_only_mode')) {
+                $('.main-form :input').prop('disabled', true);
+            }
+        };
         self.add_filter = function() {
             var case_filter_id = self.selected_case_filter_id();
             if(case_filter_id === 'select-one') {
