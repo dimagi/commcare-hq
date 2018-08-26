@@ -148,7 +148,7 @@ class TestBlobMixin(BaseTestCase):
         name = "test.1"
         content = b"<xml />"
         obj.deferred_put_attachment(content, name, content_type="text/xml")
-        self.assertEqual(obj.fetch_attachment(name), content)
+        self.assertEqual(obj.fetch_attachment(name).encode('utf-8'), content)
 
     def test_delete_attachment_deletes_unsaved_blob(self):
         obj = self.make_doc(DeferredPutBlobDocument)
@@ -855,7 +855,7 @@ class TestBulkAtomicBlobs(BaseTestCase):
             self.assertEqual(fh.read(), "deferred")
 
 
-_abc_digest = mod.sha1("abc").hexdigest()
+_abc_digest = mod.sha1("abc".encode('utf-8')).hexdigest()
 
 
 @generate_cases([
