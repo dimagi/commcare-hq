@@ -27,11 +27,13 @@ class BaseTestCase(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(BaseTestCase, cls).setUpClass()
         cls.db = TemporaryFilesystemBlobDB()
 
     @classmethod
     def tearDownClass(cls):
         cls.db.close()
+        super(BaseTestCase, cls).tearDownClass()
 
     def make_doc(self, type_=None, id=None):
         if type_ is None:
@@ -499,6 +501,7 @@ class TestBlobMixinWithS3Backend(TestBlobMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(TestBlobMixinWithS3Backend, cls).setUpClass()
         with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
             config = settings.S3_BLOB_DB_SETTINGS
         cls.db = TemporaryS3BlobDB(config)
