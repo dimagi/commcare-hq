@@ -36,6 +36,6 @@ def test_prepare_bulk_payloads2(self, max_size, chunk_size, expected_payloads):
     self.assertTrue(all(payloads))
 
     # check that we can reform the original list of changes
-    json_docs = ''.join(payloads).strip().split('\n')
+    json_docs = b''.join(payloads).strip().split(b'\n')
     reformed_changes = [json.loads(doc) for doc in json_docs]
     self.assertEqual(bulk_changes, reformed_changes)
