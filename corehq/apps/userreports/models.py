@@ -267,7 +267,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
         spec_error = None
         while named_expression_specs:
             number_generated = 0
-            for name, expression in named_expression_specs.items():
+            for name, expression in list(named_expression_specs.items()):
                 try:
                     named_expressions[name] = ExpressionFactory.from_spec(
                         expression,
