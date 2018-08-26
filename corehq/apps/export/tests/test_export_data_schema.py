@@ -1213,7 +1213,7 @@ class TestOrderingOfSchemas(SimpleTestCase):
         )
 
     def _assert_item_order(self, schema, path, items):
-        group_schema = filter(lambda gs: gs.path == path, schema.group_schemas)[0]
+        group_schema = list(filter(lambda gs: gs.path == path, schema.group_schemas))[0]
 
         for item in group_schema.items:
             if not items:
