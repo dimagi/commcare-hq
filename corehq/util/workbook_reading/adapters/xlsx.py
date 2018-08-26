@@ -27,7 +27,7 @@ def open_xlsx_workbook(filename):
     try:
         f = open(filename, 'rb')
     except IOError as e:
-        raise SpreadsheetFileNotFound(e.message)
+        raise SpreadsheetFileNotFound(e)
 
     with f as f:
         try:
