@@ -481,8 +481,10 @@ class JsonExportWriter(InMemoryExportWriter):
         new_tables = {}
         for tablename, data in self.tables.items():
             new_tables[self.table_names[tablename]] = {"headers":data[0], "rows": data[1:]}
-
-        self.file.write(json.dumps(new_tables, cls=self.ConstantEncoder))
+        json_dump = json.dumps(new_tables, cls=self.ConstantEncoder)
+        if six.PY3:
+            json_dump = json_dump.encode('utf-8')
+        self.file.write(json_dump)
 
 
 class PythonDictWriter(InMemoryExportWriter):
