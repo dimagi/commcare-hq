@@ -1073,7 +1073,7 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("a+b+c+9", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8 + 9),
     ("a*b", {"a": 2, "b": 23}, 2 * 23),
     ("a*b if a > b else b -a", {"a": 2, "b": 23}, 23 - 2),
-    ("'text1' if a < 5 else `text2`", {"a": 4}, 'text1'),
+    ("'text1' if a < 5 else 'text2'", {"a": 4}, 'text1'),
     ("a if a else b", {"a": 0, "b": 1}, 1),
     ("a if a else b", {"a": False, "b": 1}, 1),
     ("a if a else b", {"a": None, "b": 1}, 1),
