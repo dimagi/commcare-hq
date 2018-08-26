@@ -265,7 +265,7 @@ class TestDumpLoadToggles(SimpleTestCase):
 
             for mocked_toggle in mocked_toggles.values():
                 loaded_toggle = Toggle.get(mocked_toggle.slug)
-                self.assertItemsEqual(mocked_toggle.enabled_users, loaded_toggle.enabled_users)
+                self.assertEqual(set(mocked_toggle.enabled_users), set(loaded_toggle.enabled_users))
 
 
 def _get_doc_counts_from_db(domain):
