@@ -10,29 +10,29 @@ class UtilitiesTestCase(SimpleTestCase):
     def test_truncate_value_left(self):
         value = 'string to truncate'
         truncated = truncate_value(value, max_length=len(value) - 1)
-        self.assertEqual(truncated, 'truncate_849f01fd')
+        self.assertEqual(truncated, b'truncate_849f01fd')
 
     def test_truncate_value_right(self):
         value = 'string to truncate'
         truncated = truncate_value(value, max_length=len(value) - 1, from_left=False)
-        self.assertEqual(truncated, 'string t_849f01fd')
+        self.assertEqual(truncated, b'string t_849f01fd')
 
     def test_truncate_value_unicode_left(self):
         value = '\u00e8 string to truncate\u00e8'
         truncated = truncate_value(value, max_length=len(value) - 1)
-        self.assertEqual(truncated, 'runcate\\xe8_6be7bea3')
+        self.assertEqual(truncated, b'runcate\\xe8_6be7bea3')
 
     def test_truncate_value_unicode_right(self):
         value = '\u00e8 string to truncate\u00e8'
         truncated = truncate_value(value, max_length=len(value) - 1, from_left=False)
-        self.assertEqual(truncated, '\\xe8 string_6be7bea3')
+        self.assertEqual(truncated, b'\\xe8 string_6be7bea3')
 
     def test_table_name(self):
-        self.assertEqual('config_report_domain_table_7a7a33ec', get_table_name('domain', 'table'))
+        self.assertEqual(b'config_report_domain_table_7a7a33ec', get_table_name('domain', 'table'))
 
     def test_table_name_unicode(self):
         self.assertEqual(
-            "config_report_domain_unicode\\\\xe8_8aece1af",
+            b"config_report_domain_unicode\\\\xe8_8aece1af",
             get_table_name('domain', 'unicode\u00e8')
         )
 
@@ -43,7 +43,7 @@ class UtilitiesTestCase(SimpleTestCase):
 
     def test_long_table_name(self):
         name = get_table_name('this_is_a_long_domain', 'and_a_long_table_name')
-        name_expected = 'config_report_this_is_a_long_domain_and_a_long_table_n_6ac28759'
+        name_expected = b'config_report_this_is_a_long_domain_and_a_long_table_n_6ac28759'
         self.assertEqual(name, name_expected)
 
     def test_column_unicode(self):
