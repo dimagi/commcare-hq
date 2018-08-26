@@ -11,7 +11,7 @@ class JsonErrorTests(SimpleTestCase):
 
 
 @generate_cases([
-    (b'ascii string',),
+    ('ascii string',),
     (b'utf8 string \xef\xbd\xa1', 'utf8 string \uff61'),
     ('unicode string \uff61',),
 ], JsonErrorTests)
