@@ -319,7 +319,7 @@ class ZippedExportWriter(OnDiskExportWriter):
     """
     Writer that creates a zip file containing a csv for each table.
     """
-    table_file_extension = b".csv"
+    table_file_extension = ".csv"
 
     def _write_final_result(self):
         archive = zipfile.ZipFile(self.file, 'w', zipfile.ZIP_DEFLATED)
@@ -333,9 +333,11 @@ class ZippedExportWriter(OnDiskExportWriter):
 
     def _get_archive_filename(self, name):
         path = self.archive_basepath
-        if isinstance(path, six.text_type):
-            path = path.encode('utf-8')
-        return os.path.join(path, b'{}{}'.format(name, self.table_file_extension))
+        if isinstance(path, six.binary_type):
+            path = path.decode('utf-8')
+        if isinstance(name, six.binary_type):
+            name = name.decode('utf-8')
+        return os.path.join(path, '{}{}'.format(name, self.table_file_extension)).encode('utf-8')
 
 
 class CsvExportWriter(ZippedExportWriter):
