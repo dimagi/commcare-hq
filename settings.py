@@ -1295,19 +1295,34 @@ INDICATOR_CONFIG = {
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-NEW_USERS_GROUPS_DB = b'users'
-USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
+if six.PY3:
+    NEW_USERS_GROUPS_DB = 'users'
+    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
-NEW_FIXTURES_DB = b'fixtures'
-FIXTURES_DB = NEW_FIXTURES_DB
+    NEW_FIXTURES_DB = 'fixtures'
+    FIXTURES_DB = NEW_FIXTURES_DB
 
-NEW_DOMAINS_DB = b'domains'
-DOMAINS_DB = NEW_DOMAINS_DB
+    NEW_DOMAINS_DB = 'domains'
+    DOMAINS_DB = NEW_DOMAINS_DB
 
-NEW_APPS_DB = b'apps'
-APPS_DB = NEW_APPS_DB
+    NEW_APPS_DB = 'apps'
+    APPS_DB = NEW_APPS_DB
 
-META_DB = b'meta'
+    META_DB = 'meta'
+else:
+    NEW_USERS_GROUPS_DB = b'users'
+    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
+
+    NEW_FIXTURES_DB = b'fixtures'
+    FIXTURES_DB = NEW_FIXTURES_DB
+
+    NEW_DOMAINS_DB = b'domains'
+    DOMAINS_DB = NEW_DOMAINS_DB
+
+    NEW_APPS_DB = b'apps'
+    APPS_DB = NEW_APPS_DB
+
+    META_DB = b'meta'
 
 
 COUCHDB_APPS = [
