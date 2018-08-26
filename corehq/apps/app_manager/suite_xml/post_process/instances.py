@@ -186,7 +186,7 @@ def related_locations_fixture_instances(domain, instance_name):
 
 
 def get_all_instances_referenced_in_xpaths(domain, xpaths):
-    instance_re = br"""instance\(['"]([\w\-:]+)['"]\)"""
+    instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
     instances = set()
     unknown_instance_ids = set()
     for xpath in xpaths:
