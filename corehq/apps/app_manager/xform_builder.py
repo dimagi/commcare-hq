@@ -167,16 +167,16 @@ class XFormBuilder(object):
         """
         Builds a text node "id" parameter
 
-        >>> XFormBuilder.get_text_id('foo')
-        u'foo-label'
-        >>> XFormBuilder.get_text_id('foo', ['bar'])
-        u'bar/foo-label'
-        >>> XFormBuilder.get_text_id('foo', ['bar', 'baz'])
-        u'bar/baz/foo-label'
-        >>> XFormBuilder.get_text_id('foo', ['bar', 'baz'], 'choice1')
-        u'bar/baz/foo-choice1-label'
-        >>> XFormBuilder.get_text_id('foo', is_hint=True)
-        u'foo-hint'
+        >>> XFormBuilder.get_text_id('foo') if six.PY3 else XFormBuilder.get_text_id('foo').encode('utf-8')
+        'foo-label'
+        >>> XFormBuilder.get_text_id('foo', ['bar']) if six.PY3 else XFormBuilder.get_text_id('foo', ['bar']).encode('utf-8')
+        'bar/foo-label'
+        >>> XFormBuilder.get_text_id('foo', ['bar', 'baz']) if six.PY3 else XFormBuilder.get_text_id('foo', ['bar', 'baz']).encode('utf-8')
+        'bar/baz/foo-label'
+        >>> XFormBuilder.get_text_id('foo', ['bar', 'baz'], 'choice1') if six.PY3 else XFormBuilder.get_text_id('foo', ['bar', 'baz'], 'choice1').encode('utf-8')
+        'bar/baz/foo-choice1-label'
+        >>> XFormBuilder.get_text_id('foo', is_hint=True) if six.PY3 else XFormBuilder.get_text_id('foo', is_hint=True).encode('utf-8')
+        'foo-hint'
 
         """
         text_id = []
@@ -193,12 +193,12 @@ class XFormBuilder(object):
         """
         Returns the reference to the data node of the given question
 
-        >>> XFormBuilder.get_data_ref('foo')
-        u'/data/foo'
-        >>> XFormBuilder.get_data_ref('foo', ['bar'])
-        u'/data/bar/foo'
-        >>> XFormBuilder.get_data_ref('foo', ['bar', 'baz'])
-        u'/data/bar/baz/foo'
+        >>> XFormBuilder.get_data_ref('foo') if six.PY3 else XFormBuilder.get_data_ref('foo').encode('utf-8')
+        '/data/foo'
+        >>> XFormBuilder.get_data_ref('foo', ['bar']) if six.PY3 else XFormBuilder.get_data_ref('foo', ['bar']).encode('utf-8')
+        '/data/bar/foo'
+        >>> XFormBuilder.get_data_ref('foo', ['bar', 'baz']) if six.PY3 else XFormBuilder.get_data_ref('foo', ['bar', 'baz']).encode('utf-8')
+        '/data/bar/baz/foo'
 
         """
         if groups is None:
@@ -210,10 +210,10 @@ class XFormBuilder(object):
         Return a namespaced parameter/tag name
 
         >>> xform = XFormBuilder()
-        >>> xform.get_namespaced('jr:constraintMsg')
-        u'{http://openrosa.org/javarosa}constraintMsg'
-        >>> xform.get_namespaced('constraint')
-        u'constraint'
+        >>> xform.get_namespaced('jr:constraintMsg') if six.PY3 else xform.get_namespaced('jr:constraintMsg').encode('utf-8')
+        '{http://openrosa.org/javarosa}constraintMsg'
+        >>> xform.get_namespaced('constraint') if six.PY3 else xform.get_namespaced('constraint').encode('utf-8')
+        'constraint'
 
         """
         has_namespace = re.compile(r'(\w+):(\w+)')
