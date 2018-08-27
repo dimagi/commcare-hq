@@ -59,7 +59,7 @@ branches:
   - np/celery-4.x-2  # Nick P Aug 22
   - nh/omrs/atom+create  # Norman Aug 23
   - pv/deactivated-users # Preethi Aug 23
-  - np/serialize-export_instances-v2  # Nick P 8/27
+  - np/serialize-export_instances-v3  # Nick P 8/27
 submodules:
   submodules/django-digest-src:
     branches: []
