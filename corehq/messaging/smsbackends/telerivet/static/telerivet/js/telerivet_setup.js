@@ -15,9 +15,6 @@ hqDefine("telerivet/js/telerivet_setup", [
         self.step2 = ko.computed(function() { return self.step() === 2; });
         self.step3 = ko.computed(function() { return self.step() === 3; });
         self.finish = ko.computed(function() { return self.step() === 4; });
-        self.previousStep = function() {
-            self.step(self.step() - 1);
-        };
         self.nextStep = function() {
             self.step(self.step() + 1);
         };
