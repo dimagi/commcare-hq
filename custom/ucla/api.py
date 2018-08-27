@@ -70,7 +70,7 @@ def substance_use_message_bank_content_new(recipient, schedule_instance):
 
 
 def _get_message_bank_content_new_framework(fixture_name, recipient, schedule_instance):
-    return _get_message_bank_content(
+    result = _get_message_bank_content(
         fixture_name,
         schedule_instance.domain,
         schedule_instance.schedule_iteration_num,
@@ -78,6 +78,11 @@ def _get_message_bank_content_new_framework(fixture_name, recipient, schedule_in
         len(schedule_instance.memoized_schedule.memoized_events),
         recipient
     )
+
+    if result:
+        return [result]
+
+    return []
 
 
 def _get_message_bank_content(fixture_name, domain, schedule_iteration_num, current_event_num, num_events,
