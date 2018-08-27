@@ -40,7 +40,6 @@ def has_location_filter(view_fn, *args, **kwargs):
 class ReportExport(object):
     """Export all the rows of a UCR report
     """
-    data_source = None
 
     def __init__(self, domain, title, report_config, lang, filter_values):
         self.domain = domain
@@ -49,10 +48,15 @@ class ReportExport(object):
         self.lang = lang
         self.filter_values = filter_values
 
-    def set_data_source(self, data_source):
+    @property
+    @memoized
+    def data_source(self):
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        data_source = ConfigurableReportDataSource.from_spec(self.report_config, include_prefilters=True)
+        data_source.lang = self.lang
         data_source.set_filter_values(self.filter_values)
         data_source.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
-        self.data_source = data_source
+        return data_source
 
     def create_export(self, file_path, format_):
         """Save this report to a file
@@ -65,8 +69,6 @@ class ReportExport(object):
     def get_table(self):
         """Generate a table of all rows of this report
         """
-        assert self.data_source, "You need to setup data source before retrieving data"
-
         headers = [
             column.header
             for column in self.data_source.inner_columns if column.data_tables_column.visible

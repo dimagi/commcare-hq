@@ -513,9 +513,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def report_export(self):
-        report_export = ReportExport(self.domain, self.title, self.spec, self.lang, self.filter_values)
-        report_export.set_data_source(self.data_source)
-        return report_export
+        return ReportExport(self.domain, self.title, self.spec, self.lang, self.filter_values)
 
     @property
     def export_table(self):
