@@ -201,6 +201,7 @@ class UserRegistrationView(BasePageView):
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
         ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, request).update_response(response)
+        ab_tests.ABTest(ab_tests.DEMO_CTA, request).update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
