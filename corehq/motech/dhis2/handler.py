@@ -1,14 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import logging
 from collections import namedtuple
-
-from dimagi.utils.dates import force_to_datetime
 
 from corehq.apps.users.models import CouchUser
 from corehq.motech.dhis2.const import LOCATION_DHIS_ID, DHIS2_API_VERSION
-from corehq.motech.openmrs.repeater_helpers import get_form_question_values, CaseTriggerInfo
-import logging
+from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
+from dimagi.utils.dates import force_to_datetime
+
 
 logger = logging.getLogger('dhis2')
 Dhis2Response = namedtuple('Dhis2Response', 'status_code reason content')
@@ -19,7 +19,8 @@ def _get_program(config, case_trigger_info=None, payload=None):
 
 
 def _get_org_unit(config, case_trigger_info=None, payload=None):
-    org_unit_id = config.org_unit_id
+    org_unit_id_spec = config.org_unit_id
+    org_unit_id = org_unit_id_spec.get_value(case_trigger_info) if org_unit_id_spec else None
     if not org_unit_id:
         user_id = payload.get('@user_id')
         user = CouchUser.get_by_user_id(user_id)

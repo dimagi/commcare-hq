@@ -9,6 +9,16 @@
     </div>
 </div>
 
+<div data-bind="visible: $root.useCase() === 'conditional_alert'">
+    <p class="help-block">
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+        See the <a href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts#ConditionalAlerts-Content" target="_blank">help site</a>
+        for some optional formatting that can be applied to this message.
+        {% endblocktrans %}
+    </p>
+</div>
+
 <div class="controls translation-controls" data-bind="visible: !translate()">
     <textarea data-bind="value: nonTranslatedMessage" rows="10" cols="40" class="textarea form-control">
     </textarea>

@@ -324,7 +324,6 @@ class QueueingTestCase(BaseSMSTest):
         self.assertEqual(process_sms_delay_mock.call_count, 0)
         self.assertBillableDoesNotExist(couch_id)
 
-    """
     @patch.object(QueuedSMS, 'set_system_error')
     @patch('corehq.apps.sms.tasks.domain_is_on_trial')
     def test_passes_trial_check(self, domain_is_on_trial_patch, set_system_error_patch, delay_patch,
@@ -350,31 +349,6 @@ class QueueingTestCase(BaseSMSTest):
         client.set(key, MAX_TRIAL_SMS)
         self.assertFalse(passes_trial_check(sms))
         set_system_error_patch.assert_called_once()
-
-        # Test when not on trial
-        domain_is_on_trial_patch.return_value = False
-        self.assertTrue(passes_trial_check(sms))
-    """
-
-    @patch.object(QueuedSMS, 'set_system_error')
-    @patch('corehq.apps.sms.tasks.domain_is_on_trial')
-    def test_passes_trial_check(self, domain_is_on_trial_patch, set_system_error_patch, delay_patch,
-            enqueue_patch):
-
-        client = get_redis_client()
-        sms = QueuedSMS(domain='trial-project')
-        domain_is_on_trial_patch.return_value = True
-        key = 'sms-sent-on-trial-for-trial-project'
-
-        # Test when key doesn't exist
-        self.assertIsNone(client.get(key))
-        self.assertFalse(passes_trial_check(sms))
-        self.assertEqual(set_system_error_patch.call_count, 1)
-
-        # Test with existing key
-        client.set(key, 100)
-        self.assertFalse(passes_trial_check(sms))
-        self.assertEqual(set_system_error_patch.call_count, 2)
 
         # Test when not on trial
         domain_is_on_trial_patch.return_value = False

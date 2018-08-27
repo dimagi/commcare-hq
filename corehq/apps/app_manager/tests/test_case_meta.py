@@ -135,7 +135,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
                 }
             }
         })
-        self._assert_properties(app.get_case_metadata(), {'save_to_case_p1', 'save_to_case_p2'})
+        self._assert_properties(app.get_case_metadata(), {'name', 'save_to_case_p1', 'save_to_case_p2'})
 
     def test_case_references_open_close(self):
         app = Application.new_app('domain', 'New App')

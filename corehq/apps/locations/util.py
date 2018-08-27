@@ -13,7 +13,7 @@ from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, \
     LOCATION_SHEET_HEADERS_BASE, LOCATION_SHEET_HEADERS_OPTIONAL
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.products.models import Product
-from corehq.blobs import get_blob_db
+from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.files import safe_filename_header
 from couchexport.models import Format
@@ -298,7 +298,14 @@ def dump_locations(domain, download_id, include_consumption, headers_only, task=
     with open(path, 'rb') as file_:
         db = get_blob_db()
         expiry_mins = 60
-        db.put(file_, download_id, timeout=expiry_mins)
+        db.put(
+            file_,
+            domain=domain,
+            parent_id=domain,
+            type_code=CODES.tempfile,
+            key=download_id,
+            timeout=expiry_mins,
+        )
 
         file_format = Format.from_format(Excel2007ExportWriter.format)
         expose_blob_download(

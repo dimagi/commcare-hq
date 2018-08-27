@@ -4,7 +4,8 @@ import re
 import sys
 import uuid
 from collections import defaultdict
-from contextlib import contextmanager, nested
+from contextlib import contextmanager
+from contextlib2 import ExitStack
 from io import BytesIO
 from hashlib import sha1
 from itertools import chain
@@ -12,8 +13,12 @@ from os.path import join
 
 from corehq.blobs import BlobInfo, get_blob_db
 from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
-from corehq.blobs.interface import SAFENAME
-from corehq.blobs.util import ClosingContextProxy, document_method, random_url_id
+from corehq.blobs.util import (
+    ClosingContextProxy,
+    document_method,
+    random_url_id,
+    SAFENAME
+)
 from couchdbkit.exceptions import InvalidAttachment, ResourceNotFound
 from dimagi.ext.couchdbkit import (
     Document,
@@ -514,7 +519,9 @@ def bulk_atomic_blobs(docs):
     """
     save = lambda: None
     contexts = [d.atomic_blobs(save) for d in docs if hasattr(d, "atomic_blobs")]
-    with nested(*contexts):
+    with ExitStack() as stack:
+        for mgr in contexts:
+            stack.enter_context(mgr)
         delete_blobs = []
         for doc in docs:
             if isinstance(doc, DeferredBlobMixin) and doc._deferred_blobs:

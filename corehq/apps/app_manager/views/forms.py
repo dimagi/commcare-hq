@@ -85,7 +85,6 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
-from corehq.apps.tour import tours
 import six
 from six.moves import zip
 

@@ -56,7 +56,7 @@ from corehq.form_processor.utils.sql import (
     fetchall_as_namedtuple
 )
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
-from corehq.sql_db.routers import db_for_read_write
+from corehq.sql_db.routers import get_cursor
 from corehq.sql_db.util import split_list_by_db_partition
 from corehq.util.queries import fast_distinct_in_domain
 from dimagi.utils.chunked import chunked
@@ -69,11 +69,6 @@ doc_type_to_state = {
     "XFormArchived": XFormInstanceSQL.ARCHIVED,
     "SubmissionErrorLog": XFormInstanceSQL.SUBMISSION_ERROR_LOG
 }
-
-
-def get_cursor(model):
-    db = db_for_read_write(model)
-    return connections[db].cursor()
 
 
 def iter_all_rows(reindex_accessor):

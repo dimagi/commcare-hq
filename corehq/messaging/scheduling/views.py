@@ -51,7 +51,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
 from corehq.messaging.tasks import initiate_messaging_rule_run
-from corehq.messaging.util import MessagingRuleProgressHelper
+from corehq.messaging.util import MessagingRuleProgressHelper, project_is_on_new_reminders
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -80,7 +80,7 @@ def _requires_new_reminder_framework():
                 return fn(request, *args, **kwargs)
             if not hasattr(request, 'project'):
                 request.project = Domain.get_by_name(request.domain)
-            if request.project.uses_new_reminders:
+            if project_is_on_new_reminders(request.project):
                 return fn(request, *args, **kwargs)
             raise Http404()
         return wrapped
@@ -119,7 +119,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
             MessagingEventsReport,
         )
 
-        if self.domain_object.uses_new_reminders:
+        if project_is_on_new_reminders(self.domain_object):
             scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
                 kwargs={'domain': self.domain, 'report_slug': ScheduleInstanceReport.slug})
         else:
@@ -176,7 +176,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         })
 
     def add_reminder_status_info(self, result):
-        if self.domain_object.uses_new_reminders:
+        if project_is_on_new_reminders(self.domain_object):
             events_pending = get_count_of_active_schedule_instances_due(self.domain, datetime.utcnow())
         else:
             events_pending = len(CaseReminderHandler.get_all_reminders(
@@ -457,7 +457,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.request.method == 'POST':
             args.append(self.request.POST)
 
-        return BroadcastForm(*args)
+        return BroadcastForm(*args, is_system_admin=self.is_system_admin)
 
     @property
     def page_context(self):
@@ -598,6 +598,13 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             .order_by('case_type', 'name', 'id')
         )
 
+    def schedule_is_editable(self, schedule):
+        return (
+            (self.can_use_inbound_sms or not schedule.memoized_uses_sms_survey) and
+            not schedule.memoized_uses_ivr_survey and
+            not schedule.memoized_uses_sms_callback
+        )
+
     def get_conditional_alerts_ajax_response(self):
         query = self.get_conditional_alerts_queryset()
         total_records = query.count()
@@ -610,7 +617,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
                 'name': rule.name,
                 'case_type': rule.case_type,
                 'active': schedule.active,
-                'editable': self.can_use_inbound_sms or not schedule.memoized_uses_sms_survey,
+                'editable': self.schedule_is_editable(schedule),
                 'locked_for_editing': rule.locked_for_editing,
                 'progress_pct': MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
                 'id': rule.pk,
@@ -656,6 +663,12 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             if active_flag and (rule.references_parent_case or schedule.references_parent_case):
                 return HttpResponseBadRequest(
                     "Cannot reactivate alerts that reference parent case properties"
+                )
+
+            if active_flag and (schedule.memoized_uses_ivr_survey or schedule.memoized_uses_sms_callback):
+                return HttpResponseBadRequest(
+                    "Cannot activate alerts which use IVR or SMS Callback use cases since they "
+                    "are no longer supported."
                 )
 
             schedule.active = active_flag
@@ -743,6 +756,10 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         return context
 
     @cached_property
+    def new_reminders_migrator(self):
+        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
+
+    @cached_property
     def schedule_form(self):
         args = [
             self.domain,
@@ -755,7 +772,11 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.request.method == 'POST':
             args.append(self.request.POST)
 
-        return ConditionalAlertScheduleForm(*args)
+        return ConditionalAlertScheduleForm(
+            *args,
+            new_reminders_migrator=self.new_reminders_migrator,
+            is_system_admin=self.is_system_admin
+        )
 
     @property
     def schedule(self):
@@ -764,10 +785,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @property
     def rule(self):
         return None
-
-    @cached_property
-    def is_system_admin(self):
-        return self.request.couch_user.is_superuser
 
     @cached_property
     def basic_info_form(self):
@@ -831,7 +848,11 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.criteria_form.save_criteria(rule)
                 self.schedule_form.save_rule_action_and_schedule(rule)
 
-            initiate_messaging_rule_run(rule.domain, rule.pk)
+            if not (
+                self.new_reminders_migrator and
+                self.schedule_form.cleaned_data['skip_running_rule_post_save']
+            ):
+                initiate_messaging_rule_run(rule.domain, rule.pk)
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
@@ -864,7 +885,12 @@ class EditConditionalAlertView(CreateConditionalAlertView):
             self.schedule.memoized_uses_sms_survey
         )
 
-        return system_admin_restriction or inbound_sms_restriction
+        return (
+            system_admin_restriction or
+            inbound_sms_restriction or
+            self.schedule.memoized_uses_ivr_survey or
+            self.schedule.memoized_uses_sms_callback
+        )
 
     @cached_property
     def rule(self):
@@ -892,6 +918,17 @@ class EditConditionalAlertView(CreateConditionalAlertView):
                     request,
                     _("This alert is not editable because it uses an SMS survey and "
                       "your current subscription does not allow use of inbound SMS.")
+                )
+            if self.schedule.memoized_uses_ivr_survey:
+                messages.warning(
+                    request,
+                    _("This alert is not editable because it uses IVR, which is no longer supported.")
+                )
+            if self.schedule.memoized_uses_sms_callback:
+                messages.warning(
+                    request,
+                    _("This alert is not editable because it uses the SMS / Callback workflow, "
+                      "which is no longer supported.")
                 )
             if self.rule.references_parent_case or self.schedule.references_parent_case:
                 """

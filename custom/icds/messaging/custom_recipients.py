@@ -51,6 +51,17 @@ def recipient_mother_person_case_from_ccs_record_case(case_schedule_instance):
         return None
 
 
+def recipient_mother_person_case_from_ccs_record_case_excl_migrated_or_opted_out(case_schedule_instance):
+    from custom.icds.messaging.custom_content import person_case_is_migrated_or_opted_out
+
+    mother = recipient_mother_person_case_from_ccs_record_case(case_schedule_instance)
+
+    if mother is None or person_case_is_migrated_or_opted_out(mother):
+        return None
+
+    return mother
+
+
 def recipient_mother_person_case_from_child_health_case(case_schedule_instance):
     try:
         return mother_person_case_from_child_health_case(case_schedule_instance.case)

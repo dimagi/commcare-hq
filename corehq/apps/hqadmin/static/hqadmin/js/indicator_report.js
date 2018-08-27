@@ -1,6 +1,6 @@
 hqDefine('hqadmin/js/indicator_report', function() {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-        HQVisualizations = hqImport("hqadmin/js/visualizations").HQVisualizations;
+        hqVisualizations = hqImport("hqadmin/js/visualizations").hqVisualizations;
 
     function parse_url_params() {
         var result = {}, queryString = location.search.slice(1),
@@ -32,7 +32,7 @@ hqDefine('hqadmin/js/indicator_report', function() {
 
             visualizations[indicator] = _.extend(
                 {}, data, {
-                    viz: new HQVisualizations({
+                    viz: hqVisualizations({
                         chart_name: data.chart_name,
                         histogram_type: data.histogram_type,
                         xaxis_label: data.xaxis_label,

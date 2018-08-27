@@ -55,6 +55,7 @@ hqDefine("repeaters/js/add_form_repeater", [
                 auth_type: $('#id_auth_type').val(),
                 username: $('#id_username').val(),
                 password: $('#id_password').val(),
+                skip_cert_verify: $('#id_skip_cert_verify').prop('checked'),
             };
             $testLinkButton.disableButton();
 

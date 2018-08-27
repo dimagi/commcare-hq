@@ -8,6 +8,7 @@ from collections import defaultdict
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_case_updates
+from copy import deepcopy
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
@@ -24,7 +25,15 @@ from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+from corehq.messaging.scheduling.models import (
+    AlertSchedule,
+    TimedSchedule,
+    Schedule,
+    SMSContent,
+    EmailContent,
+    SMSSurveyContent,
+    CustomContent,
+)
 from corehq.messaging.scheduling.tasks import (
     refresh_case_alert_schedule_instances,
     refresh_case_timed_schedule_instances,
@@ -35,6 +44,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
     get_case_timed_schedule_instances_for_schedule_id,
 )
+from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
 from corehq.sql_db.util import run_query_across_partitioned_databases, get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
@@ -202,6 +212,272 @@ class AutomaticUpdateRule(models.Model):
                     return True
 
         return False
+
+    @classmethod
+    def get_referenced_form_unique_ids_from_sms_surveys(cls, domain):
+        """
+        Examines all of the scheduling rules in the given domain and returns
+        all form_unique_ids that are referenced from SMS Surveys.
+        """
+        result = []
+        for rule in cls.by_domain(domain, cls.WORKFLOW_SCHEDULING, active_only=False):
+            schedule = rule.get_messaging_rule_schedule()
+            for event in schedule.memoized_events:
+                if isinstance(event.content, SMSSurveyContent):
+                    result.append(event.content.form_unique_id)
+
+        return list(set(result))
+
+    def conditional_alert_can_be_copied(self, allow_sms_surveys=False, allow_custom_references=False):
+        """
+        Only scheduling rules (conditional alerts) are copied to the exchange now,
+        so all of the validation in this method pertains to scheduling rules only.
+
+        We need to make sure that the rule doesn't reference any domain-specific
+        objects, like specific user or location recipients.
+
+        We also need to make sure that the alert matches the use cases supported
+        by copy_conditional_alert().
+        """
+        if self.deleted:
+            return False
+
+        if self.workflow != self.WORKFLOW_SCHEDULING:
+            return False
+
+        allowed_criteria_definitions = (MatchPropertyDefinition, )
+        if allow_custom_references:
+            allowed_criteria_definitions += (CustomMatchDefinition, )
+
+        for criterion in self.memoized_criteria:
+            definition = criterion.definition
+            if not isinstance(definition, allowed_criteria_definitions):
+                return False
+
+        action_definition = self.get_messaging_rule_action_definition()
+
+        allowed_recipient_types = (
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES,
+        )
+
+        if allow_custom_references:
+            allowed_recipient_types += (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, )
+
+        for recipient_type, recipient_id in action_definition.recipients:
+            if recipient_type not in allowed_recipient_types:
+                return False
+
+        if action_definition.get_scheduler_module_info().enabled:
+            return False
+
+        schedule = action_definition.schedule
+
+        if schedule.ui_type not in (
+            Schedule.UI_TYPE_IMMEDIATE,
+            Schedule.UI_TYPE_DAILY,
+            Schedule.UI_TYPE_WEEKLY,
+            Schedule.UI_TYPE_MONTHLY,
+            Schedule.UI_TYPE_CUSTOM_DAILY,
+            Schedule.UI_TYPE_CUSTOM_IMMEDIATE,
+        ):
+            return False
+
+        if schedule.location_type_filter:
+            return False
+
+        allowed_content_types = (SMSContent, EmailContent)
+        if allow_sms_surveys:
+            allowed_content_types += (SMSSurveyContent, )
+
+        if allow_custom_references:
+            allowed_content_types += (CustomContent, )
+
+        for event in schedule.memoized_events:
+            if not isinstance(event.content, allowed_content_types):
+                return False
+
+        return True
+
+    def copy_conditional_alert(self, to_domain, convert_form_unique_id_function=None,
+            allow_custom_references=False):
+        """
+        Attempts to copy this rule, which should be a conditional alert, to the given domain.
+        If it cannot be copied, it returns None. Otherwise the new alert is returned.
+
+        :param to_domain: The name of the domain to attempt copying this alert to
+
+        :param convert_form_unique_id_function: A function which should take one argument, the form unique id
+        which pertains to the form unique id of a form in this alert's domain, and returns the form unique id
+        of the same copied form in to_domain. This is optional, and if omitted, alerts which use SMS Surveys
+        will not be copied.
+        """
+        allow_sms_surveys = convert_form_unique_id_function is not None
+        if not self.conditional_alert_can_be_copied(
+            allow_sms_surveys=allow_sms_surveys,
+            allow_custom_references=allow_custom_references,
+        ):
+            return None
+
+        with transaction.atomic():
+            new_rule = AutomaticUpdateRule.objects.create(
+                domain=to_domain,
+                name=self.name,
+                case_type=self.case_type,
+                active=self.active,
+                last_run=self.last_run,
+                filter_on_server_modified=self.filter_on_server_modified,
+                server_modified_boundary=self.server_modified_boundary,
+                workflow=self.workflow,
+            )
+
+            for criterion in self.memoized_criteria:
+                definition = criterion.definition
+                if isinstance(definition, MatchPropertyDefinition):
+                    new_rule.add_criteria(
+                        MatchPropertyDefinition,
+                        property_name=definition.property_name,
+                        property_value=definition.property_value,
+                        match_type=definition.match_type,
+                    )
+                elif isinstance(definition, CustomMatchDefinition):
+                    new_rule.add_criteria(
+                        CustomMatchDefinition,
+                        name=definition.name,
+                    )
+                else:
+                    raise TypeError(
+                        "Unexpected criteria definition. Did conditional_alert_can_be_copied() get called?"
+                    )
+
+            action_definition = self.get_messaging_rule_action_definition()
+            schedule = action_definition.schedule
+
+            new_schedule = self.copy_schedule(schedule, to_domain,
+                convert_form_unique_id_function=convert_form_unique_id_function)
+
+            new_rule.add_action(
+                CreateScheduleInstanceActionDefinition,
+                alert_schedule_id=new_schedule.schedule_id if isinstance(new_schedule, AlertSchedule) else None,
+                timed_schedule_id=new_schedule.schedule_id if isinstance(new_schedule, TimedSchedule) else None,
+                recipients=deepcopy(action_definition.recipients),
+                reset_case_property_name=action_definition.reset_case_property_name,
+                start_date_case_property=action_definition.start_date_case_property,
+                specific_start_date=action_definition.specific_start_date,
+                scheduler_module_info=deepcopy(action_definition.scheduler_module_info),
+            )
+
+        return new_rule
+
+    def fix_sms_survey_reference(self, copied_content, original_content, convert_form_unique_id_function):
+        copied_content.form_unique_id = convert_form_unique_id_function(original_content.form_unique_id)
+
+    def copy_schedule(self, schedule, to_domain, convert_form_unique_id_function=None):
+        """
+        Before calling this method, conditional_alert_can_be_copied() should be tested on
+        the rule to ensure that it can be copied.
+        """
+        extra_scheduling_options = {
+            'active': False,
+            'include_descendant_locations': schedule.include_descendant_locations,
+            'location_type_filter': [],
+            'default_language_code': schedule.default_language_code,
+            'custom_metadata': deepcopy(schedule.custom_metadata),
+            'use_utc_as_default_timezone': schedule.use_utc_as_default_timezone,
+            'user_data_filter': deepcopy(schedule.user_data_filter),
+            'stop_date_case_property_name': schedule.stop_date_case_property_name,
+        }
+
+        if schedule.ui_type in (
+            Schedule.UI_TYPE_IMMEDIATE,
+            Schedule.UI_TYPE_DAILY,
+            Schedule.UI_TYPE_WEEKLY,
+            Schedule.UI_TYPE_MONTHLY,
+        ):
+            model_event = schedule.memoized_events[0].create_copy()
+            model_content = schedule.memoized_events[0].content.create_copy()
+            if isinstance(model_content, SMSSurveyContent):
+                self.fix_sms_survey_reference(model_content, schedule.memoized_events[0].content,
+                    convert_form_unique_id_function)
+
+            if schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
+                return AlertSchedule.create_simple_alert(
+                    to_domain,
+                    model_content,
+                    extra_options=extra_scheduling_options,
+                )
+            elif schedule.ui_type == Schedule.UI_TYPE_DAILY:
+                return TimedSchedule.create_simple_daily_schedule(
+                    to_domain,
+                    model_event,
+                    model_content,
+                    total_iterations=schedule.total_iterations,
+                    start_offset=schedule.start_offset,
+                    start_day_of_week=schedule.start_day_of_week,
+                    extra_options=extra_scheduling_options,
+                    repeat_every=schedule.repeat_every,
+                )
+            elif schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
+                if (schedule.repeat_every % 7) != 0 or schedule.repeat_every < 7:
+                    raise ValueError("Invalid schedule.repeat_every for a weekly schedule")
+
+                return TimedSchedule.create_simple_weekly_schedule(
+                    to_domain,
+                    model_event,
+                    model_content,
+                    schedule.get_weekdays(),
+                    schedule.start_day_of_week,
+                    total_iterations=schedule.total_iterations,
+                    extra_options=extra_scheduling_options,
+                    repeat_every=schedule.repeat_every // 7,
+                )
+            elif schedule.ui_type == Schedule.UI_TYPE_MONTHLY:
+                if schedule.repeat_every >= 0:
+                    raise ValueError("Invalid schedule.repeat_every for a monthly schedule")
+
+                return TimedSchedule.create_simple_monthly_schedule(
+                    to_domain,
+                    model_event,
+                    [e.day for e in schedule.memoized_events],
+                    model_content,
+                    total_iterations=schedule.total_iterations,
+                    extra_options=extra_scheduling_options,
+                    repeat_every=schedule.repeat_every * -1,
+                )
+        elif schedule.ui_type in (
+            Schedule.UI_TYPE_CUSTOM_DAILY,
+            Schedule.UI_TYPE_CUSTOM_IMMEDIATE,
+        ):
+            event_and_content_objects = []
+            for e in schedule.memoized_events:
+                model_event = e.create_copy()
+                model_content = e.content.create_copy()
+                if isinstance(model_content, SMSSurveyContent):
+                    self.fix_sms_survey_reference(model_content, e.content, convert_form_unique_id_function)
+
+                event_and_content_objects.append((model_event, model_content))
+
+            if schedule.ui_type == Schedule.UI_TYPE_CUSTOM_DAILY:
+                return TimedSchedule.create_custom_daily_schedule(
+                    to_domain,
+                    event_and_content_objects,
+                    total_iterations=schedule.total_iterations,
+                    start_offset=schedule.start_offset,
+                    start_day_of_week=schedule.start_day_of_week,
+                    extra_options=extra_scheduling_options,
+                    repeat_every=schedule.repeat_every,
+                )
+            elif schedule.ui_type == Schedule.UI_TYPE_CUSTOM_IMMEDIATE:
+                return AlertSchedule.create_custom_alert(
+                    to_domain,
+                    event_and_content_objects,
+                    extra_options=extra_scheduling_options,
+                )
+
+        raise ValueError("Unexpected schedule ui_type: %s" % schedule.ui_type)
 
     @classmethod
     def by_domain(cls, domain, workflow, active_only=True):
@@ -466,7 +742,7 @@ class AutomaticUpdateRule(models.Model):
                 active_only=active_only,
             )
 
-    def get_messaging_rule_schedule(self):
+    def get_messaging_rule_action_definition(self):
         if self.workflow != self.WORKFLOW_SCHEDULING:
             raise ValueError("Expected scheduling workflow")
 
@@ -478,7 +754,10 @@ class AutomaticUpdateRule(models.Model):
         if not isinstance(action_definition, CreateScheduleInstanceActionDefinition):
             raise TypeError("Expected CreateScheduleInstanceActionDefinition")
 
-        return action_definition.schedule
+        return action_definition
+
+    def get_messaging_rule_schedule(self):
+        return self.get_messaging_rule_action_definition().schedule
 
 
 class CaseRuleCriteria(models.Model):

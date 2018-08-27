@@ -481,10 +481,9 @@ COPY_FORM_TO_APP = StaticToggle(
 
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
-    'UW: Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
-    TAG_DEPRECATED,
+    'Offer hosting and sharing data files for downloading from a secure dropzone',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
-    # TODO: Create Confluence docs and add help link
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -498,13 +497,6 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
 DHIS2_INTEGRATION = StaticToggle(
     'dhis2_integration',
     'DHIS2 Integration',
-    TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN]
-)
-
-DHIS2_REPEATER_INTEGRATION = StaticToggle(
-    'dhis2_repeater_integration',
-    'DHIS2 Repeater Integration (Needed DHIS2 Integration enabled)',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN]
 )
@@ -949,14 +941,6 @@ NINETYNINE_DOTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ENIKSHAY_API = StaticToggle(
-    'enikshay_api',
-    'Enikshay: Enable access to eNikshay api endpoints',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    always_enabled={"enikshay"},
-)
-
 NIKSHAY_INTEGRATION = StaticToggle(
     'nikshay_integration',
     'Enikshay: Enable patient registration in Nikshay',
@@ -982,8 +966,8 @@ RETRY_SMS_INDEFINITELY = StaticToggle(
 
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
-    'FGH: Enable OpenMRS integration',
-    TAG_CUSTOM,
+    'Enable OpenMRS integration',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1267,6 +1251,14 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
+    'language_linked_multimedia',
+    'Add a setting to link multimedia to the default language',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
+)
+
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',
@@ -1292,15 +1284,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
         "other reports - by individual user, group, or location.  Note that this "
         "will also force the report to always display by user."
     ),
-)
-
-ENIKSHAY = StaticToggle(
-    'enikshay',
-    "Enikshay: Enable custom enikshay functionality: additional user and location validation",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'enikshay'},
-    relevant_environments={'enikshay'},
 )
 
 ICDS = StaticToggle(
@@ -1549,14 +1532,6 @@ TARGET_COMMCARE_FLAVOR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-APPCUES_AB_TEST = PredictablyRandomToggle(
-    'appcues_ab_test',
-    'True if user is in variant group for Appcues AB test. Irrelevent if user is not in test.',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    randomness=0.5
-)
-
 WAREHOUSE_APP_STATUS = StaticToggle(
     'warehouse_app_status',
     "User warehouse backend for the app status report. Currently only for sql domains",
@@ -1610,4 +1585,21 @@ AGGREGATE_UCRS = StaticToggle(
     TAG_INTERNAL,  # this might change in the future
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['czue'],
+)
+
+
+RELATED_LOCATIONS = StaticToggle(
+    'related_locations',
+    'REACH: Enable experimental location many-to-many mappings',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    notification_emails=['jemord'],
+    help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
+)
+
+ALLOW_BLANK_CASE_TAGS = StaticToggle(
+    'allow_blank_case_tags',
+    'eCHIS: Allow blank case tags',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )

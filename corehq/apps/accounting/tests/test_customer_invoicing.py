@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from decimal import Decimal
 import random
 import datetime
+from dateutil.relativedelta import relativedelta
 
 from dimagi.utils.dates import add_months_to_date
 from corehq.util.dates import get_previous_month_date_range
@@ -14,7 +15,9 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     FeatureType,
     SoftwarePlanEdition,
-    CustomerInvoice
+    CustomerInvoice,
+    InvoicingPlan,
+    DomainUserHistory
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -208,6 +211,54 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
             self.assertTrue(line_item.base_cost == self.product_rate.monthly_fee or
                             line_item.base_cost == self.advanced_plan.product_rate.monthly_fee)
 
+    def test_product_line_items_in_quarterly_invoice(self):
+        self.account.invoicing_plan = InvoicingPlan.QUARTERLY
+        self.account.save()
+        invoice_date = utils.months_from_date(self.subscription.date_start, 14)
+        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
+        invoice_start = invoice_start - relativedelta(months=2)
+        invoice_factory = CustomerAccountInvoiceFactory(
+            account=self.account,
+            date_start=invoice_start,
+            date_end=invoice_end
+        )
+        invoice_factory.create_invoice()
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertGreater(invoice.balance, Decimal('0.0000'))
+        self.assertEqual(invoice.account, self.account)
+
+        # There should be two product line items, with 3 months billed for each
+        num_product_line_items = invoice.lineitem_set.get_products().count()
+        self.assertEqual(num_product_line_items, 2)
+        for product_line_item in invoice.lineitem_set.get_products().all():
+            self.assertEqual(product_line_item.quantity, 3)
+
+    def test_product_line_items_in_yearly_invoice(self):
+        self.account.invoicing_plan = InvoicingPlan.YEARLY
+        self.account.save()
+        invoice_date = utils.months_from_date(self.subscription.date_start, 14)
+        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
+        invoice_start = invoice_start - relativedelta(months=11)
+        invoice_factory = CustomerAccountInvoiceFactory(
+            account=self.account,
+            date_start=invoice_start,
+            date_end=invoice_end
+        )
+        invoice_factory.create_invoice()
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertGreater(invoice.balance, Decimal('0.0000'))
+        self.assertEqual(invoice.account, self.account)
+
+        # There should be two product line items, with 3 months billed for each
+        num_product_line_items = invoice.lineitem_set.get_products().count()
+        self.assertEqual(num_product_line_items, 2)
+        for product_line_item in invoice.lineitem_set.get_products().all():
+            self.assertEqual(product_line_item.quantity, 12)
+
 
 class TestUserLineItem(BaseCustomerInvoiceCase):
     def setUp(self):
@@ -371,3 +422,206 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
         SmsGatewayFeeCriteria.objects.all().delete()
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
+
+
+class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
+
+    def setUp(self):
+        super(TestQuarterlyInvoicing, self).setUp()
+        self.user_rate = self.subscription.plan_version.feature_rates \
+            .filter(feature__feature_type=FeatureType.USER).get()
+        self.advanced_rate = self.advanced_plan.feature_rates.filter(feature__feature_type=FeatureType.USER).get()
+        self.initialize_domain_user_history_objects()
+        self.sms_rate = self.subscription.plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.SMS
+        ).get()
+        self.advanced_sms_rate = self.advanced_plan.feature_rates.filter(
+            feature__feature_type=FeatureType.SMS
+        ).get()
+        self.invoice_date = utils.months_from_date(
+            self.subscription.date_start, random.randint(2, self.subscription_length)
+        )
+        self.sms_date = utils.months_from_date(self.invoice_date, -1)
+
+    def tearDown(self):
+        for user_history in DomainUserHistory.objects.all():
+            user_history.delete()
+
+    def initialize_domain_user_history_objects(self):
+        record_dates = []
+        month_end = self.subscription.date_end
+        while month_end > self.subscription.date_start:
+            record_dates.append(month_end)
+            _, month_end = get_previous_month_date_range(month_end)
+
+        num_users = self.user_rate.monthly_limit + 1
+        for record_date in record_dates:
+            user_history = DomainUserHistory.create(
+                domain=self.domain,
+                num_users=num_users,
+                record_date=record_date
+            )
+            user_history.save()
+
+        num_users = self.advanced_rate.monthly_limit + 2
+        for record_date in record_dates:
+            user_history = DomainUserHistory.create(
+                domain=self.domain2,
+                num_users=num_users,
+                record_date=record_date
+            )
+            user_history.save()
+
+    def test_user_over_limit_in_quarterly_invoice(self):
+        num_users = self.user_rate.monthly_limit + 1
+        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_users)
+
+        num_users_advanced = self.advanced_rate.monthly_limit + 2
+        generator.arbitrary_commcare_users_for_domain(self.domain2.name, num_users_advanced)
+
+        self.account.invoicing_plan = InvoicingPlan.QUARTERLY
+        self.account.save()
+        invoice_date = utils.months_from_date(self.subscription.date_start, 14)
+        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
+        invoice_start = invoice_start - relativedelta(months=2)
+        invoice_factory = CustomerAccountInvoiceFactory(
+            account=self.account,
+            date_start=invoice_start,
+            date_end=invoice_end
+        )
+        invoice_factory.create_invoice()
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+
+        invoice = CustomerInvoice.objects.first()
+        user_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)
+        self.assertEqual(user_line_items.count(), 2)
+        for user_line_item in user_line_items:
+            if self.user_rate.feature.name == user_line_item.feature_rate.feature.name:
+                self.assertEqual(user_line_item.quantity, 3)
+            elif user_line_item.feature_rate.feature.name == self.advanced_rate.feature.name:
+                self.assertEqual(user_line_item.quantity, 6)
+
+    def test_user_over_limit_in_yearly_invoice(self):
+        num_users = self.user_rate.monthly_limit + 1
+        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_users)
+
+        num_users_advanced = self.advanced_rate.monthly_limit + 2
+        generator.arbitrary_commcare_users_for_domain(self.domain2.name, num_users_advanced)
+
+        self.account.invoicing_plan = InvoicingPlan.YEARLY
+        self.account.save()
+        invoice_date = utils.months_from_date(self.subscription.date_start, 14)
+        invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
+        invoice_start = invoice_start - relativedelta(months=11)
+        invoice_factory = CustomerAccountInvoiceFactory(
+            account=self.account,
+            date_start=invoice_start,
+            date_end=invoice_end
+        )
+        invoice_factory.create_invoice()
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+
+        invoice = CustomerInvoice.objects.first()
+        user_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)
+        self.assertEqual(user_line_items.count(), 2)
+        for user_line_item in user_line_items:
+            if self.user_rate.feature.name == user_line_item.feature_rate.feature.name:
+                self.assertEqual(user_line_item.quantity, 12)
+            elif user_line_item.feature_rate.feature.name == self.advanced_rate.feature.name:
+                self.assertEqual(user_line_item.quantity, 24)
+
+    def test_sms_over_limit_in_quarterly_invoice(self):
+        num_sms = random.randint(self.sms_rate.monthly_limit + 1, self.sms_rate.monthly_limit + 2)
+        billables = arbitrary_sms_billables_for_domain(
+            self.domain, self.sms_date, num_sms
+        )
+        num_sms_advanced = random.randint(self.advanced_sms_rate.monthly_limit + 1,
+                                          self.advanced_sms_rate.monthly_limit + 2)
+        advanced_billables = arbitrary_sms_billables_for_domain(
+            self.domain2, self.sms_date, num_sms_advanced
+        )
+
+        invoice_start, invoice_end = get_previous_month_date_range(self.invoice_date)
+        invoice_start = invoice_start - relativedelta(months=2)
+        invoice_factory = CustomerAccountInvoiceFactory(
+            account=self.account,
+            date_start=invoice_start,
+            date_end=invoice_end
+        )
+        invoice_factory.create_invoice()
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+
+        sms_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)
+        self.assertEqual(sms_line_items.count(), 2)
+        for sms_line_item in sms_line_items:
+            self.assertIsNone(sms_line_item.base_description)
+            self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
+            self.assertEqual(sms_line_item.quantity, 1)
+
+            if self.advanced_sms_rate.feature == sms_line_item.feature_rate.feature:
+                sms_cost = sum(
+                    billable.gateway_charge + billable.usage_charge
+                    for billable in advanced_billables[self.advanced_sms_rate.monthly_limit:]
+                )
+            else:
+                sms_cost = sum(
+                    billable.gateway_charge + billable.usage_charge
+                    for billable in billables[self.sms_rate.monthly_limit:]
+                )
+            self.assertEqual(sms_line_item.unit_cost, sms_cost)
+            self.assertEqual(sms_line_item.total, sms_cost)
+
+    def test_sms_over_limit_in_yearly_invoice(self):
+        num_sms = random.randint(self.sms_rate.monthly_limit + 1, self.sms_rate.monthly_limit + 2)
+        billables = arbitrary_sms_billables_for_domain(
+            self.domain, self.sms_date, num_sms
+        )
+        num_sms_advanced = random.randint(self.advanced_sms_rate.monthly_limit + 1,
+                                          self.advanced_sms_rate.monthly_limit + 2)
+        advanced_billables = arbitrary_sms_billables_for_domain(
+            self.domain2, self.sms_date, num_sms_advanced
+        )
+
+        invoice_start, invoice_end = get_previous_month_date_range(self.invoice_date)
+        invoice_start = invoice_start - relativedelta(months=11)
+        invoice_factory = CustomerAccountInvoiceFactory(
+            account=self.account,
+            date_start=invoice_start,
+            date_end=invoice_end
+        )
+        invoice_factory.create_invoice()
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+
+        sms_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)
+        self.assertEqual(sms_line_items.count(), 2)
+        for sms_line_item in sms_line_items:
+            self.assertIsNone(sms_line_item.base_description)
+            self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
+            self.assertEqual(sms_line_item.quantity, 1)
+
+            if self.advanced_sms_rate.feature == sms_line_item.feature_rate.feature:
+                sms_cost = sum(
+                    billable.gateway_charge + billable.usage_charge
+                    for billable in advanced_billables[self.advanced_sms_rate.monthly_limit:]
+                )
+            else:
+                sms_cost = sum(
+                    billable.gateway_charge + billable.usage_charge
+                    for billable in billables[self.sms_rate.monthly_limit:]
+                )
+            self.assertEqual(sms_line_item.unit_cost, sms_cost)
+            self.assertEqual(sms_line_item.total, sms_cost)
+
+    def _create_sms_line_items_for_quarter(self):
+        invoice_start, invoice_end = get_previous_month_date_range(self.invoice_date)
+        invoice_factory = CustomerAccountInvoiceFactory(
+            account=self.account,
+            date_start=invoice_start,
+            date_end=invoice_end
+        )
+        invoice_factory.create_invoice()
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)

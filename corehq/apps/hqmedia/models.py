@@ -433,7 +433,7 @@ class HQMediaMapItem(DocumentSchema):
 
     @classmethod
     def gen_unique_id(cls, m_id, path):
-        return hashlib.md5("%s: %s" % (path.encode('utf-8'), str(m_id))).hexdigest()
+        return hashlib.md5(b"%s: %s" % (path.encode('utf-8'), m_id.encode('utf-8'))).hexdigest()
 
 
 class ApplicationMediaReference(object):
@@ -445,10 +445,9 @@ class ApplicationMediaReference(object):
         Useful info for user-facing things.
     """
 
-    def __init__(self, path,
-                 module_id=None, module_name=None,
-                 form_id=None, form_name=None, form_order=None,
-                 media_class=None, is_menu_media=False, app_lang=None):
+    def __init__(self, path, module_id=None, module_name=None, form_id=None,
+                 form_name=None, form_order=None, media_class=None,
+                 is_menu_media=False, app_lang=None, use_default_media=False):
 
         if not isinstance(path, six.string_types):
             path = ''
@@ -468,6 +467,8 @@ class ApplicationMediaReference(object):
         self.is_menu_media = is_menu_media
 
         self.app_lang = app_lang or "en"
+
+        self.use_default_media = use_default_media
 
     def __str__(self):
         detailed_location = ""
@@ -497,6 +498,7 @@ class ApplicationMediaReference(object):
             'path': self.path,
             "icon_class": self.media_class.get_icon_class(),
             "media_type": self.media_class.get_nice_name(),
+            "use_default_media": self.use_default_media,
         }
 
     def _get_name(self, raw_name, lang=None):
@@ -682,6 +684,7 @@ class HQMediaMixin(Document):
         image_ref = ApplicationMediaReference(
             item.icon_by_language(to_language),
             media_class=CommCareImage,
+            use_default_media=item.use_default_image_for_all,
             **media_kwargs
         )
         image_ref = image_ref.as_dict()
@@ -690,6 +693,7 @@ class HQMediaMixin(Document):
         audio_ref = ApplicationMediaReference(
             item.audio_by_language(to_language),
             media_class=CommCareAudio,
+            use_default_media=item.use_default_audio_for_all,
             **media_kwargs
         )
         audio_ref = audio_ref.as_dict()

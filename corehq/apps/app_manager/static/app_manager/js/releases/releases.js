@@ -213,16 +213,16 @@ hqDefine('app_manager/js/releases/releases', function () {
         var self = this;
         self.options = o;
         self.recipients = self.options.recipient_contacts;
+        self.totalItems = ko.observable();
         self.savedApps = ko.observableArray();
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
         self.buildErrorCode = ko.observable('');
         self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
-        self.nextVersionToFetch = null;
-        self.fetchLimit = o.fetchLimit || 5;
-        self.deployAnyway = {};
+        self.fetchLimit = ko.observable(o.fetchLimit || 5);
         self.currentAppVersion = ko.observable(self.options.currentAppVersion);
+        self.latestReleasedVersion = ko.observable(self.options.latestReleasedVersion);
         self.lastAppVersion = ko.observable();
 
         self.download_modal = $(self.options.download_modal_id);
@@ -279,14 +279,6 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.app_error_url = function(appId, version) {
             return self.reverse('project_report_dispatcher') + '?app=' + appId + '&version_number=' + version;
         };
-        self.latestReleaseId = ko.computed(function () {
-            for (var i = 0; i < self.savedApps().length; i++) {
-                var savedApp = self.savedApps()[i];
-                if (savedApp.is_released()) {
-                    return savedApp.id();
-                }
-            }
-        });
 
         self.previousBuildId = function(index) {
             if (self.savedApps()[index + 1]) {
@@ -299,57 +291,24 @@ hqDefine('app_manager/js/releases/releases', function () {
             appDiff.renderDiff(appIdOne, appIdTwo);
         };
 
-        self.addSavedApp = function (savedApp, toBeginning) {
-            if (toBeginning) {
-                self.savedApps.unshift(savedApp);
-            } else {
-                self.savedApps.push(savedApp);
-            }
-            self.deployAnyway[savedApp.id()] = ko.observable(false);
-        };
-
-        self.addSavedApps = function (savedApps) {
-            var i, savedApp;
-            for (i = 0; i < savedApps.length; i++) {
-                savedApp = savedAppModel(savedApps[i], self);
-                self.addSavedApp(savedApp);
-            }
-            if (i) {
-                self.nextVersionToFetch = savedApps[i - 1].version - 1;
-            }
-            if (savedApps.length < self.fetchLimit) {
-                self.doneFetching(true);
-            } else {
-                self.doneFetching(false);
-            }
-        };
-
-        self.clearSavedApps = function() {
-            self.savedApps.splice(0);
-            self.nextVersionToFetch = null;
-        };
-
-        self.getMoreSavedApps = function (scroll) {
+        self.goToPage = function(page){
             self.fetchState('pending');
             $.ajax({
                 url: self.reverse("paginate_releases"),
                 dataType: 'json',
                 data: {
-                    start_build: self.nextVersionToFetch,
+                    page: page,
                     limit: self.fetchLimit,
                     only_show_released: self.onlyShowReleased(),
                 },
-                success: function (savedApps) {
-                    self.addSavedApps(savedApps);
+                success: function (data) {
+                    self.savedApps(
+                        _.map(data.apps, function(app){
+                            return savedAppModel(app, self);
+                        })
+                    );
+                    self.totalItems(data.pagination.total);
                     self.fetchState('');
-                    if (scroll) {
-                        // Scroll so the bottom of main content (and the "View More" button) aligns with the bottom of the window
-                        // Wait for animation to finish first
-                        _.defer(function() {
-                            var $content = $("#releases");
-                            window.scrollTo(0, $content.offset().top + $content.outerHeight(true) - window.innerHeight);
-                        });
-                    }
                 },
                 error: function () {
                     self.fetchState('error');
@@ -375,6 +334,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     },
                     success: function (data) {
                         savedApp.is_released(data.is_released);
+                        self.latestReleasedVersion(data.latest_released_version);
                         $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
                     },
                     error: function () {
@@ -387,8 +347,7 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.toggleLimitToReleased = function() {
             self.onlyShowReleased(!self.onlyShowReleased());
-            self.clearSavedApps();
-            self.getMoreSavedApps(false);
+            self.goToPage(1);
         };
 
         self.reload_message = gettext("Sorry, that didn't go through. " +
@@ -440,9 +399,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             });
         };
         self.reloadApps = function () {
-            self.savedApps([]);
-            self.nextVersionToFetch = null;
-            self.getMoreSavedApps(false);
+            self.goToPage(1);
         };
         self.actuallyMakeBuild = function () {
             self.buildState('pending');
@@ -452,11 +409,11 @@ hqDefine('app_manager/js/releases/releases', function () {
                     $('#build-errors-wrapper').html(data.error_html);
                     if (data.saved_app) {
                         var app = savedAppModel(data.saved_app, self);
-                        self.addSavedApp(app, true);
+                        self.savedApps.unshift(app);
                     }
                     self.buildState('');
                     self.buildErrorCode('');
-                    hqImport('app_manager/js/app_manager').setPublishStatus(false);
+                    hqImport('app_manager/js/menu').setPublishStatus(false);
                 },
                 error: function(xhr) {
                     self.buildErrorCode(xhr.status);

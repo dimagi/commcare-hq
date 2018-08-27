@@ -83,7 +83,6 @@ _set_logging_levels({
     'elasticsearch': 'ERROR',
     'quickcache': 'INFO',
     'requests.packages.urllib3': 'WARNING',
-    'restkit.client': 'INFO',
     's3transfer': 'INFO',
     'urllib3': 'WARNING',
     'kafka.conn': 'WARNING',
