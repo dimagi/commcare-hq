@@ -36,6 +36,7 @@ class BaseTranslationsView(BaseDomainView):
         return context
 
     @property
+    @memoized
     def transifex_details_available(self):
         return transifex_details_available_for_domain(self.domain)
 
