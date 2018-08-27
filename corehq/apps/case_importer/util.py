@@ -121,16 +121,6 @@ class WorksheetWrapper(object):
         # remove None columns the library sometimes returns
         return list(filter(None, header_row))
 
-    def _get_column_values(self, column_index):
-        rows = self.iter_rows()
-        # skip first row (header row)
-        next(rows)
-        for row in rows:
-            yield row[column_index]
-
-    def get_unique_column_values(self, column_index):
-        return list(set(self._get_column_values(column_index)))
-
     @property
     def max_row(self):
         return self._worksheet.max_row
