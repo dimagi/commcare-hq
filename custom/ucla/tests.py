@@ -193,8 +193,10 @@ class TestUCLACustomHandler(TestCase):
 
     def test_message_bank_doesnt_exist_new(self):
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
-            with self.assertRaises(AssertionError):
+            with self.assertRaises(AssertionError) as e:
                 self._get_current_event_messages(self._schedule_instance(case))
+
+            self.assertIn('Lookup Table general_health not found', str(e.exception))
 
     def test_message_bank_doesnt_have_correct_properties_new(self):
         data_type = FixtureDataType(
@@ -206,8 +208,10 @@ class TestUCLACustomHandler(TestCase):
         data_type.save()
         self.addCleanup(data_type.delete)
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
-            with self.assertRaises(AssertionError):
+            with self.assertRaises(AssertionError) as e:
                 self._get_current_event_messages(self._schedule_instance(case))
+
+            self.assertIn('must have', str(e.exception))
 
     def test_not_passing_case_new(self):
         self._setup_fixture_type()
@@ -215,33 +219,43 @@ class TestUCLACustomHandler(TestCase):
             schedule_instance = self._schedule_instance(case)
             schedule_instance.recipient_type = ScheduleInstance.RECIPIENT_TYPE_WEB_USER
             schedule_instance.recipient_id = self.user.get_id
-            with self.assertRaises(AssertionError):
+            with self.assertRaises(AssertionError) as e:
                 self._get_current_event_messages(schedule_instance)
+
+            self.assertIn('must be a case', str(e.exception))
 
     def test_passing_case_without_risk_profile_new(self):
         self._setup_fixture_type()
         with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
-            with self.assertRaises(AssertionError):
+            with self.assertRaises(AssertionError) as e:
                 self._get_current_event_messages(self._schedule_instance(case))
+
+            self.assertIn('does not include risk_profile', str(e.exception))
 
     def test_no_relevant_message_invalid_risk_new(self):
         self._setup_fixture_type()
         with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk2'}) as case:
-            with self.assertRaises(AssertionError):
+            with self.assertRaises(AssertionError) as e:
                 self._get_current_event_messages(self._schedule_instance(case))
+
+            self.assertIn('No message for case', str(e.exception))
 
     def test_no_relevant_message_invalid_seq_num_new(self):
         self._setup_fixture_type()
         with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
-            with self.assertRaises(AssertionError):
+            with self.assertRaises(AssertionError) as e:
                 self._get_current_event_messages(self._schedule_instance(case, iteration_num=2))
+
+            self.assertIn('No message for case', str(e.exception))
 
     def test_multiple_relevant_messages_new(self):
         self._setup_fixture_type()
         self._setup_data_item('risk1', '1', 'message2')
         with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
-            with self.assertRaises(AssertionError):
+            with self.assertRaises(AssertionError) as e:
                 self._get_current_event_messages(self._schedule_instance(case))
+
+            self.assertIn('Multiple messages for case', str(e.exception))
 
     def test_correct_message_new(self):
         self._setup_fixture_type()
