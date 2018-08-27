@@ -6,10 +6,8 @@ from collections import namedtuple
 from django.db import models, transaction
 
 from casexml.apps.phone.restore import stream_response
-from corehq.blobs import get_blob_db
+from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
-from corehq.blobs.util import random_url_id
-from corehq.blobs.exceptions import NotFound
 from corehq.util.quickcache import quickcache
 import six
 
@@ -25,7 +23,7 @@ class DemoUserRestore(models.Model):
     restore_comment = models.CharField(max_length=250, null=True, blank=True)
 
     @classmethod
-    def create(cls, user_id, restore_content, comment=""):
+    def create(cls, user_id, restore_content, domain):
         """
         The method to create a new DemoUserRestore object
         ags:
@@ -34,10 +32,10 @@ class DemoUserRestore(models.Model):
         """
         restore = cls(
             demo_user_id=user_id,
-            restore_comment=comment,
+            restore_comment="",
         )
         with AtomicBlobs(get_blob_db()) as db:
-            restore._write_restore_blob(restore_content, db)
+            restore._write_restore_blob(restore_content, db, domain)
             restore.save()
         return restore
 
@@ -63,38 +61,30 @@ class DemoUserRestore(models.Model):
             blob.close()
 
     def _get_restore_xml(self):
-        db = get_blob_db()
-        try:
-            blob = db.get(self.restore_blob_id)
-        except (KeyError, NotFound) as e:
-            # Todo - custom exception
-            raise e
-        return blob
+        return get_blob_db().get(key=self.restore_blob_id)
 
     def delete(self):
         """
         Deletes the restore object and the xml blob permenantly
         """
-        self._delete_restore_blob()
+        get_blob_db().delete(key=self.restore_blob_id)
         super(DemoUserRestore, self).delete()
 
-    def _write_restore_blob(self, restore, db):
+    def _write_restore_blob(self, restore, db, domain):
 
         if isinstance(restore, six.text_type):
             restore = io.BytesIO(restore.encode("utf-8"))
         elif isinstance(restore, bytes):
             restore = io.BytesIO(restore)
 
-        info = db.put(restore, random_url_id(16))
-        self.restore_blob_id = info.identifier
-        self.content_length = info.length
-
-    def _delete_restore_blob(self):
-        db = get_blob_db()
-        deleted = db.delete(self.restore_blob_id)
-        self.restore_blob_id = None
-
-        return deleted
+        meta = db.put(
+            restore,
+            domain=domain,
+            parent_id=self.demo_user_id or "DemoUserRestore",
+            type_code=CODES.demo_user_restore,
+        )
+        self.restore_blob_id = meta.key
+        self.content_length = meta.content_length
 
 
 class SerialIdBucket(models.Model):

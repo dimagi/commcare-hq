@@ -153,5 +153,5 @@ class SecondaryColumn(models.Model):
     table_definition = models.ForeignKey(SecondaryTableDefinition, on_delete=models.CASCADE,
                                          related_name='columns')
     column_id = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
-    aggregation_type = models.CharField(max_length=10, choices=SECONDARY_COLUMN_TYPE_CHOICES)
+    aggregation_type = models.CharField(max_length=20, choices=SECONDARY_COLUMN_TYPE_CHOICES)
     config_params = JSONField()

@@ -21,4 +21,4 @@ class ConfigParseTest(SimpleTestCase, AggregationBaseTestMixin):
         self.assertEqual('doc_id', secondary_table.join_column_primary)
         self.assertEqual('form.case.@case_id', secondary_table.join_column_secondary)
         self.assertEqual('received_on', secondary_table.time_window_column)
-        self.assertEqual(1, len(secondary_table.columns))
+        self.assertEqual(2, len(secondary_table.columns))

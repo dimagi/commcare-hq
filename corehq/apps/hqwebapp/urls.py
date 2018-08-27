@@ -45,7 +45,7 @@ urlpatterns = [
     url(r'^activate_alert/$', activate_alert, name='activate_alert'),
     url(r'^deactivate_alert/$', deactivate_alert, name='deactivate_alert'),
     url(r'^jserror/$', jserror, name='jserror'),
-    url(r'^dropbox_upload/(?P<download_id>[0-9a-fA-Z]{25,32})/$', dropbox_upload,
+    url(r'^dropbox_upload/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', dropbox_upload,
         name='dropbox_upload'),
     url(r'^account/two_factor/$', TwoFactorProfileView.as_view(), name=TwoFactorProfileView.urlname),
     url(r'^account/two_factor/setup/$', TwoFactorSetupView.as_view(), name=TwoFactorSetupView.urlname),
@@ -65,7 +65,7 @@ urlpatterns = [
 domain_specific = [
     url(r'^$', redirect_to_default, name='domain_homepage'),
     url(r'^login/$', domain_login, name='domain_login'),
-    url(r'^retreive_download/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
+    url(r'^retreive_download/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         retrieve_download, {'template': 'hqwebapp/includes/file_download.html'},
         name='hq_soil_download'),
     url(r'toggles.js$', toggles_js, name='toggles_js'),

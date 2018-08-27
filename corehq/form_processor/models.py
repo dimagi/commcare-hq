@@ -446,6 +446,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             content_readable = BytesIO(content)
         db = get_blob_db()
         bucket = self.blobdb_bucket()
+        assert bucket != "", "blob migrated from couch, should never happen"
         if self.blob_id:
             # Overwrite and rewrite the existing entry in the database with this identifier
             info = db.put(content_readable, self.blob_id, bucket=bucket)
@@ -471,7 +472,10 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
 
         db = get_blob_db()
         try:
-            blob = db.get(self.blob_id, self.blobdb_bucket())
+            if self.blobdb_bucket() == "":
+                blob = db.get(key=self.blob_id)
+            else:
+                blob = db.get(self.blob_id, self.blobdb_bucket())
         except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
 
@@ -484,7 +488,11 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
     def delete_content(self):
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        deleted = db.delete(self.blob_id, bucket)
+        if bucket == "":
+            # blob was migrated from couch using new blobmeta API
+            deleted = db.delete(key=self.blob_id)
+        else:
+            deleted = db.delete(self.blob_id, bucket)
         if deleted:
             self.blob_id = None
 
