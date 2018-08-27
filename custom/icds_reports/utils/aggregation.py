@@ -799,7 +799,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
           state_id, month, case_id, latest_time_end_processed,
           immediate_breastfeeding, anemia, eating_extra, resting,
           anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
-          bleeding, swelling, blurred_vision, convulsions, rupture
+          bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities
         ) (
           SELECT
             %(state_id)s AS state_id,
