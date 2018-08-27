@@ -6,6 +6,7 @@ import hashlib
 import json
 import random
 import re
+from copy import deepcopy
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast, Content
@@ -104,6 +105,16 @@ class TimedSchedule(Schedule):
         which repeats every 12 months.
         """
         return self.repeat_every < 0
+
+    def get_weekdays(self):
+        """
+        Returns the weekdays (0-6 meaning Monday-Sunday) that this weekly schedule
+        sends on.
+        """
+        if self.ui_type != self.UI_TYPE_WEEKLY:
+            raise ValueError("Expected simple weekly schedule")
+
+        return [(self.start_day_of_week + e.day) % 7 for e in self.memoized_events]
 
     def set_first_event_due_timestamp(self, instance, start_date=None):
         """
@@ -547,6 +558,15 @@ class AbstractTimedEvent(Event):
 class TimedEvent(AbstractTimedEvent):
     time = models.TimeField()
 
+    def create_copy(self):
+        """
+        See Event.create_copy() for docstring.
+        """
+        return TimedEvent(
+            day=self.day,
+            time=deepcopy(self.time),
+        )
+
     def get_time(self, case=None):
         return self.time, 0
 
@@ -564,6 +584,16 @@ class RandomTimedEvent(AbstractTimedEvent):
     """
     time = models.TimeField()
     window_length = models.PositiveIntegerField()
+
+    def create_copy(self):
+        """
+        See Event.create_copy() for docstring.
+        """
+        return RandomTimedEvent(
+            day=self.day,
+            time=deepcopy(self.time),
+            window_length=self.window_length,
+        )
 
     def get_time(self, case=None):
         choices = list(range(self.window_length))
@@ -584,6 +614,15 @@ class CasePropertyTimedEvent(AbstractTimedEvent):
     content based on the value in a case property.
     """
     case_property_name = models.CharField(max_length=126)
+
+    def create_copy(self):
+        """
+        See Event.create_copy() for docstring.
+        """
+        return CasePropertyTimedEvent(
+            day=self.day,
+            case_property_name=self.case_property_name,
+        )
 
     def get_time(self, case=None):
         if not case:
