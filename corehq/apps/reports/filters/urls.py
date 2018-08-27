@@ -4,6 +4,7 @@ from django.conf.urls import url
 
 from .api import (
     EmwfOptionsView,
+    SubmitHistoryOptionsView,
     CaseListFilterOptions,
     DeviceLogUsers,
     DeviceLogIds,
@@ -14,6 +15,7 @@ from .location import LocationGroupFilterOptions
 
 urlpatterns = [
     url(r'^emwf_options/$', EmwfOptionsView.as_view(), name='emwf_options'),
+    url(r'^emwf_options_all_users/$', SubmitHistoryOptionsView.as_view(), name='emwf_options_all_users'),
     url(r'^users_options/$', MobileWorkersOptionsView.as_view(), name=MobileWorkersOptionsView.urlname),
     url(r'^case_list_options/$', CaseListFilterOptions.as_view(), name='case_list_options'),
     url(r'^reassign_case_options/$', ReassignCaseOptions.as_view(), name='reassign_case_options'),
