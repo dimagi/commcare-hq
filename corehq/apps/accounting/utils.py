@@ -368,3 +368,20 @@ def cancel_future_subscriptions(domain_name, from_date, web_user):
             web_user=web_user,
             note="Cancelled due to changing subscription",
         )
+
+
+def is_downgrade(current_edition, next_edition):
+    if current_edition == 'Enterprise':
+        if next_edition == 'Advanced' or next_edition == 'Pro' or \
+                next_edition == 'Standard' or next_edition == 'Community':
+            return True
+    if current_edition == 'Advanced':
+        if next_edition == 'Pro' or next_edition == 'Standard' or next_edition == 'Community':
+            return True
+    if current_edition == 'Pro':
+        if next_edition == 'Standard' or next_edition == 'Community':
+            return True
+    if current_edition == 'Standard':
+        if next_edition == 'Community':
+            return True
+    return False
