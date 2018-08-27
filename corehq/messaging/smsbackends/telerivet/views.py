@@ -4,7 +4,6 @@ import uuid
 from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMapping
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
-from corehq.apps.hqwebapp.decorators import use_angular_js
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
     TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm)
@@ -17,8 +16,6 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
-from djangular.views.mixins import allow_remote_invocation
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 import six
 
 
@@ -49,7 +46,7 @@ def incoming_message(request):
     return HttpResponse()
 
 
-class TelerivetSetupView(HQJSONResponseMixin, BaseMessagingSectionView):
+class TelerivetSetupView(BaseMessagingSectionView):
     template_name = 'telerivet/telerivet_setup.html'
     urlname = 'telerivet_setup'
     page_title = ugettext_lazy("Telerivet Setup")
@@ -122,6 +119,7 @@ class TelerivetSetupView(HQJSONResponseMixin, BaseMessagingSectionView):
             "problem persists, please report an issue."
         )
 
+    '''
     @allow_remote_invocation
     def get_last_inbound_sms(self, data):
         request_token = data.get('request_token')
@@ -240,7 +238,4 @@ class TelerivetSetupView(HQJSONResponseMixin, BaseMessagingSectionView):
             'name_error': name_error,
             'unexpected_error': None if name_error else self.unexpected_error,
         }
-
-    @use_angular_js
-    def dispatch(self, *args, **kwargs):
-        return super(TelerivetSetupView, self).dispatch(*args, **kwargs)
+    '''

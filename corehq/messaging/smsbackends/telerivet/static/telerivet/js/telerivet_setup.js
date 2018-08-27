@@ -1,24 +1,26 @@
-hqDefine("telerivet/js/telerivet_setup", function() {
-    'use strict';
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-        telerivetSetupApp = window.angular.module('telerivetSetupApp', ['ngRoute', 'ng.django.rmi']);
+hqDefine("telerivet/js/telerivet_setup", [
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+], function(
+    ko,
+    initialPageData
+) {
+    var telerivetSetupModel = function() {
+        var self = {};
 
+        return self;
+    };
+
+    $(function() {
+        $("#telerivet-setup").koApplyBindings(telerivetSetupModel());
+    });
+
+    /*
     var globalApiKey = '';
     var globalProjectId = '';
     var globalPhoneId = '';
     var globalTestPhoneNumber = '';
     var globalTestSMSSent = false;
-
-    telerivetSetupApp.config(['$httpProvider', function($httpProvider) {
-        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
-    }]);
-
-    telerivetSetupApp.config(function(djangoRMIProvider) {
-        djangoRMIProvider.configure(initialPageData('djng_current_rmi'));
-    });
 
     telerivetSetupApp.config(function($routeProvider) {
         $routeProvider
@@ -184,5 +186,5 @@ hqDefine("telerivet/js/telerivet_setup", function() {
         $scope.$watch('testSMSSent', function(newValue, oldValue) {
             globalTestSMSSent = newValue;
         });
-    });
+    });*/
 });
