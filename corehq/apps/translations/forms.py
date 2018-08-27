@@ -74,7 +74,7 @@ class PullResourceForm(forms.Form):
             )
         self.helper.layout = crispy.Layout(
             'transifex_project_slug',
-            'target_lang',
+            crispy.Field('target_lang', css_class="ko-select2"),
             'resource_slug',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
