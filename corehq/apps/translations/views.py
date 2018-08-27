@@ -30,14 +30,17 @@ from custom.icds.translations.integrations.utils import get_file_content_from_wo
 class BaseTranslationsView(BaseDomainView):
     @property
     def page_context(self):
-        transifex_details_available = transifex_details_available_for_domain(self.domain)
         context = {
-            'transifex_details_available': transifex_details_available,
+            'transifex_details_available': self.transifex_details_available,
         }
         return context
 
+    @property
+    def transifex_details_available(self):
+        return transifex_details_available_for_domain(self.domain)
+
     def transifex_integration_enabled(self, request):
-        if not transifex_details_available_for_domain(self.domain):
+        if not self.transifex_details_available:
             messages.error(request, _('Transifex integration not set for this domain'))
             return False
         return True

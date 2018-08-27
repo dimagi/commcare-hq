@@ -49,7 +49,6 @@ from custom.icds.tasks import (
 )
 from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
-from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
