@@ -195,6 +195,9 @@ class TransifexPOFileGenerator:
     def generated_files(self):
         return self.po_file_generator.generated_files
 
+    def cleanup(self):
+        self.po_file_generator.cleanup()
+
 
 class PoFileGenerator(object):
     def __init__(self):

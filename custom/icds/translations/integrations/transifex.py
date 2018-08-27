@@ -50,12 +50,9 @@ class Transifex(object):
         try:
             self.transifex_po_file_generator.generate_translation_files()
             file_uploads = self._send_files_to_transifex()
+        finally:
             self._cleanup()
-            return file_uploads
-        except:
-            t, v, tb = sys.exc_info()
-            self._cleanup()
-            six.reraise(t, v, tb)
+        return file_uploads
 
     @property
     @memoized
@@ -92,7 +89,7 @@ class Transifex(object):
         return file_uploads
 
     def _cleanup(self):
-        self.transifex_po_file_generator.po_file_generator.cleanup()
+        self.transifex_po_file_generator.cleanup()
 
     @property
     @memoized
