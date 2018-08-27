@@ -128,7 +128,8 @@ class ConvertTranslations(BaseTranslationsView):
         uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
         worksheet = openpyxl.load_workbook(uploaded_file).worksheets[0]
         po_file_generator = self._generate_po_file(worksheet)
-        content = open(po_file_generator.generated_files[0][1], 'r', encoding="utf-8").read()
+        with open(po_file_generator.generated_files[0][1], 'r', encoding="utf-8") as f:
+            content = f.read()
         po_file_generator.cleanup()
         response = HttpResponse(content, content_type="text/html; charset=utf-8")
         response['Content-Disposition'] = safe_filename_header(worksheet.title, 'po')
