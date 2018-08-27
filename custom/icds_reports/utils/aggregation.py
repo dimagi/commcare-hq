@@ -880,12 +880,12 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, breastfed_at_birth
+          case_id, state_id, month, latest_time_end_processed, breastfed_at_birth
         ) (
           SELECT
-            %(state_id)s AS state_id,
-            %(month)s AS month,
             DISTINCT case_load_ccs_record0 AS case_id,
+            %(state_id)s AS state_id,
+            %(month)s::DATE AS month,
             LAST_VALUE(timeend) over w AS latest_time_end_processed,
             LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth
           FROM "{ucr_tablename}"
