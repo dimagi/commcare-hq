@@ -24,7 +24,7 @@ def move_datafile_to_blobmeta(apps, schema_editor):
             domain=datafile.domain,
             parent_id=datafile.domain,
             type_code=CODES.data_file,
-            path="_default/" + datafile.blob_id,
+            key="_default/" + datafile.blob_id,
             properties={"description": datafile.description},
             content_type=datafile.content_type,
             content_length=datafile.content_length,
