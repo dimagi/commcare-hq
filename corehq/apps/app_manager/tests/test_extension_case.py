@@ -209,7 +209,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
             self.form.get_case_type(),
             self.xform.resolve_path("case/@case_id"),
         )
-        self.assertXmlEqual(self.get_xml('open_subcase_child'), str(self.xform))
+        self.assertXmlEqual(self.get_xml('open_subcase_child').decode('utf-8'), str(self.xform))
 
     def test_xform_case_block_index_valid_relationship(self):
         """
