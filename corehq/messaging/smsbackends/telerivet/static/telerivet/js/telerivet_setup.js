@@ -28,6 +28,24 @@ hqDefine("telerivet/js/telerivet_setup", [
         self.testSMSSent = ko.observable(true);        // TODO
         self.showOutboundTroubleshoot = ko.observable(false);
 
+        // Step 3
+        self.showAddWebhookNavigation = ko.observable(false);
+        self.showWebhookDetails = ko.observable(false);
+        self.pollForInboundSMS = ko.observable(true);       // TODO
+        self.inboundSMSReceived = ko.observable(true);      // TODO
+        self.inboundWaitTimedOut = ko.observable(false);
+        self.pollingErrorOccurred = ko.observable(false);
+        self.showInboundTroubleshoot = ko.observable(false);
+        self.waiting = ko.computed(function() {
+            return !self.inboundSMSReceived() && !self.inboundWaitTimedOut() && !self.pollingErrorOccurred();
+        });
+        self.messageReceived = ko.computed(function() {
+            return self.inboundSMSReceived() && !self.pollingErrorOccurred();
+        });
+        self.messageNotReceived = ko.computed(function() {
+            return self.inboundWaitTimedOut() && !self.inboundSMSReceived() && !self.pollingErrorOccurred();
+        });
+
         return self;
     };
 
@@ -59,26 +77,13 @@ hqDefine("telerivet/js/telerivet_setup", [
         $scope.nameError = null;
         $scope.setAsDefaultError = null;
 
-        // screenshot toggles
-        $scope.showAddWebookNavigation = false;
-        $scope.showWebhookDetails = false;
-
         // control flow variables
-        $scope.showInboundTroubleshoot = false;
         $scope.testSMSSent = globalTestSMSSent;
         $scope.pollForInboundSMS = false;
         $scope.pollingErrorOccurred = false;
         $scope.inboundSMSReceived = false;
         $scope.inboundWaitTimedOut = false;
         $scope.setupComplete = false;
-
-        $scope.toggleAddWebookNavigation = function() {
-            $scope.showAddWebookNavigation = !$scope.showAddWebookNavigation;
-        };
-
-        $scope.toggleWebhookDetails = function() {
-            $scope.showWebhookDetails = !$scope.showWebhookDetails;
-        };
 
         $scope.sendTestSMS = function() {
             djangoRMI.send_sample_sms({
