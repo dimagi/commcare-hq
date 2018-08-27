@@ -19,7 +19,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.conf import settings
 
 from corehq import toggles
@@ -1602,7 +1602,7 @@ class ICDSAppTranslations(BaseTranslationsView):
     page_title = ugettext_lazy('ICDS App Translations')
     urlname = 'icds_app_translations'
     template_name = 'icds_reports/icds_app/app_translations.html'
-    section_name = ugettext_noop("Translations")
+    section_name = ugettext_lazy("Translations")
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
