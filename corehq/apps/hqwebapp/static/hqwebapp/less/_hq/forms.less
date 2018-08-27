@@ -572,6 +572,25 @@ table .ko-inline-edit .read-only:hover {
   }
 }
 
+.form-bubble-purple {
+  // temporary colors while palette changes are worked out
+  @purple: #43467F;
+  @off-white: #E3D0FF;
+
+  background-color: @purple;
+  color: @off-white;
+
+  a.btn-purple {
+    background-color: @purple;
+    color: @off-white;
+    border: 1px solid @off-white;
+
+    &:hover {
+      background-color: darken(@purple, 5);
+    }
+  }
+}
+
 .form-bubble-actions {
   text-align: center;
   padding-bottom: 10px;

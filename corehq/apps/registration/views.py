@@ -225,11 +225,14 @@ class UserRegistrationView(BasePageView):
             'email': self.prefilled_email,
             'atypical_user': True if self.atypical_user else False
         }
+        ab_test = ab_tests.ABTest(ab_tests.DEMO_CTA, self.request)
+        demo_test = ab_test.context['version'] == ab_tests.DEMO_CTA_OPTION_ON
         return {
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
+            'demo_test': demo_test,
         }
 
     @property
