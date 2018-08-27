@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from __future__ import division
 import csv342 as csv
 import os
+import pickle
 
 import math
 from celery.schedules import crontab
@@ -338,7 +339,7 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
     if request and user and user.is_web_user():
         meta = get_meta(request)
         send_hubspot_form_task_v2.delay(
-            form_id, user, request.COOKIES.get(HUBSPOT_COOKIE),
+            form_id, pickle.dumps(user), request.COOKIES.get(HUBSPOT_COOKIE),
             meta, extra_fields=extra_fields
         )
 
@@ -351,8 +352,9 @@ def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta,
 
 
 @analytics_task()
-def send_hubspot_form_task_v2(form_id, web_user, hubspot_cookie, meta,
+def send_hubspot_form_task_v2(form_id, pickled_web_user, hubspot_cookie, meta,
                               extra_fields=None):
+    web_user = pickle.loads(web_user)
     _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
 
