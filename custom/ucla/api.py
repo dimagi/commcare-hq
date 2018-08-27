@@ -49,6 +49,37 @@ def _generic_message_bank_content(fixture_name, reminder, handler, recipient):
     )
 
 
+def general_health_message_bank_content_new(recipient, schedule_instance):
+    return _get_message_bank_content_new_framework('general_health', recipient, schedule_instance)
+
+
+def mental_health_message_bank_content_new(recipient, schedule_instance):
+    return _get_message_bank_content_new_framework('mental_health', recipient, schedule_instance)
+
+
+def sexual_health_message_bank_content_new(recipient, schedule_instance):
+    return _get_message_bank_content_new_framework('sexual_health', recipient, schedule_instance)
+
+
+def med_adherence_message_bank_content_new(recipient, schedule_instance):
+    return _get_message_bank_content_new_framework('med_adherence', recipient, schedule_instance)
+
+
+def substance_use_message_bank_content_new(recipient, schedule_instance):
+    return _get_message_bank_content_new_framework('substance_use', recipient, schedule_instance)
+
+
+def _get_message_bank_content_new_framework(fixture_name, recipient, schedule_instance):
+    return _get_message_bank_content(
+        fixture_name,
+        schedule_instance.domain,
+        schedule_instance.schedule_iteration_num,
+        schedule_instance.current_event_num,
+        len(schedule_instance.memoized_schedule.memoized_events),
+        recipient
+    )
+
+
 def _get_message_bank_content(fixture_name, domain, schedule_iteration_num, current_event_num, num_events,
         recipient):
     message_bank = FixtureDataType.by_domain_tag(domain, fixture_name).first()
