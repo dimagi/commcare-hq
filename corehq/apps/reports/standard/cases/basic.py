@@ -113,7 +113,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             raise e
 
     def get_special_owner_ids(self, admin, unknown, demo, commtrack):
-        if not any([admin, unknown, demo]):
+        if not any([admin, unknown, demo, commtrack]):
             return []
 
         user_filters = [filter_ for include, filter_ in [
@@ -125,7 +125,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         owner_ids = (user_es.UserES()
                      .domain(self.domain)
                      .OR(*user_filters)
-                     .show_inactive()
                      .get_ids())
 
         if commtrack:
