@@ -681,7 +681,8 @@ class ExportInstance(BlobMixin, Document):
     class Meta(object):
         app_label = 'export'
 
-    def wrap(cls, data):
+    @classmethod
+    def wrap_json(cls, data):
         return {
             'CaseExportInstance': CaseExportInstance,
             'FormExportInstance': FormExportInstance,

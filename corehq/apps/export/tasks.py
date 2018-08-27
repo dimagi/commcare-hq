@@ -42,7 +42,7 @@ def populate_export_download_task(json_export_instances, filters, download_id, f
     :param expiry:  Time period for the export to be available for download in minutes
     """
     export_instances = [
-        ExportInstance.wrap(json_export_instance)
+        ExportInstance.wrap_json(json_export_instance)
         for json_export_instance in json_export_instances
     ]
     domain = export_instances[0].domain
