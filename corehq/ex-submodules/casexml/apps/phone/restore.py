@@ -136,7 +136,7 @@ class RestoreContent(object):
 
     def _write_to_file(self, fileobj):
         # Add 1 to num_items to account for message element
-        items = (self.items_template % (self.num_items + 1)) if self.items else b''
+        items = (self.items_template % six.binary_type(self.num_items + 1)) if self.items else b''
         fileobj.write(self.start_tag_template % {
             b"items": items,
             b"username": self.username.encode("utf8"),
