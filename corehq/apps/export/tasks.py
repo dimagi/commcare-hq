@@ -11,7 +11,7 @@ from soil.progress import get_task_status
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.users.models import CouchUser
-from corehq.blobs import get_blob_db
+from corehq.blobs import CODES, get_blob_db
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.decorators import serial_task
@@ -41,6 +41,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
+    domain = export_instances[0].domain
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
@@ -56,7 +57,14 @@ def populate_export_download_task(export_instances, filters, download_id, filena
 
         with export_file as file_:
             db = get_blob_db()
-            db.put(file_, download_id, timeout=expiry)
+            db.put(
+                file_,
+                domain=domain,
+                parent_id=domain,
+                type_code=CODES.data_export,
+                key=download_id,
+                timeout=expiry,
+            )
 
             expose_blob_download(
                 download_id,
@@ -66,7 +74,6 @@ def populate_export_download_task(export_instances, filters, download_id, filena
                 download_id=download_id,
             )
 
-    domain = export_instances[0].domain
     email_requests = EmailExportWhenDoneRequest.objects.filter(
         domain=domain,
         download_id=download_id
@@ -90,7 +97,8 @@ def _start_export_task(export_instance_id, last_access_cutoff):
 
 
 def _get_saved_export_download_data(export_instance_id):
-    download_id = 'rebuild_export_tracker.{}'.format(export_instance_id)
+    prefix = DownloadBase.new_id_prefix
+    download_id = '{}rebuild_export_tracker.{}'.format(prefix, export_instance_id)
     download_data = DownloadBase.get(download_id)
     if download_data is None:
         download_data = DownloadBase(download_id=download_id)
