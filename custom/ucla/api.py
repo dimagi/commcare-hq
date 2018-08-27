@@ -39,7 +39,18 @@ def substance_use_message_bank_content(reminder, handler, recipient):
 
 
 def _generic_message_bank_content(fixture_name, reminder, handler, recipient):
-    domain = reminder.domain
+    return _get_message_bank_content(
+        fixture_name,
+        reminder.domain,
+        reminder.schedule_iteration_num,
+        reminder.current_event_sequence_num,
+        len(handler.events),
+        recipient
+    )
+
+
+def _get_message_bank_content(fixture_name, domain, schedule_iteration_num, current_event_num, num_events,
+        recipient):
     message_bank = FixtureDataType.by_domain_tag(domain, fixture_name).first()
 
     if not message_bank:
@@ -70,8 +81,8 @@ def _generic_message_bank_content(fixture_name, reminder, handler, recipient):
         return None
 
     current_message_seq_num = str(
-        ((reminder.schedule_iteration_num - 1) * len(handler.events)) +
-        reminder.current_event_sequence_num + 1
+        ((schedule_iteration_num - 1) * num_events) +
+        current_event_num + 1
     )
     custom_messages = FixtureDataItem.by_field_value(
         domain, message_bank, RISK_PROFILE_FIELD, risk_profile
