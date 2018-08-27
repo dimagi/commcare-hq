@@ -393,7 +393,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
     restrict_domain_creation = models.BooleanField(default=False)
     restrict_signup = models.BooleanField(default=False, db_index=True)
     restrict_signup_message = models.CharField(max_length=128, null=True, blank=True)
-    restrict_signup_email = models.CharField(max_length=128, null=True, blank=True)
 
     class Meta(object):
         app_label = 'accounting'

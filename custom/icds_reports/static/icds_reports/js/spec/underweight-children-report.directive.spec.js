@@ -37,6 +37,7 @@ describe('Underweight Children Directive', function () {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
+        window.ga = function() {};
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('underweight_children').respond(200, {

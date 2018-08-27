@@ -7,7 +7,7 @@ hqDefine('hqadmin/js/project_map', function () {
         var USER_COUNTS_THRESHOLD = [10, 100, 500, 1000, 4000];
         var mapboxAccessToken = $("#map").data("token");
 
-        var selectionModel;
+        var model;
 
         function colorAll() {
             if (countriesGeo !== undefined) {
@@ -100,17 +100,18 @@ hqDefine('hqadmin/js/project_map', function () {
                 return is_project_count_map;
             };
     
-            var SelectionModel = function () {
-                var self = this;
+            var selectionModel = function () {
+                var self = {};
                 self.selectedCountry = ko.observable('country name');
                 self.selectedProject = ko.observable('project name');
                 self.internalTableProperties = ['Name', 'Organization', 'Notes', 'Sector', 'Sub-Sector', 'Active Users', 'Countries'];
                 self.externalTableProperties = ['Sector', 'Sub-Sector', 'Active Users', 'Countries'];
                 self.topFiveProjects = ko.observableArray();
+                return self;
             };
     
-            selectionModel = new SelectionModel();
-            $('#modal').koApplyBindings(selectionModel);
+            model = selectionModel();
+            $('#modal').koApplyBindings(model);
     
             Object.freeze(that);
             return that;
@@ -232,17 +233,17 @@ hqDefine('hqadmin/js/project_map', function () {
                 mouseout: resetHighlight,
                 click: function() {
                     if (dataController.getCount(feature.properties.name)){
-                        selectionModel.selectedCountry(feature.properties.name);
-                        modalController.showProjectsTable(selectionModel.selectedCountry());
+                        model.selectedCountry(feature.properties.name);
+                        modalController.showProjectsTable(model.selectedCountry());
                         var country = (feature.properties.name).toUpperCase();
-                        selectionModel.topFiveProjects.removeAll();
+                        model.topFiveProjects.removeAll();
                         $.ajax({
                             url: "/hq/admin/top_five_projects_by_country/?country=" + country,
                             datatype: "json",
                         }).done(function(data){
                             if (data.internal) {
                                 data[country].forEach(function(project){
-                                    selectionModel.topFiveProjects.push({
+                                    model.topFiveProjects.push({
                                         name: project['name'],
                                         organization: project['organization_name'],
                                         description: project['internal']['notes'],
@@ -254,7 +255,7 @@ hqDefine('hqadmin/js/project_map', function () {
                                 });
                             } else {
                                 data[country].forEach(function(project){
-                                    selectionModel.topFiveProjects.push({
+                                    model.topFiveProjects.push({
                                         sector: project['internal']['area'],
                                         sub_sector: project['internal']['sub_area'],
                                         active_users: project['cp_n_active_cc_users'],
@@ -346,13 +347,13 @@ hqDefine('hqadmin/js/project_map', function () {
                 var references = window.location.hash.substring(1).split('#');
                 if (references.length === 2) {
                     // country, then project
-                    selectionModel.selectedCountry(references[0]);
-                    selectionModel.selectedProject(references[1]);
+                    model.selectedCountry(references[0]);
+                    model.selectedProject(references[1]);
                     modalController.showProjectInfo(references[0], references[1]);
                     $('#modal').modal();
                 } else if (references.length === 1 && references[0].length > 0) {
                     // just a country
-                    selectionModel.selectedCountry(references[0]);
+                    model.selectedCountry(references[0]);
                     modalController.showProjectsTable(references[0]);
                     $('#modal').modal();
                 }
