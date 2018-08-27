@@ -16,7 +16,7 @@ from corehq.apps.export.filters import (
 from corehq.apps.export.forms import (
     BaseFilterExportDownloadForm,
     EmwfFilterFormExport,
-    ExpandedMobileWorkerFilter,
+    SubmitHistoryFilter,
     FilterCaseESExportDownloadForm,
     CaseExportFilterBuilder,
     FormExportFilterBuilder,
@@ -115,7 +115,7 @@ class TestEmwfFilterFormExport(TestCase):
 
         self.assertTrue(self.export_filter.skip_layout)
         self.assertEqual(self.subject.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(self.subject.dynamic_filter_class, ExpandedMobileWorkerFilter)
+        self.assertEqual(self.subject.dynamic_filter_class, SubmitHistoryFilter)
 
     def test_export_to_es_user_types_map(self):
         mapping = {'mobile': ['mobile'], 'demo_user': ['demo'], 'supply': ['supply'],
@@ -201,7 +201,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
 
         self.assertTrue(export_filter.skip_layout)
         self.assertEqual(export_filter.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(export_filter.dynamic_filter_class, ExpandedMobileWorkerFilter)
+        self.assertEqual(export_filter.dynamic_filter_class, SubmitHistoryFilter)
 
     @patch('corehq.apps.export.filters.get_groups_user_ids')
     def test_get_group_filter(self, patch_object):
@@ -219,7 +219,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         }
         self.assertEqual(group_filter.to_es_filter(), expected_filter)
 
-    @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.REGISTERED])
+    @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.ACTIVE])
     @patch.object(filter_builder, 'get_user_ids_for_user_types')
     def test_get_user_type_filter_for_mobile(self, fetch_user_ids_patch):
         self.filter_export = self.subject(self.domain, pytz.utc)
@@ -241,7 +241,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
         self.assertEqual(user_filters[0].submitted_by, self.user_ids)
 
-    @patch.object(form, '_get_selected_es_user_types', return_value=[HQUserType.REGISTERED, HQUserType.ADMIN])
+    @patch.object(form, '_get_selected_es_user_types', return_value=[HQUserType.ACTIVE, HQUserType.ADMIN])
     @patch.object(filter_builder, 'get_user_ids_for_user_types')
     def test_get_user_type_filter_for_admin_and_mobile(self, fetch_user_ids_patch, *patches):
         self.filter_export = self.subject(self.domain, pytz.utc)
