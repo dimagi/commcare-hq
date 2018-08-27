@@ -768,7 +768,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(blurred_vision) OVER w as blurred_vision,
         LAST_VALUE(convulsions) OVER w as convulsions,
         LAST_VALUE(rupture) OVER w as rupture,
-        LAST_VALUE(anemia) OVER w as anemia
+        LAST_VALUE(anemia) OVER w as anemia,
+        LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -818,7 +819,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
             ucr.swelling as swelling,
             ucr.blurred_vision as blurred_vision,
             ucr.convulsions as convulsions,
-            ucr.rupture as rupture
+            ucr.rupture as rupture,
+            ucr.anc_abnormalities as anc_abnormalities
           FROM ({ucr_table_query}) ucr
           LEFT JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -883,7 +885,7 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
           SELECT
             %(state_id)s AS state_id,
             %(month)s AS month,
-            case_load_ccs_record0 AS case_id,
+            DISTINCT case_load_ccs_record0 AS case_id,
             LAST_VALUE(timeend) over w AS latest_time_end_processed,
             LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth
           FROM "{ucr_tablename}"
@@ -1702,6 +1704,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('mobile_number', 'case_list.mobile_number'),
             ('preg_order', 'case_list.preg_order'),
             ('num_pnc_visits', 'case_list.num_pnc_visits'),
+            ('last_date_thr', 'case_list.last_date_thr'),
+            ('num_anc_complete', 'case_list.num_anc_complete')
         )
         return """
         INSERT INTO "{tablename}" (

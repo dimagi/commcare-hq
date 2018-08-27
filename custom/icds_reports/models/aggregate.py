@@ -124,6 +124,8 @@ class CcsRecordMonthly(models.Model):
     preg_order = models.SmallIntegerField(blank=True, null=True)
     home_visit_date = models.DateField(blank=True, null=True)
     num_pnc_visits = models.SmallIntegerField(blank=True, null=True)
+    last_date_thr = models.DateField(blank=True, null=True)
+    num_anc_complete = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
@@ -1111,6 +1113,10 @@ class AggregateBirthPreparednesForms(models.Model):
     rupture = models.PositiveSmallIntegerField(
         null=True,
         help_text="Last value of /data/bp2/rupture = 'yes'"
+    )
+    anc_abnormalities = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Last value of anc_details/anc_abnormalities = 'yes'"
     )
 
     class Meta(object):
