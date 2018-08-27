@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import six
 import sqlalchemy
 from sqlagg import SumWhen
 from fluff import TYPE_STRING
@@ -9,8 +11,11 @@ from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 
 
 def column_to_sql(column):
+    column_name = column.database_column_name
+    if isinstance(column_name, six.binary_type):
+        column_name = column_name.decode('utf-8')
     return sqlalchemy.Column(
-        column.database_column_name,
+        column_name,
         _get_column_type(column.datatype),
         nullable=column.is_nullable,
         primary_key=column.is_primary_key,
