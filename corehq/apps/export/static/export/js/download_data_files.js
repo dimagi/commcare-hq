@@ -3,7 +3,8 @@ hqDefine("export/js/download_data_files",[
     'jquery',
     'hqwebapp/js/alert_user',
     'hqwebapp/js/initial_page_data',
-], function($, alertUserModule, initialPageData) {
+    'hqwebapp/js/assert_properties',
+], function($, alertUserModule, initialPageData, assertProperties) {
     var alertUser = alertUserModule.alert_user;
     /**
      * Copies the URL of a data file to the clipboard
@@ -16,7 +17,9 @@ hqDefine("export/js/download_data_files",[
      * @param textareaElem: A hidden <textarea> element containing the URL
      */
     var copyDataFileUrl = function () {
-        var url = window.location.origin + initialPageData.reverse('download_data_file',$(this).data("id"), $(this).data("name"));
+        assertProperties.assertRequired($(this).data(), ['id', 'name']);
+
+        var url =  window.location.origin+initialPageData.reverse('download_data_file',$(this).data("id"), $(this).data("name"));
         var textareaElem = $('#url_'.concat($(this).data("id")));
 
         var showCopyDialog = function () {
@@ -46,7 +49,8 @@ hqDefine("export/js/download_data_files",[
      * @param rowElem: The <tr> element of the data file to remove on successful deletion
      */
     var deleteDataFile = function () {
-        var url = window.location.origin + initialPageData.reverse('download_data_file', $(this).data("id"), $(this).data("name"));
+        assertProperties.assertRequired($(this).data(), ['id','name']);
+        var url = initialPageData.reverse('download_data_file', $(this).data("id"), $(this).data("name"));
         var rowElem = $('#row_'.concat($(this).data("id")));
 
         $.ajax({

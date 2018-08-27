@@ -21,7 +21,7 @@
                    data-action="{% url "domain_set_published" domain version.name %}"
                    data-toggle="modal" data-target="#contentDistributionAgreement"
                    href="#contentDistributionAgreement"
-                   data-analytics = "{versionName:{{ version.name }}}"
+                   data-version = "{{ version.name }}"
                    id="project-publish"
                 >
                     Publish
@@ -40,7 +40,7 @@
     <dd>
         <a href="{% url "project_info" version.name %}"
            id="view-on-exchange"
-           data-analytics = "{versionName:{{ version.name }}}"
+           data-version = "{{ version.name }}"
         >
             {% trans 'View on exchange' %}
         </a>

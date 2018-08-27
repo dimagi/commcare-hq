@@ -10,11 +10,11 @@ hqDefine("domain/js/snapshot_settings", [
     googleAnalytics
 ) {
     function viewOnExchange() {
-        var versionName = $(this).data('analytics').versionName;
+        var versionName = $(this).data('version');
         googleAnalytics.track.click($('#view-on-exchange'), 'Exchange', 'View on exchange', versionName);
     }
     function projectPublishEventTrack(){
-        var versionName = $(this).data('analytics').versionName;
+        var versionName = $(this).data('version');
         googleAnalytics.track.event('Exchange', 'Publish Most Recent', versionName);
     }
 
