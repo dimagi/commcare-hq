@@ -105,7 +105,7 @@ class FixtureDataTest(TestCase):
         delete_all_users()
         delete_all_fixture_data_types()
         get_fixture_data_types_in_domain.clear(self.domain)
-        get_blob_db().delete(self.domain, FIXTURE_BUCKET)
+        get_blob_db().delete(key=FIXTURE_BUCKET + '/' + self.domain)
         super(FixtureDataTest, self).tearDown()
 
     def test_xml(self):
@@ -292,7 +292,7 @@ class FixtureDataTest(TestCase):
 
         fixtures = call_fixture_generator(fixturegenerators.item_lists, frank)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {frank.user_id})
-        self.assertTrue(get_blob_db().exists(self.domain, FIXTURE_BUCKET))
+        self.assertTrue(get_blob_db().exists(key=FIXTURE_BUCKET + '/' + self.domain))
 
         bytes_ = six.binary_type
         fixtures = [ElementTree.fromstring(f) if isinstance(f, bytes_) else f

@@ -29,7 +29,6 @@ from corehq.apps.export.views import (
     EditNewCustomCaseExportView,
     EditNewCustomFormExportView,
 )
-from corehq.blobs import _db
 from corehq.util.test_utils import flag_enabled, generate_cases
 from io import open
 
@@ -78,29 +77,25 @@ class DataFileDownloadDetailTest(ViewTestCase):
         super(DataFileDownloadDetailTest, cls).setUpClass()
         with open(os.path.abspath(__file__), 'rb') as f:
             cls.content = f.read()
-
-        _db.append(FakeDB({'abc': cls.content}))
-        cls.data_file = DataFile(
-            domain=cls.domain.name,
-            filename='foo.txt',
-            description='all of the foo',
-            content_type='text/plain',
-            blob_id='abc',
-            content_length=len(cls.content),
-            delete_after=datetime.datetime.utcnow() + datetime.timedelta(days=3),
-        )
-        cls.data_file.save()
+            f.seek(0)
+            cls.data_file = DataFile.save_blob(
+                f,
+                domain=cls.domain.name,
+                filename='foo.txt',
+                description='all of the foo',
+                content_type='text/plain',
+                delete_after=datetime.datetime.utcnow() + datetime.timedelta(days=3)
+            )
 
     @classmethod
     def tearDownClass(cls):
         super(DataFileDownloadDetailTest, cls).tearDownClass()
         cls.data_file.delete()
-        _db.pop()
 
     def setUp(self):
         super(DataFileDownloadDetailTest, self).setUp()
         self.data_file_url = reverse(DataFileDownloadDetail.urlname, kwargs={
-            'domain': self.domain.name, 'pk': self.data_file.pk, 'filename': 'foo.txt'
+            'domain': self.domain.name, 'pk': self.data_file.id, 'filename': 'foo.txt'
         })
 
     @flag_enabled('DATA_FILE_DOWNLOAD')
@@ -113,8 +108,8 @@ class DataFileDownloadDetailTest(ViewTestCase):
 
     @flag_enabled('DATA_FILE_DOWNLOAD')
     def test_data_file_download_expired(self):
-        self.data_file.delete_after = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
-        self.data_file.save()
+        self.data_file._meta.expires_on = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
+        self.data_file._meta.save()
         resp = self.client.get(self.data_file_url)
         self.assertEqual(resp.status_code, 404)
 

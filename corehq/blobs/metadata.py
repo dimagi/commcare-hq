@@ -6,7 +6,10 @@ from datetime import datetime, timedelta
 from itertools import chain
 
 from corehq.sql_db.routers import get_cursor
-from corehq.sql_db.util import split_list_by_db_partition
+from corehq.sql_db.util import (
+    get_db_alias_for_partitioned_doc,
+    split_list_by_db_partition,
+)
 from corehq.util.datadog.gauges import datadog_counter
 
 from .models import BlobMeta
@@ -81,6 +84,28 @@ class MetaDB(object):
         deleted_bytes = sum(meta.content_length for m in metas)
         datadog_counter('commcare.blobs.deleted.count', value=len(metas))
         datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
+
+    def get(self, **kw):
+        """Get metadata for a single blob
+
+        All arguments must be passed as keyword arguments.
+
+        :param parent_id: `BlobMeta.parent_id`
+        :param type_code: `BlobMeta.type_code`
+        :param name: `BlobMeta.name`
+        :raises: `BlobMeta.DoesNotExist` if the metadata is not found.
+        :returns: A `BlobMeta` object.
+        """
+        if set(kw) != {"parent_id", "type_code", "name"}:
+            # arg check until on Python 3 -> PEP 3102: required keyword args
+            kw.pop("parent_id", None)
+            kw.pop("type_code", None)
+            kw.pop("name", None)
+            if not kw:
+                raise TypeError("Missing argument 'name' and/or 'parent_id'")
+            raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
+        dbname = get_db_alias_for_partitioned_doc(kw["parent_id"])
+        return BlobMeta.objects.using(dbname).get(**kw)
 
 
 def _utcnow():
