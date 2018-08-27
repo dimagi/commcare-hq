@@ -41,7 +41,7 @@ class TestICDSCASReach(TestCase):
                             "percent": 127.27272727272728,
                             "value": 50,
                             "label": "Number of AWCs open for at least one day in month",
-                            "frequency": "day",
+                            "frequency": "month",
                             "help_text": (
                                 "Total Number of AWCs open for at least one day in month"
                             )
