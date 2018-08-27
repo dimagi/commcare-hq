@@ -150,9 +150,10 @@ class TransifexPOFileGenerator:
         """
         :return:
         {
-            sheet_name_with_build_id: {
-                key: Translation(key, translation, occurrences)
-            }
+            sheet_name_with_build_id: [
+                Translation(key, translation, occurrences),
+                Translation(key, translation, occurrences),
+            ]
         }
         """
         from corehq.apps.app_manager.dbaccessors import get_current_app
