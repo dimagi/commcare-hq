@@ -204,7 +204,7 @@ class TestICDSCASReach(TestCase):
                             "redirect": "awc_daily_status",
                             "color": "green",
                             "all": 50,
-                            "frequency": "month",
+                            "frequency": "day",
                             "format": "div",
                             "help_text": "Total Number of Angwanwadi Centers that"
                                          " were open yesterday by the AWW or the AWW helper",
