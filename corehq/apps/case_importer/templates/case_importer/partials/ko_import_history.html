@@ -51,7 +51,7 @@
             <!--ko if: upload_comment_edit_allowed-->
             <inline-edit data-apply-bindings="false" params="
                 value: comment,
-                url: commentUrl,
+                url: commentUrl(),
                 rows: 1,
                 placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
                 saveValueName: 'comment',
