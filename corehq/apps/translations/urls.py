@@ -8,10 +8,8 @@ from .views import (
 )
 
 translations_urls = [
-    url(r'^convert_translations/$', ConvertTranslations.as_view(),
-        name=ConvertTranslations.urlname),
     url(r'^pull_resource/$', PullResource.as_view(),
         name=PullResource.urlname),
-    url(r'^', ConvertTranslations.as_view(),
+    url(r'^$', ConvertTranslations.as_view(),
         name=ConvertTranslations.urlname),
 ]
