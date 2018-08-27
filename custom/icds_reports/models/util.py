@@ -16,14 +16,6 @@ class AggregateSQLProfile(models.Model):
     duration = models.PositiveIntegerField()
     latest_aggregation = models.DateField(null=True)
 
-    @classmethod
-    def get_last_indicator_acknowledged(cls):
-        sync_latest_ds_update = cls.objects.exclude(latest_aggregation__isnull=True)\
-            .aggregate(models.Max('latest_aggregation'))
-
-        latest_ds_update = sync_latest_ds_update['latest_aggregation__max']
-        return latest_ds_update
-
 
 class UcrTableNameMapping(models.Model):
     table_type = models.TextField(primary_key=True)

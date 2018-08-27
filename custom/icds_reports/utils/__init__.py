@@ -34,7 +34,7 @@ from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
 from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
-from django.db.models import Case, When, Q, F, IntegerField, Max
+from django.db.models import Case, When, Q, F, IntegerField, Max, Min
 import six
 import uuid
 from six.moves import range
@@ -644,19 +644,8 @@ def track_time(func):
             .aggregate(Max('date_created'))['date_created__max'] or datetime.now().date()
 
     def get_sync_datasource_time():
-        ucr_pillows = ['kafka-ucr-static', 'kafka-ucr-static-cases',
-                       'kafka-ucr-static-forms', 'kafka-ucr-static-awc-location',
-                       'kafka-ucr-main']
-        latest_of_each_pillow = KafkaCheckpoint.objects.filter(checkpoint_id__in=ucr_pillows)\
-            .exclude(checkpoint_time__isnull=True)\
-            .values('checkpoint_id')\
-            .annotate(max_checkpoint=max('checkpoint_time'))
-
-        if not latest_of_each_pillow:
-            return None
-        oldest_out_of_latest = min(latest_of_each_pillow, key=lambda checkpoint: checkpoint['max_checkpoint'])
-
-        return oldest_out_of_latest['max_checkpoint']
+        return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
+            .exclude(doc_modification_time_isnull=True).aggregate(Min('doc_modification_time'))['doc_modification_time__min']
 
     @wraps(func)
     def wrapper(*args, **kwargs):

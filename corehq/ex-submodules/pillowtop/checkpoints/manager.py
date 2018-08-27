@@ -75,7 +75,7 @@ class PillowCheckpoint(object):
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )
-        checkpoint_time = change.metadata.publish_timestamp if change else None
+        doc_modification_time = change.metadata.publish_timestamp if change else None
         with transaction.atomic():
             if kafka_seq:
                 for topic_partition, offset in kafka_seq.items():
@@ -83,7 +83,7 @@ class PillowCheckpoint(object):
                         checkpoint_id=self.checkpoint_id,
                         topic=topic_partition[0],
                         partition=topic_partition[1],
-                        defaults={'offset': offset, 'checkpoint_time': checkpoint_time}
+                        defaults={'offset': offset, 'doc_modification_time': doc_modification_time}
                     )
             checkpoint = self.get_or_create_wrapped(verify_unchanged=True)
             checkpoint.sequence = seq
@@ -206,7 +206,7 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )
-        checkpoint_time = change.metadata.publish_timestamp if change else None
+        doc_modification_time = change.metadata.publish_timestamp if change else None
 
         with transaction.atomic():
             if kafka_seq:
@@ -215,7 +215,7 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
                         checkpoint_id=self.checkpoint_id,
                         topic=topic_partition[0],
                         partition=topic_partition[1],
-                        defaults={'offset': offset, 'checkpoint_time': checkpoint_time}
+                        defaults={'offset': offset, 'doc_modification_time': doc_modification_time}
                     )
 
     def touch(self, min_interval):

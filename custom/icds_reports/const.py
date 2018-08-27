@@ -15,7 +15,9 @@ TABLEAU_USERNAME = "reportviewer"
 TABLEAU_INVALID_TOKEN = '-1'
 
 BHD_ROLE = 'BHD (For VL Dashboard Testing)'
-
+UCR_PILLOWS = ['kafka-ucr-static', 'kafka-ucr-static-cases',
+               'kafka-ucr-static-forms', 'kafka-ucr-static-awc-location',
+               'kafka-ucr-main']
 
 class LocationTypes(object):
     STATE = 'state'
