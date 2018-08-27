@@ -11,6 +11,7 @@ hqDefine("domain/js/my_project_settings", [
         var self = {};
 
         self.override_tz = ko.observable(o.override);
+        self.no_domain_membership = ko.observable(o.no_domain_membership);
         self.form_is_ready = ko.observable(false);
 
         self.updateForm = function() {
@@ -23,6 +24,7 @@ hqDefine("domain/js/my_project_settings", [
     $(function() {
         $('#my-project-settings-form').koApplyBindings(HQTimezoneHandler({
             override: initialPageData.get('override_global_tz'),
+            no_domain_membership: initialPageData.get('no_domain_membership'),
         }));
 
         var $globalTimezone = $('#id_global_timezone'),
