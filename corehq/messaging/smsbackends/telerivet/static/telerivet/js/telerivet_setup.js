@@ -46,6 +46,9 @@ hqDefine("telerivet/js/telerivet_setup", [
             return self.inboundWaitTimedOut() && !self.inboundSMSReceived() && !self.pollingErrorOccurred();
         });
 
+        // Finish
+        self.setupComplete = ko.observable(false);
+
         return self;
     };
 
