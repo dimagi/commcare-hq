@@ -74,6 +74,7 @@
 {% endblock %}
 
 {% block content %}
+{% initial_page_data 'demo_test' demo_test %}
 {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
 {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
 {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
@@ -115,7 +116,7 @@
                     {% blocktrans %}
                         Want to learn more before signing up?
                         &nbsp;&nbsp;&nbsp;
-                        <a href="#cta-form-get-demo" target="_blank" data-toggle="modal" class="btn btn-purple">
+                        <a href="#cta-form-get-demo" id="demo-test-button" target="_blank" data-toggle="modal" class="btn btn-purple">
                             Get a Demo
                         </a>
                     {% endblocktrans %}
