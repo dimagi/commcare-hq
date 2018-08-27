@@ -83,7 +83,7 @@ class PillowCheckpoint(object):
                         checkpoint_id=self.checkpoint_id,
                         topic=topic_partition[0],
                         partition=topic_partition[1],
-                        defaults={'offset': offset,'checkpoint_time': checkpoint_time}
+                        defaults={'offset': offset, 'checkpoint_time': checkpoint_time}
                     )
             checkpoint = self.get_or_create_wrapped(verify_unchanged=True)
             checkpoint.sequence = seq
