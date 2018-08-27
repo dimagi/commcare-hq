@@ -37,6 +37,7 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
     def test_language_names(self):
         app_json = self.get_json('app')
         app_json['langs'] = ['en', 'fra', 'hin', 'pol']
+        app_json['domain'] = 'test'
         app = Application.wrap(app_json)
         app.create_suite()
         app_strings = app.create_app_strings('default')

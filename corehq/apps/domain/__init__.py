@@ -9,3 +9,6 @@ ExtraPreindexPlugin.register('domain', __file__, (
     settings.NEW_FIXTURES_DB,
     'meta',
 ))
+
+SHARED_DOMAIN = "<shared>"
+UNKNOWN_DOMAIN = "<unknown>"
