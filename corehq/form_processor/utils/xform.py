@@ -93,7 +93,10 @@ def _build_node_list_from_dict(form_properties, separator=''):
 
 
 def build_form_xml_from_property_dict(form_properties, separator=''):
-    return separator.join(etree.tostring(e) for e in _build_node_list_from_dict(form_properties, separator))
+    return separator.join(
+        etree.tostring(e).decode('utf-8')
+        for e in _build_node_list_from_dict(form_properties, separator)
+    )
 
 
 def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
