@@ -266,7 +266,6 @@ class BlobDbBackendMigrator(BaseDocMigrator):
         self.db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
-        self.bad_blobs_state = 0
         if not isinstance(self.db, MigratingBlobDB):
             raise MigrationError(
                 "Expected to find migrating blob db backend (got %r)" % self.db)
@@ -302,11 +301,6 @@ class BlobDbBackendMigrator(BaseDocMigrator):
             if self.dirpath is None:
                 print("Missing blob ids have been written in the log file:")
                 print(self.filename)
-        if self.bad_blobs_state:
-            print("{count} documents had `blobs != external_blobs`, which is "
-                  "not a valid state. Search for 'blobs != external_blobs' in "
-                  "the migration logs to find them."
-                  .format(count=self.bad_blobs_state))
 
 
 class BlobDbBackendExporter(BaseDocProcessor):
