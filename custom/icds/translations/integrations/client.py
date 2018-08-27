@@ -40,10 +40,17 @@ class TransifexApiClient(object):
         """
         all_resources = self.list_resources().json()
         if version and self.use_version_postfix:
+            # get all slugs with version postfix
             return [r['slug']
                     for r in self.list_resources().json()
                     if r['slug'].endswith("v%s" % version)]
+        elif version and not self.use_version_postfix:
+            # get all slugs that don't have version postfix
+            return [r['slug']
+                    for r in self.list_resources().json()
+                    if not r['slug'].endswith("v%s" % version)]
         else:
+            # get all slugs
             return [r['slug'] for r in all_resources]
 
     def lock_resource(self, resource_slug):
