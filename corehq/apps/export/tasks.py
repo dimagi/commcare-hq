@@ -5,6 +5,7 @@ import logging
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from django.conf import settings
+from django.core.serializers import deserialize
 from soil import DownloadBase
 from soil.progress import get_task_status
 
@@ -41,6 +42,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
+    export_instances = deserialize('json', export_instances)
     domain = export_instances[0].domain
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(

@@ -11,6 +11,7 @@ import datetime
 from couchdbkit import ResourceConflict
 
 from dimagi.utils.logging import notify_exception
+from django.core.serializers import serialize
 from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
@@ -285,7 +286,7 @@ def get_export_download(export_instances, filters, filename=None):
 
     download = DownloadBase()
     download.set_task(populate_export_download_task.delay(
-        export_instances,
+        serialize('json', export_instances),
         filters,
         download.download_id,
         filename=filename
