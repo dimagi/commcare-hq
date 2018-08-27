@@ -28,7 +28,7 @@ from .dbaccessors import (
     get_all_daily_saved_export_instance_ids,
 )
 from .export import get_export_file, rebuild_export, should_rebuild_export
-from .models.new import EmailExportWhenDoneRequest
+from .models.new import EmailExportWhenDoneRequest, ExportInstance
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 
 from six.moves import filter
@@ -37,10 +37,14 @@ logger = logging.getLogger('export_migration')
 
 
 @task(queue=EXPORT_DOWNLOAD_QUEUE)
-def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60):
+def populate_export_download_task(json_export_instances, filters, download_id, filename=None, expiry=10 * 60):
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
+    export_instances = [
+        ExportInstance.wrap(json_export_instance)
+        for json_export_instance in json_export_instances
+    ]
     domain = export_instances[0].domain
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(
