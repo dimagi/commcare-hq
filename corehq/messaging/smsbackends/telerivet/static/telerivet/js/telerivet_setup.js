@@ -8,20 +8,25 @@ hqDefine("telerivet/js/telerivet_setup", [
     var telerivetSetupModel = function() {
         var self = {};
 
+        // Step handling
         self.step = ko.observable(0);
         self.start = ko.computed(function() { return self.step() === 0; });
         self.step1 = ko.computed(function() { return self.step() === 1; });
         self.step2 = ko.computed(function() { return self.step() === 2; });
         self.step3 = ko.computed(function() { return self.step() === 3; });
         self.finish = ko.computed(function() { return self.step() === 4; });
-
         self.previousStep = function() {
             self.step(self.step() - 1);
         };
-
         self.nextStep = function() {
             self.step(self.step() + 1);
         };
+
+        // Step 2
+        self.showApiKeyGeneration = ko.observable(false);
+        self.showApiInfoLocation = ko.observable(false);
+        self.testSMSSent = ko.observable(true);        // TODO
+        self.showOutboundTroubleshoot = ko.observable(false);
 
         return self;
     };
@@ -55,13 +60,10 @@ hqDefine("telerivet/js/telerivet_setup", [
         $scope.setAsDefaultError = null;
 
         // screenshot toggles
-        $scope.showApiKeyGeneration = false;
-        $scope.showApiInfoLocation = false;
         $scope.showAddWebookNavigation = false;
         $scope.showWebhookDetails = false;
 
         // control flow variables
-        $scope.showOutboundTroubleshoot = false;
         $scope.showInboundTroubleshoot = false;
         $scope.testSMSSent = globalTestSMSSent;
         $scope.pollForInboundSMS = false;
@@ -69,14 +71,6 @@ hqDefine("telerivet/js/telerivet_setup", [
         $scope.inboundSMSReceived = false;
         $scope.inboundWaitTimedOut = false;
         $scope.setupComplete = false;
-
-        $scope.toggleApiInfoLocation = function() {
-            $scope.showApiInfoLocation = !$scope.showApiInfoLocation;
-        };
-
-        $scope.toggleApiKeyGeneration = function() {
-            $scope.showApiKeyGeneration = !$scope.showApiKeyGeneration;
-        };
 
         $scope.toggleAddWebookNavigation = function() {
             $scope.showAddWebookNavigation = !$scope.showAddWebookNavigation;
