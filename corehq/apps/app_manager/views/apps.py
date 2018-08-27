@@ -719,6 +719,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
         ('mobile_ucr_restore_version', None),
+        ('location_fixture_restore', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
