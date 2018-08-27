@@ -3,11 +3,9 @@ from __future__ import unicode_literals
 
 from collections import namedtuple, defaultdict
 from datetime import timedelta
-from itertools import chain
 import re
 
 from requests import RequestException
-import six
 from six.moves import zip
 
 from casexml.apps.case.mock import CaseBlock
@@ -25,25 +23,11 @@ from corehq.motech.openmrs.const import (
     XMLNS_OPENMRS,
 )
 from corehq.motech.openmrs.finders import PatientFinder
-from corehq.motech.openmrs.serializers import to_timestamp
+from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask
 from corehq.motech.value_source import CaseTriggerInfo
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
-
-
-def serialize(data):
-    """
-    Convert values in data to a format OpenMRS will accept.
-
-    >>> serialize({'birthdate': '2017-06-27'}) == {'birthdate': '2017-06-27T00:00:00.000+0000'}
-    True
-
-    """
-    # We can get away with not worrying about namespaces because these
-    # property names are fixed and unique.
-    serializers = dict(chain(six.iteritems(ADDRESS_PROPERTIES), six.iteritems(NAME_PROPERTIES), six.iteritems(PERSON_PROPERTIES)))
-    return {p: serializers[p](v) if serializers[p] else v for p, v in data.items()}
 
 
 def get_case_location(case):
@@ -233,9 +217,9 @@ class CreateVisitTask(WorkflowTask):
 
     def run(self):
         subtasks = []
-        start_datetime = to_timestamp(self.visit_datetime)
+        start_datetime = to_omrs_datetime(self.visit_datetime)
         if self.visit_type:
-            stop_datetime = to_timestamp(
+            stop_datetime = to_omrs_datetime(
                 self.visit_datetime + timedelta(days=1) - timedelta(seconds=1)
             )
             visit = {
@@ -421,7 +405,7 @@ class UpdatePersonNameTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -442,7 +426,7 @@ class UpdatePersonNameTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -466,7 +450,7 @@ class CreatePersonAddressTask(WorkflowTask):
         if properties:
             response = self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/address/'.format(person_uuid=self.person_uuid),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
             self.address_uuid = response.json()['uuid']
@@ -504,7 +488,7 @@ class UpdatePersonAddressTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -520,7 +504,7 @@ class UpdatePersonAddressTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -530,15 +514,15 @@ def save_match_ids(case, case_config, patient):
     If we are confident of the patient matched to a case, save
     the patient's identifiers to the case.
     """
-    def get_patient_id_type_uuids_values():
-        yield PERSON_UUID_IDENTIFIER_TYPE_ID, patient['uuid']
-        for identifier in patient['identifiers']:
+    def get_patient_id_type_uuids_values(patient_):
+        yield PERSON_UUID_IDENTIFIER_TYPE_ID, patient_['uuid']
+        for identifier in patient_['identifiers']:
             yield identifier['identifierType']['uuid'], identifier['identifier']
 
     case_config_ids = case_config['patient_identifiers']
     case_update = {}
     kwargs = {}
-    for id_type_uuid, value in get_patient_id_type_uuids_values():
+    for id_type_uuid, value in get_patient_id_type_uuids_values(patient):
         if id_type_uuid in case_config_ids:
             case_property = case_config_ids[id_type_uuid]['case_property']
             if case_property == 'external_id':
@@ -554,14 +538,63 @@ def save_match_ids(case, case_config, patient):
     submit_case_blocks([case_block.as_string()], case.domain, xmlns=XMLNS_OPENMRS)
 
 
-def find_patient(requests, domain, case_id, openmrs_config):
-    case = CaseAccessors(domain).get_case(case_id)
+def create_patient(requests, info, case_config):
+    name = {
+        property_: value_source.get_value(info)
+        for property_, value_source in case_config.person_preferred_name.items()
+        if property_ in NAME_PROPERTIES and value_source.get_value(info)
+    }
+    address = {
+        property_: value_source.get_value(info)
+        for property_, value_source in case_config.person_preferred_address.items()
+        if property_ in ADDRESS_PROPERTIES and value_source.get_value(info)
+    }
+    properties = {
+        property_: value_source.get_value(info)
+        for property_, value_source in case_config.person_properties.items()
+        if property_ in PERSON_PROPERTIES and value_source.get_value(info)
+    }
+    person = {}
+    if name:
+        person['names'] = [serialize(name)]
+    if address:
+        person['addresses'] = [serialize(address)]
+    if properties:
+        person.update(serialize(properties))
+    if person:
+        identifiers = [
+            {'identifierType': patient_identifier_type, 'identifier': value_source.get_value(info)}
+            for patient_identifier_type, value_source in case_config.patient_identifiers.items()
+            if patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID and value_source.get_value(info)
+        ]
+        patient = {
+            'person': person,
+        }
+        if identifiers:
+            patient['identifiers'] = identifiers
+        response = requests.post(
+            '/ws/rest/v1/patient/',
+            json=patient,
+        )
+        if 200 <= response.status_code < 300:
+            # response.json() is not the full patient record. We need
+            # the patient's identifiers and attributes.
+            return get_patient_by_uuid(requests, response.json()['uuid'])
+
+
+def find_patient(requests, domain, info, openmrs_config):
+    case = CaseAccessors(domain).get_case(info.case_id)
     patient_finder = PatientFinder.wrap(openmrs_config.case_config.patient_finder)
     patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
     if len(patients) == 1:
         patient, = patients
         save_match_ids(case, openmrs_config.case_config, patient)
         return patient
+    if not patients and patient_finder.create_missing:
+        patient = create_patient(requests, info, openmrs_config.case_config)
+        if patient:
+            save_match_ids(case, openmrs_config.case_config, patient)
+            return patient
     # If PatientFinder can't narrow down the number of candidate
     # patients, don't guess. Just admit that we don't know.
     return None
@@ -580,7 +613,7 @@ def get_patient(requests, domain, info, openmrs_config):
         # Definitive IDs did not match a patient in OpenMRS.
         if openmrs_config.case_config.patient_finder:
             # Search for patients based on other case properties
-            patient = find_patient(requests, domain, info.case_id, openmrs_config)
+            patient = find_patient(requests, domain, info, openmrs_config)
 
     return patient
 
@@ -602,7 +635,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         if properties:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -620,7 +653,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         if properties:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
