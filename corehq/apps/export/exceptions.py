@@ -19,3 +19,7 @@ class ExportFormValidationException(Exception):
 
 class ExportAsyncException(Exception):
     pass
+
+
+class NoSavedExportTask(Exception):
+    pass
