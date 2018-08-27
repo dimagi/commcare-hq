@@ -59,7 +59,7 @@ class TestPoFileGenerator(SimpleTestCase):
                 with open(file_path, encoding='utf-8') as f:
                     file_content = f.read()
                     self.assertIn("Language: hin", file_content)
-                    self.assertIn("MIME-Version: 1.0",file_content)
+                    self.assertIn("MIME-Version: 1.0", file_content)
                     self.assertIn("Content-Type: text/plain; charset=utf-8", file_content)
         finally:
             po_file_generator.cleanup()
