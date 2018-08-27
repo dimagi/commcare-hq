@@ -86,7 +86,7 @@ class ConvertTranslations(BaseTranslationsView):
         """
         rows, source, translation, occurrence, context = self._parse_excel_sheet(worksheet)
         translations = {worksheet.title: []}
-        for index, row in enumerate(rows[1:]):
+        for row in rows[1:]:
             _occurrence = row[occurrence].value if occurrence is not None else ''
             _context = row[context].value if context is not None else ''
             translations[worksheet.title].append(
