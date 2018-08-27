@@ -196,3 +196,39 @@ class TransifexApiClient(object):
         :return: source lang code on transifex
         """
         return self.project_details().json().get('source_language_code')
+
+    def move_resources(self, hq_lang_code, target_project, version=None, use_version_postfix=True):
+        """
+        ability to move resources from one project to another
+        :param hq_lang_code: lang code on hq
+        :param target_project: target project slug on transifex
+        :param version: version if needed on parent resource slugs
+        :param use_version_postfix: to use version postfix in new project
+        :return: responses per resource slug
+        """
+        responses = {}
+        for resource_slug in self.get_resource_slugs(version):
+            lang = self.transifex_lang_code(hq_lang_code)
+            url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}/?file".format(
+                self.project, resource_slug, lang
+            )
+            response = requests.get(url, auth=self._auth, stream=True)
+            if response.status_code != 200:
+                raise ResourceMissing
+            if use_version_postfix:
+                upload_resource_slug = resource_slug
+            else:
+                upload_resource_slug = resource_slug.split("_v")[0]
+            upload_url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}".format(
+                target_project, upload_resource_slug, lang)
+            content = response.content
+            headers = {'content-type': 'application/json'}
+            data = {
+                'name': upload_resource_slug, 'slug': upload_resource_slug, 'content': content,
+                'i18n_type': 'PO'
+            }
+            upload_response = requests.put(
+                upload_url, data=json.dumps(data), auth=self._auth, headers=headers,
+            )
+            responses[resource_slug] = upload_response
+        return responses
