@@ -200,11 +200,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                     state_id=state_id, date=monthly_date, func=_aggregate_ccs_record_pnc_forms
                 ) for state_id in state_ids
             ])
-            # stage_1_tasks.extend([
-            #     icds_state_aggregation_task.si(
-            #         state_id=state_id, date=monthly_date, func=_aggregate_delivery_forms
-            #     ) for state_id in state_ids
-            # ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(
+                    state_id=state_id, date=monthly_date, func=_aggregate_delivery_forms
+                ) for state_id in state_ids
+            ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
                     state_id=state_id, date=monthly_date, func=_aggregate_bp_forms
