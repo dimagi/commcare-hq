@@ -8,6 +8,21 @@ hqDefine("telerivet/js/telerivet_setup", [
     var telerivetSetupModel = function() {
         var self = {};
 
+        self.step = ko.observable(0);
+        self.start = ko.computed(function() { return self.step() === 0; });
+        self.step1 = ko.computed(function() { return self.step() === 1; });
+        self.step2 = ko.computed(function() { return self.step() === 2; });
+        self.step3 = ko.computed(function() { return self.step() === 3; });
+        self.finish = ko.computed(function() { return self.step() === 4; });
+
+        self.previousStep = function() {
+            self.step(self.step() - 1);
+        };
+
+        self.nextStep = function() {
+            self.step(self.step() + 1);
+        };
+
         return self;
     };
 
@@ -21,16 +36,6 @@ hqDefine("telerivet/js/telerivet_setup", [
     var globalPhoneId = '';
     var globalTestPhoneNumber = '';
     var globalTestSMSSent = false;
-
-    telerivetSetupApp.config(function($routeProvider) {
-        $routeProvider
-            .when('/start', {templateUrl: 'start.tpl'})
-            .when('/step1', {templateUrl: 'step1.tpl'})
-            .when('/step2', {templateUrl: 'step2.tpl'})
-            .when('/step3', {templateUrl: 'step3.tpl'})
-            .when('/finish', {templateUrl: 'finish.tpl'})
-            .otherwise({redirectTo: '/start'});
-    });
 
     telerivetSetupApp.controller('TelerivetSetupController', function($scope, djangoRMI) {
         // model attributes

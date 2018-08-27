@@ -11,12 +11,25 @@
 {% initial_page_data 'gateway_list_url' gateway_list_url %}
 {% initial_page_data 'request_token' request_token %}
 <div id="telerivet-setup" class="ko-template">
-    {% comment %}
-    {% include "telerivet/partials/start.html" %}
-    {% include "telerivet/partials/step1.html" %}
-    {% include "telerivet/partials/step2.html" %}
-    {% include "telerivet/partials/step3.html" %}
-    {% include "telerivet/partials/finish.html" %}
-    {% endcomment %}
+    <div data-bind="visible: start">
+        TODO: start<br>
+        {% include "telerivet/partials/start.html" %}
+    </div>
+    <div data-bind="visible: step1">
+        TODO: step1<br>
+        {% include "telerivet/partials/step1.html" %}
+    </div>
+    <div data-bind="visible: step2">
+        TODO: step2<br>
+        {% include "telerivet/partials/step2.html" %}
+    </div>
+    <div data-bind="visible: step3">
+        TODO: step3<br>
+        {% include "telerivet/partials/step3.html" %}
+    </div>
+    <div data-bind="visible: finish">
+        TODO: finish<br>
+        {% include "telerivet/partials/finish.html" %}
+    </div>
 </div>
 {% endblock %}
