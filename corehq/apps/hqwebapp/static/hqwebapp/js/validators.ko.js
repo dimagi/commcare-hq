@@ -1,6 +1,7 @@
 hqDefine("hqwebapp/js/validators.ko", [
     'jquery',
     'knockout',
+    'knockout-validation/dist/knockout.validation.min',
 ], function(
     $,
     ko
