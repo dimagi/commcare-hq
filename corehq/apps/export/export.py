@@ -285,7 +285,7 @@ def get_export_download(export_instances, filters, filename=None):
 
     download = DownloadBase()
     download.set_task(populate_export_download_task.delay(
-        export_instances,
+        [export_instance.to_json() for export_instance in export_instances],
         filters,
         download.download_id,
         filename=filename

@@ -681,6 +681,13 @@ class ExportInstance(BlobMixin, Document):
     class Meta(object):
         app_label = 'export'
 
+    def wrap(cls, data):
+        return {
+            'CaseExportInstance': CaseExportInstance,
+            'FormExportInstance': FormExportInstance,
+            'SMSExportInstance': SMSExportInstance,
+        }.get(data['doc_type'], cls).wrap(data)
+
     @property
     def is_safe(self):
         """For compatibility with old exports"""
