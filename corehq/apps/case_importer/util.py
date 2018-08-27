@@ -113,13 +113,12 @@ class WorksheetWrapper(object):
             return cls(workbook.worksheets[0])
 
     def get_header_columns(self):
-        if self.max_row > 1:
-            # remove None columns the library sometimes returns
-            return list(filter(None, next(self.iter_rows())))
+        try:
+            header_row = next(self.iter_rows())
+        except StopIteration:
+            header_row = []
 
-        # if max_row is 1, there may be either 0 or 1 rows in the sheet
-        rows = list(self.iter_rows())
-        header_row = rows[0] if rows else []
+        # remove None columns the library sometimes returns
         return list(filter(None, header_row))
 
     def _get_column_values(self, column_index):
