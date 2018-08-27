@@ -1267,7 +1267,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         for action_type in action_types:
             type_ |= action_type
 
-        transaction = cls._from_form(case, xform, client_date, transaction_type=type_)
+        transaction = cls._from_form(case, xform, transaction_type=type_)
         transaction.client_date = client_date
 
         return transaction
