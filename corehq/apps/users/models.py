@@ -1712,7 +1712,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     def filter_flag(self):
         from corehq.apps.reports.models import HQUserType
-        return HQUserType.REGISTERED
+        return HQUserType.ACTIVE
 
     @property
     def project(self):
