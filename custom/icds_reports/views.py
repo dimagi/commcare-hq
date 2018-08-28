@@ -1598,15 +1598,15 @@ class ICDSImagesAccessorAPI(View):
 
 @location_safe
 @method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
-class ICDSAppTranslations(BaseTranslationsView):
-    page_title = ugettext_lazy('ICDS App Translations')
-    urlname = 'icds_app_translations'
+class AppTranslations(BaseTranslationsView):
+    page_title = ugettext_lazy('App Translations')
+    urlname = 'app_translations'
     template_name = 'icds_reports/icds_app/app_translations.html'
     section_name = ugettext_lazy("Translations")
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
-        return super(ICDSAppTranslations, self).dispatch(request, *args, **kwargs)
+        return super(AppTranslations, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -1618,7 +1618,7 @@ class ICDSAppTranslations(BaseTranslationsView):
 
     @property
     def page_context(self):
-        context = super(ICDSAppTranslations, self).page_context
+        context = super(AppTranslations, self).page_context
         if context['transifex_details_available']:
             context['translations_form'] = self.translations_form
         return context

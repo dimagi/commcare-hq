@@ -7,9 +7,9 @@ from .views import (
     PullResource,
 )
 
-translations_urls = [
+urlpatterns = [
+    url(r'^convert/$', ConvertTranslations.as_view(),
+        name=ConvertTranslations.urlname),
     url(r'^pull_resource/$', PullResource.as_view(),
         name=PullResource.urlname),
-    url(r'^$', ConvertTranslations.as_view(),
-        name=ConvertTranslations.urlname),
 ]

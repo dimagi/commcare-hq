@@ -84,7 +84,8 @@ domain_specific = [
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
     url(r'^zipline/', include('custom.zipline.urls')),
-    url(r'^remote_link/', include('corehq.apps.linked_domain.urls'))
+    url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
+    url(r'^translations/', include('corehq.apps.translations.urls')),
 ]
 
 urlpatterns = [
