@@ -10,7 +10,7 @@ setproctitle==1.1.9
 uWSGI==2.0.11.2
 ipython==5.2.2
 ndg-httpsclient
-pyasn1==0.4.3
+pyasn1
 
 # ssl issue
 # https://urllib3.readthedocs.io/en/latest/user-guide.html#certificate-verification-in-python-2
