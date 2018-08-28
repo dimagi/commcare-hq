@@ -1,5 +1,5 @@
 hqDefine('sms/js/add_forwarding_rule',[
-    "jquery"
+    "jquery",
 ], function($) {
     function toggle_keyword() {
         if ($("#id_forward_type").val() === "KEYWORD") {
