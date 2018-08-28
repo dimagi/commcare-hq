@@ -1,7 +1,7 @@
 hqDefine('sms/js/add_gateway_form_handler',[
     "knockout",
 ], function (ko) {
-    var AddGatewayFormHandler = function (initial) {
+    var AddGatewayFormHandler = function(initial) {
         'use strict';
         var self = {};
 
