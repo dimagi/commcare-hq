@@ -154,8 +154,9 @@ class TelerivetPhoneNumberForm(Form):
                         StrictButton(
                             "",
                             id='id_send_sms_button',
-                            css_class='btn btn-primary',
-                            data_bind='text: sendSmsButtonText, click: sendTestSMS',
+                            css_class='btn',
+                            data_bind="text: sendSmsButtonText, click: sendTestSMS, "
+                                "css: {'btn-primary': !sendSmsButtonError(), 'btn-danger': sendSmsButtonError()}",
                         )
                     ),
                     data_bind="css: {'has-error': testPhoneNumberError}",

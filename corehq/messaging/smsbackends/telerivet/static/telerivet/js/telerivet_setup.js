@@ -36,7 +36,10 @@ hqDefine("telerivet/js/telerivet_setup", [
         // Step 2: Phone Number Form
         self.testPhoneNumber = ko.observable('');
         self.testPhoneNumberError = ko.observable('');
-        self.sendSmsButtonText = ko.observable(gettext('Send'));
+        self.sendSmsButtonError = ko.observable(false);
+        self.sendSmsButtonText = ko.computed(function() {
+            return self.sendSmsButtonError() ? gettext('Server error. Try again...') : gettext('Send');
+        });
 
         self.sendTestSMS = function() {
             $.ajax({
@@ -50,7 +53,7 @@ hqDefine("telerivet/js/telerivet_setup", [
                     request_token: initialPageData.get('request_token'),
                 },
                 success: function(data) {
-                    self.sendSmsButtonText(gettext('Send'));
+                    self.sendSmsButtonError(false);
                     self.apiKeyError(data.api_key_error);
                     self.projectIdError(data.project_id_error);
                     self.phoneIdError(data.phone_id_error);
@@ -58,7 +61,7 @@ hqDefine("telerivet/js/telerivet_setup", [
                     self.testSMSSent(data.success);
                 },
                 error: function(data) {
-                    self.sendSmsButtonText(gettext('Server error. Try again...'));
+                    self.sendSmsButtonError(true);
                 },
             });
         };
