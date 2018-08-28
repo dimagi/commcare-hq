@@ -1184,8 +1184,7 @@ class ScheduleForm(Form):
         initial['send_frequency'] = self.SEND_DAILY
 
     def add_initial_for_weekly_schedule(self, initial):
-        weekdays = [(self.initial_schedule.start_day_of_week + e.day) % 7
-                    for e in self.initial_schedule.memoized_events]
+        weekdays = self.initial_schedule.get_weekdays()
         initial['send_frequency'] = self.SEND_WEEKLY
         initial['weekdays'] = [six.text_type(day) for day in weekdays]
 

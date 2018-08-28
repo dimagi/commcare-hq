@@ -31,7 +31,7 @@ from jsonobject.exceptions import WrappingAttributeError
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
-from corehq.blobs.mixin import DeferredBlobMixin
+from corehq.blobs.mixin import DeferredBlobMixin, CODES
 from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.utils import clean_metadata
@@ -137,6 +137,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     date_header = DefaultProperty()
     build_id = StringProperty()
     export_tag = DefaultProperty(name='#export_tag')
+    _blobdb_type_code = CODES.form_xml
 
     class Meta(object):
         app_label = 'couchforms'
@@ -314,6 +315,13 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             self.save()
             self.put_attachment(decoded_payload, ATTACHMENT_NAME)
             return element
+
+    def put_attachment(self, content, name, **kw):
+        if kw.get("type_code") is None:
+            kw["type_code"] = (
+                CODES.form_xml if name == ATTACHMENT_NAME else CODES.form_attachment
+            )
+        return super(XFormInstance, self).put_attachment(content, name, **kw)
 
     @property
     def attachments(self):

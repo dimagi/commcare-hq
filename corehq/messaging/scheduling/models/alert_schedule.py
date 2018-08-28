@@ -104,6 +104,14 @@ class AlertEvent(Event):
     schedule = models.ForeignKey('scheduling.AlertSchedule', on_delete=models.CASCADE)
     minutes_to_wait = models.IntegerField()
 
+    def create_copy(self):
+        """
+        See Event.create_copy() for docstring.
+        """
+        return AlertEvent(
+            minutes_to_wait=self.minutes_to_wait,
+        )
+
 
 class ImmediateBroadcast(Broadcast):
     schedule = models.ForeignKey('scheduling.AlertSchedule', on_delete=models.CASCADE)

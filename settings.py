@@ -1565,6 +1565,21 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_PHASE2_AWW_1":
         ["custom.icds.messaging.custom_content.phase2_aww_1",
          "ICDS: AWC VHND Performance to AWW"],
+    "UCLA_GENERAL_HEALTH":
+        ["custom.ucla.api.general_health_message_bank_content_new",
+         "UCLA: General Health Message Bank"],
+    "UCLA_MENTAL_HEALTH":
+        ["custom.ucla.api.mental_health_message_bank_content_new",
+         "UCLA: Mental Health Message Bank"],
+    "UCLA_SEXUAL_HEALTH":
+        ["custom.ucla.api.sexual_health_message_bank_content_new",
+         "UCLA: Sexual Health Message Bank"],
+    "UCLA_MED_ADHERENCE":
+        ["custom.ucla.api.med_adherence_message_bank_content_new",
+         "UCLA: Med Adherence Message Bank"],
+    "UCLA_SUBSTANCE_USE":
+        ["custom.ucla.api.substance_use_message_bank_content_new",
+         "UCLA: Substance Use Message Bank"],
 }
 
 # Used by the old reminders framework

@@ -57,6 +57,7 @@ from corehq.messaging.scheduling.models import (
     IVRSurveyContent,
     SMSCallbackContent,
     MigratedReminder,
+    CustomContent,
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -74,6 +75,7 @@ from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from datetime import time, datetime, timedelta
 from django.db import transaction
 from django.db.models import Q
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from six import moves
 from time import sleep
@@ -397,6 +399,9 @@ def get_single_dict_value(d):
 
 def get_content(handler, event, translated=True):
     if handler.method == METHOD_SMS:
+        if handler.custom_content_handler:
+            return CustomContent(custom_content_id=handler.custom_content_handler)
+
         check_days_until(event.message)
         if translated:
             return SMSContent(message=event.message)
@@ -778,8 +783,18 @@ class Command(BaseCommand):
         if handler.include_child_locations:
             return None
 
-        if handler.custom_content_handler:
+        if handler.custom_content_handler and handler.method != METHOD_SMS:
             return None
+
+        if (
+            handler.custom_content_handler and
+            handler.custom_content_handler not in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT
+        ):
+            if not self.confirm(
+                "Custom content id %s not found in the new framework. Migrate anyway? y/n "
+                % handler.custom_content_handler
+            ):
+                return None
 
         for event in handler.events:
             try:

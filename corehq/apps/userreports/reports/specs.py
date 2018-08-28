@@ -8,6 +8,7 @@ from datetime import date
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.reports.datatables import DataTablesColumn
+from corehq.apps.userreports import const
 from corehq.apps.userreports.exceptions import InvalidQueryColumn
 from corehq.apps.userreports.expressions import ExpressionFactory
 
@@ -29,7 +30,7 @@ from sqlagg.columns import (
     MonthColumn,
     SimpleColumn,
     YearColumn,
-)
+    NonzeroSumColumn)
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.columns import ColumnConfig, get_expanded_column_config
 from corehq.apps.userreports.specs import TypeProperty
@@ -41,15 +42,16 @@ import six
 
 
 SQLAGG_COLUMN_MAP = {
-    'avg': MeanColumn,
-    'count_unique': CountUniqueColumn,
-    'count': CountColumn,
-    'min': MinColumn,
-    'max': MaxColumn,
-    'month': MonthColumn,
-    'sum': SumColumn,
-    'simple': SimpleColumn,
-    'year': YearColumn,
+    const.AGGGREGATION_TYPE_AVG: MeanColumn,
+    const.AGGGREGATION_TYPE_COUNT_UNIQUE: CountUniqueColumn,
+    const.AGGGREGATION_TYPE_COUNT: CountColumn,
+    const.AGGGREGATION_TYPE_MIN: MinColumn,
+    const.AGGGREGATION_TYPE_MAX: MaxColumn,
+    const.AGGGREGATION_TYPE_MONTH: MonthColumn,
+    const.AGGGREGATION_TYPE_SUM: SumColumn,
+    const.AGGGREGATION_TYPE_SIMPLE: SimpleColumn,
+    const.AGGGREGATION_TYPE_YEAR: YearColumn,
+    const.AGGGREGATION_TYPE_NONZERO_SUM: NonzeroSumColumn,
 }
 
 ES_AGG_MAP = {
