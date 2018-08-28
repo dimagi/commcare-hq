@@ -228,7 +228,8 @@ class FinalizeGatewaySetupForm(Form):
                         id="id_create_backend",
                         css_class='btn-primary',
                         data_bind="text: backendButtonText, click: createBackend, disable: creatingBackend,"
-                                  "css: {'btn-primary': !backendButtonError(), 'btn-danger': backendButtonError()}",
+                                  "css: {'btn-primary': !backendButtonError(), "
+                                  "'btn-danger': backendButtonError()}",
                     )
                 )
             )
