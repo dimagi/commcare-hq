@@ -3,9 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'sms/js/backend_map.js' %}"></script>
-{% endblock %}
+{% requirejs_main "sms/js/backend_map" %}
 
 {% block page_content %}
     {% initial_page_data 'form.backend_map' form.backend_map.value|safe %}

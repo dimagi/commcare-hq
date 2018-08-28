@@ -1,22 +1,27 @@
-hqDefine('sms/js/backend_map', function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
-    function BackendMapping(prefix, backend_id) {
+hqDefine('sms/js/backend_map',[
+    "underscore",
+    "jquery",
+    "knockout",
+    "hqwebapp/js/initial_page_data",
+], function(_, $, ko, initialPageData) {
+    function BackendMapping(prefix, backendId) {
         'use strict';
-        var self = this;
+        var self = {};
         self.prefix = ko.observable(prefix);
-        self.backend_id = ko.observable(backend_id);
+        self.backend_id = ko.observable(backendId);
+        return self;
     }
 
     function BackendMapViewModel(initial) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.backend_map = ko.observableArray();
 
         _.map(
             initial.backend_map,
             function(mapping) {
-                self.backend_map.push(new BackendMapping(mapping.prefix, mapping.backend_id));
+                self.backend_map.push(BackendMapping(mapping.prefix, mapping.backend_id));
             }
         );
 
@@ -32,16 +37,17 @@ hqDefine('sms/js/backend_map', function() {
         });
 
         self.addMapping = function() {
-            self.backend_map.push(new BackendMapping('', ''));
+            self.backend_map.push(BackendMapping('', ''));
         };
 
         self.removeMapping = function() {
             self.backend_map.remove(this);
         };
+        return self;
     }
 
     $(function(){
-        var backendViewModel = new BackendMapViewModel({
+        var backendViewModel = BackendMapViewModel({
             'backend_map': initialPageData.get('form.backend_map'),
         });
         $('#backend-map-form').koApplyBindings(backendViewModel);
