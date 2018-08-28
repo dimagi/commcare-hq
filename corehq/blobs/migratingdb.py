@@ -13,6 +13,7 @@ class MigratingBlobDB(object):
         self.new_db = new_db
         self.old_db = old_db
         assert new_db.metadb is not old_db.metadb
+        self.metadb = new_db.metadb
         # prevent over-reporting of deleted blobs on bulk delete
         # new_db.bulk_delete will delete the metadata
         old_db.metadb.bulk_delete = lambda metas: None
