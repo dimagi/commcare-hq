@@ -121,6 +121,49 @@ hqDefine("telerivet/js/telerivet_setup", [
 
         // Finish
         self.setupComplete = ko.observable(false);
+        self.creatingBackend = ko.observable(false);
+        self.backendButtonError = ko.observable(false);
+        self.backendButtonText = ko.computed(function() {
+            return self.backendButtonError() ? gettext("Server error. Try again...") : gettext("Complete");
+        });
+        self.name = ko.observable(initialPageData.get('form_name'));
+        self.nameError = ko.observable('');
+        self.setAsDefault = ko.observable(initialPageData.get('form_set_as_default'));
+        self.setAsDefaultError = ko.observable('');
+
+        self.createBackend = function() {
+            self.creatingBackend(true);
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse('create_backend'),
+                data: {
+                    name: self.name(),
+                    api_key: self.apiKey(),
+                    project_id: self.projectId(),
+                    phone_id: self.phoneId(),
+                    request_token: initialPageData.get('request_token'),
+                    set_as_default: self.setAsDefault(),
+                },
+                success: function(data) {
+                    if (data.success) {
+                        self.setupComplete(true);
+                        setTimeout(function() {
+                            window.location.href = initialPageData.get('gateway_list_url')
+                        }, 2000);
+                    } else {
+                        self.nameError(data.unexpected_error || data.name_error);
+                        if (data.name_error) {
+                            self.creatingBackend(false);
+                            self.backendButtonError(false);
+                        }
+                    }
+                },
+                error: function() {
+                    self.creatingBackend(false);
+                    self.backendButtonError(true);
+                },
+            });
+        };
 
         return self;
     };
@@ -128,86 +171,4 @@ hqDefine("telerivet/js/telerivet_setup", [
     $(function() {
         $("#telerivet-setup").koApplyBindings(telerivetSetupModel());
     });
-
-    /*
-    var globalProjectId = '';
-    var globalPhoneId = '';
-    var globalTestPhoneNumber = '';
-    var globalTestSMSSent = false;
-
-    telerivetSetupApp.controller('TelerivetSetupController', function($scope, djangoRMI) {
-        // model attributes
-        $scope.projectId = globalProjectId;
-        $scope.phoneId = globalPhoneId;
-        $scope.testPhoneNumber = globalTestPhoneNumber;
-        $scope.name = initialPageData('form_name');
-        $scope.setAsDefault = initialPageData('form_set_as_default');
-
-        // error messages
-        $scope.projectIdError = null;
-        $scope.phoneIdError = null;
-        $scope.testPhoneNumberError = null;
-        $scope.nameError = null;
-        $scope.setAsDefaultError = null;
-
-        // control flow variables
-        $scope.testSMSSent = globalTestSMSSent;
-        $scope.pollForInboundSMS = false;
-        $scope.pollingErrorOccurred = false;
-        $scope.inboundSMSReceived = false;
-        $scope.inboundWaitTimedOut = false;
-        $scope.setupComplete = false;
-
-        $scope.createBackend = function() {
-            $('#id_create_backend').prop('disabled', true);
-            djangoRMI.create_backend({
-                name: $scope.name,
-                api_key: $scope.apiKey,
-                project_id: $scope.projectId,
-                phone_id: $scope.phoneId,
-                request_token: initialPageData('request_token'),
-                set_as_default: $scope.setAsDefault
-            })
-            .success(function(data) {
-                if(data.success) {
-                    $scope.setupComplete = true;
-                    setTimeout(function() {
-                        window.location.href = initialPageData('gateway_list_url')
-                    }, 2000);
-                } else {
-                    $scope.nameError = data.unexpected_error || data.name_error;
-                    if(data.name_error) {
-                        $('#id_create_backend')
-                        .prop('disabled', false)
-                        .text(gettext("Complete"));
-                    }
-                }
-            })
-            .error(function() {
-                $('#id_create_backend')
-                .prop('disabled', false)
-                .text(gettext("Server error. Try again..."));
-            });
-        };
-
-        // TODO: Figure out if there's a better way to deal with these scope issues
-        $scope.$watch('apiKey', function(newValue, oldValue) {
-            globalApiKey = newValue;
-            $scope.testSMSSent = false;
-        });
-        $scope.$watch('projectId', function(newValue, oldValue) {
-            globalProjectId = newValue;
-            $scope.testSMSSent = false;
-        });
-        $scope.$watch('phoneId', function(newValue, oldValue) {
-            globalPhoneId = newValue;
-            $scope.testSMSSent = false;
-        });
-        $scope.$watch('testPhoneNumber', function(newValue, oldValue) {
-            globalTestPhoneNumber = newValue;
-        });
-        $scope.$watch('testSMSSent', function(newValue, oldValue) {
-            globalTestSMSSent = newValue;
-        });
-    });*/
 });

@@ -12,10 +12,9 @@
         {% endblocktrans %}
     </p>
 </div>
-<!-- TODO -->
-<!--div data-bind="visible: !setupComplete()">
+<div data-bind="visible: !setupComplete()">
     {% crispy finalize_gateway_form %}
-</div-->
+</div>
 <div data-bind="visible: setupComplete()">
     {% blocktrans %}
     Success! You are being redirected to the gateway list. If it does not happen automatically,
