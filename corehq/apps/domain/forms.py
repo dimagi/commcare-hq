@@ -141,7 +141,10 @@ class ProjectSettingsForm(forms.Form):
                 _('Override Project Timezone'),
                 crispy.Field('global_timezone', css_class='input-xlarge'),
                 twbscrispy.PrependedText(
-                    'override_global_tz', '', data_bind='checked: override_tz, event: {change: updateForm}'
+                    'override_global_tz',
+                    '',
+                    id='override_global_tz',
+                    data_bind='checked: override_tz, event: {change: updateForm}'
                 ),
                 crispy.Div(
                     crispy.Field(
@@ -158,7 +161,7 @@ class ProjectSettingsForm(forms.Form):
                     type="submit",
                     css_id="update-proj-settings",
                     css_class='btn-primary',
-                    data_bind="hqbSubmitReady: form_is_ready"
+                    data_bind="disable: disableUpdateSettings"
                 )
             )
         )
