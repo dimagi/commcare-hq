@@ -569,7 +569,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = AWCInfrastructureExport(
             config=config,
             loc_level=aggregation_level,
-            show_test=include_test
+            show_test=include_test,
+            beta=beta,
         ).get_excel_data(location)
     elif indicator == BENEFICIARY_LIST_EXPORT:
         # this report doesn't use this configuration
