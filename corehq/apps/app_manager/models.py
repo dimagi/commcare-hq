@@ -2218,8 +2218,10 @@ class DetailColumn(IndexedSchema):
 
         # Lazy migration: enum used to be a dict, now is a list
         if isinstance(data.get('enum'), dict):
-            data['enum'] = sorted({'key': key, 'value': value}
-                                  for key, value in data['enum'].items())
+            data['enum'] = sorted(
+                [{'key': key, 'value': value} for key, value in data['enum'].items()],
+                key=lambda d: d['key'],
+            )
 
         # Lazy migration: xpath expressions from format to first-class property
         if data.get('format') == 'calculate':

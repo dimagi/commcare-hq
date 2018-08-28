@@ -2490,10 +2490,10 @@ class StockFormExportColumn(ExportColumn):
         new_doc = None
         if isinstance(value, list):
             try:
-                new_doc = filter(
+                new_doc = list(filter(
                     lambda node: node.get('@type') == question_id,
                     value,
-                )[0]
+                ))[0]
             except IndexError:
                 new_doc = None
         else:

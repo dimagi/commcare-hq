@@ -155,7 +155,7 @@ class TestBlobMixin(BaseTestCase):
         name = "test.1"
         content = b"<xml />"
         obj.deferred_put_attachment(content, name, content_type="text/xml")
-        self.assertEqual(obj.fetch_attachment(name), content)
+        self.assertEqual(obj.fetch_attachment(name).encode('utf-8'), content)
 
     def test_delete_attachment_deletes_unsaved_blob(self):
         obj = self.make_doc(DeferredPutBlobDocument)
@@ -194,7 +194,7 @@ class TestBlobMixin(BaseTestCase):
 
     def test_persistent_blobs(self):
         content = b"<xml />"
-        couch_digest = "md5-" + b64encode(md5(content).digest())
+        couch_digest = "md5-" + b64encode(md5(content).digest()).decode('utf-8')
         obj = self.make_doc(DeferredPutBlobDocument)
         obj._migrating_blobs_from_couch = True
         obj._attachments = {"couch": {
@@ -225,7 +225,7 @@ class TestBlobMixin(BaseTestCase):
         self.obj.put_attachment(content, name)
         blob = self.get_blob(self.obj.blobs[name].key)
         with blob.open() as fh:
-            self.assertEqual(fh.read(), b"test_blob_directory content")
+            self.assertEqual(fh.read(), "test_blob_directory content")
 
     def test_put_attachment_deletes_replaced_blob(self):
         name = "test.\u4500"
@@ -272,7 +272,7 @@ class TestBlobMixin(BaseTestCase):
         self.assertNotIn(name, doc._attachments)
 
     def test_blobs_property(self):
-        couch_digest = "md5-" + b64encode(md5(b"content").digest())
+        couch_digest = "md5-" + b64encode(md5(b"content").digest()).decode('utf-8')
         doc = self.make_doc(FallbackToCouchDocument)
         doc._attachments["att"] = {
             "content": b"couch content",
@@ -397,7 +397,7 @@ class TestBlobMixin(BaseTestCase):
         self.assertEqual(blob.listdir(), blob_files)
 
     def test_atomic_blobs_fail_restores_couch_attachments(self):
-        couch_digest = "md5-" + b64encode(md5(b"content").digest())
+        couch_digest = "md5-" + b64encode(md5(b"content").digest()).decode('utf-8')
         doc = self.make_doc(FallbackToCouchDocument)
         doc._attachments["att"] = couch_att = {
             "content": b"couch content",
@@ -435,7 +435,7 @@ class TestBlobMixin(BaseTestCase):
         self.assertEqual(blob.listdir(), blob_files)
 
     def test_atomic_blobs_fail_restores_deleted_couch_attachment(self):
-        couch_digest = "md5-" + b64encode(md5(b"content").digest())
+        couch_digest = "md5-" + b64encode(md5(b"content").digest()).decode('utf-8')
         doc = self.make_doc(FallbackToCouchDocument)
         doc._attachments["att"] = couch_att = {
             "content": b"couch content",
@@ -896,7 +896,7 @@ class TestBulkAtomicBlobs(BaseTestCase):
             self.assertEqual(fh.read(), "deferred")
 
 
-_abc_digest = mod.sha1("abc").hexdigest()
+_abc_digest = mod.sha1("abc".encode('utf-8')).hexdigest()
 
 
 @generate_cases([

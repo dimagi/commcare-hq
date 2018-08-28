@@ -4,6 +4,7 @@ from collections import namedtuple
 import os
 from xml.sax.saxutils import escape
 
+import six
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from lxml import etree
 
@@ -578,7 +579,7 @@ class CaseTileHelper(object):
                     )
                 ).serialize()
             )
-        return ''.join(variables)
+        return ''.join([six.binary_type(variable).decode('utf-8') for variable in variables])
 
     @property
     @memoized
