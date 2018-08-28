@@ -94,7 +94,7 @@ from corehq.apps.accounting.models import (
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     EntryPoint, WireInvoice,
     StripePaymentMethod, LastPayment,
-    UNLIMITED_FEATURE_USAGE,
+    UNLIMITED_FEATURE_USAGE, MINIMUM_SUBSCRIPTION_LENGTH
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
@@ -1280,11 +1280,11 @@ class SelectPlanView(DomainAccountingSettings):
             return ""
         else:
             new_start_date = self.current_subscription.date_start + \
-                datetime.timedelta(days=self.current_subscription.minimum_subscription_length + 1)
+                datetime.timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH)
             return new_start_date.strftime(USER_DATE_FORMAT)
 
     @property
-    def next_subscription(self):
+    def next_subscription_edition(self):
         if self.current_subscription is None:
             return None
         elif self.current_subscription.next_subscription is None:
@@ -1348,7 +1348,7 @@ class SelectPlanView(DomainAccountingSettings):
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
                                            if self.current_subscription is not None else False),
-            'next_subscription': self.next_subscription,
+            'next_subscription_edition': self.next_subscription_edition,
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL
         }
 
@@ -1467,6 +1467,8 @@ class ConfirmSelectedPlanView(SelectPlanView):
     def is_upgrade(self):
         if self.current_subscription.is_trial:
             return True
+        elif self.current_subscription.plan_version.plan.edition == self.edition:
+            return False
         else:
             return not is_downgrade(
                 current_edition=self.current_subscription.plan_version.plan.edition,
@@ -1488,7 +1490,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     def current_subscription_end_date(self):
         if self.is_downgrade_before_minimum:
             return self.current_subscription.date_start + \
-                datetime.timedelta(days=self.current_subscription.minimum_subscription_length)
+                datetime.timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH)
         else:
             return datetime.date.today()
 

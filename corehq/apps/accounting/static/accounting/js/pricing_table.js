@@ -21,7 +21,7 @@ hqDefine('accounting/js/pricing_table', [
 
     var pricingTableModel = function (options) {
         assertProperties.assert(options, ['editions', 'currentEdition', 'isRenewal', 'startDateAfterMinimum',
-            'isSubscriptionBelowMin', 'nextSubscription', 'invoicing_contact']);
+            'isSubscriptionBelowMin', 'nextSubscriptionEdition', 'invoicing_contact']);
 
         'use strict';
         var self = {};
@@ -30,7 +30,7 @@ hqDefine('accounting/js/pricing_table', [
         self.isRenewal = options.isRenewal;
         self.startDateAfterMinimumSubscription = options.startDateAfterMinimum;
         self.subscriptionBelowMinimum = options.isSubscriptionBelowMin;
-        self.nextSubscription = options.nextSubscription;
+        self.nextSubscriptionEdition = options.nextSubscriptionEdition;
         self.invoicing_contact = options.invoicing_contact;
         self.editions = ko.observableArray(_.map(options.editions, function (edition) {
             return pricingTableEditionModel(edition, self.currentEdition);
@@ -80,7 +80,7 @@ hqDefine('accounting/js/pricing_table', [
                 var newStartDate = self.startDateAfterMinimumSubscription;
 
                 var message = "";
-                if (self.nextSubscription) {
+                if (self.nextSubscriptionEdition) {
                     message = _.template(gettext(
                         "All CommCare subscriptions require a 30 day minimum commitment. Your current " +
                         "<%= oldPlan %> Edition Plan subscription is scheduled to be downgraded to the " +
@@ -90,7 +90,7 @@ hqDefine('accounting/js/pricing_table', [
                         "like to speak to us about your subscription, please reach out to <%= email %>."
                     ))({
                         oldPlan: oldPlan,
-                        nextSubscription: self.nextSubscription,
+                        nextSubscription: self.nextSubscriptionEdition,
                         date: newStartDate,
                         newPlan: newPlan,
                         email: mailto,
@@ -172,7 +172,7 @@ hqDefine('accounting/js/pricing_table', [
             isRenewal: initialPageData.get('is_renewal'),
             startDateAfterMinimum: initialPageData.get('start_date_after_minimum_subscription'),
             isSubscriptionBelowMin: initialPageData.get('subscription_below_minimum'),
-            nextSubscription: initialPageData.get('next_subscription'),
+            nextSubscriptionEdition: initialPageData.get('next_subscription_edition'),
             invoicing_contact: initialPageData.get('invoicing_contact_email'),
         });
 

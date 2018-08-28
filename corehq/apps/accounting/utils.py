@@ -371,17 +371,6 @@ def cancel_future_subscriptions(domain_name, from_date, web_user):
 
 
 def is_downgrade(current_edition, next_edition):
-    if current_edition == 'Enterprise':
-        if next_edition == 'Advanced' or next_edition == 'Pro' or \
-                next_edition == 'Standard' or next_edition == 'Community':
-            return True
-    if current_edition == 'Advanced':
-        if next_edition == 'Pro' or next_edition == 'Standard' or next_edition == 'Community':
-            return True
-    if current_edition == 'Pro':
-        if next_edition == 'Standard' or next_edition == 'Community':
-            return True
-    if current_edition == 'Standard':
-        if next_edition == 'Community':
-            return True
-    return False
+    from corehq.apps.accounting.models import SoftwarePlanEdition
+    plans = SoftwarePlanEdition.SELF_SERVICE_ORDER + [SoftwarePlanEdition.ENTERPRISE]
+    return plans.index(current_edition) > plans.index(next_edition)

@@ -1633,7 +1633,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                             account=self.account,
                             domain=self.domain,
                             plan_version=self.plan_version,
-                            date_start=self.current_subscription.date_start + datetime.timedelta(days=31),
+                            date_start=self.current_subscription.date_start + datetime.timedelta(days=30),
                             web_user=self.creating_user,
                             adjustment_method=SubscriptionAdjustmentMethod.USER,
                             service_type=SubscriptionType.PRODUCT,

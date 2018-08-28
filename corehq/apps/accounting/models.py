@@ -1736,14 +1736,10 @@ class Subscription(models.Model):
         elif self.date_start < datetime.date(2018, 9, 3):
             # Only block upgrades for subscriptions created after the date we launched the 30-Day Minimum
             return False
-        elif self.date_start + datetime.timedelta(days=self.minimum_subscription_length) >= datetime.date.today():
+        elif self.date_start + datetime.timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH) >= datetime.date.today():
             return True
         else:
             return False
-
-    @property
-    def minimum_subscription_length(self):
-        return MINIMUM_SUBSCRIPTION_LENGTH
 
 
 class InvoiceBaseManager(models.Manager):
