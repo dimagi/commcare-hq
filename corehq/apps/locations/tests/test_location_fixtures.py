@@ -798,10 +798,10 @@ class ShouldSyncLocationFixturesTest(TestCase):
 class LocationFixtureSyncSettingsTest(TestCase):
 
     def test_should_sync_hierarchical_format_default(self):
-        self.assertEqual(False, should_sync_hierarchical_fixture(Domain()))
+        self.assertEqual(False, should_sync_hierarchical_fixture(Domain(), app=None))
 
     def test_should_sync_flat_format_default(self):
-        self.assertEqual(True, should_sync_flat_fixture(Domain()))
+        self.assertEqual(True, should_sync_flat_fixture(Domain(), app=None))
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_sync_format_with_toggle_enabled(self):
@@ -818,16 +818,16 @@ class LocationFixtureSyncSettingsTest(TestCase):
         conf.save()
 
         # stay on hierarchical by default
-        self.assertEqual(True, should_sync_hierarchical_fixture(project))
-        self.assertEqual(False, should_sync_flat_fixture(project))
+        self.assertEqual(True, should_sync_hierarchical_fixture(project, app=None))
+        self.assertEqual(False, should_sync_flat_fixture(project, app=None))
 
         # when domains are tested for migration by switching conf
         conf.sync_hierarchical_fixture = False
         conf.sync_flat_fixture = True  # default value
         conf.save()
 
-        self.assertEqual(False, should_sync_hierarchical_fixture(project))
-        self.assertEqual(True, should_sync_flat_fixture(project))
+        self.assertEqual(False, should_sync_hierarchical_fixture(project, app=None))
+        self.assertEqual(True, should_sync_flat_fixture(project, app=None))
 
         self.addCleanup(project.delete)
 
@@ -836,8 +836,8 @@ class LocationFixtureSyncSettingsTest(TestCase):
         project = Domain(name=domain)
         project.save()
 
-        self.assertEqual(False, should_sync_hierarchical_fixture(project))
-        self.assertEqual(True, should_sync_flat_fixture(project))
+        self.assertEqual(False, should_sync_hierarchical_fixture(project, app=None))
+        self.assertEqual(True, should_sync_flat_fixture(project, app=None))
 
         # This should not happen ideally since the conf can not be set without having HIERARCHICAL_LOCATION_FIXTURE
         # enabled. Considering that a domain has sync hierarchical fixture set to False without the FF
@@ -847,7 +847,7 @@ class LocationFixtureSyncSettingsTest(TestCase):
         conf.sync_flat_fixture = True  # default value
         conf.save()
 
-        self.assertEqual(False, should_sync_hierarchical_fixture(project))
-        self.assertEqual(True, should_sync_flat_fixture(project))
+        self.assertEqual(False, should_sync_hierarchical_fixture(project, app=None))
+        self.assertEqual(True, should_sync_flat_fixture(project, app=None))
 
         self.addCleanup(project.delete)
