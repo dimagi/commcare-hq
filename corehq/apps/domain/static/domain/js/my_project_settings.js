@@ -12,10 +12,14 @@ hqDefine("domain/js/my_project_settings", [
 
         self.override_tz = ko.observable(o.override);
         self.no_domain_membership = ko.observable(o.no_domain_membership);
-        self.form_is_ready = ko.observable(false);
+        self.disableUpdateSettings = ko.observable(true);
 
         self.updateForm = function() {
-            self.form_is_ready(true);
+            if ($('#override_global_tz')[0].checked) {
+                self.disableUpdateSettings(self.no_domain_membership());
+            } else {
+                self.disableUpdateSettings(true);
+            }
         };
 
         return self;
