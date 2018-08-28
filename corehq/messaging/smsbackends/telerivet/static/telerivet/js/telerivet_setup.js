@@ -60,7 +60,7 @@ hqDefine("telerivet/js/telerivet_setup", [
                     self.testPhoneNumberError(data.unexpected_error || data.test_phone_number_error);
                     self.testSMSSent(data.success);
                 },
-                error: function(data) {
+                error: function() {
                     self.sendSmsButtonError(true);
                 },
             });
@@ -148,7 +148,7 @@ hqDefine("telerivet/js/telerivet_setup", [
                     if (data.success) {
                         self.setupComplete(true);
                         setTimeout(function() {
-                            window.location.href = initialPageData.get('gateway_list_url')
+                            window.location.href = initialPageData.get('gateway_list_url');
                         }, 2000);
                     } else {
                         self.nameError(data.unexpected_error || data.name_error);

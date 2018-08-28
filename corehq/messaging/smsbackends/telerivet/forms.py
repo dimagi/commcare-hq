@@ -149,7 +149,8 @@ class TelerivetPhoneNumberForm(Form):
                             id='id_send_sms_button',
                             css_class='btn',
                             data_bind="text: sendSmsButtonText, click: sendTestSMS, "
-                                "css: {'btn-primary': !sendSmsButtonError(), 'btn-danger': sendSmsButtonError()}",
+                                      "css: {'btn-primary': !sendSmsButtonError(), "
+                                      "'btn-danger': sendSmsButtonError()}",
                         )
                     ),
                     data_bind="css: {'has-error': testPhoneNumberError}",
@@ -227,7 +228,7 @@ class FinalizeGatewaySetupForm(Form):
                         id="id_create_backend",
                         css_class='btn-primary',
                         data_bind="text: backendButtonText, click: createBackend, disable: creatingBackend,"
-                            "css: {'btn-primary': !backendButtonError(), 'btn-danger': backendButtonError()}",
+                                  "css: {'btn-primary': !backendButtonError(), 'btn-danger': backendButtonError()}",
                     )
                 )
             )
