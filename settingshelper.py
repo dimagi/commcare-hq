@@ -69,6 +69,9 @@ class SharedDriveConfiguration(object):
 
 
 def get_server_url(http_method, server_root, username, password):
+    if six.PY3 and isinstance(server_root, bytes):
+        server_root = server_root.decode('utf-8')
+
     if username and password:
         return '%(http_method)s://%(user)s:%(pass)s@%(server)s' % {
             'http_method': http_method,
