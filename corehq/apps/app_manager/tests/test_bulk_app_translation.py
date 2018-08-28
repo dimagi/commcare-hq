@@ -1,10 +1,10 @@
 # coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import codecs
 import tempfile
 
 from django.test import SimpleTestCase
+import io
 from io import BytesIO
 
 from mock import patch
@@ -79,8 +79,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         """
         if not expected_messages:
             expected_messages = ["App Translations Updated!"]
-
-        with codecs.open(self.get_path(name, "xlsx")) as f:
+        with io.open(self.get_path(name, "xlsx"), 'rb') as f:
             workbook, messages = read_uploaded_app_translation_file(f)
             assert workbook, messages
             messages = process_bulk_app_translation_upload(self.app, workbook)

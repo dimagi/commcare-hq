@@ -179,7 +179,7 @@ class ResumableFunctionIterator(object):
         self.args_provider = args_provider
         self.item_getter = item_getter
         self.event_handler = event_handler
-        self.iteration_id = hashlib.sha1(self.iteration_key).hexdigest()
+        self.iteration_id = hashlib.sha1(self.iteration_key.encode('utf-8')).hexdigest()
 
         self.couch_db = get_db('meta')
         self._state = None
