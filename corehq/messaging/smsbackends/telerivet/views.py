@@ -229,7 +229,7 @@ def create_backend(request, domain):
                 backend.description += ' {}'.format(phone_number)
                 backend.reply_to_phone_number = phone_number
             backend.save()
-            if request.POST.get('set_as_default', False) == FinalizeGatewaySetupForm.YES:   # TODO: test
+            if request.POST.get('set_as_default') == FinalizeGatewaySetupForm.YES:
                 SQLMobileBackendMapping.set_default_domain_backend(domain, backend)
             return json_response({'success': True})
 
