@@ -56,6 +56,7 @@ class TransifexApiClient(object):
     def lock_resource(self, resource_slug):
         """
         lock a resource so that it can't be translated/reviewed anymore.
+
         :param resource_slug:
         """
         url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
@@ -76,6 +77,7 @@ class TransifexApiClient(object):
     def upload_resource(self, path_to_pofile, resource_slug, resource_name):
         """
         Upload source language file
+
         :param path_to_pofile: path to pofile
         :param resource_slug: resource slug
         :param resource_name: resource name, mostly same as resource slug itself
@@ -97,6 +99,7 @@ class TransifexApiClient(object):
     def upload_translation(self, path_to_pofile, resource_slug, resource_name, hq_lang_code):
         """
         Upload translated files
+
         :param path_to_pofile: path to pofile
         :param resource_slug: resource slug
         :param resource_name: resource name, mostly same as resource slug itself
@@ -129,6 +132,7 @@ class TransifexApiClient(object):
     def _resource_details(self, resource_slug):
         """
         get details for a resource corresponding to a lang
+
         :param resource_slug: resource slug
         """
         url = "https://www.transifex.com/api/2/project/{}/resource/{}/stats/".format(
@@ -158,6 +162,7 @@ class TransifexApiClient(object):
         """
         get translations for a resource in the target lang.
         lock/freeze the resource if successfully pulled translations
+
         :param resource_slug: resource slug
         :param hq_lang_code: target lang code on HQ
         :param lock_resource: lock resource after pulling translation
@@ -181,6 +186,7 @@ class TransifexApiClient(object):
     def transifex_lang_code(hq_lang_code):
         """
         Single place to convert lang codes from HQ to transifex lang code
+
         :param hq_lang_code: lang code on HQ
         """
         return SOURCE_LANGUAGE_MAPPING.get(hq_lang_code, hq_lang_code)
@@ -200,6 +206,7 @@ class TransifexApiClient(object):
     def move_resources(self, hq_lang_code, target_project, version=None, use_version_postfix=True):
         """
         ability to move resources from one project to another
+
         :param hq_lang_code: lang code on hq
         :param target_project: target project slug on transifex
         :param version: version if needed on parent resource slugs

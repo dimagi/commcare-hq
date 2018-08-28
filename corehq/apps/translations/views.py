@@ -111,6 +111,7 @@ class ConvertTranslations(BaseTranslationsView):
     def _generate_excel_file(self):
         """
         extract translations from po file and converts to a xlsx file
+
         :return: Workbook object
         """
         uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
@@ -195,6 +196,7 @@ class PullResource(BaseTranslationsView):
     def _generate_excel_file(self, domain, resource_slug):
         """
         extract translations from po file pulled from transifex and converts to a xlsx file
+
         :return: Workbook object
         """
         target_lang = self.pull_resource_form.cleaned_data['target_lang']
