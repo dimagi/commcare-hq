@@ -152,10 +152,10 @@ class TelerivetPhoneNumberForm(Form):
                     ),
                     Div(
                         StrictButton(
-                            _("Send"),
+                            "",
                             id='id_send_sms_button',
-                            css_class='btn btn-success',
-                            data_bind='click: sendTestSMS',
+                            css_class='btn btn-primary',
+                            data_bind='text: sendSmsButtonText, click: sendTestSMS',
                         )
                     ),
                     data_bind="css: {'has-error': testPhoneNumberError}",

@@ -36,6 +36,7 @@ hqDefine("telerivet/js/telerivet_setup", [
         // Step 2: Phone Number Form
         self.testPhoneNumber = ko.observable('');
         self.testPhoneNumberError = ko.observable('');
+        self.sendSmsButtonText = ko.observable(gettext('Send'));
 
         self.sendTestSMS = function() {
             $.ajax({
@@ -49,7 +50,7 @@ hqDefine("telerivet/js/telerivet_setup", [
                     request_token: initialPageData.get('request_token'),
                 },
                 success: function(data) {
-                    $('#id_send_sms_button').text(gettext("Send"));
+                    self.sendSmsButtonText(gettext('Send'));
                     self.apiKeyError(data.api_key_error);
                     self.projectIdError(data.project_id_error);
                     self.phoneIdError(data.phone_id_error);
@@ -57,7 +58,7 @@ hqDefine("telerivet/js/telerivet_setup", [
                     self.testSMSSent(data.success);
                 },
                 error: function(data) {
-                    $('#id_send_sms_button').text(gettext("Server error. Try again..."));
+                    self.sendSmsButtonText(gettext('Server error. Try again...'));
                 },
             });
         };
@@ -65,8 +66,8 @@ hqDefine("telerivet/js/telerivet_setup", [
         // Step 3
         self.showAddWebhookNavigation = ko.observable(false);
         self.showWebhookDetails = ko.observable(false);
-        self.pollForInboundSMS = ko.observable(true);       // TODO
-        self.inboundSMSReceived = ko.observable(true);      // TODO
+        self.pollForInboundSMS = ko.observable(false);
+        self.inboundSMSReceived = ko.observable(false);
         self.inboundWaitTimedOut = ko.observable(false);
         self.pollingErrorOccurred = ko.observable(false);
         self.showInboundTroubleshoot = ko.observable(false);
@@ -79,6 +80,41 @@ hqDefine("telerivet/js/telerivet_setup", [
         self.messageNotReceived = ko.computed(function() {
             return self.inboundWaitTimedOut() && !self.inboundSMSReceived() && !self.pollingErrorOccurred();
         });
+
+        self.startInboundPolling = function() {
+            self.pollForInboundSMS(true);
+            self.inboundWaitTimedOut(false);
+            setTimeout(function() {
+                self.inboundWaitTimedOut(true);
+            }, 30000);
+            self.getLastInboundSMS();
+        };
+
+        self.getLastInboundSMS = function() {
+            $.ajax({
+                method: 'GET',
+                url: initialPageData.reverse('get_last_inbound_sms'),
+                data: {
+                    request_token: initialPageData.get('request_token'),
+                },
+                success: function(data) {
+                    if (data.success) {
+                        if (data.found) {
+                            self.inboundSMSReceived(true);
+                        } else {
+                            setTimeout(self.getLastInboundSMS, 10000);
+                        }
+                    } else {
+                        self.pollingErrorOccurred(true);
+                    }
+                },
+                error: function() {
+                    // This is just an http error, for example, rather than
+                    // something like a missing request token, so just retry it.
+                    setTimeout(self.getLastInboundSMS, 10000);
+                },
+            });
+        };
 
         // Finish
         self.setupComplete = ko.observable(false);
@@ -149,37 +185,6 @@ hqDefine("telerivet/js/telerivet_setup", [
                 .prop('disabled', false)
                 .text(gettext("Server error. Try again..."));
             });
-        };
-
-        $scope.getLastInboundSMS = function() {
-            djangoRMI.get_last_inbound_sms({
-                request_token: initialPageData('request_token'),
-            })
-            .success(function(data) {
-                if(data.success) {
-                    if(data.found) {
-                        $scope.inboundSMSReceived = true;
-                    } else {
-                        setTimeout($scope.getLastInboundSMS, 10000);
-                    }
-                } else {
-                    $scope.pollingErrorOccurred = true;
-                }
-            })
-            .error(function() {
-                // This is just an http error, for example, rather than
-                // something like a missing request token, so just retry it.
-                setTimeout($scope.getLastInboundSMS, 10000);
-            });
-        };
-
-        $scope.startInboundPolling = function() {
-            $scope.pollForInboundSMS = true;
-            $scope.inboundWaitTimedOut = false;
-            setTimeout(function() {
-                $scope.inboundWaitTimedOut = true;
-            }, 30000);
-            $scope.getLastInboundSMS();
         };
 
         // TODO: Figure out if there's a better way to deal with these scope issues

@@ -70,8 +70,10 @@
             </p>
             <p>
             {% blocktrans %}
-                <!-- TODO -->
-                <!--button class="btn btn-success" ng-click="startInboundPolling();">Click Here</button--> after you have sent the reply SMS.
+                <button class="btn" data-bind="css: {'btn-default': messageReceived(), 'btn-primary': !messageReceived()}, click: startInboundPolling">
+                    Click Here
+                </button>
+                after you have sent the reply SMS.
                 {% endblocktrans %}
             </p>
         </div>
