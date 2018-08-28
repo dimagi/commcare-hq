@@ -41,7 +41,7 @@ script:
         git update-index -q --refresh
         if git diff-index --quiet HEAD --; then
             # No changes
-            exit 0
+            echo "requirements ok"
         else
             # Changes
             exit 1
