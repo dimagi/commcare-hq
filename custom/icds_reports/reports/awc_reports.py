@@ -1168,16 +1168,18 @@ def get_pregnant_details(case_id, awc_id):
                 opened_on=None,  # todo change to opened_on when available in Model
                 preg_order=row_data.preg_order,
                 home_visit_date=row_data.home_visit_date,
-                bp_sys=row_data.bp_sys,  # high blood pressure
-                bp_dia=row_data.bp_dia,  # low blood pressure
-                anc_weight=row_data.anc_weight,
-                anc_hemoglobin=row_data.anc_hemoglobin,
+                bp='{} / {}'.format(
+                    row_data.bp_sys if row_data.bp_sys else '--',
+                    row_data.bp_dia if row_data.bp_dia else '--',
+                ),
+                anc_weight=row_data.anc_weight if row_data.anc_weight else '--',
+                anc_hemoglobin=row_data.anc_hemoglobin if row_data.anc_hemoglobin else '--',
                 anc_abnormalities=None,  # todo change to num_anc_complete when available in Model
                 anemic=get_anamic_status(row_data),
                 symptoms=get_symptoms(row_data),
                 counseling=get_counseling(row_data),
-                using_ifa=row_data.using_ifa,
-                ifa_consumed_last_seven_days=row_data.ifa_consumed_last_seven_days,
+                using_ifa='Y' if row_data.using_ifa else 'N',
+                ifa_consumed_last_seven_days='Y' if row_data.ifa_consumed_last_seven_days else 'N',
                 tt_taken='Y' if row_data.tt_1 or row_data.tt_2 else 'N',
                 tt_date=get_tt_dates(row_data),
             ))

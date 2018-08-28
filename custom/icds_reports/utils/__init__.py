@@ -394,7 +394,10 @@ def get_counseling(value):
         counseling.append('Accessible postpartum family planning')
     if value.counsel_fp_methods:
         counseling.append('Family planning methods')
-    return ', '.join(counseling)
+    if counseling:
+        return ', '.join(counseling)
+    else:
+        return '--'
 
 
 def get_tt_dates(value):
@@ -403,7 +406,10 @@ def get_tt_dates(value):
         tt_dates.append(value.tt_1)
     if value.tt_2:
         tt_dates.append(value.tt_2)
-    return '; '.join(tt_dates)
+    if tt_dates:
+        return '; '.join(tt_dates)
+    else:
+        return '--'
 
 
 def current_age(dob, selected_date):
