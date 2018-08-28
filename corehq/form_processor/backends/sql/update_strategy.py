@@ -349,37 +349,44 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 def _transaction_sort_key_function(case):
     xform_ids = list(case.xform_ids)
 
+    def cc_cmp(first, second):
+        if first > second:
+            return 1
+        if first < second:
+            return -1
+        return 0
+
     def _transaction_cmp(first_transaction, second_transaction):
         # if the forms aren't submitted by the same user, just default to server dates
         if first_transaction.user_id != second_transaction.user_id:
-            return cmp(first_transaction.server_date, second_transaction.server_date)
-        else:
-            if first_transaction.xform_id and first_transaction.xform_id == second_transaction.xform_id:
-                # short circuit if they are from the same form
-                return cmp(
-                    _type_sort(first_transaction.type),
-                    _type_sort(second_transaction.type)
-                )
+            return cc_cmp(first_transaction.server_date, second_transaction.server_date)
 
-            def _sortkey(transaction):
-                if not transaction.server_date:
-                    raise MissingServerDate()
+        if first_transaction.xform_id and first_transaction.xform_id == second_transaction.xform_id:
+            # short circuit if they are from the same form
+            return cc_cmp(
+                _type_sort(first_transaction.type),
+                _type_sort(second_transaction.type)
+            )
 
-                def form_cmp(form_id):
-                    return xform_ids.index(form_id) if form_id in xform_ids else sys.maxsize
+        def _sortkey(transaction):
+            if not transaction.server_date:
+                raise MissingServerDate()
 
-                # if the user is the same you should compare with the special logic below
-                # if the user is not the same you should compare just using received_on
-                return (
-                    # this is sneaky - it's designed to use just the date for the
-                    # server time in case the phone submits two forms quickly out of order
-                    transaction.server_date.date(),
-                    transaction.client_date,
-                    form_cmp(transaction.xform_id),
-                    _type_sort(transaction.type),
-                )
+            def form_cmp(form_id):
+                return xform_ids.index(form_id) if form_id in xform_ids else sys.maxsize
 
-            return cmp(_sortkey(first_transaction), _sortkey(second_transaction))
+            # if the user is the same you should compare with the special logic below
+            # if the user is not the same you should compare just using received_on
+            return (
+                # this is sneaky - it's designed to use just the date for the
+                # server time in case the phone submits two forms quickly out of order
+                transaction.server_date.date(),
+                transaction.client_date,
+                form_cmp(transaction.xform_id),
+                _type_sort(transaction.type),
+            )
+
+        return cc_cmp(_sortkey(first_transaction), _sortkey(second_transaction))
 
     return cmp_to_key(_transaction_cmp)
 
