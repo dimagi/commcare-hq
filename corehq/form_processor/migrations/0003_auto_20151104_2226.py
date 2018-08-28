@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='xformattachmentsql',
             name='xform',
-            field=models.ForeignKey(to='form_processor.XFormInstanceSQL', to_field=b'form_uuid', on_delete=models.CASCADE),
+            field=models.ForeignKey(to='form_processor.XFormInstanceSQL', to_field='form_uuid', on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

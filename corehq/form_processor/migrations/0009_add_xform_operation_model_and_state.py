@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('user', models.CharField(max_length=255, null=True)),
                 ('operation', models.CharField(max_length=255)),
                 ('date', models.DateTimeField(auto_now_add=True)),
-                ('xform', models.ForeignKey(to='form_processor.XFormInstanceSQL', to_field=b'form_uuid', on_delete=models.CASCADE)),
+                ('xform', models.ForeignKey(to='form_processor.XFormInstanceSQL', to_field='form_uuid', on_delete=models.CASCADE)),
             ],
             options={
             },
