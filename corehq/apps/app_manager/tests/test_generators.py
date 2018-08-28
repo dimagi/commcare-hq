@@ -22,10 +22,9 @@ class TestPoFileGenerator(SimpleTestCase):
             'sheet1': list(translations),
             'sheet2': list(translations),
         }
-        po_file_generator = PoFileGenerator()
+        po_file_generator = PoFileGenerator(all_translations, {})
         file_paths = []
         try:
-            po_file_generator.generate_translation_files(all_translations, {})
             for file_name, file_path in po_file_generator.generated_files:
                 file_paths.append(file_path)
                 list_of_translations = polib.pofile(file_path)
@@ -51,8 +50,7 @@ class TestPoFileGenerator(SimpleTestCase):
             'Content-Type': 'text/plain; charset=utf-8',
             'Language': 'hin',
         }
-        po_file_generator = PoFileGenerator()
-        po_file_generator.generate_translation_files(all_translations, metadata)
+        po_file_generator = PoFileGenerator(all_translations, metadata)
         try:
             for file_name, file_path in po_file_generator.generated_files:
                 # ensure meta data

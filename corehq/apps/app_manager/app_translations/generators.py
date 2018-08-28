@@ -4,6 +4,8 @@ import os
 import polib
 import datetime
 import tempfile
+import six
+import sys
 
 from django.conf import settings
 from memoized import memoized
@@ -46,7 +48,7 @@ class TransifexPOFileGenerator:
         self.version = version
         self.use_version_postfix = use_version_postfix
         self.headers = dict()  # headers for each sheet name
-        self.po_file_generator = PoFileGenerator()
+        self.po_file_generator = None
         self.sheet_name_to_module_or_form_type_and_id = dict()
 
     @property
@@ -190,21 +192,30 @@ class TransifexPOFileGenerator:
 
     def generate_translation_files(self):
         self._build_translations()
-        self.po_file_generator.generate_translation_files(self.translations, self._metadata)
+        self.po_file_generator = PoFileGenerator(self.translations, self._metadata)
 
     @property
     def generated_files(self):
-        return self.po_file_generator.generated_files
+        if self.po_file_generator:
+            return self.po_file_generator.generated_files
+        return []
 
     def cleanup(self):
-        self.po_file_generator.cleanup()
+        if self.po_file_generator:
+            self.po_file_generator.cleanup()
 
 
 class PoFileGenerator(object):
-    def __init__(self):
+    def __init__(self, translations, metadata):
         self.generated_files = list()  # list of tuples (filename, filepath)
+        try:
+            self._generate_translation_files(translations, metadata)
+        except Exception:
+            exc_info = sys.exc_info()
+            self.cleanup()
+            six.reraise(*exc_info)
 
-    def generate_translation_files(self, translations, metadata):
+    def _generate_translation_files(self, translations, metadata):
         for file_name in translations:
             sheet_translations = translations[file_name]
             po = polib.POFile()
@@ -228,3 +239,4 @@ class PoFileGenerator(object):
         for resource_name, filepath in self.generated_files:
             if os.path.exists(filepath):
                 os.remove(filepath)
+        self.generated_files = []

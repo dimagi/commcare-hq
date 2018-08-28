@@ -104,8 +104,7 @@ class ConvertTranslations(BaseTranslationsView):
         :return: PoFileGenerator object
         """
         translations = self._generate_translations_for_po(worksheet)
-        po_file_generator = PoFileGenerator()
-        po_file_generator.generate_translation_files(translations, {})
+        po_file_generator = PoFileGenerator(translations, {})
         return po_file_generator
 
     def _generate_excel_file(self):
