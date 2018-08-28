@@ -150,7 +150,7 @@ def get_last_inbound_sms(request, domain):
 
 @require_POST
 def send_sample_sms(request, domain):
-    request_token = request.GET.get('request_token')
+    request_token = request.POST.get('request_token')
     if not TelerivetSetupView.get_cached_webhook_secret(request_token):
         return {
             'success': False,
@@ -158,13 +158,13 @@ def send_sample_sms(request, domain):
         }
 
     outgoing_sms_form = TelerivetOutgoingSMSForm({
-        'api_key': request.GET.get('api_key'),
-        'project_id': request.GET.get('project_id'),
-        'phone_id': request.GET.get('phone_id'),
+        'api_key': request.POST.get('api_key'),
+        'project_id': request.POST.get('project_id'),
+        'phone_id': request.POST.get('phone_id'),
     })
 
     test_sms_form = TelerivetPhoneNumberForm({
-        'test_phone_number': request.GET.get('test_phone_number'),
+        'test_phone_number': request.POST.get('test_phone_number'),
     })
 
     # Be sure to call .is_valid() on both

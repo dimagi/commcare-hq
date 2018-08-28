@@ -36,10 +36,9 @@
                 <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/api_settings.png' %}" />
             </p>
         </div>
-        <!-- TODO -->
-        <!--div class="row">
+        <div class="row">
             {% crispy outgoing_sms_form %}
-        </div-->
+        </div>
     </li>
     <li>
         <div>
@@ -55,10 +54,9 @@
                 Please enter in international format, starting with the country code, digits only.
                 {% endblocktrans %}
             </p>
-            <!-- TODO -->
-            <!--div class="row">
+            <div class="row">
                 {% crispy test_sms_form %}
-            </div-->
+            </div>
         </div>
     </li>
     <li data-bind="visible: testSMSSent">

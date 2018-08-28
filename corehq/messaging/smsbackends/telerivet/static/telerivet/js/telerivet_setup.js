@@ -19,11 +19,48 @@ hqDefine("telerivet/js/telerivet_setup", [
             self.step(self.step() + 1);
         };
 
-        // Step 2
+        // Step 2: UI control
         self.showApiKeyGeneration = ko.observable(false);
         self.showApiInfoLocation = ko.observable(false);
-        self.testSMSSent = ko.observable(true);        // TODO
+        self.testSMSSent = ko.observable(false);
         self.showOutboundTroubleshoot = ko.observable(false);
+
+        // Step 2: Outgoing SMS Form
+        self.apiKey = ko.observable('');
+        self.apiKeyError = ko.observable('');
+        self.projectId = ko.observable('');
+        self.projectIdError = ko.observable('');
+        self.phoneId = ko.observable('');
+        self.phoneIdError = ko.observable('');
+
+        // Step 2: Phone Number Form
+        self.testPhoneNumber = ko.observable('');
+        self.testPhoneNumberError = ko.observable('');
+
+        self.sendTestSMS = function() {
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse('send_sample_sms'),
+                data: {
+                    api_key: self.apiKey(),
+                    project_id: self.projectId(),
+                    phone_id: self.phoneId(),
+                    test_phone_number: self.testPhoneNumber(),
+                    request_token: initialPageData.get('request_token'),
+                },
+                success: function(data) {
+                    $('#id_send_sms_button').text(gettext("Send"));
+                    self.apiKeyError(data.api_key_error);
+                    self.projectIdError(data.project_id_error);
+                    self.phoneIdError(data.phone_id_error);
+                    self.testPhoneNumberError(data.unexpected_error || data.test_phone_number_error);
+                    self.testSMSSent(data.success);
+                },
+                error: function(data) {
+                    $('#id_send_sms_button').text(gettext("Server error. Try again..."));
+                },
+            });
+        };
 
         // Step 3
         self.showAddWebhookNavigation = ko.observable(false);
@@ -54,7 +91,6 @@ hqDefine("telerivet/js/telerivet_setup", [
     });
 
     /*
-    var globalApiKey = '';
     var globalProjectId = '';
     var globalPhoneId = '';
     var globalTestPhoneNumber = '';
@@ -62,7 +98,6 @@ hqDefine("telerivet/js/telerivet_setup", [
 
     telerivetSetupApp.controller('TelerivetSetupController', function($scope, djangoRMI) {
         // model attributes
-        $scope.apiKey = globalApiKey;
         $scope.projectId = globalProjectId;
         $scope.phoneId = globalPhoneId;
         $scope.testPhoneNumber = globalTestPhoneNumber;
@@ -70,7 +105,6 @@ hqDefine("telerivet/js/telerivet_setup", [
         $scope.setAsDefault = initialPageData('form_set_as_default');
 
         // error messages
-        $scope.apiKeyError = null;
         $scope.projectIdError = null;
         $scope.phoneIdError = null;
         $scope.testPhoneNumberError = null;
@@ -84,29 +118,6 @@ hqDefine("telerivet/js/telerivet_setup", [
         $scope.inboundSMSReceived = false;
         $scope.inboundWaitTimedOut = false;
         $scope.setupComplete = false;
-
-        $scope.sendTestSMS = function() {
-            djangoRMI.send_sample_sms({
-                api_key: $scope.apiKey,
-                project_id: $scope.projectId,
-                phone_id: $scope.phoneId,
-                test_phone_number: $scope.testPhoneNumber,
-                request_token: initialPageData('request_token'),
-            })
-            .success(function(data) {
-                $('#id_send_sms_button')
-                .text(gettext("Send"));
-                $scope.apiKeyError = data.api_key_error;
-                $scope.projectIdError = data.project_id_error;
-                $scope.phoneIdError = data.phone_id_error;
-                $scope.testPhoneNumberError = data.unexpected_error || data.test_phone_number_error;
-                $scope.testSMSSent = data.success;
-            })
-            .error(function() {
-                $('#id_send_sms_button')
-                .text(gettext("Server error. Try again..."));
-            });
-        };
 
         $scope.createBackend = function() {
             $('#id_create_backend').prop('disabled', true);
