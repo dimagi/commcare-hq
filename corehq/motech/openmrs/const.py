@@ -2,10 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import logging
+from itertools import chain
 
 from django.utils.translation import ugettext_lazy as _
-
-from corehq.motech.openmrs.serializers import to_timestamp, to_name
 
 
 LOG_LEVEL_CHOICES = (
@@ -27,6 +26,12 @@ OPENMRS_IMPORTER_DEVICE_ID_PREFIX = 'openmrs-importer-'
 
 # XMLNS to indicate that a form was imported from OpenMRS
 XMLNS_OPENMRS = 'http://commcarehq.org/openmrs-integration'
+
+OPENMRS_ATOM_FEED_POLL_INTERVAL = {'minute': '*/10'}
+
+# device_id for cases added/updated from OpenMRS Atom feed.
+# OpenmrsRepeater ID is appended to this.
+OPENMRS_ATOM_FEED_DEVICE_ID = 'openmrs-atomfeed-'
 
 # The Location property to store the OpenMRS location UUID in
 LOCATION_OPENMRS_UUID = 'openmrs_uuid'
@@ -55,42 +60,67 @@ LOCATION_OPENMRS_UUID = 'openmrs_uuid'
 #
 PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
+# A subset of OpenMRS concept data types. Omitted data types ("Coded",
+# "N/A", "Document", "Rule", "Structured Numeric", "Complex") are not
+# currently relevant to CommCare integration
+OPENMRS_DATA_TYPE_NUMERIC = 'omrs_numeric'
+OPENMRS_DATA_TYPE_TEXT = 'omrs_text'
+OPENMRS_DATA_TYPE_DATE = 'omrs_date'
+OPENMRS_DATA_TYPE_TIME = 'omrs_time'
+OPENMRS_DATA_TYPE_DATETIME = 'omrs_datetime'
+OPENMRS_DATA_TYPE_BOOLEAN = 'omrs_boolean'
+OPENMRS_DATA_TYPES = (
+    OPENMRS_DATA_TYPE_NUMERIC,
+    OPENMRS_DATA_TYPE_TEXT,
+    OPENMRS_DATA_TYPE_DATE,
+    OPENMRS_DATA_TYPE_TIME,
+    OPENMRS_DATA_TYPE_DATETIME,
+    OPENMRS_DATA_TYPE_BOOLEAN,
+)
 
-# Standard OpenMRS property names, and serializers
+# Standard OpenMRS property names and their data types
 PERSON_PROPERTIES = {
-    'gender': None,
-    'age': None,
-    'birthdate': to_timestamp,
-    'birthdateEstimated': None,
-    'dead': None,
-    'deathDate': to_timestamp,
-    'deathdateEstimated': None,
-    'causeOfDeath': None,
+    'gender': OPENMRS_DATA_TYPE_TEXT,
+    'age': OPENMRS_DATA_TYPE_NUMERIC,
+    'birthdate': OPENMRS_DATA_TYPE_DATETIME,
+    'birthdateEstimated': OPENMRS_DATA_TYPE_BOOLEAN,
+    'dead': OPENMRS_DATA_TYPE_BOOLEAN,
+    'deathDate': OPENMRS_DATA_TYPE_DATETIME,
+    'deathdateEstimated': OPENMRS_DATA_TYPE_BOOLEAN,
+    'causeOfDeath': OPENMRS_DATA_TYPE_TEXT,
 }
 NAME_PROPERTIES = {
-    'givenName': to_name,
-    'familyName': to_name,
-    'middleName': to_name,
-    'familyName2': to_name,
-    'prefix': None,
-    'familyNamePrefix': None,
-    'familyNameSuffix': None,
-    'degree': None,
+    'givenName': OPENMRS_DATA_TYPE_TEXT,
+    'familyName': OPENMRS_DATA_TYPE_TEXT,
+    'middleName': OPENMRS_DATA_TYPE_TEXT,
+    'familyName2': OPENMRS_DATA_TYPE_TEXT,
+    'prefix': OPENMRS_DATA_TYPE_TEXT,
+    'familyNamePrefix': OPENMRS_DATA_TYPE_TEXT,
+    'familyNameSuffix': OPENMRS_DATA_TYPE_TEXT,
+    'degree': OPENMRS_DATA_TYPE_TEXT,
 }
 ADDRESS_PROPERTIES = {
-    'address1': None,
-    'address2': None,
-    'cityVillage': None,
-    'stateProvince': None,
-    'country': None,
-    'postalCode': None,
-    'latitude': None,
-    'longitude': None,
-    'countyDistrict': None,
-    'address3': None,
-    'address4': None,
-    'address5': None,
-    'address6': None,
-    'startDate': to_timestamp,
-    'endDate': to_timestamp,
+    'address1': OPENMRS_DATA_TYPE_TEXT,
+    'address2': OPENMRS_DATA_TYPE_TEXT,
+    'cityVillage': OPENMRS_DATA_TYPE_TEXT,
+    'stateProvince': OPENMRS_DATA_TYPE_TEXT,
+    'country': OPENMRS_DATA_TYPE_TEXT,
+    'postalCode': OPENMRS_DATA_TYPE_TEXT,
+    'latitude': OPENMRS_DATA_TYPE_NUMERIC,
+    'longitude': OPENMRS_DATA_TYPE_NUMERIC,
+    'countyDistrict': OPENMRS_DATA_TYPE_TEXT,
+    'address3': OPENMRS_DATA_TYPE_TEXT,
+    'address4': OPENMRS_DATA_TYPE_TEXT,
+    'address5': OPENMRS_DATA_TYPE_TEXT,
+    'address6': OPENMRS_DATA_TYPE_TEXT,
+    'startDate': OPENMRS_DATA_TYPE_DATETIME,
+    'endDate': OPENMRS_DATA_TYPE_DATETIME,
 }
+OPENMRS_PROPERTIES = dict(chain(
+    # pylint: disable=W1654
+    # Disable "dict.items referenced when not iterating"; `chain` is iterating
+    PERSON_PROPERTIES.items(),
+    NAME_PROPERTIES.items(),
+    ADDRESS_PROPERTIES.items(),
+    # pylint: enable=W1654
+))
