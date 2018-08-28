@@ -42,12 +42,12 @@ class TransifexApiClient(object):
         if version and self.use_version_postfix:
             # get all slugs with version postfix
             return [r['slug']
-                    for r in self.list_resources().json()
+                    for r in all_resources
                     if r['slug'].endswith("v%s" % version)]
         elif version and not self.use_version_postfix:
             # get all slugs that don't have version postfix
             return [r['slug']
-                    for r in self.list_resources().json()
+                    for r in all_resources
                     if not r['slug'].endswith("v%s" % version)]
         else:
             # get all slugs
