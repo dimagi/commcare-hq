@@ -7,6 +7,7 @@ keepBuildDir: true
 skipDirOptimize: true   # could turn this off to minify everything
 generateSourceMaps: true
 fileExclusionRegExp: ^\.|\.css$
+skipModuleInsertion: true
 modules:
   # The build_requirejs script creates a bundle in each javascript directory that is
   # named bundle.js and includes all files in that directory. The modules below are
