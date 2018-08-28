@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from collections import namedtuple
 import uuid
 import mock
 import os
@@ -794,6 +796,9 @@ class ShouldSyncLocationFixturesTest(TestCase):
         )
 
 
+MockApp = namedtuple("MockApp", ["location_fixture_restore"])
+
+
 @mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
 class LocationFixtureSyncSettingsTest(TestCase):
 
@@ -849,3 +854,47 @@ class LocationFixtureSyncSettingsTest(TestCase):
 
         self.assertEqual(False, should_sync_hierarchical_fixture(self.domain, app=None))
         self.assertEqual(True, should_sync_flat_fixture(self.domain, app=None))
+
+    @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
+    def test_sync_format_with_app_aware_project_default(self):
+        app = MockApp(location_fixture_restore='project_default')
+        conf = LocationFixtureConfiguration.for_domain(self.domain.name)
+        conf.sync_hierarchical_fixture = True
+        conf.sync_flat_fixture = False
+        conf.save()
+
+        self.assertTrue(should_sync_hierarchical_fixture(self.domain, app))
+        self.assertFalse(should_sync_flat_fixture(self.domain, app))
+
+    @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
+    def test_sync_format_with_app_aware_both_fixtures(self):
+        app = MockApp(location_fixture_restore='both_fixtures')
+        conf = LocationFixtureConfiguration.for_domain(self.domain.name)
+        conf.sync_hierarchical_fixture = False
+        conf.sync_flat_fixture = False
+        conf.save()
+
+        self.assertTrue(should_sync_hierarchical_fixture(self.domain, app))
+        self.assertTrue(should_sync_flat_fixture(self.domain, app))
+
+    @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
+    def test_sync_format_with_app_aware_flat_fixtures(self):
+        app = MockApp(location_fixture_restore='only_flat_fixture')
+        conf = LocationFixtureConfiguration.for_domain(self.domain.name)
+        conf.sync_hierarchical_fixture = True
+        conf.sync_flat_fixture = False
+        conf.save()
+
+        self.assertFalse(should_sync_hierarchical_fixture(self.domain, app))
+        self.assertTrue(should_sync_flat_fixture(self.domain, app))
+
+    @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
+    def test_sync_format_with_app_aware_hierarchical_fixture(self):
+        app = MockApp(location_fixture_restore='only_hierarchical_fixture')
+        conf = LocationFixtureConfiguration.for_domain(self.domain.name)
+        conf.sync_hierarchical_fixture = False
+        conf.sync_flat_fixture = True
+        conf.save()
+
+        self.assertTrue(should_sync_hierarchical_fixture(self.domain, app))
+        self.assertFalse(should_sync_flat_fixture(self.domain, app))
