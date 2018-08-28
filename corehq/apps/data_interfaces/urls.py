@@ -25,12 +25,12 @@ edit_data_urls = [
         r'^xform_management/status/(?P<mode>{archive}|{restore})/(?P<download_id>{id_regex})/$'.format(
             archive=FormManagementMode.ARCHIVE_MODE,
             restore=FormManagementMode.RESTORE_MODE,
-            id_regex="[0-9a-fA-Z]{25,32}",
+            id_regex="(?:dl-)?[0-9a-fA-Z]{25,32}",
         ),
         XFormManagementStatusView.as_view(),
         name=XFormManagementStatusView.urlname
     ),
-    url(r'^xform_management/status/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
+    url(r'^xform_management/status/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         xform_management_job_poll, name='xform_management_job_poll'),
     url(r'^case_groups/$', CaseGroupListView.as_view(), name=CaseGroupListView.urlname),
     url(r'^case_groups/(?P<group_id>[\w-]+)/$',

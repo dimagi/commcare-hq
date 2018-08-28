@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 import pytz
 
+from django.db.models import Max
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
@@ -19,15 +20,14 @@ from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProvider
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.locations.dbaccessors import (
     get_user_ids_from_primary_location_ids,
-    get_users_location_ids,
     get_users_by_location_id,
 )
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.analytics.esaccessors import (
     get_last_submission_time_for_users,
     get_last_form_submissions_by_user,
 )
 from corehq.util.quickcache import quickcache
+from corehq.warehouse.models.facts import ApplicationStatusFact
 from custom.icds.const import (
     CHILDREN_WEIGHED_REPORT_ID,
     DAYS_AWC_OPEN_REPORT_ID,
@@ -238,25 +238,21 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
     def __init__(self, domain, user):
         super(AWWSubmissionPerformanceIndicator, self).__init__(domain, user)
 
-        result = get_last_submission_time_for_users(self.domain, [self.user.get_id], self.get_datespan())
-        self.last_submission_date = result.get(self.user.get_id)
-
-    def get_datespan(self):
-        today = datetime(self.now.year, self.now.month, self.now.day)
-        end_date = today + timedelta(days=1)
-        start_date = today - timedelta(days=30)
-        return DateSpan(start_date, end_date, timezone=self.timezone)
+        self.last_submission_date = ApplicationStatusFact.objects.filter(
+            user_dim__user_id=user.get_id,
+            domain=domain,
+        ).aggregate(value=Max("last_form_submission_date"))["value"]
 
     def get_messages(self, language_code=None):
         more_than_one_week = False
         more_than_one_month = False
+        one_month_ago = datetime.utcnow() - timedelta(days=30)
+        one_week_ago = datetime.utcnow() - timedelta(days=7)
 
-        if not self.last_submission_date:
+        if not self.last_submission_date or self.last_submission_date < one_month_ago:
             more_than_one_month = True
-        else:
-            days_since_submission = (self.now.date() - self.last_submission_date).days
-            if days_since_submission > 7:
-                more_than_one_week = True
+        elif self.last_submission_date < one_week_ago:
+            more_than_one_week = True
 
         if more_than_one_week or more_than_one_month:
             context = {

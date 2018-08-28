@@ -9,9 +9,13 @@ hqDefine("domain/js/snapshot_settings", [
     initialPageData,
     googleAnalytics
 ) {
-    function view_on_exchange(version_name) {
-        googleAnalytics.track.click($('#view-on-exchange'), 'Exchange', 'View on exchange', version_name);
-        return false;
+    function viewOnExchange() {
+        var versionName = $(this).data('version');
+        googleAnalytics.track.click($('#view-on-exchange'), 'Exchange', 'View on exchange', versionName);
+    }
+    function projectPublishEventTrack(){
+        var versionName = $(this).data('version');
+        googleAnalytics.track.event('Exchange', 'Publish Most Recent', versionName);
     }
 
     $(function() {
@@ -45,7 +49,8 @@ hqDefine("domain/js/snapshot_settings", [
         });
     });
 
-    return {
-        view_on_exchange: view_on_exchange,
-    };
+
+    $('#view-on-exchange').on('click',viewOnExchange);
+    $('#project-publish').on('click',projectPublishEventTrack);
+
 });

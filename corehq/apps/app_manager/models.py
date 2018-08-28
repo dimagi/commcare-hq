@@ -63,7 +63,7 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from couchdbkit import ResourceNotFound
 from corehq import toggles, privileges
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
@@ -2218,8 +2218,10 @@ class DetailColumn(IndexedSchema):
 
         # Lazy migration: enum used to be a dict, now is a list
         if isinstance(data.get('enum'), dict):
-            data['enum'] = sorted({'key': key, 'value': value}
-                                  for key, value in data['enum'].items())
+            data['enum'] = sorted(
+                [{'key': key, 'value': value} for key, value in data['enum'].items()],
+                key=lambda d: d['key'],
+            )
 
         # Lazy migration: xpath expressions from format to first-class property
         if data.get('format') == 'calculate':
@@ -2956,10 +2958,18 @@ class Module(ModuleBase, ModuleDetailsMixin):
         return self.display_style == 'grid'
 
     def update_app_case_meta(self, meta):
+        from corehq.apps.reports.formdetails.readable import CaseMetaException
+
         for column in self.case_details.long.columns:
-            meta.add_property_detail('long', self.case_type, self.unique_id, column)
+            try:
+                meta.add_property_detail('long', self.case_type, self.unique_id, column)
+            except CaseMetaException:
+                pass
         for column in self.case_details.short.columns:
-            meta.add_property_detail('short', self.case_type, self.unique_id, column)
+            try:
+                meta.add_property_detail('short', self.case_type, self.unique_id, column)
+            except CaseMetaException:
+                pass
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -4811,6 +4821,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     See note at top of file for high-level overview.
     """
 
+    _blobdb_type_code = CODES.application
     recipients = StringProperty(default="")
 
     # this is the supported way of specifying which commcare build to use

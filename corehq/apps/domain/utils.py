@@ -20,7 +20,7 @@ from corehq.apps.es import DomainES
 
 from dimagi.utils.django.email import send_HTML_email
 
-from soil.util import ExposeBlobDownload
+from soil.util import expose_zipped_blob_download
 from couchexport.models import Format
 from io import open
 
@@ -168,7 +168,12 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
 
     headers = populate_payloads(headers)
     temp_file_path = create_result_file()
-    download_url = ExposeBlobDownload().get_link(temp_file_path, result_file_name, Format.CSV)
+    download_url = expose_zipped_blob_download(
+        temp_file_path,
+        result_file_name,
+        Format.CSV,
+        repeater.domain,
+    )
     email_result(download_url)
 
 

@@ -67,6 +67,13 @@
 </div>
 {% endblock page_content %}
 
+{% block js %}
+  {{ block.super }}
+  {% if implement_password_obfuscation %}
+      {% include "nic_compliance/password_encoder.html" %}
+  {% endif %}
+{% endblock %}
+
 <!-- get rid of footer -->
 {% block footer %}
 {% endblock footer %}

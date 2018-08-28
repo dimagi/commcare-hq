@@ -5,7 +5,8 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds-new",
+    "icds"
   ],
   "report_id": "static-custom_sql_mpr_6b_child_health_cases_v2",
   "data_source_table": "static-child_cases_monthly_v2",

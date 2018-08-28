@@ -11,7 +11,9 @@ from six.moves.urllib.parse import urlparse, parse_qs
 from captcha.fields import CaptchaField
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.users.models import CouchUser
+from corehq.messaging.util import project_is_on_new_reminders
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -139,7 +141,10 @@ class ProjectSettingsForm(forms.Form):
                 _('Override Project Timezone'),
                 crispy.Field('global_timezone', css_class='input-xlarge'),
                 twbscrispy.PrependedText(
-                    'override_global_tz', '', data_bind='checked: override_tz, event: {change: updateForm}'
+                    'override_global_tz',
+                    '',
+                    id='override_global_tz',
+                    data_bind='checked: override_tz, event: {change: updateForm}'
                 ),
                 crispy.Div(
                     crispy.Field(
@@ -156,7 +161,7 @@ class ProjectSettingsForm(forms.Form):
                     type="submit",
                     css_id="update-proj-settings",
                     css_class='btn-primary',
-                    data_bind="hqbSubmitReady: form_is_ready"
+                    data_bind="disable: disableUpdateSettings"
                 )
             )
         )
@@ -246,8 +251,7 @@ class SnapshotSettingsForm(forms.Form):
         help_text=ugettext_noop("A brief description of your project (max. 200 characters)"))
     share_multimedia = BooleanField(label=ugettext_noop("Share all multimedia?"), required=False,
         help_text=ugettext_noop("This will allow any user to see and use all multimedia in this project"))
-    share_reminders = BooleanField(label=ugettext_noop("Share Reminders?"), required=False,
-        help_text=ugettext_noop("This will publish reminders along with this project"))
+    share_reminders = BooleanField(label=ugettext_noop("Share Conditional Alerts?"), required=False)
     image = forms.ImageField(label=ugettext_noop("Exchange image"), required=False,
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
     old_image = forms.BooleanField(required=False)
@@ -317,6 +321,25 @@ class SnapshotSettingsForm(forms.Form):
         self.fields['cda_confirmed'].help_text = \
             render_to_string('domain/partials/cda_modal.html')
 
+        self.fields['share_reminders'].help_text = render_to_string(
+            'domain/partials/share_reminders_help.html',
+            context={
+                'alerts_that_cannot_be_copied': self.get_conditional_alerts_that_cannot_be_copied(),
+            }
+        )
+
+    def get_conditional_alerts_that_cannot_be_copied(self):
+        result = []
+        for rule in AutomaticUpdateRule.by_domain(
+            self.dom.name,
+            AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+            active_only=False,
+        ):
+            if not rule.conditional_alert_can_be_copied(allow_sms_surveys=True):
+                result.append(rule.name)
+
+        return result
+
     def clean_cda_confirmed(self):
         data_cda = self.cleaned_data['cda_confirmed']
         data_publish = self.data.get('publish_on_submit', "no") == "yes"
@@ -374,7 +397,11 @@ class SnapshotSettingsForm(forms.Form):
 
         sr = cleaned_data["share_reminders"]
         if sr:  # check that the forms referenced by the events in each reminders exist in the project
-            referenced_forms = CaseReminderHandler.get_referenced_forms(domain=self.dom.name)
+            if project_is_on_new_reminders(self.dom):
+                referenced_forms = AutomaticUpdateRule.get_referenced_form_unique_ids_from_sms_surveys(
+                    self.dom.name)
+            else:
+                referenced_forms = CaseReminderHandler.get_referenced_forms(domain=self.dom.name)
             if referenced_forms:
                 apps = [Application.get(app_id) for app_id in app_ids]
                 app_forms = [f.unique_id for forms in [app.get_forms() for app in apps] for f in forms]

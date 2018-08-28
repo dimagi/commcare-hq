@@ -193,7 +193,7 @@ class Bucket(object):
         return self.result['doc_count']
 
     def __getattr__(self, attr):
-        sub_aggregation = filter(lambda a: a.name == attr, self.aggregations)[0]
+        sub_aggregation = list(filter(lambda a: a.name == attr, self.aggregations))[0]
         if sub_aggregation:
             return sub_aggregation.parse_result(self.result)
 

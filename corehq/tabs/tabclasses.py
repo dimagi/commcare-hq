@@ -506,7 +506,9 @@ class ProjectDataTab(UITab):
     @property
     def _is_viewable(self):
         return self.domain and (
-            self.can_edit_commcare_data or self.can_export_data or can_download_data_files(self.domain)
+            self.can_edit_commcare_data
+            or self.can_export_data
+            or can_download_data_files(self.domain, self.couch_user)
         )
 
     @property
@@ -711,7 +713,7 @@ class ProjectDataTab(UITab):
                     'subpages': []
                 })
 
-        if can_download_data_files(self.domain):
+        if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views import DataFileDownloadList
 
             export_data_views.append({
@@ -761,7 +763,7 @@ class ProjectDataTab(UITab):
     def dropdown_items(self):
         if (
             self.can_only_see_deid_exports or (
-                not self.can_export_data and not can_download_data_files(self.domain)
+                not self.can_export_data and not can_download_data_files(self.domain, self.couch_user)
             )
         ):
             return []
