@@ -633,19 +633,11 @@ class AwcReportsView(BaseReportView):
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
                 order_dir = request.GET.get('order[0][dir]', 'asc')
-                if order_by_name_column == 'age':
-                    order_by_name_column = 'age_in_months'
-                if order_by_name_column == 'beneficiary':
-                    order_by_name_column = 'pregnant'
-                if order_by_name_column == 'number_of_thrs_given':
-                    order_by_name_column = 'num_rations_distributed'
-                # todo remove when these indicators will be available
-                if order_by_name_column in ['opened_on', 'num_anc_complete', 'last_date_thr']:
-                    order_by_name_column = 'age_in_months'
-                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
+                reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_pregnant(
-                    order,
+                    order_by_name_column,
+                    reversed_order,
                     config['awc_id']
                 )
         elif step == 'pregnant_details':
@@ -659,12 +651,11 @@ class AwcReportsView(BaseReportView):
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
                 order_dir = request.GET.get('order[0][dir]', 'asc')
-                if order_by_name_column == 'age':
-                    order_by_name_column = 'age_in_months'
-                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
+                reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_lactating(
-                    order,
+                    order_by_name_column,
+                    reversed_order,
                     config['awc_id']
                 )
         return JsonResponse(data=data)

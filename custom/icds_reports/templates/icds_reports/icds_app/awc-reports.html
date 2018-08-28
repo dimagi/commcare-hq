@@ -129,37 +129,149 @@
             <div class="row black" ng-if="$ctrl.step === 'pregnant_details'">
                 <div ng-if="$ctrl.showPregnant">
                     <div><button class="btn btn-info btn-sm right" ng-click="$ctrl.goToPregnantTable()">Back</button></div>
-                    <div class="col-sm-3"></div>
-                    <div class="form-horizontal col-sm-4">
+                    <div class="col-sm-2"></div>
+                    <div class="form-horizontal col-sm-6">
                         <div class="form-group">
+                            <label class="control-label col-sm-3" for="mother_name">Name: </label>
                             <div class="col-sm-9">
                                 <span class="icds-control">{$ $ctrl.pregnant.person_name $}</span>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="control-label col-sm-2" for="mother_name">Age: </label>
+                            <label class="control-label col-sm-3" for="mother_name">Age: </label>
                             <div class="col-sm-9">
                                 <span class="icds-control">{$ $ctrl.pregnant.age $} years</span>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="control-label col-sm-2" for="date_of_birth">LMP: </label>
+                            <label class="control-label col-sm-3" for="date_of_birth">Phone Number: </label>
                             <div class="col-sm-9">
-                                <span class="icds-control">{$ $ctrl.pregnant.dob $}</span>
+                                <span class="icds-control">{$ $ctrl.pregnant.mobile_number $}</span>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="control-label col-sm-2" for="age">AWW: </label>
+                            <label class="control-label col-sm-3" for="age">EDD: </label>
                             <div class="col-sm-9">
-                                <span class="icds-control">{$ $ctrl.pregnant.age $}</span>
+                                <span class="icds-control">{$ $ctrl.pregnant.edd $}</span>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="control-label col-sm-2" for="sex">AWW Contact: </label>
+                            <label class="control-label col-sm-3" for="sex">Date of registration of pregnancy: </label>
                             <div class="col-sm-9">
-                                <span class="icds-control">{$ $ctrl.pregnant.sex $}</span>
+                                <span class="icds-control">{$ $ctrl.pregnant.opened_on $}</span>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-3" for="sex">Current Trimester: </label>
+                            <div class="col-sm-9">
+                                <span class="icds-control">{$ $ctrl.pregnant.trimester $}</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-3" for="sex">Pregnancy Order: </label>
+                            <div class="col-sm-9">
+                                <span class="icds-control">{$ $ctrl.pregnant.preg_order $}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-2"></div>
+                    <div class="col-md-12">
+                        <table id="pregnantDetailsTable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr role="row">
+                                    <th class="big-col"></th>
+                                    <th class="big-col" colspan="2">Trimester 1</th>
+                                    <th class="big-col">Trimester 2</th>
+                                    <th class="big-col">Trimester 3</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="odd" role="row">
+                                    <td class="big-col">Home Visit Date</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].home_visit_date $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].home_visit_date $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].home_visit_date $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].home_visit_date $}</td>
+                                </tr>
+                                <tr class="even" role="row">
+                                    <td class="big-col">BP</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].bp_sys $} / {$ $ctrl.pregnantData[0][0].bp_dia $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].bp_sys $} / {$ $ctrl.pregnantData[0][1].bp_dia $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].bp_sys $} / {$ $ctrl.pregnantData[1][0].bp_dia $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].bp_sys $} / {$ $ctrl.pregnantData[2][0].bp_dia $}</td>
+                                </tr>
+                                <tr class="odd" role="row">
+                                    <td class="big-col">Weight</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].anc_weight $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].anc_weight $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].anc_weight $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].anc_weight $}</td>
+                                </tr>
+                                <tr class="even" role="row">
+                                    <td class="big-col">Haemoglobin</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].anc_hemoglobin $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].anc_hemoglobin $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].anc_hemoglobin $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].anc_hemoglobin $}</td>
+                                </tr>
+                                <tr class="odd" role="row">
+                                    <td class="big-col">Abnormalities</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].anc_abnormalities $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].anc_abnormalities $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].anc_abnormalities $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].anc_abnormalities $}</td>
+                                </tr>
+                                <tr class="even" role="row">
+                                    <td class="big-col">Anemia</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].anemic $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].anemic $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].anemic $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].anemic $}</td>
+                                </tr>
+                                <tr class="odd" role="row">
+                                    <td class="big-col">Symptoms</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].symptoms $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].symptoms $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].symptoms $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].symptoms $}</td>
+                                </tr>
+                                <tr class="even" role="row">
+                                    <td class="big-col">Counselling</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].counseling $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].counseling $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].counseling $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].counseling $}</td>
+                                </tr>
+                                <tr class="odd" role="row">
+                                    <td class="big-col">IFA tablet issued</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].using_ifa $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].using_ifa $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].using_ifa $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].using_ifa $}</td>
+                                </tr>
+                                <tr class="even" role="row">
+                                    <td class="big-col">IFA tablet consumed in last 7 days</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].ifa_consumed_last_seven_days $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].ifa_consumed_last_seven_days $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].ifa_consumed_last_seven_days $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].ifa_consumed_last_seven_days $}</td>
+                                </tr>
+                                <tr class="odd" role="row">
+                                    <td class="big-col">TT Taken? (Y/N)</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].tt_taken $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].tt_taken $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].tt_taken $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].tt_taken $}</td>
+                                </tr>
+                                <tr class="even" role="row">
+                                    <td class="big-col">TT Date</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].tt_date $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].tt_date $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].tt_date $}</td>
+                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].tt_date $}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

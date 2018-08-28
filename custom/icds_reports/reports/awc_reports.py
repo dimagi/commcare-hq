@@ -19,7 +19,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
     wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
     current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
-    chosen_filters_to_labels, default_age_interval, get_anamic_status
+    chosen_filters_to_labels, default_age_interval, get_anamic_status, get_symptoms, get_counseling, get_tt_dates
 from custom.icds_reports.const import MapColors
 import six
 
@@ -1103,21 +1103,13 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
 
 
 @quickcache([
-    'order', 'awc_id'
+    'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
-def get_awc_report_pregnant(order, awc_id):
-    if 'anemic' in order:
-        order_dir = ''
-        if order[0] == '-':
-            order_dir = '-'
-        data = CcsRecordMonthly.objects.filter(
-            awc_id=awc_id,
-        ).order_by('{}anemic_severe'.format(order_dir), '{}anemic_moderate'.format(order_dir),
-                   '{}anemic_normal'.format(order_dir), '{}anemic_unknown'.format(order_dir))
-    else:
-        data = CcsRecordMonthly.objects.filter(
-            awc_id=awc_id,
-        ).order_by(order)
+def get_awc_report_pregnant(order, reversed_order, awc_id):
+    data = CcsRecordMonthly.objects.filter(
+        awc_id=awc_id,
+        pregnant=1,
+    ).order_by('case_id', '-age_in_months').distinct('case_id')
     data_count = data.count()
     config = {
         'data': [],
@@ -1141,6 +1133,7 @@ def get_awc_report_pregnant(order, awc_id):
     for row in data:
         config['data'].append(base_data(row))
 
+    config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
 
@@ -1152,35 +1145,57 @@ def get_pregnant_details(case_id, awc_id):
     data = CcsRecordMonthly.objects.filter(
         case_id=case_id,
         awc_id=awc_id,
-    )
+    ).order_by('home_visit_date', '-age_in_months').distinct('home_visit_date')
 
     config = {
-        'data': [],
+        'data': [
+            [],
+            [],
+            [],
+        ],
     }
+    current_trimester = 1
+    current_record = 0
     for row_data in data:
-        config['data'].append(dict(
-            case_id=row_data.case_id,
-            person_name=row_data.person_name,
-            age=row_data.age_in_months // 12 if row_data.age_in_months else row_data.age_in_months,
-            add=row_data.add,
-            delivery_nature=row_data.delivery_nature,
-            institutional_delivery_in_month='Y' if row_data.institutional_delivery_in_month else 'N',
-            num_pnc_visits=row_data.num_pnc_visits,
-            breastfed_at_birth='Y' if row_data.breastfed_at_birth else 'N',
-            is_ebf='Y' if row_data.is_ebf else 'N',
-            num_rations_distributed=row_data.num_rations_distributed,
-        ))
+        if row_data.trimester >= current_trimester:
+            config['data'][row_data.trimester - 1].append(dict(
+                case_id=row_data.case_id,
+                trimester=row_data.trimester,
+                person_name=row_data.person_name,
+                age=row_data.age_in_months // 12 if row_data.age_in_months else row_data.age_in_months,
+                mobile_number=row_data.mobile_number,
+                edd=row_data.edd,
+                opened_on=None,  # todo change to opened_on when available in Model
+                preg_order=row_data.preg_order,
+                home_visit_date=row_data.home_visit_date,
+                bp_sys=row_data.bp_sys,  # high blood pressure
+                bp_dia=row_data.bp_dia,  # low blood pressure
+                anc_weight=row_data.anc_weight,
+                anc_hemoglobin=row_data.anc_hemoglobin,
+                anc_abnormalities=None,  # todo change to num_anc_complete when available in Model
+                anemic=get_anamic_status(row_data),
+                symptoms=get_symptoms(row_data),
+                counseling=get_counseling(row_data),
+                using_ifa=row_data.using_ifa,
+                ifa_consumed_last_seven_days=row_data.ifa_consumed_last_seven_days,
+                tt_taken='Y' if row_data.tt_1 or row_data.tt_2 else 'N',
+                tt_date=get_tt_dates(row_data),
+            ))
+            if current_trimester == 1 and row_data.trimester == 1 and current_record == 0:
+                current_record += 1
+            else:
+                current_trimester = row_data.trimester + 1
     return config
 
 
 @quickcache([
-    'order', 'awc_id'
+    'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
-def get_awc_report_lactating(order, awc_id):
-
+def get_awc_report_lactating(order, reversed_order, awc_id):
     data = CcsRecordMonthly.objects.filter(
         awc_id=awc_id,
-    ).order_by(order)
+        lactating=1,
+    ).order_by('case_id', '-age_in_months').distinct('case_id')
     data_count = data.count()
     config = {
         'data': [],
@@ -1203,6 +1218,7 @@ def get_awc_report_lactating(order, awc_id):
     for row in data:
         config['data'].append(base_data(row))
 
+    config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
 
