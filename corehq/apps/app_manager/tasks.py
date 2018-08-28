@@ -60,4 +60,4 @@ def prune_auto_generated_builds(domain, app_id):
             continue
         if not app.is_auto_generated or app.copy_of != app_id or app.id == last_build_id:
             raise SavedAppBuildException("Attempted to delete build that should not be deleted")
-        app.delete()
+        app.delete_app()
