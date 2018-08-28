@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
 import sys
-from collections import defaultdict
 from functools import cmp_to_key
 
 from iso8601 import iso8601
@@ -34,6 +33,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.soft_assert import soft_assert
 reconciliation_soft_assert = soft_assert('jroth@dimagi.com', include_breadcrumbs=True)
+
 
 def _validate_length(length):
     def __inner(value):
@@ -348,6 +348,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
 def _transaction_sort_key_function(case):
     xform_ids = list(case.xform_ids)
+
     def _transaction_cmp(first_transaction, second_transaction):
         # if the forms aren't submitted by the same user, just default to server dates
         if first_transaction.user_id != second_transaction.user_id:
