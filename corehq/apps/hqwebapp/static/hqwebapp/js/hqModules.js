@@ -58,9 +58,10 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     'jquery': '$',
                     'knockout': 'ko',
                     'underscore': '_',
-                    'clipboard/dist/clipboard': 'Clipboard',
                     'ace-builds/src-min-noconflict/ace': 'ace',
+                    'clipboard/dist/clipboard': 'Clipboard',
                     'DOMPurify/dist/purify.min': 'DOMPurify',
+                    'zxcvbn/dist/zxcvbn': 'zxcvbn',
                 },
                 thirdPartyPlugins = [
                     'jquery-form/dist/jquery.form.min',
