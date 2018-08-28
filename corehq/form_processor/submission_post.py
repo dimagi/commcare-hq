@@ -210,11 +210,13 @@ class SubmissionPost(object):
         return "\n\n".join(messages)
 
     def run(self):
+        print "PROCESSING FORM"
         failure_response = self._handle_basic_failure_modes()
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
+        print result.submitted_form._id
         submitted_form = result.submitted_form
 
         self._post_process_form(submitted_form)
@@ -257,6 +259,7 @@ class SubmissionPost(object):
                     result = None
                     if stub:
                         from corehq.form_processor.reprocess import reprocess_unfinished_stub_with_form
+                        print "It's a dupe and the existing one is a stub!"
                         result = reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
                     elif existing_form.is_error:
                         from corehq.form_processor.reprocess import reprocess_form

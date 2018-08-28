@@ -62,6 +62,10 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
     else:
         result = reprocess_form(form, save, lock_form=lock)
 
+    import traceback; traceback.print_stack()
+    print "Reprocessing form with unsaved stub"
+    # Stub is original form, and it's not saved
+    result = reprocess_form(form, save, lock_form=lock)
     save and not result.error and stub.delete()
     return result
 
@@ -118,6 +122,7 @@ def reprocess_xform_error_by_id(form_id, domain=None):
 
 
 def reprocess_form(form, save=True, lock_form=True):
+    print "REPROCESSING FORM"
     interface = FormProcessorInterface(form.domain)
     lock = interface.acquire_lock_for_xform(form.form_id) if lock_form else None
     with LockManager(form, lock):

@@ -231,6 +231,9 @@ class LedgerTests(TestCase):
             DOMAIN,
         )
 
+        print "--------------------------------"
+        print "STARTING ACTUAL FORM SUBMISSIONS"
+        print "--------------------------------"
         # Make form adding 100 units
         case_blocks = [
             get_single_transfer_block(None, self.case.case_id, self.product_a._id, 100),
@@ -238,6 +241,8 @@ class LedgerTests(TestCase):
         ]
 
         form_id = uuid.uuid4().hex
+        print "FORM ID:",
+        print form_id
         form_xml = render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': SYSTEM_FORM_XMLNS,
             'case_block': case_blocks,
@@ -248,6 +253,16 @@ class LedgerTests(TestCase):
             'device_id': "",
         })
 
+        self._submit_form_with_concurrent_duplicate(form_xml)
+
+        # If I do a second form submission here rather than during the
+        # processing of the first, only one StockTransaction is created:
+        # submit_form_locally(instance=form_xml, domain=DOMAIN)
+
+        self._print_stock_state(form_id)
+
+    def _submit_form_with_concurrent_duplicate(self, form_xml):
+
         def second_form_submission(*args, **kwargs):
             global ledger_test_race_condition_global
             if not ledger_test_race_condition_global:
@@ -256,27 +271,18 @@ class LedgerTests(TestCase):
                 submit_form_locally(instance=form_xml, domain=DOMAIN)
             print "finished submitting second form"
 
-        # Start processing that form, but don't actually commit - this is meant
-        # to mimic two copies being processed simultaneously
+        thing_to_mock = 'full_save'
+        thing_to_mock = 'ledger_save'
 
-        # Uncomment this to mock only the ledger part of the save method
-        # This causes a duplicate StockTransaction to be created
-        self._submit_form_with_concurrent_duplicate(second_form_submission, form_xml)
-
-        # If I do a second form submission here rather than during the
-        # processing of the first, only one StockTransaction is created:
-        # submit_form_locally(instance=form_xml, domain=DOMAIN)
-
-        self._print_stock_state(form_id)
-
-    def _submit_form_with_concurrent_duplicate(self, second_form_submission, form_xml):
-        # Uncomment this to mock the full save method, it throws a BulkSaveError
+        if thing_to_mock == 'full_save':
+        # mock the full save method, it throws a BulkSaveError
         # from corehq.form_processor.backends.couch.processor import FormProcessorCouch
-        # mocked_save = mock.Mock(side_effect=second_form_submission, wraps=FormProcessorCouch.save_processed_models)
-        # with mock.patch('corehq.form_processor.backends.couch.processor.FormProcessorCouch.save_processed_models', new=mocked_save) as save_fn:
-        #     result = submit_form_locally(instance=form_xml, domain=DOMAIN)
+            mocked_save = mock.Mock(side_effect=second_form_submission, wraps=FormProcessorCouch.save_processed_models)
+            with mock.patch('corehq.form_processor.backends.couch.processor.FormProcessorCouch.save_processed_models', new=mocked_save) as save_fn:
+                submit_form_locally(instance=form_xml, domain=DOMAIN)
 
-
+        # mock only the ledger part of the save method
+        # This causes a duplicate StockTransaction to be created
         from corehq.apps.commtrack.processing import commit_stock
         mocked_save = mock.Mock(side_effect=second_form_submission, wraps=commit_stock)
         with mock.patch('corehq.apps.commtrack.processing.commit_stock', new=mocked_save) as save_fn:
