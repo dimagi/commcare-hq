@@ -24,14 +24,9 @@ def notify_exception(request, message=None, details=None, exec_info=None):
     if request is not None:
         message = message or request.path
 
-    if six.PY3:
-        message = 'Notify Exception: %s' % (
-            message or "No message provided, fix error handler"
-        )
-    else:
-        message = b'Notify Exception: %s' % (
-            message or b"No message provided, fix error handler"
-        )
+    message = 'Notify Exception: %s' % (
+        message or "No message provided, fix error handler"
+    )
 
     notify_logger.error(
         message,

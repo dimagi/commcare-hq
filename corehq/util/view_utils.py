@@ -74,10 +74,7 @@ def json_error(f):
         except BadRequest as e:
             return _get_json_exception_response(400, request, e)
         except Exception as e:
-            if six.PY3:
-                message = 'JSON exception response: {}'.format(smart_text(e)).encode('utf-8')
-            else:
-                message = b'JSON exception response: {}'.format(smart_bytes(e))
+            message = 'JSON exception response: {}'.format(smart_text(e))
             notify_exception(request, message)
             return _get_json_exception_response(500, request, e)
     return inner
