@@ -1,10 +1,14 @@
 # Migrating
 
 Modernizing our JavaScript code base often means doing migrations. Migrations currently in progress:
-1. Migrating to RequireJS
-1. Moving away from classical inheritance
+1. [Migrating to RequireJS](#migrating-to-requirejs)
+1. [Moving away from classical inheritance](#moving-away-from-classical-inheritance)
 
 ## Migrating to RequireJS
+
+- [Background: modules and pages](#background-modules-and-pages)
+- [Basic Migration Process](#basic-migration-process)
+- [Troubleshooting](#troubleshooting)
 
 ### Background: modules and pages
 
@@ -95,6 +99,9 @@ It's often prohibitively time-consuming to test every JavaScript interaction on 
 - If your page depends on any third-party modules that might not yet be used on any RequireJS pages, test them. Third-party modules sometimes need to be upgraded to be compatible with RequireJS.
 - If your page touched any javascript modules that are used by pages that haven't yet been migrated, test at least one of those non-migrated pages.
 - Check if your base template has any descendants that should also be migrated.
+
+### Troubleshooting
+TODO
 
 ## Moving away from classical inheritance
 
