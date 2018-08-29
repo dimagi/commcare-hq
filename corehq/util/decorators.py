@@ -150,15 +150,15 @@ def old_analytics_task(default_retry_delay=10, max_retries=3, queue='background_
     return analytics_task(default_retry_delay, max_retries, queue)
 
 
-def analytics_task(default_retry_delay=10, max_retries=3, queue='analytics_queue'):
+def analytics_task(default_retry_delay=10, max_retries=3, queue='analytics_queue', serializer='json'):
     '''
         defines a task that posts data to one of our analytics endpoints. It retries the task
         up to 3 times if the post returns with a status code indicating an error with the post
         that is not our fault.
     '''
     def decorator(func):
-        @task(serializer='pickle', bind=True, queue=queue, ignore_result=True, acks_late=True,
-              default_retry_delay=default_retry_delay, max_retries=max_retries)
+        @task(bind=True, queue=queue, ignore_result=True, acks_late=True,
+              default_retry_delay=default_retry_delay, max_retries=max_retries, serializer=serializer)
         @wraps(func)
         def _inner(self, *args, **kwargs):
             try:
