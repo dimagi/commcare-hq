@@ -95,7 +95,8 @@ def push_translation_files_to_transifex(domain, data, email):
                                   data.get('source_lang'),
                                   data.get('transifex_project_slug'),
                                   data.get('version'),
-                                  use_version_postfix='yes' in data['use_version_postfix']
+                                  use_version_postfix='yes' in data['use_version_postfix'],
+                                  update_resource='yes' in data['update_resource']
                                   ).send_translation_files()
     if upload_status:
         result_note = "Hi,\nThe upload for app {app_id}(version {version}), " \

@@ -16,7 +16,7 @@ from custom.icds.translations.integrations.client import TransifexApiClient
 class Transifex(object):
     def __init__(self, domain, app_id, source_lang, project_slug, version=None, lang_prefix='default_',
                  resource_slugs=None, is_source_file=True, exclude_if_default=False, lock_translations=False,
-                 use_version_postfix=True):
+                 use_version_postfix=True, update_resource=False):
         """
         :param domain: domain name
         :param app_id: id of the app to be used
@@ -27,6 +27,7 @@ class Transifex(object):
         :param resource_slugs: resource slugs
         :param is_source_file: upload as source language file(True) or translation(False)
         :param use_version_postfix: use version number at the end of resource slugs
+        :param update_resource: update resource file
         """
         if version:
             version = int(version)
@@ -39,6 +40,7 @@ class Transifex(object):
         self.source_lang = source_lang
         self.lock_translations = lock_translations
         self.use_version_postfix = use_version_postfix
+        self.update_resource = update_resource
         self.transifex_po_file_generator = TransifexPOFileGenerator(domain, app_id, version, self.key_lang,
                                                                     source_lang, lang_prefix, exclude_if_default,
                                                                     use_version_postfix)
@@ -75,7 +77,8 @@ class Transifex(object):
                 response = self.client.upload_resource(
                     path_to_file,
                     resource_name,
-                    resource_name
+                    resource_name,
+                    self.update_resource
                 )
             else:
                 response = self.client.upload_translation(

@@ -74,15 +74,15 @@ class TransifexApiClient(object):
             self.project, resource_slug)
         return requests.delete(url, auth=self._auth)
 
-    def upload_resource(self, path_to_pofile, resource_slug, resource_name):
+    def upload_resource(self, path_to_pofile, resource_slug, resource_name, update_resource):
         """
         Upload source language file
 
         :param path_to_pofile: path to pofile
         :param resource_slug: resource slug
         :param resource_name: resource name, mostly same as resource slug itself
+        :param update_resource: update resource
         """
-        url = "https://www.transifex.com/api/2/project/{}/resources".format(self.project)
         content = open(path_to_pofile, 'r', encoding="utf-8").read()
         if resource_name is None:
             __, filename = os.path.split(path_to_pofile)
@@ -92,9 +92,17 @@ class TransifexApiClient(object):
             'name': resource_name, 'slug': resource_slug, 'content': content,
             'i18n_type': 'PO'
         }
-        return requests.post(
-            url, data=json.dumps(data), auth=self._auth, headers=headers,
-        )
+        if update_resource:
+            url = "https://www.transifex.com/api/2/project/{}/resource/{}/content".format(
+                self.project, resource_slug)
+            return requests.put(
+                url, data=json.dumps(data), auth=self._auth, headers=headers,
+            )
+        else:
+            url = "https://www.transifex.com/api/2/project/{}/resources".format(self.project)
+            return requests.post(
+                url, data=json.dumps(data), auth=self._auth, headers=headers,
+            )
 
     def upload_translation(self, path_to_pofile, resource_slug, resource_name, hq_lang_code):
         """

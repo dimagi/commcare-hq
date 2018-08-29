@@ -26,6 +26,14 @@ class AppTranslationsForm(forms.Form):
         required=False,
         initial='yes',
     )
+    update_resource = forms.MultipleChoiceField(
+        choices=[
+            ('yes', 'Update the resource files'),
+        ],
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+        initial='no',
+    )
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
     source_lang = forms.ChoiceField(label=ugettext_lazy("Source Language"),
@@ -74,6 +82,7 @@ class AppTranslationsForm(forms.Form):
             'app_id',
             'version',
             'use_version_postfix',
+            'update_resource',
             'transifex_project_slug',
             hqcrispy.Field('source_lang', css_class="ko-select2"),
             hqcrispy.Field('target_lang', css_class="ko-select2"),
