@@ -131,7 +131,7 @@ Tactics that can help track down problems with the RequireJS build process, whic
       - Bundles
          - `cp staticfiles/hqwebapp/js/common.js corehq/apps/hqwebapp/static/hqwebapp/js/common.js`
          - `cp staticfiles/hqwebapp/js/bundle.js   corehq/apps/hqwebapp/static/hqwebapp/js/bundle.js`
-         - ...and the same for any other bundles used on the page you're testing. The easiest way to check this is to open the page on staging, open the browser console, and check the resources tab to see what javascript files are requests.
+         - ...and the same for any other bundles used on the page you're testing. The easiest way to check this is to open the page on staging, open the browser console, and check the resources tab to see what javascript files are requested.
 
 ## Moving away from classical inheritance
 
