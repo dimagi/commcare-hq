@@ -3,7 +3,6 @@ hqDefine("sms/js/compose",[
     "hqwebapp/js/initial_page_data",
     'jquery-ui/ui/sortable',
     "hqwebapp/js/bootstrap-multi-typeahead",
-    "bootstrap3-typeahead/bootstrap3-typeahead.min",
 ], function ($, intialPageData) {
     $(function () {
         $("#hint_id_recipients").addClass("alert alert-info");

@@ -1,8 +1,9 @@
 hqDefine('sms/js/add_gateway',[
     "jquery",
+    "underscore",
     "hqwebapp/js/initial_page_data",
     "sms/js/add_gateway_form_handler",
-], function ($, initialPageData, AddGatewayFormHandler) {
+], function ($, _, initialPageData,AddGatewayFormHandler) {
     function addParam($widget, count, nm, val) {
         $widget.append('<tr> \
                 <td><input type="text" class="form-control" name="additional_params.' + count + '.name" value="' + nm + '" /></td> \
