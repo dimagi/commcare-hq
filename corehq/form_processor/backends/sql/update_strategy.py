@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
 import sys
+import datetime
 from functools import cmp_to_key
 
 from iso8601 import iso8601
@@ -348,6 +349,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
 def _transaction_sort_key_function(case):
     xform_ids = list(case.xform_ids)
+    fudge_factor = datetime.timedelta(hours=12)
 
     def cc_cmp(first, second):
         if first > second:
@@ -368,19 +370,19 @@ def _transaction_sort_key_function(case):
                 _type_sort(second_transaction.type)
             )
 
-        def _sortkey(transaction):
-            if not transaction.server_date:
-                raise MissingServerDate()
+        if not (first_transaction.server_date and second_transaction.server_date):
+            raise MissingServerDate()
 
+        # checks if the dates received are within a particular range
+        if abs(first_transaction.server_date - second_transaction.server_date) > fudge_factor:
+            return cc_cmp(first_transaction.server_date, second_transaction.server_date)
+
+        def _sortkey(transaction):
             def form_cmp(form_id):
                 return xform_ids.index(form_id) if form_id in xform_ids else sys.maxsize
 
             # if the user is the same you should compare with the special logic below
-            # if the user is not the same you should compare just using received_on
             return (
-                # this is sneaky - it's designed to use just the date for the
-                # server time in case the phone submits two forms quickly out of order
-                transaction.server_date.date(),
                 transaction.client_date,
                 form_cmp(transaction.xform_id),
                 _type_sort(transaction.type),
