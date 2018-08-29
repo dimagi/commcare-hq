@@ -9,8 +9,10 @@ BEGIN
     RETURN (
         WITH most_recent_rebuild_date AS (
             SELECT server_date AS rebuild_date
-            FROM form_processor_case_transaction
-            WHERE type & rebuild_types != 0
+            FROM form_processor_casetransaction
+            WHERE
+                type & rebuild_types != 0
+                AND case_id = _case_id
             ORDER BY server_date DESC
             LIMIT 1
         ),
