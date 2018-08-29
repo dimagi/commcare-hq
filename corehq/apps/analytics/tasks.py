@@ -351,7 +351,7 @@ def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
 
 
-@analytics_task(serializer='pickle', )
+@analytics_task()
 def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
                               extra_fields=None):
     # TODO - else avoids transient celery errors.  Can remove after deploying to all environments.

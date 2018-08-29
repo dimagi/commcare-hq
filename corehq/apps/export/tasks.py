@@ -37,7 +37,7 @@ from six.moves import filter
 logger = logging.getLogger('export_migration')
 
 
-@task(serializer='pickle', queue=EXPORT_DOWNLOAD_QUEUE)
+@task(queue=EXPORT_DOWNLOAD_QUEUE)
 def populate_export_download_task(pickled_export_instances, pickled_filters, download_id, filename=None, expiry=10 * 60):
     """
     :param expiry:  Time period for the export to be available for download in minutes
@@ -212,7 +212,7 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
     inferred_schema.save()
 
 
-@task(serializer='pickle', queue='background_queue', bind=True)
+@task(queue='background_queue', bind=True)
 def generate_schema_for_all_builds(self, pickled_schema_cls, domain, app_id, identifier):
     schema_cls = pickle.loads(pickled_schema_cls)
     schema_cls.generate_schema_from_builds(
