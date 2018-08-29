@@ -188,45 +188,25 @@
               "mar": "पांढरा",
               "tel": "తెలుపు",
               "hin": "सफेद",
-              "en": "White",
-              "tam": "வெள்ளை",
-              "lus": "a var",
-              "pan": "ਚਿੱਟਾ",
-              "grt": "Gipok",
-              "kha": "lieh"
+              "en": "White"
             },
             "green": {
               "mar": "हिरवा",
               "tel": "ఆకుపచ్చ",
               "hin": "हरा",
-              "en": "Green",
-              "tam": "பச்சை",
-              "lus": "a hring",
-              "pan": "ਹਰਾ",
-              "grt": "Tangsek",
-              "kha": "Jyrngam"
+              "en": "Green"
             },
             "red": {
               "mar": "लाल",
               "tel": "ఎరుపు",
               "hin": "लाल",
-              "en": "Red",
-              "tam": "சிவப்பு",
-              "lus": "a sen",
-              "pan": "ਲਾਲ",
-              "grt": "Gitchak",
-              "kha": "Saw"
+              "en": "Red"
             },
             "yellow": {
               "mar": "पिवळा",
               "tel": "పసుపు",
               "hin": "पीला",
-              "en": "Yellow",
-              "tam": "மஞ்சள்",
-              "lus": "Rimit",
-              "pan": "ਪੀਲਾ",
-              "grt": "Rimit",
-              "kha": "Stem"
+              "en": "Yellow"
             }
           }
         },
