@@ -11,11 +11,6 @@ import six
 from django.contrib import messages
 import settingshelper as helper
 
-# odd celery fix
-import djcelery
-
-djcelery.setup_loader()
-
 DEBUG = True
 LESS_DEBUG = DEBUG
 
@@ -190,7 +185,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'djcelery',
+    'django_celery_results',
     'django_prbac',
     'djangular',
     'captcha',
@@ -392,7 +387,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'django_otp',
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
-    'djcelery',
     'gunicorn',
     'langcodes',
     'raven.contrib.django.raven_compat',
@@ -541,9 +535,14 @@ TRANSFER_FILE_DIR_NAME = None
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 # celery
-BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
-CELERY_ANNOTATIONS = {
+# https://github.com/celery/celery/issues/4226
+CELERY_BROKER_POOL_LIMIT = None
+
+CELERY_RESULT_BACKEND = 'django-db'
+
+CELERY_TASK_ANNOTATIONS = {
     '*': {
         'on_failure': helper.celery_failure_handler,
         'trail': False,
@@ -558,7 +557,7 @@ CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
-CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
+CELERY_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
 # http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
 # Keep messages in the events queue only for 2 hours
