@@ -10,22 +10,22 @@ class UtilitiesTestCase(SimpleTestCase):
     def test_truncate_value_left(self):
         value = 'string to truncate'
         truncated = truncate_value(value, max_length=len(value) - 1)
-        self.assertEqual(truncated, b'truncate_849f01fd')
+        self.assertEqual(truncated, 'truncate_849f01fd')
 
     def test_truncate_value_right(self):
         value = 'string to truncate'
         truncated = truncate_value(value, max_length=len(value) - 1, from_left=False)
-        self.assertEqual(truncated, b'string t_849f01fd')
+        self.assertEqual(truncated, 'string t_849f01fd')
 
     def test_truncate_value_unicode_left(self):
         value = '\u00e8 string to truncate\u00e8'
         truncated = truncate_value(value, max_length=len(value) - 1)
-        self.assertEqual(truncated, b'runcate\\xe8_6be7bea3')
+        self.assertEqual(truncated, 'runcate\\xe8_6be7bea3')
 
     def test_truncate_value_unicode_right(self):
         value = '\u00e8 string to truncate\u00e8'
         truncated = truncate_value(value, max_length=len(value) - 1, from_left=False)
-        self.assertEqual(truncated, b'\\xe8 string_6be7bea3')
+        self.assertEqual(truncated, '\\xe8 string_6be7bea3')
 
     def test_table_name(self):
         self.assertEqual(b'config_report_domain_table_7a7a33ec', get_table_name('domain', 'table'))
