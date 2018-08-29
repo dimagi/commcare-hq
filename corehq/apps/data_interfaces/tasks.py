@@ -36,13 +36,13 @@ ONE_HOUR = 60 * 60
 HALT_AFTER = 23 * 60 * 60
 
 
-@task(ignore_result=True)
+@task(serializer='pickle', ignore_result=True)
 def bulk_upload_cases_to_group(download_id, domain, case_group_id, cases):
     results = add_cases_to_case_group(domain, case_group_id, cases)
     cache.set(download_id, results, ONE_HOUR)
 
 
-@task(ignore_result=True)
+@task(serializer='pickle', ignore_result=True)
 def bulk_archive_forms(domain, couch_user, uploaded_data):
     # archive using Excel-data
     response = archive_forms_old(domain, couch_user.user_id, couch_user.username, uploaded_data)
@@ -68,7 +68,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
     return response
 
 
-@periodic_task(
+@periodic_task(serializer='pickle',
     run_every=crontab(hour=0, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
@@ -113,7 +113,7 @@ def check_data_migration_in_progress(domain, last_migration_check_time):
     return False, last_migration_check_time
 
 
-@task(queue='case_rule_queue')
+@task(serializer='pickle', queue='case_rule_queue')
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
 
@@ -131,7 +131,7 @@ def run_case_update_rules_for_domain(domain, now=None):
         run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, db=None)
 
 
-@serial_task(
+@serial_task(serializer='pickle',
     '{domain}-{db}',
     timeout=36 * 60 * 60,
     max_retries=0,
@@ -179,7 +179,7 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, db=None):
             AutomaticUpdateRule.objects.filter(pk=rule.pk).update(last_run=now)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)
 def run_case_update_rules_on_save(case):
     key = 'case-update-on-save-case-{case}'.format(case=case.case_id)
     with CriticalSection([key]):

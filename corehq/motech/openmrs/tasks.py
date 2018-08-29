@@ -155,7 +155,7 @@ def import_patients_of_owner(requests, importer, domain_name, owner, location=No
     )
 
 
-@task(queue='background_queue')
+@task(serializer='pickle', queue='background_queue')
 def import_patients_to_domain(domain_name, force=False):
     """
     Iterates OpenmrsImporters of a domain, and imports patients
@@ -245,7 +245,7 @@ def import_patients_to_domain(domain_name, force=False):
             continue
 
 
-@periodic_task(
+@periodic_task(serializer='pickle',
     run_every=crontab(minute=4, hour=4),
     queue='background_queue'
 )
@@ -257,7 +257,7 @@ def import_patients():
         import_patients_to_domain(domain_name)
 
 
-@task(queue='background_queue')
+@task(serializer='pickle', queue='background_queue')
 def track_changes():
     """
     Uses the OpenMRS Atom Feed to track changes
