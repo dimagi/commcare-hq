@@ -247,7 +247,7 @@ def update_hubspot_properties(webuser, properties):
     update_hubspot_properties_v2(webuser, properties)
 
 
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def update_hubspot_properties_v2(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -290,7 +290,7 @@ def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_user_sign_in_on_hubspot_v2(webuser, hubspot_cookie, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
@@ -300,7 +300,7 @@ def track_built_app_on_hubspot(webuser):
     track_built_app_on_hubspot_v2(webuser)
 
 
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_built_app_on_hubspot_v2(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -313,7 +313,7 @@ def track_confirmed_account_on_hubspot(webuser):
     track_confirmed_account_on_hubspot_v2(webuser)
 
 
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_confirmed_account_on_hubspot_v2(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -351,7 +351,7 @@ def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
 
 
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
                               extra_fields=None):
     # TODO - else avoids transient celery errors.  Can remove after deploying to all environments.
@@ -365,7 +365,7 @@ def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
     track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta)
 
 
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
     ab = {
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
@@ -378,7 +378,7 @@ def track_job_candidate_on_hubspot(user_email):
     track_job_candidate_on_hubspot_v2(user_email)
 
 
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_job_candidate_on_hubspot_v2(user_email):
     properties = {
         'job_candidate': True
@@ -391,7 +391,7 @@ def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta)
 
 
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
@@ -426,7 +426,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
     _track_workflow_task_v2(email, event, properties, timestamp)
 
 
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
     def _no_nonascii_unicode(value):
         if isinstance(value, six.text_type):
@@ -452,7 +452,7 @@ def identify(email, properties):
     identify_v2(email, properties)
 
 
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def identify_v2(email, properties):
     """
     Set the given properties on a KISSmetrics user.
