@@ -56,7 +56,7 @@ def get_start_date(last_successful_run):
     return first_day_of_current_month if not last_successful_run else last_successful_run.end
 
 
-@serial_task(serializer='pickle', '{domain}', queue='logistics_background_queue', max_retries=0, timeout=60 * 60 * 12)
+@serial_task('{domain}', queue='logistics_background_queue', max_retries=0, timeout=60 * 60 * 12)
 def report_run(domain, strict=True):
     last_successful_run = ReportRun.last_success(domain)
 

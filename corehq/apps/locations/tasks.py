@@ -29,7 +29,7 @@ from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 
 
-@serial_task(serializer='pickle', "{location_type.domain}-{location_type.pk}",
+@serial_task("{location_type.domain}-{location_type.pk}",
              default_retry_delay=30, max_retries=3)
 def sync_administrative_status(location_type, sync_supply_points=True):
     """Updates supply points of locations of this type"""
@@ -58,7 +58,7 @@ def _unhide_stock_states(location_type):
          .update(sql_location=location))
 
 
-@serial_task(serializer='pickle', "{domain}", default_retry_delay=30, max_retries=3)
+@serial_task("{domain}", default_retry_delay=30, max_retries=3)
 def sync_supply_points(location_type):
     for location in SQLLocation.objects.filter(location_type=location_type):
         sync_supply_point(location)
@@ -66,7 +66,7 @@ def sync_supply_points(location_type):
 
 
 # TODO add message on types page
-@serial_task(serializer='pickle', "{location_type.domain}-{location_type.pk}",
+@serial_task("{location_type.domain}-{location_type.pk}",
              default_retry_delay=30, max_retries=0)
 def update_location_users(location_type):
     """
@@ -156,7 +156,7 @@ def download_locations_async(domain, download_id, include_consumption, headers_o
     DownloadBase.set_progress(download_locations_async, 100, 100)
 
 
-@serial_task(serializer='pickle', '{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,
+@serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,
              queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
 def import_locations_async(domain, file_ref_id, user_id):
     importer = MultiExcelImporter(import_locations_async, file_ref_id)
