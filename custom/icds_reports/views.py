@@ -584,7 +584,8 @@ class AwcReportsView(BaseReportView):
                 domain,
                 config,
                 tuple(current_month.timetuple())[:3],
-                include_test
+                include_test,
+                beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'beneficiary':
             if 'awc_id' in config:

@@ -662,6 +662,10 @@ def percent(x, y):
     return "%.2f %%" % (percent_num(x, y))
 
 
+def percent_or_not_entered(x, y):
+    return percent(x, y) if y else DATA_NOT_ENTERED
+
+
 class ICDSDatabaseColumn(DatabaseColumn):
     def get_raw_value(self, row):
         return (self.view.get_value(row) or '') if row else ''
