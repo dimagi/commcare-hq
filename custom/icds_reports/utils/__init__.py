@@ -663,7 +663,7 @@ def percent(x, y):
 
 
 def percent_or_not_entered(x, y):
-    return percent(x, y) if y else 'data not entered'
+    return percent(x, y) if y else DATA_NOT_ENTERED
 
 
 class ICDSDatabaseColumn(DatabaseColumn):
