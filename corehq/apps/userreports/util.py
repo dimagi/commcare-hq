@@ -132,6 +132,10 @@ def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=Fals
 
 
 def get_table_name(domain, table_id):
+    """
+    Returns bytes.
+    """
+
     def _hash(domain, table_id):
         return hashlib.sha1(
             '{}_{}'.format(
@@ -145,7 +149,7 @@ def get_table_name(domain, table_id):
     return truncate_value(
         'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
         from_left=False
-    )
+    ).encode('utf-8')
 
 
 def is_ucr_table(table_name):
@@ -167,8 +171,8 @@ def truncate_value(value, max_length=63, from_left=True):
 
     if len(value) > max_length:
         short_hash = hashlib.sha1(value).hexdigest()[:hash_length]
-        return '{}_{}'.format(truncated_value.decode('utf-8'), short_hash).encode('utf-8')
-    return value
+        return '{}_{}'.format(truncated_value.decode('utf-8'), short_hash)
+    return value.decode('utf-8')
 
 
 def get_ucr_class_name(id):
