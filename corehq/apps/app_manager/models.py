@@ -30,7 +30,7 @@ from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 
-from corehq.apps.app_manager.app_schemas.case_properties import get_parent_type_map
+from corehq.apps.app_manager.app_schemas.case_properties import get_parent_type_map, get_all_case_properties
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -5418,6 +5418,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             domain_has_apps.clear(self.domain)
 
         LatestAppInfo(self.master_id, self.domain).clear_caches()
+
+        get_all_case_properties.clear(self)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
