@@ -5420,6 +5420,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         LatestAppInfo(self.master_id, self.domain).clear_caches()
 
         get_all_case_properties.clear(self)
+        get_usercase_properties.clear(self)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)

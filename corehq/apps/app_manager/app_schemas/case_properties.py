@@ -507,6 +507,7 @@ def get_all_case_properties_for_case_type(domain, case_type):
     return all_case_properties_by_domain(domain, [case_type]).get(case_type, [])
 
 
+@quickcache(vary_on=['app.get_id'])
 def get_usercase_properties(app):
     if is_usercase_in_use(app.domain):
         # TODO: add name here once it is fixed to concatenate first and last in form builder
