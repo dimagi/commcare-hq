@@ -131,7 +131,7 @@ def run_case_update_rules_for_domain(domain, now=None):
         run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, db=None)
 
 
-@serial_task(serializer='pickle',
+@serial_task(
     '{domain}-{db}',
     timeout=36 * 60 * 60,
     max_retries=0,
