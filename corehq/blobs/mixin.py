@@ -335,6 +335,14 @@ class BlobHelper(object):
             BlobMetaRef._normalize_json(database.dbname, self._id, m.copy())
         ) for n, m in six.iteritems(doc.get("external_blobs", {}))}
 
+    def __repr__(self):
+        return "<%s %s domain=%s id=%s>" % (
+            type(self).__name__,
+            self.doc_type,
+            getattr(self, "domain", ""),
+            self._id,
+        )
+
     _atomic_blobs = None
 
     @property
