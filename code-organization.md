@@ -67,10 +67,12 @@ and then the files share state through global variables. That's insane.
 And it's also JavaScript. Fortunately, there are things you can do to
 enforce and respect the boundaries that keep us sane by following
 one of a number of patterns.
-Many full-blown module systems have been created for in-browser JavaScript,
-including `require.js` and more recently `system.js`,
-but for the time being we've decided to go with a lighter weight alternative.
-Before diving into that, I want to talk first about the status quo
+
+We're in the process of migrating to [RequireJS](https://requirejs.org/). Part of this process has included developing a lighter-weight alternative module system called `hqDefine`.
+
+`hqDefine` serves as a stepping stone between legacy code and requirejs modules: it adds encapsulation but not full-blown dependency management. **New code should be written to be compatible with RequireJS.** This is typically easy; once familiar with the module patterns described below, see the [migration guide](https://github.com/dimagi/js-guide/blob/master/migrating.md#migrating-to-requirejs) for details on making sure your code will work with RequireJS.
+
+Before diving into `hqDefine`, I want to talk first about the status quo
 convention for sanity with no module system.
 As we'll describe, it's a step down from our current preferred choice,
 but it's still miles ahead of having no convention at all,
