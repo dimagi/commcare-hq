@@ -31,7 +31,7 @@ from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_succ
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, SubmitHistoryFilter
 from corehq.apps.reports.views import should_update_export
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
@@ -49,14 +49,12 @@ from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.tasks import (
     generate_schema_for_all_builds,
     get_saved_export_task_status,
     rebuild_saved_export,
 )
 from corehq.apps.export.exceptions import (
-    ExportNotFound,
     ExportAppException,
     BadExportConfiguration,
     ExportFormValidationException,
@@ -129,7 +127,6 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, process_email_request
@@ -2102,7 +2099,7 @@ class GenericDownloadNewExportMixin(object):
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
-    export_filter_class = ExpandedMobileWorkerFilter
+    export_filter_class = SubmitHistoryFilter
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
