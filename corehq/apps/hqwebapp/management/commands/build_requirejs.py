@@ -34,6 +34,7 @@ class Command(ResourceStaticCommand):
             bundles = {}
             all_modules = []
             prefix = os.path.join(os.getcwd(), 'corehq')
+            '''
             for finder in finders.get_finders():
                 if isinstance(finder, finders.AppDirectoriesFinder):
                     for path, storage in finder.list(['.*', '*~', '* *', '*.*ss', '*.png']):
@@ -45,6 +46,7 @@ class Command(ResourceStaticCommand):
                                 bundles[directory] = []
                             bundles[directory].append(path[:-3])
                             all_modules.append(path[:-3])
+            '''
 
             customized = {re.sub(r'/[^/]*$', '', m['name']): True for m in config['modules']}
             for directory, inclusions in six.iteritems(bundles):
