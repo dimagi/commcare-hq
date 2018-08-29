@@ -151,7 +151,7 @@ def get_saved_export_task_status(export_instance_id):
     return get_task_status(download_data.task)
 
 
-@serial_task(serializer='pickle', '{domain}-{case_type}', queue='background_queue')
+@serial_task('{domain}-{case_type}', queue='background_queue')
 def add_inferred_export_properties(sender, domain, case_type, properties):
     _cached_add_inferred_export_properties(sender, domain, case_type, properties)
 
