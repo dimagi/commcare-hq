@@ -1319,10 +1319,10 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregation_query(self):
         columns = (
-            ('state_id', 'ucr.state_id'),
-            ('district_id', 'ucr.district_id'),
-            ('block_id', 'ucr.block_id'),
-            ('supervisor_id', 'ucr.supervisor_id'),
+            ('state_id', 'awc_loc.state_id'),
+            ('district_id', 'awc_loc.district_id'),
+            ('block_id', 'awc_loc.block_id'),
+            ('supervisor_id', 'awc_loc.supervisor_id'),
             ('awc_id', 'chm.awc_id'),
             ('month', 'chm.month'),
             ('gender', 'chm.sex'),
@@ -1428,14 +1428,13 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             {columns}
         ) (SELECT
             {calculations}
-            FROM "{ucr_child_monthly_table}" ucr
-            LEFT OUTER JOIN "{child_health_monthly_table}" chm ON ucr.doc_id = chm.case_id AND ucr.month = chm.month AND ucr.awc_id = chm.awc_id
-            WHERE ucr.month = %(start_date)s AND chm.month = %(start_date)s AND
-                  ucr.state_id != '' AND ucr.state_id IS NOT NULL
-            GROUP BY ucr.state_id, ucr.district_id, ucr.block_id, ucr.supervisor_id, chm.awc_id,
+            FROM "{child_health_monthly_table}" chm
+            LEFT OUTER JOIN "awc_location" awc_loc ON awc_loc.doc_id = chm.awc_id
+            WHERE chm.month = %(start_date)s AND awc_loc.state_id != '' AND awc_loc.state_id IS NOT NULL
+            GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id,
                      chm.month, chm.sex, chm.age_tranche, chm.caste,
                      coalesce_disabled, coalesce_minority, coalesce_resident
-            ORDER BY ucr.state_id, ucr.district_id, ucr.block_id, ucr.supervisor_id, chm.awc_id
+            ORDER BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id
         )
         """.format(
             tablename=self.tablename,
