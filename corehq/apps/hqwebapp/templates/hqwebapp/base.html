@@ -380,7 +380,9 @@ document.addEventListener("DOMContentLoaded", function(){
                     'hqwebapp/js/mobile_experience_warning',
                 ], function () {
 console.log("common modules loaded");
-                    requirejs(['{{ requirejs_main }}']);
+                    requirejs(['{{ requirejs_main }}'], function() {
+console.log("requirejs_main loaded");
+                    });
                 });
             </script>
         {% endif %}
