@@ -63,7 +63,7 @@ branches:
   - np/no-saved-export-task # Nick P 8/27
   - rn_migrating_sms_pages # Rohit Aug 29
   - np/explicit-pickle-serializer # Nick P 8/27
-  - np/cache-get_all_case_properties  # Nick P 8/29
+  - np/cache-for-loading-page  # Nick P 8/29
 submodules:
   submodules/django-digest-src:
     branches: []
