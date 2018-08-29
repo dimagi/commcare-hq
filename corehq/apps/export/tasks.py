@@ -10,6 +10,7 @@ from soil import DownloadBase
 from soil.progress import get_task_status
 
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+from corehq.apps.export.exceptions import NoSavedExportTask
 from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
@@ -145,6 +146,8 @@ def get_saved_export_task_status(export_instance_id):
     rebuilds in progress for a single export instance)
     """
     download_data = _get_saved_export_download_data(export_instance_id)
+    if not download_data.task_id:
+        raise NoSavedExportTask('No existing task for export %s' % export_instance_id)
     return get_task_status(download_data.task)
 
 
