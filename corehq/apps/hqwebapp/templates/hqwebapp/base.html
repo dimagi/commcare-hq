@@ -361,6 +361,9 @@
                         ko.mapping = mapping;
                     },
                 });
+document.addEventListener("DOMContentLoaded", function(){
+    console.log("document is ready");
+});
                 requirejs([
                     'hqwebapp/js/common',
                     'jquery.cookie/jquery.cookie',
@@ -376,6 +379,7 @@
                     'analytix/js/kissmetrix',
                     'hqwebapp/js/mobile_experience_warning',
                 ], function () {
+console.log("common modules loaded");
                     requirejs(['{{ requirejs_main }}']);
                 });
             </script>
