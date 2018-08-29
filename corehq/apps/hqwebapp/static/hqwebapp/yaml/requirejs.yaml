@@ -26,7 +26,7 @@ modules:
       - bootstrap
       - hqwebapp/js/django
       - jquery.cookie/jquery.cookie
-      - jquery.form.min
+      - jquery-form/dist/jquery.form.min.js
       - jquery.rmi/jquery.rmi
 
   # Limited set of common libraries in hqwebapp/js that are used, leaving off
