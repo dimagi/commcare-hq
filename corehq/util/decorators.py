@@ -108,7 +108,7 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
         maximum length of the task.
 
     Usage:
-        @serial_task(serializer='pickle', "{user.username}-{from}", default_retry_delay=2)
+        @serial_task("{user.username}-{from}", default_retry_delay=2)
         def greet(user, from="Dimagi"):
             ...
 
