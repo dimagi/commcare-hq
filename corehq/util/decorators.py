@@ -108,7 +108,7 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
         maximum length of the task.
 
     Usage:
-        @serial_task("{user.username}-{from}", default_retry_delay=2)
+        @serial_task(serializer='pickle', "{user.username}-{from}", default_retry_delay=2)
         def greet(user, from="Dimagi"):
             ...
 
@@ -117,7 +117,7 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
     """
     def decorator(fn):
         # register task with celery.  Note that this still happens on import
-        @task(bind=True, queue=queue, ignore_result=ignore_result,
+        @task(serializer='pickle', bind=True, queue=queue, ignore_result=ignore_result,
               default_retry_delay=default_retry_delay, max_retries=max_retries)
         @wraps(fn)
         def _inner(self, *args, **kwargs):
@@ -157,7 +157,7 @@ def analytics_task(default_retry_delay=10, max_retries=3, queue='analytics_queue
         that is not our fault.
     '''
     def decorator(func):
-        @task(bind=True, queue=queue, ignore_result=True, acks_late=True,
+        @task(serializer='pickle', bind=True, queue=queue, ignore_result=True, acks_late=True,
               default_retry_delay=default_retry_delay, max_retries=max_retries)
         @wraps(func)
         def _inner(self, *args, **kwargs):
