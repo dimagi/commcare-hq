@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime, timedelta
 import logging
+import pickle
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from django.conf import settings
@@ -37,10 +38,12 @@ logger = logging.getLogger('export_migration')
 
 
 @task(queue=EXPORT_DOWNLOAD_QUEUE)
-def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60):
+def populate_export_download_task(pickled_export_instances, pickled_filters, download_id, filename=None, expiry=10 * 60):
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
+    export_instances = pickle.loads(pickled_export_instances)
+    filters = pickle.loads(pickled_filters)
     domain = export_instances[0].domain
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(
@@ -211,7 +214,8 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
 
 
 @task(queue='background_queue', bind=True)
-def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier):
+def generate_schema_for_all_builds(self, pickled_schema_cls, domain, app_id, identifier):
+    schema_cls = pickle.loads(pickled_schema_cls)
     schema_cls.generate_schema_from_builds(
         domain,
         app_id,
