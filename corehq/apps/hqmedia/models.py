@@ -873,7 +873,7 @@ class HQMediaMixin(Document):
         """
         has_restored = False
         if hasattr(self, 'archived_media') and LOGO_ARCHIVE_KEY in self.archived_media:
-            for slug, logo_data in self.archived_media[LOGO_ARCHIVE_KEY].items():
+            for slug, logo_data in list(self.archived_media[LOGO_ARCHIVE_KEY].items()):
                 self.logo_refs[slug] = logo_data
                 has_restored = True
                 del self.archived_media[LOGO_ARCHIVE_KEY][slug]
