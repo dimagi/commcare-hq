@@ -14,6 +14,7 @@ hqDefine("registration/js/register_new_user", [
     reg
 ) {
     $(function() {
+        debugger;
         // Link up with registration form ko model
         reg.onModuleLoad = function () {
             $('.loading-form-step').fadeOut(500, function () {
