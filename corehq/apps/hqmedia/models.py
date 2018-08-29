@@ -861,7 +861,7 @@ class HQMediaMixin(Document):
         has_archived = False
         if LOGO_ARCHIVE_KEY not in self.archived_media:
             self.archived_media[LOGO_ARCHIVE_KEY] = {}
-        for slug, logo_data in self.logo_refs.items():
+        for slug, logo_data in list(self.logo_refs.items()):
             self.archived_media[LOGO_ARCHIVE_KEY][slug] = logo_data
             has_archived = True
             del self.logo_refs[slug]
