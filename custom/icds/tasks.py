@@ -17,7 +17,7 @@ from custom.icds.translations.integrations.transifex import Transifex
 from io import open
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-    @periodic_task(run_every=crontab(minute=0, hour='22'))
+    @periodic_task(serializer='pickle', run_every=crontab(minute=0, hour='22'))
     def delete_old_images():
         start = datetime.utcnow()
         max_age = start - timedelta(days=90)

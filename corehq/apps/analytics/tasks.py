@@ -492,7 +492,7 @@ def _log_failed_periodic_data(email, message):
     )
 
 
-@periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
+@periodic_task(serializer='pickle', run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
     Sync data that is neither event or page based with hubspot/Kissmetrics
