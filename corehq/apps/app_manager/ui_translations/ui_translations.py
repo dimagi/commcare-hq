@@ -5,31 +5,36 @@ import io
 from collections import defaultdict
 from distutils.version import StrictVersion
 import re
+from django.utils.translation import ugettext as _
 from commcare_translations import load_translations
 from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.ui_translations.commcare_versioning import \
     get_commcare_version_from_workbook, set_commcare_version_in_workbook
-from corehq.util.workbook_json.excel import WorkbookJSONReader
+from corehq.util.workbook_json.excel import WorkbookJSONReader, WorksheetNotFound
 from couchexport.export import export_raw_to_writer
 import six
 from six.moves import range
 
 
 def process_ui_translation_upload(app, trans_file):
-
-    workbook = WorkbookJSONReader(trans_file)
-    commcare_version = get_commcare_version_from_workbook(workbook.wb)
-    translations = workbook.get_worksheet(title='translations')
-
-    commcare_ui_strings = list(load_translations('en', version=2, commcare_version=commcare_version).keys())
-    default_trans = get_default_translations_for_download(app, commcare_version)
-    lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
-
     trans_dict = defaultdict(dict)
     # Use this to hard fail and not update any translations
     error_properties = []
     # Use this to pass warnings without failing hard
     warnings = []
+
+    workbook = WorkbookJSONReader(trans_file)
+    commcare_version = get_commcare_version_from_workbook(workbook.wb)
+    try:
+        translations = workbook.get_worksheet(title='translations')
+    except WorksheetNotFound:
+        error_properties.append(_('Could not find sheet "translations" in uploaded file.'))
+        return trans_dict, error_properties, warnings
+
+    commcare_ui_strings = list(load_translations('en', version=2, commcare_version=commcare_version).keys())
+    default_trans = get_default_translations_for_download(app, commcare_version)
+    lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
+
     for row in translations:
         if row["property"] not in commcare_ui_strings:
             # Add a warning for  unknown properties, but still add them to the translation dict

@@ -20,8 +20,10 @@ hqDefine("hqwebapp/js/sticky_tabs", [
     $(function(){
         var tabSelector = "a[data-toggle='tab']",
             navSelector = ".nav.sticky-tabs",
-            $tabFromUrl = $("a[href='" + getHash() + "']");
-        if ($tabFromUrl.length) {
+            hash = getHash(),
+            $tabFromUrl = hash ? $("a[href='" + hash + "']") : undefined;
+
+        if ($tabFromUrl && $tabFromUrl.length) {
             $tabFromUrl.tab('show');
         } else {
             $(navSelector + ' ' + tabSelector).first().tab('show');

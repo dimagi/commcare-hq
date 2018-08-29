@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 import contextlib
+import pickle
 import time
 import sys
 from collections import Counter
@@ -285,8 +286,8 @@ def get_export_download(export_instances, filters, filename=None):
 
     download = DownloadBase()
     download.set_task(populate_export_download_task.delay(
-        export_instances,
-        filters,
+        pickle.dumps(export_instances),
+        pickle.dumps(filters),
         download.download_id,
         filename=filename
     ))

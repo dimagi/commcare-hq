@@ -17,6 +17,14 @@ class AppTranslationsForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("App"), choices=(), required=True)
     version = forms.IntegerField(label=ugettext_lazy("Version"), required=False,
                                  help_text=ugettext_lazy("Leave blank to use current application state"))
+    use_version_postfix = forms.MultipleChoiceField(
+        choices=[
+            ('yes', 'Use Version Postfix in resources'),
+        ],
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+        initial='yes',
+    )
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
     source_lang = forms.ChoiceField(label=ugettext_lazy("Source Language"),
@@ -69,6 +77,7 @@ class AppTranslationsForm(forms.Form):
         self.helper.layout = Layout(
             'app_id',
             'version',
+            'use_version_postfix',
             'transifex_project_slug',
             'source_lang',
             'target_lang',

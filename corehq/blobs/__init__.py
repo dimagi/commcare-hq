@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
 
-from .exceptions import Error
+from .exceptions import Error, NotFound  # noqa: F401
 
 DEFAULT_BUCKET = "_default"
 _db = []  # singleton/global, stack for tests to push temporary dbs
@@ -48,3 +48,53 @@ class BlobInfo(namedtuple("BlobInfo", ["identifier", "length", "digest"])):
     def md5_hash(self):
         if self.digest and self.digest.startswith("md5-"):
             return self.digest[4:]
+
+
+class CODES:
+    """Blob type codes.
+
+    A unique blob type code should be assigned to each new area of HQ
+    that will have blobs associated with it. This is mainly intended for
+    analysis purposes (how much blob storage is used per type code?),
+    although it is also useful when debugging to trace a blob identifier
+    back to its parent.
+
+    When adding codes for new models, always use a unique code that has
+    never been used before, preferably one more than the highest
+    existing code. Once a type code has been used it should never be
+    reused for another purpose.
+
+    Each type code associated with couch documents should only reference
+    document types living in a single couch database or SQL models with
+    non-overlapping primary keys. `MetaDB.get` and related methods as
+    well as tools like the `check_blob_logs` management command will not
+    function properly if this contract is broken.
+    """
+    _default = 0        # legacy, do not use
+
+    tempfile = 1
+
+    # SQL forms + XFormInstance, XFormArchived, XFormDeprecated,
+    # XFormDuplicate, XFormInstance-Deleted
+    form_xml = 2
+    form_attachment = 3
+
+    domain = 4          # Domain
+    application = 5     # Application, Application-Deleted, LinkedApplication
+    multimedia = 6      # CommCareMultimedia
+    commcarebuild = 7   # CommCareBuild
+    data_import = 8     # case_importer
+
+    # FormExportInstance, CaseExportInstance, SavedBasicExport
+    data_export = 9
+    basic_export = 10   # SavedBasicExport
+
+    invoice = 11        # InvoicePdf
+    restore = 12
+    fixture = 13        # domain-fixtures
+    demo_user_restore = 14  # DemoUserRestore
+    data_file = 15      # domain data file (see DataFile class)
+
+
+CODES.name_of = {code: name
+    for name, code in vars(CODES).items() if isinstance(code, int)}.get

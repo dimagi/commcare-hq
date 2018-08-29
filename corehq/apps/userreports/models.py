@@ -146,6 +146,12 @@ class AbstractUCRDataSource(object):
     sql_column_indexes: a list of SQLColumnIndexes
     sql_settings: a SQLSettings object
     """
+    @property
+    def data_source_id(self):
+        """
+        The data source's ID
+        """
+        raise NotImplementedError()
 
     def get_columns(self):
         raise NotImplementedError()
@@ -187,6 +193,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
     def save(self, **params):
         self.last_modified = datetime.utcnow()
         super(DataSourceConfiguration, self).save(**params)
+
+    @property
+    def data_source_id(self):
+        return self._id
 
     def filter(self, document):
         filter_fn = self._get_main_filter()
@@ -257,7 +267,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
         spec_error = None
         while named_expression_specs:
             number_generated = 0
-            for name, expression in named_expression_specs.items():
+            for name, expression in list(named_expression_specs.items()):
                 try:
                     named_expressions[name] = ExpressionFactory.from_spec(
                         expression,
@@ -518,7 +528,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def config(self):
-        return get_datasource_config(self.config_id, self.domain)[0]
+        return get_datasource_config(self.config_id, self.domain, self.data_source_type)[0]
 
     @property
     @memoized

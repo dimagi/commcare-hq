@@ -26,36 +26,36 @@ from pillowtop.es_utils import initialize_index_and_mapping
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
 class TestUserSignals(SimpleTestCase):
 
-    @patch('corehq.apps.analytics.signals.update_hubspot_properties')
+    @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2')
     @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     def test_commcareuser_save(self, send_to_es, invalidate, sync_call_center,
-                               update_hubspot_properties):
+                               update_hubspot_properties_v2):
         CommCareUser(username='test').save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
         self.assertTrue(sync_call_center.called)
-        self.assertFalse(update_hubspot_properties.called)
+        self.assertFalse(update_hubspot_properties_v2.called)
 
-    @patch('corehq.apps.analytics.signals.update_hubspot_properties')
+    @patch('corehq.apps.analytics.signals.update_hubspot_properties_v2')
     @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     def test_webuser_save(self, send_to_es, invalidate, sync_call_center,
-                          update_hubspot_properties):
+                          update_hubspot_properties_v2):
         WebUser().save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
         self.assertFalse(sync_call_center.called)
-        self.assertTrue(update_hubspot_properties.called)
+        self.assertTrue(update_hubspot_properties_v2.called)
 
 
 @mock_out_couch()
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
-@patch('corehq.apps.analytics.signals.update_hubspot_properties')
+@patch('corehq.apps.analytics.signals.update_hubspot_properties_v2')
 @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
 class TestUserSyncToEs(SimpleTestCase):
@@ -97,8 +97,8 @@ class TestUserSyncToEs(SimpleTestCase):
     def check_user(self, user):
         self.es.indices.refresh(USER_INDEX_INFO.index)
         results = get_user_stubs([user._id])
-        self.assertEquals(len(results), 1)
-        self.assertEquals(results[0], {
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], {
             '_id': user._id,
             'username': user.username,
             'is_active': True,

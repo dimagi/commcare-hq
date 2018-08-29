@@ -1,6 +1,9 @@
-/* globals HQReport */
 hqDefine("userreports/js/configurable_report", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+
+    if (typeof define === 'function' && define.amd || window.USE_REQUIREJS) {
+        throw new Error("This part of UCR is not yet migrated to RequireJS. Update the UCR logic in reports/js/standard_hq_report before removing this error.");
+    }
 
     var getStandardHQReport = function(isFirstLoad) {
         if (!initial_page_data("standardHQReport")) {
@@ -53,7 +56,7 @@ hqDefine("userreports/js/configurable_report", function() {
                 enddate: initial_page_data('enddate'),
             };
         }
-        var standardHQReport = new HQReport(reportOptions);
+        var standardHQReport = hqImport("reports/js/hq_report").hqReport(reportOptions);
         standardHQReport.init();
         return standardHQReport;
     };
@@ -77,12 +80,16 @@ hqDefine("userreports/js/configurable_report", function() {
         if(!defaultConfig.datespan_slug) {
             defaultConfig.datespan_slug = null;
         }
-        $("#savedReports").reportUserConfigurableConfigEditor({
+
+        var reportConfigModels = hqImport("reports/js/report_config_models"),
+            reportConfigsView = reportConfigModels.reportConfigsViewModel({
             filterForm: $("#paramSelectorForm"),
             items: initial_page_data("report_configs"),
             defaultItem: defaultConfig,
             saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
         });
+        $("#savedReports").koApplyBindings(reportConfigsView);
+        reportConfigsView.setUserConfigurableConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
 
         $('#email-enabled').tooltip({
             placement: 'right',

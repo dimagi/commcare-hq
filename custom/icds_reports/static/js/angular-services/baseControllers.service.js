@@ -216,9 +216,6 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
                 return template;
             };
-            vm.showAllLocations = function() {
-                return vm.all_locations.length < 10;
-            };
         },
     };
 });

@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                 ('last_modified', models.DateTimeField(auto_now=True)),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT,
                                               to='accounting.BillingAccount')),
-                ('subscriptions', models.ManyToManyField(blank=True, default=list, to=b'accounting.Subscription')),
+                ('subscriptions', models.ManyToManyField(blank=True, default=list, to='accounting.Subscription')),
             ],
         ),
         migrations.RenameField(

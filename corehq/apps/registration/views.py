@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 import logging
+import re
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -17,11 +18,12 @@ import sys
 from django.views.generic.base import TemplateView, View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
-    track_confirmed_account_on_hubspot,
-    track_clicked_signup_on_hubspot,
+    track_confirmed_account_on_hubspot_v2,
+    track_clicked_signup_on_hubspot_v2,
     HUBSPOT_COOKIE,
     track_web_user_registration_hubspot,
 )
@@ -160,8 +162,25 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         email = data['email'].strip()
         duplicate = CouchUser.get_by_username(email)
         is_existing = User.objects.filter(username__iexact=email).count() > 0 or duplicate
+
+        message = None
+        restricted_by_domain = None
+        if is_existing:
+            message = _("There is already a user with this email.")
+        else:
+            domain = email[email.find("@") + 1:]
+            for account in BillingAccount.get_enterprise_restricted_signup_accounts():
+                if domain in account.enterprise_restricted_signup_domains:
+                    restricted_by_domain = domain
+                    message = account.restrict_signup_message
+                    regex = r'(\b[a-zA-Z0-9_.+%-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b)'
+                    subject = _("CommCareHQ account request")
+                    message = re.sub(regex, "<a href='mailto:\\1?subject={}'>\\1</a>".format(subject), message)
+                    break
         return {
-            'isValid': not is_existing,
+            'isValid': message is None,
+            'restrictedByDomain': restricted_by_domain,
+            'message': message,
         }
 
 
@@ -187,7 +206,8 @@ class UserRegistrationView(BasePageView):
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
             meta = get_meta(request)
-            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
+            track_clicked_signup_on_hubspot_v2.delay(
+                self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
     @property
@@ -411,7 +431,7 @@ def confirm_domain(request, guid=None):
             'the time to confirm your email address: %s.'
         % (requesting_user.username))
     track_workflow(requesting_user.email, "Confirmed new project")
-    track_confirmed_account_on_hubspot.delay(requesting_user)
+    track_confirmed_account_on_hubspot_v2.delay(requesting_user)
     request.session['CONFIRM'] = True
     return HttpResponseRedirect(reverse(view_name, args=view_args))
 

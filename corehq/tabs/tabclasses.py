@@ -506,7 +506,9 @@ class ProjectDataTab(UITab):
     @property
     def _is_viewable(self):
         return self.domain and (
-            self.can_edit_commcare_data or self.can_export_data or can_download_data_files(self.domain)
+            self.can_edit_commcare_data
+            or self.can_export_data
+            or can_download_data_files(self.domain, self.couch_user)
         )
 
     @property
@@ -711,7 +713,7 @@ class ProjectDataTab(UITab):
                     'subpages': []
                 })
 
-        if can_download_data_files(self.domain):
+        if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views import DataFileDownloadList
 
             export_data_views.append({
@@ -761,7 +763,7 @@ class ProjectDataTab(UITab):
     def dropdown_items(self):
         if (
             self.can_only_see_deid_exports or (
-                not self.can_export_data and not can_download_data_files(self.domain)
+                not self.can_export_data and not can_download_data_files(self.domain, self.couch_user)
             )
         ):
             return []
@@ -1145,7 +1147,7 @@ class MessagingTab(UITab):
         if self.show_dashboard:
             result.append(dropdown_dict(_("Dashboard"), is_header=True))
             result.append(dropdown_dict(
-                _("Dashboard (beta)"),
+                _("Dashboard"),
                 url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
             ))
 
@@ -1405,10 +1407,16 @@ class EnterpriseSettingsTab(UITab):
     @property
     def sidebar_items(self):
         items = super(EnterpriseSettingsTab, self).sidebar_items
-        items.append((_('Manage Enterprise'), [{
-            'title': _('Enterprise Dashboard'),
-            'url': reverse('enterprise_dashboard', args=[self.domain]),
-        }]))
+        items.append((_('Manage Enterprise'), [
+            {
+                'title': _('Enterprise Dashboard'),
+                'url': reverse('enterprise_dashboard', args=[self.domain]),
+            },
+            {
+                'title': _('Enterprise Settings'),
+                'url': reverse('enterprise_settings', args=[self.domain]),
+            },
+        ]))
         return items
 
 

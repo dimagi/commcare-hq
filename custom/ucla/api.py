@@ -39,7 +39,54 @@ def substance_use_message_bank_content(reminder, handler, recipient):
 
 
 def _generic_message_bank_content(fixture_name, reminder, handler, recipient):
-    domain = reminder.domain
+    return _get_message_bank_content(
+        fixture_name,
+        reminder.domain,
+        reminder.schedule_iteration_num,
+        reminder.current_event_sequence_num,
+        len(handler.events),
+        recipient
+    )
+
+
+def general_health_message_bank_content_new(recipient, schedule_instance):
+    return _get_message_bank_content_new_framework('general_health', recipient, schedule_instance)
+
+
+def mental_health_message_bank_content_new(recipient, schedule_instance):
+    return _get_message_bank_content_new_framework('mental_health', recipient, schedule_instance)
+
+
+def sexual_health_message_bank_content_new(recipient, schedule_instance):
+    return _get_message_bank_content_new_framework('sexual_health', recipient, schedule_instance)
+
+
+def med_adherence_message_bank_content_new(recipient, schedule_instance):
+    return _get_message_bank_content_new_framework('med_adherence', recipient, schedule_instance)
+
+
+def substance_use_message_bank_content_new(recipient, schedule_instance):
+    return _get_message_bank_content_new_framework('substance_use', recipient, schedule_instance)
+
+
+def _get_message_bank_content_new_framework(fixture_name, recipient, schedule_instance):
+    result = _get_message_bank_content(
+        fixture_name,
+        schedule_instance.domain,
+        schedule_instance.schedule_iteration_num,
+        schedule_instance.current_event_num,
+        len(schedule_instance.memoized_schedule.memoized_events),
+        recipient
+    )
+
+    if result:
+        return [result]
+
+    return []
+
+
+def _get_message_bank_content(fixture_name, domain, schedule_iteration_num, current_event_num, num_events,
+        recipient):
     message_bank = FixtureDataType.by_domain_tag(domain, fixture_name).first()
 
     if not message_bank:
@@ -70,8 +117,8 @@ def _generic_message_bank_content(fixture_name, reminder, handler, recipient):
         return None
 
     current_message_seq_num = str(
-        ((reminder.schedule_iteration_num - 1) * len(handler.events)) +
-        reminder.current_event_sequence_num + 1
+        ((schedule_iteration_num - 1) * num_events) +
+        current_event_num + 1
     )
     custom_messages = FixtureDataItem.by_field_value(
         domain, message_bank, RISK_PROFILE_FIELD, risk_profile

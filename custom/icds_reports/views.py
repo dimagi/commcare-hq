@@ -584,7 +584,8 @@ class AwcReportsView(BaseReportView):
                 domain,
                 config,
                 tuple(current_month.timetuple())[:3],
-                include_test
+                include_test,
+                beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'beneficiary':
             if 'awc_id' in config:
@@ -1623,7 +1624,8 @@ class ICDSAppTranslations(BaseDomainView):
         transifex_project_slug = form_data.get('transifex_project_slug')
         source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
-                         form_data['version'])
+                         form_data['version'],
+                         use_version_postfix='yes' in form_data['use_version_postfix'])
 
     def perform_push_request(self, request, form_data):
         if form_data['target_lang']:

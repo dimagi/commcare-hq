@@ -481,10 +481,9 @@ COPY_FORM_TO_APP = StaticToggle(
 
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
-    'UW: Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
-    TAG_DEPRECATED,
+    'Offer hosting and sharing data files for downloading from a secure dropzone',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
-    # TODO: Create Confluence docs and add help link
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -1256,7 +1255,8 @@ LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
     'language_linked_multimedia',
     'Add a setting to link multimedia to the default language',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1594,4 +1594,12 @@ RELATED_LOCATIONS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['jemord'],
+    help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
+)
+
+ALLOW_BLANK_CASE_TAGS = StaticToggle(
+    'allow_blank_case_tags',
+    'eCHIS: Allow blank case tags',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )

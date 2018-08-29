@@ -16,7 +16,7 @@ from django.http import HttpResponse, StreamingHttpResponse
 
 from django_transfer import TransferHttpResponse
 from soil.progress import get_task_progress, get_multiple_task_progress
-from corehq.blobs import DEFAULT_BUCKET, get_blob_db
+from corehq.blobs import get_blob_db
 import six
 from io import open
 
@@ -38,16 +38,30 @@ class DownloadBase(object):
 
     has_file = False
 
+    # `new_id_prefix` adopted when implementing new blob metadata
+    # format. This needs to round-trip to the client and back so we can
+    # detect legacy download ids, which should never start with
+    # `new_id_prefix`. Previously blobs were saved in the blob db using
+    # `self.identifier` as the key, which could result in collisions.
+    # Can be removed after all legacy blob downloads have expired.
+    new_id_prefix = "dl-"  # not a valid uuid4 prefix
+
     def __init__(self, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None,
                  cache_backend=SOIL_DEFAULT_CACHE, content_type=None,
                  suffix=None, message=None):
+
+        if download_id is None:
+            download_id = self.new_id_prefix + uuid.uuid4().hex
+        else:
+            assert download_id.startswith(self.new_id_prefix), download_id
+
         self.content_type = content_type if content_type else mimetype
         self.content_disposition = self.clean_content_disposition(content_disposition)
         self.transfer_encoding = transfer_encoding
         self.extras = extras or {}
-        self.download_id = download_id or uuid.uuid4().hex
+        self.download_id = download_id
         self.cache_backend = cache_backend
         # legacy default
         self.suffix = suffix or ''
@@ -256,12 +270,8 @@ class FileDownload(DownloadBase):
         return response
 
     @classmethod
-    def create(cls, path, **kwargs):
-        """
-        Create a FileDownload object from a payload, plus any
-        additional arguments to pass through to the constructor.
-        """
-        return cls(filename=path, **kwargs)
+    def create(cls, payload, **kwargs):
+        raise NotImplementedError
 
 
 class BlobDownload(DownloadBase):
@@ -272,9 +282,9 @@ class BlobDownload(DownloadBase):
 
     def __init__(self, identifier, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
-                 transfer_encoding=None, extras=None, download_id=None, cache_backend=SOIL_DEFAULT_CACHE,
-                 content_type=None, bucket=DEFAULT_BUCKET):
-
+                 transfer_encoding=None, extras=None, download_id=None,
+                 cache_backend=SOIL_DEFAULT_CACHE,
+                 content_type=None):
         super(BlobDownload, self).__init__(
             mimetype=content_type if content_type else mimetype,
             content_disposition=content_disposition,
@@ -284,7 +294,6 @@ class BlobDownload(DownloadBase):
             cache_backend=cache_backend
         )
         self.identifier = identifier
-        self.bucket = bucket
 
     def get_filename(self):
         return self.identifier
@@ -293,9 +302,14 @@ class BlobDownload(DownloadBase):
         raise NotImplementedError
 
     def toHttpResponse(self):
+        if self.download_id.startswith(self.new_id_prefix):
+            blob_key = self.download_id
+        else:
+            # legacy key; remove after all legacy blob downloads have expired
+            blob_key = "_default/" + self.identifier
         blob_db = get_blob_db()
-        file_obj = blob_db.get(self.identifier, self.bucket)
-        blob_size = blob_db.size(self.identifier, self.bucket)
+        file_obj = blob_db.get(key=blob_key)
+        blob_size = blob_db.size(key=blob_key)
 
         response = StreamingHttpResponse(
             FileWrapper(file_obj, CHUNK_SIZE),
@@ -309,9 +323,5 @@ class BlobDownload(DownloadBase):
         return response
 
     @classmethod
-    def create(cls, identifier, **kwargs):
-        """
-        Create a BlobDownload object from a payload, plus any
-        additional arguments to pass through to the constructor.
-        """
-        return cls(identifier=identifier, **kwargs)
+    def create(cls, payload, **kwargs):
+        raise NotImplementedError

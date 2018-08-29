@@ -34,13 +34,13 @@ from .oneoff import *
 import six
 
 
-@periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
+@periodic_task(serializer='pickle', run_every=crontab(hour="4", minute="00", day_of_week="*"),
                queue='logistics_background_queue')
 def report_run_periodic_task():
     report_run.delay('ils-gateway')
 
 
-@periodic_task(run_every=crontab(hour="8", minute="00", day_of_week="*"),
+@periodic_task(serializer='pickle', run_every=crontab(hour="8", minute="00", day_of_week="*"),
                queue='logistics_background_queue')
 def test_domains_report_run_periodic_task():
     for domain in ILSGatewayConfig.get_all_enabled_domains():
@@ -56,7 +56,7 @@ def get_start_date(last_successful_run):
     return first_day_of_current_month if not last_successful_run else last_successful_run.end
 
 
-@serial_task('{domain}', queue='logistics_background_queue', max_retries=0, timeout=60 * 60 * 12)
+@serial_task(serializer='pickle', '{domain}', queue='logistics_background_queue', max_retries=0, timeout=60 * 60 * 12)
 def report_run(domain, strict=True):
     last_successful_run = ReportRun.last_success(domain)
 
@@ -104,37 +104,37 @@ district_delivery_partial = partial(send_for_day, cutoff=13, reminder_class=Deli
                                     location_type='DISTRICT')
 
 
-@periodic_task(run_every=crontab(day_of_month="13-15", hour=11, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="13-15", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def first_facility_delivery_task():
     facility_delivery_partial(15)
 
 
-@periodic_task(run_every=crontab(day_of_month="20-22", hour=11, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="20-22", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def second_facility_delivery_task():
     facility_delivery_partial(22)
 
 
-@periodic_task(run_every=crontab(day_of_month="26-30", hour=11, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="26-30", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def third_facility_delivery_task():
     facility_delivery_partial(30)
 
 
-@periodic_task(run_every=crontab(day_of_month="11-13", hour=5, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="11-13", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def first_district_delivery_task():
     district_delivery_partial(13)
 
 
-@periodic_task(run_every=crontab(day_of_month="18-20", hour=11, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="18-20", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def second_district_delivery_task():
     district_delivery_partial(20)
 
 
-@periodic_task(run_every=crontab(day_of_month="26-28", hour=11, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="26-28", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def third_district_delivery_task():
     district_delivery_partial(28)
@@ -144,46 +144,46 @@ facility_randr_partial = partial(send_for_day, cutoff=5, reminder_class=RandrRem
 district_randr_partial = partial(send_for_day, cutoff=13, reminder_class=RandrReminder, location_type='DISTRICT')
 
 
-@periodic_task(run_every=crontab(day_of_month="3-5", hour=5, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="3-5", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def first_facility():
     """Last business day before or on 5th day of the Submission month, 8:00am"""
     facility_randr_partial(5)
 
 
-@periodic_task(run_every=crontab(day_of_month="8-10", hour=5, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="8-10", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def second_facility():
     """Last business day before or on 10th day of the submission month, 8:00am"""
     facility_randr_partial(10)
 
 
-@periodic_task(run_every=crontab(day_of_month="10-12", hour=5, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="10-12", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def third_facility():
     """Last business day before or on 12th day of the submission month, 8:00am"""
     facility_randr_partial(12)
 
 
-@periodic_task(run_every=crontab(day_of_month="11-13", hour=5, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="11-13", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def first_district():
     district_randr_partial(13)
 
 
-@periodic_task(run_every=crontab(day_of_month="13-15", hour=5, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="13-15", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def second_district():
     district_randr_partial(15)
 
 
-@periodic_task(run_every=crontab(day_of_month="15-17", hour=11, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="15-17", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def third_district():
     district_randr_partial(17)
 
 
-@periodic_task(run_every=crontab(day_of_month="26-31", hour=11, minute=15),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="26-31", hour=11, minute=15),
                queue="logistics_reminder_queue")
 def supervision_task():
     now = datetime.utcnow()
@@ -199,7 +199,7 @@ def get_last_and_nth_business_day(date, n):
     return last_month_last_day, nth_business_day
 
 
-@periodic_task(run_every=crontab(day_of_month="26-31", hour=11, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="26-31", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def first_soh_task():
     now = datetime.utcnow()
@@ -208,7 +208,7 @@ def first_soh_task():
         send_for_all_domains(last_business_day, SOHReminder)
 
 
-@periodic_task(run_every=crontab(day_of_month="1-3", hour=6, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="1-3", hour=6, minute=0),
                queue="logistics_reminder_queue")
 def second_soh_task():
     now = datetime.utcnow()
@@ -217,7 +217,7 @@ def second_soh_task():
         send_for_all_domains(last_month_last_day, SOHReminder)
 
 
-@periodic_task(run_every=crontab(day_of_month="5-7", hour=5, minute=15),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="5-7", hour=5, minute=15),
                queue="logistics_reminder_queue")
 def third_soh_task():
     now = datetime.utcnow()
@@ -226,7 +226,7 @@ def third_soh_task():
         send_for_all_domains(last_month_last_day, SOHReminder)
 
 
-@periodic_task(run_every=crontab(day_of_month="6-8", hour=13, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="6-8", hour=13, minute=0),
                queue="logistics_reminder_queue")
 def soh_summary_task():
     """
@@ -242,7 +242,7 @@ def soh_summary_task():
             send_translated_message(user, REMINDER_MONTHLY_SOH_SUMMARY, **construct_soh_summary(user.location))
 
 
-@periodic_task(run_every=crontab(day_of_month="26-31", hour=13, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="26-31", hour=13, minute=0),
                queue="logistics_reminder_queue")
 def delivery_summary_task():
     """
@@ -260,7 +260,7 @@ def delivery_summary_task():
             )
 
 
-@periodic_task(run_every=crontab(day_of_month="15-17", hour=13, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="15-17", hour=13, minute=0),
                queue="logistics_reminder_queue")
 def randr_summary_task():
     """
@@ -279,7 +279,7 @@ def randr_summary_task():
             )
 
 
-@periodic_task(run_every=crontab(day_of_month="18-20", hour=14, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="18-20", hour=14, minute=0),
                queue="logistics_reminder_queue")
 def soh_thank_you_task():
     """
@@ -295,7 +295,7 @@ def soh_thank_you_task():
         SOHThankYouReminder(domain=domain, date=last_month).send()
 
 
-@periodic_task(run_every=crontab(day_of_month="6-10", hour=8, minute=0),
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month="6-10", hour=8, minute=0),
                queue="logistics_reminder_queue")
 def stockout_reminder_task():
     """
@@ -338,7 +338,7 @@ def recalculate_on_parent_change(location, previous_parent_id, last_run):
     return type_location_map
 
 
-@task(queue='logistics_background_queue', ignore_result=True)
+@task(serializer='pickle', queue='logistics_background_queue', ignore_result=True)
 def recalculation_on_location_change(domain, last_run):
     if not last_run:
         PendingReportingDataRecalculation.objects.filter(domain=domain).delete()

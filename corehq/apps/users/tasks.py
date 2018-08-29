@@ -16,7 +16,6 @@ from corehq import toggles
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserArchivedRebuild
-from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
 from django.utils.html import format_html
@@ -30,7 +29,7 @@ from six.moves import map
 logger = get_task_logger(__name__)
 
 
-@task(ErrorMail=SensitiveErrorMail)
+@task
 def bulk_upload_async(domain, user_specs, group_specs):
     from corehq.apps.users.bulkupload import create_or_update_users_and_groups
     task = bulk_upload_async
@@ -47,7 +46,7 @@ def bulk_upload_async(domain, user_specs, group_specs):
     }
 
 
-@task()
+@task(serializer='pickle', )
 def bulk_download_users_async(domain, download_id, user_filters):
     from corehq.apps.users.bulkupload import dump_users_and_groups, GroupNameError
     DownloadBase.set_progress(bulk_download_users_async, 0, 100)
@@ -91,7 +90,7 @@ def bulk_download_users_async(domain, download_id, user_filters):
     }
 
 
-@task(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
+@task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.apps.reminders.tasks import delete_reminders_for_cases
@@ -103,7 +102,7 @@ def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, delet
     delete_schedule_instances_for_cases.delay(domain, case_ids)
 
 
-@task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
+@task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
 def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list, deletion_id,
                                                   deletion_date, deleted_cases=None):
     """
@@ -165,20 +164,20 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
     return [form.form_id for form in all_forms if _is_safe_to_modify(form)]
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
 def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_id, deletion_date):
     to_delete = _get_forms_to_modify(domain, deleted_forms, deleted_cases, is_deletion=True)
     FormAccessors(domain).soft_delete_forms(to_delete, deletion_date, deletion_id)
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
 def undelete_system_forms(domain, deleted_forms, deleted_cases):
     """The reverse of tag_system_forms_as_deleted; called on user.unretire()"""
     to_undelete = _get_forms_to_modify(domain, deleted_forms, deleted_cases, is_deletion=False)
     FormAccessors(domain).soft_undelete_forms(to_undelete)
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
 def _remove_indices_from_deleted_cases_task(domain, case_ids):
     if toggles.SKIP_REMOVE_INDICES.enabled(domain):
         return
@@ -214,7 +213,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     submit_case_blocks(case_updates, domain, device_id=device_id)
 
 
-@task(bind=True, queue='background_queue', ignore_result=True,
+@task(serializer='pickle', bind=True, queue='background_queue', ignore_result=True,
       default_retry_delay=5 * 60, max_retries=3, acks_late=True)
 def _rebuild_case_with_retries(self, domain, case_id, detail):
     """
@@ -234,7 +233,7 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
             )
 
 
-@periodic_task(
+@periodic_task(serializer='pickle',
     run_every=crontab(hour=23, minute=55),
     queue='background_queue',
 )

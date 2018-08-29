@@ -41,7 +41,7 @@ class RegisterWebUserForm(forms.Form):
         widget=forms.PasswordInput(),
     )
     phone_number = forms.CharField(
-        label=_("Include area code or any other prefix"),
+        label=_("Phone Number"),
         required=False,
     )
     persona = forms.ChoiceField(
@@ -125,20 +125,23 @@ class RegisterWebUserForm(forms.Form):
                                   "   validator: fullName "
                                   "}"
                     ),
-                    hqcrispy.InlineField(
-                        'email',
-                        css_class="input-lg",
-                        data_bind="value: email, "
-                                  "valueUpdate: 'keyup', "
-                                  "koValidationStateFeedback: { "
-                                  "  validator: email, "
-                                  "  delayedValidator: emailDelayed "
-                                  "}",
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'email',
+                            css_class="input-lg",
+                            data_bind="value: email, "
+                                      "valueUpdate: 'keyup', "
+                                      "koValidationStateFeedback: { "
+                                      "  validator: email, "
+                                      "  delayedValidator: emailDelayed "
+                                      "}",
+                        ),
+                        crispy.HTML('<p class="validation-message-block" '
+                                    'data-bind="visible: isEmailValidating, '
+                                    'text: validatingEmailMsg">&nbsp;</p>'),
+                        hqcrispy.ValidationMessage('emailDelayed'),
+                        data_bind="validationOptions: { allowHtmlMessages: 1 }",
                     ),
-                    crispy.HTML('<p class="validation-message-block" '
-                                'data-bind="visible: isEmailValidating, '
-                                'text: validatingEmailMsg">&nbsp;</p>'),
-                    hqcrispy.ValidationMessage('emailDelayed'),
                     hqcrispy.InlineField(
                         'password',
                         css_class="input-lg",

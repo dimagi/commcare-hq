@@ -89,6 +89,10 @@ def use_phone_entries():
 
 
 def project_is_on_new_reminders(domain_obj):
+    client = get_redis_client()
+    if client.get('USE_NEW_REMINDERS_GLOBALLY'):
+        return True
+
     if settings.SERVER_ENVIRONMENT in ('production', 'softlayer', 'staging'):
         return domain_obj.uses_new_reminders
 

@@ -123,7 +123,6 @@ class GIRTableGenerator(object):
             'test_domain': TEST_COUCH_TO_SQL_MAP.get(domain.is_test, NOT_SET),
             'start_date': domain.date_created,
             'device_id': max_device,
-            'wam': AMPLIFY_COUCH_TO_SQL_MAP.get(domain.internal.amplifies_workers, NOT_SET),
             'pam': AMPLIFY_COUCH_TO_SQL_MAP.get(domain.internal.amplifies_project, NOT_SET),
             'wams_current': len(user_tuple.performing & user_tuple.experienced),
             'active_users': len(user_tuple.active | user_tuple.sms),

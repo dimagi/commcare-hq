@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 from __future__ import division
 from __future__ import unicode_literals
+
+import pickle
 from datetime import datetime, date, timedelta
 
 from couchdbkit import ResourceNotFound
@@ -9,7 +11,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import SuspiciousOperation
-from django.db.models import Sum
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
     HttpResponseServerError
@@ -20,6 +21,7 @@ from django.views.decorators.http import require_GET, require_POST
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.blobs.exceptions import NotFound
 from corehq.util.download import get_download_response
+from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, \
@@ -109,8 +111,13 @@ from corehq.apps.hqwebapp.decorators import (
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions, CouchUser, WebUser
-from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
-    DEID_EXPORT_PERMISSION, has_permission_to_view_report
+from corehq.apps.users.permissions import (
+    can_download_data_files,
+    CASE_EXPORT_PERMISSION,
+    DEID_EXPORT_PERMISSION,
+    FORM_EXPORT_PERMISSION,
+    has_permission_to_view_report,
+)
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -490,7 +497,7 @@ class DownloadFormExportView(BaseDownloadExportView):
     """
     urlname = 'export_download_forms'
     show_date_range = True
-    page_title = ugettext_noop("Download Form Export")
+    page_title = ugettext_noop("Download Form Data Export")
     check_for_multimedia = True
     form_or_case = 'form'
     filter_form_class = FilterFormCouchExportDownloadForm
@@ -599,7 +606,7 @@ class BulkDownloadFormExportView(DownloadFormExportView):
     """View to download a Bulk Form Export with filters.
     """
     urlname = 'export_bulk_download_forms'
-    page_title = ugettext_noop("Download Form Exports")
+    page_title = ugettext_noop("Download Form Data Exports")
 
     def get_filters(self, filter_form_data):
         filters = super(BulkDownloadFormExportView, self).get_filters(filter_form_data)
@@ -615,7 +622,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
     """View to download a SINGLE Case Export with Filters
     """
     urlname = 'export_download_cases'
-    page_title = ugettext_noop("Download Case Export")
+    page_title = ugettext_noop("Download Case Data Export")
     form_or_case = 'case'
     filter_form_class = FilterCaseCouchExportDownloadForm
 
@@ -1239,10 +1246,17 @@ class DataFileDownloadList(BaseProjectDataView):
     template_name = 'export/download_data_files.html'
     page_title = ugettext_lazy("Download Data Files")
 
+    def dispatch(self, request, *args, **kwargs):
+        if can_download_data_files(self.domain, request.couch_user):
+            return super(DataFileDownloadList, self).dispatch(request, *args, **kwargs)
+        else:
+            raise Http404
+
     def get_context_data(self, **kwargs):
         context = super(DataFileDownloadList, self).get_context_data(**kwargs)
         context.update({
-            'data_files': DataFile.objects.filter(domain=self.domain).order_by('filename').all(),
+            'timezone': get_timezone_for_user(self.request.couch_user, self.domain),
+            'data_files': DataFile.get_all(self.domain),
             'is_admin': self.request.couch_user.is_domain_admin(self.domain),
             'url_base': get_url_base(),
         })
@@ -1256,11 +1270,8 @@ class DataFileDownloadList(BaseProjectDataView):
             )
             return self.get(request, *args, **kwargs)
 
-        aggregate = DataFile.objects.filter(domain=self.domain).aggregate(total_size=Sum('content_length'))
-        if (
-            aggregate['total_size'] and
-            aggregate['total_size'] + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL
-        ):
+        total_size = DataFile.get_total_size(self.domain)
+        if total_size and total_size + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL:
             messages.warning(
                 request,
                 _('Uploading this data file would exceed the total allowance of {} GB for this project space. '
@@ -1269,13 +1280,14 @@ class DataFileDownloadList(BaseProjectDataView):
             )
             return self.get(request, *args, **kwargs)
 
-        data_file = DataFile()
-        data_file.domain = self.domain
-        data_file.filename = request.FILES['file'].name
-        data_file.description = request.POST['description']
-        data_file.content_type = request.FILES['file'].content_type
-        data_file.content_length = request.FILES['file'].size
-        data_file.save_blob(request.FILES['file'])
+        data_file = DataFile.save_blob(
+            request.FILES['file'],
+            domain=self.domain,
+            filename=request.FILES['file'].name,
+            description=request.POST['description'],
+            content_type=request.FILES['file'].content_type,
+            delete_after=datetime.utcnow() + timedelta(hours=int(request.POST['ttl'])),
+        )
         messages.success(request, _('Data file "{}" uploaded'.format(data_file.description)))
         return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
 
@@ -1284,9 +1296,15 @@ class DataFileDownloadList(BaseProjectDataView):
 class DataFileDownloadDetail(BaseProjectDataView):
     urlname = 'download_data_file'
 
+    def dispatch(self, request, *args, **kwargs):
+        if can_download_data_files(self.domain, request.couch_user):
+            return super(DataFileDownloadDetail, self).dispatch(request, *args, **kwargs)
+        else:
+            raise Http404
+
     def get(self, request, *args, **kwargs):
         try:
-            data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+            data_file = DataFile.get(self.domain, kwargs['pk'])
             blob = data_file.get_blob()
         except (DataFile.DoesNotExist, NotFound):
             raise Http404
@@ -1298,7 +1316,7 @@ class DataFileDownloadDetail(BaseProjectDataView):
 
     def delete(self, request, *args, **kwargs):
         try:
-            data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+            data_file = DataFile.get(self.domain, kwargs['pk'])
         except DataFile.DoesNotExist:
             raise Http404
         data_file.delete()
@@ -1318,7 +1336,7 @@ class DashboardFeedPaywall(BaseProjectDataView):
 @location_safe
 class FormExportListView(BaseExportListView):
     urlname = 'list_form_exports'
-    page_title = ugettext_noop("Export Forms")
+    page_title = ugettext_noop("Export Form Data")
     form_or_case = 'form'
 
     @property
@@ -1434,7 +1452,7 @@ class FormExportListView(BaseExportListView):
 
 
 class DeIdFormExportListView(FormExportListView):
-    page_title = ugettext_noop("Export De-Identified Forms")
+    page_title = ugettext_noop("Export De-Identified Form Data")
     urlname = 'list_form_deid_exports'
     is_deid = True
 
@@ -1477,7 +1495,7 @@ class DeIdDashboardFeedListView(_DeidMixin, DashboardFeedListView):
 @location_safe
 class CaseExportListView(BaseExportListView):
     urlname = 'list_case_exports'
-    page_title = ugettext_noop("Export Cases")
+    page_title = ugettext_noop("Export Case Data")
     allow_bulk_export = False
     form_or_case = 'case'
 
@@ -1748,7 +1766,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
 @location_safe
 class CreateNewCustomFormExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_form'
-    page_title = ugettext_lazy("Create Form Export")
+    page_title = ugettext_lazy("Create Form Data Export")
     export_type = FORM_EXPORT
 
     def create_new_export_instance(self, schema):
@@ -1767,7 +1785,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
 @location_safe
 class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_case'
-    page_title = ugettext_lazy("Create Case Export")
+    page_title = ugettext_lazy("Create Case Data Export")
     export_type = CASE_EXPORT
 
     def create_new_export_instance(self, schema):
@@ -1913,13 +1931,13 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
 
 class EditNewCustomFormExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_form'
-    page_title = ugettext_lazy("Edit Form Export")
+    page_title = ugettext_lazy("Edit Form Data Export")
     export_type = FORM_EXPORT
 
 
 class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_case'
-    page_title = ugettext_lazy("Edit Case Export")
+    page_title = ugettext_lazy("Edit Case Data Export")
     export_type = CASE_EXPORT
 
 
@@ -2122,7 +2140,7 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
-    page_title = ugettext_noop("Download Form Exports")
+    page_title = ugettext_noop("Download Form Data Exports")
     filter_form_class = EmwfFilterFormExport
     export_filter_class = ExpandedMobileWorkerFilter
 
@@ -2168,7 +2186,7 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
 
 class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExportView):
     urlname = 'new_export_download_sms'
-    page_title = ugettext_noop("Export SMS")
+    page_title = ugettext_noop("Export SMS Messages")
     form_or_case = None
     filter_form_class = FilterSmsESExportDownloadForm
     export_id = None
@@ -2246,7 +2264,7 @@ class GenerateSchemaFromAllBuildsView(View):
         assert type_ in [CASE_EXPORT, FORM_EXPORT], 'Unrecogized export type {}'.format(type_)
         download = DownloadBase()
         download.set_task(generate_schema_for_all_builds.delay(
-            self.export_cls(type_),
+            pickle.dumps(self.export_cls(type_)),
             request.domain,
             request.POST.get('app_id'),
             request.POST.get('identifier'),

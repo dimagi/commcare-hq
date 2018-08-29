@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from django.db import connections
 from django.conf import settings
 
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
@@ -8,6 +9,7 @@ from .config import partition_config
 
 PROXY_APP = 'sql_proxy_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
+BLOB_DB_APP = 'blobs'
 SQL_ACCESSORS_APP = 'sql_accessors'
 ICDS_REPORTS_APP = 'icds_reports'
 ICDS_MODEL = 'icds_model'
@@ -64,7 +66,9 @@ def allow_migrate(db, app_label):
 
     if app_label == PROXY_APP:
         return db == partition_config.get_proxy_db()
-    elif app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP):
+    elif app_label == BLOB_DB_APP and db == 'default':
+        return True
+    elif app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP, BLOB_DB_APP):
         return (
             db == partition_config.get_proxy_db() or
             db in partition_config.get_form_processing_dbs()
@@ -91,6 +95,10 @@ def db_for_read_write(model, write=True):
     if not settings.USE_PARTITIONED_DATABASE:
         return 'default'
 
+    if app_label == BLOB_DB_APP:
+        if hasattr(model, 'partition_attr'):
+            return partition_config.get_proxy_db()
+        return 'default'
     if app_label == FORM_PROCESSOR_APP:
         return partition_config.get_proxy_db()
     elif app_label in (ICDS_MODEL, ICDS_REPORTS_APP):
@@ -103,3 +111,8 @@ def db_for_read_write(model, write=True):
         if not write:
             return connection_manager.get_load_balanced_read_db_alais(app_label, default_db)
         return default_db
+
+
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()

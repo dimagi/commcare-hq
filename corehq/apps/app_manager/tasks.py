@@ -10,14 +10,14 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.decorators import serial_task
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(serializer='pickle', queue='background_queue', ignore_result=True)
 def create_user_cases(domain_name):
     from corehq.apps.callcenter.utils import sync_usercase
     for user in CommCareUser.by_domain(domain_name):
         sync_usercase(user)
 
 
-@serial_task('{app._id}-{app.version}', max_retries=0, timeout=60*60)
+@serial_task(serializer='pickle', '{app._id}-{app.version}', max_retries=0, timeout=60*60)
 def make_async_build(app, username, release=False, comment=None):
     latest_build = app.get_latest_app(released_only=False)
     if latest_build and latest_build.version == app.version:
@@ -36,7 +36,7 @@ def make_async_build(app, username, release=False, comment=None):
         return copy
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(serializer='pickle', queue='background_queue', ignore_result=True)
 def create_build_files_for_all_app_profiles(domain, build_id):
     app = get_app(domain, build_id)
     build_profiles = app.build_profiles
@@ -49,7 +49,7 @@ def create_build_files_for_all_app_profiles(domain, build_id):
         app.save()
 
 
-@task(queue='background_queue')
+@task(serializer='pickle', queue='background_queue')
 def prune_auto_generated_builds(domain, app_id):
     last_build_id = get_latest_build_id(domain, app_id)
     saved_builds = get_auto_generated_built_apps(domain, app_id)

@@ -17,7 +17,7 @@ from custom.icds.translations.integrations.transifex import Transifex
 from io import open
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-    @periodic_task(run_every=crontab(minute=0, hour='22'))
+    @periodic_task(serializer='pickle', run_every=crontab(minute=0, hour='22'))
     def delete_old_images():
         start = datetime.utcnow()
         max_age = start - timedelta(days=90)
@@ -59,7 +59,8 @@ def delete_resources_on_transifex(domain, data, email):
                           data.get('app_id'),
                           data.get('target_lang') or data.get('source_lang'),
                           data.get('transifex_project_slug'),
-                          version,)
+                          version,
+                          use_version_postfix='yes' in data['use_version_postfix'])
     delete_status = transifex.delete_resources()
     result_note = "Hi,\nThe request to delete resources for app {app_id}(version {version}), " \
                   "was completed on project {transifex_project_slug} on transifex. " \
@@ -85,13 +86,17 @@ def push_translation_files_to_transifex(domain, data, email):
                                   data.get('transifex_project_slug'),
                                   data.get('version'),
                                   is_source_file=False,
-                                  exclude_if_default=True).send_translation_files()
+                                  exclude_if_default=True,
+                                  use_version_postfix='yes' in data['use_version_postfix']
+                                  ).send_translation_files()
     elif data.get('source_lang'):
         upload_status = Transifex(domain,
                                   data.get('app_id'),
                                   data.get('source_lang'),
                                   data.get('transifex_project_slug'),
-                                  data.get('version')).send_translation_files()
+                                  data.get('version'),
+                                  use_version_postfix='yes' in data['use_version_postfix']
+                                  ).send_translation_files()
     if upload_status:
         result_note = "Hi,\nThe upload for app {app_id}(version {version}), " \
                       "with source language '{source_lang}' and target lang '{target_lang}' " \
@@ -116,7 +121,8 @@ def pull_translation_files_from_transifex(domain, data, email=None):
                           data.get('target_lang') or data.get('source_lang'),
                           data.get('transifex_project_slug'),
                           version,
-                          lock_translations=data.get('lock_translations'),)
+                          lock_translations=data.get('lock_translations'),
+                          use_version_postfix='yes' in data['use_version_postfix'])
     translation_file = None
     try:
         translation_file, filename = transifex.generate_excel_file()

@@ -138,6 +138,7 @@ class PromptUpdateSettingsForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.form_class = 'form-horizontal'
+        self.helper.form_id = 'update-manager'
         self.helper.form_action = reverse(
             'update_prompt_settings',
             args=[domain, app_id])
@@ -169,14 +170,7 @@ class PromptUpdateSettingsForm(forms.Form):
                     'app_version',
                     # initial show/hide value
                     style=('' if show_app_version_select else "display: none;"), css_id="app_version_id"),
-            ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Save"),
-                    type="submit",
-                    css_class="btn btn-success",
-                )
-            ),
+            )
         )
 
     @classmethod

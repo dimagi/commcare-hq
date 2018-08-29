@@ -282,7 +282,7 @@ class ItextNode(object):
     @property
     @memoized
     def rendered_values(self):
-        return sorted([str.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
+        return sorted([bytes.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
 
     def __repr__(self):
         return self.id

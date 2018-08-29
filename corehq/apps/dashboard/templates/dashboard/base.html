@@ -72,15 +72,12 @@
                                     </div>
                                 </div>
 
-                                <ul class="pagination" data-bind="visible: totalPages() > 1">
-                                    <li><a data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
-                                    <!-- ko foreach: pageList -->
-                                        <li data-bind="css: {active: $parent.currentPage() == $data}">
-                                            <a data-bind="text: $data, click: function() { $parent.currentPage($data); }"></a>
-                                        </li>
-                                    <!-- /ko -->
-                                    <li><a data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
-                                </ul>
+                                <pagination data-apply-bindings="false"
+                                            params="goToPage: goToPage,
+                                                    perPage: itemsPerPage,
+                                                    maxPagesShown: 6,
+                                                    totalItems: totalItems,
+                                                    inlinePageListOnly: true"></pagination>
                             </div>
                         <!-- /ko -->
 
@@ -143,6 +140,23 @@
             </button>
             <p class="lead">
                 {% trans "Check out the new Dashboard for Messaging!" %}
+            </p>
+        </div>
+    {% endif %}
+    {% if is_saas_environment and request.project.uses_new_reminders and request|ui_notify_enabled:"NEW_REMINDERS_FRAMEWORK" %}
+        <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+             style="position: absolute; width: 200px;"
+             data-target="#MessagingTab"
+             data-slug="{{ "NEW_REMINDERS_FRAMEWORK"|ui_notify_slug }}"
+             role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <p class="lead">
+                {% blocktrans %}
+                We've made some updates to Broadcasts and Conditional Alerts.
+                <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/New+Reminders">Read more</a>
+                {% endblocktrans %}
             </p>
         </div>
     {% endif %}

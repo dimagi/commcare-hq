@@ -134,8 +134,8 @@ def update_tables(request, domain, data_type_id, test_patch=None):
             "\"%s\" cannot include special characters, begin or end with a space, "
             "or begin with \"xml\" or a number") % e for e in validation_errors
         ]
-        if len(data_tag) > 31:
-            validation_errors.append(_("Table ID can not be longer than 31 characters."))
+        if len(data_tag) < 1 or len(data_tag) > 31:
+            validation_errors.append(_("Table ID must be between 1 and 31 characters."))
 
         if validation_errors:
             return json_response({

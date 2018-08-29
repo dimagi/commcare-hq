@@ -88,7 +88,7 @@ class TestPrevalenceOfSevere(TestCase):
         )
         expected = (
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6 - 60 months who were moderately/severely wasted in the "
+            "percentage of children between 0 - 5 years who were moderately/severely wasted in the "
             "current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
@@ -119,13 +119,13 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '668'},
-                {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '668'},
+                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
                  'value': '0'},
-                {'indicator': 'Number of children (6 - 60 months) unmeasured:', 'value': '271'},
-                {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.00%'},
-                {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '100.00%'},
-                {'indicator': '% Normal (6 - 60 months):', 'value': '0.00%'}
+                {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '271'},
+                {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
+                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '100.00%'},
+                {'indicator': '% Normal (0 - 5 years):', 'value': '0.00%'}
             ]
         )
 
@@ -168,7 +168,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent of Children Wasted (6 - 60 months)')
+        self.assertEquals(data['label'], 'Percent of Children Wasted (0 - 5 years)')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_prevalence_of_severe_data_map(
@@ -492,7 +492,7 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6 - 60 months enrolled who were moderately/severely wasted in the "
+            "percentage of children between 0 - 5 years enrolled who were moderately/severely wasted in the "
             "current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "

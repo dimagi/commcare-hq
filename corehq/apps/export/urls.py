@@ -65,7 +65,7 @@ urlpatterns = [
     url(r"^custom/download_data_files/$",
         DataFileDownloadList.as_view(),
         name=DataFileDownloadList.urlname),
-    url(r"^custom/download_data_files/(?P<pk>\d+)/(?P<filename>.*)$",
+    url(r"^custom/download_data_files/(?P<pk>[\w\-]+)/(?P<filename>.*)$",
         DataFileDownloadDetail.as_view(),
         name=DataFileDownloadDetail.urlname),
 

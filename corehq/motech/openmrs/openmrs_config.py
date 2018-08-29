@@ -52,10 +52,25 @@ class OpenmrsCaseConfig(DocumentSchema):
     #     "searchable_properties": ["nid", "family_name"],
     #     "property_weights": [
     #         {"case_property": "nid", "weight": 0.9},
+    #         // if "match_type" is not given it defaults to "exact"
     #         {"case_property": "family_name", "weight": 0.4},
-    #         {"case_property": "given_name", "weight": 0.3},
+    #         {
+    #             "case_property": "given_name",
+    #             "weight": 0.3,
+    #             "match_type": "levenshtein",
+    #             // levenshtein function takes edit_distance / len
+    #             "match_params": [0.2]
+    #             // i.e. 0.2 (20%) is one edit for every 5 characters
+    #             // e.g. "Riyaz" matches "Riaz" but not "Riazz"
+    #         },
     #         {"case_property": "city", "weight": 0.2},
-    #         {"case_property": "dob", "weight": 0.3}
+    #         {
+    #             "case_property": "dob",
+    #             "weight": 0.3,
+    #             "match_type": "days_diff",
+    #             // days_diff matches based on days difference from given date
+    #             "match_params": [364]
+    #         }
     #     ]
     # }
     patient_finder = PatientFinder(required=False)

@@ -62,7 +62,6 @@ def store_task_result(upload_id):
 
 def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE,
               record_form_callback=None):
-    columns = spreadsheet.get_header_columns()
     match_count = created_count = too_many_matches = num_chunks = 0
     errors = importer_util.ImportErrorDetail()
 
@@ -121,7 +120,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         return err
 
     row_count = spreadsheet.max_row
-    for i, row in enumerate(spreadsheet.iter_rows()):
+    for i, row in enumerate(spreadsheet.iter_row_dicts()):
         if task:
             set_task_progress(task, i, row_count)
 
@@ -129,9 +128,9 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         if i == 0:
             continue
 
-        search_id = importer_util.parse_search_id(config, columns, row)
+        search_id = importer_util.parse_search_id(config, row)
 
-        fields_to_update = importer_util.populate_updated_fields(config, columns, row)
+        fields_to_update = importer_util.populate_updated_fields(config, row)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
             continue

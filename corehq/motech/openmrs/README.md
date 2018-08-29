@@ -218,7 +218,7 @@ ValueSource:
        }
     ```
 
-2. It can map a case property value to a Concept UUID.
+3. It can map a case property value to a Concept UUID.
    CasePropertyMap does this. e.g.
    ```javascript
        "person_attributes": {
@@ -235,6 +235,17 @@ ValueSource:
          }
        }
     ```
+
+**GOTCHA**: An easy mistake when configuring "person_attributes": The
+OpenMRS UUID of a Person Attribute Type is different from the UUID of
+its Concept. For the Person Attribute Type UUID, navigate to
+Administration > Person > Manage Person Attribute Types and select the
+Person Attribute Type you want. Note the greyed-out UUID. This is the
+UUID that you need. If the Person Attribute Type is a Concept, navigate
+to Administration > Concepts > View Concept Dictionary and search for
+the Person Attribute Type by name. Select it from the search results.
+Note the UUID of the concept is different. Select each of its Answers.
+Use their UUIDs in the "value_map".
 
 There are two more OpenmrsCaseConfig fields:
 

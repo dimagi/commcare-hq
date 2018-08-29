@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import itertools
 import json
+import six
 from collections import Counter
 
 from couchdbkit import ResourceNotFound
@@ -92,7 +93,10 @@ class ToggleDumper(DataDumper):
         count = 0
         for toggle in self._get_toggles_to_migrate():
             count += 1
-            json.dump(toggle, output_stream)
+            json_dump = json.dumps(toggle)
+            if six.PY3:
+                json_dump = json_dump.encode('utf-8')
+            output_stream.write(json_dump)
             output_stream.write(b'\n')
 
         self.stdout.write('Dumped {} Toggles\n'.format(count))
