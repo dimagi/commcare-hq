@@ -10,11 +10,15 @@ from django.test import TestCase
 
 import corehq.blobs.fsdb as mod
 from corehq.blobs import CODES
+from corehq.blobs.metadata import MetaDB
 from corehq.blobs.tests.util import new_meta
 from corehq.util.test_utils import generate_cases, patch_datadog
 
 
 class _BlobDBTests(object):
+
+    def test_has_metadb(self):
+        self.assertIsInstance(self.db.metadb, MetaDB)
 
     def test_put_and_get(self):
         identifier = new_meta()
