@@ -1,4 +1,6 @@
-hqDefine('sms/js/add_forwarding_rule', function() {
+hqDefine('sms/js/add_forwarding_rule',[
+    "jquery",
+], function($) {
     function toggle_keyword() {
         if ($("#id_forward_type").val() === "KEYWORD") {
             $("#keyword_row").removeClass('hide');

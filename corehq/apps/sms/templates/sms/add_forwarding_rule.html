@@ -4,10 +4,8 @@
 {% load timezone_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-    <script src='{% static "sms/js/add_forwarding_rule.js" %}'></script>
-{% endblock %}
 
+{% requirejs_main 'sms/js/add_forwarding_rule' %}
 {% block page_content %}
     <form action="" class="form-horizontal" method="post">
         {% csrf_token %}
