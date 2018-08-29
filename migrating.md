@@ -1,10 +1,14 @@
 # Migrating
 
 Modernizing our JavaScript code base often means doing migrations. Migrations currently in progress:
-1. Migrating to RequireJS
-1. Moving away from classical inheritance
+1. [Migrating to RequireJS](#migrating-to-requirejs)
+1. [Moving away from classical inheritance](#moving-away-from-classical-inheritance)
 
 ## Migrating to RequireJS
+
+- [Background: modules and pages](#background-modules-and-pages)
+- [Basic Migration Process](#basic-migration-process)
+- [Troubleshooting](#troubleshooting)
 
 ### Background: modules and pages
 
@@ -95,6 +99,39 @@ It's often prohibitively time-consuming to test every JavaScript interaction on 
 - If your page depends on any third-party modules that might not yet be used on any RequireJS pages, test them. Third-party modules sometimes need to be upgraded to be compatible with RequireJS.
 - If your page touched any javascript modules that are used by pages that haven't yet been migrated, test at least one of those non-migrated pages.
 - Check if your base template has any descendants that should also be migrated.
+
+### Troubleshooting
+
+#### Troubleshooting migration issues
+
+When debugging RequireJS issues, the first question is whether or not the page you're on has been migrated. You can find out by checking the value of `window.USE_REQUIREJS` in the browser console.
+
+Common issues on RequireJS pages:
+- JS error like `$(...).something is not a function`: this indicates there's a missing dependency. Typically "something" is either `select2` or a jQuery UI widget like `datepicker`. To fix, add the missing dependency to the module that's erroring.
+- Missing functionality, but no error: this usually indicates a missing knockout binding. To fix, add the file containing the binding to the module that applies that binding, which usually means adding `hqwebapp/js/knockout_bindings.ko` to the page's main module.
+- JS error like `something is not defined` where `something` is one of the parameters in the module's main function: this can indicate a circular dependency. This is rare in HQ. Track down the circular dependency and see if it makes sense to eliminate it by reorganizing code. If it doesn't, you can use [hqRequire](https://github.com/dimagi/commcare-hq/commit/15b436f77875f57d1e3d8d6db9b990720fa5dd6f#diff-73c73327e873d0e5f5f4e17c3251a1ceR100) to require the necessary module at the point where it's used rather than at the top of the module using it.
+
+Common issues on non-RequireJS pages:
+- JS error like `something is not defined` where `something` is a third-party module: this can happen if a non-RequireJS page uses a RequireJS module which uses a third party module based on a global variable. There's some code that mimicks RequireJS in this situation, but it needs to know about all of the third party libraries. To fix, add the third party module's global to [thirdPartyMap in hqModules.js](https://github.com/dimagi/commcare-hq/commit/85286460a8b08812f82d6709c161b259e77165c4#diff-73c73327e873d0e5f5f4e17c3251a1ceR57).
+- JS error like `something is not defined` where `something` is an HQ module: this can happen when script tags are ordered so that a module appears before one of its dependencies. This can happen to migrated modules because one of the effects of the migration is to typically import all of a module's dependencies at the time the module is defined, which in a non-RequireJS context means all of the dependencies' script tags must appear before the script tags that depend on them. Previously, dependencies were not imported until `hqImport` was called, which could be later on, possibly in an event handler or some other code that would never execute until the entire page was loaded. To fix, try reordering the script tags. If you find there's a circular dependency, use `hqRequire` as described above.
+
+#### Troubleshooting the RequireJS build process
+
+Tactics that can help track down problems with the RequireJS build process, which usually manifest as errors that happen on staging but not locally:
+
+- To turn off minification, add an `optimize: none` line to [requirejs.yaml](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/static/hqwebapp/yaml/requirejs.yaml).
+- To stop using the CDN, comment out [resource_versions.js in hqwebapp/base.html](https://github.com/dimagi/commcare-hq/pull/18116/files#diff-1ecb20ffccb745a5c0fc279837215a25R433). Note that this will still fetch a few files, such as `hqModules.js` and `requirejs_config.js`, from the CDN. To turn off the CDN entirely, comment out all of the code that manipulates `resource_versions` in [build_requirejs](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/build_requirejs.py).
+- To mimic the entire build process locally:
+   - Collect static files: `manage.py collectstatic --noinput`  This is necessary if you've made any changes to `requirejs.yaml` or `requirejs_config.js`, since the build script pulls these files from `staticfiles`, not `corehq`.
+   - Compile translation files: `manage.py compilejsi18n`
+   - Run build script: `manage.py build_requirejs`
+   - Copy build-generated files back into `corehq` since you're in a development environment:
+      - Updated config, including bundle setup: `cp staticfiles/hqwebapp/js/requirejs_config.js corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js`
+      - CDN paths: `cp staticfiles/hqwebapp/js/resource_versions.js corehq/apps/hqwebapp/static/hqwebapp/js/resource_versions.js`
+      - Bundles
+         - `cp staticfiles/hqwebapp/js/common.js corehq/apps/hqwebapp/static/hqwebapp/js/common.js`
+         - `cp staticfiles/hqwebapp/js/bundle.js   corehq/apps/hqwebapp/static/hqwebapp/js/bundle.js`
+         - ...and the same for any other bundles used on the page you're testing. The easiest way to check this is to open the page on staging, open the browser console, and check the resources tab to see what javascript files are requests.
 
 ## Moving away from classical inheritance
 
