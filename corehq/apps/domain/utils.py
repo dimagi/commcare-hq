@@ -112,7 +112,7 @@ def guess_domain_language(domain_name):
     return counter.most_common(1)[0][0] if counter else 'en'
 
 
-@task(queue='background_queue')
+@task(serializer='pickle', queue='background_queue')
 def send_repeater_payloads(repeater_id, payload_ids, email_id):
     from corehq.motech.repeaters.models import Repeater, RepeatRecord
     repeater = Repeater.get(repeater_id)
