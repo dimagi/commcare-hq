@@ -15,7 +15,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.tests.test_dbaccessors_p
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.models import PartitionedModel
 from corehq.sql_db.shard_data_management import get_count_of_unmatched_models_by_shard, \
-    get_count_of_models_by_shard
+    get_count_of_models_by_shard_for_testing
 from corehq.sql_db.tests.utils import DefaultShardingTestConfigMixIn
 
 
@@ -50,7 +50,7 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         self.assertEqual(AlertScheduleInstance.objects.using(self.db1).count(), 1)
         matches = get_count_of_unmatched_models_by_shard(self.db1, AlertScheduleInstance)
         self.assertEqual(0, len(matches))
-        all_data = get_count_of_models_by_shard(self.db1, AlertScheduleInstance)
+        all_data = get_count_of_models_by_shard_for_testing(self.db1, AlertScheduleInstance)
         self.assertEqual(1, len(all_data))
         self.assertEqual((0, 1), all_data[0])
 
@@ -70,7 +70,7 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         self.assertEqual(XFormInstanceSQL.objects.using(self.db2).count(), 1)
         matches = get_count_of_unmatched_models_by_shard(self.db2, XFormInstanceSQL)
         self.assertEqual(0, len(matches))
-        all_data = get_count_of_models_by_shard(self.db2, XFormInstanceSQL)
+        all_data = get_count_of_models_by_shard_for_testing(self.db2, XFormInstanceSQL)
         self.assertEqual(1, len(all_data))
         self.assertEqual((2, 1), all_data[0])
 
