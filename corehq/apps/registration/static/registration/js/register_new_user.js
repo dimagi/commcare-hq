@@ -13,7 +13,10 @@ hqDefine("registration/js/register_new_user", [
     initialPageData,
     reg
 ) {
+console.log("registration/js/register_new_user executing");
     $(function() {
+console.log("registration/js/register_new_user document ready");
+        debugger;
         // Link up with registration form ko model
         reg.onModuleLoad = function () {
             $('.loading-form-step').fadeOut(500, function () {
