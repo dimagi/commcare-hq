@@ -563,6 +563,8 @@ CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 # Keep messages in the events queue only for 2 hours
 CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
 
+CELERY_TASK_SERIALIZER = 'json'  # Default value in celery 4.x
+
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
