@@ -77,17 +77,19 @@ hqDefine('accounting/js/pricing_table', [
             if (self.isDowngrade(self.currentEdition, self.selected_edition()) && self.subscriptionBelowMinimum) {
                 var oldPlan = utils.capitalize(self.currentEdition);
                 var newPlan = utils.capitalize(self.selected_edition());
-                var newStartDate = self.startDateAfterMinimumSubscription;
+                var newStartDate = "<strong>" + self.startDateAfterMinimumSubscription + "</strong>";
 
                 var message = "";
                 if (self.nextSubscriptionEdition) {
                     message = _.template(gettext(
-                        "All CommCare subscriptions require a 30 day minimum commitment. Your current " +
-                        "<%= oldPlan %> Edition Plan subscription is scheduled to be downgraded to the " +
-                        "<%= nextSubscription %> Edition Plan on <%= date %>. Continuing ahead will allow you " +
-                        "to schedule your current <%= oldPlan %> Edition Plan subscription to be downgraded to " +
-                        "the <%= newPlan %> Edition Plan on <%= date %>.  If you have questions or if you would " +
-                        "like to speak to us about your subscription, please reach out to <%= email %>."
+                        "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
+                        "<p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to be downgraded " +
+                        "to the <%= nextSubscription %> Edition Plan on <%= date %>.</p>" +
+                        "<p>Continuing ahead will allow you to schedule your current <%= oldPlan %> Edition " +
+                        "Plan subscription to be downgraded to the <%= newPlan %> Edition Plan " +
+                        "on <%= date %>.</p>" +
+                        "<p>If you have questions or if you would like to speak to us about your subscription, " +
+                        "please reach out to <%= email %>.</p>"
                     ))({
                         oldPlan: oldPlan,
                         nextSubscription: self.nextSubscriptionEdition,
@@ -97,11 +99,12 @@ hqDefine('accounting/js/pricing_table', [
                     });
                 } else {
                     message = _.template(gettext(
-                        "All CommCare subscriptions require a 30 day minimum commitment. Continuing ahead will " +
-                        "allow you to schedule your current <%= oldPlan %> Edition Plan subscription to be " +
-                        "downgraded to the <%= newPlan %> Edition Plan on <%= date %>.  If you have questions " +
-                        "or if you would like to speak to us about your subscription, please reach out to " +
-                        "<%= email %>."
+                        "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
+                        "<p>Continuing ahead will allow you to schedule your current <%= oldPlan %> Edition " +
+                        "Plan subscription to be downgraded to the <%= newPlan %> Edition Plan " +
+                        "on <%= date %>.</p>" +
+                        "If you have questions or if you would like to speak to us about your subscription, " +
+                        "please reach out to <%= email %>."
                     ))({
                         oldPlan: oldPlan,
                         date: newStartDate,
