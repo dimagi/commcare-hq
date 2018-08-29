@@ -12,6 +12,7 @@ import tinys3
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
+from corehq.apps.users.models import WebUser
 from corehq.util.dates import unix_time
 from corehq.apps.analytics.utils import get_instance_string, get_meta
 from datetime import datetime, date, timedelta
@@ -338,7 +339,7 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
     if request and user and user.is_web_user():
         meta = get_meta(request)
         send_hubspot_form_task_v2.delay(
-            form_id, user, request.COOKIES.get(HUBSPOT_COOKIE),
+            form_id, user.user_id, request.COOKIES.get(HUBSPOT_COOKIE),
             meta, extra_fields=extra_fields
         )
 
@@ -351,8 +352,10 @@ def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta,
 
 
 @analytics_task()
-def send_hubspot_form_task_v2(form_id, web_user, hubspot_cookie, meta,
+def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
                               extra_fields=None):
+    # TODO - else avoids transient celery errors.  Can remove after deploying to all environments.
+    web_user = WebUser.get_by_user_id(web_user_id) if isinstance(web_user_id, six.string_types) else web_user_id
     _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
 
