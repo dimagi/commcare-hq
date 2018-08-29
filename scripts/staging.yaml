@@ -60,6 +60,7 @@ branches:
   - pv/deactivated-users # Preethi Aug 23
   - np/no-saved-export-task # Nick P 8/27
   - rn_migrating_sms_pages # Rohit Aug 29
+  - np/explicit-pickle-serializer # Nick P 8/27
 submodules:
   submodules/django-digest-src:
     branches: []
