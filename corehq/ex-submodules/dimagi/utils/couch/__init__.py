@@ -326,6 +326,7 @@ class CriticalSection(object):
     block - whether to wait for the lock to be acquired or not
     """
     def __init__(self, keys, fail_hard=False, timeout=60, block=True):
+        assert isinstance(keys, (list, tuple))
         self.keys = keys
         self.locks = []
         self.status = []
