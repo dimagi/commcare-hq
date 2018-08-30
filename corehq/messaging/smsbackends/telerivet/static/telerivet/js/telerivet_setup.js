@@ -1,188 +1,174 @@
-hqDefine("telerivet/js/telerivet_setup", function() {
-    'use strict';
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-        telerivetSetupApp = window.angular.module('telerivetSetupApp', ['ngRoute', 'ng.django.rmi']);
+hqDefine("telerivet/js/telerivet_setup", [
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+], function(
+    ko,
+    initialPageData
+) {
+    var telerivetSetupModel = function() {
+        var self = {};
 
-    var globalApiKey = '';
-    var globalProjectId = '';
-    var globalPhoneId = '';
-    var globalTestPhoneNumber = '';
-    var globalTestSMSSent = false;
-
-    telerivetSetupApp.config(['$httpProvider', function($httpProvider) {
-        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
-    }]);
-
-    telerivetSetupApp.config(function(djangoRMIProvider) {
-        djangoRMIProvider.configure(initialPageData('djng_current_rmi'));
-    });
-
-    telerivetSetupApp.config(function($routeProvider) {
-        $routeProvider
-            .when('/start', {templateUrl: 'start.tpl'})
-            .when('/step1', {templateUrl: 'step1.tpl'})
-            .when('/step2', {templateUrl: 'step2.tpl'})
-            .when('/step3', {templateUrl: 'step3.tpl'})
-            .when('/finish', {templateUrl: 'finish.tpl'})
-            .otherwise({redirectTo: '/start'});
-    });
-
-    telerivetSetupApp.controller('TelerivetSetupController', function($scope, djangoRMI) {
-        // model attributes
-        $scope.apiKey = globalApiKey;
-        $scope.projectId = globalProjectId;
-        $scope.phoneId = globalPhoneId;
-        $scope.testPhoneNumber = globalTestPhoneNumber;
-        $scope.name = initialPageData('form_name');
-        $scope.setAsDefault = initialPageData('form_set_as_default');
-
-        // error messages
-        $scope.apiKeyError = null;
-        $scope.projectIdError = null;
-        $scope.phoneIdError = null;
-        $scope.testPhoneNumberError = null;
-        $scope.nameError = null;
-        $scope.setAsDefaultError = null;
-
-        // screenshot toggles
-        $scope.showApiKeyGeneration = false;
-        $scope.showApiInfoLocation = false;
-        $scope.showAddWebookNavigation = false;
-        $scope.showWebhookDetails = false;
-
-        // control flow variables
-        $scope.showOutboundTroubleshoot = false;
-        $scope.showInboundTroubleshoot = false;
-        $scope.testSMSSent = globalTestSMSSent;
-        $scope.pollForInboundSMS = false;
-        $scope.pollingErrorOccurred = false;
-        $scope.inboundSMSReceived = false;
-        $scope.inboundWaitTimedOut = false;
-        $scope.setupComplete = false;
-
-        $scope.toggleApiInfoLocation = function() {
-            $scope.showApiInfoLocation = !$scope.showApiInfoLocation;
+        // Step handling
+        self.step = ko.observable(0);
+        self.start = ko.computed(function() { return self.step() === 0; });
+        self.step1 = ko.computed(function() { return self.step() === 1; });
+        self.step2 = ko.computed(function() { return self.step() === 2; });
+        self.step3 = ko.computed(function() { return self.step() === 3; });
+        self.finish = ko.computed(function() { return self.step() === 4; });
+        self.nextStep = function() {
+            self.step(self.step() + 1);
         };
 
-        $scope.toggleApiKeyGeneration = function() {
-            $scope.showApiKeyGeneration = !$scope.showApiKeyGeneration;
-        };
+        // Step 2: UI control
+        self.showApiKeyGeneration = ko.observable(false);
+        self.showApiInfoLocation = ko.observable(false);
+        self.testSMSSent = ko.observable(false);
+        self.showOutboundTroubleshoot = ko.observable(false);
 
-        $scope.toggleAddWebookNavigation = function() {
-            $scope.showAddWebookNavigation = !$scope.showAddWebookNavigation;
-        };
+        // Step 2: Outgoing SMS Form
+        self.apiKey = ko.observable('');
+        self.apiKeyError = ko.observable('');
+        self.projectId = ko.observable('');
+        self.projectIdError = ko.observable('');
+        self.phoneId = ko.observable('');
+        self.phoneIdError = ko.observable('');
 
-        $scope.toggleWebhookDetails = function() {
-            $scope.showWebhookDetails = !$scope.showWebhookDetails;
-        };
+        // Step 2: Phone Number Form
+        self.testPhoneNumber = ko.observable('');
+        self.testPhoneNumberError = ko.observable('');
+        self.sendSmsButtonError = ko.observable(false);
+        self.sendSmsButtonText = ko.computed(function() {
+            return self.sendSmsButtonError() ? gettext('Server error. Try again...') : gettext('Send');
+        });
 
-        $scope.sendTestSMS = function() {
-            djangoRMI.send_sample_sms({
-                api_key: $scope.apiKey,
-                project_id: $scope.projectId,
-                phone_id: $scope.phoneId,
-                test_phone_number: $scope.testPhoneNumber,
-                request_token: initialPageData('request_token'),
-            })
-            .success(function(data) {
-                $('#id_send_sms_button')
-                .text(gettext("Send"));
-                $scope.apiKeyError = data.api_key_error;
-                $scope.projectIdError = data.project_id_error;
-                $scope.phoneIdError = data.phone_id_error;
-                $scope.testPhoneNumberError = data.unexpected_error || data.test_phone_number_error;
-                $scope.testSMSSent = data.success;
-            })
-            .error(function() {
-                $('#id_send_sms_button')
-                .text(gettext("Server error. Try again..."));
+        self.sendTestSMS = function() {
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse('send_sample_sms'),
+                data: {
+                    api_key: self.apiKey(),
+                    project_id: self.projectId(),
+                    phone_id: self.phoneId(),
+                    test_phone_number: self.testPhoneNumber(),
+                    request_token: initialPageData.get('request_token'),
+                },
+                success: function(data) {
+                    self.sendSmsButtonError(false);
+                    self.apiKeyError(data.api_key_error);
+                    self.projectIdError(data.project_id_error);
+                    self.phoneIdError(data.phone_id_error);
+                    self.testPhoneNumberError(data.unexpected_error || data.test_phone_number_error);
+                    self.testSMSSent(data.success);
+                },
+                error: function() {
+                    self.sendSmsButtonError(true);
+                },
             });
         };
 
-        $scope.createBackend = function() {
-            $('#id_create_backend').prop('disabled', true);
-            djangoRMI.create_backend({
-                name: $scope.name,
-                api_key: $scope.apiKey,
-                project_id: $scope.projectId,
-                phone_id: $scope.phoneId,
-                request_token: initialPageData('request_token'),
-                set_as_default: $scope.setAsDefault
-            })
-            .success(function(data) {
-                if(data.success) {
-                    $scope.setupComplete = true;
-                    setTimeout(function() {
-                        window.location.href = initialPageData('gateway_list_url')
-                    }, 2000);
-                } else {
-                    $scope.nameError = data.unexpected_error || data.name_error;
-                    if(data.name_error) {
-                        $('#id_create_backend')
-                        .prop('disabled', false)
-                        .text(gettext("Complete"));
-                    }
-                }
-            })
-            .error(function() {
-                $('#id_create_backend')
-                .prop('disabled', false)
-                .text(gettext("Server error. Try again..."));
-            });
-        };
+        // Step 3
+        self.showAddWebhookNavigation = ko.observable(false);
+        self.showWebhookDetails = ko.observable(false);
+        self.pollForInboundSMS = ko.observable(false);
+        self.inboundSMSReceived = ko.observable(false);
+        self.inboundWaitTimedOut = ko.observable(false);
+        self.pollingErrorOccurred = ko.observable(false);
+        self.showInboundTroubleshoot = ko.observable(false);
+        self.waiting = ko.computed(function() {
+            return !self.inboundSMSReceived() && !self.inboundWaitTimedOut() && !self.pollingErrorOccurred();
+        });
+        self.messageReceived = ko.computed(function() {
+            return self.inboundSMSReceived() && !self.pollingErrorOccurred();
+        });
+        self.messageNotReceived = ko.computed(function() {
+            return self.inboundWaitTimedOut() && !self.inboundSMSReceived() && !self.pollingErrorOccurred();
+        });
 
-        $scope.getLastInboundSMS = function() {
-            djangoRMI.get_last_inbound_sms({
-                request_token: initialPageData('request_token'),
-            })
-            .success(function(data) {
-                if(data.success) {
-                    if(data.found) {
-                        $scope.inboundSMSReceived = true;
-                    } else {
-                        setTimeout($scope.getLastInboundSMS, 10000);
-                    }
-                } else {
-                    $scope.pollingErrorOccurred = true;
-                }
-            })
-            .error(function() {
-                // This is just an http error, for example, rather than
-                // something like a missing request token, so just retry it.
-                setTimeout($scope.getLastInboundSMS, 10000);
-            });
-        };
-
-        $scope.startInboundPolling = function() {
-            $scope.pollForInboundSMS = true;
-            $scope.inboundWaitTimedOut = false;
+        self.startInboundPolling = function() {
+            self.pollForInboundSMS(true);
+            self.inboundWaitTimedOut(false);
             setTimeout(function() {
-                $scope.inboundWaitTimedOut = true;
+                self.inboundWaitTimedOut(true);
             }, 30000);
-            $scope.getLastInboundSMS();
+            self.getLastInboundSMS();
         };
 
-        // TODO: Figure out if there's a better way to deal with these scope issues
-        $scope.$watch('apiKey', function(newValue, oldValue) {
-            globalApiKey = newValue;
-            $scope.testSMSSent = false;
+        self.getLastInboundSMS = function() {
+            $.ajax({
+                method: 'GET',
+                url: initialPageData.reverse('get_last_inbound_sms'),
+                data: {
+                    request_token: initialPageData.get('request_token'),
+                },
+                success: function(data) {
+                    if (data.success) {
+                        if (data.found) {
+                            self.inboundSMSReceived(true);
+                        } else {
+                            setTimeout(self.getLastInboundSMS, 10000);
+                        }
+                    } else {
+                        self.pollingErrorOccurred(true);
+                    }
+                },
+                error: function() {
+                    // This is just an http error, for example, rather than
+                    // something like a missing request token, so just retry it.
+                    setTimeout(self.getLastInboundSMS, 10000);
+                },
+            });
+        };
+
+        // Finish
+        self.setupComplete = ko.observable(false);
+        self.creatingBackend = ko.observable(false);
+        self.backendButtonError = ko.observable(false);
+        self.backendButtonText = ko.computed(function() {
+            return self.backendButtonError() ? gettext("Server error. Try again...") : gettext("Complete");
         });
-        $scope.$watch('projectId', function(newValue, oldValue) {
-            globalProjectId = newValue;
-            $scope.testSMSSent = false;
-        });
-        $scope.$watch('phoneId', function(newValue, oldValue) {
-            globalPhoneId = newValue;
-            $scope.testSMSSent = false;
-        });
-        $scope.$watch('testPhoneNumber', function(newValue, oldValue) {
-            globalTestPhoneNumber = newValue;
-        });
-        $scope.$watch('testSMSSent', function(newValue, oldValue) {
-            globalTestSMSSent = newValue;
-        });
+        self.name = ko.observable(initialPageData.get('form_name'));
+        self.nameError = ko.observable('');
+        self.setAsDefault = ko.observable(initialPageData.get('form_set_as_default'));
+        self.setAsDefaultError = ko.observable('');
+
+        self.createBackend = function() {
+            self.creatingBackend(true);
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse('create_backend'),
+                data: {
+                    name: self.name(),
+                    api_key: self.apiKey(),
+                    project_id: self.projectId(),
+                    phone_id: self.phoneId(),
+                    request_token: initialPageData.get('request_token'),
+                    set_as_default: self.setAsDefault(),
+                },
+                success: function(data) {
+                    if (data.success) {
+                        self.setupComplete(true);
+                        setTimeout(function() {
+                            window.location.href = initialPageData.get('gateway_list_url');
+                        }, 2000);
+                    } else {
+                        self.nameError(data.unexpected_error || data.name_error);
+                        if (data.name_error) {
+                            self.creatingBackend(false);
+                            self.backendButtonError(false);
+                        }
+                    }
+                },
+                error: function() {
+                    self.creatingBackend(false);
+                    self.backendButtonError(true);
+                },
+            });
+        };
+
+        return self;
+    };
+
+    $(function() {
+        $("#telerivet-setup").koApplyBindings(telerivetSetupModel());
     });
 });
