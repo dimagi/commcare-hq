@@ -30,6 +30,7 @@ hqDefine('app_manager/js/supported_languages',[
                     });
                 }
             }
+
             return self.message_content();
         });
 
