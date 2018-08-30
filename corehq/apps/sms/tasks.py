@@ -316,7 +316,7 @@ class OutboundDailyCounter(object):
         return True
 
 
-@no_result_task(queue="sms_queue", acks_late=True)
+@no_result_task(serializer='pickle', queue="sms_queue", acks_late=True)
 def process_sms(queued_sms_pk):
     """
     queued_sms_pk - pk of a QueuedSMS entry
@@ -407,7 +407,7 @@ def send_to_sms_queue(queued_sms):
     process_sms.apply_async([queued_sms.pk], **options)
 
 
-@no_result_task(default_retry_delay=10 * 60, max_retries=10, bind=True)
+@no_result_task(serializer='pickle', default_retry_delay=10 * 60, max_retries=10, bind=True)
 def store_billable(self, msg):
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
@@ -434,7 +434,7 @@ def store_billable(self, msg):
             raise
 
 
-@no_result_task(queue='background_queue', acks_late=True)
+@no_result_task(serializer='pickle', queue='background_queue', acks_late=True)
 def delete_phone_numbers_for_owners(owner_ids):
     for p in PhoneNumber.objects.filter(owner_id__in=owner_ids):
         # Clear cache and delete
@@ -446,7 +446,7 @@ def clear_case_caches(case):
     is_case_contact_active.clear(case.domain, case.case_id)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_case_phone_number(self, case):
     try:
@@ -511,7 +511,7 @@ def _sync_case_phone_number(contact_case):
         phone_number.save()
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_user_phone_numbers(self, couch_user_id):
     if not use_phone_entries():
@@ -559,7 +559,7 @@ def _sync_user_phone_numbers(couch_user_id):
                     pass
 
 
-@no_result_task(queue='background_queue', acks_late=True,
+@no_result_task(serializer='pickle', queue='background_queue', acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def publish_sms_change(self, sms):
     try:
@@ -568,7 +568,7 @@ def publish_sms_change(self, sms):
         self.retry(exc=e)
 
 
-@no_result_task(queue='background_queue')
+@no_result_task(serializer='pickle', queue='background_queue')
 def sync_phone_numbers_for_domain(domain):
     for user_id in CouchUser.ids_by_domain(domain, is_active=True):
         _sync_user_phone_numbers(user_id)
