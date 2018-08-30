@@ -110,7 +110,7 @@
           </div>
         </form>
 
-        {% if True or is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_test %}
+        {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_test %}
             <div class="form-bubble form-bubble-purple text-center">
                 {% blocktrans %}
                     Want to learn more before signing up?
