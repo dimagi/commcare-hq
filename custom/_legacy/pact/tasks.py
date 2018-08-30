@@ -22,7 +22,7 @@ import six
 DOT_RECOMPUTE = True
 
 
-@task(serializer='pickle', ignore_result=True)
+@task(ignore_result=True)
 def recalculate_dots_data(case_id, cc_user, sync_token=None):
     """
     Recalculate the dots data and resubmit calling the pact api for dot recompute
@@ -38,7 +38,7 @@ def recalculate_dots_data(case_id, cc_user, sync_token=None):
             notify_exception(None, message="PACT error recomputing DOTS case block: %s\n%s" % (ex, tb))
 
 
-@task(serializer='pickle', ignore_result=True)
+@task(ignore_result=True)
 def eval_dots_block(xform_json, callback=None):
     """
     Evaluate the dots block in the xform submission and put it in the computed_ block for the xform.
@@ -76,7 +76,7 @@ def eval_dots_block(xform_json, callback=None):
         notify_exception(None, message="PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb))
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="12", minute="0", day_of_week="*"))
+@periodic_task(run_every=crontab(hour="12", minute="0", day_of_week="*"))
 def update_schedule_case_properties():
     """
     Iterate through all pact patient cases in the domain and set schedule case properties if necessary.

@@ -13,7 +13,7 @@ from corehq.motech.requests import Requests
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
-@task(serializer='pickle', queue='background_queue')
+@task(queue='background_queue')
 def send_datasets(domain_name, send_now=False, send_date=None):
     """
     Sends a data set of data values in the following format:
@@ -53,7 +53,7 @@ def send_datasets(domain_name, send_now=False, send_date=None):
             requests.post(endpoint, json=dataset)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(minute=3, hour=3),
     queue='background_queue'
 )

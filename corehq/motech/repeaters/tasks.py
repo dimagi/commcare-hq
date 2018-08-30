@@ -24,7 +24,7 @@ from corehq.motech.repeaters.const import (
 logging = get_task_logger(__name__)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=CHECK_REPEATERS_INTERVAL,
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
@@ -62,7 +62,7 @@ def check_repeaters():
         pass
 
 
-@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
     if repeat_record.state == RECORD_FAILURE_STATE and repeat_record.overall_tries >= repeat_record.max_possible_tries:
         repeat_record.cancel()

@@ -25,7 +25,7 @@ RETRY_INTERVAL = 5
 MAX_ATTEMPTS = 3
 
 
-@task(serializer='pickle', ignore_result=True)
+@task(ignore_result=True)
 def send_emergency_order_request(order_id, attempt=1):
     try:
         with CriticalSection(
