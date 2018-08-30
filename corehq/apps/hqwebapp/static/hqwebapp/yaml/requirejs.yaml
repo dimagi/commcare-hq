@@ -82,17 +82,17 @@ modules:
     exclude:
       - hqwebapp/js/common
     include:
-      - blazy/blazy
-      - hqwebapp/js/password_validators.ko
-      - hqwebapp/js/validators.ko
-      - intl-tel-input/build/js/intlTelInput.min
-      - knockout-validation/dist/knockout.validation.min
-      - registration/js/login
-      - registration/js/new_user.ko
-      - registration/js/password
+#      - blazy/blazy
+#      - hqwebapp/js/password_validators.ko
+#      - hqwebapp/js/validators.ko
+#      - intl-tel-input/build/js/intlTelInput.min
+#      - knockout-validation/dist/knockout.validation.min
+#      - registration/js/login
+#      - registration/js/new_user.ko
+#      - registration/js/password
       - registration/js/register_new_user
-      - zxcvbn/dist/zxcvbn  # TODO: also used in users
-      - nic_compliance/js/encoder   # TODO: also used in users
+#      - zxcvbn/dist/zxcvbn  # TODO: also used in users
+#      - nic_compliance/js/encoder   # TODO: also used in users
 
   # Limited bundle for reports, containing only the modules that are used outside of reports
   # (currently, by fixtures, since that's the only area that depends on reports and has been

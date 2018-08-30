@@ -1,22 +1,21 @@
 hqDefine("registration/js/register_new_user", [
     'jquery',
     'hqwebapp/js/initial_page_data',
-    'registration/js/new_user.ko',
+    /*'registration/js/new_user.ko',
     'registration/js/login',    // loads background image
     'intl-tel-input/build/js/intlTelInput.min',     // provides $.intlTelInput
     'hqwebapp/js/validators.ko',
-    'hqwebapp/js/password_validators.ko',
+    'hqwebapp/js/password_validators.ko',*/
 ], function(
     $,
-    initialPageData,
-    reg
+    initialPageData/*,
+    reg*/
 ) {
 console.log("registration/js/register_new_user executing");
     $(function() {
 console.log("registration/js/register_new_user document ready");
-        debugger;
         // Link up with registration form ko model
-        reg.onModuleLoad = function () {
+        /*reg.onModuleLoad = function () {
             $('.loading-form-step').fadeOut(500, function () {
                 $('.step-1').fadeIn(500);
             });
@@ -77,6 +76,6 @@ console.log("registration/js/register_new_user document ready");
         });
         reg.setGetPhoneNumberFn(function () {
             return $number.intlTelInput("getNumber");
-        });
+        });*/
     });
 });
