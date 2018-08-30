@@ -1,4 +1,11 @@
-hqDefine('app_manager/js/supported_languages', function () {
+hqDefine('app_manager/js/supported_languages',[
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/main",
+    "hqwebapp/js/knockout_bindings.ko",
+], function ($, ko, _, initialPageData, hqMain) {
     function Language(langcode, languages) {
         var self = this;
         this.langcode = ko.observable(langcode);
@@ -45,7 +52,7 @@ hqDefine('app_manager/js/supported_languages', function () {
                 self._seen(true);
             },
         });
-        this.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        this.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your supported languages"),
             save: function () {
                 var message = self.validateGeneral();
@@ -96,7 +103,7 @@ hqDefine('app_manager/js/supported_languages', function () {
         var changeSaveButton = function () {
             self.saveButton.fire('change');
         };
-        var smartLangDisplayEnabled = hqImport("hqwebapp/js/initial_page_data").get("smart_lang_display_enabled");
+        var smartLangDisplayEnabled = initialPageData.get("smart_lang_display_enabled");
         this.smartLangDisplay = ko.observable(smartLangDisplayEnabled);
         this.smartLangDisplay.subscribe(changeSaveButton);
 
