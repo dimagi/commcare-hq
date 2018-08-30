@@ -61,6 +61,7 @@ from corehq.apps.export.exceptions import (
     BadExportConfiguration,
     ExportFormValidationException,
     ExportAsyncException,
+    NoSavedExportTask,
 )
 from corehq.apps.export.forms import (
     FilterFormCouchExportDownloadForm,
@@ -978,7 +979,14 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
 
     @staticmethod
     def _get_task_status_json(export_instance_id):
-        status = get_saved_export_task_status(export_instance_id)
+        try:
+            status = get_saved_export_task_status(export_instance_id)
+        except NoSavedExportTask:
+            return {
+                'percentComplete': 0,
+                'inProgress': False,
+                'success': False,
+            }
         return {
             'percentComplete': status.progress.percent or 0,
             'inProgress': status.started(),
