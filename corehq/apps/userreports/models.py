@@ -275,9 +275,9 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
                     )
                     number_generated += 1
                     del named_expression_specs[name]
-                except BadSpecError as spec_error:
+                except BadSpecError as bad_spec_error:
                     # maybe a nested name resolution issue, try again on the next pass
-                    pass
+                    spec_error = bad_spec_error
             if number_generated == 0 and named_expression_specs:
                 # we unsuccessfully generated anything on this pass and there are still unresolved
                 # references. we have to fail.
