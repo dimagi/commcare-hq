@@ -4,21 +4,19 @@ import uuid
 from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMapping
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
-from corehq.apps.hqwebapp.decorators import use_angular_js
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
     TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm)
 from corehq.messaging.smsbackends.telerivet.models import IncomingRequest, SQLTelerivetBackend
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.web import json_response
 from django.db import transaction
 from django.urls import reverse
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
-from djangular.views.mixins import allow_remote_invocation
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 import six
 
 
@@ -49,7 +47,7 @@ def incoming_message(request):
     return HttpResponse()
 
 
-class TelerivetSetupView(HQJSONResponseMixin, BaseMessagingSectionView):
+class TelerivetSetupView(BaseMessagingSectionView):
     template_name = 'telerivet/telerivet_setup.html'
     urlname = 'telerivet_setup'
     page_title = ugettext_lazy("Telerivet Setup")
@@ -58,22 +56,33 @@ class TelerivetSetupView(HQJSONResponseMixin, BaseMessagingSectionView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
-    def get_cache_key(self, request_token):
+    @classmethod
+    def get_cache_key(cls, request_token):
         return 'telerivet-setup-%s' % request_token
 
-    def set_cached_webhook_secret(self, request_token, webhook_secret):
+    @classmethod
+    def set_cached_webhook_secret(cls, request_token, webhook_secret):
         client = get_redis_client()
-        key = self.get_cache_key(request_token)
+        key = cls.get_cache_key(request_token)
         client.set(key, webhook_secret)
         client.expire(key, 7 * 24 * 60 * 60)
 
-    def get_cached_webhook_secret(self, request_token):
+    @classmethod
+    def get_cached_webhook_secret(cls, request_token):
         client = get_redis_client()
-        key = self.get_cache_key(request_token)
+        key = cls.get_cache_key(request_token)
         return client.get(key)
 
-    def get_error_message(self, form, field_name):
+    @classmethod
+    def get_error_message(cls, form, field_name):
         return form[field_name].errors[0] if form[field_name].errors else None
+
+    @classmethod
+    def unexpected_error(self):
+        return _(
+            "An unexpected error occurred. Please start over and if the "
+            "problem persists, please report an issue."
+        )
 
     @property
     def page_context(self):
@@ -89,7 +98,7 @@ class TelerivetSetupView(HQJSONResponseMixin, BaseMessagingSectionView):
         # via a redis lookup which expires in 1 week.
         request_token = uuid.uuid4().hex
 
-        self.set_cached_webhook_secret(request_token, webhook_secret)
+        TelerivetSetupView.set_cached_webhook_secret(request_token, webhook_secret)
         domain_has_default_gateway = SQLMobileBackend.get_domain_default_backend(
             SQLMobileBackend.SMS,
             self.domain,
@@ -115,132 +124,118 @@ class TelerivetSetupView(HQJSONResponseMixin, BaseMessagingSectionView):
             'gateway_list_url': reverse(DomainSmsGatewayListView.urlname, args=[self.domain]),
         }
 
-    @property
-    def unexpected_error(self):
-        return _(
-            "An unexpected error occurred. Please start over and if the "
-            "problem persists, please report an issue."
-        )
 
-    @allow_remote_invocation
-    def get_last_inbound_sms(self, data):
-        request_token = data.get('request_token')
-        if not request_token:
-            return {'success': False}
+@require_GET
+def get_last_inbound_sms(request, domain):
+    request_token = request.GET.get('request_token', None)
+    if not request_token:
+        return json_response({'success': False})
 
-        webhook_secret = self.get_cached_webhook_secret(request_token)
-        if not webhook_secret:
-            return {'success': False}
+    webhook_secret = TelerivetSetupView.get_cached_webhook_secret(request_token)
+    if not webhook_secret:
+        return json_response({'success': False})
 
-        result = IncomingRequest.get_last_sms_by_webhook_secret(webhook_secret)
-        if result:
-            return {
-                'success': True,
-                'found': True,
-            }
-        else:
-            return {
-                'success': True,
-                'found': False,
-            }
-
-    def trim(self, value):
-        if isinstance(value, six.string_types):
-            return value.strip()
-
-        return value
-
-    @allow_remote_invocation
-    def send_sample_sms(self, data):
-        request_token = data.get('request_token')
-        if not self.get_cached_webhook_secret(request_token):
-            return {
-                'success': False,
-                'unexpected_error': self.unexpected_error,
-            }
-
-        outgoing_sms_form = TelerivetOutgoingSMSForm({
-            'api_key': data.get('api_key'),
-            'project_id': data.get('project_id'),
-            'phone_id': data.get('phone_id'),
-        })
-
-        test_sms_form = TelerivetPhoneNumberForm({
-            'test_phone_number': data.get('test_phone_number'),
-        })
-
-        # Be sure to call .is_valid() on both
-        outgoing_sms_form_valid = outgoing_sms_form.is_valid()
-        test_sms_form_valid = test_sms_form.is_valid()
-        if not outgoing_sms_form_valid or not test_sms_form_valid:
-            return {
-                'success': False,
-                'api_key_error': self.get_error_message(outgoing_sms_form, 'api_key'),
-                'project_id_error': self.get_error_message(outgoing_sms_form, 'project_id'),
-                'phone_id_error': self.get_error_message(outgoing_sms_form, 'phone_id'),
-                'test_phone_number_error': self.get_error_message(test_sms_form, 'test_phone_number'),
-            }
-
-        tmp_backend = SQLTelerivetBackend()
-        tmp_backend.set_extra_fields(
-            api_key=outgoing_sms_form.cleaned_data.get('api_key'),
-            project_id=outgoing_sms_form.cleaned_data.get('project_id'),
-            phone_id=outgoing_sms_form.cleaned_data.get('phone_id'),
-        )
-        sms = SMS(
-            phone_number=clean_phone_number(test_sms_form.cleaned_data.get('test_phone_number')),
-            text="This is a test SMS from CommCareHQ."
-        )
-        tmp_backend.send(sms)
-        return {
+    result = IncomingRequest.get_last_sms_by_webhook_secret(webhook_secret)
+    if result:
+        return json_response({
             'success': True,
-        }
+            'found': True,
+        })
+    else:
+        return json_response({
+            'success': True,
+            'found': False,
+        })
 
-    @allow_remote_invocation
-    def create_backend(self, data):
-        webhook_secret = self.get_cached_webhook_secret(data.get('request_token'))
-        values = {
-            'name': data.get('name'),
-            'description': _("My Telerivet Gateway"),
-            'api_key': data.get('api_key'),
-            'project_id': data.get('project_id'),
-            'phone_id': data.get('phone_id'),
-            'webhook_secret': webhook_secret,
-        }
-        form = TelerivetBackendForm(values, domain=self.domain, backend_id=None)
-        if form.is_valid():
-            with transaction.atomic():
-                backend = SQLTelerivetBackend(
-                    backend_type=SQLMobileBackend.SMS,
-                    inbound_api_key=webhook_secret,
-                    hq_api_id=SQLTelerivetBackend.get_api_id(),
-                    is_global=False,
-                    domain=self.domain,
-                    name=form.cleaned_data.get('name'),
-                    description=form.cleaned_data.get('description')
-                )
-                backend.set_extra_fields(
-                    api_key=form.cleaned_data.get('api_key'),
-                    project_id=form.cleaned_data.get('project_id'),
-                    phone_id=form.cleaned_data.get('phone_id'),
-                    webhook_secret=webhook_secret
-                )
-                phone_number = backend.get_phone_number_or_none()
-                if phone_number:
-                    backend.description += ' {}'.format(phone_number)
-                    backend.reply_to_phone_number = phone_number
-                backend.save()
-                if data.get('set_as_default') == FinalizeGatewaySetupForm.YES:
-                    SQLMobileBackendMapping.set_default_domain_backend(self.domain, backend)
-                return {'success': True}
 
-        name_error = self.get_error_message(form, 'name')
+@require_POST
+def send_sample_sms(request, domain):
+    request_token = request.POST.get('request_token')
+    if not TelerivetSetupView.get_cached_webhook_secret(request_token):
         return {
             'success': False,
-            'name_error': name_error,
-            'unexpected_error': None if name_error else self.unexpected_error,
+            'unexpected_error': TelerivetSetupView.unexpected_error,
         }
 
-    @use_angular_js
-    def dispatch(self, *args, **kwargs):
-        return super(TelerivetSetupView, self).dispatch(*args, **kwargs)
+    outgoing_sms_form = TelerivetOutgoingSMSForm({
+        'api_key': request.POST.get('api_key'),
+        'project_id': request.POST.get('project_id'),
+        'phone_id': request.POST.get('phone_id'),
+    })
+
+    test_sms_form = TelerivetPhoneNumberForm({
+        'test_phone_number': request.POST.get('test_phone_number'),
+    })
+
+    # Be sure to call .is_valid() on both
+    outgoing_sms_form_valid = outgoing_sms_form.is_valid()
+    test_sms_form_valid = test_sms_form.is_valid()
+    if not outgoing_sms_form_valid or not test_sms_form_valid:
+        return json_response({
+            'success': False,
+            'api_key_error': TelerivetSetupView.get_error_message(outgoing_sms_form, 'api_key'),
+            'project_id_error': TelerivetSetupView.get_error_message(outgoing_sms_form, 'project_id'),
+            'phone_id_error': TelerivetSetupView.get_error_message(outgoing_sms_form, 'phone_id'),
+            'test_phone_number_error': TelerivetSetupView.get_error_message(test_sms_form, 'test_phone_number'),
+        })
+
+    tmp_backend = SQLTelerivetBackend()
+    tmp_backend.set_extra_fields(
+        api_key=outgoing_sms_form.cleaned_data.get('api_key'),
+        project_id=outgoing_sms_form.cleaned_data.get('project_id'),
+        phone_id=outgoing_sms_form.cleaned_data.get('phone_id'),
+    )
+    sms = SMS(
+        phone_number=clean_phone_number(test_sms_form.cleaned_data.get('test_phone_number')),
+        text="This is a test SMS from CommCareHQ."
+    )
+    tmp_backend.send(sms)
+    return json_response({
+        'success': True,
+    })
+
+
+@require_POST
+def create_backend(request, domain):
+    webhook_secret = TelerivetSetupView.get_cached_webhook_secret(request.POST.get('request_token'))
+    values = {
+        'name': request.POST.get('name'),
+        'description': _("My Telerivet Gateway"),
+        'api_key': request.POST.get('api_key'),
+        'project_id': request.POST.get('project_id'),
+        'phone_id': request.POST.get('phone_id'),
+        'webhook_secret': webhook_secret,
+    }
+    form = TelerivetBackendForm(values, domain=domain, backend_id=None)
+    if form.is_valid():
+        with transaction.atomic():
+            backend = SQLTelerivetBackend(
+                backend_type=SQLMobileBackend.SMS,
+                inbound_api_key=webhook_secret,
+                hq_api_id=SQLTelerivetBackend.get_api_id(),
+                is_global=False,
+                domain=domain,
+                name=form.cleaned_data.get('name'),
+                description=form.cleaned_data.get('description')
+            )
+            backend.set_extra_fields(
+                api_key=form.cleaned_data.get('api_key'),
+                project_id=form.cleaned_data.get('project_id'),
+                phone_id=form.cleaned_data.get('phone_id'),
+                webhook_secret=webhook_secret
+            )
+            phone_number = backend.get_phone_number_or_none()
+            if phone_number:
+                backend.description += ' {}'.format(phone_number)
+                backend.reply_to_phone_number = phone_number
+            backend.save()
+            if request.POST.get('set_as_default') == FinalizeGatewaySetupForm.YES:
+                SQLMobileBackendMapping.set_default_domain_backend(domain, backend)
+            return json_response({'success': True})
+
+    name_error = TelerivetSetupView.get_error_message(form, 'name')
+    return json_response({
+        'success': False,
+        'name_error': name_error,
+        'unexpected_error': None if name_error else TelerivetSetupView.unexpected_error,
+    })

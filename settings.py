@@ -334,6 +334,7 @@ HQ_APPS = (
     'corehq.warehouse',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
+    'corehq.apps.translations',
 
     # custom reports
     'custom.bihar',
@@ -561,6 +562,9 @@ CELERY_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 # http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
 # Keep messages in the events queue only for 2 hours
 CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
+
+CELERY_TASK_SERIALIZER = 'json'  # Default value in celery 4.x
+CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # Defaults to ['json'] in celery 4.x.  Remove once pickle is not used.
 
 # websockets config
 WEBSOCKET_URL = '/ws/'

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import langcodes
 from django import forms
 from django.utils.translation import ugettext_lazy
 from django.conf import settings
@@ -25,22 +26,25 @@ class AppTranslationsForm(forms.Form):
         required=False,
         initial='yes',
     )
+    update_resource = forms.MultipleChoiceField(
+        choices=[
+            ('yes', 'Update the resource files'),
+        ],
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+        initial='no',
+    )
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
     source_lang = forms.ChoiceField(label=ugettext_lazy("Source Language"),
-                                    choices=[('en', ugettext_lazy('English')),
-                                             ('hin', ugettext_lazy('Hindi')),
-                                             ('mr', ugettext_lazy('Marathi')),
-                                             ('te', ugettext_lazy('Telugu'))]
+                                    choices=langcodes.get_all_langs_for_select(),
+                                    initial="en"
                                     )
     # Unfortunately transifex api does not provide a way to pull all possible target languages and
     # allow us to just add a checkbox instead of selecting a single/multiple target languages at once
     target_lang = forms.ChoiceField(label=ugettext_lazy("Target Language"),
-                                    choices=[(None, ugettext_lazy('Select Target Language')),
-                                             ('ori', ugettext_lazy('Oriya')),
-                                             ('hin', ugettext_lazy('Hindi')),
-                                             ('mr', ugettext_lazy('Marathi')),
-                                             ('te', ugettext_lazy('Telugu'))],
+                                    choices=([(None, ugettext_lazy('Select Target Language'))] +
+                                             langcodes.get_all_langs_for_select()),
                                     help_text=ugettext_lazy("Leave blank to skip"),
                                     required=False,
                                     )
@@ -78,9 +82,10 @@ class AppTranslationsForm(forms.Form):
             'app_id',
             'version',
             'use_version_postfix',
+            'update_resource',
             'transifex_project_slug',
-            'source_lang',
-            'target_lang',
+            hqcrispy.Field('source_lang', css_class="ko-select2"),
+            hqcrispy.Field('target_lang', css_class="ko-select2"),
             'action',
             'lock_translations',
             'perform_translated_check',

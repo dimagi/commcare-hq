@@ -379,7 +379,7 @@ def resend_confirmation(request):
 
 @transaction.atomic
 def confirm_domain(request, guid=''):
-    with CriticalSection('confirm_domain_' + guid):
+    with CriticalSection(['confirm_domain_' + guid]):
         error = None
         # Did we get a guid?
         if not guid:
