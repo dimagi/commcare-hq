@@ -104,8 +104,8 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     fills.update({'7%-100%': MapColors.RED})
     fills.update({'defaultFill': MapColors.GREY})
 
-    average = "%.2f" % (
-            ((severe_for_all_locations + moderate_for_all_locations) * 100) / (weighed_for_all_locations or 1)
+    average = "{:.2f}".format(
+        ((severe_for_all_locations + moderate_for_all_locations) * 100) / (weighed_for_all_locations or 1)
     )
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(

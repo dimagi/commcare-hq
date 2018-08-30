@@ -96,8 +96,8 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
     fills.update({'38%-100%': MapColors.RED})
     fills.update({'defaultFill': MapColors.GREY})
 
-    average = "%.2f" % (
-            ((severe_total + moderate_total) * 100) / (measured_total or 1)
+    average = "{:.2f}".format(
+        ((severe_total + moderate_total) * 100) / (measured_total or 1)
     )
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(
