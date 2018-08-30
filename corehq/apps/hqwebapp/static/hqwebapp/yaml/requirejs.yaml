@@ -83,7 +83,7 @@ modules:
       - hqwebapp/js/common
     include:
 #      - blazy/blazy
-      - hqwebapp/js/password_validators.ko
+#      - hqwebapp/js/password_validators.ko
       - hqwebapp/js/validators.ko
 #      - intl-tel-input/build/js/intlTelInput.min
 #      - knockout-validation/dist/knockout.validation.min

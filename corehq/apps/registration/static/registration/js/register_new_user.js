@@ -5,7 +5,7 @@ hqDefine("registration/js/register_new_user", [
     //'registration/js/login',    // loads background image
     //'intl-tel-input/build/js/intlTelInput.min',     // provides $.intlTelInput
     'hqwebapp/js/validators.ko',
-    'hqwebapp/js/password_validators.ko',
+    //'hqwebapp/js/password_validators.ko',
 ], function(
     $,
     initialPageData/*,
