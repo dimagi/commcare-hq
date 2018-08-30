@@ -74,6 +74,7 @@
 {% endblock %}
 
 {% block content %}
+{% initial_page_data 'demo_test' demo_test %}
 {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
 {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
 {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
@@ -108,6 +109,20 @@
 
           </div>
         </form>
+
+        {% if not request.user.is_authenticated %}
+            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_test %}
+                <div class="form-bubble form-bubble-purple text-center">
+                    {% blocktrans %}
+                        Want to learn more before signing up?
+                        &nbsp;&nbsp;&nbsp;
+                        <a href="#cta-form-get-demo" id="demo-test-button" target="_blank" data-toggle="modal" class="btn btn-purple">
+                            Get a Demo
+                        </a>
+                    {% endblocktrans %}
+                </div>
+            {% endif %}
+        {% endif %}
       </div>
     </div>
   </div>

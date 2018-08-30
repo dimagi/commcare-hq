@@ -2,6 +2,12 @@
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
 
+    // Demo CTA test
+    var kissmetrics = hqImport('analytix/js/kissmetrix');
+    kissmetrics.identifyTraits({'demo UI': (initial_page_data("demo_test") ? "on" : "off")});
+    $("#demo-test-button").click(function() {
+        kissmetrics.track.event("Get Demo button clicked");
+    });
 
     // Link up with registration form ko model
     var reg = hqImport('registration/js/new_user.ko');
