@@ -40,7 +40,10 @@ def get_task_progress(task):
     error = False
     error_message = ''
     try:
-        info = task.info
+        if not task:
+            info = None
+        else:
+            info = task.info
     except (TypeError, NotImplementedError):
         current = total = percent = None
         logging.exception("No celery result backend?")
