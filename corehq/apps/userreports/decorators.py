@@ -61,7 +61,7 @@ def ucr_context_cache(vary_on=()):
             context = callargs['context']
             prefix = '{}.{}'.format(
                 fn.__name__[:40] + (fn.__name__[40:] and '..'),
-                hashlib.md5(inspect.getsource(fn)).hexdigest()[-8:]
+                hashlib.md5(inspect.getsource(fn).encode('utf-8')).hexdigest()[-8:]
             )
             cache_key = (prefix,) + tuple(callargs[arg_name] for arg_name in vary_on)
             if context.exists_in_cache(cache_key):

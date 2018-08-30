@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 from __future__ import division
 from __future__ import unicode_literals
+
+import pickle
 from datetime import datetime, date, timedelta
 
 from couchdbkit import ResourceNotFound
@@ -9,7 +11,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import SuspiciousOperation
-from django.db.models import Sum
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
     HttpResponseServerError
@@ -1255,7 +1256,7 @@ class DataFileDownloadList(BaseProjectDataView):
         context = super(DataFileDownloadList, self).get_context_data(**kwargs)
         context.update({
             'timezone': get_timezone_for_user(self.request.couch_user, self.domain),
-            'data_files': DataFile.active_objects.filter(domain=self.domain).order_by('filename').all(),
+            'data_files': DataFile.get_all(self.domain),
             'is_admin': self.request.couch_user.is_domain_admin(self.domain),
             'url_base': get_url_base(),
         })
@@ -1269,11 +1270,8 @@ class DataFileDownloadList(BaseProjectDataView):
             )
             return self.get(request, *args, **kwargs)
 
-        aggregate = DataFile.active_objects.filter(domain=self.domain).aggregate(total_size=Sum('content_length'))
-        if (
-            aggregate['total_size'] and
-            aggregate['total_size'] + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL
-        ):
+        total_size = DataFile.get_total_size(self.domain)
+        if total_size and total_size + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL:
             messages.warning(
                 request,
                 _('Uploading this data file would exceed the total allowance of {} GB for this project space. '
@@ -1282,14 +1280,14 @@ class DataFileDownloadList(BaseProjectDataView):
             )
             return self.get(request, *args, **kwargs)
 
-        data_file = DataFile()
-        data_file.domain = self.domain
-        data_file.filename = request.FILES['file'].name
-        data_file.description = request.POST['description']
-        data_file.content_type = request.FILES['file'].content_type
-        data_file.content_length = request.FILES['file'].size
-        data_file.delete_after = datetime.utcnow() + timedelta(hours=int(request.POST['ttl']))
-        data_file.save_blob(request.FILES['file'])
+        data_file = DataFile.save_blob(
+            request.FILES['file'],
+            domain=self.domain,
+            filename=request.FILES['file'].name,
+            description=request.POST['description'],
+            content_type=request.FILES['file'].content_type,
+            delete_after=datetime.utcnow() + timedelta(hours=int(request.POST['ttl'])),
+        )
         messages.success(request, _('Data file "{}" uploaded'.format(data_file.description)))
         return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
 
@@ -1306,7 +1304,7 @@ class DataFileDownloadDetail(BaseProjectDataView):
 
     def get(self, request, *args, **kwargs):
         try:
-            data_file = DataFile.active_objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+            data_file = DataFile.get(self.domain, kwargs['pk'])
             blob = data_file.get_blob()
         except (DataFile.DoesNotExist, NotFound):
             raise Http404
@@ -1318,7 +1316,7 @@ class DataFileDownloadDetail(BaseProjectDataView):
 
     def delete(self, request, *args, **kwargs):
         try:
-            data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+            data_file = DataFile.get(self.domain, kwargs['pk'])
         except DataFile.DoesNotExist:
             raise Http404
         data_file.delete()
@@ -2266,7 +2264,7 @@ class GenerateSchemaFromAllBuildsView(View):
         assert type_ in [CASE_EXPORT, FORM_EXPORT], 'Unrecogized export type {}'.format(type_)
         download = DownloadBase()
         download.set_task(generate_schema_for_all_builds.delay(
-            self.export_cls(type_),
+            pickle.dumps(self.export_cls(type_)),
             request.domain,
             request.POST.get('app_id'),
             request.POST.get('identifier'),

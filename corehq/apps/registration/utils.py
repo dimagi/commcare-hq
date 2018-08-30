@@ -60,7 +60,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
 
 def request_new_domain(request, form, is_new_user=True):
     now = datetime.utcnow()
-    current_user = CouchUser.from_django_user(request.user)
+    current_user = CouchUser.from_django_user(request.user, strict=True)
 
     dom_req = RegistrationRequest()
     if is_new_user:

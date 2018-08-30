@@ -25,7 +25,9 @@ models' attachments to the blob database:
 
    a. The mixin must come before `Document` in the list of base classes.
    b. Add `_migrating_blobs_from_couch = True` to the class.
-   c. Adapt any uses of the `_attachments` property to use `blobs`
+   c. Add `_blobdb_type_code = CODES.<type_code>` to the class, adding
+      a new type code to `corehq.blobs.CODES` if necessary.
+   d. Adapt any uses of the `_attachments` property to use `blobs`
       instead (this is more than a simple find and replace; see
       `corehq.blobs.mixin` for details).
 
@@ -73,26 +75,22 @@ import os
 import traceback
 from abc import abstractmethod
 from base64 import b64encode
-from functools import partial
-from itertools import groupby
 from tempfile import mkdtemp
+from io import open
 
+import six
 from django.conf import settings
 
-from corehq.apps.accounting.models import InvoicePdf
-from corehq.apps.builds.models import CommCareBuild
-from corehq.apps.domain.models import Domain
-from corehq.apps.export import models as exports
-from corehq.apps.ota.models import DemoUserRestore
-from corehq.blobs import get_blob_db, DEFAULT_BUCKET, BlobInfo
+from corehq.apps.domain import SHARED_DOMAIN
+from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.migratingdb import MigratingBlobDB
-from corehq.blobs.mixin import BlobHelper, BlobMeta
-from corehq.blobs.models import BlobMigrationState
+from corehq.blobs.mixin import BlobHelper
+from corehq.blobs.models import BlobMeta, BlobMigrationState
 from corehq.blobs.zipdb import get_export_filename
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
 from corehq.util.doc_processor.couch import (
-    CouchDocumentProvider, doc_type_tuples_to_dict, CouchViewDocumentProvider
+    CouchDocumentProvider, doc_type_tuples_to_dict
 )
 from corehq.util.doc_processor.couch import CouchProcessorProgressLogger
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -102,18 +100,6 @@ from corehq.util.doc_processor.interface import (
 )
 from couchdbkit import ResourceConflict
 from corehq.form_processor.backends.sql.dbaccessors import ReindexAccessor
-
-# models to be migrated
-import corehq.apps.hqmedia.models as hqmedia
-import couchforms.models as xform
-import casexml.apps.case.models as cases
-import corehq.apps.app_manager.models as apps
-from corehq.apps.case_importer.tracking.filestorage import BUCKET as CASE_UPLOAD_BUCKET
-from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
-from couchexport.models import SavedBasicExport
-import corehq.form_processor.models as sql_xform
-import six
-from io import open
 
 MIGRATION_INSTRUCTIONS = """
 There are {total} documents that may have attachments, and they must be
@@ -157,18 +143,15 @@ def encode_content(data):
 
 class BaseDocMigrator(BaseDocProcessor):
 
-    # If true, load attachment content before migrating.
-    load_attachments = False
-
     def __init__(self, slug, couchdb, filename=None, blob_helper=BlobHelper,
-                 complete_migration=True):
+                 get_type_code=lambda doc: None):
         super(BaseDocMigrator, self).__init__()
         self.slug = slug
         self.couchdb = couchdb
         self.dirpath = None
         self.filename = filename
         self.blob_helper = blob_helper
-        self.complete_migration = complete_migration
+        self.get_type_code = get_type_code
         if filename is None:
             self.dirpath = mkdtemp()
             self.filename = os.path.join(self.dirpath, "export.txt")
@@ -184,31 +167,10 @@ class BaseDocMigrator(BaseDocProcessor):
         return True  # ignore
 
     def _prepare_doc(self, doc):
-        if self.load_attachments:
-            obj = self.blob_helper(doc, self.couchdb)
-            doc["_attachments"] = {
-                name: {
-                    "content_type": meta["content_type"],
-                    "content": obj.fetch_attachment(name),
-                }
-                for name, meta in doc["_attachments"].items()
-            }
+        pass
 
     def _backup_doc(self, doc):
-        if self.load_attachments:
-            # make copy with encoded attachments for JSON dump
-            backup_doc = dict(doc)
-            backup_doc["_attachments"] = {
-                name: {
-                    "content_type": meta["content_type"],
-                    "content": encode_content(meta["content"]),
-                }
-                for name, meta in doc["_attachments"].items()
-            }
-        else:
-            backup_doc = doc
-
-        self.backup_file.write('{}\n'.format(json.dumps(backup_doc)))
+        self.backup_file.write('{}\n'.format(json.dumps(doc)))
         self.backup_file.flush()
 
     def process_doc(self, doc):
@@ -231,23 +193,26 @@ class BaseDocMigrator(BaseDocProcessor):
             os.remove(self.filename)
             os.rmdir(self.dirpath)
 
-        if not skipped and self.complete_migration:
+        if not skipped:
             BlobMigrationState.objects.get_or_create(slug=self.slug)[0].save()
 
 
 class CouchAttachmentMigrator(BaseDocMigrator):
 
-    load_attachments = True
+    shared_domain = False
 
     def _do_migration(self, doc):
         attachments = doc.pop("_attachments")
         external_blobs = doc.setdefault("external_blobs", {})
-        obj = self.blob_helper(doc, self.couchdb)
+        obj = self.blob_helper(doc, self.couchdb, self.get_type_code(doc))
         try:
             with obj.atomic_blobs():
                 for name, data in list(six.iteritems(attachments)):
                     if name in external_blobs:
                         continue  # skip attachment already in blob db
+                    if self.shared_domain:
+                        data = data.copy()
+                        data["domain"] = SHARED_DOMAIN
                     obj.put_attachment(name=name, **data)
         except ResourceConflict:
             # Do not migrate document if `atomic_blobs()` fails.
@@ -259,6 +224,33 @@ class CouchAttachmentMigrator(BaseDocMigrator):
 
     def should_process(self, doc):
         return doc.get("_attachments")
+
+    def _prepare_doc(self, doc):
+        obj = self.blob_helper(doc, self.couchdb, self.get_type_code(doc))
+        doc["_attachments"] = {
+            name: {
+                "content_type": meta["content_type"],
+                "content": obj.fetch_attachment(name),
+            }
+            for name, meta in doc["_attachments"].items()
+        }
+
+    def _backup_doc(self, doc):
+        # make copy with encoded attachments for JSON dump
+        backup_doc = dict(doc)
+        backup_doc["_attachments"] = {
+            name: {
+                "content_type": meta["content_type"],
+                "content": encode_content(meta["content"]),
+            }
+            for name, meta in doc["_attachments"].items()
+        }
+        super(CouchAttachmentMigrator, self)._backup_doc(backup_doc)
+
+
+class SharedCouchAttachmentMigrator(CouchAttachmentMigrator):
+
+    shared_domain = True
 
 
 class BlobDbBackendMigrator(BaseDocMigrator):
@@ -282,32 +274,24 @@ class BlobDbBackendMigrator(BaseDocMigrator):
         pass
 
     def _do_migration(self, doc):
-        obj = self.blob_helper(doc, self.couchdb)
-        bucket = obj._blobdb_bucket()
-        if obj.external_blobs != obj.blobs:
-            self.bad_blobs_state += 1
-            super(BlobDbBackendMigrator, self)._backup_doc({
-                "doc_type": obj.doc_type,
-                "doc_id": obj._id,
-                "error": "blobs != external_blobs",
-            })
-        for name, meta in six.iteritems(obj.external_blobs):
-            self.total_blobs += 1
-            try:
-                content = self.db.old_db.get(meta.id, bucket)
-            except NotFound:
-                if not self.db.new_db.exists(meta.id, bucket):
-                    super(BlobDbBackendMigrator, self)._backup_doc({
-                        "doc_type": obj.doc_type,
-                        "doc_id": obj._id,
-                        "blob_identifier": meta.id,
-                        "blob_bucket": bucket,
-                        "error": "not found",
-                    })
-                    self.not_found += 1
-            else:
-                with content:
-                    self.db.copy_blob(content, meta.info, bucket)
+        meta = doc["_obj_not_json"]
+        self.total_blobs += 1
+        try:
+            content = self.db.old_db.get(key=meta.key)
+        except NotFound:
+            if not self.db.new_db.exists(key=meta.key):
+                super(BlobDbBackendMigrator, self)._backup_doc({
+                    "blobmeta_id": meta.id,
+                    "domain": meta.domain,
+                    "type_code": meta.type_code,
+                    "parent_id": meta.parent_id,
+                    "blob_key": meta.key,
+                    "error": "not found",
+                })
+                self.not_found += 1
+        else:
+            with content:
+                self.db.copy_blob(content, key=meta.key)
         return True
 
     def processing_complete(self, skipped):
@@ -323,158 +307,41 @@ class BlobDbBackendMigrator(BaseDocMigrator):
                   "the migration logs to find them."
                   .format(count=self.bad_blobs_state))
 
-    def should_process(self, doc):
-        return self.blob_helper.get_external_blobs(doc)
-
 
 class BlobDbBackendExporter(BaseDocProcessor):
 
-    def __init__(self, slug, domain, couchdb, blob_helper=BlobHelper):
-        from corehq.blobs.zipdb import ZipBlobDB
-        self.slug = slug
-        self.blob_helper = blob_helper
-        self.db = ZipBlobDB(self.slug, domain)
-        self.total_blobs = 0
-        self.not_found = 0
-        self.domain = domain
-        self.couchdb = couchdb
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.db.close()
-
-    def process_doc(self, doc):
-        obj = self.blob_helper(doc, self.couchdb)
-        bucket = obj._blobdb_bucket()
-        assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
-        from_db = get_blob_db()
-        for name, meta in six.iteritems(obj.blobs):
-            self.total_blobs += 1
-            try:
-                content = from_db.get(meta.id, bucket)
-            except NotFound:
-                self.not_found += 1
-            else:
-                with content:
-                    self.db.copy_blob(content, meta.info, bucket)
-        return True
-
-    def processing_complete(self, skipped):
-        if self.not_found:
-            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
-
-    def should_process(self, doc):
-        return self.blob_helper.get_external_blobs(doc)
-
-
-class SqlObjectExporter(object):
     def __init__(self, slug, domain):
         from corehq.blobs.zipdb import ZipBlobDB
         self.slug = slug
         self.db = ZipBlobDB(self.slug, domain)
         self.total_blobs = 0
         self.not_found = 0
-        self.domain = domain
-
-    def __enter__(self):
-        pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.db.close()
         self.processing_complete()
 
-    def process_object(self, object):
-        pass
+    def process_object(self, meta):
+        from_db = get_blob_db()
+        self.total_blobs += 1
+        try:
+            content = from_db.get(key=meta.key)
+        except NotFound:
+            self.not_found += 1
+        else:
+            with content:
+                self.db.copy_blob(content, key=meta.key)
+        return True
 
     def processing_complete(self):
         if self.not_found:
-            print("{} {} objects processed, {} blobs not found".format(
-                self.total_blobs, self.slug, self.not_found
-            ))
-        else:
-            print("{} {} objects processed".format(self.total_blobs, self.slug))
+            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
 
 
-class SqlFormAttachmentExporter(SqlObjectExporter):
-    def process_object(self, attachment):
-        from_db = get_blob_db()
-        bucket = attachment.blobdb_bucket()
-        blob_id = attachment.blob_id
-        info = BlobInfo(identifier=blob_id, length=attachment.content_length,
-                        digest="md5=" + attachment.md5)
-        self.total_blobs += 1
-        try:
-            content = from_db.get(blob_id, bucket)
-        except NotFound:
-            self.not_found += 1
-        else:
-            with content:
-                self.db.copy_blob(content, info, bucket)
+class BlobMetaReindexAccessor(ReindexAccessor):
 
-
-class DemoUserRestoreExporter(SqlObjectExporter):
-    def process_object(self, object):
-        blob_id = object.restore_blob_id
-        info = BlobInfo(identifier=blob_id, length=object.content_length, digest=None)
-        self.total_blobs += 1
-        db = get_blob_db()
-        try:
-            content = db.get(blob_id)
-        except NotFound:
-            self.not_found += 1
-        else:
-            with content:
-                self.db.copy_blob(content, info, DEFAULT_BUCKET)
-
-
-class SqlBlobHelper(object):
-    """Adapt a SQL model object to look like a BlobHelper
-
-    This is currently built on the assumtion that the SQL model only
-    references a single blob, and the blob name is not used.
-    """
-
-    def __init__(self, obj, blob_id, bucket):
-        self.obj = obj
-        self.blobs = {"name-ignored": BlobMeta(id=blob_id)}
-        self.external_blobs = self.blobs
-        self._blobdb_bucket = lambda: bucket
-
-    @property
-    def _id(self):
-        return self.obj.id
-
-    @property
-    def doc_type(self):
-        return type(self.obj).__name__
-
-
-def sql_blob_helper(id_attr, bucket):
-    get_bucket = bucket if hasattr(bucket, "__call__") else (lambda obj: bucket)
-
-    def blob_helper(doc, couchdb_ignored=None):
-        """This has the same signature as BlobHelper
-
-        :returns: Object having parts of BlobHelper interface needed
-        for blob migrations (currently only used by BlobDbBackendMigrator).
-        """
-        obj = doc["_obj_not_json"]
-        blob_id = getattr(obj, id_attr)
-        bucket = get_bucket(obj)
-        return SqlBlobHelper(obj, blob_id, bucket)
-
-    blob_helper.id_attr = id_attr
-
-    # HACK this is only ever used to determine if there are blobs
-    # to migrate. For SQL objects there always will be.
-    blob_helper.get_external_blobs = lambda doc: True
-
-    return staticmethod(blob_helper)
-
-
-class PkReindexAccessor(ReindexAccessor):
-    @property
-    def id_field(self):
-        return 'id'
+    model_class = BlobMeta
+    id_field = 'id'
 
     def get_doc(self, *args, **kw):
         # only used for retries; BlobDbBackendMigrator doesn't retry
@@ -482,26 +349,6 @@ class PkReindexAccessor(ReindexAccessor):
 
     def doc_to_json(self, obj):
         return {"_id": obj.id, "_obj_not_json": obj}
-
-
-class CaseUploadFileMetaReindexAccessor(PkReindexAccessor):
-    model_class = CaseUploadFileMeta
-    blob_helper = sql_blob_helper("identifier", CASE_UPLOAD_BUCKET)
-
-
-class CaseAttachmentSQLReindexAccessor(PkReindexAccessor):
-    model_class = sql_xform.CaseAttachmentSQL
-    blob_helper = sql_blob_helper("blob_id", lambda obj: obj.blobdb_bucket())
-
-
-class XFormAttachmentSQLReindexAccessor(PkReindexAccessor):
-    model_class = sql_xform.XFormAttachmentSQL
-    blob_helper = sql_blob_helper("blob_id", lambda obj: obj.blobdb_bucket())
-
-
-class DemoUserRestoreReindexAccessor(PkReindexAccessor):
-    model_class = DemoUserRestore
-    blob_helper = sql_blob_helper("restore_blob_id", DEFAULT_BUCKET)
 
 
 class Migrator(object):
@@ -514,8 +361,15 @@ class Migrator(object):
         first_type = (first_type[0] if isinstance(first_type, tuple) else first_type)
         self.couchdb = first_type.get_db() if hasattr(first_type, "get_db") else None
 
-        sorted_types = sorted(doc_type_tuples_to_dict(self.doc_types))
+        doc_types_map = doc_type_tuples_to_dict(self.doc_types)
+        sorted_types = sorted(doc_types_map)
         self.iteration_key = "{}-blob-migration/{}".format(self.slug, " ".join(sorted_types))
+
+        def get_type_code(doc):
+            if doc_types_map:
+                return doc_types_map[doc["doc_type"]]._blobdb_type_code
+            return None
+        self.get_type_code = get_type_code
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
         processor = DocumentProcessorController(
@@ -529,7 +383,12 @@ class Migrator(object):
         return processor.run()
 
     def _get_doc_migrator(self, filename):
-        return self.doc_migrator_class(self.slug, self.couchdb, filename)
+        return self.doc_migrator_class(
+            self.slug,
+            self.couchdb,
+            filename,
+            get_type_code=self.get_type_code,
+        )
 
     def _get_document_provider(self):
         return CouchDocumentProvider(self.iteration_key, self.doc_types)
@@ -538,87 +397,24 @@ class Migrator(object):
         return CouchProcessorProgressLogger(self.doc_types)
 
 
-class SqlMigrator(Migrator):
+class BackendMigrator(Migrator):
 
-    def __init__(self, slug, reindexer, doc_migrator_class):
+    def __init__(self, slug):
+        reindexer = BlobMetaReindexAccessor()
         types = [reindexer.model_class]
         assert not hasattr(types[0], "get_db"), types[0]  # not a couch model
-        doc_migrator = partial(doc_migrator_class, blob_helper=reindexer.blob_helper)
-        super(SqlMigrator, self).__init__(slug, types, doc_migrator)
+        super(BackendMigrator, self).__init__(slug, types, BlobDbBackendMigrator)
         self.reindexer = reindexer
 
     def _get_document_provider(self):
         return SqlDocumentProvider(self.iteration_key, self.reindexer)
 
 
-class MultiDbMigrator(object):
+class ExportByDomain(object):
 
-    def __init__(self, slug, couch_types, sql_reindexers, doc_migrator_class):
+    def __init__(self, slug):
         self.slug = slug
-        self.migrators = migrators = []
-        doc_migrator = partial(doc_migrator_class, complete_migration=False)
-
-        def db_key(doc_type):
-            if isinstance(doc_type, tuple):
-                doc_type = doc_type[1]
-            return doc_type.get_db().dbname
-
-        for key, types in groupby(sorted(couch_types, key=db_key), key=db_key):
-            migrators.append(Migrator(slug, list(types), doc_migrator))
-
-        for rex in sql_reindexers:
-            migrators.append(SqlMigrator(slug, rex(), doc_migrator))
-
-    def migrate(self, filename, *args, **kw):
-        def filen(n):
-            return None if filename is None else "{}.{}".format(filename, n)
-        migrated = 0
-        skipped = 0
-        for n, item in enumerate(self.migrators):
-            one_migrated, one_skipped = item.migrate(filen(n), *args, **kw)
-            migrated += one_migrated
-            skipped += one_skipped
-            print("\n")
-        if not skipped:
-            BlobMigrationState.objects.get_or_create(slug=self.slug)[0].save()
-        return migrated, skipped
-
-
-class ExportByDomain(Migrator):
-    domain = None
-
-    def by_domain(self, domain):
-        self.domain = domain
-        self.iteration_key = self.iteration_key + '/domain=' + self.domain
-
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
-        if not self.domain:
-            raise MigrationError("Must specify domain")
-
-        return super(ExportByDomain, self).migrate(
-            filename=filename, reset=reset, max_retry=max_retry, chunk_size=chunk_size
-        )
-
-    def _get_document_provider(self):
-        return CouchDocumentProvider(self.iteration_key, self.doc_types, domain=self.domain)
-
-    def _get_doc_migrator(self, filename):
-        return self.doc_migrator_class(self.slug, self.domain, self.couchdb)
-
-
-class ExportMultimediaByDomain(ExportByDomain):
-    def _get_document_provider(self):
-        return CouchViewDocumentProvider(
-            self.couchdb, self.iteration_key,
-            "hqmedia/by_domain", view_keys=[self.domain]
-        )
-
-
-class SqlModelMigrator(Migrator):
-    def __init__(self, slug, model_class, migrator_class):
-        self.slug = slug
-        self.model_class = model_class
-        self.migrator_class = migrator_class
+        self.domain = None
 
     def by_domain(self, domain):
         self.domain = domain
@@ -635,10 +431,11 @@ class SqlModelMigrator(Migrator):
                 "To re-run the export use 'reset'".format(self.slug)
             )
 
-        migrator = self.migrator_class(self.slug, self.domain)
+        migrator = BlobDbBackendExporter(self.slug, self.domain)
 
         with migrator:
-            builders = get_all_model_iterators_builders_for_domain(self.model_class, self.domain, limit_to_db)
+            builders = get_all_model_iterators_builders_for_domain(
+                BlobMeta, self.domain, limit_to_db)
             for model_class, builder in builders:
                 for iterator in builder.iterators():
                     for obj in iterator:
@@ -650,78 +447,18 @@ class SqlModelMigrator(Migrator):
 
 
 MIGRATIONS = {m.slug: m for m in [
-    MultiDbMigrator("migrate_backend",
-        couch_types=[
-            apps.Application,
-            apps.LinkedApplication,
-            apps.RemoteApp,
-            #SavedAppBuild, # do we need to migrate these? (none in couch on prod)
-            ("Application-Deleted", apps.Application),
-            ("RemoteApp-Deleted", apps.RemoteApp),
-            SavedBasicExport,
-            hqmedia.CommCareAudio,
-            hqmedia.CommCareImage,
-            hqmedia.CommCareVideo,
-            hqmedia.CommCareMultimedia,
-            xform.XFormInstance,
-            ("XFormInstance-Deleted", xform.XFormInstance),
-            xform.XFormArchived,
-            xform.XFormDeprecated,
-            xform.XFormDuplicate,
-            xform.XFormError,
-            xform.SubmissionErrorLog,
-            ("HQSubmission", xform.XFormInstance),
-            cases.CommCareCase,
-            ('CommCareCase-deleted', cases.CommCareCase),
-            ('CommCareCase-Deleted', cases.CommCareCase),
-            ('CommCareCase-Deleted-Deleted', cases.CommCareCase),
-            exports.CaseExportInstance,
-            exports.FormExportInstance,
-        ],
-        sql_reindexers=[
-            CaseUploadFileMetaReindexAccessor,
-            CaseAttachmentSQLReindexAccessor,
-            XFormAttachmentSQLReindexAccessor,
-            DemoUserRestoreReindexAccessor,
-        ],
-        doc_migrator_class=BlobDbBackendMigrator,
-    ),
+    BackendMigrator("migrate_backend"),
+    # Kept for reference when writing new migrations.
+    # Migrator("applications", [
+    #    apps.Application,
+    #    apps.RemoteApp,
+    #    ("Application-Deleted", apps.Application),
+    #    ("RemoteApp-Deleted", apps.RemoteApp),
+    # ], CouchAttachmentMigrator),
 ]}
 
 EXPORTERS = {m.slug: m for m in [
-    ExportByDomain("applications", [
-        apps.Application,
-        apps.RemoteApp,
-        ("Application-Deleted", apps.Application),
-        ("RemoteApp-Deleted", apps.RemoteApp),
-    ], BlobDbBackendExporter),
-    ExportMultimediaByDomain("multimedia", [
-        hqmedia.CommCareMultimedia,
-    ], BlobDbBackendExporter),
-    ExportByDomain("couch_xforms", [
-        xform.XFormInstance,
-        ("XFormInstance-Deleted", xform.XFormInstance),
-        xform.XFormArchived,
-        xform.XFormDeprecated,
-        xform.XFormDuplicate,
-        xform.XFormError,
-        xform.SubmissionErrorLog,
-        ("HQSubmission", xform.XFormInstance),
-    ], BlobDbBackendExporter),
-    SqlModelMigrator(
-        "sql_xforms",
-        sql_xform.XFormAttachmentSQL,
-        SqlFormAttachmentExporter
-    ),
-    ExportByDomain("saved_exports", [
-        exports.CaseExportInstance,
-        exports.FormExportInstance,
-    ], BlobDbBackendExporter),
-    SqlModelMigrator(
-        "demo_user_restores",
-        DemoUserRestore,
-        DemoUserRestoreExporter
-    )
+    ExportByDomain("all_blobs"),
 ]}
 
 
