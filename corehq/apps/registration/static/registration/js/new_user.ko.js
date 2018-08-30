@@ -1,20 +1,29 @@
-/* global $ */
-/* global ko */
-/* global _ */
-/* global RMI */
-/* global django */
-
 /* New User Registration Form Model
  * This model is for validating and stepping through the new user registration form
  */
-
-hqDefine('registration/js/new_user.ko', function () {
+hqDefine('registration/js/new_user.ko', [
+    'jquery',
+    'jquery.rmi/jquery.rmi',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/appcues',
+    'analytix/js/kissmetrix',
+    'nic_compliance/js/encoder',
+], function (
+    $,
+    RMI,
+    ko,
+    _,
+    initialPageData,
+    _appcues,
+    _kissmetrics,
+    hexParser
+) {
     'use strict';
     var module = {};
 
-    var _private = {},
-        _appcues = hqImport('analytix/js/appcues'),
-        _kissmetrics = hqImport('analytix/js/kissmetrix');
+    var _private = {};
 
     _private.rmiUrl = null;
     _private.csrf = null;
@@ -113,7 +122,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.fullName = ko.observable(defaults.full_name)
             .extend({
                 required: {
-                    message: django.gettext("Please enter your name."),
+                    message: gettext("Please enter your name."),
                     params: true,
                 },
             });
@@ -122,7 +131,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.email = ko.observable()
             .extend({
                 required: {
-                    message: django.gettext("Please specify an email."),
+                    message: gettext("Please specify an email."),
                     params: true,
                 },
             })
@@ -164,7 +173,7 @@ hqDefine('registration/js/new_user.ko', function () {
             self.email(defaults.email);
         }
         self.isEmailValidating = ko.observable(false);
-        self.validatingEmailMsg = ko.observable(django.gettext("Checking email..."));
+        self.validatingEmailMsg = ko.observable(gettext("Checking email..."));
         self.emailDelayed.isValidating.subscribe(function (isValidating) {
             self.isEmailValidating(isValidating && self.email.isValid());
             _private.resetEmailFeedback(isValidating);
@@ -174,7 +183,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.password = ko.observable(defaults.password)
             .extend({
                 required: {
-                    message: django.gettext("Please specify a password."),
+                    message: gettext("Please specify a password."),
                     params: true,
                 },
             });
@@ -194,7 +203,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.projectName = ko.observable(defaults.project_name)
             .extend({
                 required: {
-                    message: django.gettext("Please specify a project name."),
+                    message: gettext("Please specify a project name."),
                     params: true,
                 },
             });
@@ -211,7 +220,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.personaOther = ko.observable()
             .extend({
                 required: {
-                    message: django.gettext("Please specify."),
+                    message: gettext("Please specify."),
                     params: true,
                 },
             });
@@ -252,8 +261,8 @@ hqDefine('registration/js/new_user.ko', function () {
 
         var _getDataForSubmission = function () {
             var password = self.password();
-            if (typeof(hex_parser) !== 'undefined') {
-                password = (new hex_parser()).encode(self.password());
+            if (initialPageData.get("implement_password_obfuscation")) {
+                password = (hexParser()).encode(self.password());
             }
             var data = {
                 full_name: self.fullName(),
@@ -310,7 +319,7 @@ hqDefine('registration/js/new_user.ko', function () {
                 return;
             }
             _getFormStepUi(self.currentStep())
-                .hide("slide", {}, 300, function () {
+                .hide(300, function () {
                     _getFormStepUi(_nextStep).fadeIn(500);
                     self.currentStep(_nextStep);
                 });
@@ -322,7 +331,7 @@ hqDefine('registration/js/new_user.ko', function () {
                 return;
             }
             _getFormStepUi(self.currentStep())
-                .hide("slide", {direction: "right"}, 300, function () {
+                .hide(300, function () {
                     _getFormStepUi(_prevStep).fadeIn(500);
                     self.currentStep(_prevStep);
                 });
