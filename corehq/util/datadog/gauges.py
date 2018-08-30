@@ -108,7 +108,7 @@ class _DatadogGauge(object):
         self.run_every = run_every
 
     def periodic_task(self):
-        @periodic_task(serializer='pickle', queue='background_queue', run_every=self.run_every,
+        @periodic_task('background_queue', run_every=self.run_every,
                        acks_late=True, ignore_result=True)
         @wraps(self.fn)
         def inner(*args, **kwargs):

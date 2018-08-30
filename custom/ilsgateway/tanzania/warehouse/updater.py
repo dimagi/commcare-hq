@@ -259,7 +259,7 @@ def populate_report_data(start_date, end_date, domain, runner, strict=True):
     runner.save()
 
 
-@task(serializer='pickle', queue='logistics_background_queue')
+@task(queue='logistics_background_queue')
 def process_facility_warehouse_data(facility, start_date, end_date, runner=None):
     """
     process all the facility-level warehouse tables
@@ -480,7 +480,7 @@ def get_non_archived_facilities_below(location, end_date):
                         created_at__lt=end_date))
 
 
-@task(serializer='pickle', queue='logistics_background_queue')
+@task(queue='logistics_background_queue')
 def process_non_facility_warehouse_data(location, start_date, end_date, runner=None, strict=True):
     facs = get_non_archived_facilities_below(location, end_date)
 

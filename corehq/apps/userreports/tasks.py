@@ -76,7 +76,7 @@ def _build_indicators(config, document_store, relevant_ids):
             adapter.best_effort_save(doc)
 
 
-@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
 def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
@@ -98,7 +98,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
         _iteratively_build_table(config, limit=limit)
 
 
-@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
 def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
@@ -116,7 +116,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
         _iteratively_build_table(config, in_place=True)
 
 
-@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def resume_building_indicators(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
@@ -181,7 +181,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
         adapter.after_table_build()
 
 
-@task(serializer='pickle', queue=UCR_CELERY_QUEUE)
+@task(queue=UCR_CELERY_QUEUE)
 def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
@@ -233,13 +233,13 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
     return objects
 
 
-@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
 def delete_data_source_task(domain, config_id):
     from corehq.apps.userreports.views import delete_data_source_shared
     delete_data_source_shared(domain, config_id)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE
 )
 def run_queue_async_indicators_task():
@@ -314,7 +314,7 @@ def _get_config(config_id):
     return _get_config_by_id(config_id)
 
 
-@task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
@@ -452,12 +452,12 @@ def _build_async_indicators(indicator_doc_ids):
         )
 
 
-@task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def save_document(doc_ids):
     build_async_indicators(doc_ids)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(minute="*/5"),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )

@@ -14,7 +14,7 @@ from django.conf import settings
 logger = get_task_logger(__name__)
 
 
-@periodic_task(serializer='pickle', queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='2'),
+@periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='2'),
                acks_late=True, ignore_result=True)
 def build_last_month_MALT():
     def _last_month_datespan():
@@ -39,7 +39,7 @@ def build_last_month_MALT():
     )
 
 
-@periodic_task(serializer='pickle', queue='background_queue', run_every=crontab(hour=2, minute=0, day_of_week='*'),
+@periodic_task(queue='background_queue', run_every=crontab(hour=2, minute=0, day_of_week='*'),
                ignore_result=True)
 def update_current_MALT():
     today = datetime.date.today()
@@ -47,7 +47,7 @@ def update_current_MALT():
     MALTTableGenerator([this_month]).build_table()
 
 
-@periodic_task(serializer='pickle', queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='3'),
+@periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='3'),
                acks_late=True, ignore_result=True)
 def build_last_month_GIR():
     def _last_month_datespan():
