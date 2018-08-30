@@ -126,6 +126,7 @@ class CcsRecordMonthly(models.Model):
     num_pnc_visits = models.SmallIntegerField(blank=True, null=True)
     last_date_thr = models.DateField(blank=True, null=True)
     num_anc_complete = models.SmallIntegerField(blank=True, null=True)
+    opened_on = models.DateTimeField(blank=True, null=True)
 
     class Meta(object):
         managed = False
