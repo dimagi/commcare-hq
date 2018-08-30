@@ -7,7 +7,7 @@ from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStra
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCaseSQL
-
+from corehq import toggles
 
 class CaseDbCacheSQL(AbstractCaseDbCache):
     case_model_classes = (CommCareCaseSQL,)
@@ -53,4 +53,5 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
         return extensions_to_close
 
     def post_process_case(self, case, xform):
-        self.case_update_strategy(case).reconcile_transactions_if_necessary(xform)
+        if toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(case.domain, toggles.NAMESPACE_DOMAIN):
+            self.case_update_strategy(case).reconcile_transactions_if_necessary(xform)

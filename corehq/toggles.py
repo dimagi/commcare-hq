@@ -1603,3 +1603,10 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
+    'sort_out_of_order_form_submissions_sql',
+    'Sort out of order form submissions in the SQL update strategy',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
