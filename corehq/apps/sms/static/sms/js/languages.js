@@ -9,7 +9,7 @@ hqDefine('sms/js/languages',[
         var edit = true;
         var validate = true;
         var SupportedLanguages = supportedLanguages.SupportedLanguages;
-        var sl = new SupportedLanguages({
+        var sl = SupportedLanguages({
             langs: langs,
             saveURL: saveURL,
             edit: edit,
