@@ -86,7 +86,7 @@ modules:
 #      - hqwebapp/js/password_validators.ko
       - hqwebapp/js/validators.ko
 #      - intl-tel-input/build/js/intlTelInput.min
-#      - knockout-validation/dist/knockout.validation.min
+      - knockout-validation/dist/knockout.validation.min
 #      - registration/js/login
 #      - registration/js/new_user.ko
 #      - registration/js/password
