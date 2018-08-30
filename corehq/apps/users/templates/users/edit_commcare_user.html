@@ -11,9 +11,7 @@
         <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
         <script src="{% static 'registration/js/password.js' %}"></script>
     {% endif %}
-    {% if implement_password_obfuscation %}
-        {% include "nic_compliance/password_encoder.html" %}
-    {% endif %}
+    <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
     <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
     <script src="{% static 'users/js/edit_commcare_user.js' %}"></script>
 {% endblock %}
@@ -22,6 +20,7 @@
     {% initial_page_data "couch_user_id" couch_user.user_id %}
     {% initial_page_data "couch_user_username" couch_user.username %}
     {% initial_page_data "hide_password_feedback" hide_password_feedback %}
+    {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
     {% initial_page_data "is_currently_logged_in_user" is_currently_logged_in_user %}
     {% initial_page_data "path" request.path %}
     {% if couch_user.is_demo_user %}
