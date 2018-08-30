@@ -33,7 +33,7 @@ CELERY_REMINDERS_QUEUE = "reminder_queue"
 
 
 if not settings.REMINDERS_QUEUE_ENABLED:
-    @periodic_task(serializer='pickle', run_every=timedelta(minutes=1),
+    @periodic_task(run_every=timedelta(minutes=1),
         queue=settings.CELERY_PERIODIC_QUEUE)
     def fire_reminders():
         CaseReminderHandler.fire_reminders()

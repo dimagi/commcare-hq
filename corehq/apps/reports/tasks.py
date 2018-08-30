@@ -91,7 +91,7 @@ def send_delayed_report(report_id):
         send_report.delay(report_id)
 
 
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
     try:
@@ -100,7 +100,7 @@ def send_report(notification_id):
         pass
 
 
-@task(serializer='pickle', queue='send_report_throttled', ignore_result=True)
+@task(queue='send_report_throttled', ignore_result=True)
 def send_report_throttled(notification_id):
     send_report(notification_id)
 
@@ -123,7 +123,7 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
     return cache_file_to_be_served(Temp(tmp_path), FakeCheckpoint(domain), download_id, format, filename)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
@@ -132,7 +132,7 @@ def daily_reports():
         send_delayed_report(report_id)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
@@ -141,7 +141,7 @@ def weekly_reports():
         send_delayed_report(report_id)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
@@ -150,12 +150,12 @@ def monthly_reports():
         send_delayed_report(report_id)
 
 
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
+@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
 def rebuild_export_async(config, schema):
     rebuild_export(config, schema)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
+@periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
     results = DomainES().fields(["name", "_id", "cp_last_updated"]).scroll()
     all_stats = all_domain_stats()
@@ -200,7 +200,7 @@ def is_app_active(app_id, domain):
     return app_has_been_submitted_to_in_last_30_days(domain, app_id)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
+@periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
 def apps_update_calculated_properties():
     es = get_es_new()
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}
@@ -210,7 +210,7 @@ def apps_update_calculated_properties():
         es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": props})
 
 
-@task(serializer='pickle', bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+@task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                       request_data, once, cleaned_data):
     """
@@ -295,7 +295,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
             self.retry(exc=er)
 
 
-@task(serializer='pickle', ignore_result=True)
+@task(ignore_result=True)
 def export_all_rows_task(ReportClass, report_state, recipient_list=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)

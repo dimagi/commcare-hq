@@ -18,7 +18,7 @@ ASYNC_RESTORE_SENT = "SENT"
 SYNCLOG_RETENTION_DAYS = 9 * 7  # 63 days
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="2", minute="0", day_of_week="1"),
+@periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="1"),
                queue='background_queue')
 def update_cleanliness_flags():
     """
@@ -27,7 +27,7 @@ def update_cleanliness_flags():
     set_cleanliness_flags_for_all_domains(force_full=False)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="4", minute="0", day_of_month="5"),
+@periodic_task(run_every=crontab(hour="4", minute="0", day_of_month="5"),
                queue='background_queue')
 def force_update_cleanliness_flags():
     """
@@ -39,7 +39,7 @@ def force_update_cleanliness_flags():
     set_cleanliness_flags_for_all_domains(force_full=True)
 
 
-@task(serializer='pickle', queue=ASYNC_RESTORE_QUEUE)
+@task(queue=ASYNC_RESTORE_QUEUE)
 def get_async_restore_payload(restore_config):
     """Process an async restore
     """
@@ -73,7 +73,7 @@ def update_celery_state(sender=None, body=None, **kwargs):
     backend.store_result(body['id'], None, ASYNC_RESTORE_SENT)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour="1", minute="0"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )

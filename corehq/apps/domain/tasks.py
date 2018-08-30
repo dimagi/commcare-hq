@@ -60,7 +60,7 @@ def incomplete_domains_to_email():
     return email_domains
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
     queue='background_queue'
 )
@@ -102,7 +102,7 @@ def incomplete_self_started_domains():
     return email_domains
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
     queue='background_queue',
 )
