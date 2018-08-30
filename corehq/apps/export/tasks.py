@@ -36,7 +36,7 @@ from six.moves import filter
 logger = logging.getLogger('export_migration')
 
 
-@task(queue=EXPORT_DOWNLOAD_QUEUE)
+@task(serializer='pickle', queue=EXPORT_DOWNLOAD_QUEUE)
 def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60):
     """
     :param expiry:  Time period for the export to be available for download in minutes
