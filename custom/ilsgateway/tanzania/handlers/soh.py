@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 from re import findall
-from strop import maketrans
 
 from custom.ilsgateway.slab.messages import REMINDER_TRANS, SOH_OVERSTOCKED
 from custom.ilsgateway.tanzania.handlers.generic_stock_report_handler import GenericStockReportHandler
@@ -38,6 +37,8 @@ def parse_report(val):
     >>> parse_report("randomextradata zi1O co2O la3O randomextradata")
     [('zi', 10), ('co', 20), ('la', 30)]
     """
+
+    from strop import maketrans
 
     def _cleanup(s):
         return six.text_type(s).encode('utf-8')
