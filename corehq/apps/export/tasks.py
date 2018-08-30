@@ -212,7 +212,7 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
     inferred_schema.save()
 
 
-@task(queue='background_queue', bind=True)
+@task(serializer='pickle', queue='background_queue', bind=True)
 def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier):
     schema_cls.generate_schema_from_builds(
         domain,
