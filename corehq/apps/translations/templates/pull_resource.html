@@ -1,7 +1,7 @@
 {% extends 'hqwebapp/two_column.html' %}
 {% load crispy_forms_tags %}
-{% load i18n %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% requirejs_main "hqwebapp/js/widgets" %}
 
@@ -13,9 +13,9 @@
             </span>
         </p>
     {% else %}
-        <form class="form form-horizontal" name="product" method="post">
-            <legend>{% trans "ICDS App Translations" %}</legend>
-            {% crispy translations_form %}
+        <form class="form form-horizontal" name="product" method="post" enctype="multipart/form-data">
+            <legend>{% trans "Pull Resource" %}</legend>
+            {% crispy pull_resource_form %}
         </form>
     {% endif %}
 {% endblock %}

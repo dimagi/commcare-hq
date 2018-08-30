@@ -26,7 +26,7 @@ import logging
 from django.conf import settings
 from email_validator import validate_email, EmailNotValidError
 from corehq.toggles import deterministic_random
-from corehq.util.decorators import old_analytics_task, analytics_task
+from corehq.util.decorators import analytics_task
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.utils import (
     count_by_response_code,
@@ -242,11 +242,6 @@ def _send_hubspot_form_request(url, data):
     return requests.post(url, data=data)
 
 
-@old_analytics_task()
-def update_hubspot_properties(webuser, properties):
-    update_hubspot_properties_v2(webuser, properties)
-
-
 @analytics_task()
 def update_hubspot_properties_v2(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
@@ -285,19 +280,9 @@ def track_web_user_registration_hubspot(request, web_user, properties):
     )
 
 
-@old_analytics_task()
-def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
-    _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
-
-
 @analytics_task()
 def track_user_sign_in_on_hubspot_v2(webuser, hubspot_cookie, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
-
-
-@old_analytics_task()
-def track_built_app_on_hubspot(webuser):
-    track_built_app_on_hubspot_v2(webuser)
 
 
 @analytics_task()
@@ -306,11 +291,6 @@ def track_built_app_on_hubspot_v2(webuser):
     if vid:
         # Only track the property if the contact already exists.
         _track_on_hubspot(webuser, {'built_app': True})
-
-
-@old_analytics_task()
-def track_confirmed_account_on_hubspot(webuser):
-    track_confirmed_account_on_hubspot_v2(webuser)
 
 
 @analytics_task()
@@ -344,13 +324,6 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
         )
 
 
-@old_analytics_task()
-def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta,
-                           extra_fields=None):
-    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
-                          extra_fields=extra_fields)
-
-
 @analytics_task()
 def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
                               extra_fields=None):
@@ -358,11 +331,6 @@ def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
     web_user = WebUser.get_by_user_id(web_user_id) if isinstance(web_user_id, six.string_types) else web_user_id
     _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
-
-
-@old_analytics_task()
-def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
-    track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta)
 
 
 @analytics_task()
@@ -373,22 +341,12 @@ def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, hubspot_cookie, meta, extra_fields=ab)
 
 
-@old_analytics_task()
-def track_job_candidate_on_hubspot(user_email):
-    track_job_candidate_on_hubspot_v2(user_email)
-
-
 @analytics_task()
 def track_job_candidate_on_hubspot_v2(user_email):
     properties = {
         'job_candidate': True
     }
     _track_on_hubspot_by_email(user_email, properties=properties)
-
-
-@old_analytics_task()
-def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
-    track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta)
 
 
 @analytics_task()
@@ -421,11 +379,6 @@ def track_workflow(email, event, properties=None):
         _track_workflow_task_v2.delay(email, event, properties, timestamp)
 
 
-@old_analytics_task()
-def _track_workflow_task(email, event, properties=None, timestamp=0):
-    _track_workflow_task_v2(email, event, properties, timestamp)
-
-
 @analytics_task()
 def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
     def _no_nonascii_unicode(value):
@@ -445,11 +398,6 @@ def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
         _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
         # TODO: Consider adding some better error handling for bad/failed requests.
         _raise_for_urllib3_response(res)
-
-
-@old_analytics_task()
-def identify(email, properties):
-    identify_v2(email, properties)
 
 
 @analytics_task()
