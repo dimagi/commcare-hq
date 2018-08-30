@@ -100,7 +100,11 @@ def get_task_status(task, is_multiple_download_task=False):
     context_error = None
     is_ready = False
     failed = False
-    if is_multiple_download_task:
+    if not task:
+        progress = get_task_progress(None)
+        context_result = False
+        context_error = []
+    elif is_multiple_download_task:
         if task.ready():
             context_result, context_error = _get_download_context_multiple_tasks(task)
         progress = get_multiple_task_progress(task)
@@ -124,7 +128,7 @@ def get_task_status(task, is_multiple_download_task=False):
     def progress_complete():
         return (
             getattr(settings, 'CELERY_ALWAYS_EAGER', False) or
-            progress.percent == 100 and
+            progress and progress.percent == 100 and
             not progress.error
         )
 
