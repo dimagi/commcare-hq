@@ -319,7 +319,7 @@ hqDefine('registration/js/new_user.ko', [
                 return;
             }
             _getFormStepUi(self.currentStep())
-                .hide("slide", {}, 300, function () {
+                .hide(300, function () {
                     _getFormStepUi(_nextStep).fadeIn(500);
                     self.currentStep(_nextStep);
                 });
@@ -331,7 +331,7 @@ hqDefine('registration/js/new_user.ko', [
                 return;
             }
             _getFormStepUi(self.currentStep())
-                .hide("slide", {direction: "right"}, 300, function () {
+                .hide(300, function () {
                     _getFormStepUi(_prevStep).fadeIn(500);
                     self.currentStep(_prevStep);
                 });

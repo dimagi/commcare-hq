@@ -3,7 +3,6 @@ hqDefine("registration/js/register_new_user", [
     'hqwebapp/js/initial_page_data',
     'registration/js/new_user.ko',
     'registration/js/login',    // loads background image
-    'jquery-ui/ui/effect-slide',
     'intl-tel-input/build/js/intlTelInput.min',     // provides $.intlTelInput
     'hqwebapp/js/validators.ko',
     'hqwebapp/js/password_validators.ko',
