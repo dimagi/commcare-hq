@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import six
 import sys
 import logging
 from corehq.util.global_request import get_request

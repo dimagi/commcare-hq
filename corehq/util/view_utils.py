@@ -10,7 +10,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.urls import reverse as _reverse
-from django.utils.encoding import smart_bytes, smart_text
+from django.utils.encoding import smart_text
 from django.utils.http import urlencode
 
 from dimagi.utils.logging import notify_exception
