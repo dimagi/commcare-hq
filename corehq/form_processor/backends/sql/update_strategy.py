@@ -33,6 +33,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from django.utils.translation import ugettext as _
 
 from corehq.util.soft_assert import soft_assert
+from corehq.util.datadog.gauges import datadog_counter
 reconciliation_soft_assert = soft_assert('jroth@dimagi.com', include_breadcrumbs=True)
 
 
@@ -306,7 +307,8 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
     def reconcile_transactions_if_necessary(self, xform):
         if self.case.check_transaction_order():
-            return
+            return False
+        datadog_counter("commcare.form_processor.sql.reconciling_transactions")
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:
