@@ -43,6 +43,16 @@ class ABTest(object):
         }
 
 
+DEMO_CTA_OPTION_ON = 'demo_on'
+DEMO_CTA_OPTION_OFF = 'demo_off'
+
+DEMO_CTA = ABTestConfig(
+    'Demo CTA on Signup',
+    'demo_cta_aug2018',
+    (DEMO_CTA_OPTION_ON, DEMO_CTA_OPTION_OFF)
+)
+
+
 APPCUES_TEMPLATE_APP_OPTION_ON = 'appcues_on'
 APPCUES_TEMPLATE_APP_OPTION_OFF = 'appcues_off'
 
