@@ -110,18 +110,16 @@
           </div>
         </form>
 
-        {% if not request.user.is_authenticated %}
-            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_test %}
-                <div class="form-bubble form-bubble-purple text-center">
-                    {% blocktrans %}
-                        Want to learn more before signing up?
-                        &nbsp;&nbsp;&nbsp;
-                        <a href="#cta-form-get-demo" id="demo-test-button" target="_blank" data-toggle="modal" class="btn btn-purple">
-                            Get a Demo
-                        </a>
-                    {% endblocktrans %}
-                </div>
-            {% endif %}
+        {% if True or is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_test %}
+            <div class="form-bubble form-bubble-purple text-center">
+                {% blocktrans %}
+                    Want to learn more before signing up?
+                    &nbsp;&nbsp;&nbsp;
+                    <a href="#cta-form-get-demo" id="test-cta-form-get-demo-button" target="_blank" data-toggle="modal" class="btn btn-purple">
+                        Get a Demo
+                    </a>
+                {% endblocktrans %}
+            </div>
         {% endif %}
       </div>
     </div>

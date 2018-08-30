@@ -6,7 +6,10 @@ $(function () {
     hqImport("analytix/js/hubspot").then(function() {
         var kissmetrics = hqImport('analytix/js/kissmetrix');
         kissmetrics.identifyTraits({'demo UI': (initial_page_data("demo_test") ? "on" : "off")});
-        $("#demo-test-button").click(function() {
+        $("#test-cta-form-get-demo-button").click(function() {
+            kissmetrics.track.event("Test Get Demo CTA clicked");
+        });
+        $("#cta-form-get-demo-button").click(function() {
             kissmetrics.track.event("Get Demo button clicked");
         });
     });
