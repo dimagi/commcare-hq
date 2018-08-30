@@ -1,10 +1,8 @@
-/* globals ace, hqDefine */
 hqDefine('hqadmin/js/raw_couch_main', [
     'jquery',
     'hqwebapp/js/initial_page_data',
-    'ace-builds/src-min-noconflict/mode-json',
-    'ace-builds/src-min-noconflict/ext-searchbox',
-], function ($, intialPageData) {
+    "ace-builds/src-min-noconflict/ace",
+], function ($, intialPageData, ace) {
     $(function() {
         var allDatabase = intialPageData.get('all_databases').map(function(database){
             return {'dbName':database,'dbValue':database};
@@ -24,6 +22,10 @@ hqDefine('hqadmin/js/raw_couch_main', [
         });
         editor.session.setMode('ace/mode/json');
         editor.setReadOnly(true);
-        editor.session.setValue(JSON.stringify($element.data('doc'), null, 4));
+
+        if($element.length){
+            editor.session.setValue(JSON.stringify($element.data('doc'), null, 4));
+        }
+
     });
 });
