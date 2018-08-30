@@ -95,7 +95,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 54.16666666666667)
+        self.assertEquals(data['rightLegend']['average'], 57.142857142857146)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_early_initiation_breastfeeding_map(
@@ -198,7 +198,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 50.0)
+        self.assertEquals(data['rightLegend']['average'], 75.0)
 
     def test_chart_data(self):
         self.assertDictEqual(

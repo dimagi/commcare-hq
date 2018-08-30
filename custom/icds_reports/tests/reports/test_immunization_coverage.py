@@ -97,7 +97,7 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 11.046135224905703)
+        self.assertEquals(data['rightLegend']['average'], 10.896898575020955)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_immunization_coverage_data_map(
@@ -206,7 +206,7 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 14.909190638712824)
+        self.assertEquals(data['rightLegend']['average'], 14.834205933682373)
 
     def test_chart_data(self):
         self.assertDictEqual(

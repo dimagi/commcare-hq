@@ -93,7 +93,7 @@ class TestAdultWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 30.09049773755656)
+        self.assertEquals(data['rightLegend']['average'], 30.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_adult_weight_scale_data_map(
@@ -194,7 +194,7 @@ class TestAdultWeightScale(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 29.166666666666668)
+        self.assertEquals(data['rightLegend']['average'], 29.41176470588235)
 
     def test_chart_data(self):
         self.assertDictEqual(

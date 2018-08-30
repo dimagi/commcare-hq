@@ -95,7 +95,7 @@ class TestFunctionalToilet(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 50.452488687782804)
+        self.assertEquals(data['rightLegend']['average'], 50.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_functional_toilet_data_map(
@@ -192,7 +192,7 @@ class TestFunctionalToilet(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 47.22222222222222)
+        self.assertEquals(data['rightLegend']['average'], 47.05882352941177)
 
     def test_chart_data(self):
         data = get_functional_toilet_data_chart(

@@ -97,7 +97,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 33.333333333333336)
+        self.assertEquals(data['rightLegend']['average'], 50.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_newborn_with_low_birth_weight_map(
@@ -196,7 +196,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 75.0)
+        self.assertEquals(data['rightLegend']['average'], 66.66666666666667)
 
     def test_chart_data_keys_length(self):
         data = get_newborn_with_low_birth_weight_chart(

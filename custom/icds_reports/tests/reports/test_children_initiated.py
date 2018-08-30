@@ -95,7 +95,7 @@ class TestChildrenInitiated(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 84.65473145780052)
+        self.assertEquals(data['rightLegend']['average'], 85.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_children_initiated_data_map(
@@ -202,7 +202,7 @@ class TestChildrenInitiated(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 80.71428571428572)
+        self.assertEquals(data['rightLegend']['average'], 82.3529411764706)
 
     def test_chart_data(self):
         self.assertDictEqual(

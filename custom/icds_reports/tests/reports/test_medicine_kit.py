@@ -93,7 +93,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 68.77828054298642)
+        self.assertEquals(data['rightLegend']['average'], 66.66666666666667)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_medicine_kit_data_map(
@@ -190,7 +190,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 53.47222222222222)
+        self.assertEquals(data['rightLegend']['average'], 52.94117647058823)
 
     def test_chart_data_keys(self):
         data = get_medicine_kit_data_chart(

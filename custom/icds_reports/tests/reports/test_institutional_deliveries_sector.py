@@ -204,7 +204,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 61.36363636363637)
+        self.assertEquals(data['rightLegend']['average'], 69.23076923076923)
 
     def test_chart_data(self):
         self.assertDictEqual(

@@ -63,7 +63,6 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     measured_for_all_locations = 0
     height_eligible_for_all_locations = 0
 
-    values_to_calculate_average = []
     for row in get_data_for(config):
         total_weighed = row['total_weighed'] or 0
         total_height_eligible = row['total_height_eligible'] or 0
@@ -73,9 +72,6 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         moderate = row['moderate'] or 0
         normal = row['normal'] or 0
         total_measured = row['total_measured'] or 0
-
-        numerator = moderate + severe
-        values_to_calculate_average.append(numerator * 100 / (total_weighed or 1))
 
         severe_for_all_locations += severe
         moderate_for_all_locations += moderate
@@ -108,6 +104,10 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     fills.update({'7%-100%': MapColors.RED})
     fills.update({'defaultFill': MapColors.GREY})
 
+    average = "%.2f" % (
+            ((severe_for_all_locations + moderate_for_all_locations) * 100) / (weighed_for_all_locations or 1)
+    )
+
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(
         config,
         default_interval=default_age_interval(icds_feature_flag)
@@ -121,8 +121,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % ((sum(values_to_calculate_average)) /
-                                 float(len(values_to_calculate_average) or 1)),
+            "average": average,
             "info": _((
                 "Of the children enrolled for Anganwadi services, whose weight and height was measured, "
                 "the percentage of children between {} who were moderately/severely wasted in the current month. "

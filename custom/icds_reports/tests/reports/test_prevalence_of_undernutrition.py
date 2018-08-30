@@ -96,7 +96,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 21.64670434399008)
+        self.assertEquals(data['rightLegend']['average'], 21.551724137931036)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_undernutrition_data_map(
@@ -192,7 +192,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 22.743014091234773)
+        self.assertEquals(data['rightLegend']['average'], 22.71293375394322)
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_undernutrition_data_chart(

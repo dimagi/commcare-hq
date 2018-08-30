@@ -105,7 +105,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], "0.14")
+        self.assertEquals(data['rightLegend']['average'], "0.15")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_severe_data_map(
@@ -823,7 +823,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             show_test=False,
             icds_feature_flag=True
         )
-        self.assertEquals(data['rightLegend']['average'], "0.13")
+        self.assertEquals(data['rightLegend']['average'], "0.14")
 
     def test_map_data_right_legend_extended_info_icds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_data_map(

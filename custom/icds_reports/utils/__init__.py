@@ -391,16 +391,12 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
     valid_total = 0
     in_month_total = 0
     total = 0
-    values_to_calculate_average = []
 
     for row in data:
         valid = row[denom_prop] or 0
         name = row['%s_name' % loc_level]
         on_map_name = row['%s_map_location_name' % loc_level] or name
         in_month = row[num_prop] or 0
-
-        value = in_month * 100 / (row[denom_prop] or 1)
-        values_to_calculate_average.append(value)
 
         valid_total += valid
         in_month_total += in_month
@@ -422,7 +418,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
         elif value >= fill_key_bigger:
             data_for_location.update({'fillKey': (fill_format % (fill_key_bigger, 100))})
 
-    average = sum(values_to_calculate_average) / float(len(values_to_calculate_average) or 1)
+    average = (in_month_total * 100) / (valid_total or 1)
     return data_for_map, valid_total, in_month_total, average, total
 
 

@@ -93,7 +93,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 80.54298642533936)
+        self.assertEquals(data['rightLegend']['average'], 80.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_infants_weight_scale_data_map(
@@ -190,7 +190,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 77.08333333333334)
+        self.assertEquals(data['rightLegend']['average'], 76.47058823529412)
 
     def test_chart_data(self):
         data = get_infants_weight_scale_data_chart(
