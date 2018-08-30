@@ -1380,7 +1380,7 @@ class FormExportListView(BaseExportListView):
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
-            can_edit = export.can_edit(self.request.couch_user.user_id)
+            can_edit = export.can_edit(self.request.couch_user)
             description = export.description
             my_export = export.owner_id == self.request.couch_user.user_id
             sharing = export.sharing
