@@ -1467,6 +1467,8 @@ class ConfirmSelectedPlanView(SelectPlanView):
     def is_upgrade(self):
         if self.current_subscription.is_trial:
             return True
+        elif self.current_subscription.plan_version.plan.edition == self.edition:
+            return False
         else:
             return not is_downgrade(
                 current_edition=self.current_subscription.plan_version.plan.edition,
