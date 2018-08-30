@@ -29,7 +29,7 @@ from six.moves import map
 logger = get_task_logger(__name__)
 
 
-@task
+@task(serializer='pickle')
 def bulk_upload_async(domain, user_specs, group_specs):
     from corehq.apps.users.bulkupload import create_or_update_users_and_groups
     task = bulk_upload_async
@@ -250,7 +250,7 @@ def resend_pending_invitations():
                 invitation.send_activation_email(days_to_expire - days)
 
 
-@task
+@task(serializer='pickle')
 def turn_on_demo_mode_task(commcare_user_id, domain):
     from corehq.apps.ota.utils import turn_on_demo_mode
     from corehq.apps.users.models import CommCareUser
@@ -265,7 +265,7 @@ def turn_on_demo_mode_task(commcare_user_id, domain):
     }
 
 
-@task
+@task(serializer='pickle')
 def reset_demo_user_restore_task(commcare_user_id, domain):
     from corehq.apps.ota.utils import reset_demo_user_restore
     from corehq.apps.users.models import CommCareUser
@@ -287,7 +287,7 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
     return {'messages': results}
 
 
-@task
+@task(serializer='pickle')
 def remove_unused_custom_fields_from_users_task(domain):
     from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
     remove_unused_custom_fields_from_users(domain)

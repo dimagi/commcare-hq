@@ -11,7 +11,7 @@ from soil.util import expose_cached_download
 from django.conf import settings
 
 
-@task
+@task(serializer='pickle')
 def demo_sleep(download_id, howlong=5, expiry=1*60*60):
     """
     Demo the downloader, with sleep
@@ -22,7 +22,7 @@ def demo_sleep(download_id, howlong=5, expiry=1*60*60):
     cache.set(download_id, CachedDownload(temp_id), expiry)
 
 
-@task
+@task(serializer='pickle')
 def prepare_download(download_id, payload_func, content_disposition,
                      content_type, expiry=10*60*60):
     """

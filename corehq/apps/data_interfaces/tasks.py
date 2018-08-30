@@ -56,7 +56,7 @@ def bulk_archive_forms(domain, couch_user, uploaded_data):
     send_HTML_email(_('Your archived forms'), couch_user.email, html_content)
 
 
-@task
+@task(serializer='pickle')
 def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids):
     task = bulk_form_management_async
     mode = FormManagementMode(archive_or_restore, validate=True)

@@ -105,7 +105,7 @@ def send_report_throttled(notification_id):
     send_report(notification_id)
 
 
-@task
+@task(serializer='pickle')
 def create_metadata_export(download_id, domain, format, filename, datespan=None, user_ids=None):
     tmp_path = save_metadata_export_to_tempfile(domain, format, datespan, user_ids)
 
@@ -332,7 +332,7 @@ def _store_excel_in_redis(report_class, file):
     return hash_id
 
 
-@task
+@task(serializer='pickle')
 def build_form_multimedia_zip(
         domain,
         xmlns,

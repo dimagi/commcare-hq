@@ -52,7 +52,7 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
             delete_old_images.delay()
 
 
-@task
+@task(serializer='pickle')
 def delete_resources_on_transifex(domain, data, email):
     version = data.get('version')
     transifex = Transifex(domain,
@@ -76,7 +76,7 @@ def delete_resources_on_transifex(domain, data, email):
     email.send()
 
 
-@task
+@task(serializer='pickle')
 def push_translation_files_to_transifex(domain, data, email):
     upload_status = None
     if data.get('target_lang'):
@@ -114,7 +114,7 @@ def push_translation_files_to_transifex(domain, data, email):
         email.send()
 
 
-@task
+@task(serializer='pickle')
 def pull_translation_files_from_transifex(domain, data, email=None):
     version = data.get('version')
     transifex = Transifex(domain,
