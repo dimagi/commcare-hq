@@ -881,14 +881,14 @@ class ConfigureNewReportBase(forms.Form):
         data_source_config.save()
 
         # expire the data source
-        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
-        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
-        settings.CELERY_ALWAYS_EAGER = False
+        always_eager = hasattr(settings, "CELERY_TASK_ALWAYS_EAGER") and settings.CELERY_TASK_ALWAYS_EAGER
+        # CELERY_TASK_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
+        settings.CELERY_TASK_ALWAYS_EAGER = False
         tasks.delete_data_source_task.apply_async(
             (self.domain, data_source_config._id),
             countdown=TEMP_DATA_SOURCE_LIFESPAN
         )
-        settings.CELERY_ALWAYS_EAGER = always_eager
+        settings.CELERY_TASK_ALWAYS_EAGER = always_eager
 
         tasks.rebuild_indicators(data_source_config._id,
                                  username,
