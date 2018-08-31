@@ -131,7 +131,7 @@ FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
 
 FormplayerFrontend.reqres.setHandler('handleNotification', function(notification) {
     if (notification.error){
-        FormplayerFrontend.request('showError', notification.message);
+        FormplayerFrontend.trigger('showError', notification.message);
     } else {
         FormplayerFrontend.request('showSuccess', notification.message);
     }
