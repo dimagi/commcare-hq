@@ -645,7 +645,7 @@ def track_time(func):
 
     def get_sync_datasource_time():
         return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
-            .exclude(doc_modification_time_isnull=True)\
+            .exclude(doc_modification_time__isnull=True)\
             .aggregate(Min('doc_modification_time'))['doc_modification_time__min']
 
     @wraps(func)
