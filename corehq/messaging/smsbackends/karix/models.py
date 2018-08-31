@@ -41,12 +41,16 @@ class KarixBackend(SQLSMSBackend):
         return KarixBackendForm
 
     def get_auth_key(self):
+        # With Python 3, b64encode() needs to be passed `bytes`, and json.dumps()
+        # needs to be passed `str`. So the return value here will be `str`.
         config = self.config
         username_and_password = '{}:{}'.format(config.username, config.password).encode('ascii')
-        return base64.b64encode(username_and_password)
+        return base64.b64encode(username_and_password).decode('ascii')
 
     @staticmethod
     def get_text_and_content_type(msg_obj):
+        # Since json.dumps() needs to be passed strings as `str` and not `bytes`,
+        # we return the text as `str`.
         try:
             msg_obj.text.encode('ascii')
             return (msg_obj.text, KarixBackend.CONTENT_TYPE_PLAIN_MESSAGE)

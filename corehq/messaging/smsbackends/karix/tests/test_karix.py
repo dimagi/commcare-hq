@@ -24,7 +24,7 @@ class KarixBackendTest(TestCase):
             username='abc',
             password='123',
         )
-        self.assertEqual(backend.get_auth_key(), b'YWJjOjEyMw==')
+        self.assertEqual(backend.get_auth_key(), 'YWJjOjEyMw==')
 
     def test_get_text_and_content_type(self):
         self.assertEqual(
