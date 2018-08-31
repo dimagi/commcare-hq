@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import base64
 import datetime
+import pickle
 from decimal import Decimal
 import itertools
 from io import BytesIO
@@ -2244,11 +2247,13 @@ class BillingRecordBase(models.Model):
         context['can_view_statement'] = can_view_statement
         email_html = render_to_string(self.html_template, context)
         email_plaintext = render_to_string(self.text_template, context)
+        pickled_file_attachments = base64.b64encode(pickle.dumps([pdf_attachment])).decode('utf-8')
+
         send_html_email_async.delay(
             subject, contact_email, email_html,
             text_content=email_plaintext,
             email_from=email_from,
-            file_attachments=[pdf_attachment],
+            pickled_file_attachments=pickled_file_attachments,
             cc=cc_emails
         )
         self.emailed_to_list.extend([contact_email])
