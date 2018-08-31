@@ -1,0 +1,52 @@
+{% extends "hqwebapp/two_column.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main 'reports/v2/js/views/caseSearch' %}
+
+{% block page_sidebar_classes %}sidebar-offcanvas col-xs-12 col-sm-3 col-lg-2{% endblock %}
+
+{% block page_row_classes %}row-offcanvas row-offcanvas-left{% endblock %}
+
+{% block page_content_classes %}col-xs-12 col-sm-9 col-lg-10{% endblock %}
+
+{% block js %}{{ block.super }}
+{% endblock %}
+
+{% block stylesheets %}{{ block.super }}
+{% endblock %}
+
+{% block title %}Case Search{% endblock %}
+
+{% block page_breadcrumbs %}
+breadcrumbs todo
+{% endblock %}
+
+
+{% block page_content %}
+  {% registerurl "endpoint_filter" domain report.slug 'slug' %}
+  {% registerurl "endpoint_data" domain report.slug 'slug' %}
+
+  {% initial_page_data "report.endpoints" report.endpoints|JSON %}
+  {% initial_page_data "report.slug" report.slug %}
+<div id="case_search--model">
+
+  <div id="case_search--filters">
+    <div class="row">
+      <div class="col-md-6">
+        <h1>{% trans "Searching the Case Lists" %}</h1>
+      </div>
+
+      <div class="col-md-6">
+      </div>
+    </div>
+  </div>
+
+  <table id="report-datatable" class="table"></table>
+
+</div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+{% endblock %}
