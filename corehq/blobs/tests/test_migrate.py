@@ -105,10 +105,12 @@ class TestMigrateBackend(TestCase):
 def discard_migration_state(slug):
     migrator = mod.MIGRATIONS[slug]
     if hasattr(migrator, "migrators"):
-        providers = [m._get_document_provider() for m in migrator.migrators]
+        migrators = migrator.migrators
+    elif hasattr(migrator, "iter_migrators"):
+        migrators = migrator.iter_migrators()
     else:
-        providers = [migrator._get_document_provider()]
-    for provider in providers:
+        migrators = [migrator]
+    for provider in (m._get_document_provider() for m in migrators):
         provider.get_document_iterator(1).discard_state()
     mod.BlobMigrationState.objects.filter(slug=slug).delete()
 

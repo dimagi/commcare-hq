@@ -84,6 +84,7 @@ from django.conf import settings
 from corehq.apps.domain import SHARED_DOMAIN
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
+from corehq.blobs.migrate_metadata import migrate_metadata
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMeta, BlobMigrationState
@@ -448,6 +449,7 @@ class ExportByDomain(object):
 
 MIGRATIONS = {m.slug: m for m in [
     BackendMigrator("migrate_backend"),
+    migrate_metadata,
     # Kept for reference when writing new migrations.
     # Migrator("applications", [
     #    apps.Application,
