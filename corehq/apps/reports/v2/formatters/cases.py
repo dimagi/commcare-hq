@@ -124,9 +124,7 @@ class CaseDataFormatter(BaseDataFormatter):
 
     def _get_case_info_prop(self, prop):
         fmt_prop = prop.replace('@', '')
-        print("fmt prop {}".format(fmt_prop))
         if hasattr(self, fmt_prop):
-            print("found prop")
             return getattr(self, fmt_prop)
         elif prop in SPECIAL_CASE_PROPERTIES:
             return self._get_special_property(prop)
