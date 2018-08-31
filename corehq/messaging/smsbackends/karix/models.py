@@ -61,6 +61,7 @@ class KarixBackend(SQLSMSBackend):
         config = self.config
         text, content_type = self.get_text_and_content_type(msg_obj)
 
+        # 'vp' is validity period, and we set it to the maximum value (1 day)
         return {
             'ver': '1.0',
             'key': self.get_auth_key(),
@@ -70,6 +71,7 @@ class KarixBackend(SQLSMSBackend):
                     'send': config.sender_id,
                     'text': text,
                     'type': content_type,
+                    'vp': '1440',
                 },
             ],
         }
