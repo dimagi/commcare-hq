@@ -61,7 +61,6 @@ branches:
   - pv/deactivated-users # Preethi Aug 23
   - rn_migrating_sms_pages # Rohit Aug 29
   - rn_miration_sms_language # Rohit Aug 30
-  - np/revert-email  # Nick P Aug 31
 submodules:
   submodules/django-digest-src:
     branches: []
