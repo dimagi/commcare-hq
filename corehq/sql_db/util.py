@@ -21,7 +21,7 @@ ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
 STALE_CHECK_FREQUENCY = 30
 
 
-def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None, query_size=4000):
+def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
     """
     Runs a query across all partitioned databases and produces a generator
     with the results.
