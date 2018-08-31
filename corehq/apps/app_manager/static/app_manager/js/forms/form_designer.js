@@ -102,9 +102,9 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         // as the host app. Because we only use requirejs for some parts
         // of the app, appcues gets very confused and throws errors, likely
         // corrupting or invalidating the data in some way. By requiring
-        // appcues to have completed it's init prior to importing requirejs
+        // appcues to have completed its init prior to importing requirejs
         // or using it to incorporate vellum, these issues disappear.
-        hqImport("analytix/js/appcues").then(function() {
+        var initFormBuilder = function() {
             $.getScript(initialPageData("requirejs_static_url"), function() {
                 define("jquery", [], function () { return window.jQuery; });
                 define("jquery.bootstrap", ["jquery"], function () {});
@@ -215,6 +215,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                     hqImport('analytix/js/kissmetrix').track.event("Renamed form from form builder");
                 });
             });
-        });
+        };
+        hqImport("analytix/js/appcues").then(initFormBuilder, initFormBuilder);
     });
 });
