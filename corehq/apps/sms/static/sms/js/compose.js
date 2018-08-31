@@ -1,4 +1,9 @@
-hqDefine("sms/js/compose", function() {
+hqDefine("sms/js/compose",[
+    "jquery",
+    "hqwebapp/js/initial_page_data",
+    'jquery-ui/ui/sortable',
+    "hqwebapp/js/bootstrap-multi-typeahead",
+], function($, intialPageData) {
     $(function(){
         $("#hint_id_recipients").addClass("alert alert-info");
         $("#hint_id_message").addClass("alert alert-info");
@@ -22,7 +27,7 @@ hqDefine("sms/js/compose", function() {
         });
 
         $('.sms-typeahead').multiTypeahead({
-            source: hqImport("hqwebapp/js/initial_page_data").get('sms_contacts'),
+            source: intialPageData.get('sms_contacts'),
         }).focus();
     });
 });
