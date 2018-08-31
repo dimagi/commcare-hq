@@ -81,9 +81,6 @@
                          data-bind="visible: show_add_extra(), click: function(){ add_item('extras') }">
                           <i class="fa fa-plus"></i> Add Key &rarr; Value Pair
                       </a>
-                      <span class="help-block" style="display: none;">
-                          {% trans "At least one extra required" %}
-                      </span>
                   </div>
                   <label class="control-label col-sm-2 {{ detail.type }}-responses">
                       {% trans "Responses" %}
@@ -107,7 +104,6 @@
                          data-bind="visible: show_add_response(), click: function(){ add_item('responses') }">
                           <i class="fa fa-plus"></i> Add Key
                       </a>
-                      <span class="help-block" style="display: none;">{% trans "At least one response required" %}</span>
                   </div>
               </div>
               <div class="case-list-lookup-icon container-fluid">
