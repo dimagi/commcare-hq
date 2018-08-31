@@ -962,6 +962,8 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(start_month_string)
         seeking_services = "(child_health.is_availing = 1 AND child_health.is_migrated = 0)"
         born_in_month = "({} AND child_health.dob BETWEEN {} AND {})".format(seeking_services, start_month_string, end_month_string)
+        valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(open_in_month, alive_in_month, seeking_services, age_in_months)
+        #fully_immunized_eligible = "{} AND {} > 365".format(valid_in_month, age_in_days)
 
         columns = (
             ("awc_id", "child_health.awc_id"),
@@ -993,7 +995,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("fully_immunized_on_time", "ucr.fully_immunized_on_time"),
             ("fully_immunized_late", "ucr.fully_immunized_late"),
             ("has_aadhar_id", "ucr.has_aadhar_id"),
-            ("valid_in_month", "ucr.valid_in_month"),
+            ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month", "ucr.valid_all_registered_in_month"),
             ("person_name", "child_health.person_name"),
             ("mother_name", "child_health.mother_name"),
