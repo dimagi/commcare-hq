@@ -34,6 +34,7 @@ from corehq.util.quickcache import quickcache
 from .models import SQLLocation, LocationType, LocationFixtureConfiguration, LocationRelation
 from .permissions import user_can_access_location_id
 from .signals import location_edited
+from six.moves import filter
 
 
 class LocationSelectWidget(forms.Widget):

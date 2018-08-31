@@ -74,18 +74,6 @@ class TemporaryBlobDBMixin(object):
         self.close()
 
 
-@contextmanager
-def install_blob_db(db, uninstall_first=True):
-    """Temporarily install the given blob db"""
-    blobs._db.append(db)
-    assert blobs.get_blob_db() is db, 'got wrong blob db'
-    try:
-        yield db
-    finally:
-        assert blobs._db[-1] is db, blobs._db[-1]
-        blobs._db.pop()
-
-
 class TemporaryFilesystemBlobDB(TemporaryBlobDBMixin, FilesystemBlobDB):
 
     def __init__(self):

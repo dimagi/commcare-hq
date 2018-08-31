@@ -497,31 +497,31 @@ class TestAWCDailyStatus(TestCase):
                 "top_five": [
                     {
                         'loc_name': 'st1',
-                        'value': 0
+                        'percent': 0
                     },
                     {
                         'loc_name': 'st2',
-                        'value': 0
+                        'percent': 0
                     }
                 ],
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "value": 0
+                        "percent": 0
                     },
                     {
                         "loc_name": "st2",
-                        "value": 0
+                        "percent": 0
                     }
                 ],
                 "bottom_five": [
                     {
                         'loc_name': 'st1',
-                        'value': 0
+                        'percent': 0
                     },
                     {
                         'loc_name': 'st2',
-                        'value': 0
+                        'percent': 0
                     }
                 ]
             }

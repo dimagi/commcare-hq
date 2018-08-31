@@ -70,8 +70,8 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             report = E.restore()
             report.extend(fixtures)
             self.assertXMLEqual(
-                etree.tostring(report, pretty_print=True),
-                self.get_xml('expected_v2_report')
+                etree.tostring(report, pretty_print=True).decode('utf-8'),
+                self.get_xml('expected_v2_report').decode('utf-8')
             )
 
     def test_v2_report_fixtures_provider_caching(self):

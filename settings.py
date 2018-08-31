@@ -339,6 +339,7 @@ HQ_APPS = (
     'corehq.warehouse',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
+    'corehq.apps.translations',
 
     # custom reports
     'custom.bihar',
@@ -1295,19 +1296,34 @@ INDICATOR_CONFIG = {
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-NEW_USERS_GROUPS_DB = b'users'
-USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
+if six.PY3:
+    NEW_USERS_GROUPS_DB = 'users'
+    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
-NEW_FIXTURES_DB = b'fixtures'
-FIXTURES_DB = NEW_FIXTURES_DB
+    NEW_FIXTURES_DB = 'fixtures'
+    FIXTURES_DB = NEW_FIXTURES_DB
 
-NEW_DOMAINS_DB = b'domains'
-DOMAINS_DB = NEW_DOMAINS_DB
+    NEW_DOMAINS_DB = 'domains'
+    DOMAINS_DB = NEW_DOMAINS_DB
 
-NEW_APPS_DB = b'apps'
-APPS_DB = NEW_APPS_DB
+    NEW_APPS_DB = 'apps'
+    APPS_DB = NEW_APPS_DB
 
-META_DB = b'meta'
+    META_DB = 'meta'
+else:
+    NEW_USERS_GROUPS_DB = b'users'
+    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
+
+    NEW_FIXTURES_DB = b'fixtures'
+    FIXTURES_DB = NEW_FIXTURES_DB
+
+    NEW_DOMAINS_DB = b'domains'
+    DOMAINS_DB = NEW_DOMAINS_DB
+
+    NEW_APPS_DB = b'apps'
+    APPS_DB = NEW_APPS_DB
+
+    META_DB = b'meta'
 
 
 COUCHDB_APPS = [
@@ -1550,6 +1566,21 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_PHASE2_AWW_1":
         ["custom.icds.messaging.custom_content.phase2_aww_1",
          "ICDS: AWC VHND Performance to AWW"],
+    "UCLA_GENERAL_HEALTH":
+        ["custom.ucla.api.general_health_message_bank_content_new",
+         "UCLA: General Health Message Bank"],
+    "UCLA_MENTAL_HEALTH":
+        ["custom.ucla.api.mental_health_message_bank_content_new",
+         "UCLA: Mental Health Message Bank"],
+    "UCLA_SEXUAL_HEALTH":
+        ["custom.ucla.api.sexual_health_message_bank_content_new",
+         "UCLA: Sexual Health Message Bank"],
+    "UCLA_MED_ADHERENCE":
+        ["custom.ucla.api.med_adherence_message_bank_content_new",
+         "UCLA: Med Adherence Message Bank"],
+    "UCLA_SUBSTANCE_USE":
+        ["custom.ucla.api.substance_use_message_bank_content_new",
+         "UCLA: Substance Use Message Bank"],
 }
 
 # Used by the old reminders framework

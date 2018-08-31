@@ -1,9 +1,12 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'hqwebapp/two_column.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "hqwebapp/js/widgets" %}
 
 {% block page_content %}
-    {% if not integration_available %}
+    {% if not transifex_details_available %}
         <p class="text-error">
             <span class="label label-danger">
                 {% trans 'Transifex integration not set for this domain' %}

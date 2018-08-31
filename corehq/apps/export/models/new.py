@@ -16,16 +16,18 @@ from django.core.exceptions import ValidationError
 from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
 from django.db import models
+from django.db.models import Sum
 from django.http import Http404
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_case_properties
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.userreports.app_manager.data_source_meta import get_form_indicator_data_type
-from corehq.blobs import get_blob_db
-from corehq.blobs.atomic import AtomicBlobs
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.util import random_url_id
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.global_request import get_request_domain
 from soil.progress import set_task_progress
 
@@ -52,7 +54,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
@@ -673,6 +675,8 @@ class ExportInstance(BlobMixin, Document):
 
     sharing = StringProperty(default=SharingOption.EDIT_AND_EXPORT, choices=SharingOption.CHOICES)
     owner_id = StringProperty(default=None)
+
+    _blobdb_type_code = CODES.data_export
 
     class Meta(object):
         app_label = 'export'
@@ -2486,10 +2490,10 @@ class StockFormExportColumn(ExportColumn):
         new_doc = None
         if isinstance(value, list):
             try:
-                new_doc = filter(
+                new_doc = list(filter(
                     lambda node: node.get('@type') == question_id,
                     value,
-                )[0]
+                ))[0]
             except IndexError:
                 new_doc = None
         else:
@@ -2622,58 +2626,81 @@ class DailySavedExportNotification(models.Model):
         )
 
 
-class ActiveDataFileManager(models.Manager):
-    def get_queryset(self):
-        return super(ActiveDataFileManager, self).get_queryset().filter(
-            models.Q(delete_after__isnull=True) | models.Q(delete_after__gte=datetime.utcnow())
+def _meta_property(name):
+    def fget(self):
+        return getattr(self._meta, name)
+    return property(fget)
+
+
+class DataFile(object):
+    """DataFile is a thin wrapper around BlobMeta"""
+    id = _meta_property("id")
+    domain = _meta_property("parent_id")
+    filename = _meta_property("name")
+    blob_id = _meta_property("key")
+    content_type = _meta_property("content_type")
+    content_length = _meta_property("content_length")
+    delete_after = _meta_property("expires_on")
+
+    def __init__(self, meta):
+        self._meta = meta
+
+    @property
+    def description(self):
+        return self._meta.properties["description"]
+
+    @classmethod
+    def get(cls, domain, pk):
+        return cls(cls.meta_query(domain).get(pk=pk))
+
+    @staticmethod
+    def meta_query(domain):
+        Q = models.Q
+        db = get_db_alias_for_partitioned_doc(domain)
+        return BlobMeta.objects.using(db).filter(
+            Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
+            parent_id=domain,
+            type_code=CODES.data_file,
         )
 
+    @classmethod
+    def get_all(cls, domain):
+        return [cls(meta) for meta in cls.meta_query(domain).order_by("name")]
 
-class DataFile(models.Model):
-    domain = models.CharField(max_length=126, db_index=True)
-    filename = models.CharField(max_length=255)
-    description = models.CharField(max_length=255)
-    content_type = models.CharField(max_length=255)
-    blob_id = models.CharField(max_length=255)
-    content_length = models.IntegerField(null=True)
-    delete_after = models.DateTimeField(null=True)
+    @classmethod
+    def get_total_size(cls, domain):
+        return cls.meta_query(domain).aggregate(total=Sum('content_length'))["total"]
 
-    objects = models.Manager()
-    active_objects = ActiveDataFileManager()
-
-    class Meta(object):
-        app_label = 'export'
-
-    def save(self, *args, **kwargs):
-        if self.delete_after is None:
+    @classmethod
+    def save_blob(cls, file_obj, domain, filename, description, content_type, delete_after):
+        if delete_after is None:
             raise ValidationError(
                 'delete_after can be None only for legacy files that were added before August 2018'
             )
-        super(DataFile, self).save(*args, **kwargs)
+        return cls(get_blob_db().put(
+            file_obj,
+            domain=domain,
+            parent_id=domain,
+            type_code=CODES.data_file,
+            name=filename,
+            key=random_url_id(16),
+            content_type=content_type,
+            expires_on=delete_after,
+            properties={"description": description},
+        ))
 
     def get_blob(self):
         db = get_blob_db()
         try:
-            blob = db.get(self.blob_id)
+            blob = db.get(key=self._meta.key)
         except (KeyError, NotFound) as err:
             raise NotFound(str(err))
         return blob
 
-    def save_blob(self, file_obj):
-        with AtomicBlobs(get_blob_db()) as db:
-            info = db.put(file_obj, random_url_id(16))
-            self.blob_id = info.identifier
-            self.content_length = info.length
-            self.save()
+    def delete(self):
+        get_blob_db().delete(key=self._meta.key)
 
-    def _delete_blob(self):
-        db = get_blob_db()
-        db.delete(self.blob_id)
-        self.blob_id = ''
-
-    def delete(self, using=None, keep_parents=False):
-        self._delete_blob()
-        return super(DataFile, self).delete(using, keep_parents)
+    DoesNotExist = BlobMeta.DoesNotExist
 
 
 class EmailExportWhenDoneRequest(models.Model):

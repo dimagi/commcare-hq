@@ -205,6 +205,7 @@ class PredictablyRandomToggleTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(PredictablyRandomToggleTests, cls).setUpClass()
         cls.user_toggle = Toggle(
             slug='user_toggle',
             enabled_users=['arthur', 'diana'])
@@ -218,6 +219,7 @@ class PredictablyRandomToggleTests(TestCase):
     def tearDownClass(cls):
         cls.user_toggle.delete()
         cls.domain_toggle.delete()
+        super(PredictablyRandomToggleTests, cls).tearDownClass()
 
     @override_settings(DISABLE_RANDOM_TOGGLES=False)
     def test_user_namespace_disabled(self):
@@ -304,6 +306,7 @@ class DyanmicPredictablyRandomToggleTests(TestCase):
 class ShortcutTests(TestCase):
     @classmethod
     def setUpClass(cls):
+        super(ShortcutTests, cls).setUpClass()
         cls.users = ['arthur', 'diane']
         cls.user_toggle = Toggle(
             slug='user_toggle',
@@ -319,6 +322,7 @@ class ShortcutTests(TestCase):
     def tearDownClass(cls):
         cls.user_toggle.delete()
         cls.domain_toggle.delete()
+        super(ShortcutTests, cls).tearDownClass()
 
     def test_find_users_with_toggle_enabled(self):
         user_toggle = StaticToggle(
