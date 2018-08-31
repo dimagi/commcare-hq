@@ -953,12 +953,25 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return 'DELETE FROM "{}"'.format(self.tablename)
 
     def aggregation_query(self):
+        age_in_days = "('{}'::date - child_health.dob)::integer".format(
+            (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("%Y-%m-%d"))
+        age_in_months = "(('{}'::date - child_health.dob) / 30.4 )".format(
+            self.month.strftime("%Y-%m-%d"))
         columns = (
             ("awc_id", "child_health.awc_id"),
             ("case_id", "child_health.doc_id"),
             ("month", self.month.strftime("'%Y-%m-%d'")),
             ("sex", "child_health.sex"),
-            ("age_tranche", "ucr.age_tranche"),
+            ("age_tranche",
+                "CASE WHEN {age_in_days} <= 28 THEN 0 "
+                "     WHEN {age_in_months} <= 6 THEN 6 "
+                "     WHEN {age_in_months} <= 12 THEN 12 "
+                "     WHEN {age_in_months} <= 24 THEN 24 "
+                "     WHEN {age_in_months} <= 36 THEN 36 "
+                "     WHEN {age_in_months} <= 48 THEN 48 "
+                "     WHEN {age_in_months} <= 60 THEN 60 "
+                "     WHEN {age_in_months} <= 72 THEN 72 "
+                "ELSE NULL END".format(age_in_days=age_in_days, age_in_months=age_in_months)),
             ("caste", "child_health.caste"),
             ("disabled", "child_health.disabled"),
             ("minority", "child_health.minority"),
