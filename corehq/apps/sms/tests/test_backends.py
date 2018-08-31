@@ -2,7 +2,12 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 import uuid
-from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.models import (
+    SoftwarePlanEdition,
+    BillingAccount,
+    DefaultProductPlan,
+    SubscriptionAdjustment,
+    Subscription)
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.api.models import ApiUser, PERMISSION_POST_SMS
 from corehq.apps.domain.models import Domain
@@ -53,7 +58,13 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         super(AllBackendTest, cls).setUpClass()
         cls.domain_obj = Domain(name='all-backend-test')
         cls.domain_obj.save()
-        cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ADVANCED)
+        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        cls.account = BillingAccount.get_or_create_account_by_domain(
+            cls.domain_obj.name, created_by="automated-test" + cls.__name__
+        )[0]
+        cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain_obj.name, plan)
+        cls.subscription.is_active = True
+        cls.subscription.save()
         cls.domain_obj = Domain.get(cls.domain_obj.get_id)
 
         cls.test_phone_number = '99912345'
@@ -187,7 +198,9 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.teardown_subscription()
+        SubscriptionAdjustment.objects.all().delete()
+        cls.subscription.delete()
+        cls.account.delete()
         cls.domain_obj.delete()
         cls.unicel_backend.delete()
         cls.mach_backend.delete()
@@ -475,7 +488,14 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
 
-        cls.setup_subscription(cls.domain, SoftwarePlanEdition.ADVANCED)
+        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        cls.account = BillingAccount.get_or_create_account_by_domain(
+            cls.domain, created_by="automated-test" + cls.__name__
+        )[0]
+        cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain, plan)
+        cls.subscription.is_active = True
+        cls.subscription.save()
+
         cls.domain_obj = Domain.get(cls.domain_obj._id)
 
         cls.backend1 = SQLTestSMSBackend.objects.create(
@@ -608,7 +628,9 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.backend8.delete()
         cls.backend9.delete()
         cls.backend10.delete()
-        cls.teardown_subscription()
+        SubscriptionAdjustment.objects.all().delete()
+        cls.subscription.delete()
+        cls.account.delete()
         cls.domain_obj.delete()
         super(OutgoingFrameworkTestCase, cls).tearDownClass()
 
