@@ -1621,10 +1621,6 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                     # You have successfully scheduled your current Advanced Edition Plan
                     # subscription to downgrade to the Pro Edition Plan on Sep 19, 2018.
                     message = _(
-                        "You have successfully scheduled a subscription to the %s Software Plan, "
-                        "set to start on %s."
-                    ) % (software_plan_name, start_date)
-                    message = _(
                         "You have successfully scheduled your current %s Edition Plan subscription to "
                         "downgrade to the %s Edition Plan on %s."
                     ) % (current_subscription, software_plan_name, start_date)
