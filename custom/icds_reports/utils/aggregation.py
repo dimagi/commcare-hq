@@ -965,6 +965,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(open_in_month, alive_in_month, seeking_services, age_in_months)
         #fully_immunized_eligible = "{} AND {} > 365".format(valid_in_month, age_in_days)
         pse_eligible = "({} AND {} > 36)".format(valid_in_month, age_in_months_end)
+        ebf_eligible = "({} AND {} <= 6)".format(valid_in_month, age_in_months)
 
         columns = (
             ("awc_id", "child_health.awc_id"),
@@ -1006,24 +1007,24 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("pse_days_attended",
                 "CASE WHEN {} THEN COALESCE(df.sum_attended_child_ids, 0) ELSE NULL END".format(pse_eligible)),
             # EBF Indicators
-            ("ebf_eligible", "ucr.ebf_eligible"),
-            ("ebf_in_month", "CASE WHEN ucr.ebf_eligible = 1 THEN COALESCE(pnc.is_ebf, 0) ELSE 0 END"),
+            ("ebf_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(ebf_eligible)),
+            ("ebf_in_month", "CASE WHEN {} THEN COALESCE(pnc.is_ebf, 0) ELSE 0 END".format(ebf_eligible)),
             ("ebf_not_breastfeeding_reason",
-                "CASE WHEN ucr.ebf_eligible = 1 THEN pnc.not_breastfeeding ELSE NULL END"),
+                "CASE WHEN {} THEN pnc.not_breastfeeding ELSE NULL END".format(ebf_eligible)),
             ("ebf_drinking_liquid",
-                "CASE WHEN ucr.ebf_eligible = 1 THEN GREATEST(pnc.water_or_milk, pnc.other_milk_to_child, pnc.tea_other, 0) ELSE 0 END"),
+                "CASE WHEN {} THEN GREATEST(pnc.water_or_milk, pnc.other_milk_to_child, pnc.tea_other, 0) ELSE 0 END".format(ebf_eligible)),
             ("ebf_eating",
-                "CASE WHEN ucr.ebf_eligible = 1 THEN COALESCE(pnc.eating, 0) ELSE 0 END"),
+                "CASE WHEN {} THEN COALESCE(pnc.eating, 0) ELSE 0 END".format(ebf_eligible)),
             ("ebf_no_bf_no_milk", "0"),
             ("ebf_no_bf_pregnant_again", "0"),
             ("ebf_no_bf_child_too_old", "0"),
             ("ebf_no_bf_mother_sick", "0"),
             ("counsel_adequate_bf",
-                "CASE WHEN ucr.ebf_eligible = 1 THEN COALESCE(pnc.counsel_adequate_bf, 0) ELSE 0 END"),
+                "CASE WHEN {} THEN COALESCE(pnc.counsel_adequate_bf, 0) ELSE 0 END".format(ebf_eligible)),
             ("ebf_no_info_recorded",
-                """CASE WHEN ucr.ebf_eligible = 1 AND date_trunc('MONTH', pnc.latest_time_end_processed) = %(start_date)s THEN 0 ELSE ucr.ebf_eligible END"""),
+                "CASE WHEN {} AND date_trunc('MONTH', pnc.latest_time_end_processed) = %(start_date)s THEN 0 ELSE (CASE WHEN {} THEN 1 ELSE 0 END) END".format(ebf_eligible, ebf_eligible)),
             ("counsel_ebf",
-                "CASE WHEN ucr.ebf_eligible = 1 THEN GREATEST(pnc.counsel_exclusive_bf, pnc.counsel_only_milk, 0) ELSE 0 END"),
+                "CASE WHEN {} THEN GREATEST(pnc.counsel_exclusive_bf, pnc.counsel_only_milk, 0) ELSE 0 END".format(ebf_eligible)),
             # PNC Indicators
             ("pnc_eligible", "ucr.pnc_eligible"),
             ("counsel_increase_food_bf",
