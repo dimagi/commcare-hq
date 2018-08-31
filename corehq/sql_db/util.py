@@ -81,24 +81,13 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
     """
     db_names = get_db_aliases_for_partitioned_query()
 
-    if values and not isinstance(values, (list, tuple)):
-        raise ValueError("Expected a list or tuple")
-
     for db_name in db_names:
         qs = model_class.objects.using(db_name)
         if annotate:
             qs = qs.annotate(**annotate)
 
         qs = qs.filter(q_expression)
-        if values:
-            if len(values) == 1:
-                flat_qs = True
-                qs = qs.values_list(*values, flat=True)
-            else:
-                qs = qs.values_list(*values)
-            sort_col = values[0]
-        else:
-            sort_col = 'pk'
+        sort_col = 'pk'
         value = 0
         last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
         if last_value is not None:
