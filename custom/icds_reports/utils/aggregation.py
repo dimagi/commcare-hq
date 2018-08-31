@@ -953,10 +953,13 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return 'DELETE FROM "{}"'.format(self.tablename)
 
     def aggregation_query(self):
-        age_in_days = "('{}'::date - child_health.dob)::integer".format(
-            (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("%Y-%m-%d"))
-        age_in_months = "(('{}'::date - child_health.dob) / 30.4 )".format(
-            self.month.strftime("%Y-%m-%d"))
+        start_month_string = self.month.strftime("'%Y-%m-%d'::date")
+        end_month_string = (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("'%Y-%m-%d'::date")
+        age_in_days = "({} - child_health.dob)::integer".format(end_month_string)
+        age_in_months_end = "({} / 30.4 )".format(age_in_days)
+        age_in_months = "(({} - child_health.dob) / 30.4 )".format(start_month_string)
+        open_in_month = ("(({} - child_health.opened_on::date)::integer >= 0) AND (child_health.closed = 0 OR (child_health.closed_on::date - {})::integer > 0)").format(end_month_string, start_month_string)
+
         columns = (
             ("awc_id", "child_health.awc_id"),
             ("case_id", "child_health.doc_id"),
@@ -977,8 +980,8 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("minority", "child_health.minority"),
             ("resident", "child_health.resident"),
             ("dob", "child_health.dob"),
-            ("age_in_months", "ucr.age_in_months"),
-            ("open_in_month", "ucr.open_in_month"),
+            ("age_in_months", 'trunc({})'.format(age_in_months_end)),
+            ("open_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(open_in_month)),
             ("alive_in_month", "ucr.alive_in_month"),
             ("born_in_month", "ucr.born_in_month"),
             ("bf_at_birth_born_in_month", "ucr.bf_at_birth_born_in_month"),
