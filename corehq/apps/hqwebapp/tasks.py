@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import base64
+import pickle
+
 from celery.task import task
 from django.conf import settings
 from django.core.mail import send_mail, mail_admins
@@ -53,12 +57,18 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
 def send_html_email_async(self, subject, recipient, html_content,
                           text_content=None, cc=None,
                           email_from=settings.DEFAULT_FROM_EMAIL,
-                          file_attachments=None, bcc=None):
+                          pickled_file_attachments=None, bcc=None):
     """ Call with send_HTML_email_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
     - retry a maximum of 10 times
     """
+
+    if pickled_file_attachments:
+        file_attachments = pickle.loads(base64.b64decode(pickled_file_attachments.encode('utf-8')))
+    else:
+        file_attachments = None
+
     try:
         send_HTML_email(subject, recipient, html_content,
                         text_content=text_content, cc=cc, email_from=email_from,
