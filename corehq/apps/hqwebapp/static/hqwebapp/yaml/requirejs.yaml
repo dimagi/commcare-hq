@@ -26,6 +26,8 @@ modules:
       - bootstrap
       - hqwebapp/js/django
       - jquery.cookie/jquery.cookie
+      - jquery-form/dist/jquery.form.min.js
+      - jquery.rmi/jquery.rmi
 
   # Limited set of common libraries in hqwebapp/js that are used, leaving off
   # a bunch of lesser-used libraries in the same directory.
@@ -35,10 +37,13 @@ modules:
     include:
       - hqwebapp/js/alert_user
       - hqwebapp/js/initial_page_data
-      - hqwebapp/js/main
+      - hqwebapp/js/hq-bug-report
+      - hqwebapp/js/hq_extensions.jquery
       - hqwebapp/js/hq.helpers
       - hqwebapp/js/layout
-      - hqwebapp/js/hq-bug-report
+      - hqwebapp/js/main
+      - hqwebapp/js/mobile_experience_warning
+      - hqwebapp/js/sticky_tabs
 
   # Bundle of the jQuery UI components we actually use. Excludes components like effect-*.js
   - name: hqwebapp/js/jquery-ui
@@ -57,12 +62,37 @@ modules:
       - jquery-ui/ui/droppable
       - jquery-ui/ui/sortable
 
+  # Bundle of the jQuery UI effects we actually use.
+  - name: hqwebapp/js/jquery-ui-effect
+    exclude:
+      - hqwebapp/js/common
+    include:
+      - jquery
+      - jquery-ui/ui/effect
+      - jquery-ui/ui/effect-slide
+
   # App manager bundle, which currently contains nothing because form_designer.js contains
   # the RequireJS config for vellum, which doesn't play well with HQ's RequireJS. This
   # will be removed once app manager is migrated to RequireJS.
   - name: app_manager/js/forms/bundle
     exclude:
       - hqwebapp/js/common
+
+  - name: registration/js/bundle
+    exclude:
+      - hqwebapp/js/common
+    include:
+#      - blazy/blazy
+      - hqwebapp/js/password_validators.ko
+#      - hqwebapp/js/validators.ko
+#      - intl-tel-input/build/js/intlTelInput.min
+      - knockout-validation/dist/knockout.validation.min
+#      - registration/js/login
+#      - registration/js/new_user.ko
+#      - registration/js/password
+      - registration/js/register_new_user
+#      - zxcvbn/dist/zxcvbn  # TODO: also used in users
+#      - nic_compliance/js/encoder   # TODO: also used in users
 
   # Limited bundle for reports, containing only the modules that are used outside of reports
   # (currently, by fixtures, since that's the only area that depends on reports and has been
