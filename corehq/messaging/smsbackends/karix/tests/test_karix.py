@@ -72,6 +72,7 @@ class KarixBackendTest(TestCase):
                         'send': 'SENDER',
                         'text': '\u0928\u092e\u0938\u094d\u0924\u0947',
                         'type': 'UC',
+                        'vp': '1440',
                     },
                 ],
             }
@@ -98,6 +99,7 @@ class KarixBackendTest(TestCase):
                         'send': 'SENDER',
                         'text': 'test',
                         'type': 'PM',
+                        'vp': '1440',
                     },
                 ],
             }
