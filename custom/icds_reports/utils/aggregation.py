@@ -964,6 +964,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         born_in_month = "({} AND child_health.dob BETWEEN {} AND {})".format(seeking_services, start_month_string, end_month_string)
         valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(open_in_month, alive_in_month, seeking_services, age_in_months)
         #fully_immunized_eligible = "{} AND {} > 365".format(valid_in_month, age_in_days)
+        pse_eligible = "({} AND {} > 36)".format(valid_in_month, age_in_months_end)
 
         columns = (
             ("awc_id", "child_health.awc_id"),
@@ -1001,9 +1002,9 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("person_name", "child_health.person_name"),
             ("mother_name", "child_health.mother_name"),
             # PSE/DF Indicators
-            ("pse_eligible", "ucr.pse_eligible"),
+            ("pse_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(pse_eligible)),
             ("pse_days_attended",
-                "CASE WHEN ucr.pse_eligible = 1 THEN COALESCE(df.sum_attended_child_ids, 0) ELSE NULL END"),
+                "CASE WHEN {} THEN COALESCE(df.sum_attended_child_ids, 0) ELSE NULL END".format(pse_eligible)),
             # EBF Indicators
             ("ebf_eligible", "ucr.ebf_eligible"),
             ("ebf_in_month", "CASE WHEN ucr.ebf_eligible = 1 THEN COALESCE(pnc.is_ebf, 0) ELSE 0 END"),
