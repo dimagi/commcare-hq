@@ -398,7 +398,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
         }
 
-        return run_query_across_partitioned_databases(
+        return paginate_query_across_partitioned_databases(
             XFormInstanceSQL,
             Q(last_modified__gt=start_datetime),
             annotate=annotate,
