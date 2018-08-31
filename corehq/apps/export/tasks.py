@@ -116,7 +116,8 @@ def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=Fal
     if manual:
         if status.not_started() or status.missing():
             # cancel pending task before kicking off a new one
-            download_data.task.revoke()
+            if download_data.task:
+                download_data.task.revoke()
         if status.started():
             return  # noop - make the user wait before starting a new one
     else:
