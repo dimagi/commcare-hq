@@ -158,6 +158,7 @@
     "sql_column_indexes": [
       {"column_ids": ["supervisor_id", "submitted_on"]}
     ],
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "asynchronous": true
   }
 }

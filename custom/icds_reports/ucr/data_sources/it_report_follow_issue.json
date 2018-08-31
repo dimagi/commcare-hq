@@ -208,6 +208,7 @@
     },
     "named_filters": {},
     "sql_column_indexes": [],
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "asynchronous": true
   }
 }

@@ -534,6 +534,7 @@
     "named_expressions": {},
     "named_filters": {},
     "engine_id": "icds-ucr",
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "asynchronous": true
   }
 }

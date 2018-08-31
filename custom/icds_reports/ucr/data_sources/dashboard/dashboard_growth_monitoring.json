@@ -362,6 +362,7 @@
         "column_ids": ["state_id", "muac_grading"]
       }
     ],
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "asynchronous": true
   }
 }

@@ -80,6 +80,7 @@
         }
       }
     ],
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "asynchronous": true
   }
 }
