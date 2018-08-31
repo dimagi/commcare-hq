@@ -1011,10 +1011,17 @@ class ConfigureNewReportBase(forms.Form):
                 'date': 'Date',
                 'numeric': 'Numeric'
             }
+            try:
+                format_ = filter_type_map[filter['type']]
+            except KeyError:
+                raise BadBuilderConfigError(_(
+                    "This report references the '{}' filter, which is not compatible with "
+                    "the Report Builder. It is only editable in the advanced interface."
+                ).format(filter['type'])
             return UserFilterViewModel(
                 exists_in_current_version=exists,
                 display_text=filter['display'],
-                format=filter_type_map[filter['type']],
+                format=format_,
                 property=self._get_property_id_by_indicator_id(field) if exists else None,
                 data_source_field=field if not exists else None
             )
