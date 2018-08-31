@@ -55,8 +55,13 @@ hqDefine('analytix/js/hubspot', [
         });
     };
 
+    var then = function(successCallback, failureCallback) {
+        _ready.then(successCallback, failureCallback);
+    };
+
     return {
         identify: identify,
+        then: then,
         trackEvent: trackEvent,
     };
 });
