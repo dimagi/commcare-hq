@@ -954,16 +954,16 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregation_query(self):
         columns = (
-            ("awc_id", "ucr.awc_id"),
-            ("case_id", "ucr.case_id"),
-            ("month", "ucr.month"),
-            ("sex", "ucr.sex"),
+            ("awc_id", "child_health.awc_id"),
+            ("case_id", "child_health.doc_id"),
+            ("month", self.month.strftime("'%Y-%m-%d'")),
+            ("sex", "child_health.sex"),
             ("age_tranche", "ucr.age_tranche"),
-            ("caste", "ucr.caste"),
-            ("disabled", "ucr.disabled"),
-            ("minority", "ucr.minority"),
-            ("resident", "ucr.resident"),
-            ("dob", "ucr.dob"),
+            ("caste", "child_health.caste"),
+            ("disabled", "child_health.disabled"),
+            ("minority", "child_health.minority"),
+            ("resident", "child_health.resident"),
+            ("dob", "child_health.dob"),
             ("age_in_months", "ucr.age_in_months"),
             ("open_in_month", "ucr.open_in_month"),
             ("alive_in_month", "ucr.alive_in_month"),
@@ -1150,8 +1150,8 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             LEFT OUTER JOIN "{agg_df_table}" df ON ucr.doc_id = df.case_id AND ucr.month = df.month
             LEFT OUTER JOIN "{child_health_case_ucr}" child_health ON ucr.doc_id = child_health.doc_id
             LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON ucr.doc_id = child_tasks.child_health_case_id
-            WHERE ucr.month = %(start_date)s
-            ORDER BY ucr.awc_id, ucr.case_id
+            WHERE ucr.month = %(start_date)s AND child_health.case_id IS NOT NULL
+            ORDER BY child_health.awc_id, child_health.case_id
         )
         """.format(
             tablename=self.tablename,
