@@ -750,6 +750,20 @@ class ProjectDataTab(UITab):
                 })
             items.extend(edit_section)
 
+        if toggles.EXPLORE_CASE_DATA.enabled(self.domain):
+            from corehq.apps.data_interfaces.views import ExploreCaseDataView
+            explore_data_views = [
+                {
+                    'title': _(ExploreCaseDataView.page_title),
+                    'url': reverse(ExploreCaseDataView.urlname,
+                                   args=(self.domain,)),
+                    'show_in_dropdown': False,
+                    'icon': 'fa fa-search',
+                    'subpages': [],
+                }
+            ]
+            items.append([_("Explore Data"), explore_data_views])
+
         if self.can_use_lookup_tables:
             from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
