@@ -996,7 +996,8 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("fully_immunized_late", "ucr.fully_immunized_late"),
             ("has_aadhar_id", "ucr.has_aadhar_id"),
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
-            ("valid_all_registered_in_month", "ucr.valid_all_registered_in_month"),
+            ("valid_all_registered_in_month",
+                "CASE WHEN {} AND {} AND {} <= 72 AND child_health.is_migrated = 0 THEN 1 ELSE 0 END".format(open_in_month, alive_in_month, age_in_months)),
             ("person_name", "child_health.person_name"),
             ("mother_name", "child_health.mother_name"),
             # PSE/DF Indicators
