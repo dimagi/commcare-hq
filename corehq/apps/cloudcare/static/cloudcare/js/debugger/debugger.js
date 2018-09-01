@@ -1,4 +1,4 @@
-/* globals CodeMirror, gettext, Clipboard */
+/* globals ace, Clipboard */
 hqDefine('cloudcare/js/debugger/debugger', function () {
 
     /**
@@ -119,22 +119,19 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         self.formattedQuestionsHtml = ko.observable('');
         self.instanceXml = ko.observable('');
         self.instanceXml.subscribe(function(newXml) {
-            var codeMirror,
-                $instanceTab = $('#debugger-xml-instance-tab');
-
-            codeMirror = CodeMirror(function(el) {
-                $('#xml-viewer-pretty').html(el);
-            }, {
-                value: newXml,
-                mode: 'xml',
-                viewportMargin: Infinity,
-                readOnly: true,
-                lineNumbers: true,
-            });
-            $instanceTab.off('shown.bs.tab');
-            $instanceTab.on('shown.bs.tab', function() {
-                codeMirror.refresh();
-            });
+            var $instanceTab = $('#debugger-xml-instance-tab'),
+                $viewer = $('#xml-viewer-pretty'),
+                editor = ace.edit($viewer.get(0), {
+                    showPrintMargin: false,
+                    maxLines: 40,
+                    minLines: 3,
+                    fontSize: 14,
+                    wrap: true,
+                    useWorker: false,
+                });
+            editor.setReadOnly(true);
+            editor.session.setMode('ace/mode/xml');
+            editor.session.setValue(newXml);
         });
 
     };
@@ -481,23 +478,26 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
     };
 
     _.delay(function  () {
-        ko.bindingHandlers.codeMirror = {
-            /* copied and edited from https://stackoverflow.com/a/33966345/240553 */
+        ko.bindingHandlers.aceEditor = {
             init: function(element, valueAccessor) {
-                var options = {
-                    mode: 'xml',
-                    viewportMargin: Infinity,
-                    readOnly: true,
-                };
-                options.value = ko.unwrap(valueAccessor());
-                var editor = CodeMirror.fromTextArea(element, options);
-                editor.setSize(null, 'auto');
+                var editor = ace.edit(element, {
+                    showGutter: false,      // no line numbers
+                    showPrintMargin: false,
+                    maxLines: 10,
+                    minLines: 1,
+                    fontSize: 14,
+                    wrap: true,
+                    useWorker: false,
+                });
+                editor.setReadOnly(true);
+                editor.session.setMode('ace/mode/xml');
+                editor.session.setValue(ko.unwrap(valueAccessor()));
                 element.editor = editor;
             },
             update: function(element, valueAccessor) {
                 var observedValue = ko.unwrap(valueAccessor());
                 if (element.editor) {
-                    element.editor.setValue(observedValue);
+                    element.editor.session.setValue(observedValue);
                 }
             },
         };
