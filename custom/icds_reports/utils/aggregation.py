@@ -969,6 +969,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         wer_eligible = "({} AND {} <= 60)".format(valid_in_month, age_in_months)
         cf_eligible = "({} AND {} > 6 AND {} <= 24)".format(valid_in_month, age_in_months_end, age_in_months)
         cf_initiation_eligible = "({} AND {} > 6 AND {} <= 8)".format(valid_in_month, age_in_months_end, age_in_months)
+        thr_eligible = "({} AND {} > 6 AND {} <= 36)".format(valid_in_month, age_in_months_end, age_in_months)
 
         columns = (
             ("awc_id", "child_health.awc_id"),
@@ -1124,9 +1125,9 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("cf_initiation_in_month",
                 "CASE WHEN {} THEN COALESCE(cf.comp_feeding_ever, 0) ELSE 0 END".format(cf_initiation_eligible)),
             # THR Indicators
-            ("thr_eligible", "ucr.thr_eligible"),
+            ("thr_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(thr_eligible)),
             ("num_rations_distributed",
-                "CASE WHEN ucr.thr_eligible = 1 THEN COALESCE(thr.days_ration_given_child, 0) ELSE NULL END"),
+                "CASE WHEN {} THEN COALESCE(thr.days_ration_given_child, 0) ELSE NULL END".format(thr_eligible)),
             ("days_ration_given_child", "thr.days_ration_given_child"),
             # Tasks case Indicators
             ("immunization_in_month", """
