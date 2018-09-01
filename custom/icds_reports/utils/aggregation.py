@@ -963,7 +963,6 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         seeking_services = "(child_health.is_availing = 1 AND child_health.is_migrated = 0)"
         born_in_month = "({} AND child_health.dob BETWEEN {} AND {})".format(seeking_services, start_month_string, end_month_string)
         valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(open_in_month, alive_in_month, seeking_services, age_in_months)
-        #fully_immunized_eligible = "{} AND {} > 365".format(valid_in_month, age_in_days)
         pse_eligible = "({} AND {} > 36)".format(valid_in_month, age_in_months_end)
         ebf_eligible = "({} AND {} <= 6)".format(valid_in_month, age_in_months)
         wer_eligible = "({} AND {} <= 60)".format(valid_in_month, age_in_months)
@@ -972,6 +971,9 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         thr_eligible = "({} AND {} > 6 AND {} <= 36)".format(valid_in_month, age_in_months_end, age_in_months)
         pnc_eligible = "({} AND {} - child_health.dob > 0 AND {} - child_health.dob <= 20)".format(valid_in_month, end_month_string, start_month_string)
         height_eligible = "({} AND {} > 6 AND {} <= 60)".format(valid_in_month, age_in_months_end, age_in_months)
+        fully_immunized_eligible = "({} AND {} > 12)".format(valid_in_month, age_in_months_end)
+        immunized_age_in_days = "(child_tasks.immun_one_year_date - child_health.dob)"
+        fully_immun_before_month = "(child_tasks.immun_one_year_date < {})".format(end_month_string)
 
         columns = (
             ("awc_id", "child_health.awc_id"),
@@ -999,9 +1001,9 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("born_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(born_in_month)),
             ("bf_at_birth_born_in_month", "CASE WHEN {} AND child_health.bf_at_birth = 'yes' THEN 1 ELSE 0 END".format(born_in_month)),
             ("low_birth_weight_born_in_month", "CASE WHEN {} AND child_health.lbw_open_count = 1 THEN 1 ELSE 0 END".format(born_in_month)),
-            ("fully_immunized_eligible", "ucr.fully_immunized_eligible"),
-            ("fully_immunized_on_time", "ucr.fully_immunized_on_time"),
-            ("fully_immunized_late", "ucr.fully_immunized_late"),
+            ("fully_immunized_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(fully_immunized_eligible)),
+            ("fully_immunized_on_time", "CASE WHEN {} AND {} <= 365 AND {} THEN 1 ELSE 0 END".format(fully_immunized_eligible, immunized_age_in_days, fully_immun_before_month)),
+            ("fully_immunized_late", "CASE WHEN {} AND {} > 365 AND {} THEN 1 ELSE 0 END".format(fully_immunized_eligible, immunized_age_in_days, fully_immun_before_month)),
             ("has_aadhar_id", "ucr.has_aadhar_id"),
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month",
