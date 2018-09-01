@@ -966,6 +966,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         #fully_immunized_eligible = "{} AND {} > 365".format(valid_in_month, age_in_days)
         pse_eligible = "({} AND {} > 36)".format(valid_in_month, age_in_months_end)
         ebf_eligible = "({} AND {} <= 6)".format(valid_in_month, age_in_months)
+        wer_eligible = "({} AND {} <= 60)".format(valid_in_month, age_in_months)
 
         columns = (
             ("awc_id", "child_health.awc_id"),
@@ -1034,31 +1035,31 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("counsel_skin_to_skin",
                 "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.skin_to_skin, 0) ELSE 0 END"),
             # GM Indicators
-            ("wer_eligible", "ucr.wer_eligible"),
+            ("wer_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(wer_eligible)),
             ("nutrition_status_last_recorded",
                 "CASE "
-                "WHEN ucr.wer_eligible = 0 THEN NULL "
+                "WHEN NOT {} THEN NULL "
                 "WHEN gm.zscore_grading_wfa = 1 THEN 'severely_underweight' "
                 "WHEN gm.zscore_grading_wfa = 2 THEN 'moderately_underweight' "
                 "WHEN gm.zscore_grading_wfa IN (2, 3) THEN 'normal' "
-                "ELSE 'unknown' END"),
+                "ELSE 'unknown' END".format(wer_eligible)),
             ("current_month_nutrition_status",
                 "CASE "
-                "WHEN ucr.wer_eligible = 0 THEN NULL "
+                "WHEN NOT {} THEN NULL "
                 "WHEN date_trunc('MONTH', gm.zscore_grading_wfa_last_recorded) != %(start_date)s THEN 'unweighed' "
                 "WHEN gm.zscore_grading_wfa = 1 THEN 'severely_underweight' "
                 "WHEN gm.zscore_grading_wfa = 2 THEN 'moderately_underweight' "
                 "WHEN gm.zscore_grading_wfa IN (3, 4) THEN 'normal' "
-                "ELSE 'unweighed' END"),
+                "ELSE 'unweighed' END".format(wer_eligible)),
             ("nutrition_status_weighed",
                 "CASE "
-                "WHEN ucr.wer_eligible = 1 AND current_month_nutrition_status != 'unweighed' THEN 1 "
-                "ELSE 0 END"),
+                "WHEN {} AND date_trunc('MONTH', gm.zscore_grading_wfa_last_recorded) = %(start_date)s THEN 1 "
+                "ELSE 0 END".format(wer_eligible)),
             ("recorded_weight",
                 "CASE "
-                "WHEN wer_eligible = 0 THEN NULL "
+                "WHEN NOT {} THEN NULL "
                 "WHEN date_trunc('MONTH', gm.weight_child_last_recorded) = %(start_date)s THEN gm.weight_child "
-                "ELSE NULL END"),
+                "ELSE NULL END".format(wer_eligible)),
             ("recorded_height",
                 "CASE "
                 "WHEN date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s THEN gm.height_child "
