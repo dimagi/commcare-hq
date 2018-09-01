@@ -968,6 +968,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         ebf_eligible = "({} AND {} <= 6)".format(valid_in_month, age_in_months)
         wer_eligible = "({} AND {} <= 60)".format(valid_in_month, age_in_months)
         cf_eligible = "({} AND {} > 6 AND {} <= 24)".format(valid_in_month, age_in_months_end, age_in_months)
+        cf_initiation_eligible = "({} AND {} > 6 AND {} <= 8)".format(valid_in_month, age_in_months_end, age_in_months)
 
         columns = (
             ("awc_id", "child_health.awc_id"),
@@ -1110,7 +1111,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 "CASE WHEN (date_trunc('MONTH', gm.muac_grading_last_recorded) = %(start_date)s) THEN 1 ELSE 0 END"),
             # CF Indicators
             ("cf_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(cf_eligible)),
-            ("cf_initiation_eligible", "ucr.cf_initiation_eligible"),
+            ("cf_initiation_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(cf_initiation_eligible)),
             ("cf_in_month", "CASE WHEN {} THEN COALESCE(cf.comp_feeding_latest, 0) ELSE 0 END".format(cf_eligible)),
             ("cf_diet_diversity", "CASE WHEN {} THEN COALESCE(cf.diet_diversity, 0) ELSE 0 END".format(cf_eligible)),
             ("cf_diet_quantity", "CASE WHEN {} THEN COALESCE(cf.diet_quantity, 0) ELSE 0 END".format(cf_eligible)),
@@ -1121,7 +1122,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("counsel_comp_feeding_vid",
                 "CASE WHEN {} THEN COALESCE(cf.play_comp_feeding_vid, 0) ELSE 0 END".format(cf_eligible)),
             ("cf_initiation_in_month",
-                "CASE WHEN ucr.cf_initiation_eligible = 1 THEN COALESCE(cf.comp_feeding_ever, 0) ELSE 0 END"),
+                "CASE WHEN {} THEN COALESCE(cf.comp_feeding_ever, 0) ELSE 0 END".format(cf_initiation_eligible)),
             # THR Indicators
             ("thr_eligible", "ucr.thr_eligible"),
             ("num_rations_distributed",
