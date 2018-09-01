@@ -181,7 +181,6 @@ class OpenmrsImporterView(BaseProjectSettingsView):
 
     @property
     def page_context(self):
-        # TODO: JsonField fields must render with CodeMirror
         # TODO: Look up locations for location_id field.
 
         openmrs_importers = []
