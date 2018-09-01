@@ -970,6 +970,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         cf_eligible = "({} AND {} > 6 AND {} <= 24)".format(valid_in_month, age_in_months_end, age_in_months)
         cf_initiation_eligible = "({} AND {} > 6 AND {} <= 8)".format(valid_in_month, age_in_months_end, age_in_months)
         thr_eligible = "({} AND {} > 6 AND {} <= 36)".format(valid_in_month, age_in_months_end, age_in_months)
+        pnc_eligible = "({} AND {} - child_health.dob > 0 AND {} - child_health.dob <= 20)".format(valid_in_month, end_month_string, start_month_string)
 
         columns = (
             ("awc_id", "child_health.awc_id"),
@@ -1030,13 +1031,13 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("counsel_ebf",
                 "CASE WHEN {} THEN GREATEST(pnc.counsel_exclusive_bf, pnc.counsel_only_milk, 0) ELSE 0 END".format(ebf_eligible)),
             # PNC Indicators
-            ("pnc_eligible", "ucr.pnc_eligible"),
+            ("pnc_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(pnc_eligible)),
             ("counsel_increase_food_bf",
-                "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.counsel_increase_food_bf, 0) ELSE 0 END"),
+                "CASE WHEN {} THEN COALESCE(pnc.counsel_increase_food_bf, 0) ELSE 0 END".format(pnc_eligible)),
             ("counsel_manage_breast_problems",
-                "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.counsel_breast, 0) ELSE 0 END"),
+                "CASE WHEN {} THEN COALESCE(pnc.counsel_breast, 0) ELSE 0 END".format(pnc_eligible)),
             ("counsel_skin_to_skin",
-                "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.skin_to_skin, 0) ELSE 0 END"),
+                "CASE WHEN {} THEN COALESCE(pnc.skin_to_skin, 0) ELSE 0 END".format(pnc_eligible)),
             # GM Indicators
             ("wer_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(wer_eligible)),
             ("nutrition_status_last_recorded",
