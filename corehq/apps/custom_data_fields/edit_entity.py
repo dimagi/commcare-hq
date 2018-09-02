@@ -46,12 +46,12 @@ class CustomDataEditor(object):
     """
 
     def __init__(self, field_view, domain, existing_custom_data=None, post_dict=None,
-                 prefix=None, required_only=False, angular_model=None):
+                 prefix=None, required_only=False, data_bind_value=None):
         self.field_view = field_view
         self.domain = domain
         self.existing_custom_data = existing_custom_data
         self.required_only = required_only
-        self.angular_model = angular_model
+        self.data_bind_value = data_bind_value
         self.prefix = prefix if prefix is not None else CUSTOM_DATA_FIELD_PREFIX
         self.form = self.init_form(post_dict)
 
@@ -119,13 +119,13 @@ class CustomDataEditor(object):
         for field in self.fields:
             fields[field.slug] = self._make_field(field)
 
-        if self.angular_model:
+        if self.data_bind_value:
             field_names = [
 
                 Field(
                     field_name,
-                    ng_model="{}.{}".format(self.angular_model, field_name),
-                    ng_required="true" if field.required else "false"
+                    data_bind="value: {}.{}".format(self.data_bind_value, field_name),
+                    #ng_required="true" if field.required else "false"  # TODO
                 )
                 for field_name, field in fields.items()
             ]
@@ -135,8 +135,8 @@ class CustomDataEditor(object):
         CustomDataForm = type('CustomDataForm' if six.PY3 else b'CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
-        CustomDataForm.helper.label_class = 'col-sm-4' if self.angular_model else 'col-lg-3'
-        CustomDataForm.helper.field_class = 'col-sm-8' if self.angular_model else 'col-lg-9'
+        CustomDataForm.helper.label_class = 'col-sm-4' if self.data_bind_value else 'col-lg-3'
+        CustomDataForm.helper.field_class = 'col-sm-8' if self.data_bind_value else 'col-lg-9'
 
         additional_fields = []
         if field_names:
