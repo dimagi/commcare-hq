@@ -32,6 +32,7 @@ class Transifex(object):
         if version:
             version = int(version)
         self.version = version
+        self.domain = domain
         self.key_lang = "en"  # the lang in which the string keys are, should be english
         self.lang_prefix = lang_prefix
         self.project_slug = project_slug
@@ -70,19 +71,30 @@ class Transifex(object):
         else:
             raise Exception(_("Transifex account details not available on this environment."))
 
+    @property
+    @memoized
+    def transifex_project_source_lang(self):
+         return self.client.transifex_lang_code(self.client.get_source_lang())
+
+    def _resource_name_in_project_lang(self, resource_slug):
+        resource_name_in_all_langs = self.transifex_po_file_generator.slug_to_name[resource_slug]
+        return resource_name_in_all_langs.get(self.transifex_project_source_lang,
+                                              resource_name_in_all_langs.get('en', resource_slug))
+
     def _send_files_to_transifex(self):
         file_uploads = {}
-        for resource_name, path_to_file in self.transifex_po_file_generator.generated_files:
+        for resource_slug, path_to_file in self.transifex_po_file_generator.generated_files:
+            resource_name = self._resource_name_in_project_lang(resource_slug)
             if self.is_source_file:
                 response = self.client.upload_resource(
                     path_to_file,
-                    resource_name,
+                    resource_slug,
                     resource_name,
                     self.update_resource
                 )
             else:
                 response = self.client.upload_translation(
-                    path_to_file, resource_name,
+                    path_to_file, resource_slug,
                     resource_name, self.source_lang
                 )
             if response.status_code in [200, 201]:
