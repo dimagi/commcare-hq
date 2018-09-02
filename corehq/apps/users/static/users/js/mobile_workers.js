@@ -114,7 +114,7 @@ hqDefine("users/js/mobile_workers", function() {
             ERROR: 'error',
         };
 
-        // Data for list
+        // Data for current worker list
         self.users = ko.observableArray([]);
         self.query = ko.observable('');
         self.inactiveOnly = ko.observable(false);
@@ -185,6 +185,12 @@ hqDefine("users/js/mobile_workers", function() {
 
         self.goToPage(1);
 
+        // Data for new worker list
+        self.newUsers = ko.observableArray([]);
+        self.hasNewUsers = ko.computed(function() {
+            return self.newUsers().length;
+        });
+
         self.mobileWorker = mobileWorkerModel();  // new worker being added
         self.mobileWorker.clear();
         self.initializeMobileWorker = function() {
@@ -200,7 +206,7 @@ hqDefine("users/js/mobile_workers", function() {
         self.submitNewMobileWorker = function() {
             $("#newMobileWorkerModal").modal('hide');
             var newWorker = _.clone(self.mobileWorker);
-            self.users.push(newWorker);
+            self.newUsers.push(newWorker);
             newWorker.creationStatus(STATUS.PENDING);
 
             var deferred = $.Deferred();
