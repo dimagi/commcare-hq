@@ -31,11 +31,25 @@ class Command(ResourceStaticCommand):
         with open(os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
             config = yaml.load(f)
 
-            bundles = {}
-            all_modules = []
+            '''
+            The default strategy is to make one "bundle" for every corehq directory of js files.
+            Begin by gathering all corehq staticfiles directories into a dict like:
+                {
+                    'app_manager/js' => [
+                        'app_manager/js/app_view',
+                        'app_manager/js/add_ons',
+                        ...
+                    ],
+                    'app_manager/js/forms' => [
+                        'app_manager/js/forms/form_designer',
+                        ...
+                    ],
+                    ...
+                }
+            '''
             prefix = os.path.join(os.getcwd(), 'corehq')
-
-            # Gather all directories of static files
+            corehq_dirs = {}
+            all_js_files = []
             for finder in finders.get_finders():
                 if isinstance(finder, finders.AppDirectoriesFinder):
                     for path, storage in finder.list(['.*', '*~', '* *', '*.*ss', '*.png']):
@@ -43,10 +57,10 @@ class Command(ResourceStaticCommand):
                             continue
                         if path.endswith(".js"):
                             directory = re.sub(r'/[^/]*$', '', path)
-                            if directory not in bundles:
-                                bundles[directory] = []
-                            bundles[directory].append(path[:-3])
-                            all_modules.append(path[:-3])
+                            if directory not in corehq_dirs:
+                                corehq_dirs[directory] = []
+                            corehq_dirs[directory].append(path[:-3])
+                            all_js_files.append(path[:-3])
 
             # Go through customized bundles and expand any that include directories
             for module in config['modules']:
@@ -54,19 +68,19 @@ class Command(ResourceStaticCommand):
                     if 'include' not in module:
                         module['include'] = []
                     for directory in module.pop('include_directories'):
-                        if directory not in bundles:
+                        if directory not in corehq_dirs:
                             raise Exception("Could not find directory to include: {}".format(directory))
-                        module['include'] += bundles[directory]
+                        module['include'] += corehq_dirs[directory]
 
             # Add a bundle for each directory that doesn't already have a custom module defined
             customized_directories = {re.sub(r'/[^/]*$', '', m['name']): True for m in config['modules']}
-            for directory, inclusions in six.iteritems(bundles):
+            for directory, inclusions in six.iteritems(corehq_dirs):
                 if directory not in customized_directories and not directory.startswith("app_manager/js/vellum"):
                     # Add this module's config to build config
                     config['modules'].append({
                         'name': os.path.join(directory, 'bundle'),
                         'include': inclusions,
-                        'excludeShallow': [name for name in all_modules if name not in inclusions],
+                        'excludeShallow': [name for name in all_js_files if name not in inclusions],
                         'exclude': ['hqwebapp/js/common'],
                     })
 
