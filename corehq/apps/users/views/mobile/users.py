@@ -45,6 +45,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -639,7 +640,7 @@ def check_username(request, domain):
 @require_POST
 @login_and_domain_required
 @require_can_edit_commcare_users
-def create_mobile_worker(request, domain, self):
+def create_mobile_worker(request, domain):
     fields = [
         'username',
         'password',
@@ -653,15 +654,10 @@ def create_mobile_worker(request, domain, self):
             'error': _("No Permission."),
         })
 
-    if 'mobileWorker' not in request.POST:
-        return json_response({
-            'error': _("Please provide mobile worker data."),
-        })
+    form_data = _construct_form_data(domain, request.POST, fields)
 
-    user_data = request.POST.get('mobileWorker')
-    form_data = _construct_form_data(domain, user_data, fields)
-
-    mobile_worker_form = NewMobileWorkerForm(domain, request.couch_user, form_data)
+    project = Domain.get_by_name(domain)
+    mobile_worker_form = NewMobileWorkerForm(project, request.couch_user, form_data)
     custom_data = CustomDataEditor(
         field_view=UserFieldsView,
         domain=domain,
