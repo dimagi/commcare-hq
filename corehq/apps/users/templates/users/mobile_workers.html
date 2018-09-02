@@ -36,7 +36,6 @@
     {% registerurl 'deactivate_commcare_user' domain '---' %}
     {% registerurl 'paginate_mobile_workers' domain %}
 
-<div id="mobile-workers-list" class="ko-template">
     <div class="row">
         <div class="col-sm-12">
             <p class="lead">
@@ -56,6 +55,7 @@
             </p>
             <div class="btn-toolbar" style="margin-bottom: 20px;">
                 <button type="button"
+                        id="newMobileWorkerModalTrigger"
                         class="btn btn-success"
                         data-toggle="modal"
                         data-target="#newMobileWorkerModal"
@@ -150,7 +150,7 @@
         {% endif %}
     </div>
 
-    <div class="panel panel-info" data-bind="visible: hasNewUsers">
+    <div class="panel panel-info ko-template" id="new-mobile-workers-list" data-bind="visible: hasUsers">
         <div class="panel-heading">
             <h3 class="panel-title">
                 {% trans 'New Mobile Workers' %}
@@ -166,7 +166,7 @@
                         <th class="col-xs-3">{% trans "Status" %}</th>
                     </tr>
                 </thead>
-                <tbody data-bind="foreach: newUsers">
+                <tbody data-bind="foreach: users">
                     <tr>
                         <td data-bind="attr: {'class': creationStatus }">
                             <!-- TODO: visibility here is wrong because editUrl defaults to truthy '#' -->
@@ -179,19 +179,17 @@
                         </td>
                         <td data-bind="attr: {'class': creationStatus }, text: first_name"></td>
                         <td data-bind="attr: {'class': creationStatus }, text: last_name"></td>
-                        <td>TODO</td>
-
-                        <!--td class="{{ worker.creationStatus }}">
-                            <div ng-show="worker.creationStatus==='pending'">
+                        <td data-bind="attr: {'class': creationStatus }">
+                            <div data-bind="visible: isPending">
                                 <i class="fa fa-circle-o-notch fa-spin"></i>
                                 {% trans 'Pending...' %}
                             </div>
-                            <div ng-show="worker.creationStatus==='success'">
+                            <div data-bind="visible: isSuccess">
                                 <span class="text-success">
                                     <i class="fa fa-check"></i> {% trans 'NEW' %}
                                 </span>
                             </div>
-                            <div ng-show="worker.creationStatus==='warning'">
+                            <div data-bind="visible: isWarning">
                                 <span class="text-warning">
                                     <i class="fa fa-exclamation-triangle"></i>
                                     {% trans "ERROR" %}
@@ -200,18 +198,18 @@
                                         class="btn btn-default"
                                         data-toggle="modal"
                                         data-target="#newMobileWorkerModal"
-                                        ng-click="retryMobileWorker">
+                                        data-bind="retryMobileWorker">
                                     {% trans 'Retry' %}
                                 </button>
                             </div>
-                        </td-->
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <div class="panel panel-default">
+    <div class="panel panel-default ko-template" id="mobile-workers-list">
         <div class="panel-heading">
             <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
         </div>
@@ -413,5 +411,4 @@
                                 totalItems: totalItems"></pagination>
         </div>
     </div>
-</div>
 {% endblock %}

@@ -16,7 +16,6 @@ hqDefine("users/js/mobile_workers", function() {
                 mark_activated: false,
                 mark_deactivated: false,
                 action_error: '',
-                creationStatus: '',
             };
         options = _.defaults(options || {}, defaults);
 
@@ -34,7 +33,6 @@ hqDefine("users/js/mobile_workers", function() {
         self.mark_activated = ko.observable(options.mark_activated);
         self.mark_deactivated = ko.observable(options.mark_deactivated);
         self.action_error = ko.observable(options.action_error);
-        self.creationStatus = ko.observable(options.creationStatus);
 
         self.clear = function() {
             self.username(defaults.username);
@@ -51,7 +49,6 @@ hqDefine("users/js/mobile_workers", function() {
             self.mark_activated(defaults.mark_activated);
             self.mark_deactivated(defaults.mark_deactivated);
             self.action_error(defaults.action_error);
-            self.creationStatus(defaults.creationStatus);
 
             self.password('');
         };
@@ -95,26 +92,21 @@ hqDefine("users/js/mobile_workers", function() {
         return self;
     };
 
-    var mobileWorkersList = function() {
+    var newMobileWorkerModel = function(options) {
+        var self = mobileWorkerModel(options);
+
+        self.creationStatus = ko.observable('');
+
+        self.isPending = ko.computed(function() { return self.creationStatus() === STATUS.PENDING; });
+        self.isSuccess = ko.computed(function() { return self.creationStatus() === STATUS.SUCCESS; });
+        self.isWarning = ko.computed(function() { return self.creationStatus() === STATUS.WARNING; });
+
+        return self;
+    };
+
+    var mobileWorkersListModel = function() {
         var self = {};
 
-        // Constants
-        var STATUS = {
-            NEW: 'new',
-            PENDING: 'pending',
-            WARNING: 'warning',
-            SUCCESS: 'success',
-            RETRIED: 'retried',
-        };
-        var USERNAME_STATUS = {
-            PENDING: 'pending',
-            TAKEN: 'taken',
-            AVAILABLE: 'available',
-            AVAILABLE_WARNING: 'warning',
-            ERROR: 'error',
-        };
-
-        // Data for current worker list
         self.users = ko.observableArray([]);
         self.query = ko.observable('');
         self.inactiveOnly = ko.observable(false);
@@ -185,13 +177,33 @@ hqDefine("users/js/mobile_workers", function() {
 
         self.goToPage(1);
 
-        // Data for new worker list
-        self.newUsers = ko.observableArray([]);
-        self.hasNewUsers = ko.computed(function() {
-            return self.newUsers().length;
+        return self;
+    }
+
+    var STATUS = {
+        NEW: 'new',
+        PENDING: 'pending',
+        WARNING: 'warning',
+        SUCCESS: 'success',
+        RETRIED: 'retried',
+    };
+    var USERNAME_STATUS = {
+        PENDING: 'pending',
+        TAKEN: 'taken',
+        AVAILABLE: 'available',
+        AVAILABLE_WARNING: 'warning',
+        ERROR: 'error',
+    };
+
+    var newMobileWorkersListModel = function() {
+        var self = {};
+
+        self.users = ko.observableArray([]);
+        self.hasUsers = ko.computed(function() {
+            return self.users().length;
         });
 
-        self.mobileWorker = mobileWorkerModel();  // new worker being added
+        self.mobileWorker = newMobileWorkerModel();  // new worker being added
         self.mobileWorker.clear();
         self.initializeMobileWorker = function() {
             self.mobileWorker.clear();
@@ -206,7 +218,7 @@ hqDefine("users/js/mobile_workers", function() {
         self.submitNewMobileWorker = function() {
             $("#newMobileWorkerModal").modal('hide');
             var newWorker = _.clone(self.mobileWorker);
-            self.newUsers.push(newWorker);
+            self.users.push(newWorker);
             newWorker.creationStatus(STATUS.PENDING);
 
             var deferred = $.Deferred();
@@ -246,10 +258,19 @@ hqDefine("users/js/mobile_workers", function() {
             });
         };
 
+        self.retryMobileWorker = function() {
+            console.log("do something");
+        };
+
         return self;
-    }
+    };
 
     $(function() {
-        $("#mobile-workers-list").koApplyBindings(mobileWorkersList());
+        var mobileWorkersList = mobileWorkersListModel(),
+            newMobileWorkersList = newMobileWorkersListModel();
+        $("#mobile-workers-list").koApplyBindings(mobileWorkersList);
+        $("#new-mobile-workers-list").koApplyBindings(newMobileWorkersList);
+        $("#newMobileWorkerModal").koApplyBindings(newMobileWorkersList);
+        $("#newMobileWorkerModalTrigger").koApplyBindings(newMobileWorkersList);
     });
 });
