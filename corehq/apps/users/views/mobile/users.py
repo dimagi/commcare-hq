@@ -44,7 +44,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -563,17 +563,6 @@ class MobileWorkerListView(BaseUserSettingsView):
 
     @property
     @memoized
-    def new_mobile_worker_form(self):
-        if self.request.method == "POST":
-            return NewMobileWorkerForm(self.request.project, self.couch_user, self.request.POST)
-        return NewMobileWorkerForm(self.request.project, self.couch_user)
-
-    @property
-    def _mobile_worker_form(self):
-        return self.new_mobile_worker_form
-
-    @property
-    @memoized
     def custom_data(self):
         return CustomDataEditor(
             field_view=UserFieldsView,
@@ -590,7 +579,7 @@ class MobileWorkerListView(BaseUserSettingsView):
         else:
             bulk_download_url = reverse("download_commcare_users", args=[self.domain])
         return {
-            'new_mobile_worker_form': self.new_mobile_worker_form,
+            'new_mobile_worker_form': NewMobileWorkerForm(self.request.project, self.couch_user),
             'custom_fields_form': self.custom_data.form,
             'custom_fields': [f.slug for f in self.custom_data.fields],
             'custom_field_names': [f.label for f in self.custom_data.fields],
@@ -606,124 +595,117 @@ class MobileWorkerListView(BaseUserSettingsView):
             'bulk_download_url': bulk_download_url
         }
 
-    @property
-    @memoized
-    def query(self):
-        return self.request.GET.get('query')
 
-    '''
-    @allow_remote_invocation
-    def check_username(self, in_data):
-        try:
-            username = in_data['username'].strip()
-        except KeyError:
-            return HttpResponseBadRequest('You must specify a username')
-        if username == 'admin' or username == 'demo_user':
-            return {'error': _('Username {} is reserved.').format(username)}
-        try:
-            validate_email("{}@example.com".format(username))
-            if BAD_MOBILE_USERNAME_REGEX.search(username) is not None:
-                raise ValidationError("Username contained an invalid character")
-        except ValidationError:
-            if '..' in username:
-                return {
-                    'error': _("Username may not contain consecutive . (period).")
-                }
-            if username.endswith('.'):
-                return {
-                    'error': _("Username may not end with a . (period).")
-                }
-            return {
-                'error': _("Username may not contain special characters.")
-            }
+@require_GET
+@login_and_domain_required
+@require_can_edit_commcare_users
+def check_username(request, domain):
+    try:
+        username = request.GET.get('username', '').strip()
+    except KeyError:
+        return HttpResponseBadRequest('You must specify a username')    # TODO: test
+    if username == 'admin' or username == 'demo_user':
+        return json_response({'error': _('Username {} is reserved.').format(username)})
+    try:
+        validate_email("{}@example.com".format(username))
+        if BAD_MOBILE_USERNAME_REGEX.search(username) is not None:
+            raise ValidationError("Username contained an invalid character")    # TODO: test
+    except ValidationError:
+        if '..' in username:
+            return json_response({
+                'error': _("Username may not contain consecutive . (period).")
+            })
+        if username.endswith('.'):
+            return json_response({
+                'error': _("Username may not end with a . (period).")
+            })
+        return json_response({
+            'error': _("Username may not contain special characters.")
+        })
 
-        full_username = format_username(username, self.domain)
-        exists = user_exists(full_username)
-        if exists.exists:
-            if exists.is_deleted:
-                result = {'warning': _('Username {} belonged to a user that was deleted.'
-                                       ' Reusing it may have unexpected consequences.').format(username)}
-            else:
-                result = {'error': _('Username {} is already taken').format(username)}
+    full_username = format_username(username, domain)
+    exists = user_exists(full_username)
+    if exists.exists:
+        if exists.is_deleted:
+            result = {'warning': _('Username {} belonged to a user that was deleted.'
+                                   ' Reusing it may have unexpected consequences.').format(username)}
         else:
-            result = {'success': _('Username {} is available').format(username)}
-        return result
+            result = {'error': _('Username {} is already taken').format(username)}
+    else:
+        result = {'success': _('Username {} is available').format(username)}
+    return json_response(result)
 
-    @allow_remote_invocation
-    def create_mobile_worker(self, in_data):
-        fields = [
-            'username',
-            'password',
-            'first_name',
-            'last_name',
-            'location_id',
-        ]
 
-        try:
-            self._ensure_proper_request(in_data)
-            form_data = self._construct_form_data(in_data, fields)
-        except InvalidMobileWorkerRequest as e:
-            return {
-                'error': six.text_type(e)
-            }
+@require_POST
+@login_and_domain_required
+@require_can_edit_commcare_users
+def create_mobile_worker(request, domain, self):
+    fields = [
+        'username',
+        'password',
+        'first_name',
+        'last_name',
+        'location_id',
+    ]
 
-        self.request.POST = form_data
+    if not can_add_extra_mobile_workers(request):
+        return json_response({
+            'error': _("No Permission."),
+        })
 
-        is_valid = lambda: self._mobile_worker_form.is_valid() and self.custom_data.is_valid()
-        if not is_valid():
-            return {'error': _("Forms did not validate")}
+    if 'mobileWorker' not in request.POST:
+        return json_response({
+            'error': _("Please provide mobile worker data."),
+        })
 
-        couch_user = self._build_commcare_user()
+    user_data = request.POST.get('mobileWorker')
+    form_data = _construct_form_data(domain, user_data, fields)
 
-        return {
-            'success': True,
-            'editUrl': reverse(
-                EditCommCareUserView.urlname,
-                args=[self.domain, couch_user.userID]
-            )
-        }
+    mobile_worker_form = NewMobileWorkerForm(domain, request.couch_user, form_data)
+    custom_data = CustomDataEditor(
+        field_view=UserFieldsView,
+        domain=domain,
+        post_dict=form_data,
+        required_only=True,
+        angular_model="mobileWorker.customFields",  # TODO
+    )
+    is_valid = lambda: mobile_worker_form.is_valid() and custom_data.is_valid()
+    if not is_valid():
+        return json_response({'error': _("Forms did not validate")})
 
-    def _build_commcare_user(self):
-        username = self.new_mobile_worker_form.cleaned_data['username']
-        password = self.new_mobile_worker_form.cleaned_data['password']
-        first_name = self.new_mobile_worker_form.cleaned_data['first_name']
-        last_name = self.new_mobile_worker_form.cleaned_data['last_name']
-        location_id = self.new_mobile_worker_form.cleaned_data['location_id']
+    location_id = mobile_worker_form.cleaned_data['location_id']
+    couch_user = CommCareUser.create(
+        domain,
+        mobile_worker_form.cleaned_data['username'],
+        mobile_worker_form.cleaned_data['password'],
+        device_id="Generated from HQ",
+        first_name=mobile_worker_form.cleaned_data['first_name'],
+        last_name=mobile_worker_form.cleaned_data['last_name'],
+        user_data=custom_data.get_data_to_save(),
+        location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
+    )
 
-        return CommCareUser.create(
-            self.domain,
-            username,
-            password,
-            device_id="Generated from HQ",
-            first_name=first_name,
-            last_name=last_name,
-            user_data=self.custom_data.get_data_to_save(),
-            location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
+    return json_response({
+        'success': True,
+        'editUrl': reverse(
+            EditCommCareUserView.urlname,
+            args=[domain, couch_user.userID]
         )
+    })
 
-    def _ensure_proper_request(self, in_data):
-        if not self.can_add_extra_users:
-            raise InvalidMobileWorkerRequest(_("No Permission."))
 
-        if 'mobileWorker' not in in_data:
-            raise InvalidMobileWorkerRequest(_("Please provide mobile worker data."))
+def _construct_form_data(domain, user_data, fields):
 
-        return None
-
-    def _construct_form_data(self, in_data, fields):
-
-        try:
-            user_data = in_data['mobileWorker']
-            form_data = {}
-            for k, v in user_data.get('customFields', {}).items():
-                form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
-            for f in fields:
-                form_data[f] = user_data.get(f)
-            form_data['domain'] = self.domain
-            return form_data
-        except Exception as e:
-            raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
-    '''
+    try:
+        form_data = {}
+        for k, v in user_data.get('customFields', {}).items():
+            form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
+        for f in fields:
+            form_data[f] = user_data.get(f)
+        form_data['domain'] = domain
+        return form_data
+    except Exception as e:
+        raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
 
 
 @require_can_edit_commcare_users
