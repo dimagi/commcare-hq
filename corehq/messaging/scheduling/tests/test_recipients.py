@@ -46,10 +46,37 @@ class SchedulingRecipientTest(TestCase):
         cls.mobile_user2 = CommCareUser.create(cls.domain, 'mobile2', 'abc')
         cls.mobile_user2.set_location(cls.state_location)
 
+        cls.mobile_user3 = CommCareUser.create(cls.domain, 'mobile3', 'abc')
+        cls.mobile_user3.user_data['role'] = 'pharmacist'
+        cls.mobile_user3.save()
+
+        cls.mobile_user4 = CommCareUser.create(cls.domain, 'mobile4', 'abc')
+        cls.mobile_user4.user_data['role'] = 'nurse'
+        cls.mobile_user4.save()
+
+        cls.mobile_user5 = CommCareUser.create(cls.domain, 'mobile5', 'abc')
+        cls.mobile_user5.user_data['role'] = ['nurse', 'pharmacist']
+        cls.mobile_user5.save()
+
         cls.web_user = WebUser.create(cls.domain, 'web', 'abc')
+
+        cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc')
+        cls.web_user2.user_data['role'] = 'nurse'
+        cls.web_user2.save()
 
         cls.group = Group(domain=cls.domain, users=[cls.mobile_user.get_id])
         cls.group.save()
+
+        cls.group2 = Group(
+            domain=cls.domain,
+            users=[
+                cls.mobile_user.get_id,
+                cls.mobile_user3.get_id,
+                cls.mobile_user4.get_id,
+                cls.mobile_user5.get_id,
+            ]
+        )
+        cls.group2.save()
 
         cls.case_group = CommCareCaseGroup(domain=cls.domain)
         cls.case_group.save()
@@ -242,6 +269,132 @@ class SchedulingRecipientTest(TestCase):
                 recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE)
             self.assertEqual(instance.recipient.case_id, parent.case_id)
 
+    @run_with_all_backends
+    def test_child_case_recipient(self):
+        with create_case(self.domain, 'person') as child_1, \
+                create_case(self.domain, 'person') as child_2, \
+                create_case(self.domain, 'person') as parent:
+
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=parent.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES)
+            self.assertIsInstance(instance.recipient, list)
+            self.assertEqual(len(instance.recipient), 0)
+
+            set_parent_case(self.domain, child_1, parent, relationship='child', identifier='parent')
+            set_parent_case(self.domain, child_2, parent, relationship='child', identifier='parent')
+
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=parent.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES)
+
+            self.assertIsInstance(instance.recipient, list)
+            self.assertEqual(len(instance.recipient), 2)
+            self.assertItemsEqual([c.case_id for c in instance.recipient], [child_1.case_id, child_2.case_id])
+
+    @run_with_all_backends
+    def test_host_case_owner_location(self):
+        with create_test_case(self.domain, 'test-extension-case', 'name') as extension_case:
+            with create_test_case(self.domain, 'test-host-case', 'name') as host_case:
+
+                update_case(self.domain, host_case.case_id,
+                    case_properties={'owner_id': self.city_location.location_id})
+                set_parent_case(self.domain, extension_case, host_case, relationship='extension')
+
+                # Test the recipient is returned correctly
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=extension_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION',
+                )
+                self.assertIsInstance(instance.recipient, SQLLocation)
+                self.assertEqual(instance.recipient.location_id, self.city_location.location_id)
+
+                # Test location that does not exist
+                update_case(self.domain, host_case.case_id, case_properties={'owner_id': 'does-not-exist'})
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=extension_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION',
+                )
+                self.assertIsNone(instance.recipient)
+
+                # Test on a case that is not an extension case
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=host_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION',
+                )
+                self.assertIsNone(instance.recipient)
+
+                # Test with case id that doesn't exist
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id='does-not-exist',
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION',
+                )
+                self.assertIsNone(instance.recipient)
+
+    @run_with_all_backends
+    def test_host_case_owner_location_parent(self):
+        with create_test_case(self.domain, 'test-extension-case', 'name') as extension_case:
+            with create_test_case(self.domain, 'test-host-case', 'name') as host_case:
+
+                update_case(self.domain, host_case.case_id,
+                    case_properties={'owner_id': self.city_location.location_id})
+                set_parent_case(self.domain, extension_case, host_case, relationship='extension')
+
+                # Test the recipient is returned correctly
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=extension_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION_PARENT',
+                )
+                self.assertIsInstance(instance.recipient, SQLLocation)
+                self.assertEqual(instance.recipient.location_id, self.state_location.location_id)
+
+                # Test no parent location
+                update_case(self.domain, host_case.case_id,
+                    case_properties={'owner_id': self.country_location.location_id})
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=extension_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION_PARENT',
+                )
+                self.assertIsNone(instance.recipient)
+
+                # Test location that does not exist
+                update_case(self.domain, host_case.case_id, case_properties={'owner_id': 'does-not-exist'})
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=extension_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION_PARENT',
+                )
+                self.assertIsNone(instance.recipient)
+
+                # Test on a case that is not an extension case
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=host_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION_PARENT',
+                )
+                self.assertIsNone(instance.recipient)
+
+                # Test with case id that doesn't exist
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id='does-not-exist',
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION_PARENT',
+                )
+                self.assertIsNone(instance.recipient)
+
     def test_expand_location_recipients_without_descendants(self):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
@@ -315,12 +468,97 @@ class SchedulingRecipientTest(TestCase):
         )
 
     def test_expand_group_recipients(self):
-        instance = CaseTimedScheduleInstance(domain=self.domain, recipient_type='Group',
-            recipient_id=self.group.get_id)
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(9, 0)),
+            SMSContent(message={'en': 'Hello'})
+        )
+        instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            timed_schedule_id=schedule.schedule_id,
+            recipient_type='Group',
+            recipient_id=self.group.get_id
+        )
         self.assertEqual(
             self.user_ids(instance.expand_recipients()),
             [self.mobile_user.get_id]
         )
+
+    def test_mobile_worker_recipients_with_user_data_filter(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(9, 0)),
+            SMSContent(message={'en': 'Hello'})
+        )
+        schedule.user_data_filter = {'role': ['nurse']}
+        schedule.save()
+
+        instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            timed_schedule_id=schedule.schedule_id,
+            recipient_type='Group',
+            recipient_id=self.group2.get_id
+        )
+        self.assertEqual(
+            self.user_ids(instance.expand_recipients()),
+            [self.mobile_user4.get_id, self.mobile_user5.get_id]
+        )
+
+    def test_web_user_recipient_with_user_data_filter(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(9, 0)),
+            SMSContent(message={'en': 'Hello'})
+        )
+        schedule.user_data_filter = {'role': ['nurse']}
+        schedule.save()
+
+        instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            timed_schedule_id=schedule.schedule_id,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_WEB_USER,
+            recipient_id=self.web_user.get_id,
+        )
+        self.assertEqual(list(instance.expand_recipients()), [])
+
+        instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            timed_schedule_id=schedule.schedule_id,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_WEB_USER,
+            recipient_id=self.web_user2.get_id,
+        )
+        recipients = list(instance.expand_recipients())
+        self.assertEqual(len(recipients), 1)
+        self.assertIsInstance(recipients[0], WebUser)
+        self.assertEqual(recipients[0].get_id, self.web_user2.get_id)
+
+    @run_with_all_backends
+    def test_case_group_recipient_with_user_data_filter(self):
+        # The user data filter should have no effect here because all
+        # the recipients are cases.
+
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(9, 0)),
+            SMSContent(message={'en': 'Hello'})
+        )
+        schedule.user_data_filter = {'role': ['nurse']}
+        schedule.save()
+
+        with create_case(self.domain, 'person') as case:
+            case_group = CommCareCaseGroup(domain=self.domain, cases=[case.case_id])
+            case_group.save()
+            self.addCleanup(case_group.delete)
+
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                timed_schedule_id=schedule.schedule_id,
+                recipient_type=ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP,
+                recipient_id=case_group.get_id,
+            )
+            recipients = list(instance.expand_recipients())
+            self.assertEqual(len(recipients), 1)
+            self.assertEqual(recipients[0].case_id, case.case_id)
 
     def create_user_case(self, user):
         create_case_kwargs = {

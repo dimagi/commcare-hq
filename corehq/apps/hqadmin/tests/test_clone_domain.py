@@ -117,10 +117,8 @@ class TestCloneDomain(TestCase):
         from corehq.motech.repeaters.models import Repeater
         from corehq.motech.repeaters.models import CaseRepeater
         from corehq.motech.repeaters.models import FormRepeater
-        from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 
         self.assertEqual(0, len(Repeater.by_domain(self.new_domain)))
-        self.assertEqual(0, len(NikshayRegisterPatientRepeater.by_domain(self.new_domain)))
 
         case_repeater = CaseRepeater(
             domain=self.old_domain,
@@ -134,22 +132,12 @@ class TestCloneDomain(TestCase):
         )
         form_repeater.save()
         self.addCleanup(form_repeater.delete)
-        custom_repeater = NikshayRegisterPatientRepeater(
-            domain=self.old_domain,
-            url='99dots'
-        )
-        custom_repeater.save()
-        self.addCleanup(custom_repeater.delete)
 
         self.make_clone(include=['repeaters'])
 
         cloned_repeaters = Repeater.by_domain(self.new_domain)
-        self.assertEqual(3, len(cloned_repeaters))
+        self.assertEqual(2, len(cloned_repeaters))
         self.assertEqual(
-            {'CaseRepeater', 'FormRepeater', 'NikshayRegisterPatientRepeater'},
+            {'CaseRepeater', 'FormRepeater'},
             {repeater.doc_type for repeater in cloned_repeaters}
         )
-
-        # test cache clearing
-        cloned_niksay_repeaters = NikshayRegisterPatientRepeater.by_domain(self.new_domain)
-        self.assertEqual(1, len(cloned_niksay_repeaters))

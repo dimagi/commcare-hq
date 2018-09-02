@@ -179,7 +179,7 @@ def overwrite_app(app, master_build, report_map=None):
                     try:
                         config.report_id = report_map[config.report_id]
                     except KeyError:
-                        raise AppEditingError('Dynamic UCR used in linked app')
+                        raise AppEditingError(config.report_id)
             else:
                 raise AppEditingError('Report map not passed to overwrite_app')
 
@@ -320,19 +320,17 @@ def update_linked_app(app, user_id):
                 'Unable to pull latest master from remote CommCare HQ. Please try again later.'
             ))
 
-        try:
-            report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
-        except (BadSpecError, DocumentNotFound) as e:
-            raise AppLinkError(_('This linked application uses mobile UCRs '
-                                 'which are available in this domain: %(message)s') % {'message': e})
+        report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
 
         try:
             app = overwrite_app(app, latest_master_build, report_map)
-        except AppEditingError:
-            raise AppLinkError(_('This linked application uses dynamic mobile UCRs '
-                                 'which are currently not supported. For this application '
-                                 'to function correctly, you will need to remove those modules '
-                                 'or revert to a previous version that did not include them.'))
+        except AppEditingError as e:
+            raise AppLinkError(
+                _(
+                    'This application uses mobile UCRs '
+                    'which are not available in the linked domain: {ucr_id}'
+                ).format(str(e))
+            )
 
     if app.master_is_remote:
         try:

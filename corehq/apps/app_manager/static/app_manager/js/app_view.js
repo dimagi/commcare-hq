@@ -53,8 +53,13 @@ hqDefine("app_manager/js/app_view", function() {
                             self.load_state('loaded');
                             self.multimedia_page_html(content);
                         },
-                        error: function() {
-                            alert(gettext('Oops, there was a problem loading this section. Please try again.'));
+                        error: function(data) {
+                            if (data.hasOwnProperty('responseJSON')){
+                                alert(data.responseJSON.message);
+                            }
+                            else{
+                                alert(gettext('Oops, there was a problem loading this section. Please try again.'));
+                            }
                             self.load_state('error');
                         },
                     });
@@ -63,12 +68,19 @@ hqDefine("app_manager/js/app_view", function() {
             return self;
         };
         if ($('#multimedia-tab').length) {
-            var multimediaTab = new multimediaTabModel();
+            var multimediaTab = multimediaTabModel(),
+                initializeMultimediaTab = function() {
+                    if (multimediaTab.load_state() === null) {
+                        multimediaTab.load_if_necessary();
+                    }
+                };
             $("#multimedia-tab").koApplyBindings(multimediaTab);
+            if ($('[href="#multimedia-tab"]').parent().hasClass("active")) {
+                // Multimedia tab has already been selected
+                initializeMultimediaTab();
+            }
             $('[href="#multimedia-tab"]').on('shown.bs.tab', function () {
-                if (multimediaTab.load_state() === null) {
-                    multimediaTab.load_if_necessary();
-                }
+                initializeMultimediaTab();
             });
         }
     });

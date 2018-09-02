@@ -1,30 +1,30 @@
 /* global moment */
 
 function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
-                            issnipService) {
+    downloadService) {
     var vm = this;
 
     vm.months = [];
     vm.monthsCopy = [];
     vm.years = [];
     vm.task_id = $location.search()['task_id'] || '';
-    $rootScope.issnip_report_link = '';
+    $rootScope.report_link = '';
 
-    var getISSNIPStatus = function () {
-        issnipService.getStatus(vm.task_id).then(function (resp) {
+    var getTaskStatus = function () {
+        downloadService.getStatus(vm.task_id).then(function (resp) {
             if (resp.task_ready) {
                 clearInterval(vm.statusCheck);
-                $rootScope.issnip_task_id = '';
-                $rootScope.issnip_report_link = resp.task_result.link;
-                vm.queuedISSNIPTask = false;
+                $rootScope.task_id = '';
+                $rootScope.report_link = resp.task_result.link;
+                vm.queuedTask = false;
             }
         });
     };
 
     if (vm.task_id) {
-        $rootScope.issnip_task_id = vm.task_id;
+        $rootScope.task_id = vm.task_id;
         $location.search('task_id', null);
-        vm.statusCheck = setInterval(getISSNIPStatus, 5 * 1000);
+        vm.statusCheck = setInterval(getTaskStatus, 5 * 1000);
     }
 
     vm.filterOptions = [
@@ -71,7 +71,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             id: year,
         });
     }
-    vm.queuedISSNIPTask = false;
+    vm.queuedTask = false;
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xlsx';
     vm.selectedPDFFormat = 'many';
@@ -367,11 +367,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    vm.submitISSNIPForm = function(csrf_token) {
-        $rootScope.issnip_report_link = '';
+    vm.submitForm = function(csrfToken) {
+        $rootScope.report_link = '';
         var awcs = vm.selectedPDFFormat === 'one' ? ['all'] : vm.selectedAWCs;
-        issnipService.createTask({
-            'csrfmiddlewaretoken': csrf_token,
+        var taskConfig = {
+            'csrfmiddlewaretoken': csrfToken,
             'location': vm.selectedLocationId,
             'aggregation_level': vm.selectedLevel,
             'month': vm.selectedMonth,
@@ -380,15 +380,24 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             'format': vm.selectedFormat,
             'pdfformat': vm.selectedPDFFormat,
             'selected_awcs': awcs.join(','),
-        }).then(function(data) {
+        };
+        var selectedFilters = vm.selectedFilterOptions();
+        if (vm.isChildBeneficiaryListSelected()) {
+            taskConfig['filter[]'] = [];
+            for (var i=0, len=selectedFilters.length; i < len; i++) {
+                taskConfig['filter[]'].push(selectedFilters[i].id);
+            }
+        }
+
+        downloadService.createTask(taskConfig).then(function(data) {
             vm.task_id = data.task_id;
             if (vm.task_id) {
-                $rootScope.issnip_task_id = vm.task_id;
+                $rootScope.task_id = vm.task_id;
                 $location.search('task_id', null);
-                vm.statusCheck = setInterval(getISSNIPStatus, 5 * 1000);
+                vm.statusCheck = setInterval(getTaskStatus, 5 * 1000);
             }
         });
-        vm.queuedISSNIPTask = true;
+        vm.queuedTask = true;
         vm.downloaded = false;
     };
 
@@ -451,25 +460,25 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.showProgressBar = function () {
-        return $rootScope.issnip_task_id;
+        return $rootScope.task_id;
     };
 
     vm.readyToDownload = function () {
-        return $rootScope.issnip_report_link;
+        return $rootScope.report_link;
     };
 
     vm.goToLink = function () {
         if (vm.readyToDownload()) {
-            window.open($rootScope.issnip_report_link);
+            window.open($rootScope.report_link);
             vm.downloaded = true;
-            $rootScope.issnip_report_link = '';
+            $rootScope.report_link = '';
         }
     };
 
 }
 
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
-    'haveAccessToFeatures', 'issnipService'];
+    'haveAccessToFeatures', 'downloadService'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

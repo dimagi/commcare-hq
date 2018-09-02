@@ -1,4 +1,9 @@
 {% extends 'hqwebapp/two_column.html' %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'ilsgateway/js/main.js' %}"></script>
+{% endblock %}
 
 {% block page_content %}
     <table id="recalculations" class="table table-bordered">
@@ -17,7 +22,4 @@
             </tr>
         {% endfor %}
     </table>
-    <script>
-        $('#recalculations').dataTable();
-    </script>
 {% endblock %}

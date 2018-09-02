@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import logging
 from datetime import date
 
 from django.apps import apps
@@ -8,6 +10,19 @@ from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
+from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
+from corehq.apps.domain.utils import silence_during_tests
+from corehq.apps.locations.views import LocationFieldsView
+from corehq.apps.products.views import ProductFieldsView
+from corehq.apps.users.views.mobile import UserFieldsView
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.models import BlobMeta
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+from corehq.util.log import with_progress_bar
+from dimagi.utils.chunked import chunked
+
+logger = logging.getLogger(__name__)
 
 
 class BaseDeletion(object):
@@ -112,6 +127,41 @@ def _terminate_subscriptions(domain_name):
         ).update(is_hidden_to_ops=True)
 
 
+def _delete_all_cases(domain_name):
+    logger.info('Deleting cases...')
+    case_accessor = CaseAccessors(domain_name)
+    case_ids = case_accessor.get_case_ids_in_domain()
+    for case_id_chunk in chunked(with_progress_bar(case_ids, stream=silence_during_tests()), 500):
+        case_accessor.soft_delete_cases(list(case_id_chunk))
+    logger.info('Deleting cases complete.')
+
+
+def _delete_all_forms(domain_name):
+    logger.info('Deleting forms...')
+    form_accessor = FormAccessors(domain_name)
+    form_ids = form_accessor.get_all_form_ids_in_domain()
+    for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
+        form_accessor.soft_delete_forms(list(form_id_chunk))
+    logger.info('Deleting forms complete.')
+
+
+def _delete_data_files(domain_name):
+    db = get_db_alias_for_partitioned_doc(domain_name)
+    get_blob_db().bulk_delete(metas=list(BlobMeta.objects.using(db).filter(
+        parent_id=domain_name,
+        type_code=CODES.data_file,
+    )))
+
+
+def _delete_custom_data_fields(domain_name):
+    # The CustomDataFieldsDefinition instances are cleaned up as part of the
+    # bulk couch delete, but we also need to clear the cache
+    logger.info('Deleting custom data fields...')
+    for field_view in [LocationFieldsView, ProductFieldsView, UserFieldsView]:
+        get_by_domain_and_type.clear(domain_name, field_view.field_type)
+    logger.info('Deleting custom data fields complete.')
+
+
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
@@ -130,19 +180,60 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('locations', 'LocationType', 'domain'),
     ModelDeletion('stock', 'DocDomainMapping', 'domain_name'),
     ModelDeletion('domain_migration_flags', 'DomainMigrationProgress', 'domain'),
+    ModelDeletion('sms', 'DailyOutboundSMSLimitReached', 'domain'),
     ModelDeletion('sms', 'SMS', 'domain'),
     ModelDeletion('sms', 'SQLLastReadMessage', 'domain'),
     ModelDeletion('sms', 'ExpectedCallback', 'domain'),
     ModelDeletion('ivr', 'Call', 'domain'),
+    ModelDeletion('sms', 'Keyword', 'domain'),
     ModelDeletion('sms', 'PhoneNumber', 'domain'),
     ModelDeletion('sms', 'MessagingSubEvent', 'parent__domain'),
     ModelDeletion('sms', 'MessagingEvent', 'domain'),
+    ModelDeletion('sms', 'QueuedSMS', 'domain'),
     ModelDeletion('sms', 'SelfRegistrationInvitation', 'domain'),
     CustomDeletion('sms', _delete_domain_backend_mappings),
     ModelDeletion('sms', 'MobileBackendInvitation', 'domain'),
     CustomDeletion('sms', _delete_domain_backends),
     CustomDeletion('users', _delete_web_user_membership),
     CustomDeletion('accounting', _terminate_subscriptions),
+    CustomDeletion('form_processor', _delete_all_cases),
+    CustomDeletion('form_processor', _delete_all_forms),
+    ModelDeletion('aggregate_ucrs', 'AggregateTableDefinition', 'domain'),
+    ModelDeletion('calendar_fixture', 'CalendarFixtureSettings', 'domain'),
+    ModelDeletion('case_importer', 'CaseUploadRecord', 'domain'),
+    ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
+    ModelDeletion('case_search', 'CaseSearchQueryAddition', 'domain'),
+    ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
+    ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
+    ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
+    ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
+    ModelDeletion('data_dictionary', 'CaseType', 'domain'),
+    ModelDeletion('data_interfaces', 'AutomaticUpdateAction', 'rule__domain'),
+    ModelDeletion('data_interfaces', 'AutomaticUpdateRuleCriteria', 'rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseRuleAction', 'rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseRuleCriteria', 'rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'domain'),  # TODO
+    ModelDeletion('data_interfaces', 'AutomaticUpdateRule', 'domain'),
+    ModelDeletion('data_interfaces', 'DomainCaseRuleRun', 'domain'),
+    ModelDeletion('domain', 'TransferDomainRequest', 'domain'),
+    ModelDeletion('export', 'DailySavedExportNotification', 'domain'),
+    ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
+    CustomDeletion('export', _delete_data_files),
+    ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
+    ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
+    ModelDeletion('ota', 'SerialIdBucket', 'domain'),
+    ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),
+    ModelDeletion('phone', 'SyncLogSQL', 'domain'),
+    ModelDeletion('reminders', 'EmailUsage', 'domain'),
+    ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
+    ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
+    ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
+    ModelDeletion('users', 'DomainRequest', 'domain'),
+    ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
+    ModelDeletion('motech', 'RequestLog', 'domain'),
+    ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
+    CustomDeletion('custom_data_fields', _delete_custom_data_fields),
 ]
 
 

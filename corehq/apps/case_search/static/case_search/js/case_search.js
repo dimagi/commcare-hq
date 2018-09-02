@@ -1,6 +1,14 @@
-/* globals hqDefine, ko, $ */
-
-hqDefine('case_search/js/case_search', function(){
+hqDefine('case_search/js/case_search', [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/alert_user',
+    'hqwebapp/js/initial_page_data',
+], function(
+    $,
+    ko,
+    alertUser,
+    initialPageData
+){
     'use strict';
     var caseSearchModel = function(caseDataUrl){
         var self = {};
@@ -52,8 +60,7 @@ hqDefine('case_search/js/case_search', function(){
                     self.query(data.query);
                 },
                 error: function(response){
-                    var alertUser = hqImport("hqwebapp/js/alert_user").alert_user;
-                    alertUser(response.responseJSON.message, 'danger');
+                    alertUser.alert_user(response.responseJSON.message, 'danger');
                 },
             });
         };
@@ -62,6 +69,6 @@ hqDefine('case_search/js/case_search', function(){
     };
 
     $(function() {
-        $("#case-search").koApplyBindings(caseSearchModel(hqImport("hqwebapp/js/initial_page_data").reverse('case_data')));
+        $("#case-search").koApplyBindings(caseSearchModel(initialPageData.reverse('case_data')));
     });
 });

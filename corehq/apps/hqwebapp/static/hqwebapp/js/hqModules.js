@@ -60,11 +60,13 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     'underscore': '_',
                     'clipboard/dist/clipboard': 'Clipboard',
                     'ace-builds/src-min-noconflict/ace': 'ace',
+                    'DOMPurify/dist/purify.min': 'DOMPurify',
                 },
                 thirdPartyPlugins = [
                     'jquery-form/dist/jquery.form.min',
                     'jquery.rmi/jquery.rmi',
                     'jquery-ui/ui/sortable',
+                    'select2-3.5.2-legacy/select2',
                 ];
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {

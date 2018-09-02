@@ -1,6 +1,12 @@
 /* global DOMPurify */
-hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/ui/sortable'], function($, ko) {
-
+hqDefine("hqwebapp/js/knockout_bindings.ko", [
+    'jquery',
+    'knockout',
+    'jquery-ui/ui/sortable',
+], function(
+    $,
+    ko
+) {
     ko.bindingHandlers.hqbSubmitReady = {
         update: function(element, valueAccessor) {
             var value = (valueAccessor()) ? valueAccessor()() : null;
@@ -171,6 +177,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
+    // Loosely based on https://jsfiddle.net/hQnWG/614/
     ko.bindingHandlers.multirow_sortable = {
         updateSortableList: function(itemList) {
             _(itemList()).each(function(item, index) {
@@ -202,16 +209,35 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             };
             list.subscribe(forceUpdate);
 
-            // based on https://jsfiddle.net/hQnWG/614/
+            $(element).on('click', '.send-to-top', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+                moveRowToIndex(row, 0);
+            });
+
+            $(element).on('click', '.send-to-bottom', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+                moveRowToIndex(row, list().length - 1);
+            });
+
+            $(element).on('click', '.export-table-checkbox', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+            });
 
             $(element).on('click', 'tr', function (e) {
                 if ($(this).hasClass('ignore-click')) {
+                    // Don't do anything if send-to-top, send-to-bottom, or select-for-export was clicked.
                     $(this).removeClass('ignore-click');
                 } else if (e.ctrlKey || e.metaKey) {
+                    // CTRL-clicking (CMD on OSX) toggles whether a row is highlighted for sorting.
                     var exportColumn = getExportColumnByRow($(this));
                     exportColumn.selectedForSort(!exportColumn.selectedForSort());
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
+                    // Clicking the shift key highlights all rows between the shift-clicked row
+                    // and the previously clicked row.
                     var shiftSelectedIndex = getIndexFromRow($(this)),
                         lastClickedIndex = 0,
                         start = null,
@@ -230,6 +256,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                         list()[i].selectedForSort(true);
                     }
                 } else {
+                    // Clicking a row selects it for sorting and unselects all other rows.
                     $(this).addClass('last-clicked').siblings().removeClass('last-clicked');
                     for (var i = 0; i < list().length; i++) {
                         list()[i].selectedForSort(false);
@@ -237,6 +264,65 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     getExportColumnByRow($(this)).selectedForSort(true);
                 }
             });
+
+            $(element).sortable({
+                delay: 150,
+                helper: function (e, item) {
+                    // If the dragged row isn't selected for sorting, select it and unselect all other rows.
+                    var exportColumn = getExportColumnByRow(item);
+                    if (!exportColumn.selectedForSort()) {
+                        for (var i = 0; i < list().length; i++) {
+                            list()[i].selectedForSort(false);
+                        }
+                        exportColumn.selectedForSort(true);
+                    }
+                    // Only show the row that is clicked and dragged.
+                    item.siblings('.selected-for-sort').hide();
+                    return item;
+                },
+                // Drop the rows in the chosen location.
+                // Maintain the original order of the selected rows.
+                stop: function (e, ui) {
+                    ui.item.after($('.selected-for-sort'));
+
+                    var previousRow = ui.item.prev()[0],
+                        previousIndex = null;
+                    if(previousRow) {
+                        previousIndex = parseInt(previousRow.attributes['data-order'].value);
+                    }
+
+                    var movedIndices = [];
+                    $('.selected-for-sort').each(function (index, element) {
+                        movedIndices.push(parseInt(element.attributes['data-order'].value));
+                    });
+                    movedIndices.sort();
+
+                    var originalList = list.splice(0, list().length);
+
+                    var insertDraggedElements = function() {
+                        movedIndices.forEach(function (movedIndex) {
+                            list.push(originalList[movedIndex]);
+                        });
+                    };
+
+                    // Insert rows at top of list.
+                    if (previousIndex === null) {
+                        insertDraggedElements();
+                    }
+                    originalList.forEach(function(originalListElement, originalListIndex) {
+                        // Other rows stay in their original order.
+                        if (!movedIndices.includes(originalListIndex)) {
+                            list.push(originalListElement);
+                        }
+                        // Insert rows in the middle of the list.
+                        if (originalListIndex === previousIndex) {
+                            insertDraggedElements();
+                        }
+                    });
+                },
+            });
+
+            // Helper functions
 
             var getIndexFromRow = function (row) {
                 return parseInt(row[0].attributes['data-order'].value);
@@ -261,133 +347,12 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 list.splice(newIndex, 0, currentListItem);
             };
 
-            $(element).on('click', '.send-to-top', function () {
-                var row = getRowFromClickedElement($(this));
-                setIgnoreClick(row);
-                moveRowToIndex(row, 0);
-            });
-
-            $(element).on('click', '.send-to-bottom', function () {
-                var row = getRowFromClickedElement($(this));
-                setIgnoreClick(row);
-                moveRowToIndex(row, list().length - 1);
-            });
-
-            $(element).on('click', '.export-table-checkbox', function () {
-                var row = getRowFromClickedElement($(this));
-                setIgnoreClick(row);
-            });
-
-            $(element).sortable({
-                delay: 150,
-                helper: function (e, item) {
-                    var exportColumn = getExportColumnByRow(item);
-                    if (!exportColumn.selectedForSort()) {
-                        for (var i = 0; i < list().length; i++) {
-                            list()[i].selectedForSort(false);
-                        }
-                        exportColumn.selectedForSort(true);
-                    }
-                    item.siblings('.selected-for-sort').hide();
-                    return item;
-                },
-                stop: function (e, ui) {
-                    ui.item.after($('.selected-for-sort'));
-
-                    var previousRow = ui.item.prev()[0],
-                        previousIndex = null;
-                    if(previousRow) {
-                        previousIndex = parseInt(previousRow.attributes['data-order'].value);
-                    }
-
-                    var movedIndices = [];
-                    $('.selected-for-sort').each(function (index, element) {
-                        movedIndices.push(parseInt(element.attributes['data-order'].value));
-                    });
-                    movedIndices.sort();
-
-                    var originalList = list.splice(0, list().length);
-
-                    var insertDraggedElements = function() {
-                        movedIndices.forEach(function (movedIndex) {
-                            list.push(originalList[movedIndex]);
-                        });
-                    };
-
-                    if (previousIndex === null) {
-                        insertDraggedElements();
-                    }
-                    originalList.forEach(function(originalListElement, originalListIndex) {
-                        if (!movedIndices.includes(originalListIndex)) {
-                            list.push(originalListElement);
-                        }
-                        if (originalListIndex === previousIndex) {
-                            insertDraggedElements();
-                        }
-                    });
-                },
-            });
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
         update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var list = ko.bindingHandlers.multirow_sortable.getList(valueAccessor);
             ko.bindingHandlers.multirow_sortable.updateSortableList(list);
             return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
-        },
-    };
-
-    ko.bindingHandlers.saveButton = {
-        init: function(element, getSaveButton) {
-            getSaveButton().ui.appendTo(element);
-        },
-    };
-
-    ko.bindingHandlers.saveButton2 = {
-        init: function(element, valueAccessor, allBindingsAccessor) {
-            var saveOptions = allBindingsAccessor().saveOptions,
-                state = valueAccessor(),
-                saveButton;
-
-            saveButton = hqImport("hqwebapp/js/main").initSaveButton({
-                save: function() {
-                    saveButton.ajax(saveOptions());
-                },
-            });
-            $(element).css('vertical-align', 'top').css('display', 'inline-block');
-
-            saveButton.ui.appendTo(element);
-            element.saveButton = saveButton;
-            saveButton.on('state:change', function() {
-                state(saveButton.state);
-            });
-        },
-        update: function(element, valueAccessor) {
-            var state = ko.utils.unwrapObservable(valueAccessor());
-            element.saveButton.setStateWhenReady(state);
-        },
-    };
-
-    ko.bindingHandlers.deleteButton = {
-        init: function(element, valueAccessor, allBindingsAccessor) {
-            var saveOptions = allBindingsAccessor().saveOptions,
-                state = valueAccessor(),
-                deleteButton;
-
-            deleteButton = hqImport("hqwebapp/js/main").initDeleteButton({
-                save: function() {
-                    deleteButton.ajax(saveOptions());
-                },
-            });
-            $(element).css('vertical-align', 'top').css('display', 'inline-block');
-            deleteButton.ui.appendTo(element);
-            element.deleteButton = deleteButton;
-            deleteButton.on('state:change', function() {
-                state(deleteButton.state);
-            });
-        },
-        update: function(element, valueAccessor) {
-            var state = ko.utils.unwrapObservable(valueAccessor());
-            element.deleteButton.setStateWhenReady(state);
         },
     };
 
@@ -448,7 +413,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
-    ko.bindingHandlers.visibleFade = {
+    ko.bindingHandlers.slideVisible = {
         'update': function(element, valueAccessor) {
             var value = ko.utils.unwrapObservable(valueAccessor());
             if (value) {
@@ -456,38 +421,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             } else if (!value) {
                 $(element).slideUp();
             }
-        },
-    };
-
-    ko.bindingHandlers.starred = {
-        init: function(element) {
-            $(element).addClass('icon fa');
-        },
-        update: function(element, valueAccessor) {
-            var value = ko.utils.unwrapObservable(valueAccessor()),
-                $element = $(element);
-            value = value + '';
-            $element.addClass('icon pointer');
-
-            var unselected = 'icon-star-empty fa-star-o';
-            var selected = 'icon-star icon-large fa-star released';
-            var pending = 'icon-refresh icon-spin fa-spin fa-spinner';
-            var error = 'icon-ban-circle';
-
-            var suffix = error;
-            if (value === 'false') {
-                suffix = unselected;
-            } else if (value === 'true') {
-                suffix = selected;
-            } else if (value === 'pending') {
-                suffix = pending;
-            }
-
-            $element.removeClass(unselected);
-            $element.removeClass(selected);
-            $element.removeClass(pending);
-            $element.removeClass(error);
-            $element.addClass(suffix);
         },
     };
 
@@ -507,23 +440,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             setTimeout(function() {
                 $('ul.nav > li.active > a', element).each(activate);
             }, 0);
-        },
-    };
-
-    ko.bindingHandlers.makeHqHelp = {
-        update: function(element, valueAccessor) {
-            var opts = valueAccessor(),
-                name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
-                description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
-                placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
-                format = ko.utils.unwrapObservable(opts.format);
-            $(element).find('.hq-help').remove();
-            hqImport("hqwebapp/js/main").makeHqHelp({
-                title: name,
-                content: description,
-                html: format === 'html',
-                placement: placement || 'right',
-            }).appendTo(element);
         },
     };
 
@@ -583,35 +499,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 value(ko.utils.unwrapObservable(allBindingsAccessor()['default']));
             }
             return ko.bindingHandlers.value.update(element, valueAccessor);
-        },
-    };
-
-    ko.bindingHandlers.edit = {
-        update: function(element, valueAccessor) {
-            var editable = ko.utils.unwrapObservable(valueAccessor());
-
-            function getValue(e) {
-                if ($(e).is('select')) {
-                    return $('option[value="' + $(e).val() + '"]', e).text() || $(e).val();
-                }
-                return $(e).val();
-            }
-            if (editable) {
-                $(element).show();
-                $(element).next('.ko-no-edit').hide();
-            } else {
-                $(element).hide();
-                var no_edit = $(element).next('.ko-no-edit');
-                if (!no_edit.length) {
-                    if ($(element).hasClass('code')) {
-                        no_edit = $('<code></code>');
-                    } else {
-                        no_edit = $('<span></span>');
-                    }
-                    no_edit.addClass('ko-no-edit').insertAfter(element);
-                }
-                no_edit.text(getValue(element)).removeClass().addClass($(element).attr('class')).addClass('ko-no-edit').addClass('ko-no-edit-' + element.tagName.toLowerCase());
-            }
         },
     };
 
@@ -725,34 +612,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             $el.select2("val", newValue);
         };
     }();
-
-    /**
-     * Autocomplete widget based on atwho.
-     */
-    ko.bindingHandlers.autocompleteAtwho = {
-        init: function(element, valueAccessor) {
-            var $element = $(element);
-            if (!$element.atwho) {
-                throw new Error("The typeahead binding requires Atwho.js and Caret.js");
-            }
-
-            hqImport('hqwebapp/js/atwho').init($element, {
-                afterInsert: function() {
-                    $element.trigger('textchange');
-                },
-            });
-
-            $element.on("textchange", function() {
-                if ($element.val()) {
-                    $element.change();
-                }
-            });
-        },
-
-        update: function(element, valueAccessor, allBindings) {
-            $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
-        },
-    };
 
     ko.bindingHandlers.multiTypeahead = {
         init: function(element, valueAccessor) {
@@ -886,7 +745,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     ko.bindingHandlers.popover = {
         update: function(element, valueAccessor) {
             var options = ko.utils.unwrapObservable(valueAccessor());
-            if (options.title || options.context) { // don't show empty popovers
+            if (options.title || options.content) { // don't show empty popovers
                 $(element).popover(options);
             }
         },
@@ -935,4 +794,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             });
         },
     };
+
+    return 1;
 });

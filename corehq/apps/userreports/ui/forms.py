@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from uuid import UUID
+
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -9,6 +12,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from corehq import toggles
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
+from corehq.apps.userreports.const import DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 from corehq.apps.userreports.util import get_table_name
@@ -126,6 +130,13 @@ class ConfigurableReportEditForm(DocumentFormBase):
 
     def save(self, commit=False):
         self.instance.report_meta.edited_manually = True
+        if toggles.AGGREGATE_UCRS.enabled(self.instance.domain):
+            # hack - if the ID looks like a guid, assume it is non-aggregate, else aggregate
+            try:
+                UUID(self.instance.config_id)
+                self.instance.data_source_type = DATA_SOURCE_TYPE_STANDARD
+            except ValueError:
+                self.instance.data_source_type = DATA_SOURCE_TYPE_AGGREGATE
         return super(ConfigurableReportEditForm, self).save(commit)
 
 

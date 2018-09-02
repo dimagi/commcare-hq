@@ -25,7 +25,7 @@ in HTML, or use an email client that supports HTML emails.
 
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=None, bcc=None):
+                    file_attachments=None, bcc=None, smtp_exception_skip_list=None):
 
     recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
 
@@ -49,32 +49,37 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
             msg.attach(file["title"], file["file_obj"].getvalue(),
                        file["mimetype"])
     msg.attach_alternative(html_content, "text/html")
+
     try:
         msg.send()
     except SMTPSenderRefused as e:
-        error_subject = _('ERROR: Could not send "%(subject)s"') % {
-            'subject': subject,
-        }
 
-        if e.smtp_code == 552:
-            error_text = _('Could not send email: file size is too large.')
+        if smtp_exception_skip_list and e.smtp_code in smtp_exception_skip_list:
+            raise e
         else:
-            error_text = e.smtp_error
-        error_text = '%s\n\n%s' % (
-            error_text,
-            _('Please contact %(support_email)s for assistance.') % {
-                'support_email': settings.SUPPORT_EMAIL,
-            },
-        )
+            error_subject = _('ERROR: Could not send "%(subject)s"') % {
+                'subject': subject,
+            }
 
-        error_msg = EmailMultiAlternatives(
-            error_subject,
-            error_text,
-            email_from,
-            recipient,
-            headers=from_header,
-            connection=connection,
-            cc=cc,
-            bcc=bcc,
-        )
-        error_msg.send()
+            if e.smtp_code == 552:
+                error_text = _('Could not send email: file size is too large.')
+            else:
+                error_text = e.smtp_error
+            error_text = '%s\n\n%s' % (
+                error_text,
+                _('Please contact %(support_email)s for assistance.') % {
+                    'support_email': settings.SUPPORT_EMAIL,
+                },
+            )
+
+            error_msg = EmailMultiAlternatives(
+                error_subject,
+                error_text,
+                email_from,
+                recipient,
+                headers=from_header,
+                connection=connection,
+                cc=cc,
+                bcc=bcc,
+            )
+            error_msg.send()

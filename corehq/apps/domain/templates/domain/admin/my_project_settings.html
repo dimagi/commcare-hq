@@ -3,9 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block js %} {{ block.super }}
-    <script src="{% static 'domain/js/my_project_settings.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'domain/js/my_project_settings' %}
 
 {% block stylesheets %}
     <style>

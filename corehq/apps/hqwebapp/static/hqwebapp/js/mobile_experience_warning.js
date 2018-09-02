@@ -15,7 +15,9 @@ hqDefine('hqwebapp/js/mobile_experience_warning', [
                 $videoModal = $("#mobile-experience-video-modal");
 
             var setCookie = function () {
-                $.cookie(initialPageData.get('mobile_ux_cookie_name'), true);
+                $.cookie(initialPageData.get('mobile_ux_cookie_name'), true, {
+                    path: '/',
+                });
             };
 
             $modal.find('.close').click(function (e) {

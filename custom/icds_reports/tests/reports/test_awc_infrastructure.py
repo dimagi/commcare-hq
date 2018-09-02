@@ -25,7 +25,8 @@ class TestAWCInfrastructure(TestCase):
                 "value": 29,
                 "label": "AWCs Reported Clean Drinking Water",
                 "frequency": "month",
-                "help_text": "Percentage of AWCs that reported having a source of clean drinking water"
+                "help_text": "Of the AWCs that have submitted an Infrastructure Details form, "
+                             "the percentage of AWCs that reported having a source of clean drinking water. "
             }
         )
 
@@ -48,7 +49,8 @@ class TestAWCInfrastructure(TestCase):
                 "value": 15,
                 "label": "AWCs Reported Functional Toilet",
                 "frequency": "month",
-                "help_text": "Percentage of AWCs that reported having a functional toilet"
+                "help_text": "Of the AWCs that submitted an Infrastructure Details form, "
+                             "the percentage of AWCs that reported having a functional toilet"
             }
         )
 
@@ -71,7 +73,8 @@ class TestAWCInfrastructure(TestCase):
                 "value": 24,
                 "label": "AWCs Reported Weighing Scale: Infants",
                 "frequency": "month",
-                "help_text": "Percentage of AWCs that reported having a weighing scale for infants"
+                "help_text": "Of the AWCs that have submitted an Infrastructure Details form, "
+                             "the percentage of AWCs that reported having a weighing scale for infants"
             }
         )
 
@@ -94,8 +97,8 @@ class TestAWCInfrastructure(TestCase):
                 "value": 9,
                 "label": "AWCs Reported Weighing Scale: Mother and Child",
                 "frequency": "month",
-                "help_text": "Percentage of AWCs that reported having"
-                             " a weighing scale for mother and child"
+                "help_text": "Of the AWCs that have submitted an Infrastructure Details form, "
+                             "the percentage of AWCs that reported having a weighing scale for mother and child"
             }
         )
 
@@ -118,7 +121,8 @@ class TestAWCInfrastructure(TestCase):
                 "value": 20,
                 "label": "AWCs Reported Medicine Kit",
                 "frequency": "month",
-                "help_text": "Percentage of AWCs that reported having a Medicine Kit"
+                "help_text": "Of the AWCs that have submitted an Infrastructure Details form, "
+                             "the percentage of AWCs that reported having a Medicine Kit"
             }
         )
 

@@ -1,97 +1,97 @@
 hqDefine("hqwebapp/js/base_list_view_model", function() {
     var BaseListViewModel = function (o) {
         'use strict';
-        var view_model = {};
+        var self = {};
 
-        view_model.initial_load = ko.observable(false);
+        self.initialLoad = ko.observable(false);
 
-        view_model.data_list = ko.observableArray();
+        self.dataList = ko.observableArray();
 
         // track any items that were archived/unarchived asynchronously
-        view_model.archive_action_items = ko.observableArray();
+        self.archiveActionItems = ko.observableArray();
 
-        view_model.show_inactive = o.show_inactive;
-        view_model.list_url = o.list_url;
+        self.showInactive = o.show_inactive;
+        self.listURL = o.list_url;
 
-        view_model.total = ko.observable(o.total);
-        view_model.page_limit = ko.observable(o.limit);
-        view_model.max_page = ko.computed(function () {
-            return Math.ceil(view_model.total()/view_model.page_limit());
+        self.total = ko.observable(o.total);
+        self.pageLimit = ko.observable(o.limit);
+        self.max_page = ko.computed(function () {
+            return Math.ceil(self.total()/self.pageLimit());
         });
-        view_model.current_page = ko.observable(o.start_page);
-        view_model.next_page = ko.computed(function () {
-            var page = view_model.current_page() + 1;
-            if (page > view_model.max_page()) {
+        self.current_page = ko.observable(o.start_page);
+        self.next_page = ko.computed(function () {
+            var page = self.current_page() + 1;
+            if (page > self.max_page()) {
                 return undefined;
             }
             return page;
         });
-        view_model.previous_page = ko.computed(function () {
-            var page = view_model.current_page() - 1;
+        self.previous_page = ko.computed(function () {
+            var page = self.current_page() - 1;
             if (page < 1) {
                 return undefined;
             }
             return page;
         });
 
-        view_model.all_pages = ko.computed(function () {
-            var last_ind = view_model.max_page()+1;
-            if (view_model.max_page() <= 5 || view_model.current_page() <= 3)
-                return _.range(1, Math.min(last_ind, 6));
-            if (view_model.current_page() >= view_model.max_page()-2)
-                return _.range(view_model.max_page()-4, last_ind);
-            return _.range(view_model.current_page()-2, Math.min(last_ind, view_model.current_page()+3));
+        self.all_pages = ko.computed(function () {
+            var lastInd = self.max_page()+1;
+            if (self.max_page() <= 5 || self.current_page() <= 3)
+                return _.range(1, Math.min(lastInd, 6));
+            if (self.current_page() >= self.max_page()-2)
+                return _.range(self.max_page()-4, lastInd);
+            return _.range(self.current_page()-2, Math.min(lastInd, self.current_page()+3));
         });
 
-        view_model.update_limit = function (model, event) {
+        self.update_limit = function (model, event) {
             var elem = $(event.currentTarget);
-            view_model.page_limit(elem.val());
-            view_model.change_page(1);
+            self.pageLimit(elem.val());
+            self.change_page(1);
         };
 
-        view_model.get_data_index = function (index) {
-            return index() + ((view_model.current_page() - 1) * view_model.page_limit()) + 1;
+        self.getDataIndex = function (index) {
+            return index() + ((self.current_page() - 1) * self.pageLimit()) + 1;
         };
 
-        view_model.take_archive_action = function (action_url, button, data_index) {
+        self.takeArchiveAction = function (actionUrl, button, dataIndex) {
             $(button).button('loading');
-            data_index = ko.utils.unwrapObservable(data_index);
+            dataIndex = ko.utils.unwrapObservable(dataIndex);
             $.ajax({
                 type: 'POST',
-                url: action_url,
+                url: actionUrl,
                 dataType: 'json',
-                error: view_model.unsuccessful_archive_action(button),
-                success: view_model.successful_archive_action(button, data_index),
+                error: self.unsuccessfulArchiveAction(button),
+                success: self.successfulArchiveAction(button, dataIndex),
             });
         };
 
-        view_model.successful_archive_action = function (button, index) {
+        self.successfulArchiveAction = function (button, index) {
             return function (data) {
                 if (data.success) {
                     var $modal = $(button).parent().parent().parent().parent();
                     $modal.modal('hide');
                     $modal.on('hidden.bs.modal', function () {
-                        var data_list = view_model.data_list(),
-                            actioned = view_model.archive_action_items();
-                        actioned.push(data_list[index]);
-                        data_list = _.difference(data_list, actioned);
-                        view_model.total(view_model.total()-1);
-                        view_model.data_list(data_list);
-                        view_model.archive_action_items(actioned);
+                        var dataList = self.dataList(),
+                            actioned = self.archiveActionItems();
+                        actioned.push(dataList[index]);
+                        dataList = _.difference(dataList, actioned);
+                        self.total(self.total()-1);
+                        self.dataList(dataList);
+                        self.archiveActionItems(actioned);
                     });
                 } else {
-                    view_model.unsuccessful_archive_action(button)(data);
+                    self.unsuccessfulArchiveAction(button)(data);
                 }
             };
         };
 
-        view_model.unsuccessful_archive_action = function (button) {
+        self.unsuccessfulArchiveAction = function (button) {
             return function () {
                 $(button).button('unsuccessful');
             };
         };
 
-        return view_model;
+        return self;
     };
 
     return {

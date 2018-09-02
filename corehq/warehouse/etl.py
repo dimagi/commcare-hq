@@ -91,7 +91,7 @@ class CustomSQLETLMixin(BaseETLMixin):
         return _render_template(path, cls._table_context(batch))
 
 
-class CouchToDjangoETLMixin(BaseETLMixin):
+class HQToWarehouseETLMixin(BaseETLMixin):
     '''
     Mixin for transferring docs from Couch to a Django model.
     '''

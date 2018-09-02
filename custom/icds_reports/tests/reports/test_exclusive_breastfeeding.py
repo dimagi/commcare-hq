@@ -10,7 +10,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestExclusiveBreastfeeding(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_exclusive_breastfeeding_data_map(
@@ -79,11 +78,11 @@ class TestExclusiveBreastfeeding(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of infants 0-6 months of age who are fed exclusively "
-            "with breast milk. <br/><br/>An infant is exclusively breastfed "
-            "if they recieve only breastmilk with "
-            "no additional food, liquids (even water) "
-            "ensuring optimal nutrition and growth between 0 - 6 months"
+            "Of the total children enrolled for Anganwadi services between the ages of 0 to 6 months, the "
+            "percentage that was exclusively fed with breast milk. "
+            "<br/><br/>"
+            "An infant is exclusively breastfed if they receive only breastmilk with no additional food or "
+            "liquids (even water), ensuring optimal nutrition and growth between 0 - 6 months"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -298,10 +297,11 @@ class TestExclusiveBreastfeeding(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-                        "<br/><br/>An infant is exclusively breastfed if they recieve only breastmilk with"
-                        " no additional food, liquids (even water) ensuring"
-                        " optimal nutrition and growth between 0 - 6 months",
+                "info": "Of the total children enrolled for Anganwadi services between the ages of 0 to 6 months, "
+                        "the percentage that was exclusively fed with breast milk."
+                        "<br/><br/>"
+                        "An infant is exclusively breastfed if they receive only breastmilk with no additional "
+                        "food or liquids (even water), ensuring optimal nutrition and growth between 0 - 6 months",
                 "tooltips_data": {
                     "s2": {
                         "all": 13,

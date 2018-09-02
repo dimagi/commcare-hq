@@ -74,6 +74,26 @@ class Schedule(models.Model):
     # where this makes a difference, this option is set to True during the migration.
     use_utc_as_default_timezone = models.BooleanField(default=False)
 
+    #   If {}, this option will be ignored.
+    #   Otherwise, for each recipient in the recipient list that is a CouchUser,
+    # that recipient's custom user data will be checked against this option to
+    # determine if the recipient should stay in the recipient list or not.
+    #   This should be a dictionary where each key is the name of a custom user data
+    # field, and each value is a list of allowed values for that field.
+    #   For example, if this is set to: {'nickname': ['bob', 'jim'], 'phone_type': ['android']}
+    # then the recipient list would be filtered to only include users whose phone
+    # type is android and whose nickname is either bob or jim.
+    user_data_filter = jsonfield.JSONField(default=dict)
+
+    #   Only applies when this Schedule is used with CaseAlertScheduleInstances or
+    # CaseTimedScheduleInstances.
+    #   If null, this is ignored. Otherwise, it's the name of a case property which
+    # can be used to set a stop date for the schedule. If the case property doesn't
+    # reference a date (e.g., it's blank), then there's no effect. But if it references
+    # a date then the corresponding schedule instance will be deactivated once the
+    # framework realizes that date has passed.
+    stop_date_case_property_name = models.CharField(max_length=126, null=True)
+
     class Meta(object):
         abstract = True
 
@@ -114,12 +134,12 @@ class Schedule(models.Model):
     @property
     @memoized
     def memoized_language_set(self):
-        from corehq.messaging.scheduling.models import SMSContent, EmailContent
+        from corehq.messaging.scheduling.models import SMSContent, EmailContent, SMSCallbackContent
 
         result = set()
         for event in self.memoized_events:
             content = event.memoized_content
-            if isinstance(content, SMSContent):
+            if isinstance(content, (SMSContent, SMSCallbackContent)):
                 result |= set(content.message)
             elif isinstance(content, EmailContent):
                 result |= set(content.subject)
@@ -137,6 +157,34 @@ class Schedule(models.Model):
 
         for event in self.memoized_events:
             if isinstance(event.content, SMSSurveyContent):
+                return True
+
+        return False
+
+    @cached_property
+    def memoized_uses_ivr_survey(self):
+        """
+        Prefixed with memoized_ to make it obvious that this property is
+        memoized and also relies on self.memoized_events.
+        """
+        from corehq.messaging.scheduling.models import IVRSurveyContent
+
+        for event in self.memoized_events:
+            if isinstance(event.content, IVRSurveyContent):
+                return True
+
+        return False
+
+    @cached_property
+    def memoized_uses_sms_callback(self):
+        """
+        Prefixed with memoized_ to make it obvious that this property is
+        memoized and also relies on self.memoized_events.
+        """
+        from corehq.messaging.scheduling.models import SMSCallbackContent
+
+        for event in self.memoized_events:
+            if isinstance(event.content, SMSCallbackContent):
                 return True
 
         return False
@@ -163,6 +211,7 @@ class ContentForeignKeyMixin(models.Model):
     sms_survey_content = models.ForeignKey('scheduling.SMSSurveyContent', null=True, on_delete=models.CASCADE)
     ivr_survey_content = models.ForeignKey('scheduling.IVRSurveyContent', null=True, on_delete=models.CASCADE)
     custom_content = models.ForeignKey('scheduling.CustomContent', null=True, on_delete=models.CASCADE)
+    sms_callback_content = models.ForeignKey('scheduling.SMSCallbackContent', null=True, on_delete=models.CASCADE)
 
     class Meta(object):
         abstract = True
@@ -179,6 +228,8 @@ class ContentForeignKeyMixin(models.Model):
             return self.ivr_survey_content
         elif self.custom_content_id:
             return self.custom_content
+        elif self.sms_callback_content_id:
+            return self.sms_callback_content
 
         raise NoAvailableContent()
 
@@ -194,13 +245,14 @@ class ContentForeignKeyMixin(models.Model):
     @content.setter
     def content(self, value):
         from corehq.messaging.scheduling.models import (SMSContent, EmailContent,
-            SMSSurveyContent, IVRSurveyContent, CustomContent)
+            SMSSurveyContent, IVRSurveyContent, CustomContent, SMSCallbackContent)
 
         self.sms_content = None
         self.email_content = None
         self.sms_survey_content = None
         self.ivr_survey_content = None
         self.custom_content = None
+        self.sms_callback_content = None
 
         if isinstance(value, SMSContent):
             self.sms_content = value
@@ -212,6 +264,8 @@ class ContentForeignKeyMixin(models.Model):
             self.ivr_survey_content = value
         elif isinstance(value, CustomContent):
             self.custom_content = value
+        elif isinstance(value, SMSCallbackContent):
+            self.sms_callback_content = value
         else:
             raise UnknownContentType()
 
@@ -225,6 +279,16 @@ class Event(ContentForeignKeyMixin):
     class Meta(object):
         abstract = True
 
+    def create_copy(self):
+        """
+        The point of this method is to create a copy of this object with no
+        primary keys set or references to other objects. It's used in the
+        process of copying schedules to a different project in the copy
+        conditional alert workflow, so there should also not be any
+        unresolved project-specific references in the returned copy.
+        """
+        raise NotImplementedError()
+
 
 class Content(models.Model):
     # If this this content is being invoked in the context of a case,
@@ -237,6 +301,16 @@ class Content(models.Model):
 
     class Meta(object):
         abstract = True
+
+    def create_copy(self):
+        """
+        The point of this method is to create a copy of this object with no
+        primary keys set or references to other objects. It's used in the
+        process of copying schedules to a different project in the copy
+        conditional alert workflow, so there should also not be any
+        unresolved project-specific references in the returned copy.
+        """
+        raise NotImplementedError()
 
     def set_context(self, case=None, schedule_instance=None):
         if case:

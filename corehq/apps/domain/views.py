@@ -329,14 +329,9 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
     strict_domain_fetching = True
 
     @property
-    def autocomplete_fields(self):
-        return []
-
-    @property
     def main_context(self):
         context = super(BaseEditProjectInfoView, self).main_context
         context.update({
-            'autocomplete_fields': self.autocomplete_fields,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
             # ideally the template gets access to the domain doc through
             # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
@@ -533,12 +528,6 @@ def generate_repeater_payloads(request, domain):
         send_repeater_payloads.delay(repeater_id, payload_ids, email_id)
         messages.success(request, _("Successfully queued request. You should receive an email shortly."))
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-
-
-def autocomplete_fields(request, field):
-    prefix = request.GET.get('prefix', '')
-    results = Domain.field_by_prefix(field, prefix)
-    return HttpResponse(json.dumps(results))
 
 
 @location_safe
@@ -1777,7 +1766,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             'fixture_forms': fixture_forms,
             'fixture_ids': [data.id for data, form in fixture_forms],
             'can_publish_as_org': self.can_publish_as_org,
-            'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'countries', 'region'),
         }
         if self.published_snapshot:
             context.update({
@@ -2256,10 +2244,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
-    def autocomplete_fields(self):
-        return ['countries']
-
-    @property
     @memoized
     def internal_settings_form(self):
         can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
@@ -2270,6 +2254,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'is_test': self.domain_object.is_test,
             'use_custom_auto_case_update_limit': 'Y' if self.domain_object.auto_case_update_limit else 'N',
             'auto_case_update_limit': self.domain_object.auto_case_update_limit,
+            'granted_messaging_access': self.domain_object.granted_messaging_access,
         }
         internal_attrs = [
             'sf_contract_id',

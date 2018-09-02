@@ -12,7 +12,7 @@ from django.conf import settings
 from django.db import DataError, transaction
 
 from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_trial
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (create_billable_for_sms, get_utcnow,
     log_sms_exception, process_incoming, send_message_via_backend,
@@ -34,6 +34,9 @@ from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.rate_limit import rate_limit
+
+
+MAX_TRIAL_SMS = 50
 
 
 def remove_from_queue(queued_sms):
@@ -162,6 +165,22 @@ def get_connection_slot_lock(phone_number, backend, max_simultaneous_connections
     return client.lock(key, timeout=60)
 
 
+def passes_trial_check(msg):
+    if msg.domain and domain_is_on_trial(msg.domain):
+        with CriticalSection(['check-sms-sent-on-trial-for-%s' % msg.domain], timeout=60):
+            key = 'sms-sent-on-trial-for-%s' % msg.domain
+            expiry = 90 * 24 * 60 * 60
+            client = get_redis_client()
+            value = client.get(key) or 0
+            if value >= MAX_TRIAL_SMS:
+                msg.set_system_error(SMS.ERROR_TRIAL_SMS_EXCEEDED)
+                return False
+
+            client.set(key, value + 1, timeout=expiry)
+
+    return True
+
+
 def handle_outgoing(msg):
     """
     Should return a requeue flag, so if it returns True, the message will be
@@ -194,11 +213,12 @@ def handle_outgoing(msg):
             # Requeue the message and try it again shortly
             return True
 
-    result = send_message_via_backend(
-        msg,
-        backend=backend,
-        orig_phone_number=orig_phone_number
-    )
+    if passes_trial_check(msg):
+        result = send_message_via_backend(
+            msg,
+            backend=backend,
+            orig_phone_number=orig_phone_number
+        )
 
     if max_simultaneous_connections:
         release_lock(connection_slot_lock, True)
@@ -296,7 +316,7 @@ class OutboundDailyCounter(object):
         return True
 
 
-@no_result_task(queue="sms_queue", acks_late=True)
+@no_result_task(serializer='pickle', queue="sms_queue", acks_late=True)
 def process_sms(queued_sms_pk):
     """
     queued_sms_pk - pk of a QueuedSMS entry
@@ -387,7 +407,7 @@ def send_to_sms_queue(queued_sms):
     process_sms.apply_async([queued_sms.pk], **options)
 
 
-@no_result_task(default_retry_delay=10 * 60, max_retries=10, bind=True)
+@no_result_task(serializer='pickle', default_retry_delay=10 * 60, max_retries=10, bind=True)
 def store_billable(self, msg):
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
@@ -414,7 +434,7 @@ def store_billable(self, msg):
             raise
 
 
-@no_result_task(queue='background_queue', acks_late=True)
+@no_result_task(serializer='pickle', queue='background_queue', acks_late=True)
 def delete_phone_numbers_for_owners(owner_ids):
     for p in PhoneNumber.objects.filter(owner_id__in=owner_ids):
         # Clear cache and delete
@@ -426,7 +446,7 @@ def clear_case_caches(case):
     is_case_contact_active.clear(case.domain, case.case_id)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_case_phone_number(self, case):
     try:
@@ -491,7 +511,7 @@ def _sync_case_phone_number(contact_case):
         phone_number.save()
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_user_phone_numbers(self, couch_user_id):
     if not use_phone_entries():
@@ -539,7 +559,7 @@ def _sync_user_phone_numbers(couch_user_id):
                     pass
 
 
-@no_result_task(queue='background_queue', acks_late=True,
+@no_result_task(serializer='pickle', queue='background_queue', acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def publish_sms_change(self, sms):
     try:
@@ -548,7 +568,7 @@ def publish_sms_change(self, sms):
         self.retry(exc=e)
 
 
-@no_result_task(queue='background_queue')
+@no_result_task(serializer='pickle', queue='background_queue')
 def sync_phone_numbers_for_domain(domain):
     for user_id in CouchUser.ids_by_domain(domain, is_active=True):
         _sync_user_phone_numbers(user_id)

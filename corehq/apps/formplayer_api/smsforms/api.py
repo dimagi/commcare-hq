@@ -1,7 +1,9 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django.conf import settings
-from urlparse import urlparse
-import httplib
+from six.moves.urllib.parse import urlparse
+import six.moves.http_client
 import socket
 import copy
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -98,7 +100,7 @@ class XFormsConfig(object):
                 ("form-url", self.form_path))
         
         # only include anything with a value, or touchforms gets mad
-        ret = dict(filter(lambda x: x[1], vals))
+        ret = dict([x for x in vals if x[1]])
         self.add_key_helper('username', ret)
         self.add_key_helper('domain', ret)
         self.add_key_helper('app_id', ret)
@@ -282,7 +284,7 @@ def post_data_helper(d, auth, content_type, url, log=False):
     headers = {}
     headers["content-type"] = content_type
     headers["content-length"] = len(data)
-    conn = httplib.HTTPConnection(up.netloc)
+    conn = six.moves.http_client.HTTPConnection(up.netloc)
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
     results = resp.read()
@@ -338,11 +340,11 @@ def get_formplayer_session_data(data):
 def get_response(data, auth=None):
     try:
         response = post_data(data, auth=auth)
-    except socket.error, e:
+    except socket.error as e:
         return XformsResponse.server_down()
     try:
         return XformsResponse(json.loads(response))
-    except Exception, e:
+    except Exception as e:
         raise e
 
 

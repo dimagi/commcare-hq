@@ -99,7 +99,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache import cache_core
 from django.conf import settings
 from django_prbac.utils import has_privilege
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from couchexport.models import Format
 from couchexport.export import export_raw
 from couchexport.shortcuts import export_response
@@ -137,10 +137,16 @@ class BaseMessagingSectionView(BaseDomainView):
     def can_use_inbound_sms(self):
         return has_privilege(self.request, privileges.INBOUND_SMS)
 
+    @cached_property
+    def is_system_admin(self):
+        return self.request.couch_user.is_superuser
+
     @method_decorator(require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(Permissions.edit_data))
-    def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        if not (settings.ENTERPRISE_MODE or self.domain_object.granted_messaging_access):
+            return render(request, "sms/wall.html", self.main_context)
+        return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
 
     @property
     def section_url(self):

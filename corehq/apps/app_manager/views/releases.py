@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from __future__ import division
 import json
 import uuid
+from math import ceil
 
 from django.db.models import Count
 from django.http import HttpResponse, Http404
@@ -21,13 +23,13 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.cache import cache_control
 
 import ghdiff
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from dimagi.utils.web import json_response
 from phonelog.models import UserErrorEntry
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_built_app_on_hubspot
+from corehq.apps.analytics.tasks import track_built_app_on_hubspot_v2
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_or_api_key
@@ -35,7 +37,6 @@ from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.hqwebapp.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -49,11 +50,11 @@ from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
 from corehq.apps.app_manager.exceptions import ModuleIdMissingException, PracticeUserException
 from corehq.apps.app_manager.models import Application, SavedAppBuild
-from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
-from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
+from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.models import CommCareBuildConfig
+from corehq.apps.es import AppES
 from corehq.apps.users.models import CouchUser
 import six
 
@@ -73,32 +74,28 @@ def _get_error_counts(domain, app_id, version_numbers):
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
+    page = int(request.GET.get('page', 1))
+    page = max(page, 1)
     try:
         limit = int(limit)
     except (TypeError, ValueError):
         limit = 10
-    start_build_param = request.GET.get('start_build')
-    if start_build_param and json.loads(start_build_param):
-        start_build = json.loads(start_build_param)
-        assert isinstance(start_build, int)
-    else:
-        start_build = {}
+
     timezone = get_timezone_for_user(request.couch_user, domain)
 
-    saved_apps = []
-    batch = [None]
-    while len(saved_apps) < limit and len(batch):
-        batch = Application.get_db().view('app_manager/saved_app',
-            startkey=[domain, app_id, start_build],
-            endkey=[domain, app_id],
-            descending=True,
-            limit=limit,
-            wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
-        ).all()
-        if len(batch):
-            start_build = batch[-1]['version'] - 1
-        saved_apps = saved_apps + [app for app in batch if not only_show_released or app['is_released']]
-    saved_apps = saved_apps[:limit]
+    app_es = (
+        AppES()
+        .start((page - 1) * limit)
+        .size(limit)
+        .sort('version', desc=True)
+        .domain(domain)
+        .is_build()
+        .app_id(app_id)
+    )
+    if only_show_released:
+        app_es = app_es.is_released()
+    apps = app_es.run()
+    saved_apps = [SavedAppBuild.wrap(app).to_saved_build_json(timezone) for app in apps.hits]
 
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
@@ -116,7 +113,16 @@ def paginate_releases(request, domain, app_id):
         for app in saved_apps:
             app['num_errors'] = num_errors_dict.get(app['version'], 0)
 
-    return json_response(saved_apps)
+    num_pages = int(ceil(apps.total / limit))
+
+    return json_response({
+        'apps': saved_apps,
+        'pagination': {
+            'total': apps.total,
+            'num_pages': num_pages,
+            'current_page': page,
+        }
+    })
 
 
 def get_releases_context(request, domain, app_id):
@@ -130,6 +136,7 @@ def get_releases_context(request, domain, app_id):
         'can_send_sms': can_send_sms,
         'can_view_cloudcare': has_privilege(request, privileges.CLOUDCARE),
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
+        'latest_released_version': get_latest_released_app_version(domain, app_id),
         'sms_contacts': (
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
@@ -196,7 +203,10 @@ def release_build(request, domain, app_id, saved_app_id):
         _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
 
     if ajax:
-        return json_response({'is_released': is_released})
+        return json_response({
+            'is_released': is_released,
+            'latest_released_version': get_latest_released_app_version(domain, app_id)
+        })
     else:
         return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
@@ -209,7 +219,7 @@ def save_copy(request, domain, app_id):
     See VersionedDoc.save_copy
 
     """
-    track_built_app_on_hubspot.delay(request.couch_user)
+    track_built_app_on_hubspot_v2.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:
@@ -431,7 +441,6 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     page_title = ugettext_lazy("App diff")
     template_name = 'app_manager/app_diff.html'
 
-    @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
 

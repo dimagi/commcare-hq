@@ -63,7 +63,7 @@ class SingleExcelImporter(ExcelImporter):
     def __init__(self, task, file_ref_id):
         super(SingleExcelImporter, self).__init__(task, file_ref_id)
         self.worksheet = self.workbook.worksheets[0]
-        self.total_rows = self.worksheet.worksheet.get_highest_row()
+        self.total_rows = self.worksheet.worksheet.max_row
 
 
 class MultiExcelImporter(ExcelImporter):
@@ -76,7 +76,7 @@ class MultiExcelImporter(ExcelImporter):
         super(MultiExcelImporter, self).__init__(task, file_ref_id)
         self.worksheets = self.workbook.worksheets
         self.add_progress(2)  # Show the user we're on it
-        total_rows = sum(ws.worksheet.get_highest_row() for ws in self.worksheets)
+        total_rows = sum(ws.worksheet.max_row for ws in self.worksheets)
         # That took a non-negligible amount of time. Give the user some feedback.
         self.add_progress(3)
         self.total_rows = total_rows

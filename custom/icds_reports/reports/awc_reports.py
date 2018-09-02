@@ -442,10 +442,9 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
-                        "Percentage of children between 0 - 5 years enrolled for Anganwadi Services with "
-                        "weight-for-age less than -2 standard deviations of the WHO Child "
-                        "Growth Standards median. Children who are moderately or severely underweight "
-                        "have a higher risk of mortality. "
+                        "Of the total children weighed, the percentage of children between 0-5 years who were "
+                        "moderately/severely underweight in the current month. Children who are moderately or "
+                        "severely underweight have a higher risk of mortality. "
                     )),
                     'percent': percent_diff(
                         'underweight',
@@ -466,7 +465,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 },
                 {
                     'label': _('Wasting (Weight-for-Height)'),
-                    'help_text': wasting_help_text(icds_feature_flag, age_label),
+                    'help_text': wasting_help_text(age_label),
                     'percent': percent_diff(
                         'wasting',
                         this_month_data,
@@ -488,7 +487,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             [
                 {
                     'label': _('Stunting (Height-for-Age)'),
-                    'help_text': stunting_help_text(icds_feature_flag, age_label),
+                    'help_text': stunting_help_text(age_label),
                     'percent': percent_diff(
                         'stunting',
                         this_month_data,
@@ -509,8 +508,8 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Weighing Efficiency'),
                     'help_text': _(
-                        "Percentage of children (0 - 5 years) who have been weighed of total children "
-                        "enrolled for Anganwadi Services"
+                        "Of the children between the ages of 0-5 years who are enrolled for Anganwadi Services, "
+                        "the percentage who were weighed in the given month. "
                     ),
                     'percent': percent_diff(
                         'wer_weight',
@@ -535,10 +534,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Newborns with Low Birth Weight'),
                     'help_text': _(
-                        "Percentage of newborns born with birth weight less than 2500 grams. "
-                        "Newborns with Low Birth Weight are closely associated with foetal and "
-                        "neonatal mortality and morbidity, inhibited growth and cognitive development, "
-                        "and chronic diseases later in life"
+                        "Of all the children born in the current month, the percentage that had a birth weight "
+                        "less than 2500 grams. Newborns with Low Birth Weight are closely associated wtih foetal "
+                        "and neonatal mortality and morbidity, inhibited growth and cognitive development, "
+                        "and chronic diseases later in life."
                     ),
                     'percent': percent_diff(
                         'low_birth',
@@ -560,9 +559,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Early Initiation of Breastfeeding'),
                     'help_text': _(
-                        "Percentage of children who were put to the breast within one hour of birth. "
-                        "Early initiation of breastfeeding ensure the newborn receives the 'first milk' "
-                        "rich in nutrients and encourages exclusive breastfeeding practice"
+                        "Of the children born in the last month, the percentage whose "
+                        "breastfeeding was initiated within 1 hour of delivery. Early initiation "
+                        "of breastfeeding ensure the newborn recieves the \"first milk\" rich "
+                        "in nutrients and encourages exclusive breastfeeding practice"
                     ),
                     'percent': percent_diff(
                         'birth',
@@ -586,10 +586,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Exclusive breastfeeding'),
                     'help_text': _(
-                        "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-                        "An infant is exclusively breastfed if they receive only breastmilk "
-                        "with no additional food, liquids (even water) ensuring "
-                        "optimal nutrition and growth between 0 - 6 months"
+                        "Of the total children between the ages of 0 to 6 months, the percentage that was "
+                        "exclusively fed with breast milk. An infant is exclusively breastfed if they receive "
+                        "only breastmilk with no additional food or liquids (even water), ensuring optimal "
+                        "nutrition and growth between 0 - 6 months"
                     ),
                     'percent': percent_diff(
                         'month_ebf',
@@ -611,10 +611,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Children initiated appropriate Complementary Feeding'),
                     'help_text': _(
-                        "Percentage of children between 6 - 8 months given timely introduction to solid, "
-                        "semi-solid or soft food. "
-                        "Timely initiation of complementary feeding in addition to breastmilk "
-                        "at 6 months of age is a key feeding practice to reduce malnutrition"
+                        "Of the total children between the ages of 6 to 8 months, the percentage that was "
+                        "given a timely introduction to solid, semi-solid or soft food. Timely intiation of "
+                        "complementary feeding in addition to breastmilk at 6 months of age is a key feeding "
+                        "practice to reduce malnutrition"
                     ),
                     'percent': percent_diff(
                         'month_cf',
@@ -638,8 +638,9 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Immunization Coverage (at age 1 year)'),
                     'help_text': _((
-                        "Percentage of children 1 year+ who have received complete immunization as per "
-                        "National Immunization Schedule of India required by age 1. "
+                        "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
+                        "the percentage of children who have received the complete immunization as per the "
+                        "National Immunization Schedule of India that is required by age 1."
                         "<br/><br/> "
                         "This includes the following immunizations:<br/> "
                         "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> "
@@ -665,9 +666,9 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Institutional Deliveries'),
                     'help_text': _((
-                        "Percentage of pregnant women who delivered in a public or private medical "
-                        "facility in the last month. "
-                        "Delivery in medical institutions is associated with a decrease maternal mortality rate"
+                        "Of the total number of women who gave birth in the last month, the percentage who "
+                        "delivered in a public or private medical facility. Delivery in medical instituitions "
+                        "is associated with a decrease in maternal mortality rate"
                     )),
                     'percent': percent_diff(
                         'institutional_delivery_in_month_sum',
@@ -795,7 +796,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                 {
                     'label': _('Percent Aadhaar-seeded Beneficiaries'),
                     'help_text': _(
-                        'Percentage of ICDS beneficiaries whose Aadhaar identification has been captured'
+                        'Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification '
+                        'has been captured. '
                     ),
                     'percent': percent_diff(
                         'person_aadhaar',
@@ -818,8 +820,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             [
                 {
                     'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
-                    'help_text': _('Percentage of children registered between '
-                                   '0-6 years old who are enrolled for Anganwadi Services'),
+                    'help_text': _('Of the total number of children between 0-6 years, the percentage '
+                                   'of children who are enrolled for Anganwadi Services'),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
                     'color': 'green' if percent_diff(
                         'child_health_all',
@@ -832,8 +834,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                 },
                 {
                     'label': _('Percent pregnant women enrolled for Anganwadi Services'),
-                    'help_text': _('Percentage of pregnant women registered who are enrolled for Anganwadi '
-                                   'Services'),
+                    'help_text': _('Of the total number of pregnant women, the percentage of pregnant '
+                                   'women enrolled for Anganwadi Services'),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
                     'color': 'green' if percent_diff(
                         'ccs_pregnant',
@@ -851,8 +853,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
 
                 {
                     'label': _('Percent lactating women enrolled for Anganwadi Services'),
-                    'help_text': _('Percentage of lactating women registered who are enrolled for Anganwadi '
-                                   'Services'),
+                    'help_text': _('Of the total number of lactating women, the percentage of '
+                                   'lactating women enrolled for Anganwadi Services'),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
                     'color': 'green' if percent_diff(
                         'css_lactating',
@@ -868,8 +870,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                 {
                     'label': _('Percent adolescent girls (11-14 years) enrolled for Anganwadi Services'),
                     'help_text': _((
-                        "Percentage of adolescent girls registered between 11-14 years"
-                        " old who are enrolled for Anganwadi Services"
+                        "Of the total number of adolescent girls (aged 11-14 years), the percentage "
+                        "of girls enrolled for Anganwadi Services"
                     )),
                     'percent': percent_diff(
                         'person_adolescent',
@@ -893,8 +895,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
     }
 
 
-@quickcache(['domain', 'config', 'month', 'show_test'], timeout=30 * 60)
-def get_awc_report_infrastructure(domain, config, month, show_test=False):
+@quickcache(['domain', 'config', 'month', 'show_test', 'beta'], timeout=30 * 60)
+def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=False):
     selected_month = datetime(*month)
 
     def get_data_for_kpi(filters, date):
@@ -907,14 +909,18 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
             functional_toilet=Sum('infra_functional_toilet'),
             medicine_kits=Sum('infra_medicine_kits'),
             infant_weighing_scale=Sum('infra_infant_weighing_scale'),
-            adult_weighing_scale=Sum('infra_adult_weighing_scale')
+            adult_weighing_scale=Sum('infra_adult_weighing_scale'),
+            num_awc_infra_last_update=Sum('num_awc_infra_last_update'),
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
     def get_infa_value(data, prop):
-        value = (data[0][prop] or None) if data else None
+        if beta:
+            value = data[0][prop] if data[0]['num_awc_infra_last_update'] else None
+        else:
+            value = (data[0][prop] or None) if data else None
         if value is not None:
             if value == 1:
                 return _("Available")

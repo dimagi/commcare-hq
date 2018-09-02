@@ -8,6 +8,9 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from django_prbac.utils import has_privilege
 
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.util.couch import DocumentNotFound
+
 
 def localize(value, lang):
     """
@@ -129,15 +132,24 @@ def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=Fals
 
 
 def get_table_name(domain, table_id):
-    def _hash(domain, table_id):
-        return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
+    """
+    Returns bytes.
+    """
 
-    domain = domain.encode('unicode-escape')
-    table_id = table_id.encode('unicode-escape')
+    def _hash(domain, table_id):
+        return hashlib.sha1(
+            '{}_{}'.format(
+                hashlib.sha1(domain.encode('utf-8')).hexdigest(),
+                table_id
+            ).encode('utf-8')
+        ).hexdigest()[:8]
+
+    domain = domain.encode('unicode-escape').decode('utf-8')
+    table_id = table_id.encode('unicode-escape').decode('utf-8')
     return truncate_value(
         'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
         from_left=False
-    )
+    ).encode('utf-8')
 
 
 def is_ucr_table(table_name):
@@ -159,8 +171,8 @@ def truncate_value(value, max_length=63, from_left=True):
 
     if len(value) > max_length:
         short_hash = hashlib.sha1(value).hexdigest()[:hash_length]
-        return '{}_{}'.format(truncated_value, short_hash)
-    return value
+        return '{}_{}'.format(truncated_value.decode('utf-8'), short_hash)
+    return value.decode('utf-8')
 
 
 def get_ucr_class_name(id):
@@ -178,9 +190,11 @@ def get_async_indicator_modify_lock_key(doc_id):
     return 'async_indicator_save-{}'.format(doc_id)
 
 
-def get_static_report_mapping(from_domain, to_domain, report_map):
+def get_static_report_mapping(from_domain, to_domain):
     from corehq.apps.userreports.models import StaticReportConfiguration, STATIC_PREFIX, \
         CUSTOM_REPORT_PREFIX
+
+    report_map = {}
 
     for static_report in StaticReportConfiguration.by_domain(from_domain):
         if static_report.get_id.startswith(STATIC_PREFIX):
@@ -199,8 +213,12 @@ def get_static_report_mapping(from_domain, to_domain, report_map):
             to_domain, report_id, is_custom_report
         )
         # check that new report is in new domain's list of static reports
-        StaticReportConfiguration.by_id(new_id)
-        report_map[static_report.get_id] = new_id
+        try:
+            StaticReportConfiguration.by_id(new_id, to_domain)
+        except (BadSpecError, DocumentNotFound):
+            pass
+        else:
+            report_map[static_report.get_id] = new_id
     return report_map
 
 

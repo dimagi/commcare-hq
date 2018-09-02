@@ -5,7 +5,9 @@ from collections import OrderedDict
 
 from django.test import SimpleTestCase
 
-from corehq.form_processor.utils.xform import build_form_xml_from_property_dict
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound
+from corehq.form_processor.utils.xform import build_form_xml_from_property_dict, get_node
+from lxml import etree
 
 
 class FormSubmissionBuilderTest(SimpleTestCase):
@@ -63,3 +65,23 @@ class FormSubmissionBuilderTest(SimpleTestCase):
             '<muffin>banana</muffin>',
             build_form_xml_from_property_dict(breakfast)
         )
+
+    def test_get_node(self):
+        xml = '''
+<data>
+    <something>elephant</something>
+    <twin>
+        <name>romulus</name>
+    </twin>
+    <twin>
+        <name>remus</name>
+    </twin>
+    <has_attribute attr="dirty" />
+</data>
+        '''
+        root = etree.fromstring(xml)
+        self.assertEqual('elephant', get_node(root, '/data/something').text)
+        self.assertEqual('romulus', get_node(root, '/data/twin[1]/name').text)
+        self.assertEqual('remus', get_node(root, '/data/twin[2]/name').text)
+        with self.assertRaises(XFormQuestionValueNotFound):
+            get_node(root, '/data/has_attribute/@dirty')

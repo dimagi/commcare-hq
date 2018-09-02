@@ -23,7 +23,8 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
+                    "info": "Of the total number of pregnant women, the percentage of pregnant women enrolled "
+                            "for Anganwadi Services",
                     "average": 77.5,
                     "average_format": "number",
                     'extended_info': [
@@ -80,7 +81,8 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
+                    "info": "Of the total number of pregnant women, the percentage of pregnant women enrolled "
+                            "for Anganwadi Services",
                     "average": 35.0,
                     "average_format": "number",
                     'extended_info': [
@@ -207,7 +209,8 @@ class TestEnrolledWomen(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
+                "info": "Of the total number of pregnant women, the percentage of pregnant women enrolled "
+                        "for Anganwadi Services",
                 "tooltips_data": {
                     "s2": {
                         "valid": 24,

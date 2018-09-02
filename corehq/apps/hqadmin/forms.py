@@ -18,18 +18,6 @@ class EmailForm(forms.Form):
     email_body_text = forms.CharField()
     real_email = forms.BooleanField(required=False)
 
-class BrokenBuildsForm(forms.Form):
-    builds = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': '30', 'cols': '50'})
-    )
-
-    def clean_builds(self):
-        self.build_ids = re.findall(r'[\w-]+', self.cleaned_data['builds'])
-        if not self.build_ids:
-            raise ValidationError("You must provide a ")
-        return self.cleaned_data['builds']
-
-
 class AuthenticateAsForm(forms.Form):
     username = forms.CharField(max_length=255)
     domain = forms.CharField(label="Domain", max_length=255, required=False)
@@ -152,7 +140,7 @@ class SuperuserManagementForm(forms.Form):
 
         if can_toggle_is_staff:
             self.fields['privileges'].choices.append(
-                ('is_staff', 'mark as developer')
+                ('is_staff', 'Mark as developer')
             )
 
         self.helper = FormHelper()

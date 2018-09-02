@@ -37,13 +37,13 @@ def b64_aes_encrypt(message):
 
     >>> settings.SECRET_KEY = 'xyzzy'
     >>> encrypted = b64_aes_encrypt('Around you is a forest.')
-    >>> encrypted == 'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I='
+    >>> encrypted == b'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I='
     True
 
     """
     key = settings.SECRET_KEY if isinstance(settings.SECRET_KEY, bytes) else settings.SECRET_KEY.encode('ascii')
     secret = pad(key, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
-    aes = AES.new(secret)
+    aes = AES.new(secret, AES.MODE_ECB)
 
     message_bytes = message if isinstance(message, bytes) else message.encode('utf8')
     plaintext = pad(message_bytes, AES_BLOCK_SIZE)
@@ -59,13 +59,13 @@ def b64_aes_decrypt(message):
 
     >>> settings.SECRET_KEY = 'xyzzy'
     >>> decrypted = b64_aes_decrypt(b'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I=')
-    >>> decrypted == 'Around you is a forest.'
+    >>> decrypted == b'Around you is a forest.'
     True
 
     """
     key = settings.SECRET_KEY if isinstance(settings.SECRET_KEY, bytes) else settings.SECRET_KEY.encode('ascii')
     secret = pad(key, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
-    aes = AES.new(secret)
+    aes = AES.new(secret, AES.MODE_ECB)
 
     ciphertext = b64decode(message)
     plaintext = aes.decrypt(ciphertext)

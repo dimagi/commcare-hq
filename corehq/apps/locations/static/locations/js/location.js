@@ -1,7 +1,24 @@
 // for product and user per location selection
-hqDefine("locations/js/location", function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
-    var LocationModels = hqImport('locations/js/location_drilldown');
+hqDefine("locations/js/location", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/alert_user',
+    'analytix/js/google',
+    'locations/js/location_drilldown',
+    'hqwebapp/js/select_2_ajax_widget',
+    'hqwebapp/js/widgets',
+    'locations/js/widgets_main',
+], function(
+    $,
+    ko,
+    _,
+    initialPageData,
+    alertUser,
+    googleAnalytics,
+    LocationModels
+) {
     var insert_new_user = function(user) {
         var $select = $('#id_users-selected_ids');
         // Add the newly created user to the users that are already at the location.
@@ -27,7 +44,6 @@ hqDefine("locations/js/location", function() {
         });
 
         form_node.submit(function(event) {
-            var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
             event.preventDefault();
             $.ajax({
                 type: 'POST',
@@ -36,7 +52,7 @@ hqDefine("locations/js/location", function() {
                 success: function(data) {
                     if (data.status === 'success') {
                         insert_new_user(data.user);
-                        alert_user(
+                        alertUser.alert_user(
                             TEMPLATE_STRINGS.new_user_success({name: data.user.text}),
                             'success'
                         );
@@ -46,7 +62,7 @@ hqDefine("locations/js/location", function() {
                     }
                 },
                 error: function() {
-                    alert_user(gettext('Error saving user', 'danger'));
+                    alertUser.alert_user(gettext('Error saving user', 'danger'));
                 },
             });
         });
@@ -98,13 +114,13 @@ hqDefine("locations/js/location", function() {
 
         $("#loc_form :button[type='submit']").click(function() {
             if (this.name === 'update-loc') {
-                hqImport('analytix/js/google').track.event('Organization Structure', 'Edit', 'Update Location');
+                googleAnalytics.track.event('Organization Structure', 'Edit', 'Update Location');
             } else {
-                hqImport('analytix/js/google').track.event('Organization Structure', 'Edit', 'Create Child Location');
+                googleAnalytics.track.event('Organization Structure', 'Edit', 'Create Child Location');
             }
         });
 
-        hqImport('analytix/js/google').track.click($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location');
+        googleAnalytics.track.click($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location');
 
         $('#loc_form').koApplyBindings(model);
 

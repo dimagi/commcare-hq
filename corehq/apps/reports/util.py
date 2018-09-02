@@ -496,7 +496,7 @@ def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     return user_es_query.count() > USER_QUERY_LIMIT
 
 
-def send_report_download_email(title, user, link):
+def send_report_download_email(title, recipient, link):
     subject = "%s: Requested export excel data"
     body = "The export you requested for the '%s' report is ready.<br>" \
            "You can download the data at the following link: %s<br><br>" \
@@ -504,7 +504,7 @@ def send_report_download_email(title, user, link):
 
     send_HTML_email(
         _(subject) % title,
-        user.get_email(),
+        recipient,
         _(body) % (title, "<a href='%s'>%s</a>" % (link, link)),
         email_from=settings.DEFAULT_FROM_EMAIL
     )

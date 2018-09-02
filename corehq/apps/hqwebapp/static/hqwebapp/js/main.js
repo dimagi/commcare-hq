@@ -1,5 +1,6 @@
 hqDefine('hqwebapp/js/main', [
     "jquery",
+    "knockout",
     "underscore",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/alert_user",
@@ -7,6 +8,7 @@ hqDefine('hqwebapp/js/main', [
     "hqwebapp/js/hq_extensions.jquery",
 ], function(
     $,
+    ko,
     _,
     initialPageData,
     alertUser,
@@ -58,6 +60,23 @@ hqDefine('hqwebapp/js/main', [
             $help.insertAfter($template);
             $template.remove();
         }
+    };
+
+    ko.bindingHandlers.makeHqHelp = {
+        update: function(element, valueAccessor) {
+            var opts = valueAccessor(),
+                name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
+                description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
+                placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
+                format = ko.utils.unwrapObservable(opts.format);
+            $(element).find('.hq-help').remove();
+            makeHqHelp({
+                title: name,
+                content: description,
+                html: format === 'html',
+                placement: placement || 'right',
+            }).appendTo(element);
+        },
     };
 
     var initBlock = function ($elem) {
@@ -251,6 +270,61 @@ hqDefine('hqwebapp/js/main', [
         RETRY: django.gettext("Try Again"),
         ERROR_SAVING: django.gettext("There was an error deleting"),
     }, 'btn btn-danger', 'savebtn-bar-danger');
+
+    ko.bindingHandlers.saveButton = {
+        init: function(element, getSaveButton) {
+            getSaveButton().ui.appendTo(element);
+        },
+    };
+
+    ko.bindingHandlers.saveButton2 = {
+        init: function(element, valueAccessor, allBindingsAccessor) {
+            var saveOptions = allBindingsAccessor().saveOptions,
+                state = valueAccessor(),
+                saveButton;
+
+            saveButton = SaveButton.init({
+                save: function() {
+                    saveButton.ajax(saveOptions());
+                },
+            });
+            $(element).css('vertical-align', 'top').css('display', 'inline-block');
+
+            saveButton.ui.appendTo(element);
+            element.saveButton = saveButton;
+            saveButton.on('state:change', function() {
+                state(saveButton.state);
+            });
+        },
+        update: function(element, valueAccessor) {
+            var state = ko.utils.unwrapObservable(valueAccessor());
+            element.saveButton.setStateWhenReady(state);
+        },
+    };
+
+    ko.bindingHandlers.deleteButton = {
+        init: function(element, valueAccessor, allBindingsAccessor) {
+            var saveOptions = allBindingsAccessor().saveOptions,
+                state = valueAccessor(),
+                deleteButton;
+
+            deleteButton = initDeleteButton({
+                save: function() {
+                    deleteButton.ajax(saveOptions());
+                },
+            });
+            $(element).css('vertical-align', 'top').css('display', 'inline-block');
+            deleteButton.ui.appendTo(element);
+            element.deleteButton = deleteButton;
+            deleteButton.on('state:change', function() {
+                state(deleteButton.state);
+            });
+        },
+        update: function(element, valueAccessor) {
+            var state = ko.utils.unwrapObservable(valueAccessor());
+            element.deleteButton.setStateWhenReady(state);
+        },
+    };
 
     var beforeUnload = [];
     var bindBeforeUnload = function (callback) {

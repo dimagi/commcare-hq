@@ -12,8 +12,6 @@
 
 <script>
 
-    var REQUIRED = {{ required }}
-
     $.when(
         $.getScript("{% static 'locations/js/location_drilldown.js' %}"),
         $.getScript("{% static 'intrahealth/js/intrahealth_loc_drilldown.async.js' %}")
@@ -29,7 +27,8 @@
             "auto_drill": null,
             "loc_filter": false,
             "loc_url": location_url,
-            "func": IntrahealthLocModel
+            "func": IntrahealthLocModel,
+            "required": {{ required }},
         });
 
         $('#group_{{ control_slug }}').koApplyBindings(model);

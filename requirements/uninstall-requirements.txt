@@ -4,3 +4,6 @@ architect
 django-nose
 ddtrace
 feedparser
+pycrypto
+restkit
+http-parser

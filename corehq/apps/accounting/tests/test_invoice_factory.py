@@ -5,11 +5,7 @@ import datetime
 from corehq.apps.accounting.invoicing import (
     DomainInvoiceFactory,
     CustomerAccountInvoiceFactory,
-    generate_invoice,
-    update_invoice_due_date,
-    should_create_invoice,
-    get_invoice_start,
-    get_invoice_end
+    should_create_invoice
 )
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
@@ -203,37 +199,3 @@ class TestInvoicingMethods(BaseAccountingTest):
             invoice_start=invoice_start,
             invoice_end=invoice_end
         ))
-
-    def test_get_invoice_start(self):
-        self.assertEqual(get_invoice_start(self.subscription, self.invoice_start), self.invoice_start)
-
-        invoice_start = datetime.date(2018, 5, 2)
-        self.assertEqual(get_invoice_start(self.subscription, invoice_start), invoice_start)
-
-        invoice_start = datetime.date(2018, 4, 30)
-        self.assertEqual(get_invoice_start(self.subscription, invoice_start), self.subscription.date_start)
-
-    def test_get_invoice_end(self):
-        get_invoice_end(self.subscription, self.invoice_end)
-        self.assertEqual(get_invoice_end(self.subscription, self.invoice_end),
-                         self.subscription.date_end - datetime.timedelta(days=1))
-
-        self.subscription.date_end = None
-        self.assertEqual(get_invoice_end(self.subscription, self.invoice_end), self.invoice_end)
-
-    def test_create_invoice(self):
-        invoice = generate_invoice(self.subscription, self.invoice_start, self.invoice_end)
-        update_invoice_due_date(invoice, self.subscription, self.invoice_end)
-        self.assertTrue(invoice.exists_for_domain(self.domain))
-        self.assertEqual(invoice.account, self.account)
-        self.assertEqual(invoice.date_start, self.invoice_start)
-        self.assertEqual(invoice.date_end, self.invoice_end)
-        self.assertEqual(invoice.lineitem_set.count(), 3)
-        self.assertEqual(invoice.subscription, self.subscription)
-
-    def test_update_invoice_due_date(self):
-        invoice = generate_invoice(self.subscription, self.invoice_start, self.invoice_end)
-        self.assertIsNone(invoice.date_due)
-        update_invoice_due_date(invoice, self.subscription, self.invoice_end)
-        date_due = datetime.date(2018, 6, 30)
-        self.assertEqual(invoice.date_due, date_due)

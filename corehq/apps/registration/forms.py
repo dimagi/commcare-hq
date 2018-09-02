@@ -8,13 +8,14 @@ from django.core.validators import validate_email
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ugettext
 
-from corehq.apps.programs.models import Program
-from corehq.apps.users.models import CouchUser
-from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.forms import clean_password, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
-from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.hqwebapp.utils import decode_password
+from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.apps.programs.models import Program
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.forms import RoleForm
 
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 from django.utils.functional import lazy
@@ -40,7 +41,7 @@ class RegisterWebUserForm(forms.Form):
         widget=forms.PasswordInput(),
     )
     phone_number = forms.CharField(
-        label=_("Include area code or any other prefix"),
+        label=_("Phone Number"),
         required=False,
     )
     persona = forms.ChoiceField(
@@ -77,20 +78,7 @@ class RegisterWebUserForm(forms.Form):
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
-        self.show_phone_number = kwargs.pop('show_number', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
-        if not self.show_phone_number:
-            del self.fields['phone_number']
-            phone_number_fields = []
-        else:
-            phone_number_fields = [
-                hqcrispy.InlineField(
-                    'phone_number',
-                    css_class="input-lg",
-                    data_bind="value: phoneNumber, "
-                              "valueUpdate: 'keyup'"
-                ),
-            ]
 
         persona_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
@@ -137,20 +125,23 @@ class RegisterWebUserForm(forms.Form):
                                   "   validator: fullName "
                                   "}"
                     ),
-                    hqcrispy.InlineField(
-                        'email',
-                        css_class="input-lg",
-                        data_bind="value: email, "
-                                  "valueUpdate: 'keyup', "
-                                  "koValidationStateFeedback: { "
-                                  "  validator: email, "
-                                  "  delayedValidator: emailDelayed "
-                                  "}",
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'email',
+                            css_class="input-lg",
+                            data_bind="value: email, "
+                                      "valueUpdate: 'keyup', "
+                                      "koValidationStateFeedback: { "
+                                      "  validator: email, "
+                                      "  delayedValidator: emailDelayed "
+                                      "}",
+                        ),
+                        crispy.HTML('<p class="validation-message-block" '
+                                    'data-bind="visible: isEmailValidating, '
+                                    'text: validatingEmailMsg">&nbsp;</p>'),
+                        hqcrispy.ValidationMessage('emailDelayed'),
+                        data_bind="validationOptions: { allowHtmlMessages: 1 }",
                     ),
-                    crispy.HTML('<p class="validation-message-block" '
-                                'data-bind="visible: isEmailValidating, '
-                                'text: validatingEmailMsg">&nbsp;</p>'),
-                    hqcrispy.ValidationMessage('emailDelayed'),
                     hqcrispy.InlineField(
                         'password',
                         css_class="input-lg",
@@ -163,7 +154,12 @@ class RegisterWebUserForm(forms.Form):
                                   "}",
                     ),
                     hqcrispy.ValidationMessage('passwordDelayed'),
-                    crispy.Div(*phone_number_fields),
+                    hqcrispy.InlineField(
+                        'phone_number',
+                        css_class="input-lg",
+                        data_bind="value: phoneNumber, "
+                                  "valueUpdate: 'keyup'"
+                    ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
                         ugettext("Next"),
@@ -430,7 +426,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain and domain.commtrack_enabled:
             self.fields['supply_point'] = forms.CharField(label='Supply Point', required=False,
-                                                          widget=SupplyPointSelectWidget(domain.name),
+                                                          widget=LocationSelectWidget(domain.name),
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
             programs = Program.by_domain(domain.name, wrap=False)

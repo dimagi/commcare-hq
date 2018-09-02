@@ -3,8 +3,7 @@ from __future__ import unicode_literals
 from nose.tools import nottest
 
 from corehq.apps.commtrack.models import CommtrackConfig
-from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
-from corehq.apps.custom_data_fields.models import CustomDataField
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.locations.models import make_location, LocationType
 from corehq.apps.products.models import SQLProduct, Product
 from corehq.apps.programs.models import Program

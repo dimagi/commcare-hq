@@ -1,5 +1,12 @@
-/* globals hqDefine */
-hqDefine("domain/js/info_basic", function() {
+hqDefine("domain/js/info_basic", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/select_2_ajax_widget', // for call center case owner
+    'select2-3.5.2-legacy/select2',
+], function(
+    $,
+    _
+) {
     $(function() {
         // Update project dropdown in page header with potentially new project name
         var name = $('#id_hr_name').val(),

@@ -10,8 +10,8 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, \
     LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
     FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
-    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckPDFReportStatus, ICDSImagesAccessorAPI, \
-    HaveAccessToLocation, ICDSAppTranslations, InactiveAWW
+    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI, \
+    HaveAccessToLocation, AppTranslations, InactiveAWW, DownloadExportReport
 
 dashboardurls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
@@ -121,8 +121,9 @@ urlpatterns = [
     url(r'^bug_report/', ICDSBugReportView.as_view(), name='icds_bug_report'),
     url(r'^awc_locations/', AWCLocationView.as_view(), name='awc_locations'),
     url(r'^download_pdf/', DownloadPDFReport.as_view(), name='icds_download_pdf'),
-    url(r'^issnip_pdf_status/', CheckPDFReportStatus.as_view(), name='issnip_pdf_status'),
+    url(r'^download_excel/', DownloadExportReport.as_view(), name='icds_download_excel'),
+    url(r'^issnip_pdf_status/', CheckExportReportStatus.as_view(), name='issnip_pdf_status'),
     url(r'^have_access_to_location/', HaveAccessToLocation.as_view(), name='have_access_to_location'),
-    url(r'^app_translations/', ICDSAppTranslations.as_view(), name='icds_app_translations'),
+    url(r'^translations/apps/', AppTranslations.as_view(), name='app_translations'),
     url(r'^inactive_aww', InactiveAWW.as_view(), name='inactive_aww')
 ]

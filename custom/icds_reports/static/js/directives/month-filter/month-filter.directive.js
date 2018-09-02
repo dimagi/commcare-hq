@@ -39,6 +39,11 @@ function MonthModalController($location, $uibModalInstance) {
     }
 
     vm.apply = function() {
+        window.ga('send', 'event', {
+            'eventCategory': 'Date Filter',
+            'eventAction': 'Date Changed',
+            'eventLabel': '',
+        });
         $uibModalInstance.close({
             month: vm.selectedMonth,
             year: vm.selectedYear,

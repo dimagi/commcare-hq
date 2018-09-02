@@ -20,7 +20,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.bootstrap import InlineField, PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from django_countries.data import COUNTRIES
@@ -65,7 +65,8 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionType,
     WireBillingRecord,
-    CustomerBillingRecord
+    CustomerBillingRecord,
+    InvoicingPlan
 )
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.accounting.utils import (
@@ -103,8 +104,14 @@ class BillingAccountBasicForm(forms.Form):
     )
     enterprise_admin_emails = forms.CharField(
         label="Enterprise Admin Emails",
-        required=False
+        required=False,
     )
+    enterprise_restricted_signup_domains = forms.CharField(
+        label="Enterprise Domains for Restricting Signups",
+        required=False,
+        help_text='ex: dimagi.com, commcarehq.org',
+    )
+    invoicing_plan = forms.ChoiceField(label="Invoicing Plan")
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscriptions To"),
         help_text=ugettext_lazy(
@@ -144,6 +151,8 @@ class BillingAccountBasicForm(forms.Form):
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
                 'enterprise_admin_emails': ','.join(account.enterprise_admin_emails),
+                'enterprise_restricted_signup_domains': ','.join(account.enterprise_restricted_signup_domains),
+                'invoicing_plan': account.invoicing_plan,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
@@ -155,10 +164,12 @@ class BillingAccountBasicForm(forms.Form):
                 'entry_point': EntryPoint.CONTRACTED,
                 'last_payment_method': LastPayment.NONE,
                 'pre_or_post_pay': PreOrPostPay.POSTPAY,
+                'invoicing_plan': InvoicingPlan.MONTHLY
             }
         super(BillingAccountBasicForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
             [(cur.code, cur.code) for cur in Currency.objects.order_by('code')]
+        self.fields['invoicing_plan'].choices = InvoicingPlan.CHOICES
         self.helper = FormHelper()
         self.helper.form_id = "account-form"
         self.helper.form_class = "form-horizontal"
@@ -183,12 +194,22 @@ class BillingAccountBasicForm(forms.Form):
             ))
             additional_fields.append(
                 crispy.Div(
+                    'invoicing_plan',
                     crispy.Field(
                         'enterprise_admin_emails',
                         css_class='input-xxlarge accounting-email-select2'
                     ),
                     data_bind='visible: is_customer_billing_account'
                 )
+            )
+            additional_fields.append(
+                crispy.Div(
+                    crispy.Field(
+                        'enterprise_restricted_signup_domains',
+                        css_class='input-xxlarge',
+                    ),
+                    data_bind='visible: is_customer_billing_account'
+                ),
             )
             if account.subscription_set.count() > 0:
                 additional_fields.append(crispy.Div(
@@ -266,8 +287,26 @@ class BillingAccountBasicForm(forms.Form):
     def clean_enterprise_admin_emails(self):
         # Do not return a list with an empty string
         if self.cleaned_data['enterprise_admin_emails']:
-            return self.cleaned_data['enterprise_admin_emails'].split(',')
+            return [e.strip() for e in self.cleaned_data['enterprise_admin_emails'].split(r',')]
         else:
+            return []
+
+    def clean_enterprise_restricted_signup_domains(self):
+        if self.cleaned_data['enterprise_restricted_signup_domains']:
+            # Check that no other account has claimed these domains, or we won't know which message to display
+            errors = []
+            accounts = BillingAccount.get_enterprise_restricted_signup_accounts()
+            domains = [e.strip() for e in self.cleaned_data['enterprise_restricted_signup_domains'].split(r',')]
+            for domain in domains:
+                for account in accounts:
+                    if domain in account.enterprise_restricted_signup_domains and account.id != self.account.id:
+                        errors.append("{} is restricted by {}".format(domain, account.name))
+            if errors:
+                raise ValidationError("The following domains are already restricted by another account: " +
+                                      ", ".join(errors))
+            return domains
+        else:
+            # Do not return a list with an empty string
             return []
 
     def clean_active_accounts(self):
@@ -319,6 +358,8 @@ class BillingAccountBasicForm(forms.Form):
         account.is_active = self.cleaned_data['is_active']
         account.is_customer_billing_account = self.cleaned_data['is_customer_billing_account']
         account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
+        account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
+        account.invoicing_plan = self.cleaned_data['invoicing_plan']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
@@ -1837,9 +1878,9 @@ class TriggerCustomerInvoiceForm(forms.Form):
     def trigger_customer_invoice(self):
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
-        invoice_start, invoice_end = get_first_last_days(year, month)
         try:
             account = BillingAccount.objects.get(name=self.cleaned_data['customer_account'])
+            invoice_start, invoice_end = self.get_invoice_dates(account, year, month)
             self.clean_previous_invoices(invoice_start, invoice_end, account)
             invoice_factory = CustomerAccountInvoiceFactory(
                 date_start=invoice_start,
@@ -1854,15 +1895,11 @@ class TriggerCustomerInvoiceForm(forms.Form):
 
     @staticmethod
     def clean_previous_invoices(invoice_start, invoice_end, account):
-        invoices = CustomerInvoice.objects.filter(
+        prev_invoices = CustomerInvoice.objects.filter(
             date_start__lte=invoice_end,
             date_end__gte=invoice_start,
             account=account
         )
-        prev_invoices = []
-        for invoice in invoices:
-            if invoice.account == account:
-                prev_invoices.append(invoice)
         if prev_invoices:
             from corehq.apps.accounting.views import CustomerInvoiceSummaryView
             raise InvoiceError(
@@ -1885,6 +1922,34 @@ class TriggerCustomerInvoiceForm(forms.Form):
         month = int(self.cleaned_data['month'])
         if (year, month) >= (today.year, today.month):
             raise ValidationError('Statement period must be in the past')
+
+    def get_invoice_dates(self, account, year, month):
+        if account.invoicing_plan == InvoicingPlan.YEARLY:
+            if month == 12:
+                # Set invoice start date to January 1st
+                return datetime.date(year, 1, 1), datetime.date(year, 12, 31)
+            else:
+                raise InvoiceError(
+                    "Account %s is set to be invoiced yearly. You may only invoice on January 1"
+                    % self.cleaned_data['customer_account']
+                )
+        if account.invoicing_plan == InvoicingPlan.QUARTERLY:
+            if month == 3:
+                return datetime.date(year, 1, 1), datetime.date(year, 3, 31)    # Quarter 1
+            if month == 6:
+                return datetime.date(year, 4, 1), datetime.date(year, 6, 30)    # Quarter 2
+            if month == 9:
+                return datetime.date(year, 7, 1), datetime.date(year, 9, 30)    # Quarter 3
+            if month == 12:
+                return datetime.date(year, 10, 1), datetime.date(year, 12, 31)  # Quarter 4
+            else:
+                raise InvoiceError(
+                    "Account %s is set to be invoiced quarterly. "
+                    "You may only invoice on April 1, July 1, October 1, or January 1."
+                    % self.cleaned_data['customer_account']
+                )
+        else:
+            return get_first_last_days(year, month)
 
 
 class TriggerBookkeeperEmailForm(forms.Form):
@@ -2348,3 +2413,74 @@ class CreateAdminForm(forms.Form):
         if not user_role.role.has_privilege(ops_role):
             Grant.objects.create(from_role=user_role.role, to_role=ops_role)
         return user
+
+
+class EnterpriseSettingsForm(forms.Form):
+    restrict_domain_creation = forms.BooleanField(
+        label=ugettext_lazy("Restrict Project Space Creation"),
+        required=False,
+        help_text=ugettext_lazy("Do not allow current web users, other than enterprise admins, "
+            "to create new project spaces."),
+    )
+    restrict_signup = forms.BooleanField(
+        label=ugettext_lazy("Restrict User Signups"),
+        required=False,
+        help_text=ugettext_lazy("<span data-bind='html: restrictSignupHelp'></span>"),
+    )
+    restrict_signup_message = forms.CharField(
+        label="Signup Restriction Message",
+        required=False,
+        help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
+        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 128}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain', None)
+        self.account = kwargs.pop('account', None)
+        kwargs['initial'] = {
+            "restrict_domain_creation": self.account.restrict_domain_creation,
+            "restrict_signup": self.account.restrict_signup,
+            "restrict_signup_message": self.account.restrict_signup_message,
+        }
+        super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_id = 'enterprise-settings-form'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = reverse("edit_enterprise_settings", args=[self.domain])
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Edit Enterprise Settings"),
+                PrependedText('restrict_domain_creation', ''),
+                crispy.Div(
+                    PrependedText('restrict_signup', '', data_bind='checked: restrictSignup'),
+                ),
+                crispy.Div(
+                    crispy.Field('restrict_signup_message'),
+                    data_bind='visible: restrictSignup',
+                ),
+            )
+        )
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Enterprise Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def clean_restrict_signup_message(self):
+        message = self.cleaned_data['restrict_signup_message']
+        if self.cleaned_data['restrict_signup'] and not message:
+            raise ValidationError(_("If restricting signups, a message is required."))
+        return message
+
+    def save(self, account):
+        account.restrict_domain_creation = self.cleaned_data.get('restrict_domain_creation', False)
+        account.restrict_signup = self.cleaned_data.get('restrict_signup', False)
+        account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
+        account.save()
+        return True

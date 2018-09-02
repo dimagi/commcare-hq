@@ -190,12 +190,3 @@
         </div>
     </div>
 {% endblock %}
-
-{% block js-inline %}
-    <script>
-        $(document).ready(function () {
-            ko.applyBindings(new PrecisionVsAchievementsTableModel(), $('#champApp').get(0));
-            $('#reportFiltersAccordion').css('display', 'none');
-        });
-    </script>
-{% endblock %}

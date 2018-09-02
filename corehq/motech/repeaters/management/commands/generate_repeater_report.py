@@ -67,7 +67,7 @@ class Command(BaseCommand):
         # iterate first row till highest column length which is highest column length over the sheet
         # Even if there are no values in header, empty cells are inserted to match highest
         # column length. So iterate over cells and find index for the first blank value
-        max_columns = self.ws.get_highest_column()
+        max_columns = self.ws.max_column
         first_empty_index = max_columns
         for i in range(1, max_columns + 1):
             if not self.ws.cell(row=1, column=i).value:

@@ -60,8 +60,10 @@ def do_reindex(alias_name, reset):
 
 
 class Command(BaseCommand):
-    help = ("Preindex ES pillows. "
-            "Only run reindexer if the index doesn't exist.")
+    help = """
+    Create all ES indexes that exist in code, but do not exist in the cluster.
+    For indexes that already exist, this command does nothing unless --reset is passed
+    """
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -69,7 +71,7 @@ class Command(BaseCommand):
             action='store_true',
             dest='reset',
             default=False,
-            help='Reset resumable indices.',
+            help='Reset resumable indices. Results in all documents being reprocessed for this index',
         )
 
     def handle(self, **options):

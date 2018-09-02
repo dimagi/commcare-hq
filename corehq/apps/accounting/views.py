@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from datetime import date
 import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
@@ -21,13 +22,14 @@ from django.http import (
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
@@ -47,6 +49,7 @@ from corehq.apps.accounting.forms import (
     ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm, TriggerCustomerInvoiceForm,
     TestReminderEmailFrom,
     CreateAdminForm,
+    EnterpriseSettingsForm,
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
 )
@@ -1136,13 +1139,14 @@ def _get_account_or_404(request, domain):
     if account is None:
         raise Http404()
 
-    if request.couch_user.username not in account.enterprise_admin_emails:
+    if not account.has_enterprise_admin(request.couch_user.username):
         if not has_privilege(request, privileges.ACCOUNTING_ADMIN):
             raise Http404()
 
     return account
 
 
+@login_and_domain_required
 def enterprise_dashboard(request, domain):
     account = _get_account_or_404(request, domain)
     context = {
@@ -1156,17 +1160,20 @@ def enterprise_dashboard(request, domain):
         )],
         'current_page': {
             'page_name': _('Enterprise Dashboard'),
+            'title': _('Enterprise Dashboard'),
         }
     }
     return render(request, "accounting/enterprise_dashboard.html", context)
 
 
+@login_and_domain_required
 def enterprise_dashboard_total(request, domain, slug):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
     return JsonResponse({'total': report.total})
 
 
+@login_and_domain_required
 def enterprise_dashboard_download(request, domain, slug, export_hash):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
@@ -1185,6 +1192,7 @@ def enterprise_dashboard_download(request, domain, slug, export_hash):
                                   "download links expire after 24 hours."))
 
 
+@login_and_domain_required
 def enterprise_dashboard_email(request, domain, slug):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
@@ -1194,3 +1202,41 @@ def enterprise_dashboard_email(request, domain, slug):
         'email': request.couch_user.username,
     })
     return JsonResponse({'message': message})
+
+
+@login_and_domain_required
+def enterprise_settings(request, domain):
+    account = _get_account_or_404(request, domain)
+
+    if request.method == 'POST':
+        form = EnterpriseSettingsForm(request.POST, domain=domain, account=account)
+    else:
+        form = EnterpriseSettingsForm(domain=domain, account=account)
+
+    context = {
+        'account': account,
+        'accounts_email': settings.ACCOUNTS_EMAIL,
+        'domain': domain,
+        'restrict_signup': request.POST.get('restrict_signup', account.restrict_signup),
+        'current_page': {
+            'title': _('Enterprise Settings'),
+            'page_name': _('Enterprise Settings'),
+        },
+        'settings_form': form,
+    }
+    return render(request, "accounting/enterprise_settings.html", context)
+
+
+@login_and_domain_required
+@require_POST
+def edit_enterprise_settings(request, domain):
+    account = _get_account_or_404(request, domain)
+    form = EnterpriseSettingsForm(request.POST, domain=domain, account=account)
+
+    if form.is_valid():
+        form.save(account)
+        messages.success(request, "Account successfully updated.")
+    else:
+        return enterprise_settings(request, domain)
+
+    return HttpResponseRedirect(reverse('enterprise_settings', args=[domain]))

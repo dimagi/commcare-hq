@@ -8,7 +8,6 @@ from corehq.apps.hqadmin.views.data import (
 )
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
-    callcenter_test,
     mass_email,
     ReprocessMessagingCaseUpdatesView,
 )

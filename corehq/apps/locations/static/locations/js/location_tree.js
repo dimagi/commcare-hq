@@ -1,8 +1,20 @@
-/* globals django */
-hqDefine('locations/js/location_tree', function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
-    var locationUtils = hqImport('locations/js/utils');
-
+hqDefine('locations/js/location_tree', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/alert_user',
+    'analytix/js/google',
+    'locations/js/utils',
+], function(
+    $,
+    ko,
+    _,
+    initialPageData,
+    alertUser,
+    googleAnalytics,
+    locationUtils
+) {
     function api_get_children(loc_uuid, show_inactive, callback) {
         var params = (loc_uuid ? {
             parent_id: loc_uuid,
@@ -146,7 +158,6 @@ hqDefine('locations/js/location_tree', function() {
 
     function LocationModel(data, root, depth) {
         var self = this;
-        var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
         self.name = ko.observable();
         self.type = ko.observable();
@@ -277,7 +288,7 @@ hqDefine('locations/js/location_tree', function() {
         self.load(data);
 
         self.new_location_tracking = function() {
-            hqImport('analytix/js/google').track.event('Organization Structure', '+ New _______');
+            googleAnalytics.track.event('Organization Structure', '+ New _______');
             return true;
         };
 
@@ -285,13 +296,13 @@ hqDefine('locations/js/location_tree', function() {
             $(button).closest('.loc_section').remove();
         };
 
-        self.archive_success_message = _.template(django.gettext("You have successfully archived the location <%=name%>"));
+        self.archive_success_message = _.template(gettext("You have successfully archived the location <%=name%>"));
 
-        self.delete_success_message = _.template(django.gettext(
+        self.delete_success_message = _.template(gettext(
             "You have successfully deleted the location <%=name%> and all of its child locations"
         ));
 
-        self.delete_error_message = _.template(django.gettext("An error occurred while deleting your location. If the problem persists, please report an issue"));
+        self.delete_error_message = _.template(gettext("An error occurred while deleting your location. If the problem persists, please report an issue"));
 
         self.loc_archive_url = function(loc_id) {
             return initialPageData.reverse('archive_location', loc_id);
@@ -337,7 +348,7 @@ hqDefine('locations/js/location_tree', function() {
                     dataType: 'json',
                     error: 'error',
                     success: function() {
-                        alert_user(self.archive_success_message({
+                        alertUser.alert_user(self.archive_success_message({
                             "name": name,
                         }), "success");
                         self.remove_elements_after_action(button);
@@ -345,7 +356,7 @@ hqDefine('locations/js/location_tree', function() {
                     },
                 });
                 $(archive_location_modal).modal('hide');
-                hqImport('analytix/js/google').track.event('Organization Structure', 'Archive');
+                googleAnalytics.track.event('Organization Structure', 'Archive');
             }
 
             var modal_context = {
@@ -385,24 +396,24 @@ hqDefine('locations/js/location_tree', function() {
                         url: self.loc_delete_url(loc_id),
                         dataType: 'json',
                         error: function() {
-                            alert_user(self.delete_error_message, "warning");
+                            alertUser.alert_user(self.delete_error_message, "warning");
                             $(button).enableButton();
                         },
                         success: function(response) {
                             if (response.success) {
-                                alert_user(self.delete_success_message({
+                                alertUser.alert_user(self.delete_success_message({
                                     "name": name,
                                 }), "success");
                                 self.remove_elements_after_action(button);
                                 locationUtils.reloadLocationSearchSelect();
                             } else {
-                                alert_user(response.message, "warning");
+                                alertUser.alert_user(response.message, "warning");
 
                             }
                         },
                     });
                     $(delete_location_modal).modal('hide');
-                    hqImport('analytix/js/google').track.event('Organization Structure', 'Delete');
+                    googleAnalytics.track.event('Organization Structure', 'Delete');
                 }
             }
 

@@ -19,8 +19,8 @@ from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
 
 from corehq.apps.commtrack.util import generate_code
-from corehq.apps.custom_data_fields import CustomDataEditor
-from corehq.apps.custom_data_fields.edit_entity import get_prefixed, CUSTOM_DATA_FIELD_PREFIX
+from corehq.apps.custom_data_fields.edit_entity import (
+    CustomDataEditor, get_prefixed, CUSTOM_DATA_FIELD_PREFIX)
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
@@ -31,9 +31,38 @@ from corehq.apps.users.util import user_display_string
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.util.quickcache import quickcache
 
-from .models import SQLLocation, LocationType, LocationFixtureConfiguration
+from .models import SQLLocation, LocationType, LocationFixtureConfiguration, LocationRelation
 from .permissions import user_can_access_location_id
 from .signals import location_edited
+from six.moves import filter
+
+
+class LocationSelectWidget(forms.Widget):
+
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
+        super(LocationSelectWidget, self).__init__(attrs)
+        self.domain = domain
+        self.id = id
+        self.multiselect = multiselect
+        if query_url:
+            self.query_url = query_url
+        else:
+            self.query_url = reverse('child_locations_for_select2', args=[self.domain])
+
+    def render(self, name, value, attrs=None):
+        location_ids = value.split(',') if value else []
+        locations = list(SQLLocation.active_objects
+                         .filter(domain=self.domain, location_id__in=location_ids))
+        initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
+
+        return get_template('locations/manage/partials/autocomplete_select_widget.html').render({
+            'id': self.id,
+            'name': name,
+            'value': ','.join(loc.location_id for loc in locations),
+            'query_url': self.query_url,
+            'multiselect': self.multiselect,
+            'initial_data': initial_data,
+        })
 
 
 class ParentLocWidget(forms.Widget):
@@ -493,7 +522,7 @@ class LocationFormSet(object):
 
 class UsersAtLocationForm(forms.Form):
     selected_ids = forms.Field(
-        label=ugettext_lazy("Group Membership"),
+        label=ugettext_lazy("Workers at Location"),
         required=False,
         widget=Select2Ajax(multiple=True),
     )
@@ -501,14 +530,9 @@ class UsersAtLocationForm(forms.Form):
     def __init__(self, domain_object, location, *args, **kwargs):
         self.domain_object = domain_object
         self.location = location
-        fieldset_title = kwargs.pop('fieldset_title',
-                                    ugettext_lazy("Edit Group Membership"))
-        submit_label = kwargs.pop('submit_label',
-                                  ugettext_lazy("Update Membership"))
-
         super(UsersAtLocationForm, self).__init__(
             initial={'selected_ids': self.get_users_at_location()},
-            *args, **kwargs
+            prefix="users", *args, **kwargs
         )
 
         from corehq.apps.reports.filters.api import MobileWorkersOptionsView
@@ -523,12 +547,12 @@ class UsersAtLocationForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                fieldset_title,
+                _("Specify Workers at this Location"),
                 crispy.Field('selected_ids'),
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    Submit('submit', submit_label)
+                    Submit('submit', ugettext_lazy("Update Location Membership"))
                 )
             )
         )
@@ -574,6 +598,7 @@ class UsersAtLocationForm(forms.Form):
             user_cache_list.append({'text': display_username, 'id': doc['_id']})
         self.get_users_at_location.set_cached_value(self).to(user_cache_list)
 
+
 class LocationFixtureForm(forms.ModelForm):
     class Meta(object):
         model = LocationFixtureConfiguration
@@ -597,4 +622,78 @@ class LocationFixtureForm(forms.ModelForm):
                 type="submit",
                 css_class='btn-primary',
             )
+        )
+
+
+class RelatedLocationForm(forms.Form):
+    related_locations = forms.CharField(
+        label=ugettext_lazy("Related Locations"),
+        required=False,
+    )
+
+    def __init__(self, domain, location, *args, **kwargs):
+        self.location = location
+        self.related_location_ids = LocationRelation.from_locations([self.location])
+        kwargs['initial'] = {'related_locations': ','.join(self.related_location_ids)}
+        super(RelatedLocationForm, self).__init__(*args, **kwargs)
+
+        self.fields['related_locations'].widget = LocationSelectWidget(
+            domain, id='id_related_locations', multiselect=True
+        )
+
+        locations = (
+            SQLLocation.objects
+            .filter(location_id__in=self.related_location_ids)
+        )
+
+        distance_dict = LocationRelation.relation_distance_dictionary([self.location])
+
+        for loc in locations:
+            distance = distance_dict[loc.location_id].get(self.location.location_id)
+            self.fields['relation_distance_%s' % loc.location_id] = forms.IntegerField(
+                label=ugettext_lazy('{location} Distance').format(location=loc.name),
+                required=False, initial=distance
+            )
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+    def clean(self):
+        cleaned_data = super(RelatedLocationForm, self).clean()
+        for name, value in cleaned_data.items():
+            if name.startswith('relation_distance_') and value and value < 0:
+                raise forms.ValidationError("The distance cannot be a negative value")
+
+    def save(self):
+        selected_location_ids = self.cleaned_data['related_locations'].split(',')
+        selected_location_ids = set(list(filter(None, selected_location_ids)))
+
+        previous_location_ids = self.related_location_ids
+        locations_to_remove = previous_location_ids - selected_location_ids
+
+        LocationRelation.objects.filter(
+            (Q(location_a=self.location) & Q(location_b__location_id__in=locations_to_remove)) |
+            (Q(location_b=self.location) & Q(location_a__location_id__in=locations_to_remove))
+        ).delete()
+
+        locations_to_add = selected_location_ids - previous_location_ids
+        for location_id in locations_to_add:
+            LocationRelation.objects.get_or_create(
+                location_a=self.location,
+                location_b=SQLLocation.objects.get(location_id=location_id)
+            )
+
+        LocationRelation.update_location_distances(
+            self.location.location_id,
+            {
+                name.lstrip('relation_distance'): value
+                for name, value in self.cleaned_data.items()
+                if name.startswith('relation_distance_')
+            }
         )

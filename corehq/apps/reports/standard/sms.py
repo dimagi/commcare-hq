@@ -6,7 +6,7 @@ from django.db.models import Q, Count
 from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq import toggles
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
@@ -69,6 +69,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
 )
+from corehq.messaging.util import project_is_on_new_reminders
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from django.core.exceptions import ObjectDoesNotExist
 import six
@@ -1646,7 +1647,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
 
         return (
             (user and toggles.NEW_REMINDERS_MIGRATOR.enabled(user.username)) or
-            (project and project.uses_new_reminders)
+            (project and project_is_on_new_reminders(project))
         )
 
     @property

@@ -1288,6 +1288,7 @@ Example assuming "village" is a location ID, which is converted to names using t
   "choice_provider": {
       "type": "location",
       "include_descendants": true,
+      "order_by_hierarchy": true,
       "show_full_path": true
   }
 }

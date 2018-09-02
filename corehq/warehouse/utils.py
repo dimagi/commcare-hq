@@ -15,10 +15,13 @@ def django_batch_records(cls, record_iter, field_mapping, batch_id):
         for raw_record in batch:
             record = {'batch_id': batch_id}
             for source_key, destination_key in field_mapping:
-                if isinstance(raw_record, dict):
-                    record[destination_key] = raw_record.get(source_key)
-                else:
-                    record[destination_key] = getattr(raw_record, source_key, None)
+                value = raw_record
+                for key in source_key.split('.'):
+                    if isinstance(raw_record, dict):
+                        value = value.get(key)
+                    else:
+                        value = getattr(value, key, None)
+                record[destination_key] = value
 
             records.append(cls(**record))
 

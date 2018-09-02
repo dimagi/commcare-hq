@@ -1,4 +1,4 @@
-hqDefine("hqpillow_retry/js/single", function() {
+hqDefine("hqpillow_retry/js/single", ['jquery'], function($) {
     function performAction(action) {
         if (action === 'delete') {
             var r=confirm("Are you sure you want to delete this error log?");

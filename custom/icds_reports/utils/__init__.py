@@ -32,6 +32,7 @@ from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
+from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
 import six
@@ -76,13 +77,13 @@ class ICDSData(object):
 
     def __init__(self, domain, filters, report_id):
         report_config = ConfigurableReportDataSource.from_spec(
-            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain))
+            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain), domain)
         )
         report_config.set_filter_values(filters)
         self.report_config = report_config
 
-    def _get_static_report_configuration_without_owner_transform(self, report_id):
-        static_report_configuration = StaticReportConfiguration.by_id(report_id)
+    def _get_static_report_configuration_without_owner_transform(self, report_id, domain):
+        static_report_configuration = StaticReportConfiguration.by_id(report_id, domain)
         for report_column in static_report_configuration.report_columns:
             transform = report_column.transform
             if transform.get('type') == 'custom' and transform.get('custom_type') == 'owner_display':
@@ -441,13 +442,13 @@ def chosen_filters_to_labels(config, default_interval=''):
     }
 
     age_intervals = {
-        '6': '0-6 months',
-        '12': '6-12 months',
-        '24': '12-24 months',
-        '36': '24-36 months',
-        '48': '36-48 months',
-        '60': '48-60 months',
-        '72': '60-72 months'
+        '6': '0-6 months (0-180 days)',
+        '12': '6-12 months (181-365 days)',
+        '24': '12-24 months (366-730 days)',
+        '36': '24-36 months (731-1095 days)',
+        '48': '36-48 months (1096-1460 days)',
+        '60': '48-60 months (1461-1825 days)',
+        '72': '60-72 months (1826-2190 days)'
     }
 
     gender = config.get('gender')
@@ -490,6 +491,17 @@ def zip_folder(pdf_files):
     icds_file.store_file_in_blobdb(in_memory, expired=60 * 60 * 24)
     icds_file.save()
     return zip_hash
+
+
+def create_excel_file(excel_data, data_type, file_format):
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    export_from_tables(excel_data, export_file, file_format)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.save()
+    return file_hash
 
 
 def create_pdf_file(pdf_context):
@@ -568,61 +580,60 @@ def person_is_beneficiary_column(beta):
 
 
 def wasting_moderate_column(beta):
-    return 'wasting_moderate_v2' if beta else 'wasting_moderate'
+    return 'wasting_moderate_v2'
 
 
 def wasting_severe_column(beta):
-    return 'wasting_severe_v2' if beta else 'wasting_severe'
+    return 'wasting_severe_v2'
 
 
 def wasting_normal_column(beta):
-    return 'wasting_normal_v2' if beta else 'wasting_normal'
+    return 'wasting_normal_v2'
 
 
 def stunting_moderate_column(beta):
-    return 'zscore_grading_hfa_moderate' if beta else 'stunting_moderate'
+    return 'zscore_grading_hfa_moderate'
 
 
 def stunting_severe_column(beta):
-    return 'zscore_grading_hfa_severe' if beta else 'stunting_severe'
+    return 'zscore_grading_hfa_severe'
 
 
 def stunting_normal_column(beta):
-    return 'zscore_grading_hfa_normal' if beta else 'stunting_normal'
+    return 'zscore_grading_hfa_normal'
 
 
 def current_month_stunting_column(beta):
-    return 'current_month_stunting_v2' if beta else 'current_month_stunting'
+    return 'current_month_stunting_v2'
 
 
 def current_month_wasting_column(beta):
-    return 'current_month_wasting_v2' if beta else 'current_month_wasting'
+    return 'current_month_wasting_v2'
 
 
 def hfa_recorded_in_month_column(beta):
-    return 'zscore_grading_hfa_recorded_in_month' if beta else 'height_measured_in_month'
+    return 'zscore_grading_hfa_recorded_in_month'
 
 
 def wfh_recorded_in_month_column(beta):
-    return 'zscore_grading_wfh_recorded_in_month' if beta else 'weighed_and_height_measured_in_month'
+    return 'zscore_grading_wfh_recorded_in_month'
 
 
 def default_age_interval(beta):
-    return '0 - 5 years' if beta else '6 - 60 months'
+    return '0 - 5 years'
 
 
 def get_age_filters(beta):
-    if beta:
-        return [
-            NOT(EQ('age_tranche', 'age_72'))
-        ]
     return [
-        AND([
-            NOT(EQ('age_tranche', 'age_0')),
-            NOT(EQ('age_tranche', 'age_6')),
-            NOT(EQ('age_tranche', 'age_72'))
-        ])
+        NOT(EQ('age_tranche', 'age_72'))
     ]
+
+
+def get_age_condition(beta):
+    if beta:
+        return "age_tranche != :age_72"
+    else:
+        return "age_tranche != :age_0 AND age_tranche != :age_6 AND age_tranche != :age_72"
 
 
 def track_time(func):
@@ -649,6 +660,10 @@ def percent_num(x, y):
 
 def percent(x, y):
     return "%.2f %%" % (percent_num(x, y))
+
+
+def percent_or_not_entered(x, y):
+    return percent(x, y) if y else DATA_NOT_ENTERED
 
 
 class ICDSDatabaseColumn(DatabaseColumn):

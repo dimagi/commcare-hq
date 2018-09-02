@@ -19,13 +19,12 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, XMLNS_OPENMRS
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 from corehq.util.test_utils import TestFileMixin, _create_case
 import corehq.motech.openmrs.repeater_helpers
 from corehq.motech.openmrs.repeater_helpers import (
-    CaseTriggerInfo,
     get_case_location,
     get_case_location_ancestor_repeaters,
-    get_form_question_values,
     get_openmrs_location_uuid,
     get_patient_by_identifier,
     get_patient_by_uuid,
@@ -180,6 +179,7 @@ class GetPatientByUuidTests(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(GetPatientByUuidTests, cls).setUpClass()
         cls.patient = {
             'uuid': 'c83d9989-585f-4db3-bf55-ca1d0ee7c0af',
             'display': 'Luis Safiana Bassilo'
@@ -188,10 +188,6 @@ class GetPatientByUuidTests(SimpleTestCase):
         response.json.return_value = cls.patient
         cls.requests = mock.Mock()
         cls.requests.get.return_value = response
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
 
     def test_none(self):
         patient = get_patient_by_uuid(self.requests, uuid=None)
@@ -236,11 +232,13 @@ class AllowedToForwardTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AllowedToForwardTests, cls).setUpClass()
         cls.owner = CommCareUser.create(DOMAIN, 'chw@example.com', '123')
 
     @classmethod
     def tearDownClass(cls):
         cls.owner.delete()
+        super(AllowedToForwardTests, cls).tearDownClass()
 
     def test_update_from_openmrs(self):
         """

@@ -99,9 +99,9 @@ hqDefine('app_manager/js/download_async_modal', function () {
             downloader = asyncDownloader($modal);
         downloader.generateDownload($modal.data("url"));
     };
+    $(document).on('click','.download-zip',downloadApplicationZip);
 
     return {
         asyncDownloader: asyncDownloader,
-        downloadApplicationZip: downloadApplicationZip,
     };
 });

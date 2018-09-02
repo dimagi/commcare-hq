@@ -131,7 +131,7 @@ FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
 
 FormplayerFrontend.reqres.setHandler('handleNotification', function(notification) {
     if (notification.error){
-        FormplayerFrontend.request('showError', notification.message);
+        FormplayerFrontend.trigger('showError', notification.message);
     } else {
         FormplayerFrontend.request('showSuccess', notification.message);
     }
@@ -155,8 +155,9 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            var $alert;
-            if (resp.submitResponseMessage && user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+            var $alert,
+                isAppPreview = user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT;
+            if (resp.submitResponseMessage && (isAppPreview || hqImport("hqwebapp/js/initial_page_data").get("appcues_test"))) {
                 var markdowner = window.markdownit(),
                     reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
                     analyticsLinks = [
@@ -198,6 +199,10 @@ FormplayerFrontend.on('startForm', function (data) {
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
                 hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");
+                appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
+            } else if (user.environment === FormplayerFrontend.Constants.WEB_APPS_ENVIRONMENT) {
+                hqImport('analytix/js/kissmetrix').track.event("[web apps] User submitted a form");
+                hqImport('analytix/js/google').track.event("Web Apps", "User submitted a form");
                 appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
             }
 

@@ -5,25 +5,7 @@
 
 {% block js %}{{ block.super }}
     {% include 'hqwebapp/includes/ui_element_js.html' %}
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-            multiselect_utils.createFullMultiselectWidget(
-                'id_selected_ids',
-                django.gettext("Available Locations"),
-                django.gettext("Locations in Program"),
-                django.gettext("Search Locations...")
-            );
-        });
-
-        var LocationModelView = function() {
-            this.isPilot = ko.observable($('#id_is_pilot').get(0).checked);
-        };
-        ko.applyBindings(new LocationModelView(), document.getElementById('edit_locations'));
-    </script>
+    <script src="{% static 'ilsgateway/js/main.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}

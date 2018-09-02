@@ -58,10 +58,11 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
         "rightLegend": {
             "average": average,
             "info": _((
-                "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
+                "Of the total children enrolled for Anganwadi services between the ages of 0 to 6 months, the "
+                "percentage that was exclusively fed with breast milk. "
                 "<br/><br/>"
-                "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
-                "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
+                "An infant is exclusively breastfed if they receive only breastmilk with no additional food or "
+                "liquids (even water), ensuring optimal nutrition and growth between 0 - 6 months"
             )),
             "extended_info": [
                 {
@@ -223,10 +224,11 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
+            "Of the total children enrolled for Anganwadi services between the ages of 0 to 6 months, the "
+            "percentage that was exclusively fed with breast milk."
             "<br/><br/>"
-            "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
-            "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
+            "An infant is exclusively breastfed if they receive only breastmilk with no additional food or "
+            "liquids (even water), ensuring optimal nutrition and growth between 0 - 6 months"
         )),
         "chart_data": [
             {

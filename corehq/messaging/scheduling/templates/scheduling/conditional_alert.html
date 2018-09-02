@@ -4,8 +4,8 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'data_interfaces/js/case_rule_criteria.js' %}"></script>
-    <script src="{% static 'data_interfaces/js/make_read_only.js' %}"></script>
+    {% requirejs_main 'scheduling/js/conditional_alert_main' %}
+
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}

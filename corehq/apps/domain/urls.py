@@ -57,7 +57,6 @@ from corehq.apps.domain.views import (
     SubscriptionRenewalView,
     TransferDomainView,
     WireInvoiceView,
-    autocomplete_fields,
     calculated_properties,
     select,
     set_published_snapshot,
@@ -83,11 +82,11 @@ from corehq.motech.repeaters.views import (
     resume_repeater,
     test_repeater,
 )
+from corehq.motech.repeaters.views.repeaters import EditDhis2RepeaterView
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
     url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
-    url(r'^domain/autocomplete/(?P<field>[\w-]+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
     url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
@@ -185,6 +184,8 @@ domain_settings = [
         {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
     url(r'^forwarding/OpenmrsRepeater/edit/(?P<repeater_id>\w+)/$', EditOpenmrsRepeaterView.as_view(),
         {'repeater_type': 'OpenmrsRepeater'}, name=EditOpenmrsRepeaterView.urlname),
+    url(r'^forwarding/Dhis2Repeater/edit/(?P<repeater_id>\w+)/$', EditDhis2RepeaterView.as_view(),
+        {'repeater_type': 'Dhis2Repeater'}, name=EditDhis2RepeaterView.urlname),
     url(r'^forwarding/(?P<repeater_type>\w+)/edit/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
         name=EditRepeaterView.urlname),
 

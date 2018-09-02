@@ -260,7 +260,7 @@ class Command(BaseCommand):
 
             old_id, new_id = self.save_couch_copy(report, self.new_domain)
             report_map[old_id] = new_id
-        report_map = get_static_report_mapping(self.existing_domain, self.new_domain, report_map)
+        report_map.update(get_static_report_mapping(self.existing_domain, self.new_domain))
         return report_map
 
     def copy_ucr_datasources(self):

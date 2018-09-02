@@ -136,9 +136,6 @@ def _get_form_designer_view(request, domain, app, module, form):
         'show_ui_notification_to_hide_translations': (len(app.langs) > 2),
     })
     context.update(_get_requirejs_context())
-    context['current_app_version_url'] = reverse(
-        'current_app_version', args=[domain, app.id]
-    )
 
     if request.user.is_superuser:
         context.update({'notification_options': _get_notification_options(request, domain, app, form)})

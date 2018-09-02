@@ -80,10 +80,11 @@ class TestNewBornWithLowWeight(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of newborns with born with birth weight less than 2500 grams."
-            "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal "
-            "and neonatal mortality and morbidity, inhibited growth and cognitive development,"
-            " and chronic diseases later in life"
+            "Of all the children born in the current month and enrolled for Anganwadi services, the percentage "
+            "that had a birth weight less than 2500 grams. "
+            "<br/><br/>"
+            "Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality and "
+            "morbidity, inhibited growth and cognitive development, and chronic diseases later in life. "
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -375,10 +376,11 @@ class TestNewBornWithLowWeight(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Percentage of newborns with born with birth weight less than 2500 grams."
-            "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal"
-            " and neonatal mortality and morbidity, inhibited growth and cognitive development,"
-            " and chronic diseases later in life",
+            "Of all the children born in the current month and enrolled for Anganwadi services, the percentage "
+            "that had a birth weight less than 2500 grams. "
+            "<br/><br/>"
+            "Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality "
+            "and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. ",
         )
 
     def test_sector_data_tooltips_data(self):

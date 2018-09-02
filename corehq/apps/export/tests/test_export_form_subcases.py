@@ -31,6 +31,10 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
     A "prescription" case can also be created using save-to-case.
         case_name is /data/prescription/prescription_name
         the save-to-case node is /data/prescription/prescription
+
+    SK Update 2018-07-30:
+      - http://manage.dimagi.com/default.asp?280515
+      - added case update tha references a question outside of the repeat group (facility_name)
     """
     file_path = ['data']
     root = os.path.dirname(__file__)
@@ -81,6 +85,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                 ('form.add_a_prescription', 'Add a prescription?'),
                 ('form.voucher-name', '#form/voucher-name'),
                 ('form.is_this_a_delivery', 'Is this a delivery?'),
+                ('form.facility_name', '#form/facility_name'),
 
                 # Verify that the main parent case updates appear (case type "mom")
                 ('form.case.@case_id', 'case.@case_id'),
@@ -134,6 +139,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                 ('form.babies.case.create.case_type', 'subcase_1.create.case_type'),
                 ('form.babies.case.create.owner_id', 'subcase_1.create.owner_id'),
                 ('form.babies.case.update.eye_color', 'subcase_1.update.eye_color'),
+                ('form.babies.case.update.facility_name', 'subcase_1.update.facility_name'),
                 ('form.babies.case.index.parent.#text', 'subcase_1.index.#text'),
                 ('form.babies.case.index.parent.@case_type', 'subcase_1.index.@case_type'),
                 ('form.babies.eye_color', 'Eye color?'),
@@ -197,7 +203,10 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
 
         }, get_form_data('Forms')[0])
 
-        self.assertDictContainsSubset({
+        self.assertDictEqual({
+            "number": "0.0",
+            "number__0": 0,
+            "number__1": 0,
 
             "form.babies.eye_color": "brown",
             "form.babies.whats_the_babys_name": "Bob",
@@ -214,5 +223,6 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             "form.babies.case.index.parent.@case_type": "mom",
 
             "form.babies.case.update.eye_color": "brown",
+            "form.babies.case.update.facility_name": "test",
 
         }, get_form_data('Repeat- babies')[0])

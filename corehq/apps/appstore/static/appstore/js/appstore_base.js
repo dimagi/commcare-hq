@@ -1,5 +1,9 @@
-/* globals hqDefine */
-hqDefine('appstore/js/appstore_base', function () {
+hqDefine('appstore/js/appstore_base', [
+    'jquery',
+    'appstore/js/facet_sidebar',
+], function (
+    $
+) {
     // This assures that all the result elements are the same height
     function assure_correct_spacing() {
         $('.results').each(function(){

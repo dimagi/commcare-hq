@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import re
 import uuid
 import datetime
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CouchUser
 from django.conf import settings

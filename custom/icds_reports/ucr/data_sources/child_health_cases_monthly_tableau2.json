@@ -618,8 +618,27 @@
               }
             },
             "expression_if_false": {
-              "type": "named",
-              "name": "has_aadhar_id_from_forms"
+            "type": "conditional",
+              "test": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "named",
+                    "name": "aadhar_number_from_forms"
+                  },
+                  "property_value": ["", null]
+                }
+              },
+              "expression_if_true": {
+                "type": "constant",
+                "constant": "yes"
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": "no"
+              }
             }
           }
         },
@@ -2608,12 +2627,12 @@
           "constant": "no"
         }
       },
-      "has_aadhar_id_from_forms": {
+      "aadhar_number_from_forms": {
         "type": "icds_get_last_case_property_update",
         "case_id_expression": {
           "type": "icds_parent_id"
         },
-        "case_property": "has_aadhar",
+        "case_property": "aadhar_number",
         "end_date": {
           "type": "named",
           "name": "month_end"

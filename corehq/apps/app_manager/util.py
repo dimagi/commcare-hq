@@ -1,18 +1,25 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import namedtuple, OrderedDict
-from copy import deepcopy, copy
-from couchdbkit import ResourceNotFound
+
 import json
 import os
 import uuid
 import re
 import logging
-
 import yaml
-from django.urls import reverse
+import six
+from collections import namedtuple, OrderedDict
+from copy import deepcopy, copy
+from io import open
+
+
+from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
+from memoized import memoized
+
+from django.urls import reverse
 from django.core.cache import cache
+from django.http import Http404
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
@@ -34,10 +41,7 @@ from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
-import six
-from io import open
 
 
 logger = logging.getLogger(__name__)
@@ -115,6 +119,10 @@ def split_path(path):
     name = path_parts.pop(-1)
     path = '/'.join(path_parts)
     return path, name
+
+
+def first_elem(elem_list):
+    return elem_list[0] if elem_list else None
 
 
 def save_xform(app, form, xml):
@@ -663,7 +671,10 @@ def get_form_source_download_url(xform):
     if not xform.build_id:
         return None
 
-    app = get_app(xform.domain, xform.build_id)
+    try:
+        app = get_app(xform.domain, xform.build_id)
+    except Http404:
+        return None
     if app.is_remote_app():
         return None
 

@@ -357,15 +357,19 @@ class SubmissionPost(object):
         instance = xforms[0]
         try:
             with unfinished_submission(instance) as unfinished_submission_stub:
-                self.interface.save_processed_models(
-                    xforms,
-                    case_stock_result.case_models,
-                    case_stock_result.stock_result
-                )
-
-                if unfinished_submission_stub:
-                    unfinished_submission_stub.saved = True
-                    unfinished_submission_stub.save()
+                try:
+                    self.interface.save_processed_models(
+                        xforms,
+                        case_stock_result.case_models,
+                        case_stock_result.stock_result
+                    )
+                except PostSaveError:
+                    # mark the stub as saved if there's a post save error
+                    # but re-raise the error so that the re-processing queue picks it up
+                    unfinished_submission_stub.submission_saved()
+                    raise
+                else:
+                    unfinished_submission_stub.submission_saved()
 
                 self.do_post_save_actions(case_db, xforms, case_stock_result)
         except PostSaveError:
@@ -489,13 +493,13 @@ def _transform_instance_to_error(interface, exception, instance):
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 
-def handle_unexpected_error(interface, instance, exception, message=None):
+def handle_unexpected_error(interface, instance, exception):
     instance = _transform_instance_to_error(interface, exception, instance)
-    _notify_submission_error(instance, exception, instance.problem)
+    notify_submission_error(instance, exception, instance.problem)
     FormAccessors(interface.domain).save_new_form(instance)
 
 
-def _notify_submission_error(instance, exception, message):
+def notify_submission_error(instance, exception, message):
     from corehq.util.global_request.api import get_request
     domain = getattr(instance, 'domain', '---')
     details = {
@@ -510,6 +514,20 @@ def _notify_submission_error(instance, exception, message):
         logging.error(message, exc_info=sys.exc_info(), extra={'details': details})
 
 
+class SubmissionProcessTracker(object):
+    def __init__(self, stub=None):
+        self.stub = stub
+
+    def submission_saved(self):
+        if self.stub:
+            self.stub.saved = True
+            self.stub.save()
+
+    def submission_fully_processed(self):
+        if self.stub:
+            self.stub.delete()
+
+
 @contextlib.contextmanager
 def unfinished_submission(instance):
     unfinished_submission_stub = None
@@ -521,7 +539,6 @@ def unfinished_submission(instance):
             saved=False,
             domain=instance.domain,
         )
-    yield unfinished_submission_stub
-
-    if unfinished_submission_stub:
-        unfinished_submission_stub.delete()
+    tracker = SubmissionProcessTracker(unfinished_submission_stub)
+    yield tracker
+    tracker.submission_fully_processed()

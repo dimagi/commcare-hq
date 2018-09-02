@@ -72,7 +72,7 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
             "./user-restore"
         )
         # check 'files/practice_user_restore.xml' is included in the build files
-        app.create_build_files(save=True)
+        app.create_build_files()
         app.save()
         self.assertTrue(app.lazy_fetch_attachment('files/practice_user_restore.xml'))
 
@@ -91,7 +91,7 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
             app.create_suite(build_profile_id=build_profile_id),
             "./user-restore"
         )
-        app.create_build_files(save=True, build_profile_id=build_profile_id)
+        app.create_build_files(build_profile_id=build_profile_id)
         app.save()
         self.assertTrue(app.lazy_fetch_attachment('files/{profile}/practice_user_restore.xml'.format(
             profile=build_profile_id
@@ -156,7 +156,7 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
             "./user-restore"
         )
 
-        app.create_build_files(save=True)
+        app.create_build_files()
         app.save()
         with self.assertRaises(ResourceNotFound):
             self.assertTrue(app.lazy_fetch_attachment('files/practice_user_restore.xml'))

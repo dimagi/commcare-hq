@@ -1,6 +1,11 @@
-hqDefine('settings/js/edit_my_account', function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
-
+hqDefine('settings/js/edit_my_account', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'select2-3.5.2-legacy/select2',
+], function(
+    $,
+    initialPageData
+) {
     $(function() {
         $('#id_language').select2();
 

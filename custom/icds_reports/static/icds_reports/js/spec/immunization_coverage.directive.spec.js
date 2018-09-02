@@ -27,6 +27,7 @@ describe('Immunization Coverage Directive', function () {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
+        window.ga = function() {};
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('immunization_coverage').respond(200, {
@@ -137,31 +138,6 @@ describe('Immunization Coverage Directive', function () {
         assert.equal(searchData.location_name, 'name');
     });
 
-    it('tests show all locations', function () {
-        controller.all_locations.push(
-            {name: 'name1', location_id: 'test_id1'}
-        );
-        var locations = controller.showAllLocations();
-        assert.equal(locations, true);
-    });
-
-    it('tests not show all locations', function () {
-        controller.all_locations.push(
-            {name: 'name1', location_id: 'test_id1'},
-            {name: 'name2', location_id: 'test_id2'},
-            {name: 'name3', location_id: 'test_id3'},
-            {name: 'name4', location_id: 'test_id4'},
-            {name: 'name5', location_id: 'test_id5'},
-            {name: 'name6', location_id: 'test_id6'},
-            {name: 'name7', location_id: 'test_id7'},
-            {name: 'name8', location_id: 'test_id8'},
-            {name: 'name9', location_id: 'test_id9'},
-            {name: 'name10', location_id: 'test_id10'}
-        );
-        var locations = controller.showAllLocations();
-        assert.equal(locations, false);
-    });
-
     it('tests chart options', function () {
         var chart = controller.chartOptions.chart;
         var caption = controller.chartOptions.caption;
@@ -189,9 +165,9 @@ describe('Immunization Coverage Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> '
-            + 'Percentage of children 1 year+ who have received complete immunization as per National Immunization Schedule of India required by age 1. <br/><br/>'
+            + 'Of the total number of children enrolled for Anganwadi Services who are over a year old, the percentage of children who have received the complete immunization as per the National Immunization Schedule of India that is required by age 1. <br/><br/>'
             + 'This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1'
-            + '<br/> If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1');
+            + '<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1');
     });
 
     it('tests chart tooltip content', function () {

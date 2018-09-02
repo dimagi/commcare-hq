@@ -11,7 +11,6 @@ from custom.icds_reports.const import ChartColors, MapColors
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestAdultWeightScale(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_adult_weight_scale_data_map(
@@ -80,7 +79,8 @@ class TestAdultWeightScale(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of AWCs that reported having a weighing scale for mother and child"
+            "Of the AWCs that have submitted an Infrastructure Details form, "
+            "the percentage of AWCs that reported having a weighing scale for mother and child"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -286,7 +286,8 @@ class TestAdultWeightScale(TestCase):
                 location_id='b1',
             ),
             {
-                "info": "Percentage of AWCs that reported having a weighing scale for mother and child",
+                "info": "Of the AWCs that have submitted an Infrastructure Details form, "
+                        "the percentage of AWCs that reported having a weighing scale for mother and child",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 1,

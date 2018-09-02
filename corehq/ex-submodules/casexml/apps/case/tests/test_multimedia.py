@@ -18,7 +18,6 @@ from casexml.apps.case.xml import V2
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
-from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
@@ -218,8 +217,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
         if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(case.case_attachments, {})
-            with self.assertRaises(AttachmentNotFound):
-                attachment_sql.read_content()
         else:
             attach_actions = [x for x in case.actions if x['action_type'] == 'attachment']
             self.assertEqual(2, len(attach_actions))

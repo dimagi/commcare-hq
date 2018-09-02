@@ -1,4 +1,4 @@
-/* globals CodeMirror */
+/* globals ace */
 hqDefine('repeaters/js/repeat_record_report', function() {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
@@ -7,7 +7,7 @@ hqDefine('repeaters/js/repeat_record_report', function() {
             $(this).nextAll('.record-attempt').toggle();
             e.preventDefault();
         });
-        var codeMirror = null;
+        var editor = null;
         $('#view-record-payload-modal').on('shown.bs.modal', function(event) {
             var recordData = $(event.relatedTarget).data(),
                 $modal = $(this);
@@ -17,27 +17,28 @@ hqDefine('repeaters/js/repeat_record_report', function() {
                 data: { record_id: recordData.recordId },
                 success: function(data) {
                     var $payload = $modal.find('.payload'),
-                        contentType = data.content_type,
-                        mode = 'xml';
+                        contentType = data.content_type;
 
+                    if (editor === null) {
+                        editor = ace.edit(
+                            $payload.get(0),
+                            {
+                                showPrintMargin: false,
+                                maxLines: 40,
+                                minLines: 3,
+                                fontSize: 14,
+                                wrap: true,
+                                useWorker: false,
+                            }
+                        );
+                        editor.setReadOnly(true);
+                    }
                     if (contentType === 'text/xml') {
-                        mode = 'xml';
+                        editor.session.setMode('ace/mode/xml');
                     } else if (contentType === 'application/json') {
-                        mode = { name: 'javascript', json: true };
+                        editor.session.setMode('ace/mode/json');
                     }
-
-                    if (codeMirror === null) {
-                        codeMirror = CodeMirror($payload[0], {
-                            value: data.payload,
-                            mode: mode,
-                            readOnly: true,
-                            lineNumbers: true,
-                            lineWrapping: true,
-                        });
-                        codeMirror.refresh();
-                    } else {
-                        codeMirror.setValue(data.payload);
-                    }
+                    editor.session.setValue(data.payload);
                 },
                 error: function(data) {
                     var defaultText = gettext('Failed to fetch payload'),
@@ -49,8 +50,8 @@ hqDefine('repeaters/js/repeat_record_report', function() {
         });
 
         $('#view-record-payload-modal').on('hide.bs.modal', function() {
-            if (codeMirror) {
-                codeMirror.setValue('');
+            if (editor) {
+                editor.session.setValue('');
             }
         });
 

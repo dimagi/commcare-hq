@@ -25,12 +25,14 @@
 
 - id: platform
   name: "Java Phone Platform"
+  description: "The kind of Java phone you want to run the application on"
   values: ['nokia/s40', 'nokia/s60', 'winmo', 'generic']
   value_names: ['Nokia S40 (default)', 'Nokia S60', 'WinMo', 'Generic']
   default: 'nokia/s40'
 
 - id: text_input
   name: "Text Input"
+  description: "What characters to allow users to input"
   widget: text_input
   values: ['roman', 'native', 'custom-keys', 'qwerty']
   value_names: [Roman, Native (International), Custom Keys, Full Keyboard]
@@ -157,6 +159,7 @@
 
 - id: target_commcare_flavor
   name: Target CommCare Flavor
+  description: "Restrict this app to the selected CommCare flavor"
   toggles: TARGET_COMMCARE_FLAVOR
   values: ['none', 'commcare', 'commcare_lts']
   value_names: ['None', 'CommCare', 'CommCare LTS']

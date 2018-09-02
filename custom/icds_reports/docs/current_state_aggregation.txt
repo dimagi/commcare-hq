@@ -75,7 +75,7 @@ package "Dashboard AWC Level Aggregate Tables" {
 
 [static-ccs_record_cases_monthly_tableau_v2] --> [agg_ccs_record]
 
-[static-daily_feeding_forms] --> [agg_awc]
+[daily_attendance] --> [agg_awc]
 [agg_child_health] --> [agg_awc]
 [agg_ccs_record] --> [agg_awc]
 [static-household_cases] --> [agg_awc]

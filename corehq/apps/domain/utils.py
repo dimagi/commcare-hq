@@ -6,6 +6,7 @@ import re
 import datetime
 import json
 import csv342 as csv
+import sys
 import tempfile
 
 from django.conf import settings
@@ -19,7 +20,7 @@ from corehq.apps.es import DomainES
 
 from dimagi.utils.django.email import send_HTML_email
 
-from soil.util import ExposeBlobDownload
+from soil.util import expose_zipped_blob_download
 from couchexport.models import Format
 from io import open
 
@@ -111,7 +112,7 @@ def guess_domain_language(domain_name):
     return counter.most_common(1)[0][0] if counter else 'en'
 
 
-@task(queue='background_queue')
+@task(serializer='pickle', queue='background_queue')
 def send_repeater_payloads(repeater_id, payload_ids, email_id):
     from corehq.motech.repeaters.models import Repeater, RepeatRecord
     repeater = Repeater.get(repeater_id)
@@ -167,5 +168,17 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
 
     headers = populate_payloads(headers)
     temp_file_path = create_result_file()
-    download_url = ExposeBlobDownload().get_link(temp_file_path, result_file_name, Format.CSV)
+    download_url = expose_zipped_blob_download(
+        temp_file_path,
+        result_file_name,
+        Format.CSV,
+        repeater.domain,
+    )
     email_result(download_url)
+
+
+def silence_during_tests():
+    if settings.UNIT_TESTING:
+        return open(os.devnull, 'w')
+    else:
+        return sys.stdout

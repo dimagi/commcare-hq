@@ -14,8 +14,11 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.blobs import CODES as BLOB_CODES
+from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
+from corehq.messaging.util import project_is_on_new_reminders
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.ext.couchdbkit import (
@@ -235,11 +238,13 @@ class DayTimeWindow(DocumentSchema):
     end_time = TimeProperty()
 
 
-class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
+class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
        see data, reports, charts, etc."""
+
+    _blobdb_type_code = BLOB_CODES.domain
 
     name = StringProperty()
     is_active = BooleanProperty()
@@ -319,6 +324,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
     sms_survey_date_format = StringProperty()
+
+    granted_messaging_access = BooleanProperty(default=False)
 
     # Allowed outbound SMS per day
     # If this is None, then the default is applied. See get_daily_outbound_sms_limit()
@@ -419,6 +426,10 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         # remove this after everything's hunky-dory in production.  2015-03-06
         if 'location_types' in data:
             data['obsolete_location_types'] = data.pop('location_types')
+
+        if 'granted_messaging_access' not in data:
+            # enable messaging for domains created before this flag was added
+            data['granted_messaging_access'] = True
 
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
@@ -669,6 +680,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                   copy_by_id=None, share_reminders=True,
                   share_user_roles=True):
         from corehq.apps.app_manager.dbaccessors import get_app
+        from corehq.apps.data_interfaces.models import AutomaticUpdateRule
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
         from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
@@ -680,6 +692,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         new_id = db.copy_doc(self.get_id)['id']
         if new_domain_name is None:
             new_domain_name = new_id
+
+        uses_new_reminders = project_is_on_new_reminders(self)
 
         with CriticalSection(['request_domain_name_{}'.format(new_domain_name)]):
             new_domain_name = Domain.generate_name(new_domain_name)
@@ -702,6 +716,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             new_domain.creating_user = user.username if user else None
             new_domain.date_created = datetime.utcnow()
             new_domain.use_sql_backend = True
+            new_domain.granted_messaging_access = False
 
             for field in self._dirty_fields:
                 if hasattr(new_domain, field):
@@ -751,10 +766,29 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                     'FixtureDataType', doc_id, new_domain_name, user=user)
                 copy_data_items(doc_id, component._id)
 
+            def convert_form_unique_id_function(form_unique_id):
+                from corehq.apps.app_manager.models import FormBase
+                form = FormBase.get_form(form_unique_id)
+                form_app = form.get_app()
+                m_index, f_index = form_app.get_form_location(form.unique_id)
+                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
+                return form_copy.unique_id
+
             if share_reminders:
-                for doc_id in get_doc_ids_in_domain_by_class(self.name, CaseReminderHandler):
-                    self.copy_component(
-                        'CaseReminderHandler', doc_id, new_domain_name, user=user)
+                if uses_new_reminders:
+                    for rule in AutomaticUpdateRule.by_domain(
+                        self.name,
+                        AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                        active_only=False,
+                    ):
+                        rule.copy_conditional_alert(
+                            new_domain_name,
+                            convert_form_unique_id_function=convert_form_unique_id_function,
+                        )
+                else:
+                    for doc_id in get_doc_ids_in_domain_by_class(self.name, CaseReminderHandler):
+                        self.copy_component(
+                            'CaseReminderHandler', doc_id, new_domain_name, user=user)
             if share_user_roles:
                 for doc_id in get_doc_ids_in_domain_by_class(self.name, UserRole):
                     self.copy_component('UserRole', doc_id, new_domain_name, user=user)
@@ -764,27 +798,25 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                 user.add_domain_membership(new_domain_name, is_admin=True)
             apply_update(user, add_dom_to_user)
 
-        def update_events(handler):
-            """
-            Change the form_unique_id to the proper form for each event in a newly copied CaseReminderHandler
-            """
-            from corehq.apps.app_manager.models import FormBase
-            for event in handler.events:
-                if not event.form_unique_id:
-                    continue
-                form = FormBase.get_form(event.form_unique_id)
-                form_app = form.get_app()
-                m_index, f_index = form_app.get_form_location(form.unique_id)
-                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
-                event.form_unique_id = form_copy.unique_id
+        if not uses_new_reminders:
+            # When uses_new_reminders is True, all of this is already taken care of
+            # in the copy process
+            def update_events(handler):
+                """
+                Change the form_unique_id to the proper form for each event in a newly copied CaseReminderHandler
+                """
+                for event in handler.events:
+                    if not event.form_unique_id:
+                        continue
+                    event.form_unique_id = convert_form_unique_id_function(event.form_unique_id)
 
-        def update_for_copy(handler):
-            handler.active = False
-            update_events(handler)
+            def update_for_copy(handler):
+                handler.active = False
+                update_events(handler)
 
-        if share_reminders:
-            for handler in CaseReminderHandler.get_handlers(new_domain_name):
-                apply_update(handler, update_for_copy)
+            if share_reminders:
+                for handler in CaseReminderHandler.get_handlers(new_domain_name):
+                    apply_update(handler, update_for_copy)
 
         return new_domain
 
@@ -997,8 +1029,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     @property
     def has_custom_logo(self):
-        return (self['_attachments'] and
-                LOGO_ATTACHMENT in self['_attachments'])
+        return self.has_attachment(LOGO_ATTACHMENT)
 
     def get_custom_logo(self):
         if not self.has_custom_logo:
@@ -1006,8 +1037,11 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
         return (
             self.fetch_attachment(LOGO_ATTACHMENT),
-            self['_attachments'][LOGO_ATTACHMENT]['content_type']
+            self.blobs[LOGO_ATTACHMENT].content_type
         )
+
+    def put_attachment(self, *args, **kw):
+        return super(Domain, self).put_attachment(domain=self.name, *args, **kw)
 
     def get_case_display(self, case):
         """Get the properties display definition for a given case"""

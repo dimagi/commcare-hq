@@ -123,7 +123,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         context.update({
             'unknown_available': bool(self._unknown_forms),
             'unknown': {
-                'show': self._show_unknown,
+                'show': bool(self._show_unknown),
                 'slug': self.unknown_slug,
                 'selected': self._selected_unknown_xmlns,
                 'options': self._unknown_forms_options,
@@ -141,12 +141,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
         if self.display_app_type and not context['selected']:
             context['selected'] = [PARAM_VALUE_STATUS_ACTIVE]
+
         context["show_advanced"] = (
             self.request.GET.get('show_advanced') == 'on'
             or context["unknown"]["show"]
             or context["hide_fuzzy"]["checked"]
             or (len(context['selected']) > 0
-                and context['selected'][0] != PARAM_VALUE_STATUS_ACTIVE)
+                and context['selected'][0] == PARAM_VALUE_STATUS_DELETED
+                )
         )
         return context
 
@@ -434,7 +436,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if instance._show_unknown:
             return True
         for param in params:
-            if param['slug'] == PARAM_SLUG_APP_ID:
+            if param['slug'] in [PARAM_SLUG_APP_ID, PARAM_SLUG_STATUS]:
                 return True
         return False
 

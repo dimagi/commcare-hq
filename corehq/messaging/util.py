@@ -16,10 +16,6 @@ class MessagingRuleProgressHelper(object):
         return 48 * 60 * 60
 
     @property
-    def in_progress_key(self):
-        return 'messaging-rule-processing-in-progress-%s' % self.rule_id
-
-    @property
     def current_key(self):
         return 'messaging-rule-case-count-current-%s' % self.rule_id
 
@@ -27,16 +23,31 @@ class MessagingRuleProgressHelper(object):
     def total_key(self):
         return 'messaging-rule-case-count-total-%s' % self.rule_id
 
+    @property
+    def rule_initiation_key(self):
+        return 'messaging-rule-run-initiated-%s' % self.rule_id
+
+    def set_rule_initiation_key(self):
+        self.client.set(self.rule_initiation_key, 1, timeout=2 * 60 * 60)
+
+    def clear_rule_initiation_key(self):
+        self.client.delete(self.rule_initiation_key)
+
+    def rule_initiation_key_is_set(self):
+        return self.client.get(self.rule_initiation_key) is not None
+
+    def rule_initiation_key_minutes_remaining(self):
+        return (self.client.ttl(self.rule_initiation_key) // 60) or 1
+
     def set_initial_progress(self):
         self.client.set(self.current_key, 0)
         self.client.set(self.total_key, 0)
-        self.client.set(self.in_progress_key, 1)
         self.client.expire(self.current_key, self.key_expiry)
         self.client.expire(self.total_key, self.key_expiry)
-        self.client.expire(self.in_progress_key, self.key_expiry)
+        self.set_rule_initiation_key()
 
     def set_rule_complete(self):
-        self.client.set(self.in_progress_key, 0)
+        self.clear_rule_initiation_key()
 
     def increment_current_case_count(self, fail_hard=False):
         try:
@@ -75,6 +86,17 @@ def use_phone_entries():
     it helps performance to avoid keeping them up to date.
     """
     return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
+
+
+def project_is_on_new_reminders(domain_obj):
+    client = get_redis_client()
+    if client.get('USE_NEW_REMINDERS_GLOBALLY'):
+        return True
+
+    if settings.SERVER_ENVIRONMENT in ('production', 'softlayer', 'staging'):
+        return domain_obj.uses_new_reminders
+
+    return True
 
 
 def show_messaging_dashboard(domain, couch_user):

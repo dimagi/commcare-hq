@@ -24,7 +24,9 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.filters = ['age'];
 
     vm.rightLegend = {
-        info: 'Percentage of newborns with born with birth weight less than 2500 grams.',
+        info: 'Of all the children born in the current month and enrolled for Anganwadi services, the percentage that had a birth weight less than 2500 grams. \n' +
+        '\n' +
+        'Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. ',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -79,9 +81,9 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of newborns with born with birth weight less than 2500 grams. \n' +
+        'captionContent': ' Of all the children born in the current month and enrolled for Anganwadi services, the percentage that had a birth weight less than 2500 grams. \n' +
         '\n' +
-        'Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life',
+        'Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. ',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;

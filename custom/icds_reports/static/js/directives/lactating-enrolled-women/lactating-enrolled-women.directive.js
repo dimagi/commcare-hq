@@ -17,7 +17,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     vm.filters = ['age', 'gender'];
 
     vm.rightLegend = {
-        info: 'Total number of lactating women who are enrolled for Anganwadi Services',
+        info: 'Of the total number of lactating women, the percentage of lactating women enrolled for Anganwadi Services',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -55,7 +55,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ",",
-        'captionContent': ' Total number of lactating women who are enrolled for Anganwadi Services',
+        'captionContent': ' Of the total number of lactating women, the percentage of lactating women enrolled for Anganwadi Services',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;

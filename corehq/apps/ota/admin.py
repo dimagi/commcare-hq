@@ -35,8 +35,20 @@ class MobileRecoveryMeasureForm(forms.ModelForm):
                 raise ValidationError("You must specify both {} and {}."
                                       .format(version_min, version_max))
 
-        if data['cc_all_versions'] and data['app_all_versions']:
-            raise ValidationError("You cannot apply a measure to all cc and app versions.")
+        application_measures = ['app_reinstall_ota', 'app_reinstall_local', 'app_update']
+        commcare_measures = ['cc_reinstall', 'cc_update']
+        if data['measure'] in application_measures:
+            if data['app_all_versions']:
+                raise ValidationError("App related measures must specify an app version range")
+        elif data['measure'] in commcare_measures:
+            if data['cc_all_versions']:
+                raise ValidationError("Commcare related measures must specify a commcare version range")
+        else:
+            raise AssertionError(
+                "This measure doesn't have any specific validation defined, you must code in "
+                "validation for all possible measures (even if it's just to explicitly mark that "
+                "no further validation is necessary)."
+            )
 
         return self.cleaned_data
 

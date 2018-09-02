@@ -2,9 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'domain/js/internal_calculations.js' %}"></script>
-{% endblock %}
+{% requirejs_main "domain/js/internal_calculations" %}
 
 {% block page_content %}
     {% registerurl 'calculated_properties' domain %}

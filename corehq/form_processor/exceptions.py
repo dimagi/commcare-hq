@@ -57,3 +57,7 @@ class UnknownActionType(Exception):
 
 class PostSaveError(Exception):
     pass
+
+
+class KafkaPublishingError(Exception):
+    pass

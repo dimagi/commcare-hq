@@ -25,6 +25,7 @@ def template_dirs(*relative_dirs):
 
 
 @template_dirs("templates")
+@override_settings(COMPRESS_ENABLED=False)
 class TagTest(SimpleTestCase):
 
     @staticmethod

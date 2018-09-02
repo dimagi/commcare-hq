@@ -62,7 +62,8 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
                  always_disabled=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None, relevant_environments=None):
+                 enabled_for_new_users_after=None, relevant_environments=None,
+                 notification_emails=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -78,10 +79,12 @@ class StaticToggle(object):
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
         self.relevant_environments = relevant_environments
+
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
+        self.notification_emails = notification_emails
 
     def enabled(self, item, namespace=Ellipsis):
         if self.relevant_environments and not (
@@ -478,10 +481,9 @@ COPY_FORM_TO_APP = StaticToggle(
 
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
-    'UW: Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
-    TAG_DEPRECATED,
+    'Offer hosting and sharing data files for downloading from a secure dropzone',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
-    # TODO: Create Confluence docs and add help link
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -546,6 +548,7 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
     help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
+    notification_emails=['jemord']
 )
 
 EXPORT_NO_SORT = StaticToggle(
@@ -917,13 +920,6 @@ CUSTOM_MENU_BAR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ICDS_REPORTS = StaticToggle(
-    'icds_reports',
-    'Enable access to the Tableau dashboard for ICDS',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
 DASHBOARD_ICDS_REPORT = StaticToggle(
     'dashboard_icds_reports',
     'ICDS: Enable access to the dashboard reports for ICDS',
@@ -943,14 +939,6 @@ NINETYNINE_DOTS = StaticToggle(
     'Enikshay: Enable access to 99DOTS',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-ENIKSHAY_API = StaticToggle(
-    'enikshay_api',
-    'Enikshay: Enable access to eNikshay api endpoints',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    always_enabled={"enikshay"},
 )
 
 NIKSHAY_INTEGRATION = StaticToggle(
@@ -978,8 +966,8 @@ RETRY_SMS_INDEFINITELY = StaticToggle(
 
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
-    'FGH: Enable OpenMRS integration',
-    TAG_CUSTOM,
+    'Enable OpenMRS integration',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1056,6 +1044,13 @@ EWS_INVALID_REPORT_RESPONSE = StaticToggle(
 USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     'use_sms_with_inactive_contacts',
     'Use SMS with inactive contacts',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
+    'enable_include_sms_gateway_charging',
+    'Enable include SMS gateway charging',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
@@ -1256,6 +1251,14 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
+    'language_linked_multimedia',
+    'Add a setting to link multimedia to the default language',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
+)
+
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',
@@ -1281,15 +1284,6 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
         "other reports - by individual user, group, or location.  Note that this "
         "will also force the report to always display by user."
     ),
-)
-
-ENIKSHAY = StaticToggle(
-    'enikshay',
-    "Enikshay: Enable custom enikshay functionality: additional user and location validation",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'enikshay'},
-    relevant_environments={'enikshay'},
 )
 
 ICDS = StaticToggle(
@@ -1538,14 +1532,6 @@ TARGET_COMMCARE_FLAVOR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-APPCUES_AB_TEST = PredictablyRandomToggle(
-    'appcues_ab_test',
-    'True if user is in variant group for Appcues AB test. Irrelevent if user is not in test.',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    randomness=0.5
-)
-
 WAREHOUSE_APP_STATUS = StaticToggle(
     'warehouse_app_status',
     "User warehouse backend for the app status report. Currently only for sql domains",
@@ -1597,5 +1583,23 @@ AGGREGATE_UCRS = StaticToggle(
     'aggregate_ucrs',
     'Enable experimental aggregate UCR support',
     TAG_INTERNAL,  # this might change in the future
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    notification_emails=['czue'],
+)
+
+
+RELATED_LOCATIONS = StaticToggle(
+    'related_locations',
+    'REACH: Enable experimental location many-to-many mappings',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    notification_emails=['jemord'],
+    help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
+)
+
+ALLOW_BLANK_CASE_TAGS = StaticToggle(
+    'allow_blank_case_tags',
+    'eCHIS: Allow blank case tags',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )

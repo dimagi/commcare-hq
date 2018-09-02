@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 import jsonfield as old_jsonfield
+from copy import deepcopy
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.exceptions import XFormIdNotUnique
 from corehq.apps.app_manager.models import Form
@@ -20,7 +21,7 @@ from corehq.apps.sms.api import (
 from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist
 from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
@@ -32,6 +33,14 @@ from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 
 class SMSContent(Content):
     message = old_jsonfield.JSONField(default=dict)
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return SMSContent(
+            message=deepcopy(self.message),
+        )
 
     def render_message(self, message, recipient, logged_subevent):
         if not message:
@@ -73,6 +82,15 @@ class EmailContent(Content):
     message = old_jsonfield.JSONField(default=dict)
 
     TRIAL_MAX_EMAILS = 50
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return EmailContent(
+            subject=deepcopy(self.subject),
+            message=deepcopy(self.message),
+        )
 
     def render_subject_and_message(self, subject, message, recipient):
         renderer = self.get_template_renderer(recipient)
@@ -134,6 +152,18 @@ class SMSSurveyContent(Content):
     reminder_intervals = JSONField(default=list)
     submit_partially_completed_forms = models.BooleanField(default=False)
     include_case_updates_in_partial_submissions = models.BooleanField(default=False)
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return SMSSurveyContent(
+            form_unique_id=None,
+            expire_after=self.expire_after,
+            reminder_intervals=deepcopy(self.reminder_intervals),
+            submit_partially_completed_forms=self.submit_partially_completed_forms,
+            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
+        )
 
     @memoized
     def get_memoized_app_module_form(self, domain):
@@ -307,7 +337,65 @@ class SMSSurveyContent(Content):
 
 
 class IVRSurveyContent(Content):
+    """
+    IVR is no longer supported, but in order to display old configurations we
+    need to keep this model around.
+    """
+
+    # The unique id of the form that will be used as the IVR Survey
     form_unique_id = models.CharField(max_length=126)
+
+    # If empty list, this is ignored. Otherwise, this is a list of intervals representing
+    # minutes to wait.
+    # After waiting the amount of minutes specified by each interval, the framework will
+    # check if an outbound IVR call was answered for this event. If not, it will retry
+    # the outbound call again.
+    reminder_intervals = JSONField(default=list)
+
+    # At the end of the IVR call, if this is True, the form will be submitted in its current
+    # state regardless if it was completed or not.
+    submit_partially_completed_forms = models.BooleanField(default=False)
+
+    # Only matters when submit_partially_completed_forms is True.
+    # If True, then case updates will be included in partial form submissions, otherwise
+    # they will be excluded.
+    include_case_updates_in_partial_submissions = models.BooleanField(default=False)
+
+    # The maximum number of times to attempt asking a question on a phone call
+    # before giving up and hanging up. This is meant to prevent long running calls
+    # where the user is giving invalid answers or not answering at all.
+    max_question_attempts = models.IntegerField(default=5)
+
+    def send(self, recipient, logged_event):
+        pass
+
+
+class SMSCallbackContent(Content):
+    """
+    This use case is no longer supported, but in order to display old configurations we
+    need to keep this model around.
+
+    The way that this use case worked was as follows. When the event fires for the
+    first time, the SMS message is sent as it is for SMSContent. The recipient is then
+    expected to perform a "call back" or "flash back" to the system, where they call
+    a phone number, let it ring, and hang up. CommCareHQ records the inbound call when
+    this happens.
+
+    Then, for every interval specified by reminder_intervals, the system will wait
+    that number of minutes and then check for the expected inbound call from the
+    recipient. If the inbound call was received, then no further action is needed.
+    If not, the SMS message is sent again. On the last interval, the SMS is not
+    sent again and the expected callback event is just closed out.
+
+    The results of the expected call back are stored in an entry in
+    corehq.apps.sms.models.ExpectedCallback.
+    """
+
+    message = JSONField(default=dict)
+
+    # This is a list of intervals representing minutes to wait. It should never be empty.
+    # See the explanation above to understand how this is used.
+    reminder_intervals = JSONField(default=list)
 
     def send(self, recipient, logged_event):
         pass
@@ -318,6 +406,14 @@ class CustomContent(Content):
     # which points to a function to call at runtime to get a list of
     # messsages to send to the recipient.
     custom_content_id = models.CharField(max_length=126)
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return CustomContent(
+            custom_content_id=self.custom_content_id,
+        )
 
     def get_list_of_messages(self, recipient):
         if not self.schedule_instance:

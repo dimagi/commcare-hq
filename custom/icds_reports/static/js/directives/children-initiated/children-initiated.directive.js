@@ -23,7 +23,9 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     };
     vm.filters = ['age'];
     vm.rightLegend = {
-        info: 'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.',
+        info: 'Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, the percentage that was given a timely introduction to solid, semi-solid or soft food.\n' +
+        '\n' +
+        'Timely intiation of complementary feeding in addition to breastmilk at 6 months of age is a key feeding practice to reduce malnutrition',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -68,7 +70,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food. \n' +
+        'captionContent': ' Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, the percentage that was given a timely introduction to solid, semi-solid or soft food.\n' +
         '\n' +
         'Timely intiation of complementary feeding in addition to breastmilk at 6 months of age is a key feeding practice to reduce malnutrition',
     };

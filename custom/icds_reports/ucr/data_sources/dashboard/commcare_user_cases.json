@@ -5,7 +5,8 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds-new",
+    "icds"
   ],
   "config": {
     "table_id": "static-commcare_user_cases",

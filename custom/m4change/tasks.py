@@ -18,7 +18,7 @@ from custom.m4change.reports.reports import M4ChangeReportDataSource
 from dimagi.utils.parsing import json_format_date
 
 
-@periodic_task(run_every=crontab(hour="3", minute="0", day_of_week="*"),
+@periodic_task(serializer='pickle', run_every=crontab(hour="3", minute="0", day_of_week="*"),
                queue='background_queue')
 def generate_production_fixtures():
     db = FixtureReportResult.get_db()
@@ -56,7 +56,7 @@ def generate_fixtures_for_domain(domain, db, data_source):
                                                 report_slug, rows, name)
 
 
-@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"),
+@periodic_task(serializer='pickle', run_every=crontab(hour="*", minute="*/30", day_of_week="*"),
                queue=getattr(settings, "CELERY_PERIODIC_QUEUE", "celery"))
 def generate_fixtures_for_locations():
 

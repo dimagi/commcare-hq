@@ -6,13 +6,15 @@ from corehq.apps.app_manager.views.translations import (
     upload_bulk_app_translations,
 )
 from corehq.apps.app_manager.views.app_summary import (
+    AppCaseSummaryView,
     AppDataView,
-    AppSummaryView,
+    AppFormSummaryView,
     DownloadCaseSummaryView,
     DownloadFormSummaryView,
     DownloadAppSummaryView,
 )
 from corehq.apps.app_manager.views.apps import (
+    app_from_template,
     app_settings,
     app_source,
     copy_app,

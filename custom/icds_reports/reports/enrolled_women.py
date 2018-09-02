@@ -69,7 +69,8 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
             "average": sum(average) / float(len(average) or 1),
             "average_format": 'number',
             "info": _((
-                "Total number of pregnant women who are enrolled for Anganwadi Services."
+                "Of the total number of pregnant women, the percentage of pregnant women enrolled for "
+                "Anganwadi Services"
             )),
             "extended_info": [
                 {
@@ -150,7 +151,8 @@ def get_enrolled_women_sector_data(domain, config, loc_level, location_id, show_
         "tooltips_data": dict(tooltips_data),
         "format": "number",
         "info": _((
-            "Total number of pregnant women who are enrolled for Anganwadi Services."
+            "Of the total number of pregnant women, the percentage of pregnant women enrolled for "
+            "Anganwadi Services"
         )),
         "chart_data": [
             {

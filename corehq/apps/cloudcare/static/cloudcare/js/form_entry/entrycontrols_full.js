@@ -132,6 +132,7 @@ function UnsupportedEntry(question, options) {
     var self = this;
     Entry.call(self, question, options);
     self.templateType = 'unsupported';
+    self.answer('Not Supported by Web Entry');
 }
 UnsupportedEntry.prototype = Object.create(Entry.prototype);
 UnsupportedEntry.prototype.constructor = Entry;

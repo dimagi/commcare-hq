@@ -1,14 +1,16 @@
-{% extends "hqadmin/user_administration.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block reportcontent %}
+{% requirejs_main 'hqadmin/js/authenticate_as' %}
+
+{% block page_content %}
 {% initial_page_data "url" root_page_url %}
 <div class="row">
     <div class="col-xs-12">
         <h2>{{ current_page.title }}</h2>
-        <p class="well">
+        <p class="help-block">
         {% blocktrans %}
             Use this form to login as a mobile user.
             You can fill out the fully qualified username of
@@ -20,8 +22,4 @@
         {% crispy form %}
     </div>
 </div>
-{% endblock %}
-
-{% block js %} {{ block.super }}
-    <script src="{% static 'hqadmin/js/authenticate_as.js' %}"></script>
 {% endblock %}

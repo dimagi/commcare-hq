@@ -20,6 +20,8 @@ import xlwt
 
 from couchexport.models import Format
 import six
+from openpyxl.styles import numbers
+from openpyxl.worksheet.write_only import WriteOnlyCell
 from six.moves import zip
 from six.moves import map
 
@@ -360,8 +362,14 @@ class Excel2007ExportWriter(ExportWriter):
     format = Format.XLS_2007
     max_table_name_size = 31
 
+    def __init__(self, format_as_text=False):
+        super(Excel2007ExportWriter, self).__init__()
+        self.format_as_text = format_as_text
+
     def _init(self):
+        # https://openpyxl.readthedocs.io/en/latest/optimized.html
         self.book = openpyxl.Workbook(write_only=True)
+
         self.tables = {}
         self.table_indices = {}
 
@@ -382,7 +390,7 @@ class Excel2007ExportWriter(ExportWriter):
         def get_write_value(value):
             if isinstance(value, six.integer_types + (float,)):
                 return value
-            if isinstance(value, str):
+            if isinstance(value, six.binary_type):
                 value = six.text_type(value, encoding="utf-8")
             elif value is not None:
                 value = six.text_type(value)
@@ -390,10 +398,11 @@ class Excel2007ExportWriter(ExportWriter):
                 value = ''
             return dirty_chars.sub('?', value)
 
-        # NOTE: don't touch this. changing anything like formatting in the
-        # row by referencing the cells will cause huge memory issues.
-        # see: http://openpyxl.readthedocs.org/en/latest/optimized.html
-        sheet.append(list(map(get_write_value, row)))
+        cells = [WriteOnlyCell(sheet, get_write_value(val)) for val in row]
+        if self.format_as_text:
+            for cell in cells:
+                cell.number_format = numbers.FORMAT_TEXT
+        sheet.append(cells)
 
     def _close(self):
         """

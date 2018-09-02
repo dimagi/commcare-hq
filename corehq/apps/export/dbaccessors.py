@@ -95,13 +95,14 @@ def get_form_exports_by_domain(domain, has_deid_permissions):
 def get_export_count_by_domain(domain):
     from .models import ExportInstance
 
-    return ExportInstance.get_db().view(
+    export_result = ExportInstance.get_db().view(
         'export_instances_by_domain/view',
         startkey=[domain],
         endkey=[domain, {}],
         include_docs=False,
         reduce=True,
-    ).one()['value']
+    ).one()
+    return 0 if export_result is None else export_result['value']
 
 
 def get_deid_export_count(domain):

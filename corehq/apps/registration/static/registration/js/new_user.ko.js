@@ -38,17 +38,10 @@ hqDefine('registration/js/new_user.ko', function () {
 
     // Can't set up analytics until the values for the A/B tests are ready
     _kissmetrics.whenReadyAlways(function() {
-        _private.isAbPhoneNumberShown = _kissmetrics.getAbTest('New User Phone Number') === 'show_number';
-        _kissmetrics.identifyTraits({
-            "Phone number field": _private.isAbPhoneNumberShown ? "Shown" : "Not shown",
-        });
         _kissmetrics.track.event("Viewed CommCare signup page");
 
         _private.submitSuccessAnalytics = function (data) {
             _kissmetrics.track.event("Account Creation was Successful");
-            if (_private.isAbPhoneNumberShown) {
-                _kissmetrics.track.event("Phone Number Field Filled Out");
-            }
 
             var appcuesEvent = "Assigned user to Appcues test",
                 appcuesData = {
@@ -61,6 +54,13 @@ hqDefine('registration/js/new_user.ko', function () {
             _kissmetrics.identify(data.email);
             _kissmetrics.identifyTraits(appcuesData);
             _kissmetrics.track.event(appcuesEvent, appcuesData);
+
+            if (data.deniedEmail) {
+                _kissmetrics.track.event("Created account after previous denial due to enterprise restricting signups", {
+                    email: data.email,
+                    previousAttempt: data.deniedEmail,
+                });
+            }
         };
     });
 
@@ -129,9 +129,10 @@ hqDefine('registration/js/new_user.ko', function () {
             .extend({
                 emailRFC2822: true,
             });
+        self.deniedEmail = ko.observable('');
         self.emailDelayed = ko.pureComputed(self.email)
             .extend(_rateLimit)
-            .extend( {
+            .extend({
                 validation: {
                     async: true,
                     validator: function (val, params, callback) {
@@ -141,7 +142,14 @@ hqDefine('registration/js/new_user.ko', function () {
                                 {email: val},
                                 {
                                     success: function (result) {
-                                        callback(result.isValid);
+                                        if (result.restrictedByDomain) {
+                                            _kissmetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
+                                            self.deniedEmail(val);
+                                        }
+                                        callback({
+                                            isValid: result.isValid,
+                                            message: result.message,
+                                        });
                                     },
                                 }
                             );
@@ -149,7 +157,6 @@ hqDefine('registration/js/new_user.ko', function () {
                             _private.resetEmailFeedback(false);
                         }
                     },
-                    message: django.gettext("There is already a user with this email."),
                 },
             });
         if (defaults.email) {
@@ -386,6 +393,7 @@ hqDefine('registration/js/new_user.ko', function () {
                             self.isSubmitSuccess(true);
                             _private.submitSuccessAnalytics(_.extend({}, submitData, {
                                 email: self.email(),
+                                deniedEmail: self.deniedEmail(),
                                 appcuesAbTest: response.appcues_ab_test ? 'On' : 'Off',
                             }));
                         }

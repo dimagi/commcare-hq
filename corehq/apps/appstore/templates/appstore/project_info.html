@@ -3,11 +3,7 @@
 {% load i18n %}
 {% load compress %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'appstore/js/project_info.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% requirejs_main 'appstore/js/project_info' %}
 
 {% block stylesheets %}{{ block.super }}
     <style type="text/css">

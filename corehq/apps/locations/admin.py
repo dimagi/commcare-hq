@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.contrib import admin
-from .models import SQLLocation, LocationType
+from .models import SQLLocation, LocationType, LocationRelation
 
 
 class LocationTypeAdmin(admin.ModelAdmin):
@@ -42,5 +42,23 @@ class LocationAdmin(admin.ModelAdmin):
     ]
 
 
+class LocationRelationAdmin(admin.ModelAdmin):
+    model = LocationRelation
+
+    list_display = [
+        'id',
+        'location_a',
+        'location_b',
+    ]
+    readonly_fields = ('location_a', 'location_b')
+    search_fields = [
+        'location_a__domain',
+        'location_a__name',
+        'location_b__domain',
+        'location_b__name',
+    ]
+
+
 admin.site.register(SQLLocation, LocationAdmin)
 admin.site.register(LocationType, LocationTypeAdmin)
+admin.site.register(LocationRelation, LocationRelationAdmin)

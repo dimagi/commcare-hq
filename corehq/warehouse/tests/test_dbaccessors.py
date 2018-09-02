@@ -74,7 +74,6 @@ class TestDbAccessors(TestCase):
         cls.deleted_app.delete()
         cls.linked_app.delete()
         cls.domain_obj.delete()
-        cls.synclog.delete()
         super(TestDbAccessors, cls).tearDownClass()
 
     def test_get_group_ids_by_last_modified(self):

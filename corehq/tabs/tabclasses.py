@@ -12,6 +12,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
+from corehq.apps.analytics.ab_tests import appcues_template_app_test
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
@@ -58,7 +59,7 @@ from corehq.messaging.scheduling.views import (
     CreateConditionalAlertView,
     EditConditionalAlertView,
 )
-from corehq.messaging.util import show_messaging_dashboard
+from corehq.messaging.util import show_messaging_dashboard, project_is_on_new_reminders
 from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
 from corehq.motech.views import MotechLogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
@@ -66,10 +67,11 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.world_vision import WORLD_VISION_DOMAINS
 from memoized import memoized
 from django_prbac.utils import has_privilege
 from six.moves import map
+
+from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 
 
 class ProjectReportsTab(UITab):
@@ -84,8 +86,6 @@ class ProjectReportsTab(UITab):
 
     @property
     def view(self):
-        if self.domain in WORLD_VISION_DOMAINS:
-            return "reports_home"
         from corehq.apps.reports.views import MySavedReportsView
         return MySavedReportsView.urlname
 
@@ -508,7 +508,9 @@ class ProjectDataTab(UITab):
     @property
     def _is_viewable(self):
         return self.domain and (
-            self.can_edit_commcare_data or self.can_export_data or can_download_data_files(self.domain)
+            self.can_edit_commcare_data
+            or self.can_export_data
+            or can_download_data_files(self.domain, self.couch_user)
         )
 
     @property
@@ -713,7 +715,7 @@ class ProjectDataTab(UITab):
                     'subpages': []
                 })
 
-        if can_download_data_files(self.domain):
+        if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views import DataFileDownloadList
 
             export_data_views.append({
@@ -763,7 +765,7 @@ class ProjectDataTab(UITab):
     def dropdown_items(self):
         if (
             self.can_only_see_deid_exports or (
-                not self.can_export_data and not can_download_data_files(self.domain)
+                not self.can_export_data and not can_download_data_files(self.domain, self.couch_user)
             )
         ):
             return []
@@ -825,10 +827,13 @@ class ApplicationsTab(UITab):
 
         submenu_context.append(dropdown_dict(_('My Applications'),
                                is_header=True))
+        in_appcues_test = appcues_template_app_test(self._request)
         for app in apps:
             url = reverse('view_app', args=[self.domain, app.get_id]) if self.couch_user.can_edit_apps() \
                 else reverse('release_manager', args=[self.domain, app.get_id])
             app_title = self.make_app_title(app.name, app.doc_type)
+            if in_appcues_test and 'created_from_template' in app and app['created_from_template'] == 'appcues':
+                url = url + '?appcues=1'
 
             submenu_context.append(dropdown_dict(
                 app_title,
@@ -841,6 +846,11 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
+            ))
+        if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                _('Translations'),
+                url=(reverse('convert_translations', args=[self.domain])),
             ))
         return submenu_context
 
@@ -969,7 +979,7 @@ class MessagingTab(UITab):
     @memoized
     def show_new_reminders_pages(self):
         return (
-            self.project.uses_new_reminders or
+            project_is_on_new_reminders(self.project) or
             toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
         )
 
@@ -977,7 +987,7 @@ class MessagingTab(UITab):
     @memoized
     def show_old_reminders_pages(self):
         return (
-            not self.project.uses_new_reminders or
+            not project_is_on_new_reminders(self.project) or
             toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
         )
 
@@ -1144,7 +1154,7 @@ class MessagingTab(UITab):
         if self.show_dashboard:
             result.append(dropdown_dict(_("Dashboard"), is_header=True))
             result.append(dropdown_dict(
-                _("Dashboard (beta)"),
+                _("Dashboard"),
                 url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
             ))
 
@@ -1404,10 +1414,45 @@ class EnterpriseSettingsTab(UITab):
     @property
     def sidebar_items(self):
         items = super(EnterpriseSettingsTab, self).sidebar_items
-        items.append((_('Manage Enterprise'), [{
-            'title': _('Enterprise Dashboard'),
-            'url': reverse('enterprise_dashboard', args=[self.domain]),
-        }]))
+        items.append((_('Manage Enterprise'), [
+            {
+                'title': _('Enterprise Dashboard'),
+                'url': reverse('enterprise_dashboard', args=[self.domain]),
+            },
+            {
+                'title': _('Enterprise Settings'),
+                'url': reverse('enterprise_settings', args=[self.domain]),
+            },
+        ]))
+        return items
+
+
+class TranslationsTab(UITab):
+    title = ugettext_noop('Translations')
+
+    url_prefix_formats = (
+        '/a/{domain}/translations/',
+    )
+    _is_viewable = False
+
+    @property
+    def sidebar_items(self):
+        items = super(TranslationsTab, self).sidebar_items
+        items.append((_('Translations'), [
+            {'url': reverse('convert_translations', args=[self.domain]),
+             'title': 'Convert Translations'
+             }
+        ]))
+        if transifex_details_available_for_domain(self.domain):
+            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
+                items.append((_('Translations'), [
+                    {'url': reverse('app_translations', args=[self.domain]),
+                     'title': 'Manage App Translations'
+                     },
+                    {'url': reverse('pull_resource', args=[self.domain]),
+                     'title': 'Pull Resource'
+                     }
+                ]))
         return items
 
 
@@ -1418,6 +1463,9 @@ class ProjectSettingsTab(UITab):
     url_prefix_formats = (
         '/a/{domain}/settings/project/',
         '/a/{domain}/phone/prime_restore/',
+        '/a/{domain}/motech/',
+        '/a/{domain}/dhis2/',
+        '/a/{domain}/openmrs/',
     )
 
     _is_viewable = False
@@ -1629,15 +1677,18 @@ def _get_integration_section(domain):
         }, {
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
-        }, {
-            'title': _(MotechLogListView.page_title),
-            'url': reverse(MotechLogListView.urlname, args=[domain])
         }])
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
         integration.append({
             'title': _(OpenmrsImporterView.page_title),
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
+        })
+
+    if toggles.DHIS2_INTEGRATION.enabled(domain) or toggles.OPENMRS_INTEGRATION.enabled(domain):
+        integration.append({
+            'title': _(MotechLogListView.page_title),
+            'url': reverse(MotechLogListView.urlname, args=[domain])
         })
 
     return integration

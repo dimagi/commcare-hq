@@ -565,13 +565,18 @@ class ElasticAPIQuerySet(object):
         for field in fields:
             if not field:
                 continue
-            
+
             direction = 'asc'
+            missing_dir = '_first'
             if field[0] == '-':
                 direction = 'desc'
+                missing_dir = '_last'
                 field = field[1:]
 
-            new_payload['sort'].append({field: direction})
+            new_payload['sort'].append({field: {
+                'order': direction,
+                "missing": missing_dir
+            }})
 
         return self.with_fields(payload=new_payload)
 

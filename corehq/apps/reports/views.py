@@ -9,7 +9,7 @@ from wsgiref.util import FileWrapper
 
 from corehq.util.download import get_download_response
 from dimagi.utils.couch import CriticalSection
-
+from corehq.apps.reports.tasks import send_email_report
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.domain.views import BaseDomainView
@@ -95,7 +95,6 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 
-from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -152,7 +151,13 @@ from corehq.util.couch import get_document_or_404
 from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.export import WorkBook
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.view_utils import absolute_reverse, reverse, get_case_or_404, get_form_or_404
+from corehq.util.view_utils import (
+    absolute_reverse,
+    reverse,
+    get_case_or_404,
+    get_form_or_404,
+    request_as_dict
+)
 
 from .dispatcher import ProjectReportDispatcher
 from .export import (
@@ -231,20 +236,6 @@ def can_view_attachments(request):
         or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.user.username)
         or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.domain)
     )
-
-
-@login_and_domain_required
-@location_safe
-def default(request, domain):
-    if domain in WORLD_VISION_DOMAINS and settings.DOMAIN_MODULE_MAP.get(domain):
-        from custom.world_vision.reports.mixed_report import MixedTTCReport
-        return HttpResponseRedirect(MixedTTCReport.get_url(domain))
-    return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
-
-
-@login_and_domain_required
-def old_saved_reports(request, domain):
-    return default(request, domain)
 
 
 class BaseProjectReportSectionView(BaseDomainView):
@@ -822,61 +813,20 @@ class AddSavedReportConfigView(View):
 @login_and_domain_required
 @datespan_default
 def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix, once=False):
-    from corehq.apps.hqwebapp.tasks import send_html_email_async
     from .forms import EmailReportForm
-    user_id = request.couch_user._id
 
     form = EmailReportForm(request.GET)
     if not form.is_valid():
         return HttpResponseBadRequest()
 
-    config = ReportConfig()
-    # see ReportConfig.query_string()
-    object.__setattr__(config, '_id', 'dummy')
-    config.name = _("Emailed report")
-    config.report_type = report_type
-
-    config.report_slug = report_slug
-    config.owner_id = user_id
-    config.domain = domain
-
-    config.start_date = request.datespan.startdate.date()
-    if request.datespan.enddate:
-        config.date_range = 'range'
-        config.end_date = request.datespan.enddate.date()
-    else:
-        config.date_range = 'since'
-
-    GET = dict(request.GET.iterlists())
-    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
-    filters = {}
-    for field in GET:
-        if not field in exclude:
-            filters[field] = GET.get(field)
-
-    config.filters = filters
-
-    subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
-    content = _render_report_configs(
-        request, [config], domain, user_id, request.couch_user, True, lang=request.couch_user.language,
-        notes=form.cleaned_data['notes'], once=once
-    )[0]
-
+    recipient_emails = set(form.cleaned_data['recipient_emails'])
     if form.cleaned_data['send_to_owner']:
-        email = request.couch_user.get_email()
-        body = render_full_report_notification(request, content).content
+        recipient_emails.add(request.couch_user.get_email())
 
-        send_html_email_async.delay(
-            subject, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL)
+    request_data = request_as_dict(request)
 
-    if form.cleaned_data['recipient_emails']:
-        for recipient in form.cleaned_data['recipient_emails']:
-            body = render_full_report_notification(request, content).content
-            send_html_email_async.delay(
-                subject, recipient, body,
-                email_from=settings.DEFAULT_FROM_EMAIL)
-
+    send_email_report.delay(recipient_emails, domain, report_slug, report_type,
+                            request_data, once, form.cleaned_data)
     return HttpResponse()
 
 

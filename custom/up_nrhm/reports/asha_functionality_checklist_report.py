@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+from collections import OrderedDict
+
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
@@ -30,7 +33,11 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
 
     @property
     def ashas(self):
-        return sorted(list(self.model_data.data.values()), key=lambda x: x['completed_on'])
+        return list(OrderedDict(
+            (x['hv_asha_name'], x)
+            for x in sorted(
+                list(self.model_data.data.values()), key=lambda x: x['completed_on'])
+        ).values())
 
     @property
     def headers(self):

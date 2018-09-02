@@ -102,9 +102,10 @@ def soft_assert(to=None, notify_admins=False,
                          'list of recipients or notify_admins=True')
 
     def send(info):
-        if to:
+        send_email = settings.ENABLE_SOFT_ASSERT_EMAILS
+        if send_email and to:
             _send_message(info, backend=send_to_recipients)
-        if notify_admins:
+        if send_email and notify_admins:
             _send_message(info, backend=send_to_admins)
         if log_to_file:
             _send_message(info, backend=write_to_log_file)

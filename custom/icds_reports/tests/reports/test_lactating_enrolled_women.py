@@ -102,7 +102,8 @@ class TestLactatingEnrolledWomen(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Lactating Mothers enrolled for Anganwadi Services.",
+                "info": "Of the total number of lactating women, "
+                        "the percentage of lactating women enrolled for Anganwadi Services",
                 "tooltips_data": {
                     "s2": {
                         "valid": 24,
@@ -147,7 +148,8 @@ class TestLactatingEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Lactating Mothers enrolled for Anganwadi Services.",
+                    "info": "Of the total number of lactating women, the percentage of lactating women enrolled "
+                            "for Anganwadi Services",
                     "average": 83.0,
                     "average_format": "number",
                     'extended_info': [
@@ -201,7 +203,8 @@ class TestLactatingEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Lactating Mothers enrolled for Anganwadi Services.",
+                    "info": "Of the total number of lactating women, the percentage of lactating women enrolled "
+                            "for Anganwadi Services",
                     "average": 43.5,
                     "average_format": "number",
                     'extended_info': [

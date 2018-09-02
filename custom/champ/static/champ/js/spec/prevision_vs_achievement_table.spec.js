@@ -1,4 +1,3 @@
-/* global PrecisionVsAchievementsTableModel */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -23,7 +22,7 @@ describe('PrecisionVsAchievementsTableModel', function() {
             {id: 'cbo3', value: 'cbo3', parent_id: 'district2'},
             {id: 'cbo4', value: 'cbo4', parent_id: 'district2'},
         ];
-        viewModel = new PrecisionVsAchievementsTableModel();
+        viewModel = hqImport("champ/js/knockout/prevision_vs_achievement_table").model();
         viewModel.districts = districts;
         viewModel.cbos = cbos;
         viewModel.availableDistricts(districts);

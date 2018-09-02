@@ -509,8 +509,12 @@ def _process_modules_and_forms_sheet(rows, app):
         _update_translation_dict('default_', document.name, row, app.langs)
 
         for lang in app.langs:
-            document.set_icon(lang, row.get('icon_filepath_%s' % lang, ''))
-            document.set_audio(lang, row.get('audio_filepath_%s' % lang, ''))
+            icon_filepath = 'icon_filepath_%s' % lang
+            audio_filepath = 'audio_filepath_%s' % lang
+            if icon_filepath in row:
+                document.set_icon(lang, row[icon_filepath])
+            if audio_filepath in row:
+                document.set_audio(lang, row[audio_filepath])
 
     return msgs
 

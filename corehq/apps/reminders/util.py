@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from datetime import datetime, time
 from functools import wraps
 
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from django.http import Http404
 from django.utils.translation import ugettext as _
 
@@ -18,6 +18,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, InvalidFormatException
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.util import project_is_on_new_reminders
 from corehq.util.quickcache import quickcache
 from django_prbac.utils import has_privilege
 
@@ -256,7 +257,7 @@ def requires_old_reminder_framework():
                 return fn(request, *args, **kwargs)
             if not hasattr(request, 'project'):
                 request.project = Domain.get_by_name(request.domain)
-            if not request.project.uses_new_reminders:
+            if not project_is_on_new_reminders(request.project):
                 return fn(request, *args, **kwargs)
             raise Http404()
         return wrapped

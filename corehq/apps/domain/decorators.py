@@ -303,10 +303,14 @@ def two_factor_check(view_func, api_key):
                         token = request.GET.pop('otp')[-1]
                 if not token:
                     return JsonResponse(OTP_AUTH_FAIL_RESPONSE, status=401)
-                elif not match_token(request.user, token):
+                otp_device = match_token(request.user, token)
+                if not otp_device:
                     return JsonResponse({"error": "OTP token is incorrect"}, status=401)
-                else:
-                    return fn(request, domain, *args, **kwargs)
+
+                # set otp device and is_verified function on user to be consistent with OTP middleware
+                request.user.otp_device = otp_device
+                request.user.is_verified = lambda: True
+                return fn(request, domain, *args, **kwargs)
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer

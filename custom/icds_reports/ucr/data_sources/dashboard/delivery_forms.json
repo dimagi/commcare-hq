@@ -5,7 +5,8 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds-new",
+    "icds"
   ],
   "config": {
     "table_id": "static-dashboard_delivery_forms",
@@ -129,6 +130,47 @@
             }
           },
           "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "column_id": "breastfed_at_birth",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "expression": {
+              "type": "reduce_items",
+              "items_expression": {
+                "type": "filter_items",
+                "items_expression": {
+                  "type": "property_path",
+                  "property_path": ["form", "child", "breastfed_at_birth"],
+                  "datatype": "array"
+                },
+                "filter_expression": {
+                  "type": "boolean_expression",
+                  "expression": {
+                    "type": "identity"
+                  },
+                  "operator": "eq",
+                  "property_value": "yes"
+                }
+              },
+              "aggregation_fn": "count"
+            },
+            "type": "boolean_expression",
+            "operator": "gt",
+            "property_value": 0
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
             "type": "constant",
             "constant": 0
           }

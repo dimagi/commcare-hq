@@ -216,7 +216,7 @@ class ASHAFacilitatorsData(SqlData):
                     FunctionalityChecklistColumn(
                         whens={'hv_percent_functionality >= 60': 1},
                         alias='percent_functionality'),
-                    AliasColumn('total_ashas')
+                    AliasColumn('total_ashas_checklist')
                 ],
                 format_fn=lambda x: x
             ),

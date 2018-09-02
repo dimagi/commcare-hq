@@ -127,13 +127,6 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.guided_tour %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% static 'bootstrap-tour/build/css/bootstrap-tour.min.css' %}" />
-        {% endif %}
-
         {% if not requirejs_main %}
             {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
         {% endif %}
@@ -212,6 +205,7 @@
                             <a href="#cta-form-get-demo"
                                target="_blank"
                                data-toggle="modal"
+                               id="cta-form-get-demo-button"
                                class="btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
                           {% endif %}
                         </div>
@@ -373,6 +367,7 @@
                     'jquery.cookie/jquery.cookie',
                     'hqwebapp/js/layout',
                     'hqwebapp/js/hq-bug-report',
+                    'hqwebapp/js/sticky_tabs',
                     'hqwebapp/js/main',
                     'notifications/js/notifications_service_main',
                     'analytix/js/appcues',
@@ -465,13 +460,6 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.guided_tour and not requirejs_main %}
-        {% compress js %}
-        <script src="{% static 'tour/js/tour.utils.js' %}"></script>
-        <script src="{% static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-
         {% if not requirejs_main %}
         {% if request.use_maps %}
         {% compress js %}
@@ -534,6 +522,10 @@
             });
           </script>
         {% endif %}
+
+        {# Knockout component templates #}
+        {% include 'hqwebapp/ko_pagination.html' %}
+        {% include 'hqwebapp/partials/ko_inline_edit.html' %}
 
         {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
         {# If it's loaded early, then execution of all following scripts block on it #}

@@ -576,10 +576,10 @@ class TestXForm(SimpleTestCase, TestXmlMixin):
         form.source = self.get_file("MySuperSpecialForm", "xml")
 
         xform = form.wrapped_xform()
-        rendered_form = xform.render()
+        rendered_form = xform.render().decode('utf-8')
 
         xform.set_name("NewTotallyAwesomeName")
-        new_rendered_form = xform.render()
+        new_rendered_form = xform.render().decode('utf-8')
 
         self.assertEqual(
             rendered_form.replace(
@@ -596,28 +596,6 @@ class TestXForm(SimpleTestCase, TestXmlMixin):
 
 class TestFormMeta(BaseIndexTest):
     def test_meta_drift(self):
-        # when version is less than META_DRIFT_ADDED_FROM_CC_VERSION
-        self.app.build_spec.version = '2.43.0'
-        self.assertTrue(
-            """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
-value="if(count(instance('commcaresession')/session/context/drift) = 1, \
-instance('commcaresession')/session/context/drift, '')"/>""" not in
-            self.form.render_xform()
-        )
-        self.assertTrue("<orx:drift/>" not in self.form.render_xform())
-
-        # when version same as META_DRIFT_ADDED_FROM_CC_VERSION
-        self.app.build_spec.version = '2.44.0'
-        self.assertTrue(
-            """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
-value="if(count(instance('commcaresession')/session/context/drift) = 1, \
-instance('commcaresession')/session/context/drift, '')"/>""" in
-            self.form.render_xform()
-        )
-        self.assertTrue("<orx:drift/>" in self.form.render_xform())
-
-        # when version greater than META_DRIFT_ADDED_FROM_CC_VERSION
-        self.app.build_spec.version = '2.44.1'
         self.assertTrue(
             """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
 value="if(count(instance('commcaresession')/session/context/drift) = 1, \
