@@ -2523,6 +2523,14 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         except IndexError:
             raise FormNotFoundException()
 
+    def get_form_index(self, unique_id):
+        for index, form in enumerate(self.get_forms()):
+            if form.unique_id == unique_id:
+                return index
+        error = _("Could not find form with ID='{unique_id}' in module '{app_name}'.").format(
+            app_name=self.name, unique_id=unique_id)
+        raise FormNotFoundException(error)
+
     def get_child_modules(self):
         return [
             module for module in self.get_app().get_modules()
@@ -5979,6 +5987,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not error:
             error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
                 app_name=self.name, unique_id=unique_id)
+        raise ModuleNotFoundException(error)
+
+    def get_module_index(self, unique_id):
+        for index, module in enumerate(self.get_modules()):
+            if module.unique_id == unique_id:
+                return index
+        error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+            app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
     def get_forms(self, bare=True):
