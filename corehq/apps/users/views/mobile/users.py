@@ -570,7 +570,7 @@ class MobileWorkerListView(BaseUserSettingsView):
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
-            angular_model="mobileWorker.customFields",  # TODO
+            data_bind_value="mobileWorker.customFields",
         )
 
     @property
@@ -663,11 +663,11 @@ def create_mobile_worker(request, domain):
         domain=domain,
         post_dict=form_data,
         required_only=True,
-        angular_model="mobileWorker.customFields",  # TODO
+        data_bind_value="mobileWorker.customFields",
     )
     is_valid = lambda: mobile_worker_form.is_valid() and custom_data.is_valid()
     if not is_valid():
-        return json_response({'error': _("Forms did not validate")})
+        return json_response({'error': _("Forms did not validate")})    # TODO: errors don't display
 
     location_id = mobile_worker_form.cleaned_data['location_id']
     couch_user = CommCareUser.create(
@@ -694,7 +694,7 @@ def _construct_form_data(domain, user_data, fields):
 
     try:
         form_data = {}
-        for k, v in user_data.get('customFields', {}).items():
+        for k, v in json.loads(user_data.get('customFields', '{}')).items():
             form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
         for f in fields:
             form_data[f] = user_data.get(f)
