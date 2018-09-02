@@ -150,10 +150,7 @@
         {% endif %}
     </div>
 
-    <!-- TODO: list new mobile workers -->
-    <!--div class="panel panel-info"
-         ng-show="workers.length > 0"
-         ng-cloak>
+    <div class="panel panel-info" data-bind="visible: hasNewUsers">
         <div class="panel-heading">
             <h3 class="panel-title">
                 {% trans 'New Mobile Workers' %}
@@ -161,21 +158,30 @@
         </div>
         <div class="panel-body">
             <table class="table table-striped">
-                <thead workertable-header></thead>
-                <tbody>
-                    <tr ng-repeat="worker in workers">
-                        <td class="{{ worker.creationStatus }}">
-                            <span ng-if="!worker.editUrl">
-                                <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
+                <thead>
+                    <tr>
+                        <th class="col-xs-3">{% trans "Username" %}</th>
+                        <th class="col-xs-3">{% trans "First Name" %}</th>
+                        <th class="col-xs-3">{% trans "Last Name" %}</th>
+                        <th class="col-xs-3">{% trans "Status" %}</th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: newUsers">
+                    <tr>
+                        <td data-bind="attr: {'class': creationStatus }">
+                            <!-- TODO: visibility here is wrong because editUrl defaults to truthy '#' -->
+                            <span data-bind="visible: !editUrl()">
+                                <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
                             </span>
-                            <a href="{{ worker.editUrl }}"
-                               ng-show="!!worker.editUrl">
-                                <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
+                            <a data-bind="attr: {href: editUrl}, visible: editUrl()">
+                                <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
                             </a>
                         </td>
-                        <td class="{{ worker.creationStatus }}">{{ worker.first_name }}</td>
-                        <td class="{{ worker.creationStatus }}">{{ worker.last_name }}</td>
-                        <td class="{{ worker.creationStatus }}">
+                        <td data-bind="attr: {'class': creationStatus }, text: first_name"></td>
+                        <td data-bind="attr: {'class': creationStatus }, text: last_name"></td>
+                        <td>TODO</td>
+
+                        <!--td class="{{ worker.creationStatus }}">
                             <div ng-show="worker.creationStatus==='pending'">
                                 <i class="fa fa-circle-o-notch fa-spin"></i>
                                 {% trans 'Pending...' %}
@@ -198,13 +204,12 @@
                                     {% trans 'Retry' %}
                                 </button>
                             </div>
-
-                        </td>
+                        </td-->
                     </tr>
                 </tbody>
             </table>
         </div>
-    </div-->
+    </div>
 
     <div class="panel panel-default">
         <div class="panel-heading">

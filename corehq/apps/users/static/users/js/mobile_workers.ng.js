@@ -373,17 +373,6 @@
     });
     mobileWorkerApp.constant('generateStrongPasswords', initial_page_data('strong_mobile_passwords'));
     mobileWorkerApp.constant('location_url', initial_page_data('location_url'));
-    mobileWorkerApp.directive('workertableHeader', function () {
-        return {
-            restrict: 'A',
-            template: '<tr>'
-                        + '<th class="col-xs-3">' + gettext("Username") + '</th>'
-                        + '<th class="col-xs-3">' + gettext("First Name") + '</th>'
-                        + '<th class="col-xs-3">' + gettext("Last Name") + '</th>'
-                        + '<th class="col-xs-3">' + gettext("Status") + '</th>'
-                    + '</tr>',
-        };
-    });
     mobileWorkerApp.constant('paginationLimits', [
         [10, gettext('Show 10 Mobile Workers')],
         [25, gettext('Show 25 Mobile Workers')],
