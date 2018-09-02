@@ -19,7 +19,9 @@
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
 {% endif %}
 <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>{# TODO: don't break this #}
-<script src="{% static 'users/js/mobile_workers.js' %}"></script>
+<script src="{% static 'users/js/mobile_worker_models.js' %}"></script>
+<script src="{% static 'users/js/mobile_worker_creation_models.js' %}"></script>
+<script src="{% static 'users/js/mobile_workers_main.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
