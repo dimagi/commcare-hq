@@ -59,7 +59,7 @@ branches:
   - nh/omrs/atom+create  # Norman Aug 23
   - pv/deactivated-users # Preethi Aug 23
   - rn_migrating_sms_pages # Rohit Aug 29
-  - rn_miration_sms_language # Rohit Aug 30
+#  - rn_miration_sms_language # Rohit Aug 30
   - jls/build-requirejs-by-html  # Jenny Sept 2
 submodules:
   submodules/django-digest-src:
