@@ -11,7 +11,7 @@ import re
 from django.conf import settings
 from memoized import memoized
 
-from collections import namedtuple, OrderedDict
+from collections import namedtuple, OrderedDict, defaultdict
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
@@ -53,7 +53,8 @@ class TransifexPOFileGenerator:
         self.headers = dict()  # headers for each sheet name
         self.po_file_generator = None
         self.sheet_name_to_module_or_form_type_and_id = dict()
-        self.slug_to_name = {MODULES_AND_FORMS_SHEET_NAME: {'en': MODULES_AND_FORMS_SHEET_NAME}}
+        self.slug_to_name = defaultdict(dict)
+        self.slug_to_name[MODULES_AND_FORMS_SHEET_NAME] = {'en': MODULES_AND_FORMS_SHEET_NAME}
 
     @property
     @memoized
@@ -116,10 +117,13 @@ class TransifexPOFileGenerator:
         :param form_index: index of form in the module
         :return: name like form_formUniqueId
         """
-        form = self.app.modules[module_index].forms[form_index]
-        form_unique_id = form.unique_id
-        sheet_name = "_".join(["form", form_unique_id])
-        self.slug_to_name[sheet_name] = form.name
+        _module = self.app.modules[module_index]
+        form = _module.forms[form_index]
+        sheet_name = "_".join(["form", form.unique_id])
+        self.slug_to_name[sheet_name][self.source_lang] = "%s > %s" % (
+            _module.name.get(self.source_lang, _module.default_name()),
+            form.name.get(self.source_lang, form.default_name())
+        )
         return sheet_name
 
     def _update_sheet_name_with_unique_id(self, sheet_name):

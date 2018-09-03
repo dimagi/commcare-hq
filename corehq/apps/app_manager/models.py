@@ -979,7 +979,6 @@ class FormBase(DocumentSchema):
     def case_references(self):
         return self.case_references_data or CaseReferences()
 
-
     def requires_case(self):
         return False
 
