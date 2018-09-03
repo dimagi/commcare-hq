@@ -352,6 +352,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.demo_users())
 
         q = user_es.UserES().domain(domain)
+        if HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
+            q = q.show_inactive()
+        elif HQUserType.DEACTIVATED in user_types:
+            q = q.show_only_inactive()
 
         if not request_user.has_permission(domain, 'access_all_locations'):
             cls._verify_users_are_accessible(domain, request_user, user_ids)
@@ -362,7 +366,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                                       .accessible_to_user(domain, request_user)
                                       .location_ids())),
             )
-        elif HQUserType.ACTIVE in user_types:
+        elif HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
             # return all users with selected user_types
             user_type_filters.append(user_es.mobile_users())
             return q.OR(*user_type_filters)
@@ -383,7 +387,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 )
             else:
                 return q.filter(id_filter)
-
 
     @staticmethod
     def _verify_users_are_accessible(domain, request_user, user_ids):
@@ -438,57 +441,3 @@ class SubmitHistoryFilter(ExpandedMobileWorkerFilter):
     @memoized
     def utils(self):
         return SubmitHistoryUtils(self.domain)
-
-    @classmethod
-    def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
-        # The queryset returned by this method is location-safe
-        user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
-        user_types = cls.selected_user_types(mobile_user_and_group_slugs)
-        group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
-        location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
-
-        user_type_filters = []
-        if HQUserType.ADMIN in user_types:
-            user_type_filters.append(user_es.admin_users())
-        if HQUserType.UNKNOWN in user_types:
-            user_type_filters.append(user_es.unknown_users())
-            user_type_filters.append(user_es.web_users())
-        if HQUserType.DEMO_USER in user_types:
-            user_type_filters.append(user_es.demo_users())
-
-        q = user_es.UserES().domain(domain)
-        if HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
-            q = q.show_inactive()
-        elif HQUserType.DEACTIVATED in user_types:
-            q = q.show_only_inactive()
-
-        if not request_user.has_permission(domain, 'access_all_locations'):
-            cls._verify_users_are_accessible(domain, request_user, user_ids)
-            return q.OR(
-                filters.term("_id", user_ids),
-                user_es.location(list(SQLLocation.active_objects
-                                      .get_locations_and_children(location_ids)
-                                      .accessible_to_user(domain, request_user)
-                                      .location_ids())),
-            )
-        elif HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
-            # return all users with selected user_types
-            user_type_filters.append(user_es.mobile_users())
-            return q.OR(*user_type_filters)
-        else:
-            # return matching user types and exact matches
-            location_ids = list(SQLLocation.active_objects
-                                .get_locations_and_children(location_ids)
-                                .location_ids())
-            id_filter = filters.OR(
-                filters.term("_id", user_ids),
-                filters.term("__group_ids", group_ids),
-                user_es.location(location_ids),
-            )
-            if user_type_filters:
-                return q.OR(
-                    id_filter,
-                    filters.OR(*user_type_filters),
-                )
-            else:
-                return q.filter(id_filter)
