@@ -1181,16 +1181,15 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             {columns}
         ) (SELECT
             {calculations}
-            FROM "{ucr_child_monthly_table}" ucr
-            LEFT OUTER JOIN "{agg_cf_table}" cf ON ucr.doc_id = cf.case_id AND ucr.month = cf.month
-            LEFT OUTER JOIN "{agg_thr_table}" thr ON ucr.doc_id = thr.case_id AND ucr.month = thr.month
-            LEFT OUTER JOIN "{agg_gm_table}" gm ON ucr.doc_id = gm.case_id AND ucr.month = gm.month
-            LEFT OUTER JOIN "{agg_pnc_table}" pnc ON ucr.doc_id = pnc.case_id AND ucr.month = pnc.month
-            LEFT OUTER JOIN "{agg_df_table}" df ON ucr.doc_id = df.case_id AND ucr.month = df.month
-            LEFT OUTER JOIN "{child_health_case_ucr}" child_health ON ucr.doc_id = child_health.doc_id
-            LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON ucr.doc_id = child_tasks.child_health_case_id
+            FROM "{child_health_case_ucr}" child_health
+            LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON child_health.doc_id = child_tasks.child_health_case_id
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
-            WHERE ucr.month = %(start_date)s AND child_health.case_id IS NOT NULL
+            LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
+            LEFT OUTER JOIN "{agg_thr_table}" thr ON child_health.doc_id = thr.case_id AND thr.month = %(start_date)s
+            LEFT OUTER JOIN "{agg_gm_table}" gm ON child_health.doc_id = gm.case_id AND gm.month = %(start_date)s
+            LEFT OUTER JOIN "{agg_pnc_table}" pnc ON child_health.doc_id = pnc.case_id AND pnc.month = %(start_date)s
+            LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id AND df.month = %(start_date)s
+            WHERE child_health.doc_id IS NOT NULL AND (child_health.closed_on IS NULL OR child_health.closed_on > %(next_month)s) AND child_health.opened_on < %(next_month)s
             ORDER BY child_health.awc_id, child_health.case_id
         )
         """.format(
@@ -1207,7 +1206,8 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
             person_cases_ucr=self.person_case_ucr_tablename,
         ), {
-            "start_date": self.month
+            "start_date": self.month,
+            "next_month": month_formatter(self.month + relativedelta(months=1))
         }
 
     def indexes(self):
