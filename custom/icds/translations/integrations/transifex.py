@@ -74,7 +74,7 @@ class Transifex(object):
     @property
     @memoized
     def transifex_project_source_lang(self):
-         return self.client.transifex_lang_code(self.client.get_source_lang())
+        return self.client.transifex_lang_code(self.client.get_source_lang())
 
     def _resource_name_in_project_lang(self, resource_slug):
         resource_name_in_all_langs = self.transifex_po_file_generator.slug_to_name[resource_slug]
