@@ -48,7 +48,7 @@ class Command(ResourceStaticCommand):
                 ...
             }
             '''
-            dirs = {'hqwebapp/js': set(['hqwebapp/js/base_main'])}
+            dirs = {'hqwebapp/js': set(['hqwebapp/js/base_main'])}  # TODO: this isn't getting bundled...maybe just add to yaml? should be the first bundle
             for filename in html_files:
                 proc = subprocess.Popen(["grep", "^\s*{% requirejs_main [^%]* %}\s*$", filename], stdout=subprocess.PIPE)
                 (out, err) = proc.communicate()
