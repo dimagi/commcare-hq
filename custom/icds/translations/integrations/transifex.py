@@ -8,6 +8,7 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 from memoized import memoized
 
+from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.app_translations.generators import TransifexPOFileGenerator
 from corehq.apps.app_manager.app_translations.parser import TranslationsParser
 from custom.icds.translations.integrations.client import TransifexApiClient
@@ -77,7 +78,15 @@ class Transifex(object):
         return self.client.transifex_lang_code(self.client.get_source_lang())
 
     def _resource_name_in_project_lang(self, resource_slug):
-        resource_name_in_all_langs = self.transifex_po_file_generator.slug_to_name[resource_slug]
+        """
+        return the name of the resource i.e module/form in source lang on Transifex
+
+        :param resource_slug: like module_moduleUniqueID
+        """
+        if MODULES_AND_FORMS_SHEET_NAME in resource_slug:
+            return MODULES_AND_FORMS_SHEET_NAME
+        module_or_form_unique_id = resource_slug.split('_')[1]
+        resource_name_in_all_langs = self.transifex_po_file_generator.slug_to_name[module_or_form_unique_id]
         return resource_name_in_all_langs.get(self.transifex_project_source_lang,
                                               resource_name_in_all_langs.get('en', resource_slug))
 

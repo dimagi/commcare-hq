@@ -106,7 +106,7 @@ class TransifexPOFileGenerator:
         """
         _module = self.app.modules[module_index]
         sheet_name = "_".join(["module", _module.unique_id])
-        self.slug_to_name[sheet_name] = _module.name
+        self.slug_to_name[_module.unique_id] = _module.name
         return sheet_name
 
     def _generate_form_sheet_name(self, module_index, form_index):
@@ -120,7 +120,7 @@ class TransifexPOFileGenerator:
         _module = self.app.modules[module_index]
         form = _module.forms[form_index]
         sheet_name = "_".join(["form", form.unique_id])
-        self.slug_to_name[sheet_name][self.source_lang] = "%s > %s" % (
+        self.slug_to_name[form.unique_id][self.source_lang] = "%s > %s" % (
             _module.name.get(self.source_lang, _module.default_name()),
             form.name.get(self.source_lang, form.default_name())
         )

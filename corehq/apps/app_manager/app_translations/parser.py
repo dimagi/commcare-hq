@@ -20,8 +20,8 @@ CONTEXT_REGEXS = {
     'form_sheet': r'^(\d+):(.+)$',
 }
 
-TRANSIFEX_MODULE_RESOURCE_NAME = re.compile(r'^module_(\w+)$')  # module_moduleUniqueID
-TRANSIFEX_FORM_RESOURCE_NAME = re.compile(r'^form_(\w+)$')  # form_formUniqueID
+TRANSIFEX_MODULE_RESOURCE_NAME = re.compile(r'^module_(\w+)(_v\d+)?$')  # module_moduleUniqueID_v123
+TRANSIFEX_FORM_RESOURCE_NAME = re.compile(r'^form_(\w+)(_v\d+)?$')  # form_formUniqueID_v123
 
 
 class TranslationsParser(object):
