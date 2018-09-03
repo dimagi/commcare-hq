@@ -12,6 +12,7 @@ from corehq.blobs.fsdb import FilesystemBlobDB
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.s3db import S3BlobDB
 from corehq.blobs.migratingdb import MigratingBlobDB
+from corehq.blobs.swiftdb import SwiftBlobDB
 from corehq.blobs.util import random_url_id
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
@@ -119,3 +120,12 @@ class TemporaryMigratingBlobDB(TemporaryBlobDBMixin, MigratingBlobDB):
     def clean_db(self):
         self.old_db.close()
         self.new_db.close()
+
+
+class TemporarySwiftBlobDB(TemporaryBlobDBMixin, SwiftBlobDB):
+
+    def __init__(self, config):
+        super(TemporarySwiftBlobDB, self).__init__(config)
+
+    def clean_db(self):
+        pass
