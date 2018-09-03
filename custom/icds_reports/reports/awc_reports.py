@@ -1109,7 +1109,11 @@ def get_awc_report_pregnant(order, reversed_order, awc_id):
     data = CcsRecordMonthly.objects.filter(
         awc_id=awc_id,
         pregnant=1,
-    ).order_by('case_id', '-age_in_months').distinct('case_id')
+    ).order_by('case_id', '-age_in_months').distinct('case_id').values(
+        'case_id', 'person_name', 'age_in_months', 'opened_on', 'edd', 'trimester', 'anemic_severe',
+        'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant',
+        'num_rations_distributed', 'last_date_thr'
+    )
     data_count = data.count()
     config = {
         'data': [],
@@ -1117,17 +1121,17 @@ def get_awc_report_pregnant(order, reversed_order, awc_id):
 
     def base_data(row_data):
         return dict(
-            case_id=row_data.case_id,
-            person_name=row_data.person_name,
-            age=row_data.age_in_months // 12 if row_data.age_in_months else row_data.age_in_months,
-            opened_on=None,  # todo change to opened_on when available in Model
-            edd=row_data.edd,
-            trimester=row_data.trimester,
+            case_id=row_data['case_id'],
+            person_name=row_data['person_name'],
+            age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+            opened_on=row_data['opened_on'],
+            edd=row_data['edd'],
+            trimester=row_data['trimester'],
             anemic=get_anamic_status(row_data),
-            num_anc_complete=None,  # todo change to num_anc_complete when available in Model
-            beneficiary='Yes' if row_data.pregnant else 'No',
-            number_of_thrs_given=row_data.num_rations_distributed,
-            last_date_thr=None,  # todo change to last_date_thr when available in Model
+            num_anc_complete=row_data['num_anc_complete'],
+            beneficiary='Yes' if row_data['pregnant'] else 'No',
+            number_of_thrs_given=row_data['num_rations_distributed'],
+            last_date_thr=row_data['last_date_thr'],
         )
 
     for row in data:
@@ -1145,7 +1149,14 @@ def get_pregnant_details(case_id, awc_id):
     data = CcsRecordMonthly.objects.filter(
         case_id=case_id,
         awc_id=awc_id,
-    ).order_by('home_visit_date', '-age_in_months').distinct('home_visit_date')
+    ).order_by('home_visit_date', '-age_in_months').distinct('home_visit_date').values(
+        'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on', 'preg_order',
+        'home_visit_date', 'bp_sys', 'bp_dia', 'anc_weight', 'anc_hemoglobin', 'anemic_severe', 'anemic_moderate',
+        'anemic_normal', 'anemic_unknown', 'bleeding', 'swelling', 'blurred_vision', 'convulsions', 'rupture',
+        'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation', 'counsel_fp_vid',
+        'counsel_immediate_conception', 'counsel_accessible_postpartum_fp', 'counsel_fp_methods', 'using_ifa',
+        'ifa_consumed_last_seven_days', 'tt_1', 'tt_2'
+    )
 
     config = {
         'data': [
@@ -1157,36 +1168,36 @@ def get_pregnant_details(case_id, awc_id):
     current_trimester = 1
     current_record = 0
     for row_data in data:
-        if row_data.trimester >= current_trimester:
-            config['data'][row_data.trimester - 1].append(dict(
-                case_id=row_data.case_id,
-                trimester=row_data.trimester,
-                person_name=row_data.person_name,
-                age=row_data.age_in_months // 12 if row_data.age_in_months else row_data.age_in_months,
-                mobile_number=row_data.mobile_number,
-                edd=row_data.edd,
-                opened_on=None,  # todo change to opened_on when available in Model
-                preg_order=row_data.preg_order,
-                home_visit_date=row_data.home_visit_date,
+        if row_data['trimester'] >= current_trimester:
+            config['data'][row_data['trimester'] - 1].append(dict(
+                case_id=row_data['case_id'],
+                trimester=row_data['trimester'],
+                person_name=row_data['person_name'],
+                age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+                mobile_number=row_data['mobile_number'],
+                edd=row_data['edd'],
+                opened_on=row_data['opened_on'],
+                preg_order=row_data['preg_order'],
+                home_visit_date=row_data['home_visit_date'],
                 bp='{} / {}'.format(
-                    row_data.bp_sys if row_data.bp_sys else '--',
-                    row_data.bp_dia if row_data.bp_dia else '--',
+                    row_data['bp_sys'] if row_data['bp_sys'] else '--',
+                    row_data['bp_dia'] if row_data['bp_dia'] else '--',
                 ),
-                anc_weight=row_data.anc_weight if row_data.anc_weight else '--',
-                anc_hemoglobin=row_data.anc_hemoglobin if row_data.anc_hemoglobin else '--',
+                anc_weight=row_data['anc_weight'] if row_data['anc_weight'] else '--',
+                anc_hemoglobin=row_data['anc_hemoglobin'] if row_data['anc_hemoglobin'] else '--',
                 anc_abnormalities=None,  # todo change to num_anc_complete when available in Model
                 anemic=get_anamic_status(row_data),
                 symptoms=get_symptoms(row_data),
                 counseling=get_counseling(row_data),
-                using_ifa='Y' if row_data.using_ifa else 'N',
-                ifa_consumed_last_seven_days='Y' if row_data.ifa_consumed_last_seven_days else 'N',
-                tt_taken='Y' if row_data.tt_1 or row_data.tt_2 else 'N',
+                using_ifa='Y' if row_data['using_ifa'] else 'N',
+                ifa_consumed_last_seven_days='Y' if row_data['ifa_consumed_last_seven_days'] else 'N',
+                tt_taken='Y' if row_data['tt_1'] or row_data['tt_2'] else 'N',
                 tt_date=get_tt_dates(row_data),
             ))
-            if current_trimester == 1 and row_data.trimester == 1 and current_record == 0:
+            if current_trimester == 1 and row_data['trimester'] == 1 and current_record == 0:
                 current_record += 1
             else:
-                current_trimester = row_data.trimester + 1
+                current_trimester = row_data['trimester'] + 1
     return config
 
 
@@ -1197,7 +1208,10 @@ def get_awc_report_lactating(order, reversed_order, awc_id):
     data = CcsRecordMonthly.objects.filter(
         awc_id=awc_id,
         lactating=1,
-    ).order_by('case_id', '-age_in_months').distinct('case_id')
+    ).order_by('case_id', '-age_in_months').distinct('case_id').values(
+        'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery_in_month',
+        'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed'
+    )
     data_count = data.count()
     config = {
         'data': [],
@@ -1205,16 +1219,16 @@ def get_awc_report_lactating(order, reversed_order, awc_id):
 
     def base_data(row_data):
         return dict(
-            case_id=row_data.case_id,
-            person_name=row_data.person_name,
-            age=row_data.age_in_months // 12 if row_data.age_in_months else row_data.age_in_months,
-            add=row_data.add,
-            delivery_nature=row_data.delivery_nature,
-            institutional_delivery_in_month='Y' if row_data.institutional_delivery_in_month else 'N',
-            num_pnc_visits=row_data.num_pnc_visits,
-            breastfed_at_birth='Y' if row_data.breastfed_at_birth else 'N',
-            is_ebf='Y' if row_data.is_ebf else 'N',
-            num_rations_distributed=row_data.num_rations_distributed,
+            case_id=row_data['case_id'],
+            person_name=row_data['person_name'],
+            age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+            add=row_data['add'],
+            delivery_nature=row_data['delivery_nature'],
+            institutional_delivery_in_month='Y' if row_data['institutional_delivery_in_month'] else 'N',
+            num_pnc_visits=row_data['num_pnc_visits'],
+            breastfed_at_birth='Y' if row_data['breastfed_at_birth'] else 'N',
+            is_ebf='Y' if row_data['is_ebf'] else 'N',
+            num_rations_distributed=row_data['num_rations_distributed'],
         )
 
     for row in data:
