@@ -179,6 +179,7 @@ class GetPatientByUuidTests(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(GetPatientByUuidTests, cls).setUpClass()
         cls.patient = {
             'uuid': 'c83d9989-585f-4db3-bf55-ca1d0ee7c0af',
             'display': 'Luis Safiana Bassilo'
@@ -187,10 +188,6 @@ class GetPatientByUuidTests(SimpleTestCase):
         response.json.return_value = cls.patient
         cls.requests = mock.Mock()
         cls.requests.get.return_value = response
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
 
     def test_none(self):
         patient = get_patient_by_uuid(self.requests, uuid=None)
@@ -235,11 +232,13 @@ class AllowedToForwardTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AllowedToForwardTests, cls).setUpClass()
         cls.owner = CommCareUser.create(DOMAIN, 'chw@example.com', '123')
 
     @classmethod
     def tearDownClass(cls):
         cls.owner.delete()
+        super(AllowedToForwardTests, cls).tearDownClass()
 
     def test_update_from_openmrs(self):
         """

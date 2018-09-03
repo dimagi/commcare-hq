@@ -371,6 +371,7 @@ def get_recovery_measures_cached(domain, app_id):
 def recovery_measures(request, domain, build_id):
     response = {"app_id": request.GET.get('app_id')}  # passed through unchanged
     app_id = get_app_cached(domain, build_id).master_id
+    response.update(LatestAppInfo(app_id, domain).get_info())
     measures = get_recovery_measures_cached(domain, app_id)
     if measures:
         response["recovery_measures"] = measures

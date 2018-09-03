@@ -107,7 +107,7 @@ class DataInterfaceSection(BaseDomainView):
 
     @property
     def section_url(self):
-        return reverse(self.urlname, args=[self.domain])
+        return reverse("data_interfaces_default", args=[self.domain])
 
 
 class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):

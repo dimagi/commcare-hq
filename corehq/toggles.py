@@ -1596,3 +1596,10 @@ RELATED_LOCATIONS = StaticToggle(
     notification_emails=['jemord'],
     help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
 )
+
+ALLOW_BLANK_CASE_TAGS = StaticToggle(
+    'allow_blank_case_tags',
+    'eCHIS: Allow blank case tags',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)

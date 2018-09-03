@@ -2,8 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import random
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
+from io import BytesIO
 from mock import patch
 
 from dateutil.relativedelta import relativedelta
@@ -76,6 +77,7 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
+from corehq.blobs import get_blob_db, NotFound
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import create_form_for_test
@@ -526,18 +528,33 @@ class TestDeleteDomain(TestCase):
     def _assert_export_counts(self, domain_name, count):
         self._assert_queryset_count([
             DailySavedExportNotification.objects.filter(domain=domain_name),
-            DataFile.objects.filter(domain=domain_name),
+            DataFile.meta_query(domain_name),
             EmailExportWhenDoneRequest.objects.filter(domain=domain_name),
         ], count)
 
     def test_export_delete(self):
+        blobdb = get_blob_db()
+        data_files = []
         for domain_name in [self.domain.name, self.domain2.name]:
             DailySavedExportNotification.objects.create(domain=domain_name)
-            DataFile.objects.create(domain=domain_name, delete_after=datetime.utcnow())
+            data_files.append(DataFile.save_blob(
+                BytesIO((domain_name + " csv").encode('utf-8')),
+                domain=domain_name,
+                filename="data.csv",
+                description="data file",
+                content_type="text/csv",
+                delete_after=datetime.utcnow() + timedelta(minutes=10),
+            ))
             EmailExportWhenDoneRequest.objects.create(domain=domain_name)
             self._assert_export_counts(domain_name, 1)
 
         self.domain.delete()
+
+        with self.assertRaises(NotFound):
+            blobdb.get(key=data_files[0].blob_id)
+
+        with blobdb.get(key=data_files[1].blob_id) as f:
+            self.assertEqual(f.read(), (self.domain2.name + " csv").encode('utf-8'))
 
         self._assert_export_counts(self.domain.name, 0)
         self._assert_export_counts(self.domain2.name, 1)

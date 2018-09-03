@@ -331,14 +331,14 @@ def _get_py_filename(module):
 def toggles_cachebuster():
     import corehq.toggles
     with open(_get_py_filename(corehq.toggles)) as f:
-        return hashlib.sha1(f.read()).hexdigest()[:3]
+        return hashlib.sha1(f.read().encode('utf-8')).hexdigest()[:3]
 
 
 @memoized
 def previews_cachebuster():
     import corehq.feature_previews
     with open(_get_py_filename(corehq.feature_previews)) as f:
-        return hashlib.sha1(f.read()).hexdigest()[:3]
+        return hashlib.sha1(f.read().encode('utf-8')).hexdigest()[:3]
 
 
 @register.filter

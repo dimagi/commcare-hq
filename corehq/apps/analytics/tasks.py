@@ -12,6 +12,7 @@ import tinys3
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
+from corehq.apps.users.models import WebUser
 from corehq.util.dates import unix_time
 from corehq.apps.analytics.utils import get_instance_string, get_meta
 from datetime import datetime, date, timedelta
@@ -25,7 +26,7 @@ import logging
 from django.conf import settings
 from email_validator import validate_email, EmailNotValidError
 from corehq.toggles import deterministic_random
-from corehq.util.decorators import old_analytics_task, analytics_task
+from corehq.util.decorators import analytics_task
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.utils import (
     count_by_response_code,
@@ -241,12 +242,7 @@ def _send_hubspot_form_request(url, data):
     return requests.post(url, data=data)
 
 
-@old_analytics_task()
-def update_hubspot_properties(webuser, properties):
-    update_hubspot_properties_v2(webuser, properties)
-
-
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def update_hubspot_properties_v2(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -284,22 +280,12 @@ def track_web_user_registration_hubspot(request, web_user, properties):
     )
 
 
-@old_analytics_task()
-def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
-    _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
-
-
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_user_sign_in_on_hubspot_v2(webuser, hubspot_cookie, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
-@old_analytics_task()
-def track_built_app_on_hubspot(webuser):
-    track_built_app_on_hubspot_v2(webuser)
-
-
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_built_app_on_hubspot_v2(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -307,12 +293,7 @@ def track_built_app_on_hubspot_v2(webuser):
         _track_on_hubspot(webuser, {'built_app': True})
 
 
-@old_analytics_task()
-def track_confirmed_account_on_hubspot(webuser):
-    track_confirmed_account_on_hubspot_v2(webuser)
-
-
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_confirmed_account_on_hubspot_v2(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -338,31 +319,21 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
     if request and user and user.is_web_user():
         meta = get_meta(request)
         send_hubspot_form_task_v2.delay(
-            form_id, user, request.COOKIES.get(HUBSPOT_COOKIE),
+            form_id, user.user_id, request.COOKIES.get(HUBSPOT_COOKIE),
             meta, extra_fields=extra_fields
         )
 
 
-@old_analytics_task()
-def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta,
-                           extra_fields=None):
-    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
-                          extra_fields=extra_fields)
-
-
 @analytics_task()
-def send_hubspot_form_task_v2(form_id, web_user, hubspot_cookie, meta,
+def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
                               extra_fields=None):
+    # TODO - else avoids transient celery errors.  Can remove after deploying to all environments.
+    web_user = WebUser.get_by_user_id(web_user_id) if isinstance(web_user_id, six.string_types) else web_user_id
     _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
 
 
-@old_analytics_task()
-def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
-    track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta)
-
-
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
     ab = {
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
@@ -370,12 +341,7 @@ def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, hubspot_cookie, meta, extra_fields=ab)
 
 
-@old_analytics_task()
-def track_job_candidate_on_hubspot(user_email):
-    track_job_candidate_on_hubspot_v2(user_email)
-
-
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_job_candidate_on_hubspot_v2(user_email):
     properties = {
         'job_candidate': True
@@ -383,12 +349,7 @@ def track_job_candidate_on_hubspot_v2(user_email):
     _track_on_hubspot_by_email(user_email, properties=properties)
 
 
-@old_analytics_task()
-def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
-    track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta)
-
-
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
@@ -418,28 +379,28 @@ def track_workflow(email, event, properties=None):
         _track_workflow_task_v2.delay(email, event, properties, timestamp)
 
 
-@old_analytics_task()
-def _track_workflow_task(email, event, properties=None, timestamp=0):
-    _track_workflow_task_v2(email, event, properties, timestamp)
-
-
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
+    def _no_nonascii_unicode(value):
+        if isinstance(value, six.text_type):
+            return value.encode('utf-8')
+        return value
+
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-        res = km.record(email, event, properties if properties else {}, timestamp)
+        res = km.record(
+            email,
+            event,
+            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in six.iteritems(properties)} if properties else {},
+            timestamp
+        )
         _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
         # TODO: Consider adding some better error handling for bad/failed requests.
         _raise_for_urllib3_response(res)
 
 
-@old_analytics_task()
-def identify(email, properties):
-    identify_v2(email, properties)
-
-
-@analytics_task()
+@analytics_task(serializer='pickle', )
 def identify_v2(email, properties):
     """
     Set the given properties on a KISSmetrics user.
@@ -479,7 +440,7 @@ def _log_failed_periodic_data(email, message):
     )
 
 
-@periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
+@periodic_task(serializer='pickle', run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
     Sync data that is neither event or page based with hubspot/Kissmetrics
