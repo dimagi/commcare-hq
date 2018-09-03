@@ -82,7 +82,7 @@ class AppPillowTest(TestCase):
         self.addCleanup(app.delete)
         return app
 
-    def refresh_elasticesarch(self, kafka_seq, couch_seq):
+    def refresh_elasticsearch(self, kafka_seq, couch_seq):
         app_db_pillow = get_application_db_kafka_pillow('test_app_db_pillow')
         app_db_pillow.process_changes(couch_seq, forever=False)
         app_pillow = get_app_to_elasticsearch_pillow()
@@ -110,7 +110,7 @@ class AppPillowTest(TestCase):
         build3.save()
 
         # All 3 builds should show up in ES
-        self.refresh_elasticesarch(kafka_seq, couch_seq)
+        self.refresh_elasticsearch(kafka_seq, couch_seq)
         build_ids_in_es = AppES().domain(self.domain).is_build().values_list('_id', flat=True)
         self.assertItemsEqual(build_ids_in_es, [build1._id, build2._id, build3._id])
 
@@ -118,6 +118,6 @@ class AppPillowTest(TestCase):
         prune_auto_generated_builds(self.domain, app.id)
 
         # Build2 should no longer be in ES
-        self.refresh_elasticesarch(kafka_seq, couch_seq)
+        self.refresh_elasticsearch(kafka_seq, couch_seq)
         build_ids_in_es = AppES().domain(self.domain).is_build().values_list('_id', flat=True)
         self.assertItemsEqual(build_ids_in_es, [build1._id, build3._id])
