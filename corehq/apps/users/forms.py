@@ -546,7 +546,7 @@ class NewMobileWorkerForm(forms.Form):
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
         email_string = "@{}.commcarehq.org".format(project.name)
-        max_chars_username = 80 - len(email_string)
+        self.max_chars_username = 80 - len(email_string)
         self.project = project
         self.domain = self.project.name
         self.request_user = request_user
@@ -594,7 +594,6 @@ class NewMobileWorkerForm(forms.Form):
                     'username',
                     data_bind='value: mobileWorker.username',
                     # TODO
-                    #ng_required="true",
                     #validate_username="",
                     # What this says is, update as normal or when the element
                     # loses focus. If the update is normal, wait 300 ms to
@@ -604,30 +603,19 @@ class NewMobileWorkerForm(forms.Form):
                     #                  " updateOn: 'default blur', "
                     #                  " debounce: {'default': 300, 'blur': 0} "
                     #                  "}",
-                    #ng_maxlength=max_chars_username,
-                    #maxlength=max_chars_username,
                 ),
                 crispy.Field(
                     'first_name',
                     data_bind='value: mobileWorker.first_name',
-                    # TODO
-                    #ng_required="false",
-                    #ng_maxlength="30",
                 ),
                 crispy.Field(
                     'last_name',
                     data_bind='value: mobileWorker.last_name',
-                    # TODO
-                    #ng_required="false",
-                    #ng_maxlength="30",
                 ),
                 location_field,
                 crispy.Field(
                     'password',
-                    data_bind='value: mobileWorker.password',
-                    # TODO
-                    #ng_required="true",
-                    #data_bind="value: password, valueUpdate: 'input'",
+                    data_bind="value: mobileWorker.password, valueUpdate: 'input'",
                 ),
             )
         )

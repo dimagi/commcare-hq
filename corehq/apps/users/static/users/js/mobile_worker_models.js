@@ -34,6 +34,7 @@ hqDefine("users/js/mobile_worker_models", function() {
         self.mark_deactivated = ko.observable(options.mark_deactivated);
         self.action_error = ko.observable(options.action_error);
 
+        // TODO: move to newMobileWorkerModel?
         self.clear = function() {
             self.username(defaults.username);
             self.password(defaults.password);

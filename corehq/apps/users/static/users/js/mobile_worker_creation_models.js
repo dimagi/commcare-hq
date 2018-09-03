@@ -16,10 +16,22 @@ hqDefine("users/js/mobile_worker_creation_models", function() {
     };
 
     var newMobileWorkerModel = function(options) {
+        options = options || {};
         var self = hqImport("users/js/mobile_worker_models").mobileWorkerModel(options);
 
-        self.creationStatus = ko.observable('');
+        // TODO: translate messages
+        // TODO: show messages styled
+        // TODO: don't show messages when observable values are undefined
+        self.username.extend({ required: true, maxLength: options.username_max_length || 10 }); // TODO: get from ipd
+        self.first_name.extend({ maxLength: 30 });
+        self.last_name.extend({ maxLength: 30 });
+        self.password.extend({ required: { params: true, message: "custom message" } });
+        self.isValid = ko.computed(function() {
+            return self.username.isValid() && self.first_name.isValid() &&
+                self.last_name.isValid() && self.password.isValid();
+        });
 
+        self.creationStatus = ko.observable('');
         self.isPending = ko.computed(function() { return self.creationStatus() === STATUS.PENDING; });
         self.isSuccess = ko.computed(function() { return self.creationStatus() === STATUS.SUCCESS; });
         self.isWarning = ko.computed(function() { return self.creationStatus() === STATUS.WARNING; });
@@ -43,8 +55,7 @@ hqDefine("users/js/mobile_worker_creation_models", function() {
         };
 
         self.allowMobileWorkerCreation = ko.computed(function() {
-            // TODO: mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'
-            return true;
+            return self.mobileWorker.isValid(); // || usernameAvailabilityStatus !== 'available' // TODO
         });
 
         self.submitNewMobileWorker = function() {
