@@ -104,8 +104,7 @@ class TransifexPOFileGenerator:
         :return: name like module_moduleUniqueId
         """
         _module = self.app.modules[module_index]
-        module_unique_id = _module.unique_id
-        sheet_name = "_".join(["module", module_unique_id])
+        sheet_name = "_".join(["module", _module.unique_id])
         self.slug_to_name[sheet_name] = _module.name
         return sheet_name
 

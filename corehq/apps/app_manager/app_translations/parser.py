@@ -99,8 +99,7 @@ class TranslationsParser(object):
         """
         form = self.get_app.get_form(form_unique_id)
         _module = form.get_module()
-        module_unique_id = _module.unique_id
-        module_index = self.get_app.get_module_index(module_unique_id) + 1
+        module_index = self.get_app.get_module_index(_module.unique_id) + 1
         form_index = _module.get_form_index(form_unique_id) + 1
         return "module%s_form%s" % (module_index, form_index)
 
