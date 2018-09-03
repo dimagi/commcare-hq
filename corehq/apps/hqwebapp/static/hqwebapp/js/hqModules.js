@@ -121,3 +121,8 @@ function hqRequire(paths, callback) {
         callback.apply(undefined, args);
     }
 }
+
+var COMMCAREHQ_DEFINE = {
+    define: hqDefine,
+    require: hqRequire,
+};
