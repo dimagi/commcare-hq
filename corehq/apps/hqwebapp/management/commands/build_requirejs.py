@@ -68,11 +68,11 @@ class Command(ResourceStaticCommand):
             # dependencies
             config['modules'] = []
             for directory, mains in dirs.items():
-                with open(os.path.join(self.root_dir, 'staticfiles', directory, "bundle.js"), 'w') as fout:
-                    fout.write("define({}, function() {{}});".format(json.dumps(list(mains))))
                 config['modules'].append({
                     'name': os.path.join(directory, "bundle"),
                     'exclude': ['hqwebapp/js/base_main'],
+                    'include': list(mains),
+                    'create': True,
                 })
 
             # Write final r.js config out as a .js file
