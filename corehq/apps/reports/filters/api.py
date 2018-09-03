@@ -13,7 +13,7 @@ from braces.views import JSONResponseMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
-from corehq.apps.reports.filters.case_list import CaseListFilterUtils, CaseListFilterUtils
+from corehq.apps.reports.filters.case_list import CaseListFilterUtils
 from corehq.apps.reports.util import SimplifiedUserInfo
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
