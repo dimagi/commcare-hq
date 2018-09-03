@@ -59,6 +59,7 @@ from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_multiselect,
+    use_ko_validation,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.bulkupload import (
@@ -545,6 +546,7 @@ class MobileWorkerListView(BaseUserSettingsView):
     page_title = ugettext_noop("Mobile Workers")
 
     @use_select2
+    @use_ko_validation
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
@@ -579,8 +581,10 @@ class MobileWorkerListView(BaseUserSettingsView):
             bulk_download_url = reverse(FilteredUserDownload.urlname, args=[self.domain])
         else:
             bulk_download_url = reverse("download_commcare_users", args=[self.domain])
+        new_worker_form = NewMobileWorkerForm(self.request.project, self.couch_user)
         return {
-            'new_mobile_worker_form': NewMobileWorkerForm(self.request.project, self.couch_user),
+            'new_mobile_worker_form': new_worker_form,
+            'username_max_length': new_worker_form.max_chars_username,
             'custom_fields_form': self.custom_data.form,
             'custom_fields': [f.slug for f in self.custom_data.fields],
             'custom_field_names': [f.label for f in self.custom_data.fields],
