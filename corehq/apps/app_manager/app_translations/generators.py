@@ -17,11 +17,11 @@ Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
 
 
-class TransifexPOFileGenerator:
+class AppTranslationsGenerator:
     def __init__(self, domain, app_id, version, key_lang, source_lang, lang_prefix,
                  exclude_if_default=False, use_version_postfix=True):
         """
-        Generates PO files for source/default lang files and also for translated files
+        Generates translations for source/default lang files and also for translated files
         :param domain: domain name
         :param app_id: app UUID
         :param version: version of the app to use, usually the built version. If none, the
@@ -48,8 +48,8 @@ class TransifexPOFileGenerator:
         self.version = version
         self.use_version_postfix = use_version_postfix
         self.headers = dict()  # headers for each sheet name
-        self.po_file_generator = None
         self.sheet_name_to_module_or_form_type_and_id = dict()
+        self._build_translations()
 
     @property
     @memoized
@@ -172,7 +172,7 @@ class TransifexPOFileGenerator:
             )
 
     @property
-    def _metadata(self):
+    def metadata(self):
         if settings.TRANSIFEX_DETAILS:
             team = settings.TRANSIFEX_DETAILS['teams'][self.domain].get(self.source_lang)
         else:
@@ -190,20 +190,6 @@ class TransifexPOFileGenerator:
             'Version': self.version
         }
 
-    def generate_translation_files(self):
-        self._build_translations()
-        self.po_file_generator = PoFileGenerator(self.translations, self._metadata)
-
-    @property
-    def generated_files(self):
-        if self.po_file_generator:
-            return self.po_file_generator.generated_files
-        return []
-
-    def cleanup(self):
-        if self.po_file_generator:
-            self.po_file_generator.cleanup()
-
 
 class PoFileGenerator(object):
     def __init__(self, translations, metadata):
@@ -212,8 +198,14 @@ class PoFileGenerator(object):
             self._generate_translation_files(translations, metadata)
         except Exception:
             exc_info = sys.exc_info()
-            self.cleanup()
+            self._cleanup()
             six.reraise(*exc_info)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        self._cleanup()
 
     def _generate_translation_files(self, translations, metadata):
         for file_name in translations:
@@ -235,7 +227,7 @@ class PoFileGenerator(object):
             po.save(temp_file.name)
             self.generated_files.append((file_name, temp_file.name))
 
-    def cleanup(self):
+    def _cleanup(self):
         for resource_name, filepath in self.generated_files:
             if os.path.exists(filepath):
                 os.remove(filepath)
