@@ -71,7 +71,6 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         cls.data_source.save()
         rebuild_indicators(cls.data_source._id)
         cls.adapter = get_indicator_adapter(cls.data_source)
-        cls.adapter.refresh_table()
 
     @classmethod
     def setUpClass(cls):
@@ -623,7 +622,6 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         cls.data_source.save()
         rebuild_indicators(cls.data_source._id)
         adapter = get_indicator_adapter(cls.data_source)
-        adapter.refresh_table()
         cls.adapter = adapter
 
     @classmethod
