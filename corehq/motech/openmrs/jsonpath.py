@@ -38,3 +38,36 @@ class Cmp(JSONPath):
             other.op == self.op and
             other.operand == self.operand
         )
+
+    def __hash__(self):
+        return hash(str(self))
+
+
+class WhereNot(JSONPath):
+    """
+    Identical to JSONPath Where, but filters for only those nodes that
+    do *not* have a match on the right.
+
+    >>> jsonpath = WhereNot(Fields('spam'), Fields('spam'))
+    >>> jsonpath.find({"spam": {"spam": 1}})
+    []
+    >>> matches = jsonpath.find({"spam": 1})
+    >>> matches[0].value
+    1
+
+    """
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+    def find(self, data):
+        return [subdata for subdata in self.left.find(data) if not self.right.find(subdata)]
+
+    def __str__(self):
+        return '%s where not %s' % (self.left, self.right)
+
+    def __eq__(self, other):
+        return isinstance(other, WhereNot) and other.left == self.left and other.right == self.right
+
+    def __hash__(self):
+        return hash(str(self))
