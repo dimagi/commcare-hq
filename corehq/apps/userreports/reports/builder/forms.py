@@ -1017,7 +1017,7 @@ class ConfigureNewReportBase(forms.Form):
                 raise BadBuilderConfigError(_(
                     "This report references the '{}' filter, which is not compatible with "
                     "the Report Builder. It is only editable in the advanced interface."
-                ).format(filter['type'])
+                ).format(filter['type']))
             return UserFilterViewModel(
                 exists_in_current_version=exists,
                 display_text=filter['display'],
