@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
+import re
+from collections import defaultdict, OrderedDict
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
@@ -370,9 +372,34 @@ def download_index(request, domain, app_id):
     all the resource files that will end up zipped into the jar.
 
     """
-    files = []
+    files = defaultdict(list)
     try:
-        files = source_files(request.app)
+        for file_ in source_files(request.app):
+            form_filename = re.search('modules-(\d+)\/forms-(\d+)', file_[0])
+            if form_filename:
+                module_id, form_id = form_filename.groups()
+                module = request.app.get_module(module_id)
+                form = module.get_form(form_id)
+                section_name = "m{} - {}".format(
+                    module_id,
+                    ", ".join(["({}) {}".format(lang, name)
+                               for lang, name in module.name.iteritems()])
+                )
+                files[section_name].append({
+                    'name': file_[0],
+                    'source': file_[1],
+                    'readable_name': "f{} - {}".format(
+                        form_id,
+                        ", ".join(["({}) {}".format(lang, name)
+                                   for lang, name in form.name.iteritems()])
+                    ),
+                })
+            else:
+                files[None].append({
+                    'name': file_[0],
+                    'source': file_[1],
+                    'readable_name': None,
+                })
     except Exception:
         messages.error(
             request,
@@ -387,7 +414,7 @@ def download_index(request, domain, app_id):
     built_versions = get_all_built_app_ids_and_versions(domain, request.app.copy_of)
     return render(request, "app_manager/download_index.html", {
         'app': request.app,
-        'files': [{'name': f[0], 'source': f[1]} for f in files],
+        'files': OrderedDict(sorted(files.iteritems(), key=lambda x: x[0])),
         'supports_j2me': request.app.build_spec.supports_j2me(),
         'built_versions': [{
             'app_id': app_id,
