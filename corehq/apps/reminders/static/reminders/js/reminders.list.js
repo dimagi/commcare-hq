@@ -1,10 +1,10 @@
-/* globals RuleProgressBarGroup, RuleProgressBar */
+/* globals ruleProgressBarGroup, ruleProgressBar */
 hqDefine("reminders/js/reminders.list", function () {
     var RemindersListModel = function (reminders, progressUrl) {
         'use strict';
         var self = this;
         self.reminders = ko.observableArray();
-        self.progress_bar_group = new RuleProgressBarGroup(progressUrl);
+        self.progress_bar_group = ruleProgressBarGroup(progressUrl);
 
         self.init = function () {
             _(reminders).each(function (reminder) {
@@ -30,7 +30,7 @@ hqDefine("reminders/js/reminders.list", function () {
         self.name = ko.observable(o.name);
         self.caseType = ko.observable(o.caseType);
         self.url = ko.observable(o.url);
-        self.progressBar = new RuleProgressBar(o.id, parentModel.progress_bar_group);
+        self.progressBar = ruleProgressBar(o.id, parentModel.progress_bar_group);
         self.active = ko.observable(o.isActive);
 
         self.activate = function (_, event) {

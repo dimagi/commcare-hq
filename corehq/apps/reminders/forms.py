@@ -2056,7 +2056,7 @@ class KeywordForm(Form):
                     _("Structured Message Options"),
                     crispy.Field(
                         'structured_sms_form_unique_id',
-                        data_bind="value: structured_sms_form_unique_id",
+                        data_bind="value: structuredSmsFormUniqueId",
                     ),
                     hqcrispy.B3MultiField(
                         _("Delimiters"),
@@ -2147,25 +2147,25 @@ class KeywordForm(Form):
                 _("Response"),
                 crispy.Field(
                     'sender_content_type',
-                    data_bind="value: sender_content_type",
+                    data_bind="value: senderContentType",
                 ),
                 crispy.Div(
                     crispy.Field(
                         'sender_message',
-                        data_bind="text: sender_message",
+                        data_bind="text: senderMessage",
                     ),
                     data_bind="visible: isMessageSMS",
                 ),
                 crispy.Div(
                     crispy.Field(
                         'sender_form_unique_id',
-                        data_bind="value: sender_form_unique_id"
+                        data_bind="value: senderFormUniqueId"
                     ),
                     data_bind="visible: isMessageSurvey",
                 ),
                 crispy.Field(
                     'other_recipient_content_type',
-                    data_bind="value: other_recipient_content_type",
+                    data_bind="value: otherRecipientContentType",
                 ),
                 hqcrispy.B3MultiField(
                     "",
@@ -2176,31 +2176,31 @@ class KeywordForm(Form):
                         ),
                         crispy.Field(
                             'other_recipient_type',
-                            data_bind="value: other_recipient_type",
+                            data_bind="value: otherRecipientType",
                         ),
                         crispy.Div(
                             crispy.Field(
                                 'other_recipient_id',
-                                data_bind="value: other_recipient_id",
+                                data_bind="value: otherRecipientId",
                             ),
                             data_bind="visible: showRecipientGroup",
                         ),
                         crispy.Div(
                             crispy.Field(
                                 'other_recipient_message',
-                                data_bind="value: other_recipient_message",
+                                data_bind="value: otherRecipientMessage",
                             ),
-                            data_bind="visible: other_recipient_content_type() == 'sms'",
+                            data_bind="visible: otherRecipientContentType() == 'sms'",
                         ),
                         crispy.Div(
                             crispy.Field(
                                 'other_recipient_form_unique_id',
-                                data_bind="value: other_recipient_form_unique_id",
+                                data_bind="value: otherRecipientFormUniqueId",
                             ),
-                            data_bind="visible: other_recipient_content_type() == 'survey'",
+                            data_bind="visible: otherRecipientContentType() == 'survey'",
                         ),
                         css_class="well",
-                        data_bind="visible: notify_others",
+                        data_bind="visible: notifyOthers",
                     ),
                 ),
             ),
@@ -2208,7 +2208,7 @@ class KeywordForm(Form):
                 _("Advanced Options"),
                 twbscrispy.PrependedText(
                     'override_open_sessions', '',
-                    data_bind="checked: override_open_sessions",
+                    data_bind="checked: overrideOpenSessions",
                 ),
                 'allow_keyword_use_by',
             ),

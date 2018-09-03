@@ -1,62 +1,66 @@
 var PROGRESS_BAR_UPDATE_INTERVAL = 30000;
 
 
-function RuleProgressBarGroup(progressUrl) {
+function ruleProgressBarGroup (progressUrl) {
     'use strict';
-    var self = this;
+    var self = {};
 
-    self.progress_bars = {};
+    self.progressBars = {};
 
-    self.add = function (handler_id, progress_bar) {
-        self.progress_bars[handler_id] = progress_bar;
+    self.add = function (handlerId, progressBar) {
+        self.progressBars[handlerId] = progressBar;
     };
 
-    self.update_progress = function () {
+    self.updateProgress = function() {
         var request = $.ajax({
             url: progressUrl,
             type: "GET",
             dataType: "json",
         }).done(function (data, textStatus, jqXHR) {
-            for (var handler_id in data) {
-                if (handler_id in self.progress_bars) {
-                    var info = data[handler_id];
-                    var progress_bar = self.progress_bars[handler_id];
-                    progress_bar.in_progress(!info.complete);
-                    if (progress_bar.in_progress()) {
-                        progress_bar.current(info.current);
-                        progress_bar.total(info.total);
+            for(var handlerId in data) {
+                if(handlerId in self.progressBars) {
+                    var info = data[handlerId];
+                    var progressBar = self.progressBars[handlerId];
+                    progressBar.inProgress(!info.complete);
+                    if(progressBar.inProgress()) {
+                        progressBar.current(info.current);
+                        progressBar.total(info.total);
                     }
                 }
             }
         }).always(function (data, textStatus, jqXHR) {
-            setTimeout(self.update_progress, PROGRESS_BAR_UPDATE_INTERVAL);
+            setTimeout(self.updateProgress, PROGRESS_BAR_UPDATE_INTERVAL);
         });
     };
 
     // Start the update progress loop
-    self.update_progress();
+    self.updateProgress();
+
+    return self;
 }
 
 
-function RuleProgressBar(handler_id, progress_bar_group) {
+function ruleProgressBar(handler_id, progress_bar_group) {
     'use strict';
-    var self = this;
+    var self = {};
 
-    self.in_progress = ko.observable(false);
+    self.inProgress = ko.observable(false);
     self.current = ko.observable(0);
     self.total = ko.observable(0);
 
-    self.progress_pct = ko.computed(function () {
-        if (self.total() > 0) {
+    self.progressPct = ko.computed(function () {
+        if(self.total() > 0) {
             return Math.round((self.current() / self.total()) * 100) + "%";
         } else {
             return "0%";
         }
     });
 
-    self.progress_display = ko.computed(function () {
+    self.progressDisplay = ko.computed(function () {
         return (self.current() || "?") + " / " + (self.total() || "?");
     });
 
     progress_bar_group.add(handler_id, self);
+
+    return self;
 }
