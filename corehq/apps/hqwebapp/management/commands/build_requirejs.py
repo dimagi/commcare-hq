@@ -4,6 +4,7 @@ import json
 import os
 import re
 import six
+import subprocess
 import yaml
 from django.contrib.staticfiles import finders
 from django.conf import settings
@@ -31,41 +32,56 @@ class Command(ResourceStaticCommand):
         with open(os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
             config = yaml.load(f)
 
-            bundles = {}
-            all_modules = []
+            # Find all HTML files in corehq, excluding partials
+            # TODO: os.walk?
             prefix = os.path.join(os.getcwd(), 'corehq')
-            for finder in finders.get_finders():
-                if isinstance(finder, finders.AppDirectoriesFinder):
-                    for path, storage in finder.list(['.*', '*~', '* *', '*.*ss', '*.png']):
-                        if not storage.location.startswith(prefix):
-                            continue
-                        if path.endswith(".js"):
-                            directory = re.sub(r'/[^/]*$', '', path)
-                            if directory not in bundles:
-                                bundles[directory] = []
-                            bundles[directory].append(path[:-3])
-                            all_modules.append(path[:-3])
+            proc = subprocess.Popen(["find", prefix, "-name", "*.html"], stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+            html_files = [f for f in map(lambda b: b.decode('utf-8'), out.split(b"\n")) if f
+                    and not re.search(r'/partials/', f)]
 
-            customized = {re.sub(r'/[^/]*$', '', m['name']): True for m in config['modules']}
-            for directory, inclusions in six.iteritems(bundles):
-                if directory not in customized and not directory.startswith("app_manager/js/vellum"):
-                    # Add this module's config to build config
-                    config['modules'].append({
-                        'name': os.path.join(directory, 'bundle'),
-                        'include': inclusions,
-                        'excludeShallow': [name for name in all_modules if name not in inclusions],
-                        'exclude': ['hqwebapp/js/common'],
-                    })
+            '''
+            Build a dict of all main js modules, grouped by directory:
+            {
+                'locations/js': set(['locations/js/import', 'locations/js/location', ...  ]),
+                'linked_domain/js': set(['linked_domain/js/domain_links']),
+                ...
+            }
+            '''
+            dirs = {'hqwebapp/js': set(['hqwebapp/js/base_main'])}
+            for filename in html_files:
+                proc = subprocess.Popen(["grep", "^\s*{% requirejs_main [^%]* %}\s*$", filename], stdout=subprocess.PIPE)
+                (out, err) = proc.communicate()
+                if out:
+                    match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
+                    if match:
+                        main = match.group(1)
+                        directory = match.group(2)
+                        if os.path.exists(os.path.join(os.getcwd(), 'staticfiles', main + '.js')):
+                            if directory not in dirs:
+                                dirs.update({directory: set()})
+                            dirs[directory].add(main)
 
-            # Write .js files to staticfiles
-            for module in config['modules']:
-                with open(os.path.join(self.root_dir, 'staticfiles', module['name'] + ".js"), 'w') as fout:
-                    fout.write("define([], function() {});")
 
+            # For each directory, write a no-op js file that depends on all of the main modules in that dir.
+            # r.js will overwrite each of these files with an optimized bundle of these main modules and all their
+            # dependencies
+            config['modules'] = []
+            for directory, mains in dirs.items():
+                config['modules'].append({
+                    'name': os.path.join(directory, "bundle"),
+                    'exclude': ['hqwebapp/js/base_main'],
+                    'include': list(mains),
+                    'create': True,
+                })
+
+            # Write final r.js config out as a .js file
             with open(os.path.join(self.root_dir, 'staticfiles', 'build.js'), 'w') as fout:
                 fout.write("({});".format(json.dumps(config, indent=4)))
 
+        # Run r.js
         call(["node", "bower_components/r.js/dist/r.js", "-o", "staticfiles/build.js"])
+
         filename = os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
         resource_versions["hqwebapp/js/requirejs_config.js"] = self.get_hash(filename)
 
