@@ -17,6 +17,8 @@ class Migration(migrations.Migration):
         # this originally installed the hashlib extension in production as well
         # but commcare-cloud does that where possible already
         # and Amazon RDS doesn't allow it
+        # Todo: Move this to testing harness, doesn't really belong here.
+        # See https://github.com/dimagi/commcare-hq/pull/21627#pullrequestreview-149807976
         HqRunSQL(
             'CREATE EXTENSION IF NOT EXISTS hashlib',
             'DROP EXTENSION hashlib'
