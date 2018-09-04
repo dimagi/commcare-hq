@@ -24,7 +24,6 @@ from .base import (
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
-from six.moves import range
 from six.moves import map
 
 
@@ -123,7 +122,10 @@ class EmwfUtils(object):
     def user_tuple(self, u):
         user = util._report_user_dict(u)
         uid = "u__%s" % user['user_id']
-        name = "%s [user]" % user['username_in_report']
+        if user['is_active']:
+            name = "%s [active user]" % user['username_in_report']
+        else:
+            name = "%s [deactivated user]" % user['username_in_report']
         return (uid, name)
 
     def reporting_group_tuple(self, g):
@@ -142,7 +144,7 @@ class EmwfUtils(object):
     @property
     @memoized
     def static_options(self):
-        static_options = [("t__0", _("[All mobile workers]"))]
+        static_options = [("t__0", _("[Active Mobile Workers]"))]
 
         types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
         if Domain.get_by_name(self.domain).commtrack_enabled:
@@ -181,6 +183,22 @@ class EmwfUtils(object):
         return ret
 
 
+class SubmitHistoryUtils(EmwfUtils):
+    @property
+    @memoized
+    def static_options(self):
+        static_options = [("t__0", _("[Active Mobile Workers]"))]
+
+        types = ['DEACTIVATED', 'DEMO_USER', 'ADMIN', 'UNKNOWN']
+        if Domain.get_by_name(self.domain).commtrack_enabled:
+            types.append('COMMTRACK')
+        for t in types:
+            user_type = getattr(HQUserType, t)
+            static_options.append(self.user_type_tuple(user_type))
+
+        return static_options
+
+
 class UsersUtils(EmwfUtils):
 
     def user_tuple(self, u):
@@ -188,7 +206,6 @@ class UsersUtils(EmwfUtils):
         uid = "%s" % user['user_id']
         name = "%s" % user['username_in_report']
         return (uid, name)
-
 
 class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
@@ -200,7 +217,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
     slug = "emw"
-    label = ugettext_lazy("Groups or Users")
+    label = ugettext_lazy("User(s)")
     default_options = None
     placeholder = ugettext_lazy(
         "Specify groups and users to include in the report")
@@ -254,7 +271,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if not self.request.can_access_all_locations:
             return self._get_assigned_locations_default()
 
-        defaults = [('t__0', _("[All mobile workers]"))]
+        defaults = [('t__0', _("[Active Mobile Workers]"))]
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
@@ -335,6 +352,11 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.demo_users())
 
         q = user_es.UserES().domain(domain)
+        if HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
+            q = q.show_inactive()
+        elif HQUserType.DEACTIVATED in user_types:
+            q = q.show_only_inactive()
+
         if not request_user.has_permission(domain, 'access_all_locations'):
             cls._verify_users_are_accessible(domain, request_user, user_ids)
             return q.OR(
@@ -344,7 +366,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                                       .accessible_to_user(domain, request_user)
                                       .location_ids())),
             )
-        elif HQUserType.REGISTERED in user_types:
+        elif HQUserType.ACTIVE in user_types or HQUserType.DEACTIVATED in user_types:
             # return all users with selected user_types
             user_type_filters.append(user_es.mobile_users())
             return q.OR(*user_type_filters)
@@ -376,7 +398,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     @property
     def options(self):
-        return [('t__0', _("[All mobile workers]"))]
+        return [('t__0', _("[Active Mobile Workers]"))]
 
     @classmethod
     def for_user(cls, user_id):
@@ -410,3 +432,12 @@ def get_user_toggle(request):
     elif group or individual:
         show_filter = False
     return toggle, show_filter
+
+
+class SubmitHistoryFilter(ExpandedMobileWorkerFilter):
+    options_url = 'emwf_options_all_users'
+
+    @property
+    @memoized
+    def utils(self):
+        return SubmitHistoryUtils(self.domain)
