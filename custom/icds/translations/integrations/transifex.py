@@ -55,7 +55,8 @@ class Transifex(object):
             self.key_lang, self.source_lang, self.lang_prefix,
             self.exclude_if_default, self.use_version_postfix)
         with PoFileGenerator(app_trans_generator.translations, app_trans_generator.metadata) as po_file_generator:
-            return self._send_files_to_transifex(po_file_generator.generated_files)
+            generated_files = po_file_generator.generate_translation_files()
+            return self._send_files_to_transifex(generated_files)
 
     @property
     @memoized

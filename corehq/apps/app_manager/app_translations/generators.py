@@ -4,8 +4,6 @@ import os
 import polib
 import datetime
 import tempfile
-import six
-import sys
 
 from django.conf import settings
 from memoized import memoized
@@ -193,13 +191,8 @@ class AppTranslationsGenerator:
 
 class PoFileGenerator(object):
     def __init__(self, translations, metadata):
-        self.generated_files = list()  # list of tuples (filename, filepath)
-        try:
-            self._generate_translation_files(translations, metadata)
-        except Exception:
-            exc_info = sys.exc_info()
-            self._cleanup()
-            six.reraise(*exc_info)
+        self.translations = translations
+        self.metadata = metadata
 
     def __enter__(self):
         return self
@@ -207,12 +200,13 @@ class PoFileGenerator(object):
     def __exit__(self, *exc_info):
         self._cleanup()
 
-    def _generate_translation_files(self, translations, metadata):
-        for file_name in translations:
-            sheet_translations = translations[file_name]
+    def generate_translation_files(self):
+        generated_files = []
+        for file_name in self.translations:
+            sheet_translations = self.translations[file_name]
             po = polib.POFile()
             po.check_for_duplicates = False
-            po.metadata = metadata
+            po.metadata = self.metadata
             for translation in sheet_translations:
                 source = translation.key
                 if source:
@@ -225,7 +219,8 @@ class PoFileGenerator(object):
                     po.append(entry)
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             po.save(temp_file.name)
-            self.generated_files.append((file_name, temp_file.name))
+            generated_files.append((file_name, temp_file.name))
+        return generated_files
 
     def _cleanup(self):
         for resource_name, filepath in self.generated_files:

@@ -105,8 +105,8 @@ class ConvertTranslations(BaseTranslationsView):
         """
         translations = self._generate_translations_for_po(worksheet)
         with PoFileGenerator(translations, {}) as po_file_generator:
-            generated_file = po_file_generator.generated_files[0][1]
-            with open(generated_file, 'r', encoding="utf-8") as f:
+            generated_files = po_file_generator.generate_translation_files()
+            with open(generated_files[0][1], 'r', encoding="utf-8") as f:
                 return f.read()
 
     def _generate_excel_file(self):

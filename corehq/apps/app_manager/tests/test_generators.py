@@ -24,7 +24,8 @@ class TestPoFileGenerator(SimpleTestCase):
         }
         file_paths = []
         with PoFileGenerator(all_translations, {}) as po_file_generator:
-            for file_name, file_path in po_file_generator.generated_files:
+            generated_files = po_file_generator.generate_translation_files()
+            for file_name, file_path in generated_files:
                 file_paths.append(file_path)
                 list_of_translations = polib.pofile(file_path)
                 # assure translations
@@ -49,7 +50,8 @@ class TestPoFileGenerator(SimpleTestCase):
             'Language': 'hin',
         }
         with PoFileGenerator(all_translations, metadata) as po_file_generator:
-            for file_name, file_path in po_file_generator.generated_files:
+            generated_files = po_file_generator.generate_translation_files()
+            for file_name, file_path in generated_files:
                 # ensure meta data
                 with open(file_path, encoding='utf-8') as f:
                     file_content = f.read()
