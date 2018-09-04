@@ -193,7 +193,7 @@ class WorkbookJSONReader(object):
     def __init__(self, f):
         if isinstance(f, six.string_types):
             filename = f
-        elif not isinstance(f, io.IOBase):
+        elif not isinstance(f, io.BufferedReader):
             tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
             filename = tmp.name
             tmp.write(f.read())
