@@ -13,6 +13,7 @@ from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHE
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
+POFileInfo = namedtuple("POFileInfo", "name path")
 
 
 class AppTranslationsGenerator:
@@ -219,7 +220,7 @@ class PoFileGenerator(object):
                     po.append(entry)
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             po.save(temp_file.name)
-            generated_files.append((file_name, temp_file.name))
+            generated_files.append(POFileInfo(file_name, temp_file.name))
         return generated_files
 
     def _cleanup(self):
