@@ -55,6 +55,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.domain_obj = Domain(name='all-backend-test')
         cls.domain_obj.save()
         cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ADVANCED)
+
         cls.domain_obj = Domain.get(cls.domain_obj.get_id)
 
         cls.test_phone_number = '99912345'
@@ -196,6 +197,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscription()
+
         cls.domain_obj.delete()
         cls.unicel_backend.delete()
         cls.mach_backend.delete()
@@ -488,6 +490,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.domain_obj.save()
 
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.ADVANCED)
+
         cls.domain_obj = Domain.get(cls.domain_obj._id)
 
         cls.backend1 = SQLTestSMSBackend.objects.create(
@@ -620,7 +623,9 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.backend8.delete()
         cls.backend9.delete()
         cls.backend10.delete()
+
         cls.teardown_subscription()
+
         cls.domain_obj.delete()
         super(OutgoingFrameworkTestCase, cls).tearDownClass()
 
