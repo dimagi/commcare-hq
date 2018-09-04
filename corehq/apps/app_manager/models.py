@@ -2526,8 +2526,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         for index, form in enumerate(self.get_forms()):
             if form.unique_id == unique_id:
                 return index
-        error = _("Could not find form with ID='{unique_id}' in module '{app_name}'.").format(
-            app_name=self.name, unique_id=unique_id)
+        error = _("Could not find form with ID='{unique_id}' in module '{module_name}'.").format(
+            module_name=self.name, unique_id=unique_id)
         raise FormNotFoundException(error)
 
     def get_child_modules(self):
