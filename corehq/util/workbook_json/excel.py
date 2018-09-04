@@ -192,17 +192,12 @@ class WorkbookJSONReader(object):
 
     def __init__(self, f):
         if isinstance(f, six.string_types):
-            filename = f
-        elif not isinstance(f, io.BufferedReader):
-            tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
-            filename = tmp.name
-            tmp.write(f.read())
-            tmp.close()
+            file_or_filename = f
         else:
-            filename = f
+            file_or_filename = f
 
         try:
-            self.wb = openpyxl.load_workbook(filename, read_only=True, data_only=True)
+            self.wb = openpyxl.load_workbook(file_or_filename, read_only=True, data_only=True)
         except (BadZipfile, InvalidFileException, KeyError) as e:
             raise InvalidExcelFileException(six.text_type(e))
         self.worksheets_by_title = {}
