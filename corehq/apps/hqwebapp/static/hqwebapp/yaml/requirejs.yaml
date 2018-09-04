@@ -60,41 +60,16 @@ modules:
   - name: accounting/js/bundle
     include:
       - accounting/js/lib/stripe.js
-      - accounting/js/base_subscriptions_main.js
-      - accounting/js/billing_account_form.js
-      - accounting/js/credits.js
-      - accounting/js/credits_tab.js
-      - accounting/js/enterprise_dashboard.js
-      - accounting/js/enterprise_settings.js
-      - accounting/js/invoice_main.js
-      - accounting/js/payment_method_handler.js
-      - accounting/js/pricing_table.js
-      - accounting/js/software_plan_version_handler.js
-      - accounting/js/stripe_card_manager.js
-      - accounting/js/subscriptions_main.js
-      - accounting/js/widgets.js
+    include_directories:
+      - accounting/js
     exclude:
       - hqwebapp/js/common
 
   - name: domain/js/bundle
     include:
       - accounting/js/lib/stripe.js
-      - domain/js/billing_statements.js
-      - domain/js/case_search.js
-      - domain/js/case_search_main.js
-      - domain/js/commtrack_settings.js
-      - domain/js/confirm_billing_info.js
-      - domain/js/create_snapshot.js
-      - domain/js/current_subscription.js
-      - domain/js/info_basic.js
-      - domain/js/internal_calculations.js
-      - domain/js/internal_settings.js
-      - domain/js/internal_subscription_management.js
-      - domain/js/media_manager.js
-      - domain/js/my_project_settings.js
-      - domain/js/pro-bono.js
-      - domain/js/snapshot_settings.js
-      - domain/js/update_billing_contact_info.js
+    include_directories:
+      - domain/js
     exclude:
       - hqwebapp/js/common
 
