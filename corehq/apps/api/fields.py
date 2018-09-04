@@ -19,6 +19,20 @@ def get_referenced_class(class_or_str):
         return class_or_str
 
 
+class AttributeOrCallable(object):
+
+    def __init__(self, attribute):
+        self.attribute = attribute
+
+    def __call__(self, v):
+        if isinstance(self.attribute, six.string_types):
+            accessor = lambda v: getattr(v, self.attribute)
+        else:
+            accessor = self.attribute
+
+        return accessor(v)
+
+
 class CallableApiField(ApiField):
     """
     A minor fix to Tastypie's ApiField to actually support callable attributes in general.
@@ -54,6 +68,7 @@ class ToManyDocumentsField(ApiField):
                                                    unique=unique,
                                                    readonly=readonly)
         self.to = to
+        self.attribute = AttributeOrCallable(attribute)
 
     @property
     def to_class(self):
@@ -101,6 +116,7 @@ class ToManyDictField(ApiField):
             use_in=use_in,
         )
         self.to = to
+        self.attribute = AttributeOrCallable(attribute)
 
     @property
     def to_class(self):
@@ -149,6 +165,7 @@ class ToManyListDictField(ApiField):
             use_in=use_in,
         )
         self.to = to
+        self.attribute = AttributeOrCallable(attribute)
 
     @property
     def to_class(self):
