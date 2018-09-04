@@ -569,18 +569,21 @@ class NewMobileWorkerForm(forms.Form):
                 '<br />'
             ))
 
-        if False and project.uses_locations:    # TODO
-            self.fields['location_id'].widget = AngularLocationSelectWidget(
-                require=not self.can_access_all_locations)
+        if project.uses_locations:
+            from corehq.apps.locations.forms import LocationSelectWidget
+            self.fields['location_id'].widget = LocationSelectWidget(
+                self.domain, multiselect=False,
+                # TODO: require=not self.can_access_all_locations
+            )
             location_field = crispy.Field(
                 'location_id',
-                #ng_model='mobileWorker.location_id',   # TODO
+                data_bind='value: mobileWorker.location_id',
             )
         else:
             location_field = crispy.Hidden(
                 'location_id',
                 '',
-                #ng_model='mobileWorker.location_id',   # TODO
+                data_bind='value: mobileWorker.location_id',
             )
 
         self.helper = FormHelper()
@@ -738,30 +741,6 @@ class MultipleSelectionForm(forms.Form):
                 )
             )
         )
-
-
-class AngularLocationSelectWidget(forms.Widget):
-    """
-    Assumptions:
-        mobileWorker.location_id is model
-        scope has searchLocations function to search
-        scope uses availableLocations to search in
-    """
-
-    def __init__(self, require=False, attrs=None):
-        self.require = require
-        super(AngularLocationSelectWidget, self).__init__(attrs)
-
-    def render(self, name, value, attrs=None):
-        # The .format() means I have to use 4 braces to end up with {{$select.selected.name}}
-        return """
-          <ui-select {validator} ng-model="mobileWorker.location_id" theme="select2" style="width: 300px;">
-            <ui-select-match placeholder="Select location...">{{{{$select.selected.name}}}}</ui-select-match>
-            <ui-select-choices refresh="searchLocations($select.search)" refresh-delay="0" repeat="location.id as location in availableLocations | filter:$select.search">
-              <div ng-bind-html="location.name | highlight: $select.search"></div>
-            </ui-select-choices>
-          </ui-select>
-        """.format(validator='validate-location=""' if self.require else '')
 
 
 class PrimaryLocationWidget(forms.Widget):
