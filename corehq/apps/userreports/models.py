@@ -485,8 +485,8 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     config_id = StringProperty(required=True)
     data_source_type = StringProperty(default=DATA_SOURCE_TYPE_STANDARD,
                                       choices=[DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE])
-    title = StringProperty()
-    description = StringProperty()
+    title = StringProperty(default='')
+    description = StringProperty(default='')
     aggregation_columns = StringListProperty()
     filters = ListProperty()
     columns = ListProperty()
