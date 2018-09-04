@@ -4927,6 +4927,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     mobile_ucr_restore_version = StringProperty(
         default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSIONS, required=False
     )
+    location_fixture_restore = StringProperty(
+        default=DEFAULT_LOCATION_FIXTURE_OPTION, choices=LOCATION_FIXTURE_OPTIONS,
+        required=False
+    )
 
     @classmethod
     def wrap(cls, data):

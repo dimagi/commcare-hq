@@ -88,7 +88,11 @@ jinja2==2.8
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
+<<<<<<< HEAD
 jsonobject-couchdbkit==0.9.8.4
+=======
+jsonobject-couchdbkit==0.9.9
+>>>>>>> master
 jsonobject==0.9.3
 jsonpath-rw==1.4.0
 kafka-python==0.9.5
