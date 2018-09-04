@@ -192,6 +192,7 @@ class AppTranslationsGenerator:
 
 class PoFileGenerator(object):
     def __init__(self, translations, metadata):
+        self._generated_files = list()  # list of tuples (filename, filepath)
         self.translations = translations
         self.metadata = metadata
 
@@ -202,7 +203,6 @@ class PoFileGenerator(object):
         self._cleanup()
 
     def generate_translation_files(self):
-        generated_files = []
         for file_name in self.translations:
             sheet_translations = self.translations[file_name]
             po = polib.POFile()
@@ -220,11 +220,11 @@ class PoFileGenerator(object):
                     po.append(entry)
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             po.save(temp_file.name)
-            generated_files.append(POFileInfo(file_name, temp_file.name))
-        return generated_files
+            self._generated_files.append(POFileInfo(file_name, temp_file.name))
+        return self._generated_files
 
     def _cleanup(self):
-        for resource_name, filepath in self.generated_files:
+        for resource_name, filepath in self._generated_files:
             if os.path.exists(filepath):
                 os.remove(filepath)
         self.generated_files = []
