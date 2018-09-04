@@ -450,6 +450,14 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     def schedule(self):
         return None
 
+    @property
+    def schedule_form_class(self):
+        if toggles.EWS_BROADCAST_BY_ROLE.enabled(self.domain):
+            from custom.ewsghana.forms import NewRemindersEWSBroadcastForm
+            return NewRemindersEWSBroadcastForm
+
+        return BroadcastForm
+
     @cached_property
     def schedule_form(self):
         args = [self.domain, self.schedule, self.can_use_inbound_sms, self.broadcast]
@@ -457,7 +465,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.request.method == 'POST':
             args.append(self.request.POST)
 
-        return BroadcastForm(*args, is_system_admin=self.is_system_admin)
+        return self.schedule_form_class(*args, is_system_admin=self.is_system_admin)
 
     @property
     def page_context(self):
