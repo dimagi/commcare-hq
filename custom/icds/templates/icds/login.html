@@ -11,6 +11,7 @@
 
 
 {% block page_content %}
+{% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
 <div class="container">
     <div class="row">
         <div class="col-sm-1">
@@ -69,9 +70,7 @@
 
 {% block js %}
   {{ block.super }}
-  {% if implement_password_obfuscation %}
-      {% include "nic_compliance/password_encoder.html" %}
-  {% endif %}
+  <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
 {% endblock %}
 
 <!-- get rid of footer -->
