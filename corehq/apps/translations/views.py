@@ -101,7 +101,8 @@ class ConvertTranslations(BaseTranslationsView):
     def _generate_po_content(self, worksheet):
         """
         extract translations from worksheet and converts to a po file
-        :return: list of files generated
+
+        :return: content of file generated
         """
         translations = self._generate_translations_for_po(worksheet)
         with PoFileGenerator(translations, {}) as po_file_generator:
