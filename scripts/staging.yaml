@@ -50,7 +50,7 @@ trunk: master
 name: autostaging
 branches:
   - revert-21236-fr/add-secure-urllib3  # Danny July 18
-#  - jls/requirejs-domain-billing  # Jenny July 19
+  - jls/requirejs-domain-billing  # Jenny July 19
 #  - jls/requirejs-login  # Jenny July 22
 #  - jls/requirejs-login-scrap  # Jenny Aug 27
 #  - 30-day-minimum-subscription # Gabriella Aug 7
