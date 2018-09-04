@@ -20,6 +20,9 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
+from corehq.apps.reports.v2.reports.explore_case_data import (
+    ExploreCaseDataReport,
+)
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports, can_download_data_files
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
@@ -108,6 +111,27 @@ class DataInterfaceSection(BaseDomainView):
     @property
     def section_url(self):
         return reverse("data_interfaces_default", args=[self.domain])
+
+
+class ExploreCaseDataView(BaseDomainView):
+    template_name = "data_interfaces/explore_case_data.html"
+    urlname = "explore_case_data"
+    page_title = ugettext_lazy("Explore Case Data")
+
+    @property
+    def section_url(self):
+        return reverse("data_interfaces_default", args=[self.domain])
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def page_context(self):
+        report_config = ExploreCaseDataReport(self.request, self.domain)
+        return {
+            'report': report_config.context,
+        }
 
 
 class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):

@@ -4,12 +4,15 @@ requirejs.config({
     paths: {
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
+        "lodash": "lodash/dist/lodash.min",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
         "knockout": "knockout/dist/knockout.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
         "datatables": "datatables/media/js/jquery.dataTables.min",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
+        "datatables.scroller": "datatables-scroller/js/dataTables.scroller",
+        "datatables.colReorder": "datatables-colreorder/js/dataTables.colReorder",
     },
     shim: {
         "bootstrap": { deps: ['jquery'] },
@@ -24,6 +27,12 @@ requirejs.config({
     },
     map: {
         "datatables.fixedColumns": {
+            "datatables.net": "datatables",
+        },
+        "datatables.scroller": {
+            "datatables.net": "datatables",
+        },
+        "datatables.colReorder": {
             "datatables.net": "datatables",
         },
     },
