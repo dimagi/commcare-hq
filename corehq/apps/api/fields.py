@@ -207,6 +207,7 @@ class ToOneDocumentField(ApiField):
                                                    unique=unique,
                                                    readonly=readonly)
         self.to = to
+        self.attribute = AttributeOrCallable(attribute)
 
     @property
     def to_class(self):
