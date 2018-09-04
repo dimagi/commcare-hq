@@ -390,7 +390,7 @@ class Excel2007ExportWriter(ExportWriter):
         def get_write_value(value):
             if isinstance(value, six.integer_types + (float,)):
                 return value
-            if isinstance(value, str):
+            if isinstance(value, six.binary_type):
                 value = six.text_type(value, encoding="utf-8")
             elif value is not None:
                 value = six.text_type(value)
@@ -480,7 +480,10 @@ class JsonExportWriter(InMemoryExportWriter):
         for tablename, data in self.tables.items():
             new_tables[self.table_names[tablename]] = {"headers":data[0], "rows": data[1:]}
 
-        self.file.write(json.dumps(new_tables, cls=self.ConstantEncoder))
+        json_dump = json.dumps(new_tables, cls=self.ConstantEncoder)
+        if six.PY3:
+            json_dump = json_dump.encode('utf-8')
+        self.file.write(json_dump)
 
 
 class PythonDictWriter(InMemoryExportWriter):

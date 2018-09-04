@@ -2419,7 +2419,8 @@ class EnterpriseSettingsForm(forms.Form):
     restrict_domain_creation = forms.BooleanField(
         label=ugettext_lazy("Restrict Project Space Creation"),
         required=False,
-        help_text=ugettext_lazy("Do not allow non-admins to create new project spaces"),
+        help_text=ugettext_lazy("Do not allow current web users, other than enterprise admins, "
+            "to create new project spaces."),
     )
     restrict_signup = forms.BooleanField(
         label=ugettext_lazy("Restrict User Signups"),
@@ -2432,11 +2433,6 @@ class EnterpriseSettingsForm(forms.Form):
         help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
         widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 128}),
     )
-    restrict_signup_email = forms.EmailField(
-        label="Signup Restriction Contact",
-        required=False,
-        help_text=ugettext_lazy("Email address that users should contact to request an account"),
-    )
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain', None)
@@ -2445,7 +2441,6 @@ class EnterpriseSettingsForm(forms.Form):
             "restrict_domain_creation": self.account.restrict_domain_creation,
             "restrict_signup": self.account.restrict_signup,
             "restrict_signup_message": self.account.restrict_signup_message,
-            "restrict_signup_email": self.account.restrict_signup_email,
         }
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -2463,10 +2458,6 @@ class EnterpriseSettingsForm(forms.Form):
                 ),
                 crispy.Div(
                     crispy.Field('restrict_signup_message'),
-                    data_bind='visible: restrictSignup',
-                ),
-                crispy.Div(
-                    crispy.Field('restrict_signup_email'),
                     data_bind='visible: restrictSignup',
                 ),
             )
@@ -2487,16 +2478,9 @@ class EnterpriseSettingsForm(forms.Form):
             raise ValidationError(_("If restricting signups, a message is required."))
         return message
 
-    def clean_restrict_signup_email(self):
-        email = self.cleaned_data['restrict_signup_email']
-        if self.cleaned_data['restrict_signup'] and not email:
-            raise ValidationError(_("If restricting signups, an email is required."))
-        return email
-
     def save(self, account):
         account.restrict_domain_creation = self.cleaned_data.get('restrict_domain_creation', False)
         account.restrict_signup = self.cleaned_data.get('restrict_signup', False)
         account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
-        account.restrict_signup_email = self.cleaned_data.get('restrict_signup_email', '')
         account.save()
         return True

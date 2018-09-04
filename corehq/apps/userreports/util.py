@@ -132,15 +132,24 @@ def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=Fals
 
 
 def get_table_name(domain, table_id):
-    def _hash(domain, table_id):
-        return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
+    """
+    Returns bytes.
+    """
 
-    domain = domain.encode('unicode-escape')
-    table_id = table_id.encode('unicode-escape')
+    def _hash(domain, table_id):
+        return hashlib.sha1(
+            '{}_{}'.format(
+                hashlib.sha1(domain.encode('utf-8')).hexdigest(),
+                table_id
+            ).encode('utf-8')
+        ).hexdigest()[:8]
+
+    domain = domain.encode('unicode-escape').decode('utf-8')
+    table_id = table_id.encode('unicode-escape').decode('utf-8')
     return truncate_value(
         'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
         from_left=False
-    )
+    ).encode('utf-8')
 
 
 def is_ucr_table(table_name):
@@ -162,8 +171,8 @@ def truncate_value(value, max_length=63, from_left=True):
 
     if len(value) > max_length:
         short_hash = hashlib.sha1(value).hexdigest()[:hash_length]
-        return '{}_{}'.format(truncated_value, short_hash)
-    return value
+        return '{}_{}'.format(truncated_value.decode('utf-8'), short_hash)
+    return value.decode('utf-8')
 
 
 def get_ucr_class_name(id):

@@ -133,7 +133,7 @@ SQL_VIEWS_PATHS = [
 ]
 
 
-@periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 
@@ -294,7 +294,7 @@ def _update_aggregate_locations_tables(cursor):
         raise
 
 
-@task(queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
+@task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
 def icds_aggregation_task(self, date, func):
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
@@ -320,7 +320,7 @@ def icds_aggregation_task(self, date, func):
     celery_task_logger.info("Ended icds reports {} {}".format(date, func.__name__))
 
 
-@task(queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
+@task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
 def icds_state_aggregation_task(self, state_id, date, func):
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
@@ -472,7 +472,7 @@ def _agg_awc_table(day):
     ], day)
 
 
-@task(queue='icds_aggregation_queue')
+@task(serializer='pickle', queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date):
     # temporary soft assert to verify it's completing
     _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
@@ -480,7 +480,7 @@ def email_dashboad_team(aggregation_date):
     icds_data_validation.delay(aggregation_date)
 
 
-@periodic_task(
+@periodic_task(serializer='pickle',
     queue='background_queue',
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=21),
     acks_late=True
@@ -531,7 +531,7 @@ def _find_stagnant_cases(adapter):
     return query.all()
 
 
-@task(queue='icds_dashboard_reports_queue')
+@task(serializer='pickle', queue='icds_dashboard_reports_queue')
 def prepare_excel_reports(config, aggregation_level, include_test, beta, location, domain,
                           file_format, indicator):
     if indicator == CHILDREN_EXPORT:
@@ -569,7 +569,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = AWCInfrastructureExport(
             config=config,
             loc_level=aggregation_level,
-            show_test=include_test
+            show_test=include_test,
+            beta=beta,
         ).get_excel_data(location)
     elif indicator == BENEFICIARY_LIST_EXPORT:
         # this report doesn't use this configuration
@@ -598,7 +599,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
     }
 
 
-@task(queue='icds_dashboard_reports_queue')
+@task(serializer='pickle', queue='icds_dashboard_reports_queue')
 def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, year, couch_user):
     selected_date = date(year, month, 1)
     report_context = {
@@ -640,7 +641,7 @@ def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, yea
     }
 
 
-@task(queue='background_queue')
+@task(serializer='pickle', queue='background_queue')
 def icds_data_validation(day):
     """Checks all AWCs to validate that there will be no inconsistencies in the
     reporting dashboard.
@@ -752,7 +753,7 @@ def _get_value(data, field):
     return getattr(data, field) or default
 
 
-@periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
 def collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
     filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
@@ -791,7 +792,7 @@ def collect_inactive_awws():
     celery_task_logger.info("Ended updating the Inactive AWW")
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), queue='background_queue')
 def push_missing_docs_to_es():
     if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
         return

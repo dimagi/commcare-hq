@@ -13,8 +13,10 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.userreports.models import ReportConfiguration, StaticReportConfiguration
 from corehq.apps.userreports.reports.filters import specs
+from six.moves import zip
 
 COLUMN_PARAMS_ORDER = [
+    'comment',
     'display',
     'column_id',
     'description',
@@ -41,6 +43,7 @@ FILTER_SPECS = {
     'location_drilldown': specs.LocationDrilldownFilterSpec,
 }
 FILTER_PARAMS_ORDER = [
+    'comment',
     'display',
     'slug',
     'type',
@@ -92,7 +95,7 @@ def order_dict(dict_, order):
         key = item[0]
         return positions.get(key, key)
 
-    return OrderedDict(sorted(dict_.items(), key=get_sort_key))
+    return OrderedDict(sorted(list(dict_.items()), key=get_sort_key))
 
 
 def clean_spec(spec, wrapped):

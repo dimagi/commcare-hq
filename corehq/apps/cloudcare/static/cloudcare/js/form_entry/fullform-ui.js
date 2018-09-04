@@ -1,4 +1,3 @@
-/* globals CodeMirror */
 var Formplayer = {
     Utils: {},
     Const: {},

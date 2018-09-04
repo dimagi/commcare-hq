@@ -26,7 +26,7 @@ hqDefine('hqadmin/js/domain_faceted_report', function () {
     $(function() {
         for (var key in visualizations) {
             if (visualizations.hasOwnProperty(key)) {
-                visualizations[key].viz = new hqImport("hqadmin/js/visualizations").HQVisualizations({
+                visualizations[key].viz = hqImport("hqadmin/js/visualizations").hqVisualizations({
                     chart_name: key,
                     histogram_type: key,
                     xaxis_label: visualizations[key].xaxis_label,

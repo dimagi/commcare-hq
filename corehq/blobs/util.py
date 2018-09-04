@@ -84,6 +84,16 @@ class document_method(object):
         return self.func.__get__(obj, owner)
 
 
+class classproperty(object):
+    """https://stackoverflow.com/a/5192374/10840"""
+
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, obj, owner):
+        return self.func(owner)
+
+
 def random_url_id(nbytes):
     """Get a random URL-safe ID string
 

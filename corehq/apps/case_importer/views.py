@@ -76,7 +76,8 @@ def excel_config(request, domain):
 
     # stash content in the default storage for subsequent views
     case_upload = CaseUpload.create(uploaded_file_handle,
-                                    filename=uploaded_file_handle.name)
+                                    filename=uploaded_file_handle.name,
+                                    domain=domain)
 
     request.session[EXCEL_SESSION_ID] = case_upload.upload_id
     try:
@@ -159,9 +160,8 @@ def excel_fields(request, domain):
         search_column = request.POST['search_column']
     except MultiValueDictKeyError:
         # this is only true if your configuration is messed up in an irreparable way
-        messages.error(request, _('It looks like you may have accessed this page from a stale page. '
-                                  'Please start over.'))
-        return _spreadsheet_expired(request, domain)
+        messages.error(request, _('The excel file you are trying to import does not have any headers.'))
+        return HttpResponseRedirect(base.ImportCases.get_url(domain))
 
     search_field = request.POST['search_field']
     create_new_cases = request.POST.get('create_new_cases') == 'on'
@@ -228,9 +228,4 @@ def excel_commit(request, domain):
 
     request.session.pop(EXCEL_SESSION_ID, None)
 
-    return HttpResponseRedirect(base.ImportCases.get_url(domain))
-
-
-def _spreadsheet_expired(req, domain):
-    messages.error(req, _('Sorry, your session has expired. Please start over and try again.'))
     return HttpResponseRedirect(base.ImportCases.get_url(domain))

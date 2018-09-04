@@ -166,6 +166,8 @@ class WrappedAttribs(object):
 class WrappedNode(object):
 
     def __init__(self, xml, namespaces=namespaces):
+        if isinstance(xml, six.binary_type):
+            xml = xml.decode('utf-8')
         if isinstance(xml, six.string_types):
             self.xml = parse_xml(xml) if xml else None
         else:
@@ -181,8 +183,7 @@ class WrappedNode(object):
 
     def find(self, xpath, *args, **kwargs):
         if self.xml is not None:
-            return WrappedNode(self.xml.find(
-                xpath.format(**self.namespaces), *args, **kwargs))
+            return WrappedNode(self.xml.find(xpath.format(**self.namespaces), *args, **kwargs))
         else:
             return WrappedNode(None)
 
@@ -282,7 +283,7 @@ class ItextNode(object):
     @property
     @memoized
     def rendered_values(self):
-        return sorted([str.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
+        return sorted([bytes.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
 
     def __repr__(self):
         return self.id
@@ -608,7 +609,11 @@ class XForm(WrappedNode):
         self._scheduler_case_updates_populated = False
 
     def __str__(self):
-        return ET.tostring(self.xml) if self.xml is not None else ''
+        text = ET.tostring(self.xml).decode('utf-8') if self.xml is not None else ''
+        if six.PY3:
+            return text
+        else:
+            return text.encode('utf-8')
 
     @property
     @raise_if_none("Can't find <model>")

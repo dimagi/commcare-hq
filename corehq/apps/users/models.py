@@ -1424,8 +1424,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return couch_user
 
     @classmethod
-    def from_django_user(cls, django_user):
-        return cls.get_by_username(django_user.username)
+    def from_django_user(cls, django_user, strict=False):
+        return cls.get_by_username(django_user.username, strict=strict)
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='',
