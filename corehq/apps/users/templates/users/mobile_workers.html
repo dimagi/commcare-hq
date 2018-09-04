@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "users/base_template.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -10,7 +10,7 @@
       href="{% static 'ui-select/dist/select.min.css' %}" />
 {% endblock %}
 
-{% block js %}
+{% block js %}{{ block.super }}
 <!--script src="{% static 'hqwebapp/js/pagination.ng.js' %}"></script>
 <script src="{% static 'users/js/mobile_workers.ng.js' %}"></script>
 <script src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
