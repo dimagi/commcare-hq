@@ -62,6 +62,7 @@ branches:
   - rn_miration_sms_language # Rohit Aug 30
   - jls/build-requirejs-by-html  # Jenny Sept 2
   - annual-pricing # Gabriella Sept 3
+  - sr-batch-ucrpillow # Sravan Sept 4
 submodules:
   submodules/django-digest-src:
     branches: []
