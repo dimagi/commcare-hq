@@ -20,88 +20,141 @@
 {% endif %}
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/pricing_table.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'accounting/js/pricing_table' %}
 
 {% block form_content %}
 {% initial_page_data 'editions' editions %}
-{% initial_page_data 'current_edition' current_edition %}
-{% initial_page_data 'is_renewal' is_renewal|BOOL %}
+{% initial_page_data 'planOptions' plan_options|JSON %}
+{% initial_page_data 'currentPlan' current_edition %}
 {% registerurl 'email_on_downgrade' domain %}
-<p class="lead">
+
+<p class="lead text-center">
     {{ lead_text|safe }}
+    <a href="{% prelogin_url 'public_pricing' %}" target="_blank">
+      {% trans "Learn More" %}
+    </a>
 </p>
-<p>
-<i class="fa fa-info-circle"></i>
-{% blocktrans %}
-    <a href="https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details" target="_blank">Visit the Help Site
-    to learn more</a> about each plan.
-{% endblocktrans %}
-</p>
-<div class="row">
-    <div class="col-sm-12" id="pricing-table">
-        <form
-            {% if is_renewal %}
-                action="{% url 'domain_subscription_renewal_confirmation' domain %}"
-            {% else %}
-                action="{% url 'confirm_selected_plan' domain %}"
-            {% endif %}
-            method="post"
-            class="form"
-        >{% csrf_token %}
-            {% if is_renewal %}
-            <input type="hidden" name="from_plan_page" value="true">
-            {% endif %}
-            <input type="hidden" name="plan_edition" data-bind="value: selected_edition">
 
-            {% include 'accounting/partials/pricing_table.html' %}
+<section id="plans">
 
+    <p class="community-plan-notice"
+       data-bind="visible: isCurrentPlanCommunity">
+        {% blocktrans %}
+            You are currently on the FREE CommCare Community plan.
+        {% endblocktrans %}
+    </p>
 
-            <div class="form-actions" data-bind="visible: isSubmitVisible">
-                <div class="col-xs-offset-2">
-                    <button type="submit" class="btn btn-primary btn-lg" data-bind="click: openDowngradeModal">{% trans 'Next' %}</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-
-<script type="text/html" id="select-plan-template">
-    <!-- ko foreach: pt.editions -->
-    <div class="col-xs-2"
-         data-bind="css: {
-            'pricing-col-community': isCommunity(),
-            'pricing-col-standard': isStandard(),
-            'pricing-col-pro': isPro(),
-            'pricing-col-advanced': isAdvanced(),
-            'pricing-col-enterprise': isEnterprise()
-        }">
-        <label class="pricing-select-plan-radio pricing-header"
-               data-bind="visible: $parent.pt.isRenewal||notCurrentEdition">
-            <input type="radio" data-bind="
-                attr: {value: slug, name: $parent.radio_group_name},
-                checked: $parent.pt.selected_edition
-            " >
+    <p class="switch-label text-center">
+        {% trans "Pay Annually" %}
+        <label class="switch">
+            <input type="checkbox" id="pricing-toggle" data-bind="{checked: showMonthlyPricing}">
+            <span class="slider round slider-blue slider-blue-on"></span>
         </label>
-        <div data-bind="visible: !$parent.pt.isRenewal">
-            <div class="pricing-current-plan pricing-header"
-                 data-bind="visible: currentEdition, click: $root.selectCurrentPlan()">
-                {% trans 'Current Plan' %}
+        {% trans "Pay Monthly" %}
+    </p>
+
+    <p class="text-center">
+        {% blocktrans %}
+          Save close to 20% when you pay annually.
+        {% endblocktrans %}
+    </p>
+
+    <p class="refund-text text-center"
+       data-bind="css: refundCss">
+        <i class="fa fa-check"></i>
+        <a href="https://dimagi.com/terms/latest/tos/"
+           class="check-icon blue">
+            {% trans '90 day refund policy' %}
+        </a>
+    </p>
+
+    <div class="row select-plan-row">
+        <!-- ko foreach: planOptions -->
+        <div class="col-xs-3">
+            <a href="#"
+               class="tile"
+               data-bind="css: cssClass, click: selectPlan">
+                <h3 data-bind="text: name"></h3>
+                <p class="pricing-type"
+                   data-bind="text: pricingTypeText, css: pricingTypeCssClass"></p>
+
+                <p class="plan-price" data-bind="text: displayPrice"></p>
+                <p class="plan-monthly-label">{% trans "monthly" %}</p>
+                <p class="plan-desc" data-bind="text: description"></p>
+
+                <div class="btn btn-current"
+                     data-bind="visible: isCurrentPlan">
+                    {% trans "Current Plan" %}
+                </div>
+
+                <div class="btn btn-select"
+                     data-bind="visible: !isCurrentPlan()">
+                    {% trans "Select Plan" %}
+                </div>
+            </a>
+        </div>
+        <!-- /ko -->
+    </div>
+
+    <div class="row"
+         data-bind="visible: !isCurrentPlanCommunity()">
+        <div class="col-xs-4 col-xs-offset-4">
+            <a href="#"
+               class="tile tile-community"
+               data-bind="click: selectCommunityPlan, css: communityCss">
+                <h4>
+                    {% blocktrans %}
+                        Select FREE CommCare Community Plan
+                    {% endblocktrans %}
+                </h4>
+                <p>
+                    {% blocktrans %}
+                        This does not include any paid features.
+                    {% endblocktrans %}
+                </p>
+
+                <div class="btn btn-select">
+                    {% trans "Select Plan" %}
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+    <form class="form"
+          id="select-plan-form"
+          method="post"
+          data-bind="visible: showNext"
+          style="display: none;"
+          action="{% url 'confirm_selected_plan' domain %}">
+        {% csrf_token %}
+
+        <input type="hidden" name="plan_edition" data-bind="value: selectedPlan">
+        <div class="form-actions" data-bind="visible: isSubmitVisible">
+            <div class="text-center">
+                <button type="submit"
+                        class="btn btn-primary btn-lg"
+                        data-bind="click: openDowngradeModal">
+                  {% trans 'Next' %}
+                </button>
             </div>
         </div>
-    </div>
-    <!-- /ko -->
-</script>
+    </form>
 
-<script type="text/html" id="blank-row-template">
-    <td></td>
-    <th class="th-feature"></th>
-    <!-- ko foreach: pt.editions -->
-    <td data-bind="attr: {class: col_css, 'data-edition': slug}"></td>
-    <!-- /ko -->
-</script>
+    <form action="{% url 'annual_plan_request_quote' domain %}"
+          data-bind="visible: !showNext()">
+        {% csrf_token %}
+        <input type="hidden" name="plan_edition" data-bind="value: selectedPlan">
+        <div class="form-actions ">
+            <div class="text-center">
+                <button class="btn btn-primary btn-lg" data-bind="click: contactSales">
+                  {% trans 'Talk to Sales' %}
+                </button>
+            </div>
+        </div>
+    </form>
+
+</section>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
@@ -128,5 +181,5 @@
             </div>
         </div>
     </div>
-</script>
+</div>
 {% endblock %}

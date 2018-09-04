@@ -21,7 +21,6 @@ from corehq.apps.accounting.models import (
     Currency,
     DefaultProductPlan,
     SoftwarePlanEdition,
-    SoftwarePlanVersion,
     Subscriber,
     Subscription,
     SubscriptionType,
@@ -36,8 +35,6 @@ from six.moves import range
 @unit_testing_only
 @nottest
 def bootstrap_test_software_plan_versions():
-    DefaultProductPlan.objects.all().delete()
-    SoftwarePlanVersion.objects.all().delete()
     ensure_plans(BOOTSTRAP_CONFIG_TESTING, verbose=False, apps=apps)
 
 
