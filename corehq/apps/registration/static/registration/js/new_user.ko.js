@@ -138,7 +138,7 @@ hqDefine('registration/js/new_user.ko', function () {
                     validator: function (val, params, callback) {
                         if (self.email.isValid()) {
                             _private.rmi(
-                                "check_username_availability",
+                                "check_username_availability",  // TODO: use new view
                                 {email: val},
                                 {
                                     success: function (result) {
