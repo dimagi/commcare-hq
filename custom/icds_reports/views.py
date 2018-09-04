@@ -30,7 +30,11 @@ from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
-from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.decorators import (
+    use_daterangepicker,
+    use_select2,
+)
+from corehq.apps.translations.views import ConvertTranslations, BaseTranslationsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
@@ -45,7 +49,6 @@ from custom.icds.tasks import (
 )
 from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
-from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
@@ -584,7 +587,8 @@ class AwcReportsView(BaseReportView):
                 domain,
                 config,
                 tuple(current_month.timetuple())[:3],
-                include_test
+                include_test,
+                beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'beneficiary':
             if 'awc_id' in config:
@@ -1595,10 +1599,15 @@ class ICDSImagesAccessorAPI(View):
 
 @location_safe
 @method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
-class ICDSAppTranslations(BaseDomainView):
-    page_title = ugettext_lazy('ICDS App Translations')
-    urlname = 'icds_app_translations'
+class AppTranslations(BaseTranslationsView):
+    page_title = ugettext_lazy('App Translations')
+    urlname = 'app_translations'
     template_name = 'icds_reports/icds_app/app_translations.html'
+    section_name = ugettext_lazy("Translations")
+
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(AppTranslations, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -1610,21 +1619,21 @@ class ICDSAppTranslations(BaseDomainView):
 
     @property
     def page_context(self):
-        transifex_details_available = transifex_details_available_for_domain(self.domain)
-        context = {'integration_available': transifex_details_available}
-        if transifex_details_available:
+        context = super(AppTranslations, self).page_context
+        if context['transifex_details_available']:
             context['translations_form'] = self.translations_form
         return context
 
     def section_url(self):
-        return
+        return reverse(ConvertTranslations.urlname, args=self.args, kwargs=self.kwargs)
 
     def transifex(self, domain, form_data):
         transifex_project_slug = form_data.get('transifex_project_slug')
         source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
                          form_data['version'],
-                         use_version_postfix='yes' in form_data['use_version_postfix'])
+                         use_version_postfix='yes' in form_data['use_version_postfix'],
+                         update_resource='yes' in form_data['update_resource'])
 
     def perform_push_request(self, request, form_data):
         if form_data['target_lang']:
@@ -1692,9 +1701,7 @@ class ICDSAppTranslations(BaseDomainView):
                 return self.perform_delete_request(request, form_data)
 
     def post(self, request, *args, **kwargs):
-        if not transifex_details_available_for_domain(self.domain):
-            messages.error(request, _('Transifex account not set up for this environment'))
-        else:
+        if self.transifex_integration_enabled(request):
             form = self.translations_form
             if form.is_valid():
                 form_data = form.cleaned_data

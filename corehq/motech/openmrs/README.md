@@ -309,23 +309,24 @@ skew towards false negatives (Type I errors). In other words, it is much
 better not to choose a patient than to choose the wrong patient.
 
 
-Provider UUID
--------------
+Provider
+--------
 
 In OpenMRS, observations about a patient, like their height or their
 blood pressure, can be associated with a data provider. A "provider" is
 usually an OpenMRS user who can enter data.
 
 It is useful to label data from CommCare. OpenMRS Configuration has a
-field called "Provider UUID", and the value entered here is stored in
-OpenmrsConfig.openmrs_provider.
+field called "Provider's Person UUID", and the value entered here is
+stored in OpenmrsConfig.openmrs_provider.
 
 There are three different kinds of entities involved in setting up a
 provider in OpenMRS: A Person instance; a Provider instance; and a User
 instance.
 
-**NOTE**: The value that OpenMRS expects in the "Provider UUID" field is
-a **Person UUID**.
+**NOTE**: The value that OpenMRS expects in the "Provider's Person UUID"
+field is a **Person UUID**, not a **Provider UUID**. The distinction is
+not obvious in the OpenMRS interface.
 
 Use the following steps to create a provider for CommCare:
 
@@ -339,8 +340,8 @@ binary about it. You will have to decided whether CommCare is male or
 female. When you are done, click "Create Person".
 
 Make a note of the greyed UUID at the bottom of the next page. This is
-the value you will need for "Provider UUID" in the configuration for the
-OpenMRS Repeater.
+the value you will need for "Provider's Person UUID" in the
+configuration for the OpenMRS Repeater.
 
 Go back to the OpenMRS Administration page, choose "Manage Providers"
 and click "Add Provider". In the "Person" field, type the name of the

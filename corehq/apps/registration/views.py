@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 import logging
+import re
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -173,11 +174,9 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 if domain in account.enterprise_restricted_signup_domains:
                     restricted_by_domain = domain
                     message = account.restrict_signup_message
-                    message += _("""
-                        <br>Please contact <a href='mailto:{}?subject={}'>{}</a> to register for an account.
-                    """).format(account.restrict_signup_email,
-                                _("CommCareHQ account request"),
-                                account.restrict_signup_email)
+                    regex = r'(\b[a-zA-Z0-9_.+%-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b)'
+                    subject = _("CommCareHQ account request")
+                    message = re.sub(regex, "<a href='mailto:\\1?subject={}'>\\1</a>".format(subject), message)
                     break
         return {
             'isValid': message is None,
@@ -203,6 +202,7 @@ class UserRegistrationView(BasePageView):
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
         ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, request).update_response(response)
+        ab_tests.ABTest(ab_tests.DEMO_CTA, request).update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -226,11 +226,14 @@ class UserRegistrationView(BasePageView):
             'email': self.prefilled_email,
             'atypical_user': True if self.atypical_user else False
         }
+        ab_test = ab_tests.ABTest(ab_tests.DEMO_CTA, self.request)
+        demo_test = ab_test.context['version'] == ab_tests.DEMO_CTA_OPTION_ON
         return {
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
+            'demo_test': demo_test,
         }
 
     @property
@@ -380,7 +383,7 @@ def resend_confirmation(request):
 
 @transaction.atomic
 def confirm_domain(request, guid=''):
-    with CriticalSection('confirm_domain_' + guid):
+    with CriticalSection(['confirm_domain_' + guid]):
         error = None
         # Did we get a guid?
         if not guid:

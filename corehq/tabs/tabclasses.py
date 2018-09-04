@@ -71,6 +71,8 @@ from memoized import memoized
 from django_prbac.utils import has_privilege
 from six.moves import map
 
+from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
+
 
 class ProjectReportsTab(UITab):
     title = ugettext_noop("Reports")
@@ -845,6 +847,11 @@ class ApplicationsTab(UITab):
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
+        if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                _('Translations'),
+                url=(reverse('convert_translations', args=[self.domain])),
+            ))
         return submenu_context
 
     @property
@@ -1417,6 +1424,35 @@ class EnterpriseSettingsTab(UITab):
                 'url': reverse('enterprise_settings', args=[self.domain]),
             },
         ]))
+        return items
+
+
+class TranslationsTab(UITab):
+    title = ugettext_noop('Translations')
+
+    url_prefix_formats = (
+        '/a/{domain}/translations/',
+    )
+    _is_viewable = False
+
+    @property
+    def sidebar_items(self):
+        items = super(TranslationsTab, self).sidebar_items
+        items.append((_('Translations'), [
+            {'url': reverse('convert_translations', args=[self.domain]),
+             'title': 'Convert Translations'
+             }
+        ]))
+        if transifex_details_available_for_domain(self.domain):
+            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
+                items.append((_('Translations'), [
+                    {'url': reverse('app_translations', args=[self.domain]),
+                     'title': 'Manage App Translations'
+                     },
+                    {'url': reverse('pull_resource', args=[self.domain]),
+                     'title': 'Pull Resource'
+                     }
+                ]))
         return items
 
 

@@ -1495,10 +1495,6 @@ class CaseReminderHandler(Document):
                     "must send to all child cases if child case recipients are chosen"
                 )
 
-        if (self.custom_content_handler and self.custom_content_handler not in
-            settings.ALLOWED_CUSTOM_CONTENT_HANDLERS):
-            raise IllegalModelStateException("unknown custom_content_handler")
-
         self.check_min_tick()
 
     def check_min_tick(self, minutes=60):

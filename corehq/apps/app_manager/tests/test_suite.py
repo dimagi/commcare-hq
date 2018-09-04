@@ -526,10 +526,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ),
         ]
 
-        key1_varname = hashlib.md5("gender = 'male' and age <= 21").hexdigest()[:8]
-        key2_varname = hashlib.md5("gender = 'female' and age <= 21").hexdigest()[:8]
-        key3_varname = hashlib.md5("gender = 'male' and age > 21").hexdigest()[:8]
-        key4_varname = hashlib.md5("gender = 'female' and age > 21").hexdigest()[:8]
+        key1_varname = hashlib.md5("gender = 'male' and age <= 21".encode('utf-8')).hexdigest()[:8]
+        key2_varname = hashlib.md5("gender = 'female' and age <= 21".encode('utf-8')).hexdigest()[:8]
+        key3_varname = hashlib.md5("gender = 'male' and age > 21".encode('utf-8')).hexdigest()[:8]
+        key4_varname = hashlib.md5("gender = 'female' and age > 21".encode('utf-8')).hexdigest()[:8]
 
         icon_mapping_spec = """
         <partial>
@@ -604,8 +604,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         ]
 
         key1_varname = '10'
-        key2_varname = hashlib.md5('age > 50').hexdigest()[:8]
-        key3_varname = hashlib.md5('15%').hexdigest()[:8]
+        key2_varname = hashlib.md5('age > 50'.encode('utf-8')).hexdigest()[:8]
+        key3_varname = hashlib.md5('15%'.encode('utf-8')).hexdigest()[:8]
 
         icon_mapping_spec = """
             <partial>

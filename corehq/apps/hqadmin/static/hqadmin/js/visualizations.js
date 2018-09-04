@@ -19,30 +19,30 @@ hqDefine("hqadmin/js/visualizations", function() {
         return b;
     };
 
-    var HQVisualizations = function (options) {
+    var hqVisualizations = function (options) {
         var self = {};
-        self.chart_name = options.chart_name;
-        self.xaxis_label = options.xaxis_label;
-        self.histogram_type = options.histogram_type;
-        self.ajax_url = options.ajax_url;
+        self.chartName = options.chart_name;
+        self.xaxisLabel = options.xaxis_label;
+        self.histogramType = options.histogram_type;
+        self.ajaxUrl = options.ajax_url;
         self.data = options.data || {};
-        self.should_update_url = options.should_update_url === undefined ? false : options.should_update_url;
+        self.shouldUpdateUrl = options.should_update_url === undefined ? false : options.should_update_url;
         self.interval = options.interval || "day";
         self.datefield = options.datefield;
-        self.is_cumulative = options.is_cumulative || null;
-        self.get_request_params = options.get_request_params || {};
+        self.isCumulative = options.is_cumulative || null;
+        self.getRequestParams = options.get_request_params || {};
 
         self.charts = { "bar-chart": null, "cumulative-chart": null, "stacked-cumulative-chart": null };
-        self.charts_id = '#' + self.chart_name + '-charts';
-        self.chart_tabs_id = '#' + self.chart_name + '-chart-tabs';
+        self.chartsId = '#' + self.chartName + '-charts';
+        self.chartTabsId = '#' + self.chartName + '-chart-tabs';
 
-        function update_active_chart() {
+        function updateActiveChart() {
             // for some reason nvd3 doesn't fully animate the charts, force this update after the chart is loaded
-            var active_chart_name = $(self.chart_tabs_id + ' li.active a').attr('href').substr(1); // remove '#'
-            _update_chart_if_exists(self.charts[active_chart_name]);
+            var activeChartName = $(self.chartTabsId + ' li.active a').attr('href').substr(1); // remove '#'
+            _updateChartIfExists(self.charts[activeChartName]);
         }
 
-        function _update_chart_if_exists(chart) {
+        function _updateChartIfExists(chart) {
             if (chart) {
                 chart.update();
             }
@@ -51,7 +51,7 @@ hqDefine("hqadmin/js/visualizations", function() {
         self.init = function() {
             $(function() {
                 // load new chart when daterange is clicked
-                $(self.chart_tabs_id).on('submit', '.reload-graph-form', function() {
+                $(self.chartTabsId).on('submit', '.reload-graph-form', function() {
                     var $this = $(this);
                     var startdate = $this.find('[name="startdate"]').val();
                     var enddate = $this.find('[name="enddate"]').val();
@@ -66,61 +66,61 @@ hqDefine("hqadmin/js/visualizations", function() {
                         self.datefield = datefield;
                     }
 
-                    self.loadChartData(update_active_chart, startdate, enddate);
+                    self.loadChartData(updateActiveChart, startdate, enddate);
 
-                    if (self.should_update_url) {
+                    if (self.shouldUpdateUrl) {
                         var params = getUrlParams($(location).attr('search').substr(1));
                         params['datefield'] = datefield || "";
                         params['interval'] = interval;
                         params['startdate'] = startdate;
                         params['enddate'] = enddate;
 
-                        var new_url = '?' + $.param(params) + window.location.hash;
-                        history.pushState(null, "Reloaded Chart", new_url);
+                        var newUrl = '?' + $.param(params) + window.location.hash;
+                        history.pushState(null, "Reloaded Chart", newUrl);
 
                         // keep the urls for the other data visualizations consistent with this datespan
                         $(".viz-url").each(function() {
-                            var new_href = $(this).attr('href').split("?")[0] + new_url;
-                            $(this).attr('href', new_href);
+                            var newHref = $(this).attr('href').split("?")[0] + newUrl;
+                            $(this).attr('href', newHref);
                         });
                     }
 
                     return false;
                 });
-                $(self.chart_tabs_id + ' .reload-graph-form').submit();
+                $(self.chartTabsId + ' .reload-graph-form').submit();
 
                 // load chart if not already visible on the screen
-                $(self.chart_tabs_id).on('click', 'a[data-toggle="hash-tab"]', function(){
+                $(self.chartTabsId).on('click', 'a[data-toggle="hash-tab"]', function(){
                     $('.nvd3-chart').hide();
                     var $chart = $($(this).attr('href')).children('.nvd3-chart');
                     $chart.show().removeClass('hidden');
                     $(window).trigger('resize');
                     var chart = self.charts[$chart.parents('.tab-pane').attr('id')];
-                    _update_chart_if_exists(chart); // for some reason nvd3 doesn't fully animate the charts, force this update
+                    _updateChartIfExists(chart); // for some reason nvd3 doesn't fully animate the charts, force this update
                 });
             });
-            return this;
+            return self;
         };
 
-        self.loadChartData = function(callback_fn, startdate, enddate) {
-            var $loading = $(self.charts_id + ' .loading');
-            var $error = $(self.charts_id + ' .error');
-            var $charts = $(self.charts_id + ' .nvd3-chart');
+        self.loadChartData = function(callbackFn, startdate, enddate) {
+            var $loading = $(self.chartsId + ' .loading');
+            var $error = $(self.chartsId + ' .error');
+            var $charts = $(self.chartsId + ' .nvd3-chart');
             var data = {};
 
-            $(self.charts_id + " .no-data").hide();
+            $(self.chartsId + " .no-data").hide();
             $error.hide();
             $loading.show().removeClass('hidden');
             $(window).trigger('resize');  // redraw graph
 
-            var svg_width = $(self.charts_id + " .tab-pane.active").width();
+            var svgWidth = $(self.chartsId + " .tab-pane.active").width();
             $charts.each(function(){
                 // hack: need to explicitly set the width to a pixel value because nvd3 has issues when it's set to 100%
-                var $svg_ele = $("<svg style='height:320px;'> </svg>").width(svg_width);
-                $(this).hide().html('').append($svg_ele); // create a new svg element to stop update issues
+                var $svgEle = $("<svg style='height:320px;'> </svg>").width(svgWidth);
+                $(this).hide().html('').append($svgEle); // create a new svg element to stop update issues
             });
 
-            data["histogram_type"] = self.histogram_type;
+            data["histogram_type"] = self.histogramType;
             data["interval"] = self.interval;
 
             if (self.datefield) {
@@ -134,21 +134,21 @@ hqDefine("hqadmin/js/visualizations", function() {
                 data["startdate"] = startdate;
             }
 
-            if (!$.isEmptyObject(self.get_request_params)) {
-                data['get_request_params'] = self.get_request_params;
+            if (!$.isEmptyObject(self.getRequestParams)) {
+                data['get_request_params'] = self.getRequestParams;
             }
 
-            if (self.is_cumulative !== null) {
-                data['is_cumulative'] = self.is_cumulative;
+            if (self.isCumulative !== null) {
+                data['is_cumulative'] = self.isCumulative;
             }
 
             _.extend(self.data, data);
 
-            $.getJSON(self.ajax_url, self.data,
+            $.getJSON(self.ajaxUrl, self.data,
                 function(d) {
                     var startdate = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2]));
                     var enddate = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2]));
-                    self.charts = loadCharts(self.chart_name, self.xaxis_label, d.histo_data, d.initial_values,
+                    self.charts = loadCharts(self.chartName, self.xaxisLabel, d.histo_data, d.initial_values,
                         startdate.getTime(), enddate.getTime(), self.interval);
                     $loading.hide();
                     $charts.show().removeClass('hidden');
@@ -156,30 +156,30 @@ hqDefine("hqadmin/js/visualizations", function() {
 
                     _.each(self.charts, function(chart, name) {
                         if (chart === null) {
-                            $("#" + self.chart_name + "-" + name + " svg").hide();
-                            $("#" + self.chart_name + "-" + name + " .no-data").show().removeClass('hidden');
+                            $("#" + self.chartName + "-" + name + " svg").hide();
+                            $("#" + self.chartName + "-" + name + " .no-data").show().removeClass('hidden');
                             $(window).trigger('resize');  // redraw graph
                         }
                     });
 
                     // set the date fields if they're not already set
-                    var $startdate_field = $("#" + self.chart_name + "-startdate");
-                    var $enddate_field = $("#" + self.chart_name + "-enddate");
-                    var $interval_field = $("#" + self.chart_name + "-interval");
-                    if (!$startdate_field.val()) {
-                        $startdate_field.val(startdate.toISOString().substr(0, 10)); // substr bc date strs are 10 chars
+                    var $startdateField = $("#" + self.chartName + "-startdate");
+                    var $enddateField = $("#" + self.chartName + "-enddate");
+                    var $intervalField = $("#" + self.chartName + "-interval");
+                    if (!$startdateField.val()) {
+                        $startdateField.val(startdate.toISOString().substr(0, 10)); // substr bc date strs are 10 chars
                     }
-                    if (!$enddate_field.val()) {
-                        $enddate_field.val(enddate.toISOString().substr(0, 10));
+                    if (!$enddateField.val()) {
+                        $enddateField.val(enddate.toISOString().substr(0, 10));
                     }
-                    if (!$interval_field.val()) {
-                        $interval_field.val(self.interval);
+                    if (!$intervalField.val()) {
+                        $intervalField.val(self.interval);
                     }
 
-                    d3.selectAll(self.charts_id + ' g.nv-x.nv-axis g text').each(insertLinebreaks);
+                    d3.selectAll(self.chartsId + ' g.nv-x.nv-axis g text').each(insertLinebreaks);
 
-                    if (callback_fn) {
-                        callback_fn();
+                    if (callbackFn) {
+                        callbackFn();
                     }
                 }
             ).fail(function() {
@@ -192,6 +192,6 @@ hqDefine("hqadmin/js/visualizations", function() {
     };
 
     return {
-        HQVisualizations: HQVisualizations,
+        hqVisualizations: hqVisualizations,
     };
 });

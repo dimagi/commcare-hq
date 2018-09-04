@@ -5,7 +5,7 @@ from soil import DownloadBase
 from celery.task import task
 
 
-@task
+@task(serializer='pickle')
 def fixture_upload_async(domain, download_id, replace):
     task = fixture_upload_async
     DownloadBase.set_progress(task, 0, 100)
@@ -17,7 +17,7 @@ def fixture_upload_async(domain, download_id, replace):
     }
 
 
-@task
+@task(serializer='pickle')
 def fixture_download_async(prepare_download, *args, **kw):
     task = fixture_download_async
     DownloadBase.set_progress(task, 0, 100)

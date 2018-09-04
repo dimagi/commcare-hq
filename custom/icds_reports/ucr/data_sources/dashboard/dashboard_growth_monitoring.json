@@ -6,7 +6,7 @@
   "server_environment": [
     "softlayer",
     "icds-new",
-    "localdev"
+    "icds"
   ],
   "config": {
     "table_id": "static-dashboard_growth_monitoring_forms",
