@@ -595,7 +595,10 @@ class NewMobileWorkerForm(forms.Form):
                 _('Basic Information'),
                 crispy.Field(
                     'username',
-                    data_bind='value: mobileWorker.username',
+                    data_bind='value: mobileWorker.username, '
+                              'koValidationStateFeedback: { '
+                              '   validator: mobileWorker.username '
+                              '}',
                     # TODO
                     #validate_username="",
                     # What this says is, update as normal or when the element
@@ -609,16 +612,26 @@ class NewMobileWorkerForm(forms.Form):
                 ),
                 crispy.Field(
                     'first_name',
-                    data_bind='value: mobileWorker.first_name',
+                    data_bind='value: mobileWorker.first_name, '
+                              'koValidationStateFeedback: { '
+                              '   validator: mobileWorker.first_name '
+                              '}',
                 ),
                 crispy.Field(
                     'last_name',
-                    data_bind='value: mobileWorker.last_name',
+                    data_bind='value: mobileWorker.last_name, '
+                              'koValidationStateFeedback: { '
+                              '   validator: mobileWorker.last_name '
+                              '}',
                 ),
                 location_field,
                 crispy.Field(
                     'password',
-                    data_bind="value: mobileWorker.password, valueUpdate: 'input'",
+                    data_bind='value: mobileWorker.password, '
+                              'valueUpdate: \'input\', '
+                              'koValidationStateFeedback: { '
+                              '   validator: mobileWorker.first_name '
+                              '}',
                 ),
             )
         )
