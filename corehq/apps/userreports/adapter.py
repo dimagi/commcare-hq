@@ -20,9 +20,6 @@ class IndicatorAdapter(object):
     def drop_table(self):
         raise NotImplementedError
 
-    def refresh_table(self):
-        raise NotImplementedError
-
     @unit_testing_only
     def clear_table(self):
         raise NotImplementedError

@@ -44,6 +44,7 @@ import datetime
 
 from corehq.elastic import SIZE_LIMIT
 import six
+from six.moves import filter
 
 MISSING_KEY = None
 

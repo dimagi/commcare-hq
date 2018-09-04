@@ -106,6 +106,7 @@ from corehq.apps.export.utils import (
 import six
 from six.moves import range
 from six.moves import map
+from six.moves import filter
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 

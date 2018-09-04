@@ -104,7 +104,7 @@ class ShardAccessor(object):
     hash_key = b'\x00' * 16
 
     @staticmethod
-    def hash_doc_ids_sql(doc_ids):
+    def hash_doc_ids_sql_for_testing(doc_ids):
         """Get HASH for each doc_id from PostgreSQL
 
         This is used to ensure the python version is consistent with what's
@@ -123,7 +123,7 @@ class ShardAccessor(object):
             return {row.doc_id: row.hash for row in rows}
 
     @staticmethod
-    def hash_doc_uuid_sql(doc_uuid):
+    def hash_doc_uuid_sql_for_testing(doc_uuid):
         """Get the hash for a UUID from PostgreSQL
 
         This is used to ensure the python version is consistent with what's
