@@ -40,7 +40,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustment
 )
 from corehq.apps.api.es import ElasticAPIQuerySet
-from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
+from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, ToManyDictField
 from corehq.apps.api.resources import v0_4, v0_5
 from corehq.apps.api.util import get_obj, object_does_not_exist
 from corehq.apps.domain.models import Domain
@@ -1288,54 +1288,6 @@ class TestToOneDocumentField(TestCase):
         dehydrated_bundle = source_resource.full_dehydrate(bundle)
 
         self.assertEqual(dehydrated_bundle.data['other_model']['id'], 'bar')
-
-        
-class UseIfRequestedModel(object):
-
-    def __init__(self, id):
-        self.id = id
-
-
-class UseIfRequestedTestResource(Resource):
-    something = UseIfRequested(fields.CharField(attribute='id'))
-
-    def __init__(self, objs):
-        super(UseIfRequestedTestResource, self).__init__()
-        self.objs = objs
-
-    def obj_get_list(self):
-        return self.objs
-
-    def detail_uri_kwargs(self, bundle_or_obj):
-        return {
-            'pk': get_obj(bundle_or_obj).id
-        }
-
-    class Meta(object):
-        model_class = UseIfRequestedModel
-
-
-class TestUseIfRequested(TestCase):
-
-    def test_requested_use_in(self):
-        objs = [
-            UseIfRequestedModel(id='foo'),
-            UseIfRequestedModel(id='bar')
-        ]
-
-        test_resource = UseIfRequestedTestResource(objs)
-
-        bundle = test_resource.build_bundle(obj=objs[0])
-        dehydrated_bundle = test_resource.full_dehydrate(bundle)
-
-        self.assertFalse('id' in dehydrated_bundle.data)
-
-        bundle = test_resource.build_bundle(obj=objs[0])
-        bundle.request.GET['something__full'] = 'true'
-        dehydrated_bundle = test_resource.full_dehydrate(bundle)
-
-        self.assertTrue('something' in dehydrated_bundle.data)
-        self.assertEqual(dehydrated_bundle.data['something'], 'foo')
 
 
 class TestSingleSignOnResource(APIResourceTest):

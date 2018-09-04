@@ -9,7 +9,7 @@ from tastypie.exceptions import BadRequest
 
 from casexml.apps.case import xform as casexml_xform
 from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
-from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
+from corehq.apps.api.fields import ToManyDocumentsField, ToManyDictField, ToManyListDictField
 from corehq.apps.api.models import ESXFormInstance, ESCase
 from corehq.apps.api.resources import (
     CouchResourceMixin,
@@ -79,11 +79,9 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     def dehydrate_archived(self, bundle):
         return bundle.obj.is_archived
 
-    cases = UseIfRequested(
-        ToManyDocumentsField(
-            'corehq.apps.api.resources.v0_4.CommCareCaseResource',
-            attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)
-        )
+    cases = ToManyDocumentsField(
+        'corehq.apps.api.resources.v0_4.CommCareCaseResource',
+        attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)
     )
 
     attachments = fields.DictField(readonly=True, null=True)
@@ -223,28 +221,28 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
 
 
 class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
-    xforms_by_name = UseIfRequested(ToManyListDictField(
+    xforms_by_name = ToManyListDictField(
         'corehq.apps.api.resources.v0_4.XFormInstanceResource',
-        attribute='xforms_by_name'
-    ))
-
-    xforms_by_xmlns = UseIfRequested(ToManyListDictField(
-        'corehq.apps.api.resources.v0_4.XFormInstanceResource',
-        attribute='xforms_by_xmlns'
-    ))
-
-    child_cases = UseIfRequested(
-        ToManyDictField(
-            'corehq.apps.api.resources.v0_4.CommCareCaseResource',
-            attribute='child_cases'
-        )
+        attribute='xforms_by_name',
+        use_in=(lambda bundle: bundle.request.GET.get('xforms_by_name__full', 'false').lower() == 'true'),
     )
 
-    parent_cases = UseIfRequested(
-        ToManyDictField(
-            'corehq.apps.api.resources.v0_4.CommCareCaseResource',
-            attribute='parent_cases'
-        )
+    xforms_by_xmlns = ToManyListDictField(
+        'corehq.apps.api.resources.v0_4.XFormInstanceResource',
+        attribute='xforms_by_xmlns',
+        use_in=(lambda bundle: bundle.request.GET.get('xforms_by_xmlns__full', 'false').lower() == 'true'),
+    )
+
+    child_cases = ToManyDictField(
+        'corehq.apps.api.resources.v0_4.CommCareCaseResource',
+        attribute='child_cases',
+        use_in=(lambda bundle: bundle.request.GET.get('child_cases__full', 'false').lower() == 'true'),
+    )
+
+    parent_cases = ToManyDictField(
+        'corehq.apps.api.resources.v0_4.CommCareCaseResource',
+        attribute='parent_cases',
+        use_in=(lambda bundle: bundle.request.GET.get('parent_cases__full', 'false').lower() == 'true'),
     )
 
     domain = fields.CharField(attribute='domain')

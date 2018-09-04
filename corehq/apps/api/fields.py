@@ -19,39 +19,6 @@ def get_referenced_class(class_or_str):
         return class_or_str
 
 
-class AttributeOrCallable(object):
-
-    def __init__(self, attribute):
-        self.attribute = attribute
-
-    def __call__(self, v):
-        if isinstance(self.attribute, six.string_types):
-            accessor = lambda v: getattr(v, self.attribute)
-        else:
-            accessor = self.attribute
-
-        return accessor(v)
-
-
-class UseIfRequested(object):
-    '''
-    Returns a field identical to the one provided in
-    every way EXCEPT that this one will only appear in
-    the API output if <fieldname>__full=true is passed
-    on the querystring
-    '''
-
-    def __init__(self, underlying_field):
-        self.underlying_field = underlying_field
-
-    def use_in(self, bundle):
-        full_name = self.instance_name + '__full'
-        return bundle.request.GET.get(full_name, 'false').lower() == 'true'
-
-    def __getattr__(self, attr):
-        return getattr(self.underlying_field, attr)
-
-
 class CallableApiField(ApiField):
     """
     A minor fix to Tastypie's ApiField to actually support callable attributes in general.
@@ -87,7 +54,6 @@ class ToManyDocumentsField(ApiField):
                                                    unique=unique,
                                                    readonly=readonly)
         self.to = to
-        self.attribute = AttributeOrCallable(attribute)
 
     @property
     def to_class(self):
@@ -125,14 +91,16 @@ class ToManyDictField(ApiField):
     (tastypie.fields.ToManyField requires the Django ORM)
     '''
 
-    def __init__(self, to, attribute, blank=False, readonly=False, unique=False, help_text=None):
-        super(ToManyDictField, self).__init__(attribute=attribute,
-                                              blank=blank,
-                                              help_text=help_text,
-                                              unique=unique,
-                                              readonly=readonly)
+    def __init__(self, to, attribute, blank=False, readonly=False, unique=False, help_text=None, use_in='all'):
+        super(ToManyDictField, self).__init__(
+            attribute=attribute,
+            blank=blank,
+            help_text=help_text,
+            unique=unique,
+            readonly=readonly,
+            use_in=use_in,
+        )
         self.to = to
-        self.attribute = AttributeOrCallable(attribute)
 
     @property
     def to_class(self):
@@ -171,16 +139,16 @@ class ToManyListDictField(ApiField):
     (tastypie.fields.ToManyField requires the Django ORM)
     '''
 
-    def __init__(self, to, attribute, blank=False, readonly=False, unique=False, help_text=None):
+    def __init__(self, to, attribute, blank=False, readonly=False, unique=False, help_text=None, use_in='all'):
         super(ToManyListDictField, self).__init__(
             attribute=attribute,
             blank=blank,
             help_text=help_text,
             unique=unique,
-            readonly=readonly
+            readonly=readonly,
+            use_in=use_in,
         )
         self.to = to
-        self.attribute = AttributeOrCallable(attribute)
 
     @property
     def to_class(self):
@@ -222,7 +190,6 @@ class ToOneDocumentField(ApiField):
                                                    unique=unique,
                                                    readonly=readonly)
         self.to = to
-        self.attribute = AttributeOrCallable(attribute)
 
     @property
     def to_class(self):
