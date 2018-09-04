@@ -806,7 +806,7 @@ class AbstractExportFilterBuilder(object):
         self.domain_object = domain_object
         self.timezone = timezone
 
-    def get_user_ids_for_user_types(self, admin, unknown, demo, commtrack):
+    def get_user_ids_for_user_types(self, admin, unknown, demo, commtrack, active=False, deactivated=False):
         """
         referenced from CaseListMixin to fetch user_ids for selected user type
         :param admin: if admin users to be included
@@ -816,7 +816,7 @@ class AbstractExportFilterBuilder(object):
         :return: user_ids for selected user types
         """
         from corehq.apps.es import filters, users as user_es
-        if not any([admin, unknown, demo]):
+        if not any([admin, unknown, demo, commtrack, active, deactivated]):
             return []
 
         user_filters = [filter_ for include, filter_ in [
@@ -827,10 +827,18 @@ class AbstractExportFilterBuilder(object):
 
         query = (user_es.UserES()
                  .domain(self.domain_object.name)
-                 .OR(*user_filters)
-                 .show_inactive()
                  .remove_default_filter('not_deleted')
                  .fields([]))
+
+        if user_filters:
+            query = query.OR(*user_filters)
+
+        if active and deactivated:
+            query = query.show_inactive()
+
+        elif deactivated:
+            query = query.show_only_inactive()
+
         user_ids = query.run().doc_ids
 
         if commtrack:
@@ -882,14 +890,13 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         """
         if user_types:
             form_filters = []
-            if HQUserType.ACTIVE in user_types:
-                # TODO: This
-                form_filters.append(UserTypeFilter(BaseFilterExportDownloadForm._USER_MOBILE))
             user_ids = self.get_user_ids_for_user_types(
                 admin=HQUserType.ADMIN in user_types,
                 unknown=HQUserType.UNKNOWN in user_types,
                 demo=HQUserType.DEMO_USER in user_types,
                 commtrack=False,
+                active=HQUserType.ACTIVE in user_types,
+                deactivated=HQUserType.DEACTIVATED in user_types,
             )
             form_filters.append(FormSubmittedByFilter(user_ids))
             return form_filters
