@@ -19,10 +19,55 @@ hqDefine("users/js/mobile_worker_creation_models", function() {
         options = options || {};
         var self = hqImport("users/js/mobile_worker_models").mobileWorkerModel(options);
 
+        self.usernameAvailabilityStatus = ko.observable('');
+        self.usernameStatusMessage = ko.observable('');
+
         // TODO: translate messages
         // TODO: show messages styled
         // TODO: don't show messages when observable values are undefined
-        self.username.extend({ required: true, maxLength: options.username_max_length || 10 }); // TODO: get from ipd
+        // TODO: get username_max_length from ipd
+        self.username.extend({
+            required: true,
+            maxLength: options.username_max_length || 10,
+            validation: {
+                async: true,
+                validator: function (val, params, callback) {
+                    if (self.username() && self.username.isValid()) {
+                        self.usernameAvailabilityStatus(USERNAME_STATUS.PENDING);
+                        self.usernameStatusMessage('');
+                        // TODO: clear classes (visualFormCtrl.usernamePending in old code)
+                        $.ajax({
+                            method: 'GET',
+                            url: hqImport("hqwebapp/js/initial_page_data").reverse('check_username'),
+                            data: {
+                                username: self.username(),
+                            },
+                            success: function(data) {
+                                if (data.success) {
+                                    // TODO: visualFormCtrl.usernameSuccess();
+                                    self.usernameAvailabilityStatus(USERNAME_STATUS.AVAILABLE);
+                                    self.usernameStatusMessage(data.success);
+                                } else if (data.warning) {
+                                    // TODO: visualFormCtrl.usernameWarning();
+                                    self.usernameAvailabilityStatus(USERNAME_STATUS.AVAILABLE_WARNING);
+                                    self.usernameStatusMessage(data.warning);
+                                } else {
+                                    // TODO: visualFormCtrl.usernameError();
+                                    self.usernameAvailabilityStatus(USERNAME_STATUS.TAKEN);
+                                    self.usernameStatusMessage(data.error);
+                                }
+                            },
+                            error: function() {
+                                self.usernameAvailabilityStatus(USERNAME_STATUS.ERROR);
+                                self.usernameStatusMessage(gettext("Sorry, there was an issue communicating with the server."));
+                            },
+                        });
+                    } else {
+                        // TODO: clear classes (visualFormCtrl.usernameClear in old code)
+                    }
+                },
+            },
+        });
         self.first_name.extend({ maxLength: 30 });
         self.last_name.extend({ maxLength: 30 });
         self.password.extend({ required: { params: true, message: "custom message" } });
@@ -35,6 +80,12 @@ hqDefine("users/js/mobile_worker_creation_models", function() {
         self.isPending = ko.computed(function() { return self.creationStatus() === STATUS.PENDING; });
         self.isSuccess = ko.computed(function() { return self.creationStatus() === STATUS.SUCCESS; });
         self.isWarning = ko.computed(function() { return self.creationStatus() === STATUS.WARNING; });
+
+        self.usernameIsPending = ko.computed(function() { return self.usernameAvailabilityStatus() === USERNAME_STATUS.PENDING; });
+        self.usernameIsTaken = ko.computed(function() { return self.usernameAvailabilityStatus() === USERNAME_STATUS.TAKEN; });
+        self.usernameIsAvailable = ko.computed(function() { return self.usernameAvailabilityStatus() === USERNAME_STATUS.AVAILABLE; });
+        self.usernameIsWarning = ko.computed(function() { return self.usernameAvailabilityStatus() === USERNAME_STATUS.AVAILABLE_WARNING; });
+        self.usernameIsError = ko.computed(function() { return self.usernameAvailabilityStatus() === USERNAME_STATUS.ERROR; });
 
         return self;
     };
@@ -51,11 +102,12 @@ hqDefine("users/js/mobile_worker_creation_models", function() {
         self.mobileWorker.clear();
         self.initializeMobileWorker = function() {
             self.mobileWorker.clear();
+            self.mobileWorker.usernameAvailabilityStatus('');
             hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
 
         self.allowMobileWorkerCreation = ko.computed(function() {
-            return self.mobileWorker.isValid(); // || usernameAvailabilityStatus !== 'available' // TODO
+            return self.mobileWorker.isValid() && self.mobileWorker.usernameAvailabilityStatus() === USERNAME_STATUS.AVAILABLE;
         });
 
         self.submitNewMobileWorker = function() {
@@ -102,6 +154,8 @@ hqDefine("users/js/mobile_worker_creation_models", function() {
         };
 
         self.retryMobileWorker = function() {
+            self.mobileWorker.usernameAvailabilityStatus(USERNAME_STATUS.AVAILABLE);
+            self.mobileWorker.usernameStatusMessage(gettext('Username is available.'));
             console.log("do something");
         };
 

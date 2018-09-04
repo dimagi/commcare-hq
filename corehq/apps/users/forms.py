@@ -487,25 +487,25 @@ validate_username = EmailValidator(message=ugettext_lazy('Username contains inva
 
 
 _username_help = """
-<span ng-if="usernameAvailabilityStatus === 'pending'">
+<span data-bind="visible: mobileWorker.usernameIsPending">
     <i class="fa fa-circle-o-notch fa-spin"></i>
     %(checking)s
 </span>
-<span ng-if="usernameAvailabilityStatus === 'taken'"
+<span data-bind="visible: mobileWorker.usernameIsTaken"
       style="word-wrap:break-word;">
     <i class="fa fa-remove"></i>
-    {{ usernameStatusMessage }}
+    <span data-bind="text: mobileWorker.usernameStatusMessage"></span>
 </span>
-<span ng-if="usernameAvailabilityStatus === 'available'"
+<span data-bind="visible: mobileWorker.usernameIsAvailable"
       style="word-wrap:break-word;">
     <i class="fa fa-check"></i>
-    {{ usernameStatusMessage }}
+    <span data-bind="text: mobileWorker.usernameStatusMessage"></span>
 </span>
-<span ng-if="usernameAvailabilityStatus === 'warning'">
+<span data-bind="visible: mobileWorker.usernameIsWarning">
     <i class="fa fa-exclamation-triangle"></i>
-    {{ usernameStatusMessage }}
+    <span data-bind="text: mobileWorker.usernameStatusMessage"></span>
 </span>
-<span ng-if="usernameAvailabilityStatus === 'error'">
+<span data-bind="visible: mobileWorker.usernameIsError">
     <i class="fa fa-exclamation-triangle"></i>
     %(server_error)s
 </span>
@@ -519,7 +519,7 @@ class NewMobileWorkerForm(forms.Form):
     username = forms.CharField(
         max_length=50,
         required=True,
-        #help_text=_username_help,  # TODO
+        help_text=_username_help,
         label=ugettext_noop("Username"),
     )
     first_name = forms.CharField(
