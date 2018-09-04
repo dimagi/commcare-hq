@@ -206,7 +206,7 @@ class AppStringsBase(object):
         messages = {}
         for part in self.app_strings_parts(app, lang, for_default=for_default):
             messages.update(part)
-        return commcare_translations.dumps(messages).encode('utf-8')
+        return commcare_translations.dumps(messages)
 
     def app_strings_parts(self, app, lang, for_default=False):
         raise NotImplementedError()
@@ -271,7 +271,7 @@ class AppStringsBase(object):
         messages[key] = ("This form requires the user's location to be "
                          "marked as 'Tracks Stock'.")
 
-        return commcare_translations.dumps(messages).encode('utf-8')
+        return commcare_translations.dumps(messages)
 
 
 class DumpKnownAppStrings(AppStringsBase):
