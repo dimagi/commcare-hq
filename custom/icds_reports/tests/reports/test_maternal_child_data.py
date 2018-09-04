@@ -108,11 +108,11 @@ class TestMaternalChildData(TestCase):
                 "all": 4,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Of all the children born in the current month and enrolled for Anganwadi services, "
-                             "the percentage that had a birth weight less than 2500 grams. Newborns with Low "
-                             "Birth Weight are closely associated wtih foetal and neonatal mortality and "
-                             "morbidity, inhibited growth and cognitive development, and chronic diseases "
-                             "later in life. ",
+                "help_text": "Of all the children born and weighed in the current month and enrolled for "
+                             "Anganwadi services, the percentage that had a birth weight less than 2500 grams. "
+                             "Newborns with Low Birth Weight are closely associated with fetal and neonatal "
+                             "mortality and morbidity, inhibited growth and cognitive development, and chronic "
+                             "diseases later in life. ",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 2,
                 "label": "Newborns with Low Birth Weight"

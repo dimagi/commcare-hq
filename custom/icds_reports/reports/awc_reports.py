@@ -534,9 +534,11 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Newborns with Low Birth Weight'),
                     'help_text': _(
-                        "Of all the children born in the current month, the percentage that had a birth weight "
-                        "less than 2500 grams. Newborns with Low Birth Weight are closely associated wtih foetal "
-                        "and neonatal mortality and morbidity, inhibited growth and cognitive development, "
+                        "Of all the children born and weighed in the current month and enrolled for Anganwadi "
+                        "services, the percentage that had a birth weight less than 2500 grams. "
+                        ""
+                        "Newborns with Low Birth Weight are closely associated with fetal and neonatal "
+                        "mortality and morbidity, inhibited growth and cognitive development, "
                         "and chronic diseases later in life."
                     ),
                     'percent': percent_diff(
