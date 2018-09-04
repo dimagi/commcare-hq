@@ -8,3 +8,24 @@ findNestedDependencies: true
 skipDirOptimize: true   # could turn this off to minify everything
 generateSourceMaps: true
 fileExclusionRegExp: ^\.|\.css$
+modules:
+  - name: hqwebapp/js/base_main
+    include:
+      - jquery
+      - knockout
+      - ko.mapping
+      - underscore
+      - bootstrap
+      - hqwebapp/js/django
+      - jquery.cookie/jquery.cookie
+      - hqwebapp/js/layout
+      - hqwebapp/js/hq-bug-report
+      - hqwebapp/js/sticky_tabs
+      - hqwebapp/js/main
+      - notifications/js/notifications_service_main
+      - analytix/js/appcues
+      - analytix/js/drift
+      - analytix/js/google
+      - analytix/js/hubspot
+      - analytix/js/kissmetrix
+      - hqwebapp/js/mobile_experience_warning

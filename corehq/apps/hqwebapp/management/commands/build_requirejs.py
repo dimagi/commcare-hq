@@ -48,7 +48,8 @@ class Command(ResourceStaticCommand):
                 ...
             }
             '''
-            dirs = {'hqwebapp/js': set(['hqwebapp/js/base_main'])}  # TODO: this isn't getting bundled...maybe just add to yaml? should be the first bundle
+            #dirs = {'hqwebapp/js': set(['hqwebapp/js/base_main'])}  # TODO: this isn't getting bundled...maybe just add to yaml? should be the first bundle
+            dirs = {}
             for filename in html_files:
                 proc = subprocess.Popen(["grep", "^\s*{% requirejs_main [^%]* %}\s*$", filename], stdout=subprocess.PIPE)
                 (out, err) = proc.communicate()
@@ -66,7 +67,7 @@ class Command(ResourceStaticCommand):
             # For each directory, write a no-op js file that depends on all of the main modules in that dir.
             # r.js will overwrite each of these files with an optimized bundle of these main modules and all their
             # dependencies
-            config['modules'] = []
+            #config['modules'] = []
             for directory, mains in dirs.items():
                 config['modules'].append({
                     'name': os.path.join(directory, "bundle"),
