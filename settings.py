@@ -1748,11 +1748,6 @@ PILLOWTOPS = {
     ],
     'experimental': [
         {
-            'name': 'CaseSearchToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case_search.get_case_search_to_elasticsearch_pillow',
-        },
-        {
             'name': 'LedgerToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.ledger.get_ledger_to_elasticsearch_pillow',

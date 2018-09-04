@@ -3,9 +3,10 @@ from __future__ import unicode_literals
 
 import uuid
 
-from django.test import TestCase, override_settings
+from django.test import override_settings
 from mock import MagicMock, patch
 
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
 from corehq.apps.case_search.models import CaseSearchConfig
@@ -20,11 +21,11 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.pillows.case import get_ucr_es_case_pillow
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     delete_case_search_cases,
     domains_needing_search_index,
-    get_case_search_to_elasticsearch_pillow,
 )
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
@@ -35,7 +36,7 @@ from corehq.util.test_utils import create_and_save_a_case
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
-class CaseSearchPillowTest(TestCase):
+class CaseSearchPillowTest(CallCenterDomainMockTest):
 
     domain = 'meereen'
 
@@ -43,7 +44,7 @@ class CaseSearchPillowTest(TestCase):
         super(CaseSearchPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         self.elasticsearch = get_es_new()
-        self.pillow = get_case_search_to_elasticsearch_pillow()
+        self.pillow = get_ucr_es_case_pillow()
         ensure_index_deleted(CASE_SEARCH_INDEX)
 
         # Bootstrap ES
