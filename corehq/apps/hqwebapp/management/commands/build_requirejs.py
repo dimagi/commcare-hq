@@ -33,12 +33,14 @@ class Command(ResourceStaticCommand):
             config = yaml.load(f)
 
             # Find all HTML files in corehq, excluding partials
-            # TODO: os.walk?
             prefix = os.path.join(os.getcwd(), 'corehq')
-            proc = subprocess.Popen(["find", prefix, "-name", "*.html"], stdout=subprocess.PIPE)
-            (out, err) = proc.communicate()
-            html_files = [f for f in map(lambda b: b.decode('utf-8'), out.split(b"\n")) if f
-                    and not re.search(r'/partials/', f)]
+            html_files = []
+            for root, dirs, files in os.walk(prefix):
+                for name in files:
+                    if name.endswith(".html"):
+                        filename = os.path.join(root, name)
+                        if not re.search(r'/partials/', filename):
+                            html_files.append(filename)
 
             '''
             Build a dict of all main js modules, grouped by directory:
