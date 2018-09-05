@@ -479,7 +479,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
         return {
             "app": self.first_app,
             "other_app": self.second_app,
-            "files": self.app_diffs
+            "files": {None: self.app_diffs},
         }
 
     @property
