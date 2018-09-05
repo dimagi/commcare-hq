@@ -9,7 +9,7 @@ skipDirOptimize: true   # could turn this off to minify everything
 generateSourceMaps: true
 fileExclusionRegExp: ^\.|\.css$
 modules:
-  - name: hqwebapp/js/base_main
+  - name: hqwebapp/js/common
     create: true
     include:
       - jquery
@@ -19,6 +19,11 @@ modules:
       - bootstrap
       - hqwebapp/js/django
       - jquery.cookie/jquery.cookie
+  - name: hqwebapp/js/base_main
+    create: true
+    exclude:
+      - hqwebapp/js/common
+    include:
       - hqwebapp/js/layout
       - hqwebapp/js/hq-bug-report
       - hqwebapp/js/sticky_tabs

@@ -71,7 +71,7 @@ class Command(ResourceStaticCommand):
             for directory, mains in dirs.items():
                 config['modules'].append({
                     'name': os.path.join(directory, "bundle"),
-                    'exclude': ['hqwebapp/js/base_main'],
+                    'exclude': ['hqwebapp/js/common', 'hqwebapp/js/base_main'],
                     'include': list(mains),
                     'create': True,
                 })

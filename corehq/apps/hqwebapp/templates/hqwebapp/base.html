@@ -363,9 +363,13 @@
                     },
                 });
                 requirejs([
-                    'hqwebapp/js/base_main',
-                ], function () {
-                    requirejs(['{{ requirejs_main }}']);
+                    'hqwebapp/js/common',
+                ], function() {
+                    requirejs([
+                        'hqwebapp/js/base_main',
+                    ], function () {
+                        requirejs(['{{ requirejs_main }}']);
+                    });
                 });
             </script>
         {% endif %}
