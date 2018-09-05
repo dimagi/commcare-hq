@@ -13,6 +13,7 @@ requirejs.config({
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "nvd3/nv.d3.min":{deps:['d3/d3.min']},
         "bootstrap": { deps: ['jquery'] },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
@@ -21,7 +22,6 @@ requirejs.config({
             deps: ['jquery', 'knockout', 'underscore'],
             exports: 'RMI',
         },
-        "nvd3/nv.d3.min":{deps:['d3/d3.min']},
     },
     map: {
         "datatables.fixedColumns": {
