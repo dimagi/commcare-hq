@@ -2,7 +2,7 @@ hqDefine('accounting/js/payment_method_handler', [
     'jquery',
     'knockout',
     'underscore',
-    'stripe',
+    'accounting/js/lib/stripe',
 ], function (
     $,
     ko,
