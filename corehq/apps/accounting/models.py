@@ -732,6 +732,7 @@ class SoftwarePlan(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     is_customer_software_plan = models.BooleanField(default=False)
     max_domains = models.IntegerField(blank=True, null=True)
+    is_annual_plan = models.BooleanField(default=False)
 
     class Meta(object):
         app_label = 'accounting'
