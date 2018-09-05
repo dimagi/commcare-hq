@@ -1,12 +1,19 @@
-/* global Stripe */
-hqDefine("domain/js/current_subscription", function() {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        CreditsManager = hqImport('accounting/js/credits').CreditsManager,
-        PaymentMethodHandler = hqImport('accounting/js/payment_method_handler').PaymentMethodHandler;
-
+hqDefine("domain/js/current_subscription", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'accounting/js/credits',
+    'accounting/js/payment_method_handler',
+    'stripe',
+], function(
+    $,
+    initialPageData,
+    credits,
+    paymentMethodHandler,
+    Stripe
+) {
     $(function () {
         Stripe.setPublishableKey(initialPageData.get('stripe_public_key'));
-        var paymentHandler = new PaymentMethodHandler(
+        var paymentHandler = new paymentMethodHandler.PaymentMethodHandler(
             "add-credit-form",
             {
                 submitBtnText: gettext("Buy Credits"),
@@ -22,7 +29,7 @@ hqDefine("domain/js/current_subscription", function() {
         }
         $('#paymentModal').koApplyBindings(paymentHandler);
 
-        var creditsHandler = new CreditsManager(
+        var creditsHandler = credits.creditsManager(
             plan.products,
             plan.features,
             paymentHandler,
