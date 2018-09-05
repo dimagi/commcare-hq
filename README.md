@@ -269,7 +269,7 @@ Then run the following separately:
     # Keeps elasticsearch index in sync
     $ ./manage.py run_ptop --all
 
-    # Setting up the asynchronous task scheduler (only required if you have CELERY_ALWAYS_EAGER=False in settings)
+    # Setting up the asynchronous task scheduler (only required if you have CELERY_TASK_ALWAYS_EAGER=False in settings)
     # For Mac / Linux
     $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
     # Windows
