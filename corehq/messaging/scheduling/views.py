@@ -575,6 +575,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
     ACTION_DEACTIVATE = 'deactivate'
     ACTION_DELETE = 'delete'
     ACTION_RESTART = 'restart'
+    ACTION_COPY = 'copy'
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(reminders_framework_permission)
@@ -592,10 +593,15 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             settings.SERVER_ENVIRONMENT in settings.UNLIMITED_RULE_RESTART_ENVS
         )
 
+    @cached_property
+    def allow_copy(self):
+        return toggles.COPY_CONDITIONAL_ALERTS.enabled(self.request.couch_user.username)
+
     @property
     def page_context(self):
         context = super(ConditionalAlertListView, self).page_context
         context['limit_rule_restarts'] = self.limit_rule_restarts
+        context['allow_copy'] = self.allow_copy
         return context
 
     def get_conditional_alerts_queryset(self):
@@ -698,9 +704,41 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         initiate_messaging_rule_run(rule.domain, rule.pk)
         return JsonResponse({'status': 'success'})
 
+    def get_copy_ajax_response(self, rule, copy_to_project_name):
+        if not self.allow_copy:
+            return JsonResponse({
+                'status': 'error',
+                'error_msg': _("You do not have permission to copy alerts."),
+            })
+
+        destination_project = Domain.get_by_name(copy_to_project_name)
+        if (
+            destination_project is None or
+            destination_project.is_snapshot or
+            not self.request.couch_user.has_permission(copy_to_project_name, 'edit_data')
+        ):
+            return JsonResponse({
+                'status': 'error',
+                'error_msg': _("Destination project not found."),
+            })
+
+        # Use the same copy method as the exchange uses, which will
+        # return None if the rule can't be copied, otherwise will
+        # copy the rule as inactive.
+        copied_rule = rule.copy_conditional_alert(copy_to_project_name, allow_custom_references=True)
+        if copied_rule is None:
+            return JsonResponse({
+                'status': 'error',
+                'error_msg': _("This rule includes references that cannot be copied."),
+            })
+
+        initiate_messaging_rule_run(copied_rule.domain, copied_rule.pk)
+        return JsonResponse({'status': 'success'})
+
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
         rule_id = request.POST.get('rule_id')
+        copy_to_project_name = request.POST.get('project')
 
         with get_conditional_alert_edit_critical_section(rule_id):
             rule = self.get_rule(rule_id)
@@ -715,6 +753,8 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
                 return self.get_delete_ajax_response(rule)
             elif action == self.ACTION_RESTART:
                 return self.get_restart_ajax_response(rule)
+            elif action == self.ACTION_COPY:
+                return self.get_copy_ajax_response(rule, copy_to_project_name)
             else:
                 return HttpResponseBadRequest()
 
