@@ -1301,17 +1301,15 @@ class SelectPlanView(DomainAccountingSettings):
                 SoftwarePlanEdition.ADVANCED,
                 "$1200",
                 "$1000",
-                _("Ideal for projects that need a complete mobile solution "
-                  "with data management tools, and access to priority email "
-                  "support.")
+                _("For our savviest users, working on projects at scale that require advanced levels of data, "
+                  "security and support.")
             ),
             PlanOption(
                 SoftwarePlanEdition.ENTERPRISE,
                 _("Contact Us"),
                 _("Contact Us"),
-                _("Ideal for projects that need a complete mobile solution "
-                  "with data management tools, and access to priority email "
-                  "support.")
+                _("A tailor-made plan for organizations with multiple projects. "
+                  "All paid features included in this plan.")
             )
         ]
 
