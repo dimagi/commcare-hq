@@ -40,7 +40,7 @@ requirejs.config({
         'multiselect/js/jquery.multi-select': { deps: ['jquery'] },
         'quicksearch/dist/jquery.quicksearch.min': { deps: ['jquery'] },
         'nvd3/nv.d3.min':{deps:['d3/d3.min']},
-        'stripe': {
+        'accounting/js/lib/stripe': {
             exports: 'Stripe',
         },
     },
