@@ -1603,3 +1603,10 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+PREETHI_TAG = StaticToggle(
+    'PREETHI_LABEL',
+    'PREETHI-TODO',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
