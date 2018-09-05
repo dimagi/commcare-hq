@@ -7,12 +7,13 @@ from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.specs import PieChartSpec, \
     MultibarAggregateChartSpec, MultibarChartSpec, \
     FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn, \
-    OrderBySpec, LocationColumn, ExpressionColumn
+    OrderBySpec, LocationColumn, ExpressionColumn, ConditionalAggregationColumn
 
 
 class ReportColumnFactory(object):
     class_map = {
         'aggregate_date': AggregateDateColumn,
+        'conditional_aggregation': ConditionalAggregationColumn,
         'expanded': ExpandedColumn,
         'field': FieldColumn,
         'percent': PercentageColumn,
