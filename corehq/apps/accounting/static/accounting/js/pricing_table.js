@@ -18,7 +18,6 @@ hqDefine('accounting/js/pricing_table', [
             'editions',
             'planOptions',
             'currentPlan',
-
             'isRenewal',
             'startDateAfterMinimum',
             'isSubscriptionBelowMin',
@@ -44,9 +43,6 @@ hqDefine('accounting/js/pricing_table', [
         self.refundCss = ko.computed(function () {
             if (self.showMonthlyPricing()) {
                 return "hide-refund";
-            }
-            return "";
-        });
 
         self.isSubmitVisible = ko.computed(function () {
             return !! self.selectedPlan() && !(self.selectedPlan() === self.currentPlan());

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import hashlib
 import binascii
 from copy import copy
+import six
 from six.moves import zip
 from functools import reduce
 from six.moves import map
@@ -59,6 +60,8 @@ class Checksum(object):
 
     @classmethod
     def hash(cls, line):
+        if isinstance(line, six.text_type):
+            line = line.encode('utf-8')
         return bytearray([ord(b) for b in hashlib.md5(line).digest()])
 
     @classmethod

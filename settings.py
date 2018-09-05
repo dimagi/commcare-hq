@@ -300,6 +300,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.vertex',
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
+    'corehq.messaging.smsbackends.karix',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -339,6 +340,7 @@ HQ_APPS = (
     'corehq.warehouse',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
+    'corehq.apps.translations',
 
     # custom reports
     'custom.bihar',
@@ -562,6 +564,9 @@ CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 # http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
 # Keep messages in the events queue only for 2 hours
 CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
+
+CELERY_TASK_SERIALIZER = 'json'  # Default value in celery 4.x
+CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # Defaults to ['json'] in celery 4.x.  Remove once pickle is not used.
 
 # websockets config
 WEBSOCKET_URL = '/ws/'
@@ -1295,19 +1300,34 @@ INDICATOR_CONFIG = {
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-NEW_USERS_GROUPS_DB = b'users'
-USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
+if six.PY3:
+    NEW_USERS_GROUPS_DB = 'users'
+    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
-NEW_FIXTURES_DB = b'fixtures'
-FIXTURES_DB = NEW_FIXTURES_DB
+    NEW_FIXTURES_DB = 'fixtures'
+    FIXTURES_DB = NEW_FIXTURES_DB
 
-NEW_DOMAINS_DB = b'domains'
-DOMAINS_DB = NEW_DOMAINS_DB
+    NEW_DOMAINS_DB = 'domains'
+    DOMAINS_DB = NEW_DOMAINS_DB
 
-NEW_APPS_DB = b'apps'
-APPS_DB = NEW_APPS_DB
+    NEW_APPS_DB = 'apps'
+    APPS_DB = NEW_APPS_DB
 
-META_DB = b'meta'
+    META_DB = 'meta'
+else:
+    NEW_USERS_GROUPS_DB = b'users'
+    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
+
+    NEW_FIXTURES_DB = b'fixtures'
+    FIXTURES_DB = NEW_FIXTURES_DB
+
+    NEW_DOMAINS_DB = b'domains'
+    DOMAINS_DB = NEW_DOMAINS_DB
+
+    NEW_APPS_DB = b'apps'
+    APPS_DB = NEW_APPS_DB
+
+    META_DB = b'meta'
 
 
 COUCHDB_APPS = [
@@ -1495,6 +1515,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
+    'corehq.messaging.smsbackends.karix.models.KarixBackend',
 ]
 
 # The number of seconds to use as a timeout when making gateway requests
@@ -1550,6 +1571,21 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_PHASE2_AWW_1":
         ["custom.icds.messaging.custom_content.phase2_aww_1",
          "ICDS: AWC VHND Performance to AWW"],
+    "UCLA_GENERAL_HEALTH":
+        ["custom.ucla.api.general_health_message_bank_content_new",
+         "UCLA: General Health Message Bank"],
+    "UCLA_MENTAL_HEALTH":
+        ["custom.ucla.api.mental_health_message_bank_content_new",
+         "UCLA: Mental Health Message Bank"],
+    "UCLA_SEXUAL_HEALTH":
+        ["custom.ucla.api.sexual_health_message_bank_content_new",
+         "UCLA: Sexual Health Message Bank"],
+    "UCLA_MED_ADHERENCE":
+        ["custom.ucla.api.med_adherence_message_bank_content_new",
+         "UCLA: Med Adherence Message Bank"],
+    "UCLA_SUBSTANCE_USE":
+        ["custom.ucla.api.substance_use_message_bank_content_new",
+         "UCLA: Substance Use Message Bank"],
 }
 
 # Used by the old reminders framework

@@ -3,7 +3,7 @@ attrs==18.1.0
 cython==0.27.3
 iso8601==0.1.11
 jsonobject==0.9.3
-jsonobject-couchdbkit==0.9.8
+jsonobject-couchdbkit==0.9.9
 celery==3.1.25
 # required by django-digest
 decorator==4.0.11
@@ -30,7 +30,7 @@ Pillow==5.2.0
 phonenumberslite==8.8.9
 psycopg2==2.7.3.1
 psycogreen==1.0
-pycryptodome
+pycryptodome>=3.6.6  # security update
 py-KISSmetrics==1.0.1
 pygooglechart==0.4.0
 python-dateutil==2.6.1
@@ -51,7 +51,7 @@ numpy==1.7.1
 six==1.11.0
 socketpool==0.5.3
 markdown==2.2.1
-sqlagg==0.10.1
+sqlagg==0.10.2
 django-redis==4.2
 redis==2.10.5
 twilio==6.5.1

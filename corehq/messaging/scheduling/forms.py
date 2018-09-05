@@ -1128,6 +1128,8 @@ class ScheduleForm(Form):
         required=False,
     )
 
+    use_advanced_user_data_filter = True
+
     def is_valid(self):
         # Make sure .is_valid() is called on all appropriate forms before returning.
         # Don't let the result of one short-circuit the expression and prevent calling the others.
@@ -1184,8 +1186,7 @@ class ScheduleForm(Form):
         initial['send_frequency'] = self.SEND_DAILY
 
     def add_initial_for_weekly_schedule(self, initial):
-        weekdays = [(self.initial_schedule.start_day_of_week + e.day) % 7
-                    for e in self.initial_schedule.memoized_events]
+        weekdays = self.initial_schedule.get_weekdays()
         initial['send_frequency'] = self.SEND_WEEKLY
         initial['weekdays'] = [six.text_type(day) for day in weekdays]
 
@@ -1815,29 +1816,35 @@ class ScheduleForm(Form):
         return self.initial_schedule and self.initial_schedule.use_utc_as_default_timezone
 
     def get_advanced_layout_fields(self):
-        return [
+        result = [
             crispy.Div(
                 crispy.Field('use_utc_as_default_timezone'),
                 data_bind='visible: %s' % ('true' if self.display_utc_timezone_option else 'false'),
             ),
             crispy.Field('default_language_code'),
-            hqcrispy.B3MultiField(
-                _("Filter user recipients"),
-                crispy.Div(
-                    twbscrispy.InlineField(
-                        'use_user_data_filter',
-                        data_bind='value: use_user_data_filter',
-                    ),
-                    get_system_admin_label("visible: use_user_data_filter() === '%s'" % self.JSON),
-                    css_class='col-sm-4',
-                ),
-            ),
-            crispy.Div(
-                crispy.Field('user_data_property_name'),
-                crispy.Field('user_data_property_value'),
-                data_bind="visible: use_user_data_filter() !== 'N'",
-            ),
         ]
+
+        if self.use_advanced_user_data_filter:
+            result.extend([
+                hqcrispy.B3MultiField(
+                    _("Filter user recipients"),
+                    crispy.Div(
+                        twbscrispy.InlineField(
+                            'use_user_data_filter',
+                            data_bind='value: use_user_data_filter',
+                        ),
+                        get_system_admin_label("visible: use_user_data_filter() === '%s'" % self.JSON),
+                        css_class='col-sm-4',
+                    ),
+                ),
+                crispy.Div(
+                    crispy.Field('user_data_property_name'),
+                    crispy.Field('user_data_property_value'),
+                    data_bind="visible: use_user_data_filter() !== 'N'",
+                ),
+            ])
+
+        return result
 
     def get_advanced_survey_layout_fields(self):
         return [

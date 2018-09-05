@@ -148,7 +148,7 @@ class ShardAccessorTests(TestCase):
     def test_hash_doc_ids(self):
         N = 1001
         doc_ids = [str(i) for i in range(N)]
-        hashes = ShardAccessor.hash_doc_ids_sql(doc_ids)
+        hashes = ShardAccessor.hash_doc_ids_sql_for_testing(doc_ids)
         self.assertEquals(len(hashes), N)
         self.assertTrue(all(isinstance(hash_, int) for hash_ in hashes.values()))
 
@@ -175,7 +175,7 @@ class ShardAccessorTests(TestCase):
         N = 2048
         doc_ids = [str(i) for i in range(N)]
 
-        sql_hashes = ShardAccessor.hash_doc_ids_sql(doc_ids)
+        sql_hashes = ShardAccessor.hash_doc_ids_sql_for_testing(doc_ids)
 
         csiphash_hashes = ShardAccessor.hash_doc_ids_python(doc_ids)
         self.assertEquals(len(csiphash_hashes), N)
@@ -192,4 +192,4 @@ class ShardAccessorTests(TestCase):
     def test_hash_uuid(self):
         uuid = UUID('403724ef9fe141f2908363918c62c2ff')
         self.assertEqual(ShardAccessor.hash_doc_id_python(uuid), 1415444857)
-        self.assertEqual(ShardAccessor.hash_doc_uuid_sql(uuid), 1415444857)
+        self.assertEqual(ShardAccessor.hash_doc_uuid_sql_for_testing(uuid), 1415444857)

@@ -13,6 +13,8 @@ from casexml.apps.case.views import get_wrapped_case
 from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
+MAX_CHILD_CASES = 100
+
 
 def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=None):
     wrapped_case = get_wrapped_case(case)
@@ -38,6 +40,7 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
         'current_case': case,
         'domain': case.domain,
         'case_list': case_list,
+        'max_child_cases': MAX_CHILD_CASES,
         'columns': columns,
         'num_columns': len(columns) + 1,
         'show_view_buttons': show_view_buttons,
@@ -164,8 +167,10 @@ def get_children(case, type_info=None):
             return None
 
         seen.add(case.case_id)
+        case.num_children = len(case.reverse_indices)
         children = [
-            _get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
+            _get_children(i.referenced_case, i.referenced_type, seen)
+            for i in case.reverse_indices[:MAX_CHILD_CASES]
             if i.referenced_id not in seen
         ]
 
@@ -192,7 +197,7 @@ def get_children(case, type_info=None):
             'case': case,
             'child_cases': children,
             'descendant_types': list(set(descendant_types + [c['case'].type for c in children])),
-            'case_list': [case] + child_cases
+            'case_list': [case] + child_cases,
         }
     return _get_children(case)
 
@@ -209,7 +214,7 @@ def get_case_hierarchy(case, type_info):
         last_index = new_indices[0]
         seen_indices |= set(new_indices)
 
-    return get_children(CaseAccessors(case.domain).get_case(last_index), type_info)
+    return get_children(accessor.get_case(last_index), type_info)
 
 
 def get_flat_descendant_case_list(case, get_case_url, type_info=None):

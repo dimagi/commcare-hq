@@ -1,8 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import os
 import polib
 import datetime
 import tempfile
+import six
+import sys
 
 from django.conf import settings
 from memoized import memoized
@@ -14,7 +17,7 @@ Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
 
 
-class POFileGenerator:
+class TransifexPOFileGenerator:
     def __init__(self, domain, app_id, version, key_lang, source_lang, lang_prefix,
                  exclude_if_default=False, use_version_postfix=True):
         """
@@ -45,7 +48,7 @@ class POFileGenerator:
         self.version = version
         self.use_version_postfix = use_version_postfix
         self.headers = dict()  # headers for each sheet name
-        self.generated_files = list()  # list of tuples (filename, filepath)
+        self.po_file_generator = None
         self.sheet_name_to_module_or_form_type_and_id = dict()
 
     @property
@@ -149,9 +152,10 @@ class POFileGenerator:
         """
         :return:
         {
-            sheet_name_with_build_id: {
-                key: Translation(key, translation, occurrences)
-            }
+            sheet_name_with_build_id: [
+                Translation(key, translation, occurrences),
+                Translation(key, translation, occurrences),
+            ]
         }
         """
         from corehq.apps.app_manager.dbaccessors import get_current_app
@@ -167,36 +171,62 @@ class POFileGenerator:
                 app, sheet_name, rows[sheet_name]
             )
 
-    def generate_translation_files(self):
-        self._build_translations()
+    @property
+    def _metadata(self):
         if settings.TRANSIFEX_DETAILS:
             team = settings.TRANSIFEX_DETAILS['teams'][self.domain].get(self.source_lang)
         else:
             team = ""
         now = str(datetime.datetime.now())
-        for file_name in self.translations:
-            sheet_translations = self.translations[file_name]
+        return {
+            'App-Id': self.app_id_to_build,
+            'PO-Creation-Date': now,
+            'Language-Team': "{lang} ({team})".format(
+                lang=self.key_lang, team=team
+            ),
+            'MIME-Version': '1.0',
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Language': self.key_lang,
+            'Version': self.version
+        }
+
+    def generate_translation_files(self):
+        self._build_translations()
+        self.po_file_generator = PoFileGenerator(self.translations, self._metadata)
+
+    @property
+    def generated_files(self):
+        if self.po_file_generator:
+            return self.po_file_generator.generated_files
+        return []
+
+    def cleanup(self):
+        if self.po_file_generator:
+            self.po_file_generator.cleanup()
+
+
+class PoFileGenerator(object):
+    def __init__(self, translations, metadata):
+        self.generated_files = list()  # list of tuples (filename, filepath)
+        try:
+            self._generate_translation_files(translations, metadata)
+        except Exception:
+            exc_info = sys.exc_info()
+            self.cleanup()
+            six.reraise(*exc_info)
+
+    def _generate_translation_files(self, translations, metadata):
+        for file_name in translations:
+            sheet_translations = translations[file_name]
             po = polib.POFile()
             po.check_for_duplicates = False
-            po.metadata = {
-                'App-Id': self.app_id_to_build,
-                'PO-Creation-Date': now,
-                'Language-Team': "{lang} ({team})".format(
-                    lang=self.key_lang, team=team
-                ),
-                'MIME-Version': '1.0',
-                'Content-Type': 'text/plain; charset=utf-8',
-                'Content-Transfer-Encoding': '8bit',
-                'Language': self.key_lang,
-                'Version': self.version
-            }
-
+            po.metadata = metadata
             for translation in sheet_translations:
                 source = translation.key
                 if source:
                     entry = polib.POEntry(
                         msgid=translation.key,
-                        msgstr=translation.translation,
+                        msgstr=translation.translation or '',
                         occurrences=translation.occurrences,
                         msgctxt=translation.msgctxt
                     )
@@ -204,3 +234,9 @@ class POFileGenerator:
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             po.save(temp_file.name)
             self.generated_files.append((file_name, temp_file.name))
+
+    def cleanup(self):
+        for resource_name, filepath in self.generated_files:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        self.generated_files = []

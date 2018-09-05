@@ -142,10 +142,10 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
         [
             dict(
                 loc_name=key,
-                value=value['in_day']
+                percent=value['in_day'] * 100 / value['all']
             ) for key, value in six.iteritems(best_worst)
         ],
-        key=lambda x: x['value'],
+        key=lambda x: x['percent'],
         reverse=True
     )
 

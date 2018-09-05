@@ -72,7 +72,7 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm, AnnualPlanCo
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error, domain_has_privilege,
+    log_accounting_error, domain_has_privilege, is_downgrade
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -1568,25 +1568,54 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return DefaultProductPlan.get_default_plan_version(self.edition)
 
     @property
-    def downgrade_messages(self):
-        subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        downgrades = get_change_status(
-            subscription.plan_version if subscription else None,
-            self.selected_plan_version
-        )[1]
-        downgrade_handler = DomainDowngradeStatusHandler(
-            self.domain_object, self.selected_plan_version, downgrades,
-        )
-        return downgrade_handler.get_response()
+    def is_upgrade(self):
+        if self.current_subscription.is_trial:
+            return True
+        elif self.current_subscription.plan_version.plan.edition == self.edition:
+            return False
+        else:
+            return not is_downgrade(
+                current_edition=self.current_subscription.plan_version.plan.edition,
+                next_edition=self.edition
+            )
+
+    @property
+    def is_downgrade_before_minimum(self):
+        if self.is_upgrade:
+            return False
+        elif self.current_subscription is None or self.current_subscription.is_trial:
+            return False
+        elif self.current_subscription.is_below_minimum_subscription:
+            return True
+        else:
+            return False
+
+    @property
+    def current_subscription_end_date(self):
+        if self.is_downgrade_before_minimum:
+            return self.current_subscription.date_start + \
+                datetime.timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH)
+        else:
+            return datetime.date.today()
+
+    @property
+    def next_invoice_date(self):
+        # Next invoice date is the first day of the next month
+        return datetime.date.today().replace(day=1) + dateutil.relativedelta.relativedelta(months=1)
 
     @property
     def page_context(self):
         return {
-            'downgrade_messages': self.downgrade_messages,
-            'current_plan': (self.current_subscription.plan_version.user_facing_description
+            'is_upgrade': self.is_upgrade,
+            'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
+            'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
             'show_community_notice': (self.edition == SoftwarePlanEdition.COMMUNITY
                                       and self.current_subscription is None),
+            'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
+            'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
+            'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
+            'new_plan_edition': self.edition
         }
 
     @property
@@ -1681,18 +1710,30 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
             if not is_saved:
+                downgrade_date = self.current_subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT)
                 messages.error(
                     request, _(
-                        "It appears there was an issue subscribing your project to the %s Software Plan. You "
-                        "may try resubmitting, but if that doesn't work, rest assured someone will be "
-                        "contacting you shortly."
-                    ) % software_plan_name
+                        "You have already scheduled a downgrade to the %s Software Plan on %s. If this is a "
+                        "mistake, please reach out to billing-support@dimagi.com."
+                    ) % (software_plan_name, downgrade_date)
                 )
             else:
-                messages.success(
-                    request, _(
-                        "Your project has been successfully subscribed to the %s Software Plan."
+                if self.current_subscription.next_subscription is not None:
+                    # New subscription has been scheduled for the future
+                    current_subscription = self.current_subscription.plan_version.plan.edition
+                    start_date = self.current_subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT)
+                    # You have successfully scheduled your current Advanced Edition Plan
+                    # subscription to downgrade to the Pro Edition Plan on Sep 19, 2018.
+                    message = _(
+                        "You have successfully scheduled your current %s Edition Plan subscription to "
+                        "downgrade to the %s Edition Plan on %s."
+                    ) % (current_subscription, software_plan_name, start_date)
+                else:
+                    message = _(
+                        "Your project has been successfully subscribed to the %s Edition Plan."
                     ) % software_plan_name
+                messages.success(
+                    request, message
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)

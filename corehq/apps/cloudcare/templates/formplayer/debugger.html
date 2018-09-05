@@ -100,7 +100,7 @@
     <!--/ko-->
     <!--ko if: options.showInFull && xPathQuery.successResult()-->
     <textarea type="text" data-bind="
-        codeMirror: xPathQuery.successResult()
+        aceEditor: xPathQuery.successResult()
     "></textarea>
     <!--/ko-->
     <!--ko if: xPathQuery.isTraceTruncated() && options.showInFull-->
@@ -113,7 +113,7 @@
     <!--/ko-->
     <!--ko if: options.showInFull && xPathQuery.hasTrace()-->
     <textarea type="text" data-bind="
-        codeMirror: xPathQuery.traceResult()
+        aceEditor: xPathQuery.traceResult()
     "></textarea>
     <!--/ko-->
     <!--ko if: !options.showInFull && xPathQuery.successResult()-->
