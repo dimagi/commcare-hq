@@ -1,4 +1,4 @@
-// knockout_bindings.ko is a part of this dependency because page uses 'slideVisible' binding
+// knockout_bindings.ko is a part of this dependency because page uses 'slideVisible' binding form_summary.html
 hqDefine('app_manager/js/summary/form_summary',[
     'jquery',
     'underscore',
