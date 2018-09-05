@@ -1,12 +1,20 @@
-hqDefine('app_manager/js/supported_languages', function () {
+// knockout_bindings is required sortable used here 'app_manager/partials/settings/supported_languages.html#L4'
+hqDefine('app_manager/js/supported_languages',[
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/main",
+    "hqwebapp/js/knockout_bindings.ko",
+], function ($, ko, _, initialPageData, hqMain) {
     function Language(langcode, languages) {
-        var self = this;
-        this.langcode = ko.observable(langcode);
-        this.originalLangcode = ko.observable(langcode);
-        this.message_content = ko.observable('');
-        this.show_error = ko.observable();
-        this.languages = languages;
-        this.message = ko.computed(function () {
+        var self = {};
+        self.langcode = ko.observable(langcode);
+        self.originalLangcode = ko.observable(langcode);
+        self.message_content = ko.observable('');
+        self.show_error = ko.observable();
+        self.languages = languages;
+        self.message = ko.computed(function () {
             if (self.message_content() === '') {
                 if (self.langcode()) {
                     var lang = self.langcode().toLowerCase();
@@ -25,19 +33,20 @@ hqDefine('app_manager/js/supported_languages', function () {
             return self.message_content();
         });
 
-        this.isDefaultLang = ko.computed(function () {
+        self.isDefaultLang = ko.computed(function () {
             return self.languages()[0] === self;
         });
+        return self;
     }
     function SupportedLanguages(options) {
         var langs = options.langs;
         var saveURL = options.saveURL;
         var validate = options.validate;
-        var self = this;
+        var self = {};
 
-        this.addLanguageDisabled = ko.observable(false);
-        this._seen = ko.observable(false);
-        this.seen = ko.computed({
+        self.addLanguageDisabled = ko.observable(false);
+        self._seen = ko.observable(false);
+        self.seen = ko.computed({
             read: function () {
                 return self._seen();
             },
@@ -45,7 +54,7 @@ hqDefine('app_manager/js/supported_languages', function () {
                 self._seen(true);
             },
         });
-        this.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your supported languages"),
             save: function () {
                 var message = self.validateGeneral();
@@ -96,28 +105,28 @@ hqDefine('app_manager/js/supported_languages', function () {
         var changeSaveButton = function () {
             self.saveButton.fire('change');
         };
-        var smartLangDisplayEnabled = hqImport("hqwebapp/js/initial_page_data").get("smart_lang_display_enabled");
-        this.smartLangDisplay = ko.observable(smartLangDisplayEnabled);
-        this.smartLangDisplay.subscribe(changeSaveButton);
+        var smartLangDisplayEnabled = initialPageData.get("smart_lang_display_enabled");
+        self.smartLangDisplay = ko.observable(smartLangDisplayEnabled);
+        self.smartLangDisplay.subscribe(changeSaveButton);
 
-        this.languages = ko.observableArray([]);
-        this.removedLanguages = ko.observableArray([]);
+        self.languages = ko.observableArray([]);
+        self.removedLanguages = ko.observableArray([]);
         function newLanguage(langcode) {
-            var language = new Language(langcode, self.languages);
+            var language = Language(langcode, self.languages);
             language.langcode.subscribe(changeSaveButton);
             language.langcode.subscribe(function () { self.validateLanguage(language); });
             return language;
         }
-        this.addLanguage = function () {
+        self.addLanguage = function () {
             self.languages.push(newLanguage());
-            this.addLanguageDisabled(true);
+            self.addLanguageDisabled(true);
             self._seen(true);
         };
-        this.removeLanguage = function (language) {
+        self.removeLanguage = function (language) {
             self.languages.remove(language);
             self.removedLanguages.push(language);
         };
-        this.unremoveLanguage = function (language) {
+        self.unremoveLanguage = function (language) {
             self.removedLanguages.remove(language);
             self.languages.push(language);
         };
@@ -125,13 +134,13 @@ hqDefine('app_manager/js/supported_languages', function () {
             var language = newLanguage(langs[i]);
             self.languages.push(language);
         }
-        this.languages.subscribe(changeSaveButton);
+        self.languages.subscribe(changeSaveButton);
 
-        this.canSortLanguages = ko.computed(function () {
+        self.canSortLanguages = ko.computed(function () {
             return self.languages().length > 1;
         });
 
-        this.validateGeneral = function () {
+        self.validateGeneral = function () {
             var message = "";
             if (!validate) {
                 return "";
@@ -142,7 +151,7 @@ hqDefine('app_manager/js/supported_languages', function () {
             return message;
         };
 
-        this.validateLanguage = function (language) {
+        self.validateLanguage = function (language) {
             if (!validate) {
                 language.message_content("");
                 return "";
@@ -169,9 +178,10 @@ hqDefine('app_manager/js/supported_languages', function () {
             return message;
         };
 
-        this.showSmartLangDisplayOption = ko.computed(function() {
+        self.showSmartLangDisplayOption = ko.computed(function() {
             return self.languages().length > 2;
         });
+        return self;
     }
     return {SupportedLanguages: SupportedLanguages};
 });
