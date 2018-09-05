@@ -1,3 +1,4 @@
+// knockout_bindings is required sortable used here 'app_manager/partials/settings/supported_languages.html#L4'
 hqDefine('app_manager/js/supported_languages',[
     "jquery",
     "knockout",
