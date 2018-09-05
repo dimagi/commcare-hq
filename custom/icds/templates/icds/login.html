@@ -11,52 +11,38 @@
 
 
 {% block page_content %}
-{% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
+{#{% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}#}
 <div class="container">
     <div class="row">
-        <div class="col-sm-1">
-            <a href="{% url "homepage" %}" class="navbar-brand">
-            <img src="{% static 'icds/img/cas-logo.png' %}" alt="CommCare HQ Logo" />
-            </a>
+        <div class="col-sm-2">
+            <img style="width: 100%" src="{% static 'icds/img/poshan-logo.png' %}" alt="CommCare HQ Logo" />
         </div>
-        <div class="col-sm-11">
+        <div class="col-sm-8">
+            <br/>
             {% blocktrans %}
             <h4>Government of India</h4>
             <h2>MINISTRY OF WOMEN AND CHILD DEVELOPMENT</h2>
             {% endblocktrans %}
         </div>
-    </div>
-
-    <div class="row">
-        <div class="col-sm-1"></div>
-        <div class="col-sm-11">
-        {% blocktrans %}
-            <h3>
-                NATIONAL NUTRITION MISSION (NNM)
-            </h3>
-        {% endblocktrans %}
+        <div class="col-sm-2">
+            <a href="{% url "homepage" %}" class="navbar-brand">
+            <img style="width: 100%" src="{% static 'icds/img/ICDS-CAS_banner.png' %}" alt="CommCare HQ Logo" />
+            </a>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-sm-1"></div>
-        <div class="col-lg-4">
-            <img style="height:300px" src="{% static 'icds/img/mobile.png' %}">
+        <div class="col-sm-2">
+            <img style="height:300px" src="{% static 'icds/img/phone_left.png' %}">
         </div>
-        <div class="col-sm-7" style="padding-top: 40px">
+
+        <div class="col-sm-8" style="padding-top: 40px">
             {% include "login_and_password/two_factor/core/login.html" %}
-      </div>
-    </div>
-
-
-    {% block login-content %}
-    <div class="row">
-        <div class="col-sm-1"></div>
-        <div class="col-sm-11" style="padding-left: 30px">
-            <h1>{% trans 'Welcome to ICDS-CAS' %}</h1>
+        </div>
+        <div class="col-lg-2">
+            <img style="height:300px" src="{% static 'icds/img/phone_right.png' %}">
         </div>
     </div>
-    {% endblock %}
 
     <div class="row" style="margin-top:60px">
         <div class="col-sm-1"></div>
