@@ -20,16 +20,14 @@
 {% endif %}
 {% endblock %}
 
-{% requirejs_main 'accounting/js/pricing_table' %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'accounting/js/pricing_table.js' %}"></script>
+{% endblock %}
 
 {% block form_content %}
 {% initial_page_data 'editions' editions %}
 {% initial_page_data 'current_edition' current_edition %}
-{% initial_page_data 'is_renewal' is_renewal %}
-{% initial_page_data 'start_date_after_minimum_subscription' start_date_after_minimum_subscription %}
-{% initial_page_data 'subscription_below_minimum' subscription_below_minimum %}
-{% initial_page_data 'next_subscription_edition' next_subscription_edition %}
-{% initial_page_data 'invoicing_contact_email' invoicing_contact_email %}
+{% initial_page_data 'is_renewal' is_renewal|BOOL %}
 {% registerurl 'email_on_downgrade' domain %}
 <p class="lead">
     {{ lead_text|safe }}
@@ -62,7 +60,7 @@
 
             <div class="form-actions" data-bind="visible: isSubmitVisible">
                 <div class="col-xs-offset-2">
-                    <button type="submit" class="btn btn-primary btn-lg" data-bind="click: openMinimumSubscriptionModal">{% trans 'Next' %}</button>
+                    <button type="submit" class="btn btn-primary btn-lg" data-bind="click: openDowngradeModal">{% trans 'Next' %}</button>
                 </div>
             </div>
         </form>
@@ -107,7 +105,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-<div class="modal fade" id="modal-minimum-subscription">
+<div class="modal fade" id="modal-downgrade">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -118,13 +116,17 @@
                 <h4 class="modal-title">Downgrading?</h4>
             </div>
             <div class="modal-body">
+                {% blocktrans %}
+                    We'd love to make CommCare work better for you.
+                    Let us know what we can do to improve, or why you're downgrading.
+                {% endblocktrans %}
                 <br><br>
+                <textarea class="form-control"></textarea>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Dismiss" %}</button>
-                <button type="button" class="btn btn-danger" data-bind="click: submitDowngradeForm">{% trans "Continue" %}</button>
+                <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade">{% trans "OK" %}</button>
             </div>
         </div>
     </div>
-</div>
+</script>
 {% endblock %}
