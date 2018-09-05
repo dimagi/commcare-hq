@@ -1313,6 +1313,25 @@ class SelectPlanView(DomainAccountingSettings):
             )
         ]
 
+    def start_date_after_minimum_subscription(self):
+        if self.current_subscription is None:
+            return ""
+        elif self.current_subscription.is_trial:
+            return ""
+        else:
+            new_start_date = self.current_subscription.date_start + \
+                             datetime.timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH)
+            return new_start_date.strftime(USER_DATE_FORMAT)
+
+    @property
+    def next_subscription_edition(self):
+        if self.current_subscription is None:
+            return None
+        elif self.current_subscription.next_subscription is None:
+            return None
+        else:
+            return self.current_subscription.next_subscription.plan_version.plan.edition
+
     @property
     def start_date_after_minimum_subscription(self):
         if self.current_subscription is None:
