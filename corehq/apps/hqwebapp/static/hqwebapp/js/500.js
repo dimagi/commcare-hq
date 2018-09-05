@@ -1,4 +1,7 @@
-hqDefine("hqwebapp/js/500", function() {
+hqDefine("hqwebapp/js/500",[
+    'jquery',
+    'bootstrap',
+], function($) {
     $(function () {
         $('#sad-danny').popover({
             title: gettext("This is Danny, one of our best developers."),
