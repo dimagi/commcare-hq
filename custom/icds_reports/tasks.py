@@ -118,6 +118,7 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'update_aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
 ]
@@ -134,6 +135,11 @@ SQL_VIEWS_PATHS = [
 
 
 @periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
+def run_move_ucr_data_into_aggregation_tables_task(date=None):
+    move_ucr_data_into_aggregation_tables.delay(date)
+
+
+@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6), acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 
@@ -471,6 +477,11 @@ def _agg_awc_table(day):
         "SELECT aggregate_awc_data(%s)"
     ], day)
 
+@track_time
+def _agg_awc_table_weekly(day):
+    _run_custom_sql_script([
+        "SELECT update_aggregate_awc_data(%s)"
+    ], day)
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date):
