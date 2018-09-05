@@ -24,7 +24,7 @@ from corehq.apps.export.models.new import (
     CaseExportInstanceFilters,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilterUtils
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, EmwfUtils
+from corehq.apps.reports.filters.users import SubmitHistoryFilter, SubmitHistoryUtils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -429,12 +429,12 @@ class DashboardFeedFilterForm(forms.Form):
     A form used to configure the filters on a Dashboard Feed export
     """
     emwf_case_filter = forms.Field(
-        label=ugettext_lazy("Groups or Users"),
+        label=ugettext_lazy("Case Owner(s)"),
         required=False,
         widget=Select2Ajax(multiple=True),
     )
     emwf_form_filter = forms.Field(
-        label=ugettext_lazy("Groups or Users"),
+        label=ugettext_lazy("User(s)"),
         required=False,
         widget=Select2Ajax(multiple=True),
     )
@@ -477,7 +477,7 @@ class DashboardFeedFilterForm(forms.Form):
             reverse(CaseListFilter.options_url, args=(self.domain_object.name,))
         )
         self.fields['emwf_form_filter'].widget.set_url(
-            reverse(ExpandedMobileWorkerFilter.options_url, args=(self.domain_object.name,))
+            reverse(SubmitHistoryFilter.options_url, args=(self.domain_object.name,))
         )
 
         self.helper = FormHelper()
@@ -612,10 +612,10 @@ class DashboardFeedFilterForm(forms.Form):
                 begin=self.cleaned_data['start_date'],
                 end=self.cleaned_data['end_date'],
             ),
-            users=ExpandedMobileWorkerFilter.selected_user_ids(emwf_selections),
-            reporting_groups=ExpandedMobileWorkerFilter.selected_reporting_group_ids(emwf_selections),
-            locations=ExpandedMobileWorkerFilter.selected_location_ids(emwf_selections),
-            user_types=ExpandedMobileWorkerFilter.selected_user_types(emwf_selections),
+            users=SubmitHistoryFilter.selected_user_ids(emwf_selections),
+            reporting_groups=SubmitHistoryFilter.selected_reporting_group_ids(emwf_selections),
+            locations=SubmitHistoryFilter.selected_location_ids(emwf_selections),
+            user_types=SubmitHistoryFilter.selected_user_types(emwf_selections),
             can_access_all_locations=can_access_all_locations,
             accessible_location_ids=accessible_location_ids,
         )
@@ -643,7 +643,8 @@ class DashboardFeedFilterForm(forms.Form):
                     (["project_data"] if export_instance_filters.show_project_data else [])
                 )
 
-            emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else EmwfUtils
+            emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else \
+                SubmitHistoryUtils
             emwf_data = []
             for item in selected_items:
                 choice_tuple = emwf_utils_class(domain).id_to_choice_tuple(str(item))
@@ -766,7 +767,7 @@ class EmwfFilterExportMixin(object):
     export_user_filter = FormSubmittedByFilter
 
     # filter class for including dynamic fields in the context of the view as dynamic_filters
-    dynamic_filter_class = ExpandedMobileWorkerFilter
+    dynamic_filter_class = SubmitHistoryFilter
 
     def _get_user_ids(self, mobile_user_and_group_slugs):
         """
@@ -805,7 +806,7 @@ class AbstractExportFilterBuilder(object):
         self.domain_object = domain_object
         self.timezone = timezone
 
-    def get_user_ids_for_user_types(self, admin, unknown, demo, commtrack):
+    def get_user_ids_for_user_types(self, admin, unknown, demo, commtrack, active=False, deactivated=False):
         """
         referenced from CaseListMixin to fetch user_ids for selected user type
         :param admin: if admin users to be included
@@ -815,7 +816,7 @@ class AbstractExportFilterBuilder(object):
         :return: user_ids for selected user types
         """
         from corehq.apps.es import filters, users as user_es
-        if not any([admin, unknown, demo]):
+        if not any([admin, unknown, demo, commtrack, active, deactivated]):
             return []
 
         user_filters = [filter_ for include, filter_ in [
@@ -826,10 +827,18 @@ class AbstractExportFilterBuilder(object):
 
         query = (user_es.UserES()
                  .domain(self.domain_object.name)
-                 .OR(*user_filters)
-                 .show_inactive()
                  .remove_default_filter('not_deleted')
                  .fields([]))
+
+        if user_filters:
+            query = query.OR(*user_filters)
+
+        if active and deactivated:
+            query = query.show_inactive()
+
+        elif deactivated:
+            query = query.show_only_inactive()
+
         user_ids = query.run().doc_ids
 
         if commtrack:
@@ -881,14 +890,13 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         """
         if user_types:
             form_filters = []
-            if HQUserType.REGISTERED in user_types:
-                # TODO: This
-                form_filters.append(UserTypeFilter(BaseFilterExportDownloadForm._USER_MOBILE))
             user_ids = self.get_user_ids_for_user_types(
                 admin=HQUserType.ADMIN in user_types,
                 unknown=HQUserType.UNKNOWN in user_types,
                 demo=HQUserType.DEMO_USER in user_types,
                 commtrack=False,
+                active=HQUserType.ACTIVE in user_types,
+                deactivated=HQUserType.DEACTIVATED in user_types,
             )
             form_filters.append(FormSubmittedByFilter(user_ids))
             return form_filters
@@ -1064,11 +1072,11 @@ class SmsExportFilterBuilder(AbstractExportFilterBuilder):
 
 class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloadForm):
     """
-    Generic Filter form including dynamic filters using ExpandedMobileWorkerFilter
+    Generic Filter form including dynamic filters using SubmitHistoryFilters
     overrides few methods from GenericFilterFormExportDownloadForm for dynamic fields over form fields
     """
     export_user_filter = FormSubmittedByFilter
-    dynamic_filter_class = ExpandedMobileWorkerFilter
+    dynamic_filter_class = SubmitHistoryFilter
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
@@ -1117,7 +1125,7 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
 
     def _get_mapped_user_types(self, selected_user_types):
         user_types = []
-        if HQUserType.REGISTERED in selected_user_types:
+        if HQUserType.ACTIVE in selected_user_types:
             user_types.append(BaseFilterExportDownloadForm._USER_MOBILE)
         if HQUserType.ADMIN in selected_user_types:
             user_types.append(BaseFilterExportDownloadForm._USER_ADMIN)
