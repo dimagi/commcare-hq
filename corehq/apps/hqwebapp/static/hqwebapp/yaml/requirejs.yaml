@@ -10,6 +10,7 @@ generateSourceMaps: true
 fileExclusionRegExp: ^\.|\.css$
 modules:
   - name: hqwebapp/js/base_main
+    create: true
     include:
       - jquery
       - knockout
