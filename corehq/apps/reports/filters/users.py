@@ -353,18 +353,39 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             location_ids = list(SQLLocation.active_objects
                                 .get_locations_and_children(location_ids)
                                 .location_ids())
-            id_filter = filters.OR(
+
+            id_filter = filters.term("_id", user_ids)
+
+            group_and_location_filter = []
+            if group_ids and location_ids:
+                if True:
+                    group_and_location_filter = filters.AND(
+                        filters.term("__group_ids", group_ids),
+                        user_es.location(location_ids),
+                    )
+                else:
+                    group_and_location_filter = filters.OR(
+                        filters.term("__group_ids", group_ids),
+                        user_es.location(location_ids),
+                    )
+            if user_type_filters and group_and_location_filter:
+                return q.OR(
+                    id_filter,
+                    group_and_location_filter,
+                    filters.OR(*user_type_filters),
+                )
+            elif group_and_location_filter:
+                return q.OR(id_filter,
+                            group_and_location_filter,)
+
+            # Filter everything separately (locs and groups aren't connected)
+            else:
+                return q.filter(filters.OR(
                 filters.term("_id", user_ids),
                 filters.term("__group_ids", group_ids),
                 user_es.location(location_ids),
-            )
-            if user_type_filters:
-                return q.OR(
-                    id_filter,
-                    filters.OR(*user_type_filters),
-                )
-            else:
-                return q.filter(id_filter)
+            ))
+
 
     @staticmethod
     def _verify_users_are_accessible(domain, request_user, user_ids):
