@@ -18,12 +18,12 @@ modules:
       - underscore
       - bootstrap
       - hqwebapp/js/django
-      - jquery.cookie/jquery.cookie
   - name: hqwebapp/js/base_main
     create: true
     exclude:
       - hqwebapp/js/common
     include:
+      - hqwebapp/js/hq.helpers
       - hqwebapp/js/layout
       - hqwebapp/js/hq-bug-report
       - hqwebapp/js/sticky_tabs
