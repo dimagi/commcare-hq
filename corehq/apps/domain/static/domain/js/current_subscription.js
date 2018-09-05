@@ -3,7 +3,7 @@ hqDefine("domain/js/current_subscription", [
     'hqwebapp/js/initial_page_data',
     'accounting/js/credits',
     'accounting/js/payment_method_handler',
-    'stripe',
+    'accounting/js/lib/stripe',
 ], function(
     $,
     initialPageData,

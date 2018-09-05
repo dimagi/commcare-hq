@@ -2,7 +2,7 @@ hqDefine('domain/js/update_billing_contact_info', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'accounting/js/stripe_card_manager',
-    'stripe',
+    'accounting/js/lib/stripe',
     'accounting/js/widgets',
     'hqwebapp/js/knockout_bindings.ko', // openModal
 ], function (
