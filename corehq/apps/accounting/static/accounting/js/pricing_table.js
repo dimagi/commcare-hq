@@ -19,7 +19,7 @@ hqDefine('accounting/js/pricing_table', [
         ]);
 
         'use strict';
-        var self = this;
+        var self = {};
 
         self.currentPlan = ko.observable(options.currentPlan);
         self.editions = options.editions;
@@ -104,7 +104,9 @@ hqDefine('accounting/js/pricing_table', [
 
         self.init = function () {
             self.form = $("#select-plan-form");
-        }
+        };
+
+        return self;
     };
 
     var PlanOption = function (data, parent) {
