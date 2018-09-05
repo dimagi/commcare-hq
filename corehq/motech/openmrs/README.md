@@ -309,6 +309,48 @@ skew towards false negatives (Type I errors). In other words, it is much
 better not to choose a patient than to choose the wrong patient.
 
 
+Creating Missing Patients
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If a corresponding OpenMRS patient is not found for a CommCare case,
+then a PatientFinder has the option to create a patient in OpenMRS. This
+is an optional property named "create_missing". Its value defaults to
+`false`. If it is set to `true`, then it will create a new patient if
+none are found.
+
+For example:
+
+    "patient_finder": {
+        "doc_type": "WeightedPropertyPatientFinder",
+        "property_weights": [
+            {"case_property": "given_name", "weight": 0.5},
+            {"case_property": "family_name", "weight": 0.6}
+        ],
+        "searchable_properties": ["family_name"],
+        "create_missing": true
+    }
+
+If more than one matching patient is found, a new patient will not be
+created.
+
+All required properties must be included in the payload. This is sure to
+include a name and a date of birth, possibly estimated. It may include
+an identifier. You can find this out from the OpenMRS Administration UI,
+or by testing the OpenMRS REST API.
+
+
+WeightedPropertyPatientFinder
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The first (and currently only) subclass of `PatientFinder` is the
+`WeightedPropertyPatientFinder` class. As the name suggests, it assigns
+weights to case properties, and scores the patients it finds in OpenMRS
+to select an OpenMRS patient that matches a CommCare case.
+
+See [the source code](finders.py) for more details on its properties and
+how to define it.
+
+
 Provider
 --------
 
