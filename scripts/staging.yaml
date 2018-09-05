@@ -67,6 +67,7 @@ branches:
 #  - jls/rn_migrating_more_messaging_pages-new  # Jenny Sept 4
 #  - jls/requirejs-domain-billing-new  # Jenny Sept 4
 #  - jls/requirejs-login-scrap-new  # Jenny Sept 4
+  - some_migration_of_hqwebapps   # Rohit Sep 5
 submodules:
   submodules/django-digest-src:
     branches: []
