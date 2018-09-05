@@ -12,12 +12,10 @@ from corehq.apps.dump_reload.const import DATETIME_FORMAT
 
 
 CONTEXT_REGEXS = {
-    # index:Module or Form: sheet name for module/form: unique id
-    'module_and_forms_sheet': r'^(\d+):(Module|Form):(\w+):(\w+)$',
-    # index: case property: list/detail
-    'module_sheet': r'^(\d+):(.+):(list|detail)$',
-    # index: label
-    'form_sheet': r'^(\d+):(.+)$',
+    # Module or Form: sheet name for module/form: unique id
+    'module_and_forms_sheet': r'^(Module|Form):(\w+):(\w+)$',
+    # case property: list/detail
+    'module_sheet': r'^(.+):(list|detail)$',
 }
 
 TRANSIFEX_MODULE_RESOURCE_NAME = re.compile(r'^module_(\w+)(_v\d+)?$')  # module_moduleUniqueID_v123
@@ -59,7 +57,7 @@ class TranslationsParser(object):
         # add rows
         for po_entry in po_entries:
             context = po_entry.msgctxt
-            _index, _type, _sheet_name, _unique_id = re.match(context_regex, context).groups()
+            _type, _sheet_name, _unique_id = re.match(context_regex, context).groups()
             ws.append([_type, _sheet_name, po_entry.msgid, po_entry.msgstr, _unique_id])
 
     def _add_module_sheet(self, ws, po_entries):
@@ -69,17 +67,15 @@ class TranslationsParser(object):
         # add rows
         for po_entry in po_entries:
             context = po_entry.msgctxt
-            _index, _case_property, _list_or_detail = re.match(context_regex, context).groups()
+            _case_property, _list_or_detail = re.match(context_regex, context).groups()
             ws.append([_case_property, _list_or_detail, po_entry.msgid, po_entry.msgstr])
 
     def _add_form_sheet(self, ws, po_entries):
-        context_regex = CONTEXT_REGEXS['form_sheet']
         # add header
         ws.append(["label", self.key_lang_str, self.source_lang_str])
         # add rows
         for po_entry in po_entries:
-            context = po_entry.msgctxt
-            _index, _label = re.match(context_regex, context).groups()
+            _label = po_entry.msgctxt
             ws.append([_label, po_entry.msgid, po_entry.msgstr])
 
     @memoized

@@ -207,7 +207,7 @@ class TransifexPOFileGenerator:
                 source,
                 translation,
                 [(occurrence_row, '')],
-                ':'.join([str(i), occurrence_row]))
+                occurrence_row)
             )
         return translations_for_sheet
 
