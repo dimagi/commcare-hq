@@ -1,9 +1,14 @@
-hqDefine('app_manager/js/summary/form_summary', function() {
-    var assertProperties = hqImport("hqwebapp/js/assert_properties"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        models = hqImport("app_manager/js/summary/models"),
-        utils = hqImport('app_manager/js/summary/utils');
-
+// knockout_bindings.ko is a part of this dependency because page uses 'slideVisible' binding
+hqDefine('app_manager/js/summary/form_summary',[
+    'jquery',
+    'underscore',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/assert_properties',
+    'app_manager/js/summary/models',
+    'app_manager/js/summary/utils',
+    'hqwebapp/js/knockout_bindings.ko',
+], function($, _, ko, initialPageData, assertProperties, models, utils) {
     var formSummaryModel = function(options) {
         var self = models.contentModel(_.extend(options, {
             query_label: gettext("Filter questions"),
@@ -74,7 +79,7 @@ hqDefine('app_manager/js/summary/form_summary', function() {
     var moduleModel = function(module) {
         var self = models.contentItemModel(module);
 
-        self.url = hqImport("hqwebapp/js/initial_page_data").reverse("view_module", self.id);
+        self.url = initialPageData.reverse("view_module", self.id);
         self.icon = utils.moduleIcon(self) + ' hq-icon';
         self.forms = _.map(self.forms, formModel);
 
@@ -84,7 +89,7 @@ hqDefine('app_manager/js/summary/form_summary', function() {
     var formModel = function(form) {
         var self = models.contentItemModel(form);
 
-        self.url = hqImport("hqwebapp/js/initial_page_data").reverse("form_source", self.id);
+        self.url = initialPageData.reverse("form_source", self.id);
         self.icon = utils.formIcon(self) + ' hq-icon';
         self.questions = _.map(self.questions, function(question) {
             return models.contentItemModel(_.defaults(question, {

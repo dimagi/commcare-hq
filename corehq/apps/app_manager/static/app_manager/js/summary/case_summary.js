@@ -1,7 +1,13 @@
-hqDefine('app_manager/js/summary/case_summary', function() {
-    var assertProperties = hqImport("hqwebapp/js/assert_properties"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        models = hqImport("app_manager/js/summary/models");
+hqDefine('app_manager/js/summary/case_summary',[
+    'jquery',
+    'underscore',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/assert_properties',
+    'app_manager/js/summary/models',
+    'app_manager/js/summary/utils',
+    'hqwebapp/js/knockout_bindings.ko',
+], function($, _, ko, initialPageData, assertProperties, models) {
 
     var caseTypeModel = function(caseType) {
         var self = models.contentItemModel(caseType);
