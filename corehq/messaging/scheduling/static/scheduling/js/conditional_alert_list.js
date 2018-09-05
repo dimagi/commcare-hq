@@ -64,7 +64,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
 
                         var processing_text = '';
                         if(row.locked_for_editing) {
-                            processing_text = '<span class="label label-default">' + gettext("Rule is processing") + ': ' + row.progress_pct + '%</span> ';
+                            processing_text = '<span class="label label-default">' + gettext("Processing") + ': ' + row.progress_pct + '%</span> ';
                         }
 
                         return active_text + processing_text;
