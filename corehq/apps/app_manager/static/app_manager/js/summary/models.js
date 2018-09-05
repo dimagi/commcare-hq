@@ -2,9 +2,14 @@
  * Base models for app summary. Inherited by case summary and form summary.
  * Sets up a menu of items, to be linked with a set of content.
  */
-hqDefine('app_manager/js/summary/models', function() {
-    var assertProperties = hqImport("hqwebapp/js/assert_properties"),
-        utils = hqImport('app_manager/js/summary/utils');
+hqDefine('app_manager/js/summary/models',[
+    'jquery',
+    'knockout',
+    'underscore',
+    'app_manager/js/summary/utils',
+    'hqwebapp/js/assert_properties',
+    'hqwebapp/js/layout',
+], function($, ko, _, utils, assertProperties, hqLayout) {
 
     var menuItemModel = function(options) {
         assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors']);
@@ -144,7 +149,7 @@ hqDefine('app_manager/js/summary/models', function() {
             contentInstance.selectedItemId(newValue);
         });
 
-        hqImport("hqwebapp/js/layout").setIsAppbuilderResizing(true);
+        hqLayout.setIsAppbuilderResizing(true);
         $("#hq-sidebar > nav").koApplyBindings(menuInstance);
         $("#js-appmanager-body").koApplyBindings(contentInstance);
     };
