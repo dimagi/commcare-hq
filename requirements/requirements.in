@@ -3,7 +3,7 @@ attrs==18.1.0
 cython==0.27.3
 iso8601==0.1.11
 jsonobject==0.9.3
-jsonobject-couchdbkit==0.9.8
+jsonobject-couchdbkit==0.9.9
 celery==3.1.25
 # required by django-digest
 decorator==4.0.11
