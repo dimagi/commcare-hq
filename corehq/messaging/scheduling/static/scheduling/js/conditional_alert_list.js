@@ -100,12 +100,22 @@ hqDefine("scheduling/js/conditional_alert_list", [
                         return html;
                     },
                 },
+                {
+                    "targets": [5],
+                    "visible": initialPageData.get("allow_copy"),
+                    "render": function(data, type, row) {
+                        var html = '<input type="text" id="copy-to-project-for-' + row.id + '" placeholder="' + gettext("Project") + '" class="textinput textInput form-control" />';
+                        html += ' <button id="copy-button-for-' + row.id + '" class="btn btn-default alert-copy" data-id="' + row.id + '" >' + gettext("Copy") + '</button>';
+                        return html;
+                    },
+                },
             ],
         });
 
         $(document).on('click', '.alert-delete', deleteAlert);
         $(document).on('click', '.alert-activate', activateAlert);
         $(document).on('click', '.alert-restart', restartRule);
+        $(document).on('click', '.alert-copy', copyRule);
 
         function reloadTable() {
             table.fnDraw(false);
@@ -116,25 +126,38 @@ hqDefine("scheduling/js/conditional_alert_list", [
 
     });
 
-    function alertAction(action, rule_id) {
+    function alertAction(action, rule_id, projectName) {
         var activateButton = $('#activate-button-for-' + rule_id);
         var deleteButton = $('#delete-button-for-' + rule_id);
+        var copyButton = $('#copy-button-for-' + rule_id);
         if(action === 'delete') {
             deleteButton.disableButton();
             activateButton.prop('disabled', true);
+            copyButton.prop('disabled', true);
         } else if (action === 'activate' || action === 'deactivate') {
             activateButton.disableButton();
             deleteButton.prop('disabled', true);
+            copyButton.prop('disabled', true);
+        } else if(action === 'copy') {
+            copyButton.disableButton();
+            deleteButton.prop('disabled', true);
+            activateButton.prop('disabled', true);
+        }
+
+        var payload = {
+            action: action,
+            rule_id: rule_id,
+        };
+
+        if(action === 'copy') {
+            payload['project'] = projectName;
         }
 
         $.ajax({
             url: '',
             type: 'post',
             dataType: 'json',
-            data: {
-                action: action,
-                rule_id: rule_id,
-            },
+            data: payload,
         })
             .done(function(result) {
                 if(action === 'restart') {
@@ -147,6 +170,12 @@ hqDefine("scheduling/js/conditional_alert_list", [
                         );
                         text = interpolate(text, [result.minutes_remaining]);
                         alert(text);
+                    }
+                } else if(action === 'copy') {
+                    if(result.status === 'success') {
+                        alert(gettext("Copy successful."));
+                    } else if(result.status === 'error') {
+                        alert(interpolate(gettext("Error: %s"), [result.error_msg]));
                     }
                 }
             })
@@ -182,6 +211,20 @@ hqDefine("scheduling/js/conditional_alert_list", [
         }
         if(confirm(prompt)) {
             alertAction('restart', $(this).data("id"));
+        }
+    }
+
+    function copyRule() {
+        var ruleId = $(this).data("id");
+        var projectName = $.trim($("#copy-to-project-for-" + ruleId).val());
+
+        if(projectName === '') {
+            alert(gettext("Please enter a project name first."));
+            return;
+        }
+
+        if(confirm(interpolate(gettext("Copy this alert to project %s?"), [projectName]))) {
+            alertAction('copy', ruleId, projectName);
         }
     }
 
