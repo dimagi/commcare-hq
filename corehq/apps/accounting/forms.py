@@ -1797,7 +1797,7 @@ class AnnualPlanContactForm(forms.Form):
             'message',
             hqcrispy.FormActions(
                 StrictButton(
-                    _("Request Quote"),
+                    _("Submit"),
                     type="submit",
                     css_class="btn-primary",
                 ),
