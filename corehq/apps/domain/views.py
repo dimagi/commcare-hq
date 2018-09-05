@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
 import datetime
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from decimal import Decimal
 import logging
 import json
@@ -68,7 +68,7 @@ from corehq.apps.accounting.payment_handlers import (
     InvoiceStripePaymentHandler,
 )
 from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
-from corehq.apps.accounting.forms import EnterprisePlanContactForm
+from corehq.apps.accounting.forms import EnterprisePlanContactForm, AnnualPlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
@@ -629,7 +629,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_end': date_end,
             'cards': cards,
             'next_subscription': next_subscription,
-            'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line
+            'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line,
+            'is_annual_plan': plan_version.plan.is_annual_plan
         }
         info['has_account_level_credit'] = (
             any(
@@ -1264,6 +1265,12 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         return not self.slug_to_form[ContractedPartnerForm.slug].is_uneditable
 
 
+PlanOption = namedtuple(
+    'PlanOption',
+    ['name', 'monthly_price', 'annual_price', 'description']
+)
+
+
 class SelectPlanView(DomainAccountingSettings):
     template_name = 'domain/select_plan.html'
     urlname = 'domain_select_plan'
@@ -1271,6 +1278,40 @@ class SelectPlanView(DomainAccountingSettings):
     step_title = ugettext_lazy("Select Plan")
     edition = None
     lead_text = ugettext_lazy("Please select a plan below that fits your organization's needs.")
+
+    @property
+    def plan_options(self):
+        return [
+            PlanOption(
+                SoftwarePlanEdition.STANDARD,
+                "$300",
+                "$250",
+                _("Perfect to prove the value of CommCare in the pilot phase. "
+                  "Access case imports, API integrations, and better support.")
+            ),
+            PlanOption(
+                SoftwarePlanEdition.PRO,
+                "$600",
+                "$500",
+                _("Ideal for projects that need a complete mobile solution "
+                  "with data management tools, and access to priority email "
+                  "support.")
+            ),
+            PlanOption(
+                SoftwarePlanEdition.ADVANCED,
+                "$1200",
+                "$1000",
+                _("For our savviest users, working on projects at scale that require advanced levels of data, "
+                  "security and support.")
+            ),
+            PlanOption(
+                SoftwarePlanEdition.ENTERPRISE,
+                _("Contact Us"),
+                _("Contact Us"),
+                _("A tailor-made plan for organizations with multiple projects. "
+                  "All paid features included in this plan.")
+            )
+        ]
 
     @property
     def edition_name(self):
@@ -1312,7 +1353,7 @@ class SelectPlanView(DomainAccountingSettings):
     def page_context(self):
         return {
             'editions': [
-                (edition.lower(), DESC_BY_EDITION[edition])
+                edition.lower()
                 for edition in [
                     SoftwarePlanEdition.COMMUNITY,
                     SoftwarePlanEdition.STANDARD,
@@ -1321,6 +1362,7 @@ class SelectPlanView(DomainAccountingSettings):
                     SoftwarePlanEdition.ENTERPRISE,
                 ]
             ],
+            'plan_options': [p._asdict() for p in self.plan_options],
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
@@ -1387,7 +1429,7 @@ class SelectedEnterprisePlanView(SelectPlanView):
     @property
     @memoized
     def is_not_redirect(self):
-        return not 'plan_edition' in self.request.POST
+        return 'plan_edition' not in self.request.POST
 
     @property
     @memoized
@@ -1405,6 +1447,69 @@ class SelectedEnterprisePlanView(SelectPlanView):
     def post(self, request, *args, **kwargs):
         if self.is_not_redirect and self.enterprise_contact_form.is_valid():
             self.enterprise_contact_form.send_message()
+            messages.success(request, _("Your request was sent to Dimagi. "
+                                        "We will try our best to follow up in a timely manner."))
+            return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class SelectedAnnualPlanView(SelectPlanView):
+    template_name = 'domain/selected_annual_plan.html'
+    urlname = 'annual_plan_request_quote'
+    step_title = ugettext_lazy("Contact Dimagi")
+    edition = None
+
+    @property
+    def steps(self):
+        last_steps = super(SelectedAnnualPlanView, self).steps
+        last_steps.append({
+            'title': _("2. Contact Dimagi"),
+            'url': reverse(SelectedAnnualPlanView.urlname, args=[self.domain]),
+        })
+        return last_steps
+
+    @property
+    def on_annual_plan(self):
+        if self.current_subscription is None:
+            return False
+        else:
+            return self.current_subscription.plan_version.plan.is_annual_plan
+
+    @property
+    @memoized
+    def is_not_redirect(self):
+        return 'plan_edition' not in self.request.POST
+
+    @property
+    @memoized
+    def edition(self):
+        if self.on_annual_plan:
+            return self.current_subscription.plan_version.plan.edition
+        edition = self.request.GET.get('plan_edition').title()
+        if edition not in [e[0] for e in SoftwarePlanEdition.CHOICES]:
+            raise Http404()
+        return edition
+
+    @property
+    @memoized
+    def annual_plan_contact_form(self):
+        if self.request.method == 'POST' and self.is_not_redirect:
+            return AnnualPlanContactForm(self.domain, self.request.couch_user, self.on_annual_plan,
+                                         data=self.request.POST)
+        return AnnualPlanContactForm(self.domain, self.request.couch_user, self.on_annual_plan)
+
+    @property
+    def page_context(self):
+        return {
+            'annual_plan_contact_form': self.annual_plan_contact_form,
+            'on_annual_plan': self.on_annual_plan,
+            'edition': self.edition,
+            'selected_enterprise_plan': self.edition == SoftwarePlanEdition.ENTERPRISE
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.is_not_redirect and self.annual_plan_contact_form.is_valid():
+            self.annual_plan_contact_form.send_message()
             messages.success(request, _("Your request was sent to Dimagi. "
                                         "We will try our best to follow up in a timely manner."))
             return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
@@ -1586,17 +1691,12 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
     page_title = ugettext_lazy("Renew Plan")
     step_title = ugettext_lazy("Renew or Change Plan")
+    template_name = "domain/renew_plan.html"
 
     @property
     def lead_text(self):
         return ugettext_lazy("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
                              .format(plan=self.current_subscription.plan_version.plan.edition))
-
-    @property
-    def main_context(self):
-        context = super(SubscriptionRenewalView, self).main_context
-        context.update({'is_renewal': True})
-        return context
 
     @property
     def page_context(self):
