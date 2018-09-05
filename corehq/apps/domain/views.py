@@ -1313,6 +1313,7 @@ class SelectPlanView(DomainAccountingSettings):
             )
         ]
 
+    @property
     def start_date_after_minimum_subscription(self):
         if self.current_subscription is None:
             return ""
