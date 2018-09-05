@@ -27,4 +27,9 @@ requirejs.config({
             "datatables.net": "datatables",
         },
     },
+
+    // This is really build config, but it's easier to define a js function here than in requirejs.yaml
+    onBuildRead: function (moduleName, path, contents) {
+        return contents.replace(/hqDefine/g, 'define');
+    },
 });
