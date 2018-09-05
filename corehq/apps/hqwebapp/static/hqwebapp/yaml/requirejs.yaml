@@ -57,6 +57,22 @@ modules:
       - jquery-ui/ui/droppable
       - jquery-ui/ui/sortable
 
+  - name: accounting/js/bundle
+    include:
+      - accounting/js/lib/stripe.js
+    include_directories:
+      - accounting/js
+    exclude:
+      - hqwebapp/js/common
+
+  - name: domain/js/bundle
+    include:
+      - accounting/js/lib/stripe.js
+    include_directories:
+      - domain/js
+    exclude:
+      - hqwebapp/js/common
+
   # App manager bundle, which currently contains nothing because form_designer.js contains
   # the RequireJS config for vellum, which doesn't play well with HQ's RequireJS. This
   # will be removed once app manager is migrated to RequireJS.
