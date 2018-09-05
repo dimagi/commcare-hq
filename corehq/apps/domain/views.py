@@ -1509,6 +1509,16 @@ class SelectedAnnualPlanView(SelectPlanView):
 
     @property
     @memoized
+    def edition(self):
+        if self.on_annual_plan:
+            return self.current_subscription.plan_version.plan.edition
+        edition = self.request.GET.get('plan_edition').title()
+        if edition not in [e[0] for e in SoftwarePlanEdition.CHOICES]:
+            raise Http404()
+        return edition
+
+    @property
+    @memoized
     def annual_plan_contact_form(self):
         if self.request.method == 'POST' and self.is_not_redirect:
             return AnnualPlanContactForm(self.domain, self.request.couch_user, self.on_annual_plan,
@@ -1519,6 +1529,9 @@ class SelectedAnnualPlanView(SelectPlanView):
     def page_context(self):
         return {
             'annual_plan_contact_form': self.annual_plan_contact_form,
+            'on_annual_plan': self.on_annual_plan,
+            'edition': self.edition,
+            'selected_enterprise_plan': self.edition == SoftwarePlanEdition.ENTERPRISE
         }
 
     def post(self, request, *args, **kwargs):
