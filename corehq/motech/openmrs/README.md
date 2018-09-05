@@ -356,3 +356,104 @@ Click "Save"
 Now CommCare's "Provider UUID" will be recognised by OpenMRS as a
 provider. Copy the value of the person UUID you made a note of earlier
 into your OpenMRS configuration in CommCare HQ.
+
+
+Atom Feed Integration
+---------------------
+
+The [OpenMRS Atom Feed Module](https://wiki.openmrs.org/display/docs/Atom+Feed+Module)
+allows MOTECH to poll a feed of updates to patients, concepts,
+encounters and observations. The feed adheres to the
+[Atom syndication format](https://validator.w3.org/feed/docs/rfc4287.html).
+
+An example URL for the patient feed would be like
+http://www.example.com/openmrs/ws/atomfeed/patient/recent
+
+Example content:
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <feed xmlns="http://www.w3.org/2005/Atom">
+      <title>Patient AOP</title>
+      <link rel="self" type="application/atom+xml" href="http://www.example.com/openmrs/ws/atomfeed/patient/recent" />
+      <link rel="via" type="application/atom+xml" href="http://www.example.com/openmrs/ws/atomfeed/patient/32" />
+      <link rel="prev-archive" type="application/atom+xml" href="http://www.example.com/openmrs/ws/atomfeed/patient/31" />
+      <author>
+        <name>OpenMRS</name>
+      </author>
+      <id>bec795b1-3d17-451d-b43e-a094019f6984+32</id>
+      <generator uri="https://github.com/ICT4H/atomfeed">OpenMRS Feed Publisher</generator>
+      <updated>2018-04-26T10:56:10Z</updated>
+      <entry>
+        <title>Patient</title>
+        <category term="patient" />
+        <id>tag:atomfeed.ict4h.org:6fdab6f5-2cd2-4207-b8bb-c2884d6179f6</id>
+        <updated>2018-01-17T19:44:40Z</updated>
+        <published>2018-01-17T19:44:40Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]></content>
+      </entry>
+      <entry>
+        <title>Patient</title>
+        <category term="patient" />
+        <id>tag:atomfeed.ict4h.org:5c6b6913-94a0-4f08-96a2-6b84dbced26e</id>
+        <updated>2018-01-17T19:46:14Z</updated>
+        <published>2018-01-17T19:46:14Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]></content>
+      </entry>
+      <entry>
+        <title>Patient</title>
+        <category term="patient" />
+        <id>tag:atomfeed.ict4h.org:299c435d-b3b4-4e89-8188-6d972169c13d</id>
+        <updated>2018-01-17T19:57:09Z</updated>
+        <published>2018-01-17T19:57:09Z</published>
+        <content type="application/vnd.atomfeed+xml"><![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]></content>
+      </entry>
+    </feed>
+
+At the time of writing, the Atom feed does not use ETags or offer HEAD
+requests. MOTECH uses a GET request to fetch the document, and checks
+the timestamp in the `<updated>` tag to tell whether there is new
+content.
+
+The feed is paginated, and the page number is given at the end of the
+`href` attribute of the `<link rel="via" ...` tag, which is found at the
+start of the feed. A `<link rel="next-archive" ...` tag indicates that
+there is a next page.
+
+MOTECH stores the last page number polled in the
+`OpenmrsRepeater.atom_feed_last_page` property. When it polls again, it
+starts at this page, and iterates "next-archive" links until all have
+been fetched.
+
+If this is the first time MOTECH is polling an Atom feed, it uses the
+`/recent` URL (as given in the example URL above) instead of starting
+from the very beginning. This is to allow Atom feed integration to be
+enabled for ongoing projects that may have a lot of established data.
+Administrators should be informed that enabling Atom feed integration
+will not import all OpenMRS patients into CommCare, but it will add
+CommCare cases for patients created in OpenMRS from the moment Atom
+feed integration is enabled.
+
+### Adding cases for OpenMRS patients
+
+MOTECH needs three kinds of data in order to add a case for an OpenMRS
+patient:
+
+1. The **case type**. This is set using the OpenMRS Repeater's "Case
+   Type" field (i.e. OpenmrsRepeater.white_listed_case_types). It must
+   have exactly one case type specified.
+
+2. The **case owner**. This is determined using the OpenMRS Repeater's
+   "Location" field (i.e. OpenmrsRepeater.location_id). The owner is set
+   to the first mobile worker (specifically CommCareUser instance) found
+   at that location.
+
+3. The **case properties** to set. MOTECH uses the patient_identifiers,
+   person_properties, person_preferred_name, person_preferred_address,
+   and person_attributes given in "Case config"
+   (OpenmrsRepeater.openmrs_config.case_config) to map the values of an
+   OpenMRS patient to case properties. All and only the properties in
+   "Case config" are mapped.
+
+The **name of cases** updated from the Atom feed are set to the display
+name of the *person* (not the display name of patient because it often
+includes punctuation and an identifier).
