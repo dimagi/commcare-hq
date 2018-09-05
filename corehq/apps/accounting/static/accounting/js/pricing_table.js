@@ -13,70 +13,75 @@ hqDefine('accounting/js/pricing_table', [
     utils,
     assertProperties
 ) {
-    var ENTERPRISE = 'enterprise';
-    var ADVANCED = 'advanced';
-    var PRO = 'pro';
-    var STANDARD = 'standard';
-    var COMMUNITY = 'community';
-
-    var pricingTableModel = function (options) {
-        assertProperties.assert(options, ['editions', 'currentEdition', 'isRenewal', 'startDateAfterMinimum',
-            'isSubscriptionBelowMin', 'nextSubscriptionEdition', 'invoicing_contact']);
+    var PricingTable = function (options) {
+        assertProperties.assert(options, [
+            'editions',
+            'planOptions',
+            'currentPlan',
+            'isRenewal',
+            'startDateAfterMinimum',
+            'isSubscriptionBelowMin',
+            'nextSubscriptionEdition',
+            'invoicingContact',
+        ]);
 
         'use strict';
         var self = {};
 
-        self.currentEdition = options.currentEdition;
+        self.currentPlan = ko.observable(options.currentPlan);
+        self.editions = options.editions;
         self.isRenewal = options.isRenewal;
         self.startDateAfterMinimumSubscription = options.startDateAfterMinimum;
         self.subscriptionBelowMinimum = options.isSubscriptionBelowMin;
         self.nextSubscriptionEdition = options.nextSubscriptionEdition;
-        self.invoicing_contact = options.invoicing_contact;
-        self.editions = ko.observableArray(_.map(options.editions, function (edition) {
-            return pricingTableEditionModel(edition, self.currentEdition);
+        self.invoicingContact = options.invoicingContact;
+
+        self.selectedPlan = ko.observable(options.currentPlan);
+
+        self.showMonthlyPricing = ko.observable(false);
+
+        self.refundCss = ko.computed(function () {
+            if (self.showMonthlyPricing()) {
+                return "hide-refund";
+            }
+        });
+
+        self.isSubmitVisible = ko.computed(function () {
+            return !! self.selectedPlan() && !(self.selectedPlan() === self.currentPlan());
+        });
+
+        self.isCurrentPlanCommunity = ko.observable(options.currentPlan === 'community');
+
+        self.selectCommunityPlan = function () {
+            self.selectedPlan('community');
+        };
+        self.isDowngrade = function () {
+            return self.editions.indexOf(self.selectedPlan()) < self.editions.indexOf(self.currentPlan());
+        };
+
+        self.communityCss = ko.computed(function () {
+            if (self.selectedPlan() === 'community') {
+                return "selected-plan";
+            }
+            return "";
+        });
+
+        self.planOptions = ko.observableArray(_.map(options.planOptions, function (opt) {
+          return new PlanOption(opt, self);
         }));
 
-        self.selected_edition = ko.observable(options.isRenewal ? options.currentEdition : false);
-        self.isSubmitVisible = ko.computed(function () {
-            if (self.isRenewal){
-                return true;
-            }
-            return !! self.selected_edition() && !(self.selected_edition() === self.currentEdition);
+        self.showNext = ko.computed(function () {
+            return self.selectedPlan() === 'community' || self.showMonthlyPricing();
         });
-        self.selectCurrentPlan = function () {
-            self.selected_edition(self.currentEdition);
-        };
-        self.isDowngrade = function (oldPlan, newPlan) {
-            if (oldPlan === ENTERPRISE) {
-                if (_.contains([ADVANCED, PRO, STANDARD, COMMUNITY], newPlan)) {
-                    return true;
-                }
-            }
-            else if (oldPlan === ADVANCED) {
-                if (_.contains([PRO, STANDARD, COMMUNITY], newPlan)) {
-                    return true;
-                }
-            }
-            else if (oldPlan === PRO) {
-                if (_.contains([STANDARD, COMMUNITY], newPlan)) {
-                    return true;
-                }
-            } else if (oldPlan === STANDARD) {
-                if (newPlan === COMMUNITY) {
-                    return true;
-                }
-            }
-            return false;
-        };
 
         self.form = undefined;
         self.openMinimumSubscriptionModal = function (pricingTable, e) {
             self.form = $(e.currentTarget).closest("form");
 
-            var mailto = "<a href=\'mailto:" + self.invoicing_contact + "'>billing-support@dimagi.com</a>";
-            if (self.isDowngrade(self.currentEdition, self.selected_edition()) && self.subscriptionBelowMinimum) {
-                var oldPlan = utils.capitalize(self.currentEdition);
-                var newPlan = utils.capitalize(self.selected_edition());
+            var mailto = "<a href=\'mailto:" + self.invoicingContact + "'>billing-support@dimagi.com</a>";
+            if (self.isDowngrade() && self.subscriptionBelowMinimum) {
+                var oldPlan = utils.capitalize(self.currentPlan());
+                var newPlan = utils.capitalize(self.selectedPlan());
                 var newStartDate = "<strong>" + self.startDateAfterMinimumSubscription + "</strong>";
 
                 var message = "";
@@ -126,62 +131,92 @@ hqDefine('accounting/js/pricing_table', [
             }
         };
 
+        self.contactSales = function (pricingTable, e) {
+            var $button = $(e.currentTarget);
+            $button.disableButton();
+
+            self.form = $(e.currentTarget).closest("form");
+            self.currentPlan = self.currentPlan + " - annual pricing";
+            self.form.submit();
+        };
+
         self.init = function () {
-            $('.col-edition').click(function () {
-                self.selected_edition($(this).data('edition'));
-            });
+            self.form = $("#select-plan-form");
         };
 
         return self;
     };
 
-    var pricingTableEditionModel = function (data, currentEdition) {
+    var PlanOption = function (data, parent) {
         'use strict';
-        var self = {};
+        var self = this;
 
-        self.slug = ko.observable(data[0]);
-        self.name = ko.observable(data[1].name);
-        self.description = ko.observable(data[1].description);
-        self.currentEdition = ko.observable(data[0] === currentEdition);
-        self.notCurrentEdition = ko.computed(function (){
-            return !self.currentEdition();
-        });
-        self.col_css = ko.computed(function () {
-            return 'col-edition col-edition-' + self.slug();
-        });
-        self.isCommunity = ko.computed(function () {
-            return self.slug() === COMMUNITY;
-        });
-        self.isStandard = ko.computed(function () {
-            return self.slug() === STANDARD;
-        });
-        self.isPro = ko.computed(function () {
-            return self.slug() === PRO;
-        });
-        self.isAdvanced = ko.computed(function () {
-            return self.slug() === ADVANCED;
-        });
-        self.isEnterprise = ko.computed(function () {
-            return self.slug() === ENTERPRISE;
+        self.name = ko.observable(data.name);
+        self.slug = ko.observable(data.name.toLowerCase());
+
+        self.monthlyPrice = ko.observable(data.monthly_price);
+        self.annualPrice = ko.observable(data.annual_price);
+        self.description = ko.observable(data.description);
+
+        self.isCurrentPlan = ko.computed(function () {
+            return self.slug() === parent.currentPlan();
         });
 
-        return self;
+        self.isSelectedPlan = ko.computed(function () {
+            return self.slug() === parent.selectedPlan();
+        });
+
+        self.cssClass = ko.computed(function () {
+            var cssClass = "tile-" + self.slug();
+            if (self.isSelectedPlan()) {
+                cssClass = cssClass + " selected-plan";
+            }
+            return cssClass;
+        });
+
+        self.selectPlan = function () {
+            parent.selectedPlan(self.slug());
+        };
+
+        self.pricingTypeText = ko.computed(function (){
+            if (parent.showMonthlyPricing()) {
+                return django.gettext("Billed Monthly");
+            }
+            return django.gettext("Billed Annually");
+        });
+
+        self.pricingTypeCssClass = ko.computed(function (){
+            if (parent.showMonthlyPricing()) {
+                return 'pricing-type-monthly';
+            }
+            return 'pricing-type-annual';
+        });
+
+        self.displayPrice = ko.computed(function () {
+            if (parent.showMonthlyPricing()) {
+                return self.monthlyPrice();
+            }
+            return self.annualPrice();
+        });
+
     };
 
+
     $(function () {
-        var pricingTable = pricingTableModel({
+        var pricingTable = new PricingTable({
             editions: initialPageData.get('editions'),
-            currentEdition: initialPageData.get('current_edition'),
+            planOptions: initialPageData.get('planOptions'),
+            currentPlan: initialPageData.get('currentPlan'),
             isRenewal: initialPageData.get('is_renewal'),
             startDateAfterMinimum: initialPageData.get('start_date_after_minimum_subscription'),
             isSubscriptionBelowMin: initialPageData.get('subscription_below_minimum'),
             nextSubscriptionEdition: initialPageData.get('next_subscription_edition'),
-            invoicing_contact: initialPageData.get('invoicing_contact_email'),
+            invoicingContact: initialPageData.get('invoicing_contact_email'),
         });
 
         // Applying bindings is a bit weird here, because we need logic in the modal,
         // but the only HTML ancestor the modal shares with the pricing table is <body>.
-        $('#pricing-table').koApplyBindings(pricingTable);
+        $('#plans').koApplyBindings(pricingTable);
         $('#modal-minimum-subscription').koApplyBindings(pricingTable);
 
         pricingTable.init();

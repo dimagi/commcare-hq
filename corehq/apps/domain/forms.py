@@ -1699,7 +1699,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         if self.current_subscription is None:
             return False
         else:
-            is_downgrade(
+            return is_downgrade(
                 current_edition=self.current_subscription.plan_version.plan.edition,
                 next_edition=self.plan_version.plan.edition
             )
