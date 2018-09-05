@@ -12,15 +12,25 @@ requirejs.config({
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
     },
     shim: {
-        "ace-builds/src-min-noconflict/ace": { exports: "ace" },
-        "nvd3/nv.d3.min":{deps:['d3/d3.min']},
-        "bootstrap": { deps: ['jquery'] },
-        "ko.mapping": { deps: ['knockout'] },
-        "hqwebapp/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
-        "datatables.bootstrap": { deps: ['datatables'] },
-        "jquery.rmi/jquery.rmi": {
+        'ace-builds/src-min-noconflict/ace': { exports: 'ace' },
+        'bootstrap': { deps: ['jquery'] },
+        'datatables.bootstrap': { deps: ['datatables'] },
+        'hqwebapp/js/hq.helpers': { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
+        'jquery.rmi/jquery.rmi': {
             deps: ['jquery', 'knockout', 'underscore'],
             exports: 'RMI',
+        },
+        'jquery-treetable/jquery.treetable': { deps: ['jquery'] },
+        'jquery-ui/ui/datepicker': { deps: ['jquery'] },
+        'jquery-ui/ui/effect': { deps: ['jquery'] },
+        'jquery-ui/ui/effect-slide': { deps: ['jquery', 'jquery-ui/ui/effect'] },
+        'ko.mapping': { deps: ['knockout'] },
+        'knockout-validation/dist/knockout.validation.min': { deps: ['knockout'] },
+        'multiselect/js/jquery.multi-select': { deps: ['jquery'] },
+        'quicksearch/dist/jquery.quicksearch.min': { deps: ['jquery'] },
+        'nvd3/nv.d3.min':{deps:['d3/d3.min']},
+        'stripe': {
+            exports: 'Stripe',
         },
     },
     map: {
