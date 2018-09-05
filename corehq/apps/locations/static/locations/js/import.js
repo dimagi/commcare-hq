@@ -2,7 +2,6 @@ hqDefine('locations/js/import', [
     'jquery',
     'knockout',
     'analytix/js/google',
-    'commtrack/js/location_bulk_upload_file',
 ], function(
     $,
     ko,
