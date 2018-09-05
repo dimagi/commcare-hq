@@ -1,4 +1,8 @@
-hqDefine("app_manager/js/summary/utils", function() {
+hqDefine("app_manager/js/summary/utils",[
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+], function($, _, initialPageData) {
     var translateName = function(names, targetLang, allLangs) {
         var langs = [targetLang].concat(allLangs),
             firstLang = _(langs).find(function(lang) {
@@ -37,7 +41,7 @@ hqDefine("app_manager/js/summary/utils", function() {
     };
 
     var questionIcon = function(question) {
-        var vellumType = hqImport("hqwebapp/js/initial_page_data").get('VELLUM_TYPES')[question.type];
+        var vellumType = initialPageData.get('VELLUM_TYPES')[question.type];
         return 'hq-icon ' + (vellumType ? vellumType.icon : '');
     };
 

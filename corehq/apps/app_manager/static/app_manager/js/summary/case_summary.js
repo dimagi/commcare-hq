@@ -1,7 +1,13 @@
-hqDefine('app_manager/js/summary/case_summary', function() {
-    var assertProperties = hqImport("hqwebapp/js/assert_properties"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        models = hqImport("app_manager/js/summary/models");
+// knockout_bindings.ko is a part of this dependency because page uses 'slideVisible' binding in case_summary.html
+hqDefine('app_manager/js/summary/case_summary',[
+    'jquery',
+    'underscore',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/assert_properties',
+    'app_manager/js/summary/models',
+    'hqwebapp/js/knockout_bindings.ko',
+], function($, _, ko, initialPageData, assertProperties, models) {
 
     var caseTypeModel = function(caseType) {
         var self = models.contentItemModel(caseType);
