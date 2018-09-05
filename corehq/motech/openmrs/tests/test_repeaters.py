@@ -18,11 +18,13 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, XMLNS_OPENMRS
+from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 from corehq.util.test_utils import TestFileMixin, _create_case
 import corehq.motech.openmrs.repeater_helpers
 from corehq.motech.openmrs.repeater_helpers import (
+    find_patient,
     get_case_location,
     get_case_location_ancestor_repeaters,
     get_openmrs_location_uuid,
@@ -433,6 +435,41 @@ class GetPatientTest(SimpleTestCase):
         patient = get_patient_by_identifier(
             requests_mock, 'e2b966d0-1d5f-11e0-b929-000c29ad1d07', '11111111/11/1111')
         self.assertEqual(patient['uuid'], '5ba94fa2-9cb3-4ae6-b400-7bf45783dcbf')
+
+
+class FindPatientTest(SimpleTestCase):
+
+    def test_create_missing(self):
+        """
+        create_patient should be called if PatientFinder.create_missing is set
+        """
+        openmrs_config = OpenmrsConfig.wrap({
+            'case_config': {
+                'patient_finder': {
+                    'create_missing': True,
+                    'doc_type': 'WeightedPropertyPatientFinder',
+                    'searchable_properties': [],
+                    'property_weights': [],
+                },
+                'patient_identifiers': {},
+                'match_on_ids': [],
+                'person_properties': {},
+                'person_preferred_address': {},
+                'person_preferred_name': {},
+            },
+            'form_configs': [],
+        })
+
+        with mock.patch('corehq.motech.openmrs.repeater_helpers.CaseAccessors') as CaseAccessorsPatch, \
+                mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch:
+            requests = mock.Mock()
+            info = mock.Mock(case_id='123')
+            CaseAccessorsPatch.return_value = mock.Mock(get_case=mock.Mock())
+            create_patient_patch.return_value = None
+
+            find_patient(requests, DOMAIN, info, openmrs_config)
+
+            create_patient_patch.assert_called()
 
 
 class SaveMatchIdsTests(SimpleTestCase):
