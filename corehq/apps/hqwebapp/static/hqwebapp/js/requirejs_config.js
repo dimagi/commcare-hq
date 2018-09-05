@@ -39,6 +39,10 @@ requirejs.config({
         'knockout-validation/dist/knockout.validation.min': { deps: ['knockout'] },
         'multiselect/js/jquery.multi-select': { deps: ['jquery'] },
         'quicksearch/dist/jquery.quicksearch.min': { deps: ['jquery'] },
+        'nvd3/nv.d3.min':{deps:['d3/d3.min']},
+        'stripe': {
+            exports: 'Stripe',
+        },
     },
     map: {
         'datatables.fixedColumns': {
