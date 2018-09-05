@@ -90,7 +90,7 @@ COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 
 #  make celery synchronous
-CELERY_ALWAYS_EAGER = True
+CELERY_TASK_ALWAYS_EAGER = True
 # Fail hard in tasks so you get a traceback
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
