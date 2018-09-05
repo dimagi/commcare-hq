@@ -105,7 +105,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
                     "visible": initialPageData.get("allow_copy"),
                     "render": function(data, type, row) {
                         var disabled = (row.locked_for_editing || !row.editable) ? 'disabled' : '';
-                        var html = '<input type="text" id="copy-to-project-for-' + row.id + '" placeholder="' + gettext("Project") + '" class="textinput textInput form-control" />';
+                        var html = '<input type="text" id="copy-to-project-for-' + row.id + '" placeholder="' + gettext("Project") + '" class="textinput textInput form-control copy-project-name" />';
                         html += ' <button ' + disabled + ' id="copy-button-for-' + row.id + '" class="btn btn-default alert-copy" data-id="' + row.id + '" >' + gettext("Copy") + '</button>';
                         return html;
                     },
@@ -119,7 +119,18 @@ hqDefine("scheduling/js/conditional_alert_list", [
         $(document).on('click', '.alert-copy', copyRule);
 
         function reloadTable() {
-            table.fnDraw(false);
+            // Don't redraw the table if someone is typing a project name in the copy input
+            var canDraw = true;
+            $('.copy-project-name').each(function() {
+                if($(this).val()) {
+                    canDraw = false;
+                }
+            });
+
+            if(canDraw) {
+                table.fnDraw(false);
+            }
+
             setTimeout(reloadTable, 10000);
         }
 
