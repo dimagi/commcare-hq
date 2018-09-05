@@ -10,6 +10,7 @@ from django.test import TestCase
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
     get_awc_report_beneficiary
+from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
 
 
 class TestAWCReport(TestCase):
@@ -1248,10 +1249,7 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Newborns with Low Birth Weight",
                 'help_text': (
-                    "Of all the children born and weighed in the current month and enrolled for Anganwadi "
-                    "services, the percentage that had a birth weight less than 2500 grams. "
-                    "Newborns with Low Birth Weight are closely associated with fetal and neonatal mortality and "
-                    "morbidity, inhibited growth and cognitive development, and chronic diseases later in life."
+                    get_new_born_with_low_weight_help_text(html=False)
                 ),
             }
         )
