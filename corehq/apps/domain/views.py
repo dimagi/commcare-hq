@@ -94,7 +94,7 @@ from corehq.apps.accounting.models import (
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     EntryPoint, WireInvoice,
     StripePaymentMethod, LastPayment,
-    UNLIMITED_FEATURE_USAGE,
+    UNLIMITED_FEATURE_USAGE, MINIMUM_SUBSCRIPTION_LENGTH
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
@@ -1313,6 +1313,25 @@ class SelectPlanView(DomainAccountingSettings):
             )
         ]
 
+    def start_date_after_minimum_subscription(self):
+        if self.current_subscription is None:
+            return ""
+        elif self.current_subscription.is_trial:
+            return ""
+        else:
+            new_start_date = self.current_subscription.date_start + \
+                             datetime.timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH)
+            return new_start_date.strftime(USER_DATE_FORMAT)
+
+    @property
+    def next_subscription_edition(self):
+        if self.current_subscription is None:
+            return None
+        elif self.current_subscription.next_subscription is None:
+            return None
+        else:
+            return self.current_subscription.next_subscription.plan_version.plan.edition
+
     @property
     def edition_name(self):
         if self.edition:
@@ -1367,6 +1386,11 @@ class SelectPlanView(DomainAccountingSettings):
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
                                 else ""),
+            'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
+            'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
+                                           if self.current_subscription is not None else False),
+            'next_subscription_edition': self.next_subscription_edition,
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL
         }
 
 

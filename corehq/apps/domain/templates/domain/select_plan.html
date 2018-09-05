@@ -26,6 +26,11 @@
 {% initial_page_data 'editions' editions %}
 {% initial_page_data 'planOptions' plan_options %}
 {% initial_page_data 'currentPlan' current_edition %}
+{% initial_page_data 'is_renewal' is_renewal %}
+{% initial_page_data 'start_date_after_minimum_subscription' start_date_after_minimum_subscription %}
+{% initial_page_data 'subscription_below_minimum' subscription_below_minimum %}
+{% initial_page_data 'next_subscription_edition' next_subscription_edition %}
+{% initial_page_data 'invoicing_contact_email' invoicing_contact_email %}
 {% registerurl 'email_on_downgrade' domain %}
 
 <p class="lead text-center">
@@ -121,20 +126,29 @@
 
     </div>
 
-    <form class="form"
-          id="select-plan-form"
-          method="post"
-          data-bind="visible: showNext"
-          style="display: none;"
-          action="{% url 'confirm_selected_plan' domain %}">
-        {% csrf_token %}
+    <form
+        {% if is_renewal %}
+            action="{% url 'domain_subscription_renewal_confirmation' domain %}"
+        {% else %}
+            action="{% url 'confirm_selected_plan' domain %}"
+        {% endif %}
+        class="form"
+        id="select-plan-form"
+        method="post"
+        data-bind="visible: showNext"
+        style="display: none;"
+        action="{% url 'confirm_selected_plan' domain %}">
+    {% csrf_token %}
+        {% if is_renewal %}
+        <input type="hidden" name="from_plan_page" value="true">
+        {% endif %}
 
         <input type="hidden" name="plan_edition" data-bind="value: selectedPlan">
         <div class="form-actions" data-bind="visible: isSubmitVisible">
             <div class="text-center">
                 <button type="submit"
                         class="btn btn-primary btn-lg"
-                        data-bind="click: openDowngradeModal">
+                        data-bind="click: openMinimumSubscriptionModal">
                   {% trans 'Next' %}
                 </button>
             </div>
@@ -158,7 +172,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-<div class="modal fade" id="modal-downgrade">
+<div class="modal fade" id="modal-minimum-subscription">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -169,15 +183,11 @@
                 <h4 class="modal-title">Downgrading?</h4>
             </div>
             <div class="modal-body">
-                {% blocktrans %}
-                    We'd love to make CommCare work better for you.
-                    Let us know what we can do to improve, or why you're downgrading.
-                {% endblocktrans %}
                 <br><br>
-                <textarea class="form-control"></textarea>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade">{% trans "OK" %}</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                <button type="button" class="btn btn-danger" data-bind="click: submitDowngradeForm">{% trans "Continue" %}</button>
             </div>
         </div>
     </div>
