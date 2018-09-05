@@ -106,9 +106,9 @@ class TestTreeUtils(SimpleTestCase):
                 ("Region", "State"),  # State doesn't exist
                 ("District", "Region"),
             ])
-        self.assertItemsEqual(
-            e.exception.affected_nodes,
-            ["County", "Region"]
+        self.assertEqual(
+            set(e.exception.affected_nodes),
+            set(["County", "Region"])
         )
 
     def test_has_cycle(self):
@@ -122,9 +122,9 @@ class TestTreeUtils(SimpleTestCase):
                 ("District", "Region"),
                 ("Village", "District"),
             ])
-        self.assertItemsEqual(
-            e.exception.affected_nodes,
-            ["Region", "District", "Village"]
+        self.assertEqual(
+            set(e.exception.affected_nodes),
+            set(["Region", "District", "Village"])
         )
 
 

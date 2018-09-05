@@ -63,6 +63,10 @@ def iso_string_to_date(iso_string):
     return datetime.datetime.strptime(iso_string, ISO_DATE_FORMAT).date()
 
 
+def get_timestamp_for_filename():
+    return datetime.datetime.utcnow().strftime("%Y-%m-%dT%H.%M.%S")
+
+
 def get_first_last_days(year, month):
     last_day = calendar.monthrange(year, month)[1]
     date_start = datetime.date(year, month, 1)

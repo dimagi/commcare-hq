@@ -1,4 +1,11 @@
-hqDefine('hqwebapp/js/atwho', ["underscore"], function (_) {
+hqDefine('hqwebapp/js/atwho', [
+    "knockout",
+    "underscore",
+],
+function (
+    ko,
+    _
+) {
     var _init = function($input, options, afterInsert, replaceValue) {
         $input.atwho(options).on("inserted.atwho", function(event, $li, otherEvent) {
             if (replaceValue){
@@ -58,6 +65,31 @@ hqDefine('hqwebapp/js/atwho', ["underscore"], function (_) {
         } else {
             _init($input, atwhoOptions, options.afterInsert, replaceValue);
         }
+    };
+
+    ko.bindingHandlers.autocompleteAtwho = {
+        init: function(element, valueAccessor) {
+            var $element = $(element);
+            if (!$element.atwho) {
+                throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+            }
+
+            init($element, {
+                afterInsert: function() {
+                    $element.trigger('textchange');
+                },
+            });
+
+            $element.on("textchange", function() {
+                if ($element.val()) {
+                    $element.change();
+                }
+            });
+        },
+
+        update: function(element, valueAccessor, allBindings) {
+            $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
+        },
     };
 
     return {

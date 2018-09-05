@@ -3,8 +3,7 @@ from __future__ import unicode_literals
 from django.utils.text import slugify
 from django.template.loader import render_to_string
 
-from couchdbkit.exceptions import DocTypeError
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.web import json_response

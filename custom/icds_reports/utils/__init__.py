@@ -442,13 +442,13 @@ def chosen_filters_to_labels(config, default_interval=''):
     }
 
     age_intervals = {
-        '6': '0-6 months',
-        '12': '6-12 months',
-        '24': '12-24 months',
-        '36': '24-36 months',
-        '48': '36-48 months',
-        '60': '48-60 months',
-        '72': '60-72 months'
+        '6': '0-6 months (0-180 days)',
+        '12': '6-12 months (181-365 days)',
+        '24': '12-24 months (366-730 days)',
+        '36': '24-36 months (731-1095 days)',
+        '48': '36-48 months (1096-1460 days)',
+        '60': '48-60 months (1461-1825 days)',
+        '72': '60-72 months (1826-2190 days)'
     }
 
     gender = config.get('gender')
@@ -620,21 +620,20 @@ def wfh_recorded_in_month_column(beta):
 
 
 def default_age_interval(beta):
-    return '0 - 5 years' if beta else '6 - 60 months'
+    return '0 - 5 years'
 
 
 def get_age_filters(beta):
-    if beta:
-        return [
-            NOT(EQ('age_tranche', 'age_72'))
-        ]
     return [
-        AND([
-            NOT(EQ('age_tranche', 'age_0')),
-            NOT(EQ('age_tranche', 'age_6')),
-            NOT(EQ('age_tranche', 'age_72'))
-        ])
+        NOT(EQ('age_tranche', 'age_72'))
     ]
+
+
+def get_age_condition(beta):
+    if beta:
+        return "age_tranche != :age_72"
+    else:
+        return "age_tranche != :age_0 AND age_tranche != :age_6 AND age_tranche != :age_72"
 
 
 def track_time(func):
@@ -661,6 +660,10 @@ def percent_num(x, y):
 
 def percent(x, y):
     return "%.2f %%" % (percent_num(x, y))
+
+
+def percent_or_not_entered(x, y):
+    return percent(x, y) if y else DATA_NOT_ENTERED
 
 
 class ICDSDatabaseColumn(DatabaseColumn):

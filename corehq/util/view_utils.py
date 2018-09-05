@@ -10,7 +10,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.urls import reverse as _reverse
-from django.utils.encoding import smart_bytes
+from django.utils.encoding import smart_text
 from django.utils.http import urlencode
 
 from dimagi.utils.logging import notify_exception
@@ -74,7 +74,8 @@ def json_error(f):
         except BadRequest as e:
             return _get_json_exception_response(400, request, e)
         except Exception as e:
-            notify_exception(request, b'JSON exception response: {}'.format(smart_bytes(e)))
+            message = 'JSON exception response: {}'.format(smart_text(e))
+            notify_exception(request, message)
             return _get_json_exception_response(500, request, e)
     return inner
 
@@ -154,3 +155,32 @@ def get_form_or_404(domain, id):
         return form
     except XFormNotFound:
         raise Http404()
+
+
+def request_as_dict(request):
+    """
+    Function returns the dictionary which contains the data of request object.
+    :Parameter request:
+            Object of HttpRequest
+
+    :Return request_data:
+            Dict containing the request data
+    """
+
+    request_data = dict(
+        GET=request.GET if request.method == 'GET' else request.POST,
+        META=dict(
+            QUERY_STRING=request.META.get('QUERY_STRING'),
+            PATH_INFO=request.META.get('PATH_INFO')
+        ),
+        datespan=request.datespan,
+        couch_user=None,
+        can_access_all_locations=request.can_access_all_locations
+    )
+
+    try:
+        request_data.update(couch_user=request.couch_user.get_id)
+    except Exception as e:
+        logging.error("Could not pickle the couch_user id from the request object. Error: %s" % e)
+
+    return request_data

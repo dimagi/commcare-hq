@@ -30,7 +30,11 @@ from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 
-from corehq.apps.app_manager.app_schemas.case_properties import get_parent_type_map
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    get_all_case_properties,
+    get_parent_type_map,
+    get_usercase_properties,
+)
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -61,9 +65,9 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 from django.template.loader import render_to_string
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq import toggles, privileges
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
@@ -2218,8 +2222,10 @@ class DetailColumn(IndexedSchema):
 
         # Lazy migration: enum used to be a dict, now is a list
         if isinstance(data.get('enum'), dict):
-            data['enum'] = sorted({'key': key, 'value': value}
-                                  for key, value in data['enum'].items())
+            data['enum'] = sorted(
+                [{'key': key, 'value': value} for key, value in data['enum'].items()],
+                key=lambda d: d['key'],
+            )
 
         # Lazy migration: xpath expressions from format to first-class property
         if data.get('format') == 'calculate':
@@ -2667,6 +2673,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         raise IncompatibleFormTypeException()
 
+    def update_app_case_meta(self, app_case_meta):
+        pass
+
 
 class ModuleDetailsMixin(object):
 
@@ -2951,6 +2960,20 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     def grid_display_style(self):
         return self.display_style == 'grid'
+
+    def update_app_case_meta(self, meta):
+        from corehq.apps.reports.formdetails.readable import CaseMetaException
+
+        for column in self.case_details.long.columns:
+            try:
+                meta.add_property_detail('long', self.case_type, self.unique_id, column)
+            except CaseMetaException:
+                pass
+        for column in self.case_details.short.columns:
+            try:
+                meta.add_property_detail('short', self.case_type, self.unique_id, column)
+            except CaseMetaException:
+                pass
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -3875,6 +3898,12 @@ class AdvancedModule(ModuleBase):
             except IndexError:
                 pass  # That phase wasn't found, so we can't change it's anchor. Ignore it
 
+    def update_app_case_meta(self, meta):
+        for column in self.case_details.long.columns:
+            meta.add_property_detail('long', self.case_type, self.unique_id, column)
+        for column in self.case_details.short.columns:
+            meta.add_property_detail('short', self.case_type, self.unique_id, column)
+
 
 class ReportAppFilter(DocumentSchema):
 
@@ -4796,6 +4825,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     See note at top of file for high-level overview.
     """
 
+    _blobdb_type_code = CODES.application
     recipients = StringProperty(default="")
 
     # this is the supported way of specifying which commcare build to use
@@ -5392,6 +5422,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             domain_has_apps.clear(self.domain)
 
         LatestAppInfo(self.master_id, self.domain).clear_caches()
+
+        get_all_case_properties.clear(self)
+        get_usercase_properties.clear(self)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
@@ -6315,6 +6348,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             type_meta.relationships = relationships
 
         for module in self.get_modules():
+            module.update_app_case_meta(meta)
             for form in module.get_forms():
                 form.update_app_case_meta(meta)
 

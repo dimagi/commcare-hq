@@ -2,6 +2,7 @@ hqDefine('domain/js/case_search_main', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'domain/js/case_search',
+    'hqwebapp/js/knockout_bindings.ko',     // save button
 ], function(
     $,
     initialPageData,

@@ -9,13 +9,13 @@
         <br/>
     {% endif %}
     <p>
-        <a class="btn {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}btn-warning{% else %}btn-primary{% endif %}"
+        <a class="btn {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}btn-warning{% else %}btn-primary{% endif %} {% if include_modal %}download-zip
+{% endif %}"
             {% if include_modal %}
                 href="#multimedia-zip-modal" data-toggle="modal"
-                onclick="hqImport('app_manager/js/download_async_modal').downloadApplicationZip()"
-            }
+
             {% else %}
-                {# This happens when the template gets included in app_manager/partials/releases.html #}
+                {# This happens when the template gets included in app_manager/partials/releases/releases.html #}
                 {# See app_manager/js/releases/releases.js #}
                 data-bind="click: function () {
                     download_application_zip(true, build_profile());

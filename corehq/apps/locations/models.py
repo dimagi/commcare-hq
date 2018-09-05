@@ -1,16 +1,19 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import uuid
+
+from collections import defaultdict
 from datetime import datetime
 from functools import partial
+import uuid
 
 from bulk_update.helper import bulk_update as bulk_update_helper
 
 import jsonfield
-from django.conf import settings
 from django.db import models, transaction
+from django.db.models import Q
 from django_cte import CTEQuerySet
 from memoized import memoized
+import six
 
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.exceptions import CaseNotFound
@@ -280,7 +283,6 @@ class LocationQueriesMixin(object):
 
         Accepts partial matches, matches against name and site_code.
         """
-        Q = models.Q
         return Q(domain=domain) & Q(
             Q(name__icontains=user_input) | Q(site_code__icontains=user_input)
         )
@@ -712,13 +714,6 @@ class SQLLocation(AdjListModel):
         # For backwards compatability
         return self
 
-    @property
-    def related_location_ids(self):
-        a = LocationRelation.objects.filter(location_a=self.location_id).values_list('location_b', flat=True)
-        b = LocationRelation.objects.filter(location_b=self.location_id).values_list('location_a', flat=True)
-
-        return set(a).union(set(b))
-
 
 def filter_for_archived(locations, include_archive_ancestors):
     """
@@ -827,6 +822,75 @@ class LocationRelation(models.Model):
         SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
     location_b = models.ForeignKey(
         SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
+    distance = models.PositiveSmallIntegerField(null=True)
+
+    @classmethod
+    def from_locations(cls, locations):
+        """Returns  a list of location_ids that have a relation to the list of locations passed in.
+
+        The result will not include any duplicates and any locations that are passed in
+        """
+        relations = LocationRelation.objects.filter(
+            Q(location_a__in=locations) | Q(location_b__in=locations)
+        ).values_list('location_a_id', 'location_b_id')
+
+        related_locations = {loc_id for relation in relations for loc_id in relation}
+        return related_locations - {l.location_id for l in locations}
+
+    @classmethod
+    def relation_distance_dictionary(cls, locations):
+        """Returns a dictionary of the related locations and their distance to each
+        location that's passed in if it has a relation.
+
+        If two locations that are passed in that have a relation. That relation is ignored.
+
+        {
+          related_location: {
+            loc_a_passed_in: distance,
+            loc_b_passed_in: distance
+          }
+        }
+        """
+        relations = cls.objects.filter(
+            Q(location_a__in=locations) | Q(location_b__in=locations)
+        ).prefetch_related('location_a', 'location_b')
+        location_ids = {loc.location_id for loc in locations}
+
+        distance_dictionary = defaultdict(dict)
+
+        for relation in relations:
+            if relation.distance is None:
+                continue
+
+            a_id = relation.location_a_id
+            b_id = relation.location_b_id
+
+            if a_id in location_ids and b_id in location_ids:
+                # ignore when two locations were passed in that are related to each other
+                continue
+
+            if a_id in location_ids:
+                distance_dictionary[b_id][a_id] = relation.distance
+            elif b_id in location_ids:
+                distance_dictionary[a_id][b_id] = relation.distance
+
+        return distance_dictionary
+
+    @classmethod
+    def update_location_distances(cls, source_location_id, location_dict):
+        """Update the related locations for a source location.
+
+        location_dict: {loc_id: distance}
+        """
+
+        for loc_id, distance in six.iteritems(location_dict):
+            relation = cls.objects.filter(
+                (Q(location_a_id=loc_id) & Q(location_b_id=source_location_id)) |
+                (Q(location_b_id=loc_id) & Q(location_a_id=source_location_id))
+            ).first()
+            if relation and relation.distance != distance:
+                relation.distance = distance
+                relation.save()
 
     class Meta(object):
         unique_together = [

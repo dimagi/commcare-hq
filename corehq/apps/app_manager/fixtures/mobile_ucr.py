@@ -373,7 +373,8 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         rows_elem = ReportFixturesProviderV2._get_v2_report_elem(
             data_source,
             {f.field for f in defer_filters},
-            filter_options_by_field
+            filter_options_by_field,
+            _last_sync_time(domain, restore_user.user_id),
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
@@ -386,14 +387,13 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
 
         report_elem = E.fixture(
             id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
-            report_id=report_config.report_id, last_sync=_last_sync_time(domain, restore_user.user_id),
-            indexed='true'
+            report_id=report_config.report_id, indexed='true'
         )
         report_elem.append(rows_elem)
         return [report_filter_elem, report_elem]
 
     @staticmethod
-    def _get_v2_report_elem(data_source, deferred_fields, filter_options_by_field):
+    def _get_v2_report_elem(data_source, deferred_fields, filter_options_by_field, last_sync):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -403,7 +403,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                     filter_options_by_field[k].add(value)
             return row_elem
 
-        rows_elem = E.rows()
+        rows_elem = E.rows(last_sync=last_sync)
         for i, row in enumerate(data_source.get_data()):
             rows_elem.append(_row_to_row_elem(row, i))
         if data_source.has_total_row:

@@ -52,7 +52,7 @@ class CouchPillowRetryProcessingTest(TestCase, TestMixin):
             self.consumer = KafkaConsumer(
                 topics.CASE,
                 group_id='test-consumer',
-                bootstrap_servers=[settings.KAFKA_URL],
+                bootstrap_servers=settings.KAFKA_BROKERS,
                 consumer_timeout_ms=100,
             )
         self.pillow = get_change_feed_pillow_for_db('fake-changefeed-pillow-id', self._fake_couch)

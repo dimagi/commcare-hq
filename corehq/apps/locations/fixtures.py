@@ -13,7 +13,12 @@ import six
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.fixtures.utils import get_index_schema_node
-from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
+from corehq.apps.locations.models import (
+    LocationFixtureConfiguration,
+    LocationRelation,
+    LocationType,
+    SQLLocation,
+)
 from corehq import toggles
 
 
@@ -214,23 +219,50 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
+class RelatedLocationSerializer(FlatLocationSerializer):
+
+    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
+        all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
+            'code', flat=True
+        )
+        location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
+        attrs_to_index = ['@{}'.format(attr) for attr in location_type_attrs]
+        attrs_to_index.extend(_get_indexed_field_name(field.slug) for field in data_fields
+                              if field.index_in_fixture)
+        attrs_to_index.extend(['@id', '@type', 'name', '@distance'])
+
+        xml_nodes = self._get_fixture_node(fixture_id, restore_user, locations_queryset,
+                                           location_type_attrs, data_fields)
+
+        user_locations = restore_user.get_sql_locations(restore_user.domain)
+        distance_dict = LocationRelation.relation_distance_dictionary(user_locations)
+
+        child_node = xml_nodes.getchildren()[0]
+        for grandchild_node in child_node.getchildren():
+            location_id = grandchild_node.get('id')
+            if location_id in distance_dict:
+                minimum_distance = min(six.itervalues(distance_dict[location_id]))
+                grandchild_node.set('distance', str(minimum_distance))
+
+        return [get_index_schema_node(fixture_id, attrs_to_index), xml_nodes]
+
+
 class RelatedLocationsFixtureProvider(FixtureProvider):
     """This fixture is under active development for REACH, and is expected to change.
 
     - Relations do not nest. Meaning that a location needs a direct relation
       to another location for it be included in this fixture.
-    - Only the user's primary location will get its related locations synced
     """
     id = 'related_locations'
-    serializer = FlatLocationSerializer()
+    serializer = RelatedLocationSerializer()
 
     def __call__(self, restore_state):
         if not toggles.RELATED_LOCATIONS.enabled(restore_state.domain):
             return []
 
         restore_user = restore_state.restore_user
-        primary_location = restore_user.get_commtrack_location_id()
-        related_location_ids = SQLLocation.objects.get(location_id=primary_location).related_location_ids
+        user_locations = restore_user.get_sql_locations(restore_user.domain)
+        related_location_ids = LocationRelation.from_locations(user_locations)
         related_location_pks = (
             SQLLocation.objects.filter(location_id__in=related_location_ids)
             .values_list('pk', flat=True)

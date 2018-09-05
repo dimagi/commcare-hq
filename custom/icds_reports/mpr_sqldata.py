@@ -295,8 +295,8 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
 
     @property
     def subtitle(self):
-        return 'Average no. days AWCs were open during the month? %.1f' % div(
-            self.awc_open_count, float(self.awc_number or 1)
+        return 'Average no. days AWCs were open during the month? %.1f' % (
+            self.awc_open_count / (self.awc_number or 1)
         ),
 
     @property

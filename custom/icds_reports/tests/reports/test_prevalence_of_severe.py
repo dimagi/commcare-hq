@@ -10,6 +10,7 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds')
 class TestPrevalenceOfSevere(TestCase):
+    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_prevalence_of_severe_data_map(
@@ -87,7 +88,7 @@ class TestPrevalenceOfSevere(TestCase):
         )
         expected = (
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6 - 60 months who were moderately/severely wasted in the "
+            "percentage of children between 0 - 5 years who were moderately/severely wasted in the "
             "current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
@@ -118,13 +119,13 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '668'},
-                {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '668'},
+                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
                  'value': '0'},
-                {'indicator': 'Number of children (6 - 60 months) unmeasured:', 'value': '271'},
-                {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.00%'},
-                {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '100.00%'},
-                {'indicator': '% Normal (6 - 60 months):', 'value': '0.00%'}
+                {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '271'},
+                {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
+                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '100.00%'},
+                {'indicator': '% Normal (0 - 5 years):', 'value': '0.00%'}
             ]
         )
 
@@ -167,7 +168,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent of Children Wasted (6 - 60 months)')
+        self.assertEquals(data['label'], 'Percent of Children Wasted (0 - 5 years)')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_prevalence_of_severe_data_map(
@@ -491,7 +492,7 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6 - 60 months enrolled who were moderately/severely wasted in the "
+            "percentage of children between 0 - 5 years enrolled who were moderately/severely wasted in the "
             "current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
@@ -517,8 +518,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 0-6 months enrolled who were moderately/severely wasted in the "
-            "current month. "
+            "percentage of children between 0-6 months (0-180 days) enrolled who were moderately/severely wasted "
+            "in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
@@ -543,8 +544,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6-12 months enrolled who were moderately/severely wasted in "
-            "the current month. "
+            "percentage of children between 6-12 months (181-365 days) enrolled who were moderately/severely "
+            "wasted in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
@@ -569,8 +570,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 48-60 months enrolled who were moderately/severely wasted in the "
-            "current month. "
+            "percentage of children between 48-60 months (1461-1825 days) enrolled who were moderately/severely "
+            "wasted in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
@@ -620,8 +621,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 0-6 months enrolled who were moderately/severely wasted in the "
-            "current month. "
+            "percentage of children between 0-6 months (0-180 days) enrolled who were moderately/severely wasted "
+            "in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
@@ -646,8 +647,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6-12 months enrolled who were moderately/severely wasted in the "
-            "current month. "
+            "percentage of children between 6-12 months (181-365 days) enrolled who were moderately/severely "
+            "wasted in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
@@ -672,8 +673,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 48-60 months enrolled who were moderately/severely wasted in the "
-            "current month. "
+            "percentage of children between 48-60 months (1461-1825 days) enrolled who were moderately/severely "
+            "wasted in the current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."

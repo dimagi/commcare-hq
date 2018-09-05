@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
 from mock import patch
-from couchdbkit import RequestFailed
+from requests.exceptions import HTTPError
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -165,8 +165,8 @@ class EditFormTest(TestCase, TestFileMixin):
             0
         )
 
-        with patch.object(self.interface.processor, 'save_processed_models', side_effect=RequestFailed):
-            with self.assertRaises(RequestFailed):
+        with patch.object(self.interface.processor, 'save_processed_models', side_effect=HTTPError):
+            with self.assertRaises(HTTPError):
                 submit_form_locally(edit_xml, self.domain)
 
         # it didn't go through, so make sure there are no edits still

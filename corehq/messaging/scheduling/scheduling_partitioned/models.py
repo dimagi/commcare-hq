@@ -9,12 +9,13 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling import util
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
-from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule, IVRSurveyContent, SMSCallbackContent
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
@@ -279,6 +280,12 @@ class ScheduleInstance(PartitionedModel):
         client = get_redis_client()
         content = self.memoized_schedule.get_current_event_content(self)
 
+        if isinstance(content, (IVRSurveyContent, SMSCallbackContent)):
+            raise TypeError(
+                "IVR and Callback use cases are no longer supported. "
+                "How did this schedule instance end up as active?"
+            )
+
         if isinstance(self, CaseScheduleInstanceMixin):
             content.set_context(case=self.case, schedule_instance=self)
         else:
@@ -493,7 +500,7 @@ class CaseScheduleInstanceMixin(object):
     RECIPIENT_TYPE_CASE_OWNER = 'Owner'
     RECIPIENT_TYPE_LAST_SUBMITTING_USER = 'LastSubmittingUser'
     RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
-    RECIPIENT_TYPE_CHILD_CASE = 'SubCase'
+    RECIPIENT_TYPE_ALL_CHILD_CASES = 'AllChildCases'
     RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
 
     @property
@@ -559,7 +566,10 @@ class CaseScheduleInstanceMixin(object):
                 return self.case.parent
 
             return None
-        elif self.recipient_type == self.RECIPIENT_TYPE_CHILD_CASE:
+        elif self.recipient_type == self.RECIPIENT_TYPE_ALL_CHILD_CASES:
+            if self.case:
+                return list(self.case.get_subcases(index_identifier=DEFAULT_PARENT_IDENTIFIER))
+
             return None
         elif self.recipient_type == self.RECIPIENT_TYPE_CUSTOM:
             custom_function = to_function(

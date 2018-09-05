@@ -5,8 +5,7 @@
 
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'locations/js/widgets_main.js' %}"></script>
-    <script src="{% static 'data_interfaces/js/make_read_only.js' %}"></script>
+    {% requirejs_main 'scheduling/js/create_schedule_main' %}
 {% endblock %}
 
 {% block page_content %}{{ block.super }}

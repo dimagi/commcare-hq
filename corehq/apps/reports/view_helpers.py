@@ -1,17 +1,19 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from functools import partial
 import datetime
 import numbers
-import pytz
+from functools import partial
 
-from couchdbkit import ResourceNotFound
+import pytz
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from casexml.apps.case.views import get_wrapped_case
 from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+
+MAX_CHILD_CASES = 100
 
 
 def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=None):
@@ -21,34 +23,9 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
     columns = wrapped_case.related_cases_columns
     type_info = wrapped_case.related_type_info
 
-    descendent_case_list = get_flat_descendant_case_list(
+    case_list = get_flat_descendant_case_list(
         case, get_case_url, type_info=type_info
     )
-
-    parent_cases = []
-    if case.indices:
-        # has parent case(s)
-        # todo: handle duplicates in ancestor path (bubbling up of parent-child
-        # relationships)
-        for idx in case.indices:
-            try:
-                parent_cases.append(idx.referenced_case)
-            except ResourceNotFound:
-                parent_cases.append(None)
-        for parent_case in parent_cases:
-            if parent_case:
-                parent_case.edit_data = {
-                    'view_url': get_case_url(parent_case.case_id)
-                }
-                last_parent_id = parent_case.case_id
-            else:
-                last_parent_id = None
-
-        for c in descendent_case_list:
-            if not getattr(c, 'treetable_parent_node_id', None) and last_parent_id:
-                c.treetable_parent_node_id = last_parent_id
-
-    case_list = parent_cases + descendent_case_list
 
     for c in case_list:
         if not c:
@@ -63,6 +40,7 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
         'current_case': case,
         'domain': case.domain,
         'case_list': case_list,
+        'max_child_cases': MAX_CHILD_CASES,
         'columns': columns,
         'num_columns': len(columns) + 1,
         'show_view_buttons': show_view_buttons,
@@ -179,17 +157,20 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
     process_output(case_output)
 
 
-def get_case_hierarchy(case, type_info):
-    def get_children(case, referenced_type=None, seen=None):
+def get_children(case, type_info=None):
+    def _get_children(case, referenced_type=None, seen=None):
         seen = seen or set()
 
-        ignore_types = type_info.get(case.type, {}).get("ignore_relationship_types", [])
+        # only relevant for `pact`
+        ignore_types = type_info.get(case.type, {}).get("ignore_relationship_types", []) if type_info else []
         if referenced_type and referenced_type in ignore_types:
             return None
 
         seen.add(case.case_id)
+        case.num_children = len(case.reverse_indices)
         children = [
-            get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
+            _get_children(i.referenced_case, i.referenced_type, seen)
+            for i in case.reverse_indices[:MAX_CHILD_CASES]
             if i.referenced_id not in seen
         ]
 
@@ -216,10 +197,24 @@ def get_case_hierarchy(case, type_info):
             'case': case,
             'child_cases': children,
             'descendant_types': list(set(descendant_types + [c['case'].type for c in children])),
-            'case_list': [case] + child_cases
+            'case_list': [case] + child_cases,
         }
+    return _get_children(case)
 
-    return get_children(case)
+
+def get_case_hierarchy(case, type_info):
+    accessor = CaseAccessors(case.domain)
+    new_indices = {case.case_id}
+    seen_indices = {case.case_id}
+    last_index = case.case_id
+    while True:
+        new_indices = accessor.get_indexed_case_ids(new_indices)
+        if not set(new_indices) - seen_indices:
+            break
+        last_index = new_indices[0]
+        seen_indices |= set(new_indices)
+
+    return get_children(accessor.get_case(last_index), type_info)
 
 
 def get_flat_descendant_case_list(case, get_case_url, type_info=None):

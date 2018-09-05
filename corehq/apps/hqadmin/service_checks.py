@@ -24,8 +24,7 @@ from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.es import GroupES
-from corehq.blobs import get_blob_db
-from corehq.blobs.util import random_url_id
+from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
 from corehq.util.decorators import change_log_level
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
@@ -106,10 +105,15 @@ def check_blobdb():
     """Save something to the blobdb and try reading it back."""
     db = get_blob_db()
     contents = b"It takes Pluto 248 Earth years to complete one orbit!"
-    info = db.put(BytesIO(contents), random_url_id(16))
-    with db.get(info.identifier) as fh:
+    meta = db.put(
+        BytesIO(contents),
+        domain="<unknown>",
+        parent_id="check_blobdb",
+        type_code=CODES.tempfile,
+    )
+    with db.get(key=meta.key) as fh:
         res = fh.read()
-    db.delete(info.identifier)
+    db.delete(key=meta.key)
     if res == contents:
         return ServiceStatus(True, "Successfully saved a file to the blobdb")
     return ServiceStatus(False, "Failed to save a file to the blobdb")
@@ -194,7 +198,10 @@ def check_couch():
 
 def check_formplayer():
     try:
-        res = requests.get('{}/serverup'.format(get_formplayer_url()), timeout=5)
+        # Setting verify=False in this request keeps this from failing for urls with self-signed certificates.
+        # Allowing this because the certificate will always be self-signed in the "provable deploy"
+        # bootstrapping test in commcare-cloud.
+        res = requests.get('{}/serverup'.format(get_formplayer_url()), timeout=5, verify=False)
     except requests.exceptions.ConnectTimeout:
         return ServiceStatus(False, "Could not establish a connection in time")
     except requests.ConnectionError:

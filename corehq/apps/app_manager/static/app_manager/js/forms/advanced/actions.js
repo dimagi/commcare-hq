@@ -27,7 +27,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function() {
             }
             if (!case_type) {
                 return gettext("Case Type required");
-            } else if (!case_tag || self.warn_blank_case_tag()) {
+            } else if (!case_tag || (self.warn_blank_case_tag() && !hqImport('hqwebapp/js/toggles').toggleEnabled('ALLOW_BLANK_CASE_TAGS'))) {
                 return gettext("Case Tag required");
             }
             if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
@@ -63,7 +63,9 @@ hqDefine('app_manager/js/forms/advanced/actions', function() {
                 if (!self.auto_select && !tag) {
                     // Don't allow user to blank out case tag
                     self.warn_blank_case_tag(true);
-                    self.case_tag(self.case_tag.previous());
+                    if(!hqImport('hqwebapp/js/toggles').toggleEnabled('ALLOW_BLANK_CASE_TAGS')) {
+                        self.case_tag(self.case_tag.previous());
+                    }
                     return;
                 }
                 if (self.case_tag.previous()) {

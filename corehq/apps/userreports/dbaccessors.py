@@ -22,7 +22,7 @@ def get_report_configs_for_domain(domain):
     from corehq.apps.userreports.models import ReportConfiguration
     return sorted(
         get_docs_in_domain_by_class(domain, ReportConfiguration),
-        key=lambda report: report.title,
+        key=lambda report: report.title or '',
     )
 
 
