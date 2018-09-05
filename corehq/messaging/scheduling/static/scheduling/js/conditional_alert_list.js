@@ -104,8 +104,9 @@ hqDefine("scheduling/js/conditional_alert_list", [
                     "targets": [5],
                     "visible": initialPageData.get("allow_copy"),
                     "render": function(data, type, row) {
+                        var disabled = (row.locked_for_editing || !row.editable) ? 'disabled' : '';
                         var html = '<input type="text" id="copy-to-project-for-' + row.id + '" placeholder="' + gettext("Project") + '" class="textinput textInput form-control" />';
-                        html += ' <button id="copy-button-for-' + row.id + '" class="btn btn-default alert-copy" data-id="' + row.id + '" >' + gettext("Copy") + '</button>';
+                        html += ' <button ' + disabled + ' id="copy-button-for-' + row.id + '" class="btn btn-default alert-copy" data-id="' + row.id + '" >' + gettext("Copy") + '</button>';
                         return html;
                     },
                 },
