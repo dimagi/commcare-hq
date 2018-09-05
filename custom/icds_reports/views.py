@@ -1567,8 +1567,8 @@ class DownloadPDFReport(View):
 class CheckExportReportStatus(View):
     def get(self, request, *args, **kwargs):
         task_id = self.request.GET.get('task_id', None)
-        res = AsyncResult(task_id)
-        status = res.ready()
+        res = AsyncResult(task_id) if task_id else None
+        status = res and res.ready()
 
         if status:
             return JsonResponse(
