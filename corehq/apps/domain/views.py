@@ -1320,7 +1320,7 @@ class SelectPlanView(DomainAccountingSettings):
             return ""
         else:
             new_start_date = self.current_subscription.date_start + \
-                             datetime.timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH)
+                datetime.timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH)
             return new_start_date.strftime(USER_DATE_FORMAT)
 
     @property
