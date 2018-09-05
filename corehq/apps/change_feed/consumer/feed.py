@@ -174,13 +174,8 @@ class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
         assert isinstance(change_feed, KafkaChangeFeed)
         self.change_feed = change_feed
 
-    def fire_change_processed(self, change, context):
-        if self.should_update_checkpoint(context):
-            updated_to = self.change_feed.get_current_checkpoint_offsets()
-            self.update_checkpoint(updated_to)
-            return True
-
-        return False
+    def get_new_seq(self, change):
+        return self.change_feed.get_current_checkpoint_offsets()
 
 
 def change_from_kafka_message(message):
