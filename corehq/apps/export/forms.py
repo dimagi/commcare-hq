@@ -823,21 +823,19 @@ class AbstractExportFilterBuilder(object):
             (admin, user_es.admin_users()),
             (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
             (demo, user_es.demo_users()),
+            # Sets the is_active filter status correctly for if either active or deactivated users are selected
+            (active ^ deactivated, user_es.is_active(active)),
         ] if include]
+
+        if not user_filters:
+            return []
 
         query = (user_es.UserES()
                  .domain(self.domain_object.name)
+                 .OR(*user_filters)
                  .remove_default_filter('not_deleted')
+                 .remove_default_filter('active')
                  .fields([]))
-
-        if user_filters:
-            query = query.OR(*user_filters)
-
-        if active and deactivated:
-            query = query.show_inactive()
-
-        elif deactivated:
-            query = query.show_only_inactive()
 
         user_ids = query.run().doc_ids
 
@@ -890,6 +888,9 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         """
         if user_types:
             form_filters = []
+            # Select all mobile workers if both active and deactivated users are selected
+            if HQUserType.ACTIVE in user_types and HQUserType.DEACTIVATED in user_types:
+                form_filters.append(UserTypeFilter(BaseFilterExportDownloadForm._USER_MOBILE))
             user_ids = self.get_user_ids_for_user_types(
                 admin=HQUserType.ADMIN in user_types,
                 unknown=HQUserType.UNKNOWN in user_types,
