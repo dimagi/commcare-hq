@@ -2,13 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/payment_method_handler.js' %}"></script>
-    <script src="{% static 'accounting/js/credits.js' %}"></script>
-    <script src="https://js.stripe.com/v2/"></script>
-    {% include 'domain/partials/schedule_once.html' %}
-    <script src="{% static 'domain/js/current_subscription.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'domain/js/current_subscription' %}
 
 {% block page_content %}
     {% initial_page_data "stripe_public_key" stripe_public_key %}
@@ -350,6 +344,8 @@
             {% endblocktrans %}
         <!-- /ko -->
     </script>
+
+    {% include 'domain/partials/schedule_once.html' %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
