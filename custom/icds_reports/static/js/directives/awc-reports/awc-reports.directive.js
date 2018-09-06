@@ -2474,21 +2474,21 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         );
     };
 
-    vm.goToPregnantDetails = function (case_id) {
+    vm.goToPregnantDetails = function (caseId) {
         var params = $location.search();
-        params.case_id = case_id;
+        params.case_id = caseId;
         $location.path('/awc_reports/pregnant_details');
     };
 
     vm.showPregnantDetails = function () {
         var params = $location.search();
-        var get_url = url('awc_reports', 'pregnant_details');
+        var getUrl = url('awc_reports', 'pregnant_details');
 
         vm.filters.push('month');
 
         vm.myPromise = $http({
             method: "GET",
-            url: get_url,
+            url: getUrl,
             params: params,
         }).then(
             function (response) {

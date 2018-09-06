@@ -19,7 +19,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='aggregatebirthpreparednesforms',
             name='anc_abnormalities',
-            field=models.PositiveSmallIntegerField(help_text="Last value of anc_details/anc_abnormalities = 'yes'", null=True),
+            field=models.PositiveSmallIntegerField(
+                help_text="Last value of anc_details/anc_abnormalities = 'yes'", null=True
+            ),
         ),
         migrator.get_migration('update_tables26.sql'),
     ]
