@@ -21,8 +21,9 @@ from jsonobject.properties import BooleanProperty
 from lxml import etree
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
-from corehq.blobs.mixin import get_short_identifier
 from corehq.blobs.exceptions import NotFound, BadName
+from corehq.blobs.mixin import get_short_identifier
+from corehq.blobs.util import get_content_md5
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
@@ -387,7 +388,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         return self.get_attachment('form.xml')
 
     def xml_md5(self):
-        return self.get_attachment_meta('form.xml').md5
+        return self.get_attachment_meta('form.xml').content_md5()
 
     def archive(self, user_id=None):
         if self.is_archived:
@@ -469,6 +470,11 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
         except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
         return blob
+
+    @memoized
+    def content_md5(self):
+        """Get RFC-1864-compliant Content-MD5 header value"""
+        return get_content_md5(self.open())
 
     def delete_content(self):
         db = get_blob_db()
