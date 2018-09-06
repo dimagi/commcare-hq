@@ -1,4 +1,4 @@
-hqDefine('sms/js/chat_contacts', function() {
+hqDefine('sms/js/chat_contacts', function () {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     var contactListTable = null;
 
@@ -8,22 +8,22 @@ hqDefine('sms/js/chat_contacts', function() {
 
         self.filterText = ko.observable();
 
-        self.performFilter = function() {
+        self.performFilter = function () {
             contactListTable.fnFilter(self.filterText());
         };
 
-        self.clearFilter = function() {
+        self.clearFilter = function () {
             self.filterText("");
             self.performFilter();
         };
     }
 
-    $(function(){
+    $(function () {
         contactListTable = $("#contact_list").dataTable({
             "aoColumnDefs": [
                 {
                     "aTargets": [0],
-                    "render": function(data, type, row) {
+                    "render": function (data, type, row) {
                         return _.template(
                             '<a target="_blank" href="<%= href %>"><%= content %></a>' +
                             '<span class="btn btn-primary pull-right" ' +

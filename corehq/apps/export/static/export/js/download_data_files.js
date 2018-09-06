@@ -4,7 +4,7 @@ hqDefine("export/js/download_data_files",[
     'hqwebapp/js/alert_user',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
-], function($, alertUserModule, initialPageData, assertProperties) {
+], function ($, alertUserModule, initialPageData, assertProperties) {
     var alertUser = alertUserModule.alert_user;
     /**
      * Copies the URL of a data file to the clipboard
@@ -19,7 +19,7 @@ hqDefine("export/js/download_data_files",[
     var copyDataFileUrl = function () {
         assertProperties.assertRequired($(this).data(), ['id', 'name']);
 
-        var url =  window.location.origin+initialPageData.reverse('download_data_file',$(this).data("id"), $(this).data("name"));
+        var url =  window.location.origin + initialPageData.reverse('download_data_file',$(this).data("id"), $(this).data("name"));
         var textareaElem = $('#url_'.concat($(this).data("id")));
 
         var showCopyDialog = function () {

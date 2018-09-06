@@ -3,12 +3,12 @@ hqDefine('hqwebapp/js/mobile_experience_warning', [
     "hqwebapp/js/initial_page_data",
     "analytix/js/kissmetrix",
     "jquery.cookie/jquery.cookie",
-], function(
+], function (
     $,
     initialPageData,
     kissmetrix
 ) {
-    $(function() {
+    $(function () {
 
         if (initialPageData.get('show_mobile_ux_warning')) {
             var reminderUrl = initialPageData.reverse('send_mobile_reminder'),

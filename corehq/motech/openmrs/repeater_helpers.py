@@ -84,10 +84,15 @@ def get_case_location_ancestor_repeaters(case):
     return []
 
 
-def get_openmrs_location_uuid(domain, case_id):
+def get_ancestor_location_openmrs_uuid(domain, case_id):
     case = CaseAccessors(domain).get_case(case_id)
-    location = get_case_location(case)
-    return location.metadata.get(LOCATION_OPENMRS_UUID) if location else None
+    case_location = get_case_location(case)
+    if not case_location:
+        return None
+    for location in reversed(case_location.get_ancestors(include_self=True)):
+        if location.metadata.get(LOCATION_OPENMRS_UUID):
+            return location.metadata[LOCATION_OPENMRS_UUID]
+    return None
 
 
 class CreatePersonAttributeTask(WorkflowTask):

@@ -49,7 +49,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
         return hqDefine(path, [], dependencies);
     }
 
-    (function(factory) {
+    (function (factory) {
         if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
             // HQ's requirejs build process (build_requirejs.py) replaces hqDefine calls with
             // define calls, so it's important that this do nothing but pass through to require

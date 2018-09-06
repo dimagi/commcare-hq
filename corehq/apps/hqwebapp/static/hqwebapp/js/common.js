@@ -5,6 +5,6 @@ hqDefine("hqwebapp/js/common", [
     'underscore',
     'bootstrap',
     'hqwebapp/js/django',
-], function() {
+], function () {
     // nothing to do, this is just to define the major common dependencies for HQ
 });

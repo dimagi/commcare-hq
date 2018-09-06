@@ -1,4 +1,4 @@
-describe('ListExportsController Unit Tests', function() {
+describe('ListExportsController Unit Tests', function () {
     var $httpBackend, createController, $rootScope, currentScope;
 
     var mockBackendUrls = {
@@ -50,7 +50,7 @@ describe('ListExportsController Unit Tests', function() {
         inject(function () {});
     });
 
-    beforeEach(inject(function($injector) {
+    beforeEach(inject(function ($injector) {
         $rootScope = $injector.get('$rootScope');
         $httpBackend = $injector.get('$httpBackend');
         var $controller = $injector.get('$controller');
@@ -61,14 +61,14 @@ describe('ListExportsController Unit Tests', function() {
 
     }));
 
-    describe('Initialization', function() {
+    describe('Initialization', function () {
 
-        afterEach(function() {
+        afterEach(function () {
             $httpBackend.verifyNoOutstandingExpectation();
             $httpBackend.verifyNoOutstandingRequest();
         });
 
-        it('registers a non-blank list of exports', function() {
+        it('registers a non-blank list of exports', function () {
             $httpBackend
                 .when('POST', mockBackendUrls.GET_EXPORTS_LIST)
                 .respond({
@@ -84,7 +84,7 @@ describe('ListExportsController Unit Tests', function() {
             assert.isTrue(currentScope.hasLoaded);
         });
 
-        it('registers a server-side error', function() {
+        it('registers a server-side error', function () {
             var serverErrorMsg = 'error initializing exports for test';
             $httpBackend
                 .when('POST', mockBackendUrls.GET_EXPORTS_LIST)
@@ -101,7 +101,7 @@ describe('ListExportsController Unit Tests', function() {
             assert.equal(serverErrorMsg, currentScope.exportsListError);
         });
 
-        it('registers a connection error', function() {
+        it('registers a connection error', function () {
             $httpBackend
                 .when('POST', mockBackendUrls.GET_EXPORTS_LIST)
                 .respond(522, '');
@@ -140,12 +140,12 @@ describe('ListExportsController Unit Tests', function() {
                 });
         });
 
-        afterEach(function() {
+        afterEach(function () {
             $httpBackend.verifyNoOutstandingExpectation();
             $httpBackend.verifyNoOutstandingRequest();
         });
 
-        it('selectAll()', function() {
+        it('selectAll()', function () {
             createController();
             $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
             $httpBackend.flush();
@@ -157,7 +157,7 @@ describe('ListExportsController Unit Tests', function() {
             assert.isTrue(currentScope.showBulkExportDownload);
         });
 
-        it('selectNone()', function() {
+        it('selectNone()', function () {
             createController();
             $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
             $httpBackend.flush();
@@ -189,14 +189,14 @@ describe('ListExportsController Unit Tests', function() {
                 currentScope.updateEmailedExportData(component, exportToUpdate);
             });
 
-            it('success ok', function() {
+            it('success ok', function () {
                 assert.isTrue(component.updatingData);
                 $httpBackend.flush();
                 assert.isFalse(component.updatingData);
                 assert.isTrue(component.taskStatus.inProgress);
             });
 
-            it('analytics ok', function() {
+            it('analytics ok', function () {
                 assert.isTrue(hqImport('analytix/js/google').track.event.calledWith("Form Exports", "Update Saved Export", "Saved"));
                 $httpBackend.flush();
             });
@@ -220,14 +220,14 @@ describe('ListExportsController Unit Tests', function() {
                 currentScope.updateDisabledState(component, exportToUpdate);
             });
 
-            it('success ok', function() {
+            it('success ok', function () {
                 assert.isTrue(component.savingAutoRebuildChange);
                 $httpBackend.flush();
                 assert.isFalse(component.savingAutoRebuildChange);
                 assert.isFalse(exportToUpdate.isAutoRebuildEnabled);
             });
 
-            it('analytics ok', function() {
+            it('analytics ok', function () {
                 assert.isTrue(hqImport('analytix/js/google').track.event.calledWith("Form Exports", "Disable Saved Export", "Saved"));
                 $httpBackend.flush();
             });

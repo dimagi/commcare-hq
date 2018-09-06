@@ -14,7 +14,7 @@ hqDefine("reports/js/standard_hq_report", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'bootstrap',
-], function(
+], function (
     $,
     _,
     initialPageData
@@ -22,7 +22,7 @@ hqDefine("reports/js/standard_hq_report", [
     var standardReport = undefined,
         asyncReport = undefined;
 
-    var getStandard = function() {
+    var getStandard = function () {
         if (typeof standardReport !== 'undefined') {
             return standardReport;
         }
@@ -37,7 +37,7 @@ hqDefine("reports/js/standard_hq_report", [
                 // UCRs
                 standardReport = hqImport(ucr).getStandardHQReport();
             } else {
-                hqRequire(["reports/js/hq_report"], function(hqReportModule) {
+                hqRequire(["reports/js/hq_report"], function (hqReportModule) {
                     // Standard reports
                     var reportOptions = _.extend({}, initialPageData.get('js_options'), {
                         emailSuccessMessage: gettext('Report successfully emailed'),
@@ -58,7 +58,7 @@ hqDefine("reports/js/standard_hq_report", [
         return standardReport;
     };
 
-    var getAsync = function() {
+    var getAsync = function () {
         if (typeof asyncReport !== 'undefined') {
             return asyncReport;
         }
@@ -75,14 +75,14 @@ hqDefine("reports/js/standard_hq_report", [
         return asyncReport;
     };
 
-    $(function() {
+    $(function () {
         // Initialize reports. This must be done inside of a document ready handler
         // so that if this is UCR, userreports/js/configurable_report.js will
         // have been loaded and getStandard will execute the proper branch
         standardReport = getStandard(),
         asyncReport = getAsync();
 
-        $('#apply-btn').on('click', function() {
+        $('#apply-btn').on('click', function () {
             $('.hq-generic-report').trigger('apply-click');
         });
 
