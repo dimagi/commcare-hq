@@ -3,13 +3,13 @@ hqDefine('locations/js/locations', [
     'hqwebapp/js/initial_page_data',
     'locations/js/utils',
     'locations/js/location_tree',
-], function(
+], function (
     $,
     initialPageData,
     locationUtils,
     LocationModels
 ) {
-    $(function() {
+    $(function () {
         var locs = initialPageData.get('locations'),
             can_edit_root = initialPageData.get('can_edit_root'),
             hierarchy = initialPageData.get('hierarchy'),

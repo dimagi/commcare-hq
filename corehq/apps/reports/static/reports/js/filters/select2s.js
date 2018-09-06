@@ -5,11 +5,11 @@ hqDefine("reports/js/filters/select2s", [
     'jquery',
     'knockout',
     'select2-3.5.2-legacy/select2',
-], function(
+], function (
     $,
     ko
 ) {
-    var initSingle = function(el) {
+    var initSingle = function (el) {
         var $filter = $(el);
         $filter.parent().koApplyBindings({
             select_params: $filter.data("selectOptions"),
@@ -18,7 +18,7 @@ hqDefine("reports/js/filters/select2s", [
         $filter.select2();
     };
 
-    var initSinglePaginated = function(el) {
+    var initSinglePaginated = function (el) {
         var $filter = $(el);
         $filter.select2({
             ajax: {
@@ -56,7 +56,7 @@ hqDefine("reports/js/filters/select2s", [
         });
     };
 
-    var initMulti = function(el) {
+    var initMulti = function (el) {
         var $filter = $(el),
             data = $filter.data();
         $filter.parent().koApplyBindings({

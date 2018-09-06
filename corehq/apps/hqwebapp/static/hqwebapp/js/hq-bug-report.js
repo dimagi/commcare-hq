@@ -1,6 +1,6 @@
 hqDefine('hqwebapp/js/hq-bug-report', [
     "jquery", "jquery-form/dist/jquery.form.min", "hqwebapp/js/hq.helpers",
-], function($) {
+], function ($) {
     $(function () {
         var $hqwebappBugReportModal = $('#modalReportIssue'),
             $hqwebappBugReportForm = $('#hqwebapp-bugReportForm'),
@@ -21,27 +21,27 @@ hqDefine('hqwebapp/js/hq-bug-report', [
             $emailFormGroup.find(".label-danger").addClass('hide');
         };
 
-        $hqwebappBugReportModal.on('shown.bs.modal', function() {
+        $hqwebappBugReportModal.on('shown.bs.modal', function () {
             $("input#bug-report-subject").focus();
         });
 
-        $hqwebappBugReportForm.submit(function() {
+        $hqwebappBugReportForm.submit(function () {
             var isDescriptionEmpty = !$("#bug-report-subject").val() && !$("#bug-report-message").val();
             if (isDescriptionEmpty) {
                 highlightInvalidField($issueSubjectFormGroup);
             }
 
             var emailAddress = $(this).find("input[name='email']").val();
-            if (emailAddress && !IsValidEmail(emailAddress)){
+            if (emailAddress && !IsValidEmail(emailAddress)) {
                 highlightInvalidField($emailFormGroup);
                 return false;
             }
 
             var emailAddresses = $(this).find("input[name='cc']").val();
             emailAddresses = emailAddresses.replace(/ /g, "").split(",");
-            for (var index in emailAddresses){
+            for (var index in emailAddresses) {
                 var email = emailAddresses[index];
-                if (email && !IsValidEmail(email)){
+                if (email && !IsValidEmail(email)) {
                     highlightInvalidField($ccFormGroup);
                     return false;
                 }
@@ -97,7 +97,7 @@ hqDefine('hqwebapp/js/hq-bug-report', [
         function highlightInvalidField($element) {
             $element.addClass('has-error has-feedback');
             $element.find(".label-danger").removeClass('hide');
-            $element.find("input").focus(function(){
+            $element.find("input").focus(function () {
                 $element.removeClass("has-error has-feedback");
                 $element.find(".label-danger").addClass('hide');
             });

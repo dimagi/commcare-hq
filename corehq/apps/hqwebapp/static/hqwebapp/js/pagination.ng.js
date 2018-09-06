@@ -19,7 +19,7 @@
 
     var paginationControllers = {};
 
-    paginationControllers.PaginatedListController = function(
+    paginationControllers.PaginatedListController = function (
         $scope, djangoRMI, paginationConfig, paginationLimits,
         paginationCustomData, paginationLimitCookieName, $cookies
     ) {

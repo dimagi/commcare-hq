@@ -3,15 +3,15 @@ hqDefine("repeaters/js/add_form_repeater", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/widgets',          // case repeaters use .ko-select2
     'locations/js/widgets_main',    // openmrs repeaters use the LocationSelectWidget
-], function(
+], function (
     $,
     initialPageData
 ) {
-    $(function() {
+    $(function () {
         var $testLinkButton = $('#test-forward-link'),
             $testResult = $('#test-forward-result');
 
-        var handleSuccess = function(resp) {
+        var handleSuccess = function (resp) {
             /*
              * Handles a successful attempt to test the link. Note, just gets run when HQ returns
              * successful not if the link being tested returns successful
@@ -36,7 +36,7 @@ hqDefine("repeaters/js/add_form_repeater", [
             }
         };
 
-        var handleFailure = function(resp) {
+        var handleFailure = function (resp) {
             /*
              * Handles an HQ failure to test the URL
              */

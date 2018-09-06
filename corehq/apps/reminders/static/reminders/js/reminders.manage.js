@@ -1,5 +1,5 @@
 /* globals hqImport */
-hqDefine("reminders/js/reminders.manage", function() {
+hqDefine("reminders/js/reminders.manage", function () {
     var ManageRemindersViewModel = function (
         initial,
         choices,
@@ -35,15 +35,15 @@ hqDefine("reminders/js/reminders.manage", function() {
         });
     
         self.start_property_offset_type = ko.observable(initial.start_property_offset_type);
-        self.start_property_offset_type.subscribe(function(val) {
+        self.start_property_offset_type.subscribe(function (val) {
             var initial_timing = JSON.parse(initial.event_timing);
             var allow_offset_timing_with_date = (
                 initial.start_property_offset_type === self.choices.START_REMINDER_ON_CASE_DATE &&
                 initial_timing.event_interpretation === "OFFSET"
             );
-            $("#id_event_timing").children("option").each(function() {
+            $("#id_event_timing").children("option").each(function () {
                 var j = JSON.parse($(this).val());
-                if(allow_offset_timing_with_date && val === self.choices.START_REMINDER_ON_CASE_DATE &&
+                if (allow_offset_timing_with_date && val === self.choices.START_REMINDER_ON_CASE_DATE &&
                    j.event_interpretation === "OFFSET") {
                     //This is here to allow editing of any old reminders that started on a date but
                     //had offset-based event interpretation. This use case is discouraged and is not
@@ -51,11 +51,11 @@ hqDefine("reminders/js/reminders.manage", function() {
                     //that may use it, we have to show the offset-based event timing options when we
                     //find a reminder like this.
                     $(this).show();
-                } else if(val === self.choices.START_PROPERTY_OFFSET_IMMEDIATE ||
+                } else if (val === self.choices.START_PROPERTY_OFFSET_IMMEDIATE ||
                           val === self.choices.START_PROPERTY_OFFSET_DELAY) {
                     $(this).show();
                 } else {
-                    if(j.event_interpretation === "OFFSET") {
+                    if (j.event_interpretation === "OFFSET") {
                         $(this).hide();
                     } else {
                         $(this).show();
@@ -91,7 +91,7 @@ hqDefine("reminders/js/reminders.manage", function() {
         self.method = ko.observable(initial.method);
         self.eventObjects = ko.observableArray();
         self.events = ko.computed(function () {
-            return JSON.stringify(_.map(self.eventObjects(), function (event){
+            return JSON.stringify(_.map(self.eventObjects(), function (event) {
                 return event.asJSON();
             }));
         });
@@ -158,8 +158,8 @@ hqDefine("reminders/js/reminders.manage", function() {
     
         self.is_trial_project = initial.is_trial_project;
         self.displayed_email_trial_message = false;
-        self.method.subscribe(function(newValue) {
-            if(
+        self.method.subscribe(function (newValue) {
+            if (
                 self.is_trial_project &&
                 !self.displayed_email_trial_message &&
                 newValue === self.choices.METHOD_EMAIL
@@ -173,18 +173,18 @@ hqDefine("reminders/js/reminders.manage", function() {
         self.available_case_properties = {};
         self.available_subcase_properties = {};
     
-        self.getAvailableCaseProperties = ko.computed(function() {
+        self.getAvailableCaseProperties = ko.computed(function () {
             var case_type = self.case_type();
-            if(self.available_case_properties.hasOwnProperty(case_type)) {
+            if (self.available_case_properties.hasOwnProperty(case_type)) {
                 return self.available_case_properties[case_type];
             } else {
                 return [];
             }
         });
     
-        self.getAvailableSubcaseProperties = ko.computed(function() {
+        self.getAvailableSubcaseProperties = ko.computed(function () {
             var case_type = self.case_type();
-            if(self.available_subcase_properties.hasOwnProperty(case_type)) {
+            if (self.available_subcase_properties.hasOwnProperty(case_type)) {
                 return self.available_subcase_properties[case_type];
             } else {
                 return [];
@@ -218,40 +218,40 @@ hqDefine("reminders/js/reminders.manage", function() {
             self.initAvailableSubcaseProperties();
         };
     
-        self.initAvailableCaseTypes = function() {
+        self.initAvailableCaseTypes = function () {
             $.ajax({
                 type: "POST",
                 dataType: "json",
                 data: {
                     action: "search_case_type",
                 },
-            }).done(function(data, textStatus, jqXHR) {
-                for(var i = 0; i < data.length; i++) {
+            }).done(function (data, textStatus, jqXHR) {
+                for (var i = 0; i < data.length; i++) {
                     self.available_case_types.push(data[i]);
                 }
             });
         };
     
-        self.initAvailableCaseProperties = function() {
+        self.initAvailableCaseProperties = function () {
             $.ajax({
                 type: "POST",
                 dataType: "json",
                 data: {
                     action: "search_case_property",
                 },
-            }).done(function(data, textStatus, jqXHR) {
+            }).done(function (data, textStatus, jqXHR) {
                 self.available_case_properties = data;
             });
         };
     
-        self.initAvailableSubcaseProperties = function() {
+        self.initAvailableSubcaseProperties = function () {
             $.ajax({
                 type: "POST",
                 dataType: "json",
                 data: {
                     action: "search_subcase_property",
                 },
-            }).done(function(data, textStatus, jqXHR) {
+            }).done(function (data, textStatus, jqXHR) {
                 self.available_subcase_properties = data;
             });
         };
@@ -307,7 +307,7 @@ hqDefine("reminders/js/reminders.manage", function() {
                         };
                     },
                 },
-                initSelection : function (element, callback) {
+                initSelection: function (element, callback) {
                     if (element.val()) {
                         try {
                             $.ajax({
@@ -317,8 +317,8 @@ hqDefine("reminders/js/reminders.manage", function() {
                                     action: "search_form_by_id",
                                     term: element.val(),
                                 },
-                            }).done(function(data, textStatus, jqXHR) {
-                                if(data.id && data.text) {
+                            }).done(function (data, textStatus, jqXHR) {
+                                if (data.id && data.text) {
                                     callback(data);
                                 }
                             });
@@ -385,7 +385,7 @@ hqDefine("reminders/js/reminders.manage", function() {
         });
     
         var initialMessagesArray = [];
-        for(var langcode in eventData.message) {
+        for (var langcode in eventData.message) {
             initialMessagesArray.push(
                 new ReminderMessage(
                     eventData.subject[langcode],
@@ -415,11 +415,11 @@ hqDefine("reminders/js/reminders.manage", function() {
             return message_data;
         });
     
-        self.isEmailSelected = ko.computed(function() {
+        self.isEmailSelected = ko.computed(function () {
             return self.method() === self.choices.METHOD_EMAIL;
         });
     
-        self.isSubjectVisible = ko.computed(function() {
+        self.isSubjectVisible = ko.computed(function () {
             return self.isEmailSelected();
         });
     
@@ -457,7 +457,7 @@ hqDefine("reminders/js/reminders.manage", function() {
             return self.message().length;
         });
         self.totalMessages = ko.computed(function () {
-            return Math.ceil(self.messageLength()/160);
+            return Math.ceil(self.messageLength() / 160);
         });
         self.isMessageLong = ko.computed(function () {
             return self.totalMessages() > 1;
@@ -502,14 +502,14 @@ hqDefine("reminders/js/reminders.manage", function() {
         });
     
         $.getJSON('/langcodes/langs.json', {term: self.langcode()}, function (res) {
-            var index = _.map(res, function(r) { return r.code; }).indexOf(self.langcode());
+            var index = _.map(res, function (r) { return r.code; }).indexOf(self.langcode());
             if (index >= 0) {
                 self.name(res[index].name);
             }
         });
     };
 
-    $(function() {
+    $(function () {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
             manageRemindersModel = new ManageRemindersViewModel(
                 initial_page_data("current_values"),

@@ -1,4 +1,4 @@
-hqDefine('sms/js/languages', function() {
+hqDefine('sms/js/languages', function () {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     $(function () {
         var langs = initialPageData.get('sms_langs');

@@ -4,29 +4,29 @@ hqDefine("scheduling/js/create_schedule.ko", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler',
     'jquery-ui/ui/datepicker',
-], function($, ko, intialPageData, select2Handler) {
+], function ($, ko, intialPageData, select2Handler) {
     ko.bindingHandlers.useTimePicker = {
-        init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
             $(element).timepicker({
                 showMeridian: false,
                 showSeconds: false,
                 defaultTime: $(element).val() || '',
             });
         },
-        update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {}
+        update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {},
     };
 
-    var MessageViewModel = function(language_code, message) {
+    var MessageViewModel = function (language_code, message) {
         var self = this;
 
         self.language_code = ko.observable(language_code);
         self.message = ko.observable(message);
     };
 
-    var TranslationViewModel = function(language_codes, translations) {
+    var TranslationViewModel = function (language_codes, translations) {
         var self = this;
 
-        if(typeof translations === 'string') {
+        if (typeof translations === 'string') {
             translations = JSON.parse(translations);
         }
         translations = translations || {};
@@ -36,22 +36,22 @@ hqDefine("scheduling/js/create_schedule.ko", [
         self.nonTranslatedMessage = ko.observable(translations['*']);
         self.translatedMessages = ko.observableArray();
 
-        self.translate.subscribe(function(newValue) {
+        self.translate.subscribe(function (newValue) {
             // Automatically copy the non-translated message to any blank
             // translated messages when enabling the "translate" option
-            if(newValue) {
-                self.translatedMessages().forEach(function(messageModel) {
-                    if(!messageModel.message()) {
+            if (newValue) {
+                self.translatedMessages().forEach(function (messageModel) {
+                    if (!messageModel.message()) {
                         messageModel.message(self.nonTranslatedMessage());
                     }
                 });
             }
         });
 
-        self.messagesJSONString = ko.computed(function() {
+        self.messagesJSONString = ko.computed(function () {
             var result = {};
-            if(self.translate()) {
-                self.translatedMessages().forEach(function(messageModel) {
+            if (self.translate()) {
+                self.translatedMessages().forEach(function (messageModel) {
                     result[messageModel.language_code()] = messageModel.message();
                 });
             } else {
@@ -60,8 +60,8 @@ hqDefine("scheduling/js/create_schedule.ko", [
             return JSON.stringify(result);
         });
 
-        self.loadInitialTranslatedMessages = function() {
-            language_codes.forEach(function(language_code) {
+        self.loadInitialTranslatedMessages = function () {
+            language_codes.forEach(function (language_code) {
                 self.translatedMessages.push(new MessageViewModel(language_code, translations[language_code]));
             });
         };
@@ -69,7 +69,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
         self.loadInitialTranslatedMessages();
     };
 
-    var ContentViewModel = function(initial_values) {
+    var ContentViewModel = function (initial_values) {
         var self = this;
 
         self.subject = new TranslationViewModel(
@@ -85,7 +85,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
         self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
     };
 
-    var EventAndContentViewModel = function(initial_values) {
+    var EventAndContentViewModel = function (initial_values) {
         var self = this;
         ContentViewModel.call(self, initial_values);
 
@@ -96,14 +96,14 @@ hqDefine("scheduling/js/create_schedule.ko", [
         self.deleted = ko.observable(initial_values.DELETE);
         self.order = ko.observable(initial_values.ORDER);
 
-        self.waitTimeDisplay = ko.computed(function() {
+        self.waitTimeDisplay = ko.computed(function () {
             var minutes_to_wait = parseInt(self.minutes_to_wait());
-            if(minutes_to_wait >= 0) {
+            if (minutes_to_wait >= 0) {
                 var hours = Math.floor(minutes_to_wait / 60);
                 var minutes = minutes_to_wait % 60;
                 var hours_text = hours + ' ' + gettext('hour(s)');
                 var minutes_text = minutes + ' ' + gettext('minute(s)');
-                if(hours > 0) {
+                if (hours > 0) {
                     return hours_text + ', ' + minutes_text;
                 } else {
                     return minutes_text;
@@ -116,7 +116,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
     EventAndContentViewModel.prototype = Object.create(EventAndContentViewModel.prototype);
     EventAndContentViewModel.prototype.constructor = EventAndContentViewModel;
 
-    var CustomEventContainer = function(id) {
+    var CustomEventContainer = function (id) {
         var self = this;
         var initialCustomEventValue;
         self.event_id = id;
@@ -124,7 +124,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
         var customEventFormset = intialPageData.get("current_values").custom_event_formset;
 
 
-        if(id < customEventFormset.length) {
+        if (id < customEventFormset.length) {
             initialCustomEventValue = customEventFormset[id];
         } else {
             initialCustomEventValue = {
@@ -138,7 +138,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
         self.eventAndContentViewModel = Object.create(EventAndContentViewModel.prototype);
         self.eventAndContentViewModel.constructor(initialCustomEventValue);
 
-        self.templateId = ko.computed(function() {
+        self.templateId = ko.computed(function () {
             return 'id_custom_event_template_' + id;
         });
     };
@@ -204,12 +204,12 @@ hqDefine("scheduling/js/create_schedule.ko", [
         self.capture_custom_metadata_item = ko.observable(initial_values.capture_custom_metadata_item);
         self.editing_custom_immediate_schedule = ko.observable(initial_values.editing_custom_immediate_schedule);
 
-        self.create_day_of_month_choice = function(value) {
-            if(value === '-1') {
+        self.create_day_of_month_choice = function (value) {
+            if (value === '-1') {
                 return {code: value, name: gettext("last")};
-            } else if(value === '-2') {
+            } else if (value === '-2') {
                 return {code: value, name: gettext("last - 1")};
-            } else if(value === '-3') {
+            } else if (value === '-3') {
                 return {code: value, name: gettext("last - 2")};
             } else {
                 return {code: value, name: value};
@@ -224,69 +224,69 @@ hqDefine("scheduling/js/create_schedule.ko", [
             {row: ['-3', '-2', '-1'].map(self.create_day_of_month_choice)},
         ];
 
-        self.recipientTypeSelected = function(value) {
+        self.recipientTypeSelected = function (value) {
             return self.recipient_types().indexOf(value) !== -1;
         };
 
-        self.toggleRecipientType = function(value) {
-            if(self.recipientTypeSelected(value)) {
+        self.toggleRecipientType = function (value) {
+            if (self.recipientTypeSelected(value)) {
                 self.recipient_types.remove(value);
             } else {
                 self.recipient_types.push(value);
             }
         };
 
-        self.setRepeatOptionText = function(newValue) {
+        self.setRepeatOptionText = function (newValue) {
             var option = $('option[value="repeat_every_1"]');
-            if(newValue === 'daily' || newValue === 'custom_daily') {
+            if (newValue === 'daily' || newValue === 'custom_daily') {
                 option.text(gettext("every day"));
-            } else if(newValue === 'weekly') {
+            } else if (newValue === 'weekly') {
                 option.text(gettext("every week"));
-            } else if(newValue === 'monthly') {
+            } else if (newValue === 'monthly') {
                 option.text(gettext("every month"));
             }
         };
 
         self.send_frequency.subscribe(self.setRepeatOptionText);
 
-        self.usesCustomEventDefinitions = ko.computed(function() {
+        self.usesCustomEventDefinitions = ko.computed(function () {
             return self.send_frequency() === 'custom_daily' || self.send_frequency() === 'custom_immediate';
         });
 
-        self.showSharedTimeInput = ko.computed(function() {
+        self.showSharedTimeInput = ko.computed(function () {
             return $.inArray(self.send_frequency(), ['daily', 'weekly', 'monthly']) !== -1;
         });
 
-        self.showWeekdaysInput = ko.computed(function() {
+        self.showWeekdaysInput = ko.computed(function () {
             return self.send_frequency() === 'weekly';
         });
 
-        self.showDaysOfMonthInput = ko.computed(function() {
+        self.showDaysOfMonthInput = ko.computed(function () {
             return self.send_frequency() === 'monthly';
         });
 
-        self.usesTimedSchedule = ko.computed(function() {
+        self.usesTimedSchedule = ko.computed(function () {
             return $.inArray(self.send_frequency(), ['daily', 'weekly', 'monthly', 'custom_daily']) !== -1;
         });
 
-        self.calculateDailyEndDate = function(start_date_milliseconds, repeat_every, occurrences) {
+        self.calculateDailyEndDate = function (start_date_milliseconds, repeat_every, occurrences) {
             var milliseconds_in_a_day = 24 * 60 * 60 * 1000;
             var days_until_end_date = (occurrences - 1) * repeat_every;
             return new Date(start_date_milliseconds + (days_until_end_date * milliseconds_in_a_day));
         };
 
-        self.calculateWeeklyEndDate = function(start_date_milliseconds, repeat_every, occurrences) {
+        self.calculateWeeklyEndDate = function (start_date_milliseconds, repeat_every, occurrences) {
             var milliseconds_in_a_day = 24 * 60 * 60 * 1000;
             var js_start_day_of_week = new Date(start_date_milliseconds).getUTCDay();
             var python_start_day_of_week = (js_start_day_of_week + 6) % 7;
             var offset_to_last_weekday_in_schedule = null;
-            for(var i = 0; i < 7; i++) {
+            for (var i = 0; i < 7; i++) {
                 var current_weekday = (python_start_day_of_week + i) % 7;
-                if(self.weekdays().indexOf(current_weekday.toString()) !== -1) {
+                if (self.weekdays().indexOf(current_weekday.toString()) !== -1) {
                     offset_to_last_weekday_in_schedule = i;
                 }
             }
-            if(offset_to_last_weekday_in_schedule === null) {
+            if (offset_to_last_weekday_in_schedule === null) {
                 return null;
             }
 
@@ -297,31 +297,31 @@ hqDefine("scheduling/js/create_schedule.ko", [
             );
         };
 
-        self.calculateMonthlyEndDate = function(start_date_milliseconds, repeat_every, occurrences) {
+        self.calculateMonthlyEndDate = function (start_date_milliseconds, repeat_every, occurrences) {
             var last_day = null;
-            self.days_of_month().forEach(function(value) {
+            self.days_of_month().forEach(function (value) {
                 value = parseInt(value);
-                if(last_day === null) {
+                if (last_day === null) {
                     last_day = value;
-                } else if(last_day > 0) {
-                    if(value < 0) {
+                } else if (last_day > 0) {
+                    if (value < 0) {
                         last_day = value;
-                    } else if(value > last_day) {
+                    } else if (value > last_day) {
                         last_day = value;
                     }
                 } else {
-                    if(value < 0 && value > last_day) {
+                    if (value < 0 && value > last_day) {
                         last_day = value;
                     }
                 }
             });
-            if(last_day === null) {
+            if (last_day === null) {
                 return null;
             }
 
             var end_date = new Date(start_date_milliseconds);
             end_date.setUTCMonth(end_date.getUTCMonth() + (occurrences - 1) * repeat_every);
-            if(last_day < 0) {
+            if (last_day < 0) {
                 end_date.setUTCMonth(end_date.getUTCMonth() + 1);
                 // Using a value of 0 sets it to the last day of the previous month
                 end_date.setUTCDate(last_day + 1);
@@ -331,24 +331,24 @@ hqDefine("scheduling/js/create_schedule.ko", [
             return end_date;
         };
 
-        self.calculateOccurrences = function() {
-            if(self.repeat() === 'no') {
+        self.calculateOccurrences = function () {
+            if (self.repeat() === 'no') {
                 return 1;
-            } else if(self.stop_type() === 'never') {
+            } else if (self.stop_type() === 'never') {
                 return NaN;
             } else {
                 var value = parseInt(self.occurrences());
-                if(value <= 0) {
+                if (value <= 0) {
                     return NaN;
                 }
                 return value;
             }
         };
 
-        self.calculateRepeatEvery = function() {
-            if(self.repeat() === 'repeat_every_n') {
+        self.calculateRepeatEvery = function () {
+            if (self.repeat() === 'repeat_every_n') {
                 var value = parseInt(self.repeat_every());
-                if(value <= 0) {
+                if (value <= 0) {
                     return NaN;
                 }
                 return value;
@@ -357,85 +357,85 @@ hqDefine("scheduling/js/create_schedule.ko", [
             }
         };
 
-        self.computedEndDate = ko.computed(function() {
+        self.computedEndDate = ko.computed(function () {
             var start_date_milliseconds = Date.parse(self.start_date());
             var repeat_every = self.calculateRepeatEvery();
             var occurrences = self.calculateOccurrences();
 
-            if(self.start_date_type() && self.start_date_type() !== 'SPECIFIC_DATE') {
+            if (self.start_date_type() && self.start_date_type() !== 'SPECIFIC_DATE') {
                 return '';
             }
 
-            if(isNaN(start_date_milliseconds) || isNaN(occurrences) || isNaN(repeat_every)) {
+            if (isNaN(start_date_milliseconds) || isNaN(occurrences) || isNaN(repeat_every)) {
                 return '';
             }
 
             var end_date = null;
-            if(self.send_frequency() === 'daily') {
+            if (self.send_frequency() === 'daily') {
                 end_date = self.calculateDailyEndDate(start_date_milliseconds, repeat_every, occurrences);
-            } else if(self.send_frequency() === 'weekly') {
+            } else if (self.send_frequency() === 'weekly') {
                 end_date = self.calculateWeeklyEndDate(start_date_milliseconds, repeat_every, occurrences);
-            } else if(self.send_frequency() === 'monthly') {
+            } else if (self.send_frequency() === 'monthly') {
                 end_date = self.calculateMonthlyEndDate(start_date_milliseconds, repeat_every, occurrences);
             }
 
-            if(end_date) {
+            if (end_date) {
                 return end_date.toJSON().substr(0, 10);
             }
 
             return '';
         });
 
-        self.saveBroadcastText = ko.computed(function() {
-            if(self.send_frequency() === 'immediately') {
+        self.saveBroadcastText = ko.computed(function () {
+            if (self.send_frequency() === 'immediately') {
                 return gettext("Send Broadcast");
             } else {
                 return gettext("Schedule Broadcast");
             }
         });
 
-        self.initDatePicker = function(element) {
-            element.datepicker({dateFormat : "yy-mm-dd"});
+        self.initDatePicker = function (element) {
+            element.datepicker({dateFormat: "yy-mm-dd"});
         };
 
-        self.getNextCustomEventIndex = function() {
+        self.getNextCustomEventIndex = function () {
             var count = $('#id_custom-event-TOTAL_FORMS').val();
             return parseInt(count);
         };
 
-        self.addCustomEvent = function() {
+        self.addCustomEvent = function () {
             var id = self.getNextCustomEventIndex();
             $('#id_custom_event_templates').append(
-                 $('#id_custom_event_empty_form_container').html().replace(/__prefix__/g, id)
+                $('#id_custom_event_empty_form_container').html().replace(/__prefix__/g, id)
             );
             $('#id_custom-event-TOTAL_FORMS').val(id + 1);
             self.custom_events.push(new CustomEventContainer(id));
         };
 
-        self.markCustomEventDeleted = function(event_id) {
-            $.each(self.custom_events(), function(index, value) {
-                if(value.event_id === event_id) {
+        self.markCustomEventDeleted = function (event_id) {
+            $.each(self.custom_events(), function (index, value) {
+                if (value.event_id === event_id) {
                     value.eventAndContentViewModel.deleted(true);
-                };
+                }
             });
         };
 
-        self.getCustomEventIndex = function(event_id, arr) {
+        self.getCustomEventIndex = function (event_id, arr) {
             var item_index = null;
-            $.each(arr, function(index, value) {
-                if(value.event_id === event_id) {
+            $.each(arr, function (index, value) {
+                if (value.event_id === event_id) {
                     item_index = index;
                 }
             });
             return item_index;
         };
 
-        self.moveCustomEventUp = function(event_id) {
+        self.moveCustomEventUp = function (event_id) {
             var new_array = self.custom_events();
             var item_index = self.getCustomEventIndex(event_id, new_array);
             var swapped_item = null;
 
-            while(item_index > 0 && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
+            while (item_index > 0 && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
                 swapped_item = new_array[item_index - 1];
                 new_array[item_index - 1] = new_array[item_index];
                 new_array[item_index] = swapped_item;
@@ -445,12 +445,12 @@ hqDefine("scheduling/js/create_schedule.ko", [
             self.custom_events(new_array);
         };
 
-        self.moveCustomEventDown = function(event_id) {
+        self.moveCustomEventDown = function (event_id) {
             var new_array = self.custom_events();
             var item_index = self.getCustomEventIndex(event_id, new_array);
             var swapped_item = null;
 
-            while((item_index < (new_array.length - 1)) && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
+            while ((item_index < (new_array.length - 1)) && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
                 swapped_item = new_array[item_index + 1];
                 new_array[item_index + 1] = new_array[item_index];
                 new_array[item_index] = swapped_item;
@@ -460,18 +460,18 @@ hqDefine("scheduling/js/create_schedule.ko", [
             self.custom_events(new_array);
         };
 
-        self.custom_events.subscribe(function(newValue) {
+        self.custom_events.subscribe(function (newValue) {
             // update the order for all events when the array changes
-            $.each(newValue, function(index, value) {
+            $.each(newValue, function (index, value) {
                 value.eventAndContentViewModel.order(index);
             });
         });
 
-        self.useTimeInput = ko.computed(function() {
+        self.useTimeInput = ko.computed(function () {
             return self.send_time_type() === 'SPECIFIC_TIME' || self.send_time_type() === 'RANDOM_TIME';
         });
 
-        self.useCasePropertyTimeInput = ko.computed(function() {
+        self.useCasePropertyTimeInput = ko.computed(function () {
             return self.send_time_type() === 'CASE_PROPERTY_TIME';
         });
 
@@ -480,10 +480,10 @@ hqDefine("scheduling/js/create_schedule.ko", [
             self.setRepeatOptionText(self.send_frequency());
 
             var custom_events = [];
-            for(var i = 0; i < self.getNextCustomEventIndex(); i++) {
+            for (var i = 0; i < self.getNextCustomEventIndex(); i++) {
                 custom_events.push(new CustomEventContainer(i));
             }
-            custom_events.sort(function(item1, item2) {
+            custom_events.sort(function (item1, item2) {
                 return item1.eventAndContentViewModel.order() - item2.eventAndContentViewModel.order();
             });
             self.custom_events(custom_events);
@@ -528,7 +528,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
             multiple: false,
         });
 
-        self.getExtraData = function() {
+        self.getExtraData = function () {
             return {'timestamp': timestamp};
         };
 

@@ -1,7 +1,7 @@
 /* globals moment */
-hqDefine("reminders/js/scheduled_reminders", function() {
+hqDefine("reminders/js/scheduled_reminders", function () {
     $(function () {
-        var reminders = _.map(hqImport("hqwebapp/js/initial_page_data").get("reminder_data"), function(data) {
+        var reminders = _.map(hqImport("hqwebapp/js/initial_page_data").get("reminder_data"), function (data) {
                 var next_fire = moment.utc(data.next_fire);
                 return {
                     nickname: data.handler_name,

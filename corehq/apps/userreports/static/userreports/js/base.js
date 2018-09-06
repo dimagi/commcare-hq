@@ -1,7 +1,7 @@
 hqDefine('userreports/js/base', [
     'jquery',
     'ace-builds/src-min-noconflict/ace',
-], function(
+], function (
     $,
     ace
 ) {
@@ -22,7 +22,7 @@ hqDefine('userreports/js/base', [
         );
         editor.session.setMode('ace/mode/json');
         editor.getSession().setValue($element.val());
-        editor.getSession().on('change', function() {
+        editor.getSession().on('change', function () {
             $element.val(editor.getSession().getValue());
         });
     }

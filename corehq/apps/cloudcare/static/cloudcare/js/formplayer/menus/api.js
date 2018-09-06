@@ -21,7 +21,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             $.when(FormplayerFrontend.request("appselect:apps")).done(function (appCollection) {
                 if (!params.preview) {
                     // Make sure the user has access to the app
-                    if (!appCollection.find(function(app) {
+                    if (!appCollection.find(function (app) {
                         return app.id === params.appId || app.get('copy_of') === params.copyOf;
                     })) {
                         FormplayerFrontend.trigger(
@@ -36,11 +36,11 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 options = {
                     success: function (parsedMenus, response) {
                         if (response.status === 'retry') {
-                            FormplayerFrontend.trigger('retry', response, function() {
+                            FormplayerFrontend.trigger('retry', response, function () {
                                 var newOptionsData = JSON.stringify($.extend(true, { mustRestore: true }, JSON.parse(options.data)));
                                 menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                             }, gettext('Waiting for server progress'));
-                        } else if (response.hasOwnProperty('exception')){
+                        } else if (response.hasOwnProperty('exception')) {
                             FormplayerFrontend.trigger('clearProgress');
                             FormplayerFrontend.trigger(
                                 'showError',

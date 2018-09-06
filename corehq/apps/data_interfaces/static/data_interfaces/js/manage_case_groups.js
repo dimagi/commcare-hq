@@ -1,6 +1,6 @@
-hqDefine("data_interfaces/js/manage_case_groups", function() {
+hqDefine("data_interfaces/js/manage_case_groups", function () {
     var initialPagedata = hqImport('hqwebapp/js/initial_page_data');
-    $(function() {
+    $(function () {
         var bulkUploadId = initialPagedata.get("bulk_upload_id");
         if (bulkUploadId) {
             var isPollingActive = true,
@@ -21,7 +21,7 @@ hqDefine("data_interfaces/js/manage_case_groups", function() {
                             action: 'bulk',
                             upload_id: bulkUploadId,
                         },
-                        error: function() {
+                        error: function () {
                             retry();
                         },
                         success: function (data) {
