@@ -2,7 +2,7 @@ hqDefine('hqcase/js/explode_cases', [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'select2-3.5.2-legacy/select2',
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
