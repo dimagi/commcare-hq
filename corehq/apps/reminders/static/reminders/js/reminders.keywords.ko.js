@@ -7,16 +7,16 @@ hqDefine("reminders/js/reminders.keywords.ko", [
     ko,
     initialPageData
 ) {
-    var keywordActionsViewModel = function (initial_values) {
+    var keywordActionsViewModel = function (initialValues) {
         'use strict';
         var self = {};
 
         // load initial values
-        self.keyword = ko.observable(initial_values.keyword);
-        self.description = ko.observable(initial_values.description);
-        self.overrideOpenSessions = ko.observable(initial_values.override_open_sessions);
+        self.keyword = ko.observable(initialValues.keyword);
+        self.description = ko.observable(initialValues.description);
+        self.overrideOpenSessions = ko.observable(initialValues.override_open_sessions);
 
-        self.senderContentType = ko.observable(initial_values.sender_content_type);
+        self.senderContentType = ko.observable(initialValues.sender_content_type);
         self.isMessageSMS = ko.computed(function () {
             return self.senderContentType() === 'sms';
         });
@@ -24,38 +24,37 @@ hqDefine("reminders/js/reminders.keywords.ko", [
             return self.senderContentType() === 'survey';
         });
 
-        self.senderMessage = ko.observable(initial_values.sender_message);
-        self.senderFormUniqueId = ko.observable(initial_values.sender_form_unique_id);
-        self.notifyOthers = ko.observable(initial_values.other_recipient_type !== 'none');
+        self.senderMessage = ko.observable(initialValues.sender_message);
+        self.senderFormUniqueId = ko.observable(initialValues.sender_form_unique_id);
+        self.notifyOthers = ko.observable(initialValues.other_recipient_type !== 'none');
 
-        self.otherRecipientType = ko.observable(initial_values.other_recipient_type);
+        self.otherRecipientType = ko.observable(initialValues.other_recipient_type);
         self.showRecipientGroup = ko.computed(function () {
             return self.otherRecipientType() === 'USER_GROUP';
         });
 
-        self.otherRecipientId = ko.observable(initial_values.other_recipient_id);
-        self.otherRecipientContentType = ko.observable(initial_values.other_recipient_content_type);
+        self.otherRecipientId = ko.observable(initialValues.other_recipient_id);
+        self.otherRecipientContentType = ko.observable(initialValues.other_recipient_content_type);
         self.notifyOthers = ko.computed(function () {
             return (self.otherRecipientContentType() === 'sms'
                 || self.otherRecipientContentType() === 'survey');
         });
 
-        self.otherRecipientMessage = ko.observable(initial_values.other_recipient_message);
-        self.otherRecipientFormUniqueId = ko.observable(initial_values.other_recipient_form_unique_id);
-        self.processStructuredSms = ko.observable(initial_values.process_structured_sms);
-        self.structuredSmsFormUniqueId = ko.observable(initial_values.structured_sms_form_unique_id);
-        self.useCustomDelimiter = ko.observable(initial_values.use_custom_delimiter);
-        self.delimiter = ko.observable(initial_values.delimiter);
+        self.otherRecipientMessage = ko.observable(initialValues.other_recipient_message);
+        self.otherRecipientFormUniqueId = ko.observable(initialValues.other_recipient_form_unique_id);
+        self.processStructuredSms = ko.observable(initialValues.process_structured_sms);
+        self.structuredSmsFormUniqueId = ko.observable(initialValues.structured_sms_form_unique_id);
+        self.useCustomDelimiter = ko.observable(initialValues.use_custom_delimiter);
+        self.delimiter = ko.observable(initialValues.delimiter);
 
-        self.useNamedArgs = ko.observable(initial_values.use_named_args);
-        self.useNamedArgsSeparator = ko.observable(initial_values.use_named_args_separator);
+        self.useNamedArgs = ko.observable(initialValues.use_named_args);
+        self.useNamedArgsSeparator = ko.observable(initialValues.use_named_args_separator);
         self.useJoiningCharacter = ko.computed(function () {
             return self.useNamedArgs() && self.useNamedArgsSeparator();
         });
 
-
-        self.namedArgs = ko.observableArray((initial_values.named_args.length > 0) ? initial_values.named_args : [{"name": "", "xpath": ""}]);
-        self.namedArgsSeparator = ko.observable(initial_values.named_args_separator);
+        self.namedArgs = ko.observableArray((initialValues.named_args.length > 0) ? initialValues.named_args : [{"name": "", "xpath": ""}]);
+        self.namedArgsSeparator = ko.observable(initialValues.named_args_separator);
         self.exampleStructuredSms = ko.observable("");
 
         self.init = function () {

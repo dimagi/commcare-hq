@@ -40,7 +40,7 @@ function ruleProgressBarGroup (progressUrl) {
 }
 
 
-function ruleProgressBar(handler_id, progress_bar_group) {
+function ruleProgressBar(handlerId, progressBarGroup) {
     'use strict';
     var self = {};
 
@@ -60,7 +60,7 @@ function ruleProgressBar(handler_id, progress_bar_group) {
         return (self.current() || "?") + " / " + (self.total() || "?");
     });
 
-    progress_bar_group.add(handler_id, self);
+    progressBarGroup.add(handlerId, self);
 
     return self;
 }

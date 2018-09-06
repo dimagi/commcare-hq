@@ -1,21 +1,21 @@
 hqDefine("reminders/js/reminders.broadcast.ko", function () {
-    var broadcastViewModel = function (initial_values) {
+    var broadcastViewModel = function (initialValues) {
         'use strict';
         var self = {};
 
-        self.recipientType = ko.observable(initial_values.recipient_type);
-        self.timing = ko.observable(initial_values.timing);
-        self.date = ko.observable(initial_values.date);
-        self.time = ko.observable(initial_values.time);
-        self.caseGroupId = ko.observable(initial_values.case_group_id);
-        self.userGroupId = ko.observable(initial_values.user_group_id);
-        self.contentType = ko.observable(initial_values.content_type);
-        self.subject = ko.observable(initial_values.subject);
-        self.message = ko.observable(initial_values.message);
-        self.formUniqueId = ko.observable(initial_values.formUniqueId);
-        self.role = ko.observable(initial_values.role);
+        self.recipientType = ko.observable(initialValues.recipient_type);
+        self.timing = ko.observable(initialValues.timing);
+        self.date = ko.observable(initialValues.date);
+        self.time = ko.observable(initialValues.time);
+        self.caseGroupId = ko.observable(initialValues.case_group_id);
+        self.userGroupId = ko.observable(initialValues.user_group_id);
+        self.contentType = ko.observable(initialValues.content_type);
+        self.subject = ko.observable(initialValues.subject);
+        self.message = ko.observable(initialValues.message);
+        self.formUniqueId = ko.observable(initialValues.formUniqueId);
+        self.role = ko.observable(initialValues.role);
 
-        self.isTrialProject = initial_values.isTrialProject;
+        self.isTrialProject = initialValues.isTrialProject;
         self.displayedEmailTrialMessage = false;
         self.contentType.subscribe(function (newValue) {
             if (
@@ -37,8 +37,8 @@ hqDefine("reminders/js/reminders.broadcast.ko", function () {
         });
 
         self.showMessage = ko.computed(function () {
-            var content_type = self.contentType();
-            return content_type === 'sms' || content_type === 'email';
+            var contentType = self.contentType();
+            return contentType === 'sms' || contentType === 'email';
         });
 
         self.showSurveySelect = ko.computed(function () {

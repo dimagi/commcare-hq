@@ -7,8 +7,8 @@ hqDefine("reminders/js/reminders.list", function () {
         self.progressBarGroup = ruleProgressBarGroup(progressUrl);
 
         self.init = function () {
-            _(reminders).each(function (reminder_obj) {
-                self.reminders.push(reminder(reminder_obj, self));
+            _(reminders).each(function (reminderObj) {
+                self.reminders.push(reminder(reminderObj, self));
             });
         };
 
