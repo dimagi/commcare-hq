@@ -4,12 +4,14 @@ from __future__ import unicode_literals
 import json
 import mimetypes
 import os
+import sys
 import uuid
 import functools
 from collections import (
     namedtuple,
     OrderedDict
 )
+from contextlib import contextmanager
 from datetime import datetime
 
 import six
@@ -24,8 +26,10 @@ from six.moves import map
 from lxml import etree
 
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
-from corehq.blobs import get_blob_db
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import NotFound, BadName
+from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import get_content_md5
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import UnknownActionType
@@ -164,11 +168,81 @@ class SaveStateMixin(object):
 
 
 class AttachmentMixin(SaveStateMixin):
+    """Mixin for models that have attachments
+
+    This class has some features that are not used by all subclasses.
+    For example cases never have unsaved attachments, and therefore never
+    write attachments.
+    """
+
+    @property
+    def attachments_list(self):
+        try:
+            rval = self._attachments_list
+        except AttributeError:
+            rval = self._attachments_list = []
+        return rval
+
+    @attachments_list.setter
+    def attachments_list(self, value):
+        assert not hasattr(self, "_attachments_list"), self._attachments_list
+        self._attachments_list = value
+
+    def copy_attachments(self, xform):
+        """Copy attachments from the given xform"""
+        existing_names = {a.name for a in self.attachments_list}
+        self.attachments_list.extend(
+            Attachment(meta.name, meta, meta.content_type)
+            for meta in six.itervalues(xform.attachments)
+            if meta.name not in existing_names
+        )
+
+    def has_unsaved_attachments(self):
+        """Return true if this form has unsaved attachments else false"""
+        return any(isinstance(a, Attachment) for a in self.attachments_list)
+
+    def attachment_writer(self):
+        """Context manager for atomically writing attachments
+
+        Usage:
+            with form.attachment_writer() as write_attachments, \\
+                    transaction.atomic(using=form.db, savepoint=False):
+                form.save()
+                write_attachments()
+                ...
+        """
+
+        def write_attachments(blob_db):
+            self._attachments_list = [
+                attachment.write(blob_db, self)
+                for attachment in self.attachments_list
+            ]
+
+        @contextmanager
+        def atomic_attachments():
+            unsaved_attachments = self.attachments_list
+            assert all(isinstance(a, Attachment) for a in unsaved_attachments), \
+                unsaved_attachments
+            with AtomicBlobs(get_blob_db()) as blob_db:
+                if self.deprecated_form_id:
+                    # reassign existing attachments to deprecated form
+                    blob_db.metadb.reparent(self.form_id, self.deprecated_form_id)
+                try:
+                    yield lambda: write_attachments(blob_db)
+                except:
+                    exc = sys.exc_info()
+                    if self.deprecated_form_id:
+                        # undo reassignment
+                        blob_db.metadb.reparent(self.deprecated_form_id, self.form_id)
+                    self._attachments_list = unsaved_attachments
+                    six.reraise(*exc)
+
+        return atomic_attachments()
 
     def get_attachments(self):
-        for list_attr in ('unsaved_attachments', 'cached_attachments'):
-            if hasattr(self, list_attr):
-                return getattr(self, list_attr)
+        attachments = getattr(self, '_attachments_list', None)
+        if attachments is not None:
+            return attachments
 
         if self.is_saved():
             return self._get_attachments_from_db()
@@ -192,9 +266,9 @@ class AttachmentMixin(SaveStateMixin):
                 if attachment.name == attachment_name:
                     return attachment
 
-        for list_attr in ('unsaved_attachments', 'cached_attachments'):
-            if hasattr(self, list_attr):
-                return _get_attachment_from_list(getattr(self, list_attr))
+        attachments = getattr(self, '_attachments_list', None)
+        if attachments is not None:
+            return _get_attachment_from_list(attachments)
 
         if self.is_saved():
             return self._get_attachment_from_db(attachment_name)

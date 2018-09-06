@@ -584,7 +584,7 @@ def _migrate_form_attachments(sql_form, couch_form):
             )
             meta.save()
         attachments.append(meta)
-    sql_form.cached_attachments = attachments
+    sql_form.attachments_list = attachments
 
 
 def _migrate_form_operations(sql_form, couch_form):

@@ -27,7 +27,6 @@ from django.db.models.expressions import Value
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import get_blob_db, CODES
-from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.exceptions import (
     XFormNotFound,
@@ -429,8 +428,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         the memoize hash.
         """
         form = FormAccessorSQL.get_form(form_id)
-        attachments = FormAccessorSQL.get_attachments(form_id)
-        form.cached_attachments = attachments
+        form.attachments_list = FormAccessorSQL.get_attachments(form_id)
         return form
 
     @staticmethod
@@ -467,7 +465,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             key=lambda meta: meta.parent_id
         )
         forms_by_id = {form.form_id: form for form in forms}
-        _attach_prefetch_models(forms_by_id, attachments, 'parent_id', 'cached_attachments')
+        _attach_prefetch_models(forms_by_id, attachments, 'parent_id', 'attachments_list')
 
         if ordered:
             _sort_with_id_list(forms, form_ids, 'form_id')
@@ -615,32 +613,14 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form_id = form.form_id
 
         try:
-            with AtomicBlobs(get_blob_db()) as blob_db, \
+            with form.attachment_writer() as write_attachments, \
                     transaction.atomic(using=form.db, savepoint=False):
                 form.save()
-
-                if form.deprecated_form_id:
-                    # reassign old attachments to deprecated form
-                    blob_db.metadb.reparent(form.form_id, form.deprecated_form_id)
-
-                form.cached_attachments = [
-                    attachment.write(blob_db, form)
-                    for attachment in getattr(form, 'unsaved_attachments', [])
-                ]
-
+                write_attachments()
                 for operation in operations:
                     operation.save()
         except InternalError as e:
-            try:
-                del form.cached_attachments
-            except AttributeError:
-                pass
             raise XFormSaveError(e)
-
-        try:
-            del form.unsaved_attachments
-        except AttributeError:
-            pass
 
         form.clear_tracked_models()
 
@@ -649,7 +629,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         from corehq.form_processor.change_publishers import publish_form_saved
         from corehq.sql_db.util import get_db_alias_for_partitioned_doc
         assert form.is_saved(), "this method doesn't support creating unsaved forms"
-        assert getattr(form, 'unsaved_attachments', None) is None, \
+        assert not form.has_unsaved_attachments(), \
             'Adding attachments to saved form not supported'
         assert not form.has_tracked_models_to_delete(), 'Deleting other models not supported by this method'
         assert not form.has_tracked_models_to_update(), 'Updating other models not supported by this method'
