@@ -5,7 +5,6 @@ import logging
 import uuid
 
 import redis
-from PIL import Image
 from contextlib2 import ExitStack
 from django.db import transaction
 from lxml import etree
@@ -18,10 +17,10 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.change_publishers import (
     publish_form_saved, publish_case_saved, publish_ledger_v2_saved,
     republish_all_changes_for_form)
-from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, KafkaPublishingError
+from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
+    XFormInstanceSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
 from corehq import toggles
@@ -34,38 +33,20 @@ class FormProcessorSQL(object):
 
     @classmethod
     def store_attachments(cls, xform, attachments):
-        xform_attachments = []
-        for attachment in attachments:
-            xform_attachment = XFormAttachmentSQL(
-                name=attachment.name,
-                attachment_id=uuid.uuid4(),
-                content_type=attachment.content_type,
-            )
-            xform_attachment.write_content(attachment.content)
-            if xform_attachment.is_image:
-                try:
-                    img_size = Image.open(attachment.content_as_file()).size
-                    xform_attachment.properties = dict(width=img_size[0], height=img_size[1])
-                except IOError:
-                    xform_attachment.content_type = 'application/octet-stream'
-            xform_attachments.append(xform_attachment)
-
-        xform.unsaved_attachments = xform_attachments
+        assert not hasattr(xform, "unsaved_attachments"), xform
+        assert not hasattr(xform, "cached_attachments"), xform
+        xform.unsaved_attachments = attachments
 
     @classmethod
     def copy_attachments(cls, from_form, to_form):
-        to_form.unsaved_attachments = getattr(to_form, 'unsaved_attachments', [])
-        for name, att in from_form.attachments.items():
-            to_form.unsaved_attachments.append(XFormAttachmentSQL(
-                name=att.name,
-                attachment_id=uuid.uuid4(),
-                content_type=att.content_type,
-                content_length=att.content_length,
-                properties=att.properties,
-                blob_id=att.blob_id,
-                blob_bucket=att.blobdb_bucket(),
-                md5=att.md5,
-            ))
+        if not hasattr(to_form, 'unsaved_attachments'):
+            to_form.unsaved_attachments = []
+        existing_names = {a.name for a in to_form.unsaved_attachments}
+        to_form.unsaved_attachments.extend(
+            Attachment(meta.name, meta, meta.content_type)
+            for meta in six.itervalues(from_form.attachments)
+            if meta.name not in existing_names
+        )
 
     @classmethod
     def copy_form_operations(cls, from_form, to_form):

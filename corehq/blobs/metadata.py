@@ -5,6 +5,8 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import chain
 
+from django.db import connections
+
 from corehq.sql_db.routers import get_cursor
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
@@ -131,6 +133,22 @@ class MetaDB(object):
             'SELECT * FROM get_blobmetas(%s, %s::SMALLINT)',
             [parent_ids, type_code],
         ))
+
+    def reparent(self, old_parent_id, new_parent_id):
+        """Reassign blobs' parent
+
+        Both `old_parent_id` and `new_parent_id` must map to the same
+        database partition.
+        """
+        dbname = get_db_alias_for_partitioned_doc(old_parent_id)
+        new_db = get_db_alias_for_partitioned_doc(new_parent_id)
+        assert dbname == new_db, ("Cannot reparent to new partition: %s -> %s" %
+            (old_parent_id, new_parent_id))
+        with connections[dbname].cursor() as cursor:
+            cursor.execute(
+                "UPDATE blobs_blobmeta SET parent_id = %s WHERE parent_id = %s",
+                [new_parent_id, old_parent_id],
+            )
 
 
 def _utcnow():

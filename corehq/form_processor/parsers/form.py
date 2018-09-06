@@ -63,7 +63,8 @@ def process_xform_xml(domain, instance, attachments=None, auth_context=None):
     Create a new xform to ready to be saved to a database in a thread-safe manner
 
     attachments is a dictionary of the request.FILES that are not the xform;
-    key is parameter name, value is django MemoryFile object stream
+    key is parameter name, value is
+    `django.core.files.uploadedfile.UploadedFile` object.
 
     :returns: FormProcessingResult containing the new XFormInstance(SQL)
     or raises an exception if anything goes wrong.

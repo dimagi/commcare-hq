@@ -10,7 +10,10 @@ from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import get_meta, new_meta, TemporaryFilesystemBlobDB
 from corehq.form_processor.tests.utils import only_run_with_partitioned_database
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+from corehq.sql_db.util import (
+    get_db_alias_for_partitioned_doc,
+    new_id_in_same_dbalias,
+)
 
 
 class TestMetaDB(TestCase):
@@ -153,6 +156,23 @@ class TestMetaDB(TestCase):
             CODES.multimedia,
         )
         self.assertEqual({x.key for x in items}, {ns.m2.key, ns.m3.key})
+
+    def test_reparent(self):
+        metadb = self.db.metadb
+        self.db.put(BytesIO(b"content"), meta=new_meta(parent_id="no-change"))
+        metas = []
+        for name in "abc":
+            meta = new_meta(parent_id="old", name=name)
+            metas.append(self.db.put(BytesIO(b"content"), meta=meta))
+        a, b, c = metas
+        new_parent = new_id_in_same_dbalias("old")
+        metadb.reparent("old", new_parent)
+        self.assertEqual(metadb.get_for_parent("old"), [])
+        self.assertEqual(
+            [m.id for m in metadb.get_for_parent(new_parent)],
+            [m.id for m in metas],
+        )
+        self.assertEqual(len(metadb.get_for_parent("no-change")), 1)
 
 
 @only_run_with_partitioned_database

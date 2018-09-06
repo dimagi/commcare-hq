@@ -13,12 +13,17 @@ from collections import (
 from datetime import datetime
 
 from io import BytesIO, StringIO
+
+import six
 from django.db import models
 from jsonfield.fields import JSONField
 from jsonobject import JsonObject
 from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
+from PIL import Image
+from six.moves import map
 from lxml import etree
+
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
@@ -39,8 +44,6 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, IsImageMixin
 from .exceptions import AttachmentNotFound
-import six
-from six.moves import map
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
@@ -68,11 +71,22 @@ class TruncatingCharField(models.CharField):
         return value
 
 
-class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
+class Attachment(namedtuple('Attachment', 'name raw_content content_type'), IsImageMixin):
+    """Unsaved form attachment
+
+    This class implements the subset of the `BlobMeta` interface needed
+    when handling attachments before they are saved.
+    """
 
     @property
     @memoized
     def content(self):
+        """Get content bytes
+
+        This is not part of the `BlobMeta` interface. Avoid this method
+        for large attachments because it reads the entire attachment
+        content into memory.
+        """
         if hasattr(self.raw_content, 'read'):
             if hasattr(self.raw_content, 'seek'):
                 self.raw_content.seek(0)
@@ -84,8 +98,66 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
             data = data.encode("utf-8")
         return data
 
-    def content_as_file(self):
-        return BytesIO(self.content)
+    def open(self):
+        """Get a file-like object with attachment content
+
+        This is the preferred way to read attachment content.
+
+        If the underlying raw content is a django `File` object this
+        will call `raw_content.open()`, which changes the state of the
+        underlying file object and will affect other concurrent readers
+        (it is not safe to use this for multiple concurrent reads).
+        """
+        if isinstance(self.raw_content, (bytes, six.text_type)):
+            return BytesIO(self.content)
+        fileobj = self.raw_content.open()
+
+        from django.core.files.uploadedfile import InMemoryUploadedFile
+        if fileobj is None and isinstance(self.raw_content, InMemoryUploadedFile):
+            # work around Django 1.11 bug, fixed in 2.0
+            # https://docs.djangoproject.com/en/1.11/_modules/django/core/files/uploadedfile/#InMemoryUploadedFile
+            return self.raw_content
+
+        return fileobj
+
+    @memoized
+    def content_md5(self):
+        """Get RFC-1864-compliant Content-MD5 header value"""
+        return get_content_md5(self.open())
+
+    def write(self, blob_db, xform):
+        """Save attachment
+
+        This is not part of the `BlobMeta` interface.
+
+        This will create an orphaned blob if the xform is not saved.
+        If this is called in a SQL transaction and the transaction is
+        rolled back, then there will be no record of the blob (blob
+        metadata will be lost), but the blob content will continue to
+        use space in the blob db unless something like `AtomicBlobs` is
+        used to clean up on rollback.
+
+        :param blob_db: Blob db where content will be written.
+        :param xform: The XForm instance associated with this attachment.
+        :returns: `BlobMeta` object.
+        """
+        properties = {}
+        content_type = self.content_type
+        if self.is_image:
+            try:
+                img_size = Image.open(self.open()).size
+                properties.update(width=img_size[0], height=img_size[1])
+            except IOError:
+                content_type = 'application/octet-stream'
+        xform_attachment = XFormAttachmentSQL(
+            name=self.name,
+            form_id=xform.form_id,
+            attachment_id=uuid.uuid4(),
+            content_type=content_type,
+        )
+        xform_attachment.write_content(self.open(), blob_db)
+        xform_attachment.save()
+        return xform_attachment
 
 
 class SaveStateMixin(object):
@@ -439,7 +511,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
         # SQL 'id' field which won't be unique across all the DB's
         return self.attachment_id
 
-    def write_content(self, content):
+    def write_content(self, content, blob_db):
         if not self.name:
             raise InvalidAttachment("cannot save attachment without name")
 
@@ -448,14 +520,13 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             content_readable = StringIO(content)
         elif isinstance(content, bytes):
             content_readable = BytesIO(content)
-        db = get_blob_db()
         bucket = self.blobdb_bucket()
         assert bucket != "", "blob migrated from couch, should never happen"
         if self.blob_id:
             # Overwrite and rewrite the existing entry in the database with this identifier
-            info = db.put(content_readable, self.blob_id, bucket=bucket)
+            info = blob_db.put(content_readable, self.blob_id, bucket=bucket)
         else:
-            info = db.put(content_readable, get_short_identifier(), bucket=bucket)
+            info = blob_db.put(content_readable, get_short_identifier(), bucket=bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier

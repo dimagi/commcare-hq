@@ -26,6 +26,7 @@ from django.db.models.expressions import Value
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import get_blob_db
+from corehq.blobs.atomic import AtomicBlobs
 from corehq.form_processor.exceptions import (
     XFormNotFound,
     XFormSaveError,
@@ -626,17 +627,8 @@ class FormAccessorSQL(AbstractFormAccessor):
         """
         Save a previously unsaved form
         """
-
         assert not form.is_saved(), 'form already saved'
         logging.debug('Saving new form: %s', form)
-        unsaved_attachments = getattr(form, 'unsaved_attachments', [])
-        if unsaved_attachments:
-            for unsaved_attachment in unsaved_attachments:
-                if unsaved_attachment.is_saved():
-                    raise XFormSaveError(
-                        'XFormAttachmentSQL {} has already been saved'.format(unsaved_attachment.id)
-                    )
-                unsaved_attachment.form_id = form.form_id
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
@@ -647,14 +639,26 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form_id = form.form_id
 
         try:
-            with transaction.atomic(using=form.db, savepoint=False):
+            with AtomicBlobs(get_blob_db()) as blob_db, \
+                    transaction.atomic(using=form.db, savepoint=False):
                 form.save()
-                for attachment in unsaved_attachments:
-                    attachment.save()
+
+                if form.deprecated_form_id:
+                    # reassign old attachments to deprecated form
+                    blob_db.metadb.reparent(form.form_id, form.deprecated_form_id)
+
+                form.cached_attachments = [
+                    attachment.write(blob_db, form)
+                    for attachment in getattr(form, 'unsaved_attachments', [])
+                ]
 
                 for operation in operations:
                     operation.save()
         except InternalError as e:
+            try:
+                del form.cached_attachments
+            except AttributeError:
+                pass
             raise XFormSaveError(e)
 
         try:
@@ -663,10 +667,6 @@ class FormAccessorSQL(AbstractFormAccessor):
             pass
 
         form.clear_tracked_models()
-
-        # keep these around since we might need them still e.g publishing changes to kafka
-        form.cached_attachments = unsaved_attachments
-
 
     @staticmethod
     def update_form(form, publish_changes=True):
