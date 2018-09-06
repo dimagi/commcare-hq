@@ -224,6 +224,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.currentAppVersion = ko.observable(self.options.currentAppVersion);
         self.latestReleasedVersion = ko.observable(self.options.latestReleasedVersion);
         self.lastAppVersion = ko.observable();
+        self.buildComment = ko.observable();
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
@@ -300,6 +301,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     page: page,
                     limit: self.fetchLimit,
                     only_show_released: self.onlyShowReleased(),
+                    build_comment: self.buildComment(),
                 },
                 success: function (data) {
                     self.savedApps(
@@ -314,6 +316,20 @@ hqDefine('app_manager/js/releases/releases', function () {
                     self.fetchState('error');
                 },
             });
+        };
+
+        self.searchOnEnter = function(value, event) {
+            if (event.keyCode === 13){
+                self.goToPage(1);
+            }
+            return true;
+        };
+
+        self.initQuery = function(){
+            if (self.buildComment()){
+                self.buildComment('');
+                self.goToPage(1);
+            }
         };
 
         self.toggleRelease = function (savedApp, event) {
