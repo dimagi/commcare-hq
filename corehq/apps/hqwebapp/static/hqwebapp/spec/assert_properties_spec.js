@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 /* global $, sinon */
 
-describe('assert_properties', function() {
+describe('assert_properties', function () {
     var lib = hqImport("hqwebapp/js/assert_properties"),
         object = {
             alpha: 1,
@@ -9,7 +9,7 @@ describe('assert_properties', function() {
             delta: 3,
         };
 
-    it('should fail if required properties are missing', function() {
+    it('should fail if required properties are missing', function () {
         try {
             lib.assert(object, ['alpha', 'beta', 'delta', 'gamma'], []);
         } catch (e) {
@@ -17,7 +17,7 @@ describe('assert_properties', function() {
         }
     });
 
-    it('should fail if extra properties are provided', function() {
+    it('should fail if extra properties are provided', function () {
         try {
             lib.assert(object, ['alpha', 'beta'], []);
         } catch (e) {
@@ -25,7 +25,7 @@ describe('assert_properties', function() {
         }
     });
 
-    it('should pass if all required properties and any optional properties are provided', function() {
+    it('should pass if all required properties and any optional properties are provided', function () {
         assert(lib.assert(object, ['alpha', 'beta', 'delta'], []));
         assert(lib.assert(object, ['alpha', 'beta'], ['delta']));
         assert(lib.assert(object, [], ['alpha', 'beta', 'delta']));

@@ -11,7 +11,7 @@ hqDefine('domain/js/update_billing_contact_info', [
     stripeCardManager,
     Stripe
 ) {
-    $(function() {
+    $(function () {
         Stripe.setPublishableKey(initialPageData.get("stripe_public_key"));
         var cardManager = stripeCardManager.stripeCardManager({
             cards: initialPageData.get("cards"),
@@ -19,7 +19,7 @@ hqDefine('domain/js/update_billing_contact_info', [
         });
         $("#card-manager").koApplyBindings(cardManager);
 
-        $("#show_emails").click(function() {
+        $("#show_emails").click(function () {
             $('#emails-text').show();
             $(this).parent().hide();
         });

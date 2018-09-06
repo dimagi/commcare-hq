@@ -1,4 +1,4 @@
-hqDefine("reminders/js/reminders.broadcast.ko", function() {
+hqDefine("reminders/js/reminders.broadcast.ko", function () {
     var BroadcastViewModel = function (initial_values) {
         'use strict';
         var self = this;
@@ -17,8 +17,8 @@ hqDefine("reminders/js/reminders.broadcast.ko", function() {
 
         self.is_trial_project = initial_values.is_trial_project;
         self.displayed_email_trial_message = false;
-        self.content_type.subscribe(function(newValue) {
-            if(
+        self.content_type.subscribe(function (newValue) {
+            if (
                 self.is_trial_project &&
                 !self.displayed_email_trial_message &&
                 newValue === 'email'
@@ -58,7 +58,7 @@ hqDefine("reminders/js/reminders.broadcast.ko", function() {
         });
 
         self.initDatePicker = function () {
-            $("input[name='date']").datepicker({dateFormat : "yy-mm-dd"});
+            $("input[name='date']").datepicker({dateFormat: "yy-mm-dd"});
         };
 
         self.initTimePicker = function () {

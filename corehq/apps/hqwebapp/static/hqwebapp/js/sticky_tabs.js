@@ -5,10 +5,10 @@
 hqDefine("hqwebapp/js/sticky_tabs", [
     "jquery",
     "bootstrap",    // needed for $.tab
-], function(
+], function (
     $
 ) {
-    var getHash = function() {
+    var getHash = function () {
         if (window.location.hash) {
             // .replace handles the #history?form_id=foo style of URL hashes used by
             // the case data page's history tab (case_data.js)
@@ -17,7 +17,7 @@ hqDefine("hqwebapp/js/sticky_tabs", [
         return "";
     };
 
-    $(function(){
+    $(function () {
         var tabSelector = "a[data-toggle='tab']",
             navSelector = ".nav.sticky-tabs",
             hash = getHash(),

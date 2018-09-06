@@ -53,6 +53,23 @@
             </button>
         {% endif %}
     </p>
+    <div class="row">
+        <div class="col-md-3 col-md-offset-9">
+            <span class="input-group input-group-sm">
+                <input type="text" class="form-control" placeholder="{% trans "Search version comment" %}"
+                       data-bind="value: buildComment, valueUpdate: 'afterkeydown', event: {keypress: searchOnEnter}" />
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" data-bind="click: function(){ goToPage(1); }">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button class="btn btn-default" type="button" data-bind="click: initQuery">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </span>
+            </span>
+        </div>
+    </div>
+
 
     <div id="build-errors-wrapper"></div>
 

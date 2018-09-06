@@ -1,5 +1,5 @@
 /* globals RuleProgressBarGroup, RuleProgressBar */
-hqDefine("reminders/js/reminders.list", function() {
+hqDefine("reminders/js/reminders.list", function () {
     var RemindersListModel = function (reminders, progressUrl) {
         'use strict';
         var self = this;
@@ -13,7 +13,7 @@ hqDefine("reminders/js/reminders.list", function() {
         };
 
         self.removeReminder = function (id) {
-            self.reminders.remove(function(item) { return item.id() === id; });
+            self.reminders.remove(function (item) { return item.id() === id; });
             var dt = $("#reminder-list-table").dataTable();
             var row = dt.$("#" + id)[0];
             dt.fnDeleteRow(row);
@@ -41,7 +41,7 @@ hqDefine("reminders/js/reminders.list", function() {
             self.processReminder('deactivate', event.target);
         };
 
-        self.del = function(_, event) {
+        self.del = function (_, event) {
             self.processReminder('delete', event.target);
         };
 
@@ -61,7 +61,7 @@ hqDefine("reminders/js/reminders.list", function() {
                 success: function (data) {
                     if (data.success) {
                         $(target_button).button('success');
-                        if(method === 'delete') {
+                        if (method === 'delete') {
                             self.reminderList.removeReminder(self.id());
                         } else if (method === 'activate') {
                             self.active(true);
@@ -69,7 +69,7 @@ hqDefine("reminders/js/reminders.list", function() {
                             self.active(false);
                         }
                     } else {
-                        if(data.locked) {
+                        if (data.locked) {
                             $(target_button).button('locked');
                         } else {
                             $(target_button).button('error');
@@ -80,7 +80,7 @@ hqDefine("reminders/js/reminders.list", function() {
         };
     };
 
-    $(function() {
+    $(function () {
         var remindersList = new RemindersListModel(hqImport("hqwebapp/js/initial_page_data").get('reminders'),
             hqImport("hqwebapp/js/initial_page_data").reverse("reminder_rule_progress"));
         $('#reminders-list').koApplyBindings(remindersList);
@@ -90,7 +90,7 @@ hqDefine("reminders/js/reminders.list", function() {
             "paginateType": "bootstrap",
             "lengthChange": false,
             "filter": true,
-            "oLanguage": {"emptyTable": gettext('There are no reminders to display.'), "infoEmpty" : ""},
+            "oLanguage": {"emptyTable": gettext('There are no reminders to display.'), "infoEmpty": ""},
             "sort": true,
             "sorting": [[0, "asc"]],
             "displayLength": 5,

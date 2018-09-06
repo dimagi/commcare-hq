@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/modules/case_list_setting", function() {
+hqDefine("app_manager/js/modules/case_list_setting", function () {
     function getLabel(slug) { return $('.case-list-setting-label[data-slug="' + slug + '"]'); }
     function getShow(slug) { return $('.case-list-setting-show[data-slug="' + slug + '"]'); }
     function getMedia(slug) { return $('.case-list-setting-media[data-slug="' + slug + '"]'); }
@@ -22,20 +22,20 @@ hqDefine("app_manager/js/modules/case_list_setting", function() {
     }
 
     $(function () {
-        _.each($(".case-list-setting-label"), function(el) {
+        _.each($(".case-list-setting-label"), function (el) {
             var $el = $(el),
                 slug = $el.data("slug");
             $el.find("input").attr("name", slug + "-label");
-            $el.find("input").on('textchange', function() {
+            $el.find("input").on('textchange', function () {
                 updateCaseListLabelError(slug);
             });
         });
 
-        _.each($(".case-list-setting-show"), function(el) {
+        _.each($(".case-list-setting-show"), function (el) {
             var $el = $(el),
                 slug = $el.data("slug");
             updateCaseListLabel(slug, $el.val() === 'true');
-            $el.change(function() {
+            $el.change(function () {
                 updateCaseListLabel(slug, $el.val() === 'true');
             });
         });

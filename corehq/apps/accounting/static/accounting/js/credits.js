@@ -30,7 +30,7 @@ hqDefine('accounting/js/credits', [
         return self;
     };
 
-    var prepaymentsModel = function(products, features, paymentHandler) {
+    var prepaymentsModel = function (products, features, paymentHandler) {
         var self = {};
         var PrepaymentItems = paymentMethodHandler.PrepaymentItems;
         self.products = products;
@@ -38,7 +38,7 @@ hqDefine('accounting/js/credits', [
         self.paymentHandler = paymentHandler;
         self.general_credit = ko.observable(generalCreditItem(paymentHandler));
 
-        self.triggerPayment = function(paymentMethod) {
+        self.triggerPayment = function (paymentMethod) {
             self.paymentHandler.reset();
             self.paymentHandler.paymentMethod(paymentMethod);
             self.paymentHandler.costItem(new PrepaymentItems({
@@ -51,12 +51,12 @@ hqDefine('accounting/js/credits', [
         return self;
     };
 
-    var generalCreditItem = function(paymentHandler) {
+    var generalCreditItem = function (paymentHandler) {
         var self = {};
         self.name = ko.observable("Credits");
         self.creditType = ko.observable("general_credit");
         self.addAmount = ko.observable(0);
-        self.addAmountValid = ko.computed(function(){
+        self.addAmountValid = ko.computed(function () {
             return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);
         });
         self.paymentHandler = paymentHandler;
@@ -82,7 +82,7 @@ hqDefine('accounting/js/credits', [
         self.paymentHandler = paymentHandler;
         self.addAmount = ko.observable(0);
 
-        self.addAmountValid = ko.computed(function(){
+        self.addAmountValid = ko.computed(function () {
             return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);
         });
 
@@ -106,7 +106,7 @@ hqDefine('accounting/js/credits', [
         /*
          * Return the name with the recurring interval if it exists
          */
-        self.getUsageName = function() {
+        self.getUsageName = function () {
             return self.recurringInterval() ? self.recurringInterval() + ' ' + self.name() : self.name();
         };
 

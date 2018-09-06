@@ -4,7 +4,7 @@ hqDefine("domain/js/current_subscription", [
     'accounting/js/credits',
     'accounting/js/payment_method_handler',
     'accounting/js/lib/stripe',
-], function(
+], function (
     $,
     initialPageData,
     credits,

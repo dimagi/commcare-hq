@@ -16,7 +16,7 @@ hqDefine('export/js/models', function () {
      * This is an instance of an export. It contains the tables to export
      * and other presentation properties.
      */
-    var ExportInstance = function(instanceJSON, options) {
+    var ExportInstance = function (instanceJSON, options) {
         options = options || {};
         var self = this;
         ko.mapping.fromJS(instanceJSON, ExportInstance.mapping, self);
@@ -36,7 +36,7 @@ hqDefine('export/js/models', function () {
         self.saveState = ko.observable(constants.SAVE_STATES.READY);
 
         // True if the form has no errors
-        self.isValid = ko.pureComputed(function() {
+        self.isValid = ko.pureComputed(function () {
             if (!self.hasDailySavedAccess && self.is_daily_saved_export()) {
                 return false;
             }
@@ -48,23 +48,23 @@ hqDefine('export/js/models', function () {
         self.hasExcelDashboardAccess = Boolean(options.hasExcelDashboardAccess);
         self.hasDailySavedAccess = Boolean(options.hasDailySavedAccess);
 
-        self.formatOptions = options.formatOptions !== undefined ? options.formatOptions : _.map(constants.EXPORT_FORMATS, function(format){
+        self.formatOptions = options.formatOptions !== undefined ? options.formatOptions : _.map(constants.EXPORT_FORMATS, function (format) {
             return format;
         });
 
-        self.sharingOptions = options.sharingOptions !== undefined ? options.sharingOptions : _.map(constants.SHARING_OPTIONS, function(format){
+        self.sharingOptions = options.sharingOptions !== undefined ? options.sharingOptions : _.map(constants.SHARING_OPTIONS, function (format) {
             return format;
         });
 
         // If any column has a deid transform, show deid column
-        self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
-            return table.selected() && _.any(table.columns(), function(column) {
+        self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function (table) {
+            return table.selected() && _.any(table.columns(), function (column) {
                 return column.selected() && column.deid_transform();
             });
         }));
 
         // Set column widths
-        self.questionColumnClass = ko.computed(function() {
+        self.questionColumnClass = ko.computed(function () {
             var width = 6;
             if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
                 width--;
@@ -74,7 +74,7 @@ hqDefine('export/js/models', function () {
             }
             return "col-sm-" + width;
         });
-        self.displayColumnClass = ko.computed(function() {
+        self.displayColumnClass = ko.computed(function () {
             var width = 5;
             if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
                 width--;
@@ -85,15 +85,15 @@ hqDefine('export/js/models', function () {
             return "col-sm-" + width;
         });
 
-        self.hasHtmlFormat = ko.pureComputed(function() {
+        self.hasHtmlFormat = ko.pureComputed(function () {
             return this.export_format() === constants.EXPORT_FORMATS.HTML;
         }, self);
-        self.hasDisallowedHtmlFormat = ko.pureComputed(function() {
+        self.hasDisallowedHtmlFormat = ko.pureComputed(function () {
             return this.hasHtmlFormat() && !this.hasExcelDashboardAccess;
         }, self);
 
-        self.hasCaseHistoryTable = ko.pureComputed(function() {
-            return _.any(self.tables(), function(table) {
+        self.hasCaseHistoryTable = ko.pureComputed(function () {
+            return _.any(self.tables(), function (table) {
                 if (table.label() !== 'Case History') {
                     return false;
                 }
@@ -103,19 +103,19 @@ hqDefine('export/js/models', function () {
             });
         });
 
-        self.export_format.subscribe(function (newFormat){
+        self.export_format.subscribe(function (newFormat) {
             // Selecting Excel Dashboard format automatically checks the daily saved export box
             if (newFormat === constants.EXPORT_FORMATS.HTML) {
                 self.is_daily_saved_export(true);
             } else {
-                if (!self.hasExcelDashboardAccess){
+                if (!self.hasExcelDashboardAccess) {
                     self.is_daily_saved_export(false);
                 }
             }
         });
     };
 
-    ExportInstance.prototype.onBeginSchemaBuild = function(exportInstance, e) {
+    ExportInstance.prototype.onBeginSchemaBuild = function (exportInstance, e) {
         var self = this,
             $btn = $(e.currentTarget),
             errorHandler,
@@ -137,7 +137,7 @@ hqDefine('export/js/models', function () {
         $btn.addClass('disabled');
         $btn.addSpinnerToButton();
 
-        errorHandler = function() {
+        errorHandler = function () {
             $btn.attr('disabled', false);
             $btn.removeSpinnerFromButton();
             $btn.removeClass('disabled');
@@ -145,7 +145,7 @@ hqDefine('export/js/models', function () {
             self.schemaProgressText(gettext('Process'));
         };
 
-        successHandler = function() {
+        successHandler = function () {
             $btn.removeSpinnerFromButton();
             $btn.removeClass('disabled');
             $btn.attr('disabled', false);
@@ -163,14 +163,14 @@ hqDefine('export/js/models', function () {
                 identifier: identifier,
             },
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 self.checkBuildSchemaProgress(response.download_id, successHandler, errorHandler);
             },
             error: errorHandler,
         });
     };
 
-    ExportInstance.prototype.checkBuildSchemaProgress = function(downloadId, successHandler, errorHandler) {
+    ExportInstance.prototype.checkBuildSchemaProgress = function (downloadId, successHandler, errorHandler) {
         var self = this,
             buildSchemaUrl = urls.reverse('build_schema', this.domain());
 
@@ -181,7 +181,7 @@ hqDefine('export/js/models', function () {
                 download_id: downloadId,
             },
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     self.buildSchemaProgress(100);
                     self.showBuildSchemaProgressBar(false);
@@ -206,13 +206,13 @@ hqDefine('export/js/models', function () {
         });
     };
 
-    ExportInstance.prototype.getFormatOptionValues = function() {
-        return _.filter(constants.EXPORT_FORMATS, function(format) {
+    ExportInstance.prototype.getFormatOptionValues = function () {
+        return _.filter(constants.EXPORT_FORMATS, function (format) {
             return this.formatOptions.indexOf(format) !== -1;
         }, this);
     };
 
-    ExportInstance.prototype.getFormatOptionText = function(format) {
+    ExportInstance.prototype.getFormatOptionText = function (format) {
         if (format === constants.EXPORT_FORMATS.HTML) {
             return gettext('Web Page (Excel Dashboards)');
         } else if (format === constants.EXPORT_FORMATS.CSV) {
@@ -224,13 +224,13 @@ hqDefine('export/js/models', function () {
         }
     };
 
-    ExportInstance.prototype.getSharingOptionValues = function() {
-        return _.filter(constants.SHARING_OPTIONS, function(format) {
+    ExportInstance.prototype.getSharingOptionValues = function () {
+        return _.filter(constants.SHARING_OPTIONS, function (format) {
             return this.sharingOptions.indexOf(format) !== -1;
         }, this);
     };
 
-    ExportInstance.prototype.getSharingOptionText = function(format) {
+    ExportInstance.prototype.getSharingOptionText = function (format) {
         if (format === constants.SHARING_OPTIONS.PRIVATE) {
             return gettext('Private');
         } else if (format === constants.SHARING_OPTIONS.EXPORT_ONLY) {
@@ -253,11 +253,11 @@ hqDefine('export/js/models', function () {
      *
      * @returns {Boolean} - Returns true if the export has been saved, false otherwise.
      */
-    ExportInstance.prototype.isNew = function() {
+    ExportInstance.prototype.isNew = function () {
         return !ko.utils.unwrapObservable(this._id);
     };
 
-    ExportInstance.prototype.getSaveText = function() {
+    ExportInstance.prototype.getSaveText = function () {
         return this.isNew() ? gettext('Create') : gettext('Save');
     };
 
@@ -267,7 +267,7 @@ hqDefine('export/js/models', function () {
      * Saves an ExportInstance by serializing it and POSTing it
      * to the server.
      */
-    ExportInstance.prototype.save = function() {
+    ExportInstance.prototype.save = function () {
         var self = this,
             serialized;
 
@@ -276,13 +276,13 @@ hqDefine('export/js/models', function () {
         $.post({
             url: self.saveUrl,
             data: JSON.stringify(serialized),
-            success: function(data) {
-                self.recordSaveAnalytics(function() {
+            success: function (data) {
+                self.recordSaveAnalytics(function () {
                     self.saveState(constants.SAVE_STATES.SUCCESS);
                     utils.redirect(data.redirect);
                 });
             },
-            error: function() {
+            error: function () {
                 self.saveState(constants.SAVE_STATES.ERROR);
             },
         });
@@ -296,7 +296,7 @@ hqDefine('export/js/models', function () {
      *
      * @param {function} callback - A function to be called after recording analytics.
      */
-    ExportInstance.prototype.recordSaveAnalytics = function(callback) {
+    ExportInstance.prototype.recordSaveAnalytics = function (callback) {
         var analyticsAction = this.is_daily_saved_export() ? 'Saved' : 'Regular',
             analyticsExportType = utils.capitalize(this.type()),
             args,
@@ -320,7 +320,7 @@ hqDefine('export/js/models', function () {
         }
     };
 
-    ExportInstance.prototype.toggleShowDeleted = function(table) {
+    ExportInstance.prototype.toggleShowDeleted = function (table) {
         table.showDeleted(!table.showDeleted());
 
         if (this.numberOfAppsToProcess > 0 && table.showDeleted()) {
@@ -334,13 +334,13 @@ hqDefine('export/js/models', function () {
      * Makse the deid column visible and scrolls the user back to the
      * top of the export.
      */
-    ExportInstance.prototype.showDeidColumn = function() {
-        utils.animateToEl('#field-select', function() {
+    ExportInstance.prototype.showDeidColumn = function () {
+        utils.animateToEl('#field-select', function () {
             this.isDeidColumnVisible(true);
         }.bind(this));
     };
 
-    ExportInstance.prototype.toJS = function() {
+    ExportInstance.prototype.toJS = function () {
         return ko.mapping.toJS(this, ExportInstance.mapping);
     };
 
@@ -353,7 +353,7 @@ hqDefine('export/js/models', function () {
      * @param {ExportInstance} instance
      * @param {Object} e - The window's click event
      */
-    ExportInstance.prototype.addUserDefinedTableConfiguration = function(instance, e) {
+    ExportInstance.prototype.addUserDefinedTableConfiguration = function (instance, e) {
         e.preventDefault();
         instance.tables.push(new UserDefinedTableConfiguration({
             selected: true,
@@ -402,7 +402,7 @@ hqDefine('export/js/models', function () {
             'is_daily_saved_export',
         ],
         tables: {
-            create: function(options) {
+            create: function (options) {
                 if (options.data.is_user_defined) {
                     return new UserDefinedTableConfiguration(options.data);
                 } else {
@@ -419,7 +419,7 @@ hqDefine('export/js/models', function () {
      * The TableConfiguration represents one excel sheet in an export.
      * It contains a list of columns and other presentation properties
      */
-    var TableConfiguration = function(tableJSON) {
+    var TableConfiguration = function (tableJSON) {
         var self = this;
         // Whether or not to show advanced columns in the UI
         self.showAdvanced = ko.observable(false);
@@ -428,17 +428,17 @@ hqDefine('export/js/models', function () {
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
     };
 
-    TableConfiguration.prototype.isVisible = function() {
+    TableConfiguration.prototype.isVisible = function () {
         // Not implemented
         return true;
     };
 
-    TableConfiguration.prototype.toggleShowAdvanced = function(table) {
+    TableConfiguration.prototype.toggleShowAdvanced = function (table) {
         table.showAdvanced(!table.showAdvanced());
     };
 
-    TableConfiguration.prototype._select = function(select) {
-        _.each(this.columns(), function(column) {
+    TableConfiguration.prototype._select = function (select) {
+        _.each(this.columns(), function (column) {
             column.selected(select && column.isVisible(this));
         }.bind(this));
     };
@@ -450,7 +450,7 @@ hqDefine('export/js/models', function () {
      *
      * Selects all visible columns in the table.
      */
-    TableConfiguration.prototype.selectAll = function(table) {
+    TableConfiguration.prototype.selectAll = function (table) {
         table._select(true);
     };
 
@@ -461,7 +461,7 @@ hqDefine('export/js/models', function () {
      *
      * Deselects all visible columns in the table.
      */
-    TableConfiguration.prototype.selectNone = function(table) {
+    TableConfiguration.prototype.selectNone = function (table) {
         table._select(false);
     };
 
@@ -472,8 +472,8 @@ hqDefine('export/js/models', function () {
      *
      * Uses the question labels for the all the label values in the column.
      */
-    TableConfiguration.prototype.useLabels = function(table) {
-        _.each(table.columns(), function(column) {
+    TableConfiguration.prototype.useLabels = function (table) {
+        _.each(table.columns(), function (column) {
             if (column.isQuestion() && !column.isUserDefined) {
                 column.label(column.item.label() || column.label());
             }
@@ -488,8 +488,8 @@ hqDefine('export/js/models', function () {
      *
      * Uses the question ids for the all the label values in the column.
      */
-    TableConfiguration.prototype.useIds = function(table) {
-        _.each(table.columns(), function(column) {
+    TableConfiguration.prototype.useIds = function (table) {
+        _.each(table.columns(), function (column) {
             if (column.isQuestion() && !column.isUserDefined) {
                 column.label(column.item.readablePath() || column.label());
             }
@@ -497,13 +497,13 @@ hqDefine('export/js/models', function () {
         table.displayType('ids');
     };
 
-    TableConfiguration.prototype.getColumn = function(path) {
-        return _.find(this.columns(), function(column) {
+    TableConfiguration.prototype.getColumn = function (path) {
+        return _.find(this.columns(), function (column) {
             return utils.readablePath(column.item.path()) === path;
         });
     };
 
-    TableConfiguration.prototype.addUserDefinedExportColumn = function(table, e) {
+    TableConfiguration.prototype.addUserDefinedExportColumn = function (table, e) {
         e.preventDefault();
         table.columns.push(new UserDefinedExportColumn({
             selected: true,
@@ -518,7 +518,7 @@ hqDefine('export/js/models', function () {
     TableConfiguration.mapping = {
         include: ['name', 'path', 'columns', 'selected', 'label', 'is_deleted', 'doc_type', 'is_user_defined'],
         columns: {
-            create: function(options) {
+            create: function (options) {
                 if (options.data.doc_type === 'UserDefinedExportColumn') {
                     return new UserDefinedExportColumn(options.data);
                 } else {
@@ -527,7 +527,7 @@ hqDefine('export/js/models', function () {
             },
         },
         path: {
-            create: function(options) {
+            create: function (options) {
                 return new PathNode(options.data);
             },
         },
@@ -550,7 +550,7 @@ hqDefine('export/js/models', function () {
      * table path: form.repeat[]
      * question path: form.repeat[].question1
      */
-    var UserDefinedTableConfiguration = function(tableJSON) {
+    var UserDefinedTableConfiguration = function (tableJSON) {
         var self = this;
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
         self.customPathString = ko.observable(utils.readablePath(self.path()));
@@ -568,7 +568,7 @@ hqDefine('export/js/models', function () {
     };
     UserDefinedTableConfiguration.prototype = Object.create(TableConfiguration.prototype);
 
-    UserDefinedTableConfiguration.prototype.onCustomPathChange = function() {
+    UserDefinedTableConfiguration.prototype.onCustomPathChange = function () {
         var rowColumn,
             nestedRepeatCount;
         this.path(utils.customPathToNodes(this.customPathString()));
@@ -577,7 +577,7 @@ hqDefine('export/js/models', function () {
         // repeats in the table path
         rowColumn = this.getColumn('number');
         if (rowColumn) {
-            nestedRepeatCount = _.filter(this.path(), function(node) { return node.is_repeat(); }).length;
+            nestedRepeatCount = _.filter(this.path(), function (node) { return node.is_repeat(); }).length;
             rowColumn.repeat(nestedRepeatCount);
         }
     };
@@ -589,7 +589,7 @@ hqDefine('export/js/models', function () {
      * The model that represents a column in an export. Each column has a one-to-one
      * mapping with an ExportItem. The column controls the presentation of that item.
      */
-    var ExportColumn = function(columnJSON) {
+    var ExportColumn = function (columnJSON) {
         var self = this;
         ko.mapping.fromJS(columnJSON, ExportColumn.mapping, self);
         // showOptions is used a boolean for whether to show options for user defined option
@@ -606,10 +606,10 @@ hqDefine('export/js/models', function () {
      * @returns {Boolean} - Returns true if the column is associated with a form question
      *      or a case property, false otherwise.
      */
-    ExportColumn.prototype.isQuestion = function() {
+    ExportColumn.prototype.isQuestion = function () {
         var disallowedTags = ['info', 'case', 'server', 'row', 'app', 'stock'],
             self = this;
-        return !_.any(disallowedTags, function(tag) { return _.include(self.tags(), tag); });
+        return !_.any(disallowedTags, function (tag) { return _.include(self.tags(), tag); });
     };
 
 
@@ -619,7 +619,7 @@ hqDefine('export/js/models', function () {
      * This adds an options to the user defined options. This is used for the
      * feature preview: SPLIT_MULTISELECT_CASE_EXPORT
      */
-    ExportColumn.prototype.addUserDefinedOption = function() {
+    ExportColumn.prototype.addUserDefinedOption = function () {
         var option = this.userDefinedOptionToAdd();
         if (option) {
             this.user_defined_options.push(option);
@@ -632,7 +632,7 @@ hqDefine('export/js/models', function () {
      *
      * Removes a user defined option.
      */
-    ExportColumn.prototype.removeUserDefinedOption = function(option) {
+    ExportColumn.prototype.removeUserDefinedOption = function (option) {
         this.user_defined_options.remove(option);
     };
 
@@ -643,11 +643,11 @@ hqDefine('export/js/models', function () {
      *
      * @returns {string} - Returns a string representation of the property/question
      */
-    ExportColumn.prototype.formatProperty = function() {
-        if (this.tags().length !== 0){
+    ExportColumn.prototype.formatProperty = function () {
+        if (this.tags().length !== 0) {
             return this.label();
         } else {
-            return _.map(this.item.path(), function(node) { return node.name(); }).join('.');
+            return _.map(this.item.path(), function (node) { return node.name(); }).join('.');
         }
     };
 
@@ -656,8 +656,8 @@ hqDefine('export/js/models', function () {
      *
      * @returns {Array} - A list of all deid option choices
      */
-    ExportColumn.prototype.getDeidOptions = function() {
-        return _.map(constants.DEID_OPTIONS, function(value) { return value; });
+    ExportColumn.prototype.getDeidOptions = function () {
+        return _.map(constants.DEID_OPTIONS, function (value) { return value; });
     };
 
     /**
@@ -666,7 +666,7 @@ hqDefine('export/js/models', function () {
      * @param {string} deidOption - A deid option
      * @returns {string} - Given a deid option, returns the human readable label
      */
-    ExportColumn.prototype.getDeidOptionText = function(deidOption) {
+    ExportColumn.prototype.getDeidOptionText = function (deidOption) {
         if (deidOption === constants.DEID_OPTIONS.ID) {
             return gettext('Sensitive ID');
         } else if (deidOption === constants.DEID_OPTIONS.DATE) {
@@ -683,7 +683,7 @@ hqDefine('export/js/models', function () {
      *
      * @returns {Boolean} - True if the column is visible false otherwise.
      */
-    ExportColumn.prototype.isVisible = function(table) {
+    ExportColumn.prototype.isVisible = function (table) {
         if (this.selected()) {
             return true;
         }
@@ -710,15 +710,15 @@ hqDefine('export/js/models', function () {
      *
      * @returns {Boolean} - True if it is the case name property False otherwise.
      */
-    ExportColumn.prototype.isCaseName = function() {
+    ExportColumn.prototype.isCaseName = function () {
         return this.item.isCaseName();
     };
 
-    ExportColumn.prototype.translatedHelp = function() {
+    ExportColumn.prototype.translatedHelp = function () {
         return gettext(this.help_text);
     };
 
-    ExportColumn.prototype.isEditable = function() {
+    ExportColumn.prototype.isEditable = function () {
         return false;
     };
 
@@ -736,7 +736,7 @@ hqDefine('export/js/models', function () {
             'user_defined_options',
         ],
         item: {
-            create: function(options) {
+            create: function (options) {
                 return new ExportItem(options.data);
             },
         },
@@ -748,7 +748,7 @@ hqDefine('export/js/models', function () {
      * This model represents a column that a user has defined the path to the
      * data within the form. It should only be needed for RemoteApps
      */
-    var UserDefinedExportColumn = function(columnJSON) {
+    var UserDefinedExportColumn = function (columnJSON) {
         var self = this;
         ko.mapping.fromJS(columnJSON, UserDefinedExportColumn.mapping, self);
         self.showOptions = ko.observable(false);
@@ -760,19 +760,19 @@ hqDefine('export/js/models', function () {
     };
     UserDefinedExportColumn.prototype = Object.create(ExportColumn.prototype);
 
-    UserDefinedExportColumn.prototype.isVisible = function() {
+    UserDefinedExportColumn.prototype.isVisible = function () {
         return true;
     };
 
-    UserDefinedExportColumn.prototype.formatProperty = function() {
-        return _.map(this.custom_path(), function(node) { return node.name(); }).join('.');
+    UserDefinedExportColumn.prototype.formatProperty = function () {
+        return _.map(this.custom_path(), function (node) { return node.name(); }).join('.');
     };
 
-    UserDefinedExportColumn.prototype.isEditable = function() {
+    UserDefinedExportColumn.prototype.isEditable = function () {
         return this.is_editable();
     };
 
-    UserDefinedExportColumn.prototype.customPathToNodes = function() {
+    UserDefinedExportColumn.prototype.customPathToNodes = function () {
         this.custom_path(utils.customPathToNodes(this.customPathString()));
     };
 
@@ -786,7 +786,7 @@ hqDefine('export/js/models', function () {
             'is_editable',
         ],
         custom_path: {
-            create: function(options) {
+            create: function (options) {
                 return new PathNode(options.data);
             },
         },
@@ -798,7 +798,7 @@ hqDefine('export/js/models', function () {
      *
      * An item for export that is generated from the schema generation
      */
-    var ExportItem = function(itemJSON) {
+    var ExportItem = function (itemJSON) {
         var self = this;
         ko.mapping.fromJS(itemJSON, ExportItem.mapping, self);
     };
@@ -810,18 +810,18 @@ hqDefine('export/js/models', function () {
      *
      * @returns {Boolean} - True if it is the case name property False otherwise.
      */
-    ExportItem.prototype.isCaseName = function() {
+    ExportItem.prototype.isCaseName = function () {
         return this.path()[this.path().length - 1].name === 'name';
     };
 
-    ExportItem.prototype.readablePath = function() {
+    ExportItem.prototype.readablePath = function () {
         return utils.readablePath(this.path());
     };
 
     ExportItem.mapping = {
         include: ['path', 'label', 'tag'],
         path: {
-            create: function(options) {
+            create: function (options) {
                 return new PathNode(options.data);
             },
         },
@@ -833,7 +833,7 @@ hqDefine('export/js/models', function () {
      *
      * An node representing a portion of the path to item to export.
      */
-    var PathNode = function(pathNodeJSON) {
+    var PathNode = function (pathNodeJSON) {
         ko.mapping.fromJS(pathNodeJSON, PathNode.mapping, this);
     };
 

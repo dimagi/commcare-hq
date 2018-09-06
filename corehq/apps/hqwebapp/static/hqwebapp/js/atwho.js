@@ -6,9 +6,9 @@ function (
     ko,
     _
 ) {
-    var _init = function($input, options, afterInsert, replaceValue) {
-        $input.atwho(options).on("inserted.atwho", function(event, $li, otherEvent) {
-            if (replaceValue){
+    var _init = function ($input, options, afterInsert, replaceValue) {
+        $input.atwho(options).on("inserted.atwho", function (event, $li, otherEvent) {
+            if (replaceValue) {
                 $input.val($input.data("selected-value")).change();
             }
 
@@ -24,7 +24,7 @@ function (
      *      Suggest at least overriding url and data.
      *  afterInsert: will be called after new value is selected.
      */
-    var init = function($input, options) {
+    var init = function ($input, options) {
         var replaceValue = options.replaceValue === undefined || options.replaceValue;
         var atwhoOptions = {
             at: "",
@@ -33,18 +33,18 @@ function (
             suffix: "",
             tabSelectsMatch: false,
             callbacks: {
-                filter: function(query, data, searchKey) {
-                    return _.filter(data, function(item) {
+                filter: function (query, data, searchKey) {
+                    return _.filter(data, function (item) {
                         return item.name.indexOf(query) !== -1;
                     });
                 },
-                matcher: function(flag, subtext, should_startWithSpace) {
+                matcher: function (flag, subtext, should_startWithSpace) {
                     return $input.val();
                 },
-                beforeInsert: function(value, $li) {
+                beforeInsert: function (value, $li) {
                     // This and the inserted.atwho handler below ensure that the entire
                     // input's value is replaced, regardless of where the cursor is
-                    if (replaceValue){
+                    if (replaceValue) {
                         $input.data("selected-value", value);
                     }
                 },
@@ -68,26 +68,26 @@ function (
     };
 
     ko.bindingHandlers.autocompleteAtwho = {
-        init: function(element, valueAccessor) {
+        init: function (element, valueAccessor) {
             var $element = $(element);
             if (!$element.atwho) {
                 throw new Error("The typeahead binding requires Atwho.js and Caret.js");
             }
 
             init($element, {
-                afterInsert: function() {
+                afterInsert: function () {
                     $element.trigger('textchange');
                 },
             });
 
-            $element.on("textchange", function() {
+            $element.on("textchange", function () {
                 if ($element.val()) {
                     $element.change();
                 }
             });
         },
 
-        update: function(element, valueAccessor, allBindings) {
+        update: function (element, valueAccessor, allBindings) {
             $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
         },
     };

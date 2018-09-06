@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-08-22 18:18+0000\n"
+"POT-Creation-Date: 2018-09-04 19:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,10 +25,10 @@ msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/enterprise_settings.js:25
 msgid ""
-"Do not allow new users to sign up on commcarehq.org.<br>This will affect "
-"users with email addresses from the following domains: <strong><%= domains "
-"%></strong><br>Contact <a href='mailto:<%= email %>'><%= email %></a> to "
-"change the list of domains."
+"Do not allow new users to sign up on commcarehq.org. This may take up to an "
+"hour to take effect. <br>This will affect users with email addresses from "
+"the following domains: <strong><%= domains %></strong><br>Contact <a "
+"href='mailto:<%= email %>'><%= email %></a> to change the list of domains."
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js:66
@@ -254,7 +254,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:29
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:658
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:660
 msgid "Case Type required"
 msgstr ""
 
@@ -263,63 +263,63 @@ msgid "Case Tag required"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:34
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:662
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:664
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:38
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:666
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:668
 msgid "Case Tag already in use"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:105
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:107
 msgid "subcase of"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:111
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:113
 msgid "autoselect mode: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:114
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:116
 msgid " (from fixture)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:264
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:266
 msgid "Autoselect mode required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:266
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:268
 msgid "Property required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:269
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:271
 msgid "Case required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:271
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:273
 msgid "Lookup table tag required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:275
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:277
 msgid "Expected case type required"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:374
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:567
-msgid "Subcase parent reference is missing"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:376
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:569
+msgid "Subcase parent reference is missing"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:378
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:571
 msgid "Parent reference ID required for subcases: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:383
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:576
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:385
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:578
 msgid "Subcase must be in same repeat context as parent \""
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:484
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:486
 msgid "Select parent"
 msgstr ""
 
@@ -2272,7 +2272,7 @@ msgstr ""
 msgid "Evaluate XPath"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:272
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:269
 msgid "Error evaluating expression."
 msgstr ""
 
@@ -2293,7 +2293,7 @@ msgstr ""
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:637
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:636
 msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
@@ -2464,42 +2464,42 @@ msgstr ""
 msgid "Search Countries..."
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/my_project_settings.js:40
+#: corehq/apps/domain/static/domain/js/my_project_settings.js:46
 msgid "Reset to Default"
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/my_project_settings.js:54
+#: corehq/apps/domain/static/domain/js/my_project_settings.js:60
 msgid "This matches the global setting: "
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/my_project_settings.js:57
+#: corehq/apps/domain/static/domain/js/my_project_settings.js:63
 msgid "This does not match global setting: "
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/my_project_settings.js:62
+#: corehq/apps/domain/static/domain/js/my_project_settings.js:68
 msgid ""
 "You may not override this project space's timezone because you only have "
 "access to this project space through an Organization. You must be added to "
 "the project space as a member in order to override your timezone."
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/snapshot_settings.js:30
+#: corehq/apps/domain/static/domain/js/snapshot_settings.js:34
 msgid "Hide previous versions"
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/snapshot_settings.js:34
+#: corehq/apps/domain/static/domain/js/snapshot_settings.js:38
 msgid "Show previous versions"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_data_files.js:17
+#: corehq/apps/export/static/export/js/download_data_files.js:26
 msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_data_files.js:26
+#: corehq/apps/export/static/export/js/download_data_files.js:35
 msgid "Data file URL copied to clipboard."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_data_files.js:48
+#: corehq/apps/export/static/export/js/download_data_files.js:61
 msgid "Data file deleted."
 msgstr ""
 
@@ -2591,11 +2591,11 @@ msgstr ""
 msgid "Please wait and do not navigate away..."
 msgstr ""
 
-#: corehq/apps/hqadmin/static/hqadmin/js/system_info.js:241
+#: corehq/apps/hqadmin/static/hqadmin/js/system_info.js:248
 msgid "Stop"
 msgstr ""
 
-#: corehq/apps/hqadmin/static/hqadmin/js/system_info.js:241
+#: corehq/apps/hqadmin/static/hqadmin/js/system_info.js:248
 msgid "Start"
 msgstr ""
 
@@ -3467,16 +3467,16 @@ msgstr ""
 msgid "(no errors over the given date range)"
 msgstr ""
 
-#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:92
-msgid "Send"
-msgstr ""
-
-#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:101
-#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:133
+#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:41
+#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:127
 msgid "Server error. Try again..."
 msgstr ""
 
-#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:126
+#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:41
+msgid "Send"
+msgstr ""
+
+#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:127
 msgid "Complete"
 msgstr ""
 
