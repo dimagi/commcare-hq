@@ -10,7 +10,7 @@ from django.test import TestCase
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
     get_awc_report_beneficiary
-from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
+from custom.icds_reports.messages import new_born_with_low_weight_help_text, wasting_help_text
 
 
 class TestAWCReport(TestCase):
@@ -1082,15 +1082,7 @@ class TestAWCReport(TestCase):
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
                 "label": "Wasting (Weight-for-Height)",
-                "help_text": (
-                    "Of the children enrolled for Anganwadi services, whose weight and height was measured, "
-                    "the percentage of children between 0 - 5 years enrolled who were moderately/severely "
-                    "wasted in the current month. "
-                    "<br/><br/>"
-                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
-                    "usually as a consequence of insufficient food intake or a high incidence of infectious "
-                    "diseases."
-                )
+                "help_text": wasting_help_text("0 - 5 years")
             }
         )
 
@@ -1151,15 +1143,7 @@ class TestAWCReport(TestCase):
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
                 "label": "Wasting (Weight-for-Height)",
-                "help_text": (
-                    "Of the children enrolled for Anganwadi services, whose weight and height was measured, "
-                    "the percentage of children between 0 - 5 years enrolled who were moderately/severely wasted "
-                    "in the current month. "
-                    "<br/><br/>"
-                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
-                    "usually as a consequence of insufficient food intake or a high incidence of infectious "
-                    "diseases."
-                )
+                "help_text": wasting_help_text("0 - 5 years")
             }
         )
 
@@ -1249,7 +1233,7 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Newborns with Low Birth Weight",
                 'help_text': (
-                    get_new_born_with_low_weight_help_text(html=False)
+                    new_born_with_low_weight_help_text(html=False)
                 ),
             }
         )

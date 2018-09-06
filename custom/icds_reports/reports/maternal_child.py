@@ -6,12 +6,13 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.messages import wasting_help_text, stunting_help_text
+from custom.icds_reports.messages import wasting_help_text, stunting_help_text, underweight_children_help_text, \
+    early_initiation_breastfeeding_help_text
 from custom.icds_reports.models import AggChildHealthMonthly, AggCcsRecordMonthly
 from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, exclude_records_by_age_for_column, \
     wasting_moderate_column, wasting_severe_column, stunting_moderate_column, stunting_severe_column, \
     hfa_recorded_in_month_column, wfh_recorded_in_month_column, chosen_filters_to_labels, default_age_interval
-from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
+from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
 @quickcache(['domain', 'config', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
@@ -118,12 +119,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
             [
                 {
                     'label': _('Underweight (Weight-for-Age)'),
-                    'help_text': _((
-                        "Of the total children enrolled for Anganwadi services and weighed, the percentage "
-                        "of children between 0-5 years who were moderately/severely underweight in the current "
-                        "month. Children who are moderately or severely underweight have a higher risk "
-                        "of mortality. "
-                    )),
+                    'help_text': underweight_children_help_text(),
                     'percent': percent_diff(
                         'underweight',
                         this_month_data,
@@ -189,7 +185,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 {
                     'label': _('Newborns with Low Birth Weight'),
                     'help_text': _((
-                        get_new_born_with_low_weight_help_text(html=False)
+                        new_born_with_low_weight_help_text(html=False)
                     )),
                     'percent': percent_diff(
                         'low_birth_weight',
@@ -213,12 +209,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
             [
                 {
                     'label': _('Early Initiation of Breastfeeding'),
-                    'help_text': _((
-                        "Of the children born in the last month and enrolled for Anganwadi services, "
-                        "the percentage whose breastfeeding was initiated within 1 hour of delivery. "
-                        "Early initiation of breastfeeding ensure the newborn recieves the \"first milk\" "
-                        "rich in nutrients and encourages exclusive breastfeeding practice")
-                    ),
+                    'help_text': early_initiation_breastfeeding_help_text(),
                     'percent': percent_diff(
                         'bf_birth',
                         this_month_data,

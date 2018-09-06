@@ -11,7 +11,8 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from custom.icds_reports.messages import wasting_help_text, stunting_help_text
+from custom.icds_reports.messages import wasting_help_text, stunting_help_text, \
+    early_initiation_breastfeeding_help_text
 from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
@@ -23,7 +24,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
 from custom.icds_reports.const import MapColors
 import six
 
-from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
+from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
 @quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -536,7 +537,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Newborns with Low Birth Weight'),
                     'help_text': _(
-                        get_new_born_with_low_weight_help_text(html=False)
+                        new_born_with_low_weight_help_text(html=False)
                     ),
                     'percent': percent_diff(
                         'low_birth',
@@ -562,7 +563,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         "breastfeeding was initiated within 1 hour of delivery. Early initiation "
                         "of breastfeeding ensure the newborn recieves the \"first milk\" rich "
                         "in nutrients and encourages exclusive breastfeeding practice"
-                    ),
+                    ),  # todo
                     'percent': percent_diff(
                         'birth',
                         this_month_data,
