@@ -7,6 +7,7 @@ import re
 import six
 import subprocess
 import yaml
+from collections import defaultdict
 from django.contrib.staticfiles import finders
 from django.conf import settings
 from shutil import copyfile
@@ -14,10 +15,6 @@ from subprocess import call
 
 from corehq.apps.hqwebapp.management.commands.resource_static import Command as ResourceStaticCommand
 from io import open
-
-
-logger = logging.getLogger('build_requirejs')
-logger.setLevel('DEBUG')
 
 
 class Command(ResourceStaticCommand):
@@ -34,9 +31,12 @@ class Command(ResourceStaticCommand):
                  'production optimization (dependency tracing, concatenation and minification) locally. '
                  'Does not allow you to mimic CDN.')
         parser.add_argument('--no_optimize', action='store_true',
-            help='Don\'t minify files. Useful when running on a local environment.')
+            help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
 
     def handle(self, **options):
+        logger = logging.getLogger('__name__')
+        logger.setLevel('DEBUG')
+
         local = options['local']
         no_optimize = options['no_optimize']
 
@@ -49,15 +49,16 @@ class Command(ResourceStaticCommand):
             return rel
 
         if local:
-            proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"], stdout=subprocess.PIPE)
+            proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
+                                    stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
             if out:
-                confirm = raw_input("You have unstaged changes to the following files: \n{} "
+                confirm = six.moves.input("You have unstaged changes to the following files: \n{} "
                                     "This script overwrites some static files. "
                                     "Are you sure you want to continue (y/n)? ".format(out))
                 if confirm[0].lower() != 'y':
                     exit()
-            confirm = raw_input("You are running locally. Have you already run "
+            confirm = six.moves.input("You are running locally. Have you already run "
                                 "`./manage.py collectstatic --noinput && ./manage.py compilejsi18n` (y/n)? ")
             if confirm[0].lower() != 'y':
                 exit()
@@ -81,8 +82,8 @@ class Command(ResourceStaticCommand):
             html_files = []
             for root, dirs, files in os.walk(prefix):
                 for name in files:
-                    filename = os.path.join(root, name)
                     if name.endswith(".html"):
+                        filename = os.path.join(root, name)
                         if not re.search(r'/partials/', filename):
                             html_files.append(filename)
                     elif local and name.endswith(".js"):
@@ -96,9 +97,10 @@ class Command(ResourceStaticCommand):
                 ...
             }
             '''
-            dirs = {}
+            dirs = defaultdict(set)
             for filename in html_files:
-                proc = subprocess.Popen(["grep", "^\s*{% requirejs_main [^%]* %}\s*$", filename], stdout=subprocess.PIPE)
+                proc = subprocess.Popen(["grep", "^\s*{% requirejs_main [^%]* %}\s*$", filename],
+                                        stdout=subprocess.PIPE)
                 (out, err) = proc.communicate()
                 if out:
                     match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
@@ -106,10 +108,7 @@ class Command(ResourceStaticCommand):
                         main = match.group(1)
                         directory = match.group(2)
                         if os.path.exists(os.path.join(self.root_dir, 'staticfiles', main + '.js')):
-                            if directory not in dirs:
-                                dirs.update({directory: set()})
                             dirs[directory].add(main)
-
 
             # For each directory, add an optimized "module" entry including all of the main modules in that dir.
             # For each of these entries, r.js will create an optimized bundle of these main modules and all their
@@ -118,7 +117,7 @@ class Command(ResourceStaticCommand):
                 config['modules'].append({
                     'name': os.path.join(directory, "bundle"),
                     'exclude': ['hqwebapp/js/common', 'hqwebapp/js/base_main'],
-                    'include': list(mains),
+                    'include': sorted(list(mains)),
                     'create': True,
                 })
 
