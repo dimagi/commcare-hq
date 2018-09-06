@@ -38,7 +38,7 @@ class Command(ResourceStaticCommand):
         logger.setLevel('DEBUG')
 
         local = options['local']
-        no_optimize = options['no_optimize']
+        no_optimize = True or options['no_optimize']
 
         def _relative(path, root=None):
             if not root:
