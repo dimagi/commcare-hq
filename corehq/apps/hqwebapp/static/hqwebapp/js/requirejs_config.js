@@ -33,6 +33,6 @@ requirejs.config({
     // just pass throughs to define and require, with actual calls to define and require. This is needed
     // because r.js's dependency tracing depends on parsing define and require calls.
     onBuildRead: function (moduleName, path, contents) {
-        return contents.replace(/hqDefine/g, 'define').replace(/hqRequire/g, 'require');
+        return contents.replace(/\bhqDefine\b/g, 'define').replace(/\bhqRequire\b/g, 'require');
     },
 });
