@@ -108,10 +108,16 @@ class AttachmentMixin(SaveStateMixin):
         return []
 
     def get_attachment(self, attachment_name):
+        """Read attachment content
+
+        Avoid this method because it reads the entire attachment into
+        memory at once.
+        """
         attachment = self.get_attachment_meta(attachment_name)
         if not attachment:
             raise AttachmentNotFound(attachment_name)
-        return attachment.read_content()
+        with attachment.open() as content:
+            return content.read()
 
     def get_attachment_meta(self, attachment_name):
         def _get_attachment_from_list(attachments):
@@ -453,20 +459,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
         self.content_length = info.length
         self.blob_id = info.identifier
 
-        self._set_cached_content(content)
-
-    def _set_cached_content(self, content):
-        self._cached_content = content
-
-    def _get_cached_content(self, stream=False):
-        if hasattr(self, '_cached_content') and self._cached_content:
-            return StringIO(self._cached_content) if stream else self._cached_content
-
-    def read_content(self, stream=False):
-        cached = self._get_cached_content(stream)
-        if cached:
-            return cached
-
+    def open(self):
         db = get_blob_db()
         try:
             if self.blobdb_bucket() == "":
@@ -475,12 +468,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
                 blob = db.get(self.blob_id, self.blobdb_bucket())
         except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
-
-        if stream:
-            return blob
-
-        with blob:
-            return blob.read()
+        return blob
 
     def delete_content(self):
         db = get_blob_db()
@@ -1000,6 +988,12 @@ class CaseAttachmentSQL(AbstractAttachment, IsImageMixin):
             "blob_id='{a.blob_id}', "
             "properties='{a.properties}')"
         ).format(a=self)
+
+    def open(self):
+        try:
+            return get_blob_db().get(key=self.key)
+        except (KeyError, NotFound, BadName):
+            raise AttachmentNotFound(self.name)
 
     class Meta(object):
         app_label = "form_processor"

@@ -10,7 +10,20 @@ from corehq.util.test_utils import generate_cases
 
 class TestBlobMeta(TestCase):
 
-    pass
+    @classmethod
+    def setUpClass(cls):
+        super(TestBlobMeta, cls).setUpClass()
+        cls.db = TemporaryFilesystemBlobDB()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.db.close()
+        super(TestBlobMeta, cls).tearDownClass()
+
+    def test_open(self):
+        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        with meta.open() as fh:
+            self.assertEqual(fh.read(), b"content")
 
 
 @generate_cases([

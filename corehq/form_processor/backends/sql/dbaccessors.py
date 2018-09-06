@@ -444,7 +444,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_attachment_content(form_id, attachment_name, stream=False):
         meta = FormAccessorSQL.get_attachment_by_name(form_id, attachment_name)
-        return AttachmentContent(meta.content_type, meta.read_content(stream=True))
+        return AttachmentContent(meta.content_type, meta.open())
 
     @staticmethod
     def get_form_operations(form_id):
@@ -949,7 +949,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_attachment_content(case_id, attachment_name):
         meta = CaseAccessorSQL.get_attachment_by_name(case_id, attachment_name)
-        return AttachmentContent(meta.content_type, meta.read_content(stream=True))
+        return AttachmentContent(meta.content_type, meta.open())
 
     @staticmethod
     def get_attachments(case_id):

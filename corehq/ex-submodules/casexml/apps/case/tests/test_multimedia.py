@@ -207,7 +207,8 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         _, case = self._doCreateCaseWithMultimedia()
         if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             attachment_sql = case.case_attachments['fruity_file']
-            self.assertTrue(len(attachment_sql.read_content()) > 0)
+            with attachment_sql.open() as content:
+                self.assertTrue(content.read(1))
 
         new_attachments = []
         removes = ['fruity_file']

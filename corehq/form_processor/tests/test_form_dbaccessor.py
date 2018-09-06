@@ -134,7 +134,8 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(form.form_id, attachment_meta.form_id)
         self.assertEqual('form.xml', attachment_meta.name)
         self.assertEqual('text/xml', attachment_meta.content_type)
-        self.assertEqual(form_xml, attachment_meta.read_content())
+        with attachment_meta.open() as content:
+            self.assertEqual(form_xml, content.read())
 
     def test_get_form_operations(self):
         form = create_form_for_test(DOMAIN)
@@ -486,9 +487,10 @@ class DeleteAttachmentsFSDBTests(TestCase):
 
         for attachment in attachments[1:]:
             with self.assertRaises(AttachmentNotFound):
-                attachment.read_content()
+                attachment.open()
 
-        self.assertIsNotNone(attachments[0].read_content())
+        with attachments[0].open() as content:
+            self.assertIsNotNone(content.read())
         other_form = FormAccessorSQL.get_form(other_form.form_id)
         self.assertIsNotNone(other_form.get_xml())
 
