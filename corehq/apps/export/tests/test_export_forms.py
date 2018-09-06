@@ -225,7 +225,8 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.filter_export = self.subject(self.domain, pytz.utc)
         es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
-        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
+                                                     active=False, deactivated=False)
         self.assertIsInstance(user_filters[0], UserTypeFilter)
         self.assertEqual(user_filters[0].user_types, self.subject._USER_MOBILE)
 
@@ -237,7 +238,8 @@ class TestEmwfFilterFormExportFilters(TestCase):
         fetch_user_ids_patch.return_value = self.user_ids
         es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
-        fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False)
+        fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False,
+                                                     active=False, deactivated=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
         self.assertEqual(user_filters[0].submitted_by, self.user_ids)
 
@@ -249,7 +251,8 @@ class TestEmwfFilterFormExportFilters(TestCase):
         fetch_user_ids_patch.return_value = self.user_ids
         es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
-        fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False)
+        fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False,
+                                                     active=False, deactivated=False)
 
         self.assertIsInstance(user_filters[0], UserTypeFilter)
         self.assertEqual(user_filters[0].user_types, self.subject._USER_MOBILE)
@@ -265,7 +268,8 @@ class TestEmwfFilterFormExportFilters(TestCase):
         fetch_user_ids_patch.return_value = self.user_ids
         es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
-        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=True, commtrack=False)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=True, commtrack=False,
+                                                     active=False, deactivated=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
         self.assertEqual(user_filters[0].submitted_by, self.user_ids)
 
@@ -360,7 +364,8 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.assertTrue(self.export_filter.is_valid())
         case_filters = self.export_filter.get_case_filter('', True, None)
 
-        fetch_user_ids_patch.assert_called_once_with(admin=False, unknown=True, demo=True, commtrack=True)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, unknown=True, demo=True, commtrack=True,
+                                                     active=False, deactivated=False)
         assert not filters_from_slugs_patch.called
 
         self.assertIsInstance(case_filters[0], NOT)
