@@ -10,7 +10,7 @@ hqDefine("reminders/js/scheduled_reminders", function () {
                     case_name: data.case_name,
                     case_url: data.case_id ? hqImport("hqwebapp/js/initial_page_data").reverse("case_data", data.case_id) : "",
                     recipient_desc: data.recipient_desc,
-                    recipient_type: data.recipient_type,
+                    recipientType: data.recipientType,
                 };
             }),
             i,
@@ -20,9 +20,9 @@ hqDefine("reminders/js/scheduled_reminders", function () {
             reminder = reminders[i];
             if (reminder) {
                 var recipient_text;
-                if (_.contains(["USER", "OWNER", "CASE", "PARENT_CASE", "SUBCASE"], reminder.recipient_type)) {
+                if (_.contains(["USER", "OWNER", "CASE", "PARENT_CASE", "SUBCASE"], reminder.recipientType)) {
                     var case_url = '<a href="' + reminder.case_url + '">' + reminder.case_name + '</a>';
-                    if (reminder.recipient_type === "CASE") {
+                    if (reminder.recipientType === "CASE") {
                         recipient_text = case_url;
                     } else {
                         recipient_text = reminder.recipient_desc + " for " + case_url;

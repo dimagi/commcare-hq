@@ -602,7 +602,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             hqcrispy.FieldWithHelpBubble(
                 'case_type',
                 css_class="input-xlarge",
-                data_bind="value: case_type, autocompleteSelect2: available_case_types",
+                data_bind="value: caseType, autocompleteSelect2: availableCaseTypes",
                 placeholder=_("Enter a Case Type"),
                 help_bubble_text=_(
                     "Choose which case type this reminder will be "
@@ -611,7 +611,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             ),
             hqcrispy.FieldWithHelpBubble(
                 'start_reminder_on',
-                data_bind="value: start_reminder_on",
+                data_bind="value: startReminderOn",
                 css_class="input-xlarge",
                 help_bubble_text=("Reminders can either start based on a date in a case property "
                                   "or if the case is in a particular state (ex: case property 'high_risk' "
@@ -630,7 +630,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_match_type',
-                            data_bind="value: start_match_type",
+                            data_bind="value: startMatchType",
                         ),
                         css_class='col-sm-4'
                     ),
@@ -650,7 +650,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_property_offset_type',
-                            data_bind="value: start_property_offset_type",
+                            data_bind="value: startPropertyOffsetType",
                             css_class="input-xlarge"
                         ),
                         css_class='col-sm-6'
@@ -734,7 +734,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 crispy.Div(
                     InlineField(
                         'recipient_case_match_type',
-                        data_bind="value: recipient_case_match_type",
+                        data_bind="value: recipientCaseMatchType",
                     ),
                     css_class='col-sm-4'
                 ),
@@ -775,7 +775,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                   "section. "),
                 css_class="input-xlarge",
             ),
-            crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
+            crispy.Field('event_interpretation', data_bind="value: eventInterpretation"),
             hqcrispy.B3HiddenFieldWithErrors('events', data_bind="value: events"),
         ]
 
@@ -786,7 +786,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 _("Time of Day"),
                 InlineField(
                     'event_timing',
-                    data_bind="value: event_timing",
+                    data_bind="value: eventTiming",
                     css_class="col-sm-6",
                 ),
                 crispy.Div(
@@ -812,7 +812,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             _("Repeat"),
             crispy.Field(
                 'repeat_type',
-                data_bind="value: repeat_type",
+                data_bind="value: repeatType",
                 css_class="input-xlarge",
             ),
             crispy.Div(
@@ -848,7 +848,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 crispy.Div(
                     InlineField(
                         'stop_condition',
-                        data_bind="value: stop_condition",
+                        data_bind="value: stopCondition",
 
                     ),
                     css_class="col-sm-6",
@@ -875,8 +875,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     _("Default Language"),
                     InlineField(
                         'default_lang',
-                        data_bind="options: available_languages, "
-                                  "value: default_lang, "
+                        data_bind="options: availableLanguages, "
+                                  "value: defaultLang, "
                                   "optionsText: 'name', optionsValue: 'langcode'",
                         css_class="input-xlarge",
                     ),
@@ -886,7 +886,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             crispy.Div(
                 hqcrispy.FieldWithHelpBubble(
                     'global_timeouts',
-                    data_bind="value: global_timeouts",
+                    data_bind="value: globalTimeouts",
                     placeholder="e.g. 30,60,180",
                     help_bubble_text=_(
                         "Will repeat the last message or question if the "
@@ -908,7 +908,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             crispy.Div(
                 hqcrispy.FieldWithHelpBubble(
                     'submit_partial_forms',
-                    data_bind="checked: submit_partial_forms",
+                    data_bind="checked: submitPartialForms",
                     help_bubble_text=_(
                         "For surveys, this will let forms be saved even if "
                         "the survey has not been completed and the user is "
@@ -924,26 +924,26 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                        "case should be created, updated or closed.  This is may not be safe to do if "
                                        "the form has not been completed. ")
                 ),
-                data_bind="visible: isPartialSubmissionsVisible() && submit_partial_forms()",
+                data_bind="visible: isPartialSubmissionsVisible() && submitPartialForms()",
             ),
             crispy.Div(
                 InlineField(
                     twbscrispy.PrependedText(
                         'use_custom_user_data_filter', '',
-                        data_bind="checked: use_custom_user_data_filter"
+                        data_bind="checked: useCustomUserDataFilter"
                     ),
                     css_class='col-sm-6'
                 ),
                 crispy.Div(
                     crispy.Field(
                         'custom_user_data_filter_field',
-                        data_bind="value: custom_user_data_filter_field",
+                        data_bind="value: customUserDataFilterField",
                     ),
                     crispy.Field(
                         'custom_user_data_filter_value',
-                        data_bind="value: custom_user_data_filter_value",
+                        data_bind="value: customUserDataFilterValue",
                     ),
-                    data_bind="visible: use_custom_user_data_filter"
+                    data_bind="visible: useCustomUserDataFilter"
                 )
             ),
         ]
@@ -953,7 +953,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         twbscrispy.PrependedText(
                             'use_custom_content_handler', '',
-                            data_bind="checked: use_custom_content_handler"
+                            data_bind="checked: useCustomContentHandler"
                         ),
                         css_class='col-sm-6'
                     ),
@@ -961,7 +961,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         crispy.Field(
                             'custom_content_handler',
                         ),
-                        data_bind="visible: use_custom_content_handler"
+                        data_bind="visible: useCustomContentHandler"
                     )
                 )
             )
@@ -1621,7 +1621,7 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
                 crispy.Div(
                     InlineField(
                         'event_timing',
-                        data_bind="value: event_timing"
+                        data_bind="value: eventTiming"
                     ),
                     css_class='col-sm-6'
                 ),
@@ -1682,7 +1682,7 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
                 crispy.Div(
                     InlineField(
                         'event_timing',
-                        data_bind="value: event_timing",
+                        data_bind="value: eventTiming",
                         css_class="input-xlarge",
                     ),
                     css_class='col-sm-6'
@@ -1772,7 +1772,7 @@ class CaseReminderEventForm(forms.Form):
             crispy.Div(
                 InlineField(
                     'fire_time_aux',
-                    data_bind="value: fire_time_aux, attr: {id: ''}",
+                    data_bind="value: fireTimeAux, attr: {id: ''}",
                     css_class="input-large",
                 ),
                 css_class="help-inline",
@@ -1787,14 +1787,14 @@ class CaseReminderEventForm(forms.Form):
         self.helper.field_class = 'col-sm-4 col-md-4 col-lg-4'
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
-            crispy.Field('subject_data', data_bind="value: subject_data, attr: {id: ''}"),
-            crispy.Field('message_data', data_bind="value: message_data, attr: {id: ''}"),
+            crispy.Field('subject_data', data_bind="value: subjectData, attr: {id: ''}"),
+            crispy.Field('message_data', data_bind="value: messageData, attr: {id: ''}"),
             crispy.Div(data_bind="template: {name: 'event-message-template', foreach: messageTranslations}, "
                                  "visible: isMessageVisible"),
             crispy.Div(
                 crispy.Field(
                     'form_unique_id',
-                    data_bind="value: form_unique_id, attr: {id: ''}",
+                    data_bind="value: formUniqueId, attr: {id: ''}",
                     css_class="input-xxlarge",
                 ),
                 data_bind="visible: isSurveyVisible",
@@ -1807,11 +1807,11 @@ class CaseReminderEventForm(forms.Form):
         self.helper_general.field_class = 'col-sm-4 col-md-4 col-lg-4'
         self.helper_general.layout = crispy.Layout(
             crispy.Div(
-                crispy.Field('time_window_length', data_bind="value: time_window_length, attr: {id: ''}"),
+                crispy.Field('time_window_length', data_bind="value: timeWindowLength, attr: {id: ''}"),
                 data_bind="visible: isWindowLengthVisible",
             ),
-            crispy.Field('fire_time_type', data_bind="value: fire_time_type, attr: {id: ''}"),
-            crispy.Field('day_num', data_bind="value: day_num, attr: {id: ''}"),
+            crispy.Field('fire_time_type', data_bind="value: fireTimeType, attr: {id: ''}"),
+            crispy.Field('day_num', data_bind="value: dayNum, attr: {id: ''}"),
         )
 
 
@@ -2064,7 +2064,7 @@ class KeywordForm(Form):
                             crispy.Div(
                                 InlineField(
                                     twbscrispy.PrependedText('use_custom_delimiter', '',
-                                                             data_bind="checked: use_custom_delimiter, "
+                                                             data_bind="checked: useCustomDelimiter, "
                                                                        "click: updateExampleStructuredSMS"),
 
                                     block_css_class="span2",
@@ -2090,7 +2090,7 @@ class KeywordForm(Form):
                         crispy.Div(
                             InlineField(
                                 twbscrispy.PrependedText('use_named_args', '',
-                                                         data_bind="checked: use_named_args, "
+                                                         data_bind="checked: useNamedArgs, "
                                                                    "click: updateExampleStructuredSMS"),
 
                             ),
@@ -2113,7 +2113,7 @@ class KeywordForm(Form):
                                 InlineField(
                                     twbscrispy.PrependedText(
                                         'use_named_args_separator', '',
-                                        data_bind="checked: use_named_args_separator, "
+                                        data_bind="checked: useNamedArgsSeparator, "
                                                   "click: updateExampleStructuredSMS"
                                     ),
                                 ),
@@ -2123,7 +2123,7 @@ class KeywordForm(Form):
                             crispy.Div(
                                 InlineField(
                                     'named_args_separator',
-                                    data_bind="value: named_args_separator, "
+                                    data_bind="value: namedArgsSeparator, "
                                               "valueUpdate: 'afterkeydown', "
                                               "event: {keyup: updateExampleStructuredSMS},"
                                               "visible: useJoiningCharacter",
@@ -2132,12 +2132,12 @@ class KeywordForm(Form):
                             )
 
                         ),
-                        data_bind="visible: use_named_args",
+                        data_bind="visible: useNamedArgs",
                     ),
                     hqcrispy.B3MultiField(
                         _("Example Structured Message"),
                         crispy.HTML('<pre style="background: white;" '
-                                    'data-bind="text: example_structured_sms">'
+                                    'data-bind="text: exampleStructuredSms">'
                                     '</pre>'),
                     ),
                 ),
@@ -2529,19 +2529,19 @@ class BroadcastForm(Form):
         return [
             crispy.Field(
                 'recipient_type',
-                data_bind="value: recipient_type",
+                data_bind="value: recipientType",
             ),
             crispy.Div(
                 crispy.Field(
                     'case_group_id',
-                    data_bind='value: case_group_id',
+                    data_bind='value: caseGroupId',
                 ),
                 data_bind='visible: showCaseGroupSelect',
             ),
             crispy.Div(
                 crispy.Field(
                     'user_group_id',
-                    data_bind='value: user_group_id',
+                    data_bind='value: userGroupId',
                 ),
                 data_bind='visible: showUserGroupSelect',
             ),
@@ -2588,7 +2588,7 @@ class BroadcastForm(Form):
         return [
             crispy.Field(
                 'content_type',
-                data_bind='value: content_type',
+                data_bind='value: contentType',
             ),
             crispy.Div(
                 crispy.Field(
@@ -2609,7 +2609,7 @@ class BroadcastForm(Form):
             crispy.Div(
                 crispy.Field(
                     'form_unique_id',
-                    data_bind='value: form_unique_id',
+                    data_bind='value: formUniqueId',
                 ),
                 data_bind='visible: showSurveySelect',
             ),
