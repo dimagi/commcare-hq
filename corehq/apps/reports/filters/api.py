@@ -17,6 +17,7 @@ from corehq.apps.reports.filters.case_list import CaseListFilterUtils
 from corehq.apps.reports.util import SimplifiedUserInfo
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
+from corehq.toggles import SEARCH_DEACTIVATED_USERS
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
@@ -224,12 +225,20 @@ class SubmitHistoryOptionsView(EmwfOptionsView):
     @property
     def data_sources(self):
         if self.request.can_access_all_locations:
-            return [
-                (self.get_static_options_size, self.get_static_options),
-                (self.get_groups_size, self.get_groups),
-                (self.get_locations_size, self.get_locations),
-                (self.get_all_users_size, self.get_all_users),
-            ]
+            if SEARCH_DEACTIVATED_USERS.enabled(self.domain):
+                return [
+                    (self.get_static_options_size, self.get_static_options),
+                    (self.get_groups_size, self.get_groups),
+                    (self.get_locations_size, self.get_locations),
+                    (self.get_all_users_size, self.get_all_users),
+                ]
+            else:
+                return [
+                    (self.get_static_options_size, self.get_static_options),
+                    (self.get_groups_size, self.get_groups),
+                    (self.get_locations_size, self.get_locations),
+                    (self.get_active_users_size, self.get_active_users),
+                ]
         else:
             return [
                 (self.get_locations_size, self.get_locations),
