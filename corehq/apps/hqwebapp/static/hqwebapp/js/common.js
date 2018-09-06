@@ -1,5 +1,10 @@
-/*
-    This is a dummy file needed for local environments. In production environments this file is replaced by a
-    bundle of common libraries: jQuery, bootstrap, etc. See hqwebapp/yaml/requirejs.yaml for more detail.
-*/
-define("hqwebapp/js/common", function() {});
+hqDefine("hqwebapp/js/common", [
+    'jquery',
+    'knockout',
+    'ko.mapping',
+    'underscore',
+    'bootstrap',
+    'hqwebapp/js/django',
+], function() {
+    // nothing to do, this is just to define the major common dependencies for HQ
+});
