@@ -95,40 +95,6 @@ hqDefine("app_manager/js/details/case_list_callout", function() {
             return errors;
         };
 
-        var _validate_extras = function(errors){
-            errors = errors || [];
-            var $extras = $el.find("." + detail_type + "-extras"),
-                $extra_help = $extras.find(".help-block");
-
-            if (!_trimmed_extras().length){
-                $extras.addClass('has-error');
-                $extra_help.show();
-                errors.push($extra_help.text());
-            }
-            else {
-                $extras.removeClass('has-error');
-                $extra_help.hide();
-            }
-            return errors;
-        };
-
-        var _validate_responses = function(errors){
-            errors = errors || [];
-            var $responses = $el.find("." + detail_type + "-responses"),
-                $response_help = $responses.find(".help-block");
-
-            if (!_trimmed_responses().length){
-                $responses.addClass('has-error');
-                $response_help.show();
-                errors.push($response_help.text());
-            }
-            else {
-                $responses.removeClass('has-error');
-                $response_help.hide();
-            }
-            return errors;
-        };
-
         self.validate = function(){
             var errors = [];
 
@@ -138,8 +104,6 @@ hqDefine("app_manager/js/details/case_list_callout", function() {
 
             if (self.lookup_enabled()){
                 _validate_inputs(errors);
-                _validate_extras(errors);
-                _validate_responses(errors);
             }
 
             if (errors.length) {
