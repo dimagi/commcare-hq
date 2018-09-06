@@ -332,6 +332,7 @@ class AutomaticUpdateRule(models.Model):
                 filter_on_server_modified=self.filter_on_server_modified,
                 server_modified_boundary=self.server_modified_boundary,
                 workflow=self.workflow,
+                migrated=True,
             )
 
             for criterion in self.memoized_criteria:

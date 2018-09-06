@@ -303,7 +303,7 @@ class IndexedSchema(DocumentSchema):
         def __get__(self, instance, owner):
             # thanks, http://metapython.blogspot.com/2010/11/python-instance-methods-how-are-they.html
             # this makes Getter('foo') act like a bound method
-            return types.MethodType(self, instance, owner)
+            return types.MethodType(self, instance)
 
 
 class FormActionCondition(DocumentSchema):
@@ -4926,6 +4926,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     mobile_ucr_restore_version = StringProperty(
         default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSIONS, required=False
+    )
+    location_fixture_restore = StringProperty(
+        default=DEFAULT_LOCATION_FIXTURE_OPTION, choices=LOCATION_FIXTURE_OPTIONS,
+        required=False
     )
 
     @classmethod
