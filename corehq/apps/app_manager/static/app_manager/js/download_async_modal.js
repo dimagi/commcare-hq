@@ -1,5 +1,5 @@
 hqDefine('app_manager/js/download_async_modal', function () {
-    var asyncDownloader = function($el){
+    var asyncDownloader = function ($el) {
         "use strict";
         var self = {};
         self.POLL_FREQUENCY = 1500; //ms
@@ -11,7 +11,7 @@ hqDefine('app_manager/js/download_async_modal', function () {
         self.$download_progress = self.$el.find("#" + self.el_id + "-download-progress");
         self.$downloading = self.$el.find("#" + self.el_id + "-downloading");
 
-        self.init = function(){
+        self.init = function () {
             self.download_in_progress = false;
             self.download_poll_url = null;
             self.download_poll_id = null;
@@ -19,7 +19,7 @@ hqDefine('app_manager/js/download_async_modal', function () {
             self.$downloading.removeClass("hide");
         };
 
-        self.pollDownloadStatus = function(){
+        self.pollDownloadStatus = function () {
             if (self.download_in_progress) {
                 $.ajax({
                     url: self.download_poll_url,
@@ -51,12 +51,12 @@ hqDefine('app_manager/js/download_async_modal', function () {
                 error_id = 'error_' + self.download_poll_id;
             return progress_response &&
                 progress_response.trim().length &&
-                _.any([ready_id, error_id], function(el_id) {
+                _.any([ready_id, error_id], function (el_id) {
                     return progress_response.indexOf(el_id) >= 0;
                 });
         };
 
-        self.generateDownload = function(download_url, params){
+        self.generateDownload = function (download_url, params) {
             // prevent multiple calls
             if (!self.download_in_progress) {
                 self.download_in_progress = true;
@@ -80,12 +80,12 @@ hqDefine('app_manager/js/download_async_modal', function () {
             }
         };
 
-        self.downloadError = function(text){
+        self.downloadError = function (text) {
             self.init();
             self.$download_progress.html(text);
         };
 
-        self.$el.on("hidden hidden.bs.modal", function(){
+        self.$el.on("hidden hidden.bs.modal", function () {
             self.init();
         });
 
@@ -94,7 +94,7 @@ hqDefine('app_manager/js/download_async_modal', function () {
         return self;
     };
 
-    var downloadApplicationZip = function() {
+    var downloadApplicationZip = function () {
         var $modal = $(".download-async-modal"),
             downloader = asyncDownloader($modal);
         downloader.generateDownload($modal.data("url"));

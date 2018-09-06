@@ -9,23 +9,23 @@ hqDefine('app_manager/js/summary/models',[
     'app_manager/js/summary/utils',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/layout',
-], function($, ko, _, utils, assertProperties, hqLayout) {
+], function ($, ko, _, utils, assertProperties, hqLayout) {
 
-    var menuItemModel = function(options) {
+    var menuItemModel = function (options) {
         assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors']);
         var self = _.extend({
             has_errors: false,
         }, options);
 
         self.isSelected = ko.observable(false);
-        self.select = function() {
+        self.select = function () {
             self.isSelected(true);
         };
 
         return self;
     };
 
-    var menuModel = function(options) {
+    var menuModel = function (options) {
         assertProperties.assert(options, ['items', 'viewAllItems'], []);
 
         var self = {};
@@ -34,56 +34,56 @@ hqDefine('app_manager/js/summary/models',[
         self.viewAllItems = options.viewAllItems;
 
         self.selectedItemId = ko.observable('');      // blank indicates "View All"
-        self.viewAllSelected = ko.computed(function() {
+        self.viewAllSelected = ko.computed(function () {
             return !self.selectedItemId();
         });
 
-        self.select = function(item) {
+        self.select = function (item) {
             self.selectedItemId(item.id);
-            _.each(self.items, function(i) {
+            _.each(self.items, function (i) {
                 i.isSelected(item.id === i.id);
-                _.each(i.subitems, function(s) {
+                _.each(i.subitems, function (s) {
                     s.isSelected(item.id === s.id);
                 });
             });
         };
-        self.selectAll = function() {
+        self.selectAll = function () {
             self.select('');
         };
 
         return self;
     };
 
-    var contentItemModel = function(options) {
+    var contentItemModel = function (options) {
         var self = _.extend({}, options);
 
         self.isSelected = ko.observable(true);  // based on what's selected in menu
         self.matchesQuery = ko.observable(true);   // based on what's entered in search box
-        self.isVisible = ko.computed(function() {
+        self.isVisible = ko.computed(function () {
             return self.isSelected() && self.matchesQuery();
         });
 
         return self;
     };
 
-    var contentModel = function(options) {
+    var contentModel = function (options) {
         assertProperties.assertRequired(options, ['form_name_map', 'lang', 'langs', 'query_label', 'read_only', 'onQuery', 'onSelectMenuItem']);
 
         var self = {};
 
         // Connection to menu
         self.selectedItemId = ko.observable('');      // blank indicates "View All"
-        self.selectedItemId.subscribe(function(selectedId) {
+        self.selectedItemId.subscribe(function (selectedId) {
             options.onSelectMenuItem(selectedId);
         });
 
         // Search box behavior
         self.query = ko.observable('');
         self.queryLabel = options.query_label;
-        self.clearQuery = function() {
+        self.clearQuery = function () {
             self.query('');
         };
-        self.query.subscribe(_.debounce(function(newValue) {
+        self.query.subscribe(_.debounce(function (newValue) {
             options.onQuery(newValue);
         }, 200));
 
@@ -91,10 +91,10 @@ hqDefine('app_manager/js/summary/models',[
         self.lang = options.lang;
         self.langs = options.langs;
         self.questionIcon = utils.questionIcon;
-        self.translate = function(translations) {
+        self.translate = function (translations) {
             return utils.translateName(translations, self.lang, self.langs);
         };
-        self.translateQuestion = function(question) {
+        self.translateQuestion = function (question) {
             if (question.translations) {
                 return utils.translateName(question.translations, self.lang, self.langs);
             }
@@ -103,20 +103,20 @@ hqDefine('app_manager/js/summary/models',[
 
         // Handling of id/label switcher
         self.showLabels = ko.observable(true);
-        self.showIds = ko.computed(function() {
+        self.showIds = ko.computed(function () {
             return !self.showLabels();
         });
-        self.turnLabelsOn = function() {
+        self.turnLabelsOn = function () {
             self.showLabels(true);
         };
-        self.turnIdsOn = function() {
+        self.turnIdsOn = function () {
             self.showLabels(false);
         };
 
         // Create "module -> form" link/text markup
         self.formNameMap = options.form_name_map;
         self.readOnly = options.read_only;
-        self.moduleFormReference = function(formId) {
+        self.moduleFormReference = function (formId) {
             var formData = self.formNameMap[formId];
             var template = self.readOnly
                 ? "<%= moduleName %> &rarr; <%= formName %>"
@@ -129,7 +129,7 @@ hqDefine('app_manager/js/summary/models',[
                 formUrl: formData.form_url,
             });
         };
-        self.moduleReference = function(moduleId) {
+        self.moduleReference = function (moduleId) {
             var moduleData = self.formNameMap[moduleId];
             var template = self.readOnly
                 ? "<%= moduleName %>"
@@ -144,8 +144,8 @@ hqDefine('app_manager/js/summary/models',[
         return self;
     };
 
-    var initSummary = function(menuInstance, contentInstance) {
-        menuInstance.selectedItemId.subscribe(function(newValue) {
+    var initSummary = function (menuInstance, contentInstance) {
+        menuInstance.selectedItemId.subscribe(function (newValue) {
             contentInstance.selectedItemId(newValue);
         });
 

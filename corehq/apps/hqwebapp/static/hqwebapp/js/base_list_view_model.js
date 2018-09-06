@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/base_list_view_model", function() {
+hqDefine("hqwebapp/js/base_list_view_model", function () {
     var BaseListViewModel = function (o) {
         'use strict';
         var self = {};
@@ -16,7 +16,7 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
         self.total = ko.observable(o.total);
         self.pageLimit = ko.observable(o.limit);
         self.max_page = ko.computed(function () {
-            return Math.ceil(self.total()/self.pageLimit());
+            return Math.ceil(self.total() / self.pageLimit());
         });
         self.current_page = ko.observable(o.start_page);
         self.next_page = ko.computed(function () {
@@ -35,12 +35,12 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
         });
 
         self.all_pages = ko.computed(function () {
-            var lastInd = self.max_page()+1;
+            var lastInd = self.max_page() + 1;
             if (self.max_page() <= 5 || self.current_page() <= 3)
                 return _.range(1, Math.min(lastInd, 6));
-            if (self.current_page() >= self.max_page()-2)
-                return _.range(self.max_page()-4, lastInd);
-            return _.range(self.current_page()-2, Math.min(lastInd, self.current_page()+3));
+            if (self.current_page() >= self.max_page() - 2)
+                return _.range(self.max_page() - 4, lastInd);
+            return _.range(self.current_page() - 2, Math.min(lastInd, self.current_page() + 3));
         });
 
         self.update_limit = function (model, event) {
@@ -75,7 +75,7 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
                             actioned = self.archiveActionItems();
                         actioned.push(dataList[index]);
                         dataList = _.difference(dataList, actioned);
-                        self.total(self.total()-1);
+                        self.total(self.total() - 1);
                         self.dataList(dataList);
                         self.archiveActionItems(actioned);
                     });

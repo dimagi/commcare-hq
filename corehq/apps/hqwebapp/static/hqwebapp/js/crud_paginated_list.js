@@ -3,7 +3,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
     "jquery",
     "knockout",
     "underscore",
-], function(
+], function (
     $,
     ko,
     _
@@ -68,7 +68,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
         });
 
         self.maxPage = ko.computed(function () {
-            return Math.ceil(self.total()/self.pageLimit());
+            return Math.ceil(self.total() / self.pageLimit());
         });
         self.currentPage = ko.observable(currentPage);
         self.nextPage = ko.computed(function () {
@@ -338,7 +338,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
     };
 
     ko.bindingHandlers.disabledOnUndefined = {
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var value = valueAccessor()();
             if (value === undefined) {
                 $(element).addClass('disabled');
@@ -349,7 +349,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
     };
 
     ko.bindingHandlers.activeOnSimilar = {
-        update: function(element, valueAccessor, allBindingsAccessor) {
+        update: function (element, valueAccessor, allBindingsAccessor) {
             var current = valueAccessor()();
             var compare = parseInt(allBindingsAccessor()['compareText']);
             if (current === compare) {

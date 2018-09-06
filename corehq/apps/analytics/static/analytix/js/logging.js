@@ -95,7 +95,7 @@ hqDefine('analytix/js/logging', [
         return grp;
     };
 
-    var logModel = function(level, logger) {
+    var logModel = function (level, logger) {
         var _log = {};
         _log.level = level.slug;
         _log.isVisible = level.isVisible;

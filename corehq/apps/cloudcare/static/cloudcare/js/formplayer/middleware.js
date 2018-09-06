@@ -2,11 +2,11 @@
 
 FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, FormplayerFrontend, Backbone, Marionette) {
     SessionNavigate.Middleware = {
-        apply: function(api) {
+        apply: function (api) {
             var wrappedApi = {};
-            _.each(api, function(value, key) {
-                wrappedApi[key] = function() {
-                    _.each(SessionNavigate.Middleware.middlewares, function(fn) {
+            _.each(api, function (value, key) {
+                wrappedApi[key] = function () {
+                    _.each(SessionNavigate.Middleware.middlewares, function (fn) {
                         fn.call(null, key);
                     });
                     return value.apply(null, arguments);
@@ -15,22 +15,22 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             return wrappedApi;
         },
     };
-    var logRouteMiddleware = function(name) {
+    var logRouteMiddleware = function (name) {
         window.console.log('User navigated to ' + name);
     };
-    var clearFormMiddleware = function(name) {
+    var clearFormMiddleware = function (name) {
         FormplayerFrontend.trigger("clearForm");
     };
-    var navigationMiddleware = function(name) {
+    var navigationMiddleware = function (name) {
         FormplayerFrontend.trigger("navigation");
     };
-    var clearVersionInfo = function(name) {
+    var clearVersionInfo = function (name) {
         FormplayerFrontend.trigger('setVersionInfo', '');
     };
-    var clearBreadcrumbMiddleware = function(name) {
+    var clearBreadcrumbMiddleware = function (name) {
         FormplayerFrontend.trigger('clearBreadcrumbs');
     };
-    var setScrollableMaxHeight = function() {
+    var setScrollableMaxHeight = function () {
         var maxHeight,
             user = FormplayerFrontend.request('currentUser'),
             restoreAsBannerHeight = 0;

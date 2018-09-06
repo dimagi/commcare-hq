@@ -67,7 +67,7 @@ hqDefine('accounting/js/pricing_table', [
         });
 
         self.planOptions = ko.observableArray(_.map(options.planOptions, function (opt) {
-          return new PlanOption(opt, self);
+            return new PlanOption(opt, self);
         }));
 
         self.showNext = ko.computed(function () {
@@ -178,14 +178,14 @@ hqDefine('accounting/js/pricing_table', [
             parent.selectedPlan(self.slug());
         };
 
-        self.pricingTypeText = ko.computed(function (){
+        self.pricingTypeText = ko.computed(function () {
             if (parent.showMonthlyPricing()) {
                 return django.gettext("Billed Monthly");
             }
             return django.gettext("Billed Annually");
         });
 
-        self.pricingTypeCssClass = ko.computed(function (){
+        self.pricingTypeCssClass = ko.computed(function () {
             if (parent.showMonthlyPricing()) {
                 return 'pricing-type-monthly';
             }

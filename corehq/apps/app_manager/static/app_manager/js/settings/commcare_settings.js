@@ -10,10 +10,10 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         self.warning = options.warning;
 
         self.customPropertyType = 'custom_properties';
-        self.customProperties = ko.observableArray(_.map(options.customProperties, function(d) {
+        self.customProperties = ko.observableArray(_.map(options.customProperties, function (d) {
             return ko.mapping.fromJS(d);
         }));
-        self.customProperties.sort(function(left, right) {
+        self.customProperties.sort(function (left, right) {
             return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
         });
         self.customPropertiesCollapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", "custom-properties", false);
@@ -162,7 +162,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                         var names = _(condition.settings).map(function (setting) {
                             return setting.name;
                         });
-                        uniqueNames = names.filter(function(elem, pos) {
+                        uniqueNames = names.filter(function (elem, pos) {
                             return names.indexOf(elem) == pos;
                         });
                         return gettext('Auto-set by ') + uniqueNames.join(', ');
@@ -181,8 +181,8 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                         return _case.value;
                     }
                 }
-                if (!setting.versionOK()){
-                    if (setting.disabled_default != null){
+                if (!setting.versionOK()) {
+                    if (setting.disabled_default != null) {
                         return setting.disabled_default;
                     }
                 }
@@ -260,7 +260,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 condition = self.parseCondition(_case.condition);
                 var j;
                 for (j = 0; j < condition.settings.length; j += 1) {
-                    condition.settings[j].value.subscribe(function() {
+                    condition.settings[j].value.subscribe(function () {
                         setting.value(setting.computeDefault());
                     });
                 }
@@ -314,11 +314,11 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         self.saveButton.ui.appendTo($saveContainer);
         hqImport("app_manager/js/section_changer").attachToForm($saveContainer);
 
-        self.onAddCustomProperty = function() {
+        self.onAddCustomProperty = function () {
             self.customProperties.push({ key: ko.observable(), value: ko.observable() });
         };
 
-        self.onDestroyCustomProperty = function(customProperty) {
+        self.onDestroyCustomProperty = function (customProperty) {
             self.customProperties.remove(customProperty);
         };
 
@@ -326,7 +326,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
     CommcareSettings.widgets = {};
 
     CommcareSettings.widgets.select = function (self) {
-        self.updateOptions = function() {
+        self.updateOptions = function () {
             var values = ko.utils.unwrapObservable(self.values);
             var value_names = ko.utils.unwrapObservable(self.value_names);
             if (!values || !value_names || values.length !== value_names.length) {
@@ -428,16 +428,16 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         self.url = self.manager.urlFromLogo(self.slug);
         self.thumb_url = self.manager.thumbUrlFromLogo(self.slug);
 
-        self.is_uploader = function(slug) {
+        self.is_uploader = function (slug) {
             return slug === self.slug;
         };
-        self.uploadComplete = function(widget, event, response) {
+        self.uploadComplete = function (widget, event, response) {
             self.manager.uploadCompleteForLogo(self.slug, response);
         };
-        self.triggerUpload = function() {
+        self.triggerUpload = function () {
             self.manager.triggerUploadForLogo(self.slug);
         };
-        self.removeLogo = function() {
+        self.removeLogo = function () {
             self.manager.removeLogo(self.slug);
         };
     };
@@ -458,7 +458,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
     // text_input has the same behavior as a select widget but uses a different template
     CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
 
-    $(function() {
+    $(function () {
         hqImport('app_manager/js/app_manager').setPrependedPageTitle(gettext("Settings"));
     });
 
