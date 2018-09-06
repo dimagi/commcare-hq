@@ -5,7 +5,7 @@ AppES
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from .es_query import HQESQuery
-from . import filters
+from . import filters, queries
 
 
 class AppES(HQESQuery):
@@ -21,6 +21,12 @@ class AppES(HQESQuery):
             cloudcare_enabled,
             app_id,
         ] + super(AppES, self).builtin_filters
+
+    def build_comment(self, comment):
+        return self.add_query(
+            queries.match(comment, 'build_comment'),
+            queries.MUST,
+        )
 
 
 def is_build(build=True):
