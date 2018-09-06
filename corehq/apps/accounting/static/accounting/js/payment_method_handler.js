@@ -1,5 +1,14 @@
-/* global Stripe */
-hqDefine('accounting/js/payment_method_handler', function () {
+hqDefine('accounting/js/payment_method_handler', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'accounting/js/lib/stripe',
+], function (
+    $,
+    ko,
+    _,
+    Stripe
+) {
     var BillingHandler = function (formId, opts) {
         'use strict';
         var self = this;

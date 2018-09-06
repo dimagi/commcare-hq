@@ -12,6 +12,7 @@ requirejs.config({
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
     },
     shim: {
+        "ace-builds/src-min-noconflict/ace": { exports: "ace" },
         "bootstrap": { deps: ['jquery'] },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
@@ -20,11 +21,16 @@ requirejs.config({
             deps: ['jquery', 'knockout', 'underscore'],
             exports: 'RMI',
         },
-        "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "accounting/js/lib/stripe": { exports: 'Stripe' },
     },
     map: {
         "datatables.fixedColumns": {
             "datatables.net": "datatables",
         },
+    },
+
+    // This is really build config, but it's easier to define a js function here than in requirejs.yaml
+    onBuildRead: function (moduleName, path, contents) {
+        return contents.replace(/hqDefine/g, 'define');
     },
 });
