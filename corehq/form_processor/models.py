@@ -12,9 +12,8 @@ from collections import (
 )
 from datetime import datetime
 
-from io import BytesIO, StringIO
-
 import six
+from io import BytesIO
 from django.db import models
 from jsonfield.fields import JSONField
 from jsonobject import JsonObject
@@ -27,10 +26,9 @@ from lxml import etree
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
-from corehq.blobs.mixin import get_short_identifier
 from corehq.blobs.util import get_content_md5
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
-from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
+from corehq.form_processor.exceptions import UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel, RestrictedManager
@@ -46,7 +44,6 @@ from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, IsImag
 from .exceptions import AttachmentNotFound
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
-XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
 XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
 
 CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
@@ -149,15 +146,15 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type'), IsIm
                 properties.update(width=img_size[0], height=img_size[1])
             except IOError:
                 content_type = 'application/octet-stream'
-        xform_attachment = XFormAttachmentSQL(
+        return blob_db.put(
+            self.open(),
+            domain=xform.domain,
+            parent_id=xform.form_id,
+            type_code=(CODES.form_xml if self.name == "form.xml" else CODES.form_attachment),
             name=self.name,
-            form_id=xform.form_id,
-            attachment_id=uuid.uuid4(),
             content_type=content_type,
+            properties=properties,
         )
-        xform_attachment.write_content(self.open(), blob_db)
-        xform_attachment.save()
-        return xform_attachment
 
 
 class SaveStateMixin(object):
@@ -167,9 +164,6 @@ class SaveStateMixin(object):
 
 
 class AttachmentMixin(SaveStateMixin):
-    """Requires the model to be linked to the attachments model via the 'attachments' related name.
-    """
-    ATTACHMENTS_RELATED_NAME = 'attachment_set'
 
     def get_attachments(self):
         for list_attr in ('unsaved_attachments', 'cached_attachments'):
@@ -493,114 +487,27 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         ]
 
 
-class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
+class DeprecatedXFormAttachmentSQL(models.Model):
+    """Deprecated: moved to BlobMeta
+
+    This class exists so Django does not delete its table when making
+    new migrations. It should not be referenced anywhere.
+    """
+    form_id = models.CharField(max_length=255)
     attachment_id = models.UUIDField(unique=True, db_index=True)
     content_type = models.CharField(max_length=255, null=True)
     content_length = models.IntegerField(null=True)
     blob_id = models.CharField(max_length=255, default=None)
     blob_bucket = models.CharField(max_length=255, null=True, default=None)
     name = models.CharField(max_length=255, default=None)
-
-    # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255, default=None)
-
     properties = JSONField(default=dict)
 
-    def natural_key(self):
-        # necessary for dumping models from a sharded DB so that we exclude the
-        # SQL 'id' field which won't be unique across all the DB's
-        return self.attachment_id
-
-    def write_content(self, content, blob_db):
-        if not self.name:
-            raise InvalidAttachment("cannot save attachment without name")
-
-        content_readable = content
-        if isinstance(content, six.text_type):
-            content_readable = StringIO(content)
-        elif isinstance(content, bytes):
-            content_readable = BytesIO(content)
-        bucket = self.blobdb_bucket()
-        assert bucket != "", "blob migrated from couch, should never happen"
-        if self.blob_id:
-            # Overwrite and rewrite the existing entry in the database with this identifier
-            info = blob_db.put(content_readable, self.blob_id, bucket=bucket)
-        else:
-            info = blob_db.put(content_readable, get_short_identifier(), bucket=bucket)
-        self.md5 = info.md5_hash
-        self.content_length = info.length
-        self.blob_id = info.identifier
-
-    def open(self):
-        db = get_blob_db()
-        try:
-            if self.blobdb_bucket() == "":
-                blob = db.get(key=self.blob_id)
-            else:
-                blob = db.get(self.blob_id, self.blobdb_bucket())
-        except (KeyError, NotFound, BadName):
-            raise AttachmentNotFound(self.name)
-        return blob
-
-    @memoized
-    def content_md5(self):
-        """Get RFC-1864-compliant Content-MD5 header value"""
-        return get_content_md5(self.open())
-
-    def delete_content(self):
-        db = get_blob_db()
-        bucket = self.blobdb_bucket()
-        if bucket == "":
-            # blob was migrated from couch using new blobmeta API
-            deleted = db.delete(key=self.blob_id)
-        else:
-            deleted = db.delete(self.blob_id, bucket)
-        if deleted:
-            self.blob_id = None
-
-        return deleted
-
-    def blobdb_bucket(self):
-        if self.blob_bucket is not None:
-            return self.blob_bucket
-        if self.attachment_id is None:
-            raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
-        return os.path.join(self._attachment_prefix, self.attachment_id.hex)
-
     class Meta(object):
-        abstract = True
-        app_label = "form_processor"
-
-
-class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
-    partition_attr = 'form_id'
-    objects = RestrictedManager()
-    _attachment_prefix = 'form'
-
-    form = models.ForeignKey(
-        XFormInstanceSQL, to_field='form_id', db_index=False,
-        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
-        on_delete=models.CASCADE,
-    )
-
-    def __unicode__(self):
-        return six.text_type(
-            "XFormAttachmentSQL("
-            "attachment_id='{a.attachment_id}', "
-            "form_id='{a.form_id}', "
-            "name='{a.name}', "
-            "content_type='{a.content_type}', "
-            "content_length='{a.content_length}', "
-            "md5='{a.md5}', "
-            "blob_id='{a.blob_id}', "
-            "properties='{a.properties}', "
-        ).format(a=self)
-
-    class Meta(object):
-        db_table = XFormAttachmentSQL_DB_TABLE
+        db_table = "form_processor_xformattachmentsql"
         app_label = "form_processor"
         index_together = [
-            ["form", "name"],
+            ("form_id", "name"),
         ]
 
 
@@ -1018,29 +925,72 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         db_table = CommCareCaseSQL_DB_TABLE
 
 
-class CaseAttachmentSQL(AbstractAttachment, IsImageMixin):
+class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
+    """Case attachment
+
+    Case attachments reference form attachments, and therefore this
+    model is not sole the owner of the attachment content (blob). The
+    form is the primary owner, and attachment content should not be
+    deleted when a case attachment is deleted unless the form attachment
+    is also being deleted. All case attachment data, except for
+    `attachment_id`, `case_id`, and `name`, is a copy of the same data
+    from the corresponding form attachment. It is mirrored here (rather
+    than simply referencing the corresponding form attachment record)
+    for sharding locality with other data from the same case.
+    """
     partition_attr = 'case_id'
     objects = RestrictedManager()
-    _attachment_prefix = 'case'
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
-        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
+        related_name="attachment_set", related_query_name="attachment",
         on_delete=models.CASCADE,
     )
+    attachment_id = models.UUIDField(unique=True, db_index=True)
+    name = models.CharField(max_length=255, default=None)
+    content_type = models.CharField(max_length=255, null=True)
+    content_length = models.IntegerField(null=True)
+    properties = JSONField(default=dict)
+    blob_id = models.CharField(max_length=255, default=None)
+    blob_bucket = models.CharField(max_length=255, null=True, default="")
+
+    # DEPRECATED - use CaseAttachmentSQL.content_md5() instead
+    md5 = models.CharField(max_length=255, default="")
+
+    @property
+    def key(self):
+        if self.blob_bucket == "":
+            # empty string in bucket -> blob_id is blob key
+            return self.blob_id
+        # deprecated key construction. will be removed after migration
+        if self.blob_bucket is not None:
+            bucket = self.blob_bucket
+        else:
+            if self.attachment_id is None:
+                raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
+            bucket = os.path.join('case', self.attachment_id.hex)
+        return os.path.join(bucket, self.blob_id)
+
+    @key.setter
+    def key(self, value):
+        self.blob_id = value
+        self.blob_bucket = ""
+
+    def natural_key(self):
+        # necessary for dumping models from a sharded DB so that we exclude the
+        # SQL 'id' field which won't be unique across all the DB's
+        return self.attachment_id
 
     def from_form_attachment(self, attachment, attachment_src):
         """
         Update fields in this attachment with fields from another attachment
 
-        :param attachment: XFormAttachmentSQL object.
+        :param attachment: BlobMeta object.
         :param attachment_src: Attachment file name. Used for content type
         guessing if the form attachment has no content type.
         """
+        self.key = attachment.key
         self.content_length = attachment.content_length
-        self.blob_id = attachment.blob_id
-        self.blob_bucket = attachment.blobdb_bucket()
-        self.md5 = attachment.md5
         self.content_type = attachment.content_type
         self.properties = attachment.properties
 
@@ -1061,8 +1011,7 @@ class CaseAttachmentSQL(AbstractAttachment, IsImageMixin):
             "name='{a.name}', "
             "content_type='{a.content_type}', "
             "content_length='{a.content_length}', "
-            "md5='{a.md5}', "
-            "blob_id='{a.blob_id}', "
+            "key='{a.key}', "
             "properties='{a.properties}')"
         ).format(a=self)
 
@@ -1071,6 +1020,12 @@ class CaseAttachmentSQL(AbstractAttachment, IsImageMixin):
             return get_blob_db().get(key=self.key)
         except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
+
+    @memoized
+    def content_md5(self):
+        """Get RFC-1864-compliant Content-MD5 header value"""
+        with self.open() as fileobj:
+            return get_content_md5(fileobj)
 
     class Meta(object):
         app_label = "form_processor"
