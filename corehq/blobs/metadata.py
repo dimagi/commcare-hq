@@ -78,9 +78,9 @@ class MetaDB(object):
         parents = defaultdict(list)
         for meta in metas:
             parents[meta.parent_id].append(meta.id)
-        for db_name, split_parent_ids in split_list_by_db_partition(parents):
+        for dbname, split_parent_ids in split_list_by_db_partition(parents):
             ids = chain.from_iterable(parents[x] for x in split_parent_ids)
-            BlobMeta.objects.using(db_name).filter(id__in=list(ids)).delete()
+            BlobMeta.objects.using(dbname).filter(id__in=list(ids)).delete()
         deleted_bytes = sum(meta.content_length for m in metas)
         datadog_counter('commcare.blobs.deleted.count', value=len(metas))
         datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
@@ -106,6 +106,31 @@ class MetaDB(object):
             raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
         dbname = get_db_alias_for_partitioned_doc(kw["parent_id"])
         return BlobMeta.objects.using(dbname).get(**kw)
+
+    def get_for_parent(self, parent_id, type_code=None):
+        """Get a list of `BlobMeta` objects for the given parent
+
+        :param parent_id: `BlobMeta.parent_id`
+        :param type_code: `BlobMeta.type_code` (optional).
+        :returns: A list of `BlobMeta` objects.
+        """
+        dbname = get_db_alias_for_partitioned_doc(parent_id)
+        kw = {"parent_id": parent_id}
+        if type_code is not None:
+            kw["type_code"] = type_code
+        return list(BlobMeta.objects.using(dbname).filter(**kw))
+
+    def get_for_parents(self, parent_ids, type_code=None):
+        """Get a list of `BlobMeta` objects for the given parent(s)
+
+        :param parent_ids: List of `BlobMeta.parent_id` values.
+        :param type_code: `BlobMeta.type_code` (optional).
+        :returns: A list of `BlobMeta` objects sorted by `parent_id`.
+        """
+        return list(BlobMeta.objects.raw(
+            'SELECT * FROM get_blobmetas(%s, %s::SMALLINT)',
+            [parent_ids, type_code],
+        ))
 
 
 def _utcnow():
