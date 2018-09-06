@@ -84,6 +84,11 @@ class BlobMeta(PartitionedModel, Model):
     def __repr__(self):
         return "<BlobMeta id={self.id} key={self.key}>".format(self=self)
 
+    @property
+    def is_image(self):
+        """Use content type to check if blob is an image"""
+        return (self.content_type or "").startswith("image/")
+
 
 class BlobMigrationState(Model):
     slug = CharField(max_length=20, unique=True)
