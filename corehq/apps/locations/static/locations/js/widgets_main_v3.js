@@ -1,4 +1,4 @@
-hqDefine("locations/js/widgets_main", [
+hqDefine("locations/js/widgets_main_v3", [
     'jquery',
     'underscore',
     'select2-3.5.2-legacy/select2',
