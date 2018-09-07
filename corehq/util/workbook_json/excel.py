@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from tempfile import NamedTemporaryFile
 from zipfile import BadZipfile
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
@@ -190,17 +189,12 @@ class WorkbookJSONReader(object):
 
     def __init__(self, f):
         if isinstance(f, six.string_types):
-            filename = f
-        elif not isinstance(f, file):
-            tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
-            filename = tmp.name
-            tmp.write(f.read())
-            tmp.close()
+            file_or_filename = f
         else:
-            filename = f
+            file_or_filename = f
 
         try:
-            self.wb = openpyxl.load_workbook(filename, read_only=True, data_only=True)
+            self.wb = openpyxl.load_workbook(file_or_filename, read_only=True, data_only=True)
         except (BadZipfile, InvalidFileException, KeyError) as e:
             raise InvalidExcelFileException(six.text_type(e))
         self.worksheets_by_title = {}
