@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from kafka.common import OffsetRequest
+from kafka.common import OffsetRequestPayload
 from kafka.util import kafka_bytestring
 
 from corehq.apps.app_manager.util import app_doc_types
@@ -127,7 +127,7 @@ def _get_topic_offsets(topics, latest):
         partitions = list(partition_meta.get(topic, {}))
         for partition in partitions:
             offsets[(kafka_bytestring(topic), partition)] = None
-            offset_requests.append(OffsetRequest(kafka_bytestring(topic), partition, time_value, num_offsets))
+            offset_requests.append(OffsetRequestPayload(kafka_bytestring(topic), partition, time_value, num_offsets))
 
     responses = client.send_offset_request(offset_requests)
     for r in responses:
