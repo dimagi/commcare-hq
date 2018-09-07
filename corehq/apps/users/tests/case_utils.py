@@ -6,6 +6,7 @@ from corehq.apps.users.cases import get_wrapped_owner, get_owning_users
 from corehq.apps.users.models import CommCareUser
 from six.moves import range
 
+from corehq.apps.users.util import user_id_to_username
 from corehq.util.test_utils import generate_cases
 
 
@@ -69,3 +70,4 @@ class CaseUtilsTestCase(TestCase):
 )
 def test_invalid_ids(self, invalid_id):
     self.assertEqual(None, get_wrapped_owner(invalid_id))
+    self.assertEqual(None, user_id_to_username(invalid_id))
