@@ -92,13 +92,19 @@ def make_migrators(mod):
             type_code = self.get_type_code(doc)
             obj = self.blob_helper(doc, self.couchdb, type_code)
             db = get_db_alias_for_partitioned_doc(doc["_id"])
+            domain = obj.domain
+            if domain is None:
+                self.error(obj, {
+                    "error": "unknown-domain",
+                    "doc_type": obj.doc_type,
+                    "doc_id": obj._id,
+                })
+                domain = UNKNOWN_DOMAIN
             with connections[db].cursor() as cursor:
                 for name, meta in six.iteritems(obj.blobs):
                     if meta.blobmeta_id is not None:
                         # blobmeta already saved
                         continue
-                    if obj.domain is None:
-                        print("Unknown domain: {!r}".format(obj))
                     cursor.execute("""
                         INSERT INTO blobs_blobmeta (
                             domain,
@@ -112,7 +118,7 @@ def make_migrators(mod):
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, CLOCK_TIMESTAMP())
                         ON CONFLICT (key) DO NOTHING
                     """, params=[
-                        (UNKNOWN_DOMAIN if obj.domain is None else obj.domain),
+                        domain,
                         type_code,
                         doc["_id"],
                         name,
@@ -122,6 +128,10 @@ def make_migrators(mod):
                     ])
                     self.total_blobs += 1
             return True
+
+        def error(self, obj, doc):
+            print("Error: %s %r" % (doc["error"], obj))
+            super(BlobMetaMigrator, self)._backup_doc(doc)
 
         def processing_complete(self, skipped):
             # fake skipped to prevent writing BlobMigrationState
@@ -257,7 +267,8 @@ def couch_blob_helper(doc, *args, **kw):
     if get_domain is not None:
         assert not hasattr(obj, "domain"), obj
         obj.domain = get_domain(doc)
-    assert hasattr(obj, "domain"), obj.doc_type
+    elif not hasattr(obj, "domain"):
+        obj.domain = None  # will trigger "unknown-domain" error
     return obj
 
 
