@@ -12,6 +12,9 @@ $(function () {
         $("#cta-form-get-demo-button").click(function() {
             kissmetrics.track.event("Get Demo button clicked");
         });
+        $(".hs_submit .hs-button").click(function() {
+            kissmetrics.track.event("Demo request sent");
+        });
     });
 
     // Link up with registration form ko model

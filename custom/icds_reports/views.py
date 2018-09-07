@@ -1496,6 +1496,9 @@ class AggregationScriptPage(BaseDomainView):
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+            return HttpResponse("This page is only available for QA and not available for production instances.")
+
         couch_user = self.request.couch_user
         domain = self.domain
         domain_membership = couch_user.get_domain_membership(domain)
