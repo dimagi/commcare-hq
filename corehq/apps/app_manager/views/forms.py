@@ -78,6 +78,7 @@ from corehq.apps.app_manager.models import (
     UpdateCaseAction,
     load_case_reserved_words,
     WORKFLOW_FORM,
+    CustomAssertion,
     CustomInstance,
     CaseReferences,
     CustomIcon,
@@ -365,6 +366,30 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 instance_path=instance.get("instancePath"),
             ) for instance in instances
         ]
+
+    if should_edit('custom_assertions'):
+        assertions = json.loads(request.POST.get('custom_assertions'))
+        try:  # validate that custom assertions can be added into the XML
+            for assertion in assertions:
+                etree.fromstring(
+                    '<assertion test="{}"><text><locale id="{}"/></text></assertion>'.format(
+                        assertion.get('test'),
+                        assertion.get('localeId')
+                    )
+                )
+        except etree.XMLSyntaxError as error:
+            return json_response(
+                {'message': _("There was an issue with your custom assertions: {}").format(error.message)},
+                status_code=400
+            )
+
+        form.custom_assertions = [
+            CustomAssertion(
+                test=assertion.get('test'),
+                locale_id=assertion.get('localeId'),
+            ) for assertion in assertions
+        ]
+
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
@@ -681,6 +706,10 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'custom_instances': [
             {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}
             for instance in form.custom_instances
+        ],
+        'custom_assertions': [
+            {'test': assertion.test, 'localeId': assertion.locale_id}
+            for assertion in form.custom_assertions
         ],
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
         'form_icon': None,

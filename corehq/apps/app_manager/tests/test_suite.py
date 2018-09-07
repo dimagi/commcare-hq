@@ -31,6 +31,7 @@ from corehq.apps.app_manager.models import (
     SortElement,
     UpdateCaseAction,
     CustomInstance,
+    CustomAssertion,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled
@@ -1095,6 +1096,30 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         with self.assertRaises(SuiteValidationError):
             factory.app.create_suite()
+
+    def test_custom_assertions(self):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+
+        test = "foo = 'bar' and baz = 'buzz'"
+        locale_id = "assertion.foo.equals.bar"
+        form.custom_assertions = [CustomAssertion(test=test, locale_id=locale_id)]
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <assertions>
+                    <assert test="{test}">
+                        <text>
+                            <locale id="{locale_id}"/>
+                        </text>
+                    </assert>
+                </assertions>
+            </partial>
+            """.format(test=test, locale_id=locale_id),
+            factory.app.create_suite(),
+            "entry/assertions"
+        )
 
     def test_custom_variables(self):
         factory = AppFactory()
