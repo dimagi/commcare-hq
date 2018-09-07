@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 import json
+import six
 import time
 from django.conf import settings
 
@@ -13,9 +14,12 @@ from six.moves import range
 
 def send_to_kafka(producer, topic, change_meta):
     def _send_to_kafka():
+        change_meta_json = json.dumps(change_meta.to_json())
+        if six.PY3:
+            change_meta_json = change_meta_json.encode('utf-8')
         producer.send_messages(
-            bytes(topic),
-            bytes(json.dumps(change_meta.to_json())),
+            topic.encode('utf-8'),
+            change_meta_json,
         )
 
     try:
