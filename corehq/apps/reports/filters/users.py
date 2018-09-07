@@ -146,11 +146,6 @@ class EmwfUtils(object):
         static_options = [("t__0", _("[All mobile workers]"))]
 
         types = ['DEMO_USER', 'ADMIN', 'UNKNOWN']
-
-        from corehq.toggles import PREETHI_TAG
-        if PREETHI_TAG.enabled(self.domain):
-            types += ['FEATURE_FLAG_OR']
-
         if Domain.get_by_name(self.domain).commtrack_enabled:
             types.append('COMMTRACK')
         for t in types:
@@ -364,7 +359,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
             group_and_location_filter = []
             if group_ids and location_ids:
-                if HQUserType.FEATURE_FLAG_OR in user_types:
+                if PREETHI_TAG.enabled(domain):
                     group_and_location_filter = filters.AND(
                         filters.term("__group_ids", group_ids),
                         user_es.location(location_ids),

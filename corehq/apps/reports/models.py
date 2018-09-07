@@ -78,16 +78,14 @@ class HQUserType(object):
     ADMIN = 2
     UNKNOWN = 3
     COMMTRACK = 4
-    FEATURE_FLAG_OR = 5
     human_readable = [settings.COMMCARE_USER_TERM,
                       ugettext_noop("demo_user"),
                       ugettext_noop("admin"),
                       ugettext_noop("Unknown Users"),
-                      ugettext_noop("CommCare Supply"),
-                      ugettext_noop("OR (for groups + locations)")]
-    toggle_defaults = (True, False, False, False, False, True)
+                      ugettext_noop("CommCare Supply")]
+    toggle_defaults = (True, False, False, False, False)
     count = len(human_readable)
-    included_defaults = (True, True, True, True, False, True)
+    included_defaults = (True, True, True, True, False)
 
     @classmethod
     def use_defaults(cls):
