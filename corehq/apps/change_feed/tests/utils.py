@@ -20,4 +20,10 @@ def get_test_kafka_consumer(*topics):
             'bootstrap_servers': settings.KAFKA_BROKERS,
             'consumer_timeout_ms': 100,
         }
-        return KafkaConsumer(*topics, **configs)
+        consumer = KafkaConsumer(*topics, **configs)
+        try:
+            # initialize consumer
+            next(consumer)
+        except StopIteration:
+            pass
+        return consumer
