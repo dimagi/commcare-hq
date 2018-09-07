@@ -17,12 +17,12 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
             FormplayerFrontend.trigger("getSession", model.get('sessionId'));
         },
 
-        templateHelpers: function(e) {
+        templateHelpers: function (e) {
             return {
                 humanDateOpened: moment(this.model.get('dateOpened')).fromNow(),
             };
         },
-        onDeleteSession: function(e) {
+        onDeleteSession: function (e) {
             var self = this;
             e.preventDefault();
             e.stopPropagation();
@@ -31,7 +31,7 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
                 message: gettext("Are you sure you want to delete '" + self.model.get('title') + "'"),
                 confirmText: gettext('Yes'),
                 cancelText: gettext('No'),
-                onConfirm: function() {
+                onConfirm: function () {
                     FormplayerFrontend.request("deleteSession", self.model);
                 },
             });
@@ -40,7 +40,7 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
 
     SessionList.SessionListView = Marionette.CompositeView.extend({
         tagName: "div",
-        getTemplate: function() {
+        getTemplate: function () {
             var user = FormplayerFrontend.request('currentUser');
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 return "#session-view-list-preview-template";

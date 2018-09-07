@@ -5,13 +5,13 @@ hqDefine("dashboard/js/dashboard", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/components.ko',    // pagination widget
     'hqwebapp/js/main',     // post-link function
-], function(
+], function (
     $,
     ko,
     _,
     initialPageData
 ) {
-    var tileModel = function(options) {
+    var tileModel = function (options) {
         var self = {};
         self.title = options.title;
         self.slug = options.slug;
@@ -33,29 +33,29 @@ hqDefine("dashboard/js/dashboard", [
         }
 
         // Control visibility of various parts of tile content
-        self.showBackgroundIcon = ko.computed(function() {
+        self.showBackgroundIcon = ko.computed(function () {
             return self.hasItemList() && !self.hasError();
         });
-        self.showSpinner = ko.computed(function() {
+        self.showSpinner = ko.computed(function () {
             // Show spinner if this is an ajax tile, it's still waiting for one or both requests,
             // and neither request has errored out
             return self.hasItemList()
                    && (self.items().length === 0 || self.totalPages() === undefined)
                    && !self.hasError();
         });
-        self.showItemList = ko.computed(function() {
+        self.showItemList = ko.computed(function () {
             return !self.showSpinner() && !self.hasError();
         });
-        self.showIconLink = ko.computed(function() {
+        self.showIconLink = ko.computed(function () {
             return !self.hasItemList() || self.hasError();
         });
 
         // Paging
         if (self.hasItemList()) {
-            self.goToPage = function(page) {
+            self.goToPage = function (page) {
                 // If request takes a noticeable amount of time, clear items, which will show spinner
                 var done = false;
-                _.delay(function() {
+                _.delay(function () {
                     if (!done) {
                         self.items([]);     // clear items to show spinner
                     }
@@ -69,11 +69,11 @@ hqDefine("dashboard/js/dashboard", [
                         itemsPerPage: self.itemsPerPage,
                         currentPage: page,
                     },
-                    success: function(data) {
+                    success: function (data) {
                         self.items(data.items);
                         done = true;
                     },
-                    error: function() {
+                    error: function () {
                         self.hasError(true);
                     },
                 });
@@ -84,14 +84,14 @@ hqDefine("dashboard/js/dashboard", [
                     var totalPagesRequest = $.ajax({
                         method: "GET",
                         url: initialPageData.reverse('dashboard_tile_total', self.slug),
-                        success: function(data) {
+                        success: function (data) {
                             self.totalItems(data.total);
-                            self.totalPages(Math.ceil(data.total / self.itemsPerPage) );
+                            self.totalPages(Math.ceil(data.total / self.itemsPerPage));
                             if (data.total === 0) {
                                 self.hasItemList(false);
                             }
                         },
-                        error: function() {
+                        error: function () {
                             self.hasError(true);
                         },
                     });
@@ -105,13 +105,13 @@ hqDefine("dashboard/js/dashboard", [
         return self;
     };
 
-    var dashboardModel = function(options) {
+    var dashboardModel = function (options) {
         var self = {};
-        self.tiles = _.map(options.tiles, function(t) { return tileModel(t); });
+        self.tiles = _.map(options.tiles, function (t) { return tileModel(t); });
         return self;
     };
 
-    $(function() {
+    $(function () {
         $("#dashboard-tiles").koApplyBindings(dashboardModel({
             tiles: initialPageData.get("dashboard_tiles"),
         }));

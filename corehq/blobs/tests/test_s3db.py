@@ -71,13 +71,11 @@ Add the following to localsettings.py
 """
 from __future__ import unicode_literals
 from __future__ import absolute_import
-from os.path import join
-from unittest import TestCase
-from io import BytesIO
+from django.test import TestCase
 
 from django.conf import settings
 
-from corehq.blobs.tests.util import get_id, TemporaryS3BlobDB
+from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.blobs.tests.test_fsdb import _BlobDBTests
 from corehq.util.test_utils import trap_extra_setup
 
@@ -95,8 +93,3 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
     def tearDownClass(cls):
         cls.db.close()
         super(TestS3BlobDB, cls).tearDownClass()
-
-    def test_bucket_path(self):
-        bucket = join("doctype", "8cd98f0")
-        self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
-        self.assertEqual(self.db.get_path(bucket=bucket), bucket)

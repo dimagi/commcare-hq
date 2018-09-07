@@ -481,10 +481,9 @@ COPY_FORM_TO_APP = StaticToggle(
 
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
-    'UW: Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
-    TAG_DEPRECATED,
+    'Offer hosting and sharing data files for downloading from a secure dropzone',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
-    # TODO: Create Confluence docs and add help link
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -1078,6 +1077,13 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
+COPY_CONDITIONAL_ALERTS = StaticToggle(
+    'copy_conditional_alerts',
+    'Allow copying conditional alerts to another project (or within the same project).',
+    TAG_SOLUTIONS,
+    [NAMESPACE_USER],
+)
+
 ABT_REMINDER_RECIPIENT = StaticToggle(
     'abt_reminder_recipient',
     "ABT: Custom reminder recipients",
@@ -1596,4 +1602,11 @@ RELATED_LOCATIONS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['jemord'],
     help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
+)
+
+ALLOW_BLANK_CASE_TAGS = StaticToggle(
+    'allow_blank_case_tags',
+    'eCHIS: Allow blank case tags',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )

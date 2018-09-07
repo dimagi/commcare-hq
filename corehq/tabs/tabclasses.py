@@ -71,6 +71,8 @@ from memoized import memoized
 from django_prbac.utils import has_privilege
 from six.moves import map
 
+from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
+
 
 class ProjectReportsTab(UITab):
     title = ugettext_noop("Reports")
@@ -506,7 +508,9 @@ class ProjectDataTab(UITab):
     @property
     def _is_viewable(self):
         return self.domain and (
-            self.can_edit_commcare_data or self.can_export_data or can_download_data_files(self.domain)
+            self.can_edit_commcare_data
+            or self.can_export_data
+            or can_download_data_files(self.domain, self.couch_user)
         )
 
     @property
@@ -711,7 +715,7 @@ class ProjectDataTab(UITab):
                     'subpages': []
                 })
 
-        if can_download_data_files(self.domain):
+        if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views import DataFileDownloadList
 
             export_data_views.append({
@@ -761,7 +765,7 @@ class ProjectDataTab(UITab):
     def dropdown_items(self):
         if (
             self.can_only_see_deid_exports or (
-                not self.can_export_data and not can_download_data_files(self.domain)
+                not self.can_export_data and not can_download_data_files(self.domain, self.couch_user)
             )
         ):
             return []
@@ -842,6 +846,11 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
+            ))
+        if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                _('Translations'),
+                url=(reverse('convert_translations', args=[self.domain])),
             ))
         return submenu_context
 
@@ -1405,10 +1414,45 @@ class EnterpriseSettingsTab(UITab):
     @property
     def sidebar_items(self):
         items = super(EnterpriseSettingsTab, self).sidebar_items
-        items.append((_('Manage Enterprise'), [{
-            'title': _('Enterprise Dashboard'),
-            'url': reverse('enterprise_dashboard', args=[self.domain]),
-        }]))
+        items.append((_('Manage Enterprise'), [
+            {
+                'title': _('Enterprise Dashboard'),
+                'url': reverse('enterprise_dashboard', args=[self.domain]),
+            },
+            {
+                'title': _('Enterprise Settings'),
+                'url': reverse('enterprise_settings', args=[self.domain]),
+            },
+        ]))
+        return items
+
+
+class TranslationsTab(UITab):
+    title = ugettext_noop('Translations')
+
+    url_prefix_formats = (
+        '/a/{domain}/translations/',
+    )
+    _is_viewable = False
+
+    @property
+    def sidebar_items(self):
+        items = super(TranslationsTab, self).sidebar_items
+        items.append((_('Translations'), [
+            {'url': reverse('convert_translations', args=[self.domain]),
+             'title': 'Convert Translations'
+             }
+        ]))
+        if transifex_details_available_for_domain(self.domain):
+            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
+                items.append((_('Translations'), [
+                    {'url': reverse('app_translations', args=[self.domain]),
+                     'title': 'Manage App Translations'
+                     },
+                    {'url': reverse('pull_resource', args=[self.domain]),
+                     'title': 'Pull Resource'
+                     }
+                ]))
         return items
 
 

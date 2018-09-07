@@ -43,8 +43,8 @@
     </thead>
     <tbody data-bind="foreach: { data: eventObjects, afterAdd: refreshEventsListUI }">
         <td>
-            <input type="hidden" data-bind="value: fire_time_type" />
-            <input type="text" class="form-control" data-bind="value: day_num" />
+            <input type="hidden" data-bind="value: fireTimeType" />
+            <input type="text" class="form-control" data-bind="value: dayNum" />
         </td>
         <td>
             <div data-bind="template: { name: 'event-fire-template', data: $data }"></div>
@@ -53,12 +53,12 @@
             <input type="text"
                    name="time_window_legnth"
                    class="form-control"
-                   data-bind="value: time_window_length" /> {% trans 'minute(s)' %}
+                   data-bind="value: timeWindowLength" /> {% trans 'minute(s)' %}
         </td>
         <td data-bind="visible: isSurveyVisible">
             <input type="hidden"
                    name="form_unique_id"
-                   data-bind="value: form_unique_id, visible: isSurveyVisible"
+                   data-bind="value: formUniqueId, visible: isSurveyVisible"
                    class="form-control" />
         </td>
         <td data-bind="visible: isSubjectVisible">
@@ -88,7 +88,7 @@
                    name="callback_timeout_intervals"
                    class="form-control"
                    placeholder="{% trans 'e.g. 30,60,180' %}"
-                   data-bind="value: callback_timeout_intervals" />
+                   data-bind="value: callbackTimeoutIntervals" />
         </td>
         <td data-bind="visible: $parent.isEventDeleteButtonVisible">
             <button type="button"

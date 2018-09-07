@@ -1,4 +1,4 @@
-describe('DownloadExportFormController -> exportDownloadService - Polling', function() {
+describe('DownloadExportFormController -> exportDownloadService - Polling', function () {
     DnldExpData.prepareTests();
     DnldExpData.prepareDownloadController();
     DnldExpData.prepareBackends();
@@ -59,7 +59,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
             DnldExpData.$interval.flush(2000);  // start polling
             DnldExpData.$httpBackend.flush();   // first response, throws error attempts retries
             // retry 3 times
-            for (var r=0; r < 3; r++) {
+            for (var r = 0; r < 3; r++) {
                 DnldExpData.$interval.flush(2000);
                 DnldExpData.$httpBackend.flush();
                 assert.isFalse(DnldExpData.exportDownloadService.downloadError);
@@ -100,7 +100,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
             DnldExpData.$interval.flush(2000);  // start polling
             DnldExpData.$httpBackend.flush();   // first response, throws error attempts retries
             // retry 10 times
-            for (var r=0; r < 10; r++) {
+            for (var r = 0; r < 10; r++) {
                 DnldExpData.$interval.flush(2000);
                 DnldExpData.$httpBackend.flush();
                 assert.isFalse(DnldExpData.exportDownloadService.celeryError);
@@ -140,7 +140,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
             DnldExpData.$interval.flush(2000);  // start polling
             DnldExpData.$httpBackend.flush();   // first response, throws error attempts retries
             // retry 3 times
-            for (var r=0; r < 3; r++) {
+            for (var r = 0; r < 3; r++) {
                 DnldExpData.$interval.flush(2000);
                 DnldExpData.$httpBackend.flush();
                 assert.isFalse(DnldExpData.exportDownloadService.downloadError);

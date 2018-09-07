@@ -9,7 +9,7 @@ from corehq.util.celery_utils import no_result_task
 from corehq.apps.formplayer_api.smsforms.api import current_question
 
 
-@no_result_task(queue='reminder_queue')
+@no_result_task(serializer='pickle', queue='reminder_queue')
 def handle_due_survey_action(domain, contact_id, session_id):
     with critical_section_for_smsforms_sessions(contact_id):
         session = SQLXFormsSession.by_session_id(session_id)

@@ -59,5 +59,15 @@ MOBILE_UCR_MIGRATING_TO_2 = '1.5'
 MOBILE_UCR_VERSION_2 = '2.0'
 MOBILE_UCR_VERSIONS = [MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2]
 
+DEFAULT_LOCATION_FIXTURE_OPTION = 'project_default'
+LOCATION_FIXTURE_OPTIONS = [
+    DEFAULT_LOCATION_FIXTURE_OPTION,
+    'both_fixtures',
+    'only_flat_fixture',
+    'only_hierarchical_fixture'
+]
+SYNC_HIERARCHICAL_FIXTURE = ('both_fixtures', 'only_hierarchical_fixture')
+SYNC_FLAT_FIXTURES = ('both_fixtures', 'only_flat_fixture')
+
 TARGET_COMMCARE = 'commcare'
 TARGET_COMMCARE_LTS = 'commcare_lts'

@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime
 import glob
@@ -78,11 +77,6 @@ ID_REGEX_CHECK = re.compile("^[\w\-:]+$")
 def _check_ids(value):
     if not ID_REGEX_CHECK.match(value):
         raise BadValueError("Invalid ID")
-
-
-class ElasticSearchIndexSettings(DocumentSchema):
-    refresh_interval = StringProperty(default="5s")
-    number_of_shards = IntegerProperty(default=2)
 
 
 class SQLColumnIndexes(DocumentSchema):
@@ -164,7 +158,6 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
     """
     domain = StringProperty(required=True)
     engine_id = StringProperty(default=UCR_ENGINE_ID)
-    es_index_settings = SchemaProperty(ElasticSearchIndexSettings)
     backend_id = StringProperty(default=UCR_SQL_BACKEND)  # no longer used
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
@@ -267,7 +260,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
         spec_error = None
         while named_expression_specs:
             number_generated = 0
-            for name, expression in named_expression_specs.items():
+            for name, expression in list(named_expression_specs.items()):
                 try:
                     named_expressions[name] = ExpressionFactory.from_spec(
                         expression,
@@ -275,9 +268,9 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
                     )
                     number_generated += 1
                     del named_expression_specs[name]
-                except BadSpecError as spec_error:
+                except BadSpecError as bad_spec_error:
                     # maybe a nested name resolution issue, try again on the next pass
-                    pass
+                    spec_error = bad_spec_error
             if number_generated == 0 and named_expression_specs:
                 # we unsuccessfully generated anything on this pass and there are still unresolved
                 # references. we have to fail.
@@ -430,11 +423,6 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, 
             self.is_deactivated = True
             self.save()
             get_indicator_adapter(self).drop_table()
-
-    def get_es_index_settings(self):
-        es_index_settings = self.es_index_settings.to_json()
-        es_index_settings.pop('doc_type')
-        return {"settings": es_index_settings}
 
     def get_case_type_or_xmlns_filter(self):
         """Returns a list of case types or xmlns from the filter of this data source.

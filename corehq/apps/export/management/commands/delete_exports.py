@@ -19,6 +19,11 @@ class Command(BaseCommand):
             'domain',
             help="The domain to delete exports in"
         )
+        parser.add_argument(
+            '--days_inactive',
+            default=0,
+            help="Only delete exports that have been inactive for this many days"
+        )
 
     def handle(self, domain, **options):
         db = ExportInstance.get_db()
@@ -32,6 +37,33 @@ class Command(BaseCommand):
         if not exports:
             print("No exports to delete here, exiting.")
             return
+
+        if options['days_inactive'] > 0:
+            import datetime
+            inactive_since = datetime.datetime.today() - datetime.timedelta(days=int(options['days_inactive']))
+            inactive_exports = []
+            for export in exports:
+                e = ExportInstance.get(export['id'])
+                if e.last_accessed and e.last_accessed <= inactive_since:
+                    inactive_exports.append(export)
+            if not inactive_exports:
+                print("No exports have been inactive for more than {days_inactive} days, exiting.".format(
+                    days_inactive=options['days_inactive'])
+                )
+                return
+            confirm = input(
+                "There are {total_exports} exports in {domain}. Are you sure you want to delete "
+                "{total_inactive_exports} that are older than {days_inactive} days [y/N]?".format(
+                    total_exports=len(exports),
+                    total_inactive_exports=len(inactive_exports),
+                    domain=domain,
+                    days_inactive=int(options['days_inactive'])
+                )
+            )
+            if confirm.lower() == 'y':
+                exports = inactive_exports
+            else:
+                return
 
         filter_exports = lambda _type: [row for row in exports if _type in row['key']]
         form_exports = filter_exports('FormExportInstance')
@@ -50,7 +82,7 @@ class Command(BaseCommand):
                 "Enter 'case' to delete all case exports, "
                 "'form to delete all form exports, "
                 "'all' to delete both form and case exports. "
-                "Entery anything else to exit.\n"
+                "Enter anything else to exit.\n"
             )
             if _type == 'form':
                 to_delete = form_exports

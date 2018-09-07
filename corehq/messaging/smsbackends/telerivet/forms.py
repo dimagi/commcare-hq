@@ -15,13 +15,6 @@ from django.forms.forms import Form
 from django.utils.translation import ugettext as _, ugettext_lazy
 
 
-def get_rmi_error_placeholder(error_name):
-    return Div(
-        HTML('<span class="help-block"><strong ng-bind="%s"></strong></span>' % error_name),
-        ng_show=error_name,
-    )
-
-
 class TelerivetBackendForm(BackendForm):
     api_key = TrimmedCharField(
         label=ugettext_lazy("API Key"),
@@ -83,33 +76,42 @@ class TelerivetOutgoingSMSForm(Form):
                     Div(
                         hqcrispy.MultiInlineField(
                             'api_key',
-                            ng_model='apiKey'
+                            data_bind='value: apiKey',
                         )
                     ),
-                    get_rmi_error_placeholder('apiKeyError'),
-                    ng_class="{'has-error': apiKeyError}"
+                    crispy.Div(
+                        css_class="help-block",
+                        data_bind="visible: apiKeyError, text: apiKeyError",
+                    ),
+                    data_bind="css: {'has-error': apiKeyError}",
                 ),
                 hqcrispy.B3MultiField(
                     _("Project ID"),
                     Div(
                         hqcrispy.MultiInlineField(
                             'project_id',
-                            ng_model='projectId'
+                            data_bind='value: projectId',
                         )
                     ),
-                    get_rmi_error_placeholder('projectIdError'),
-                    ng_class="{'has-error': projectIdError}"
+                    crispy.Div(
+                        css_class="help-block",
+                        data_bind="visible: projectIdError, text: projectIdError",
+                    ),
+                    data_bind="css: {'has-error': projectIdError}",
                 ),
                 hqcrispy.B3MultiField(
                     _("Phone ID"),
                     Div(
                         hqcrispy.MultiInlineField(
                             'phone_id',
-                            ng_model='phoneId'
+                            data_bind='value: phoneId',
                         )
                     ),
-                    get_rmi_error_placeholder('phoneIdError'),
-                    ng_class="{'has-error': phoneIdError}"
+                    crispy.Div(
+                        css_class="help-block",
+                        data_bind="visible: phoneIdError, text: phoneIdError",
+                    ),
+                    data_bind="css: {'has-error': phoneIdError}",
                 )
             )
         )
@@ -134,19 +136,24 @@ class TelerivetPhoneNumberForm(Form):
                     Div(
                         hqcrispy.MultiInlineField(
                             'test_phone_number',
-                            ng_model='testPhoneNumber'
+                            data_bind='value: testPhoneNumber',
                         )
                     ),
-                    get_rmi_error_placeholder('testPhoneNumberError'),
+                    crispy.Div(
+                        css_class="help-block",
+                        data_bind="visible: testPhoneNumberError, text: testPhoneNumberError",
+                    ),
                     Div(
                         StrictButton(
-                            _("Send"),
+                            "",
                             id='id_send_sms_button',
-                            css_class='btn btn-success',
-                            ng_click='sendTestSMS();'
+                            css_class='btn',
+                            data_bind="text: sendSmsButtonText, click: sendTestSMS, "
+                                      "css: {'btn-primary': !sendSmsButtonError(), "
+                                      "'btn-danger': sendSmsButtonError()}",
                         )
                     ),
-                    ng_class="{'has-error': testPhoneNumberError}"
+                    data_bind="css: {'has-error': testPhoneNumberError}",
                 )
             )
         )
@@ -191,30 +198,38 @@ class FinalizeGatewaySetupForm(Form):
                     Div(
                         hqcrispy.MultiInlineField(
                             'name',
-                            ng_model='name'
+                            data_bind='value: name',
                         )
                     ),
-                    get_rmi_error_placeholder('nameError'),
-                    ng_class="{'has-error': nameError}"
+                    crispy.Div(
+                        css_class="help-block",
+                        data_bind="visible: nameError, text: nameError",
+                    ),
+                    data_bind="css: {'has-error': nameError}",
                 ),
                 hqcrispy.B3MultiField(
                     _("Set as default gateway"),
                     Div(
                         hqcrispy.MultiInlineField(
                             'set_as_default',
-                            ng_model='setAsDefault',
+                            data_bind='value: setAsDefault',
                             style='margin-left: 0px;'
                         )
                     ),
-                    get_rmi_error_placeholder('setAsDefaultError'),
-                    ng_class="{'has-error': setAsDefaultError}"
+                    crispy.Div(
+                        css_class="help-block",
+                        data_bind="visible: setAsDefaultError, text: setAsDefaultError",
+                    ),
+                    data_bind="css: {'has-error': setAsDefaultError}",
                 ),
                 FormActions(
                     StrictButton(
-                        _("Complete"),
+                        "",
                         id="id_create_backend",
-                        css_class='btn-success',
-                        ng_click='createBackend();'
+                        css_class='btn-primary',
+                        data_bind="text: backendButtonText, click: createBackend, disable: creatingBackend,"
+                                  "css: {'btn-primary': !backendButtonError(), "
+                                  "'btn-danger': backendButtonError()}",
                     )
                 )
             )

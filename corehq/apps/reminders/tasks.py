@@ -33,13 +33,13 @@ CELERY_REMINDERS_QUEUE = "reminder_queue"
 
 
 if not settings.REMINDERS_QUEUE_ENABLED:
-    @periodic_task(run_every=timedelta(minutes=1),
+    @periodic_task(serializer='pickle', run_every=timedelta(minutes=1),
         queue=settings.CELERY_PERIODIC_QUEUE)
     def fire_reminders():
         CaseReminderHandler.fire_reminders()
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True, bind=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True, bind=True,
                 default_retry_delay=CASE_CHANGED_RETRY_INTERVAL * 60, max_retries=CASE_CHANGED_RETRY_MAX)
 def case_changed(self, domain, case_id):
     try:
@@ -53,7 +53,7 @@ def case_changed(self, domain, case_id):
         self.retry(exc=e)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True, bind=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True, bind=True,
                 default_retry_delay=CASE_CHANGED_RETRY_INTERVAL * 60, max_retries=CASE_CHANGED_RETRY_MAX)
 def process_handlers_for_case_changed(self, domain, case_id, handler_ids):
     try:
@@ -83,7 +83,7 @@ def _process_case_changed_for_case(domain, case, handler_ids):
             handler.case_changed(case, **kwargs)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True)
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True)
 def process_reminder_rule(handler, schedule_changed, prev_definition,
     send_immediately):
     try:
@@ -94,7 +94,7 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
             message="Error processing reminder rule for handler %s" % handler._id)
 
 
-@no_result_task(queue=CELERY_REMINDERS_QUEUE, acks_late=True)
+@no_result_task(serializer='pickle', queue=CELERY_REMINDERS_QUEUE, acks_late=True)
 def fire_reminder(reminder_id, domain):
     if REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain):
         fire_reminder.apply_async([reminder_id, domain], countdown=60)
@@ -136,7 +136,7 @@ def _fire_reminder(reminder_id):
                 reminder.save()
 
 
-@no_result_task(queue='background_queue', acks_late=True)
+@no_result_task(serializer='pickle', queue='background_queue', acks_late=True)
 def delete_reminders_for_cases(domain, case_ids):
     handler_ids = CaseReminderHandler.get_handler_ids(
         domain, reminder_type_filter=REMINDER_TYPE_DEFAULT)

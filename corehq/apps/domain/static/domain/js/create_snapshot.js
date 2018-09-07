@@ -4,13 +4,13 @@ hqDefine("domain/js/create_snapshot", [
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
     'jquery-ui/ui/datepicker',
-], function(
+], function (
     $,
     _,
     initialPageData,
     googleAnalytics
 ) {
-    $(function(){
+    $(function () {
         var ids = initialPageData.get('app_ids').concat(initialPageData.get('fixture_ids'));
 
         _.each(ids, function (id) {
@@ -34,7 +34,7 @@ hqDefine("domain/js/create_snapshot", [
             $('#snapshot-form').submit();
         });
 
-        $('input:radio[name="publisher"]').change(function() {
+        $('input:radio[name="publisher"]').change(function () {
             if ($(this).val() === 'user') {
                 $('#author-input').show(250);
             } else {
@@ -42,8 +42,8 @@ hqDefine("domain/js/create_snapshot", [
             }
         });
 
-        $('#publish-now-button').on('click', function() {
-            googleAnalytics.track.event('Exchange', 'Publish Now', '?', "", {}, function() {
+        $('#publish-now-button').on('click', function () {
+            googleAnalytics.track.event('Exchange', 'Publish Now', '?', "", {}, function () {
                 $('#snapshot-form').submit();
             });
         });

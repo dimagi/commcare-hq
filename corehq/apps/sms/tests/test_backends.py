@@ -22,6 +22,7 @@ from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
 from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
 from corehq.messaging.smsbackends.ivory_coast_mtn.models import IvoryCoastMTNBackend
+from corehq.messaging.smsbackends.karix.models import KarixBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from corehq.messaging.smsbackends.push.models import PushBackend
@@ -54,6 +55,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.domain_obj = Domain(name='all-backend-test')
         cls.domain_obj.save()
         cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ADVANCED)
+
         cls.domain_obj = Domain.get(cls.domain_obj.get_id)
 
         cls.test_phone_number = '99912345'
@@ -185,9 +187,17 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.ivory_coast_mtn_backend.save()
 
+        cls.karix_backend = KarixBackend(
+            name='KARIX',
+            is_global=True,
+            hq_api_id=KarixBackend.get_api_id()
+        )
+        cls.karix_backend.save()
+
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscription()
+
         cls.domain_obj.delete()
         cls.unicel_backend.delete()
         cls.mach_backend.delete()
@@ -207,6 +217,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.vertext_backend.delete()
         cls.start_enterprise_backend.delete()
         cls.ivory_coast_mtn_backend.delete()
+        cls.karix_backend.delete()
         super(AllBackendTest, cls).tearDownClass()
 
     def tearDown(self):
@@ -298,8 +309,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.vertex.models.VertexBackend.send')
     @patch('corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend.send')
     @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
+    @patch('corehq.messaging.smsbackends.karix.models.KarixBackend.send')
     def test_outbound_sms(
             self,
+            karix_send,
             ivory_coast_mtn_send,
             start_ent_send,
             vertex_send,
@@ -336,6 +349,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.vertext_backend, 'vertex_test', vertex_send)
         self._test_outbound_backend(self.start_enterprise_backend, 'start_ent_test', start_ent_send)
         self._test_outbound_backend(self.ivory_coast_mtn_backend, 'ivory_coast_mtn_test', ivory_coast_mtn_send)
+        self._test_outbound_backend(self.karix_backend, 'karix test', karix_send)
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
@@ -476,6 +490,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.domain_obj.save()
 
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.ADVANCED)
+
         cls.domain_obj = Domain.get(cls.domain_obj._id)
 
         cls.backend1 = SQLTestSMSBackend.objects.create(
@@ -608,7 +623,9 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.backend8.delete()
         cls.backend9.delete()
         cls.backend10.delete()
+
         cls.teardown_subscription()
+
         cls.domain_obj.delete()
         super(OutgoingFrameworkTestCase, cls).tearDownClass()
 

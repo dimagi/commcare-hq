@@ -1,5 +1,5 @@
-hqDefine("translations/js/translations", function() {
-    var mk_translation_ui = function(spec) {
+hqDefine("translations/js/translations", function () {
+    var mk_translation_ui = function (spec) {
         "use strict";
         var translation_ui = {
                 translations: {},
@@ -13,21 +13,21 @@ hqDefine("translations/js/translations", function() {
             suggestionURL = spec.suggestion_url,
             suggestionCache = {},
             key,
-            Translation = (function() {
-                var Translation = function(key, value) {
+            Translation = (function () {
+                var Translation = function (key, value) {
                     var that = this;
                     this.key = hqImport('hqwebapp/js/ui-element').input().val(key).setEdit(false);
                     this.value = hqImport('hqwebapp/js/ui-element').input().val(value);
                     this.solid = true;
 
-                    this.$delete = $('<button class="btn btn-danger"><i class="fa fa-remove"></i></button>').click(function() {
+                    this.$delete = $('<button class="btn btn-danger"><i class="fa fa-remove"></i></button>').click(function () {
                         $(this).remove();
                         translation_ui.deleteTranslation(that.key.val());
                     }).css({
                         cursor: 'pointer',
                     }).attr('title', gettext("Delete Translation"));
 
-                    this.$add = $('<button class="btn btn-default"><i class="fa fa-plus"></i></button>').click(function() {
+                    this.$add = $('<button class="btn btn-default"><i class="fa fa-plus"></i></button>').click(function () {
                         // remove any trailing whitespace from the input box
                         that.key.val($.trim(that.key.val()));
                         if (that.key.val() && !translation_ui.translations[that.key.val()]) {
@@ -50,7 +50,7 @@ hqDefine("translations/js/translations", function() {
                     this.ui = $('<div/>').append(this.ui);
                     this.$error.hide();
 
-                    var helperFunction = function() {
+                    var helperFunction = function () {
                         if (that.solid) {
                             translation_ui.saveButton.fire('change');
                         }
@@ -63,14 +63,14 @@ hqDefine("translations/js/translations", function() {
                         delay: 100,
                         allowClear: 1,
                         placeholder: ' ', // allowClear requires a placeholder
-                        initSelection: function(element, callback) {
+                        initSelection: function (element, callback) {
                             callback({
                                 id: element.val(),
                                 text: element.val(),
                             });
                         },
-                        createSearchChoice: function(term, data) {
-                            if (term !== "" && !_.find(data, function(d) { return d.text === term; })) {
+                        createSearchChoice: function (term, data) {
+                            if (term !== "" && !_.find(data, function (d) { return d.text === term; })) {
                                 return {
                                     id: term,
                                     text: term,
@@ -79,15 +79,15 @@ hqDefine("translations/js/translations", function() {
                         },
                         ajax: {
                             url: suggestionURL,
-                            data: function(term, page) {
+                            data: function (term, page) {
                                 return {
                                     lang: translation_ui.lang,
                                     key: that.key.val(),
                                 };
                             },
-                            results: function(data, page) {
+                            results: function (data, page) {
                                 return {
-                                    results: _.map(_.compact(data), function(item) {
+                                    results: _.map(_.compact(data), function (item) {
                                         return {
                                             id: item,
                                             text: item,
@@ -98,11 +98,11 @@ hqDefine("translations/js/translations", function() {
                         },
                     });
                 };
-                Translation.init = function(key, value) {
+                Translation.init = function (key, value) {
                     return new Translation(key, value);
                 };
                 Translation.prototype = {
-                    setSolid: function(solid) {
+                    setSolid: function (solid) {
                         this.solid = solid;
                         if (solid) {
                             this.ui.find("legend").closest(".row").remove();
@@ -124,7 +124,7 @@ hqDefine("translations/js/translations", function() {
             $list = $('<div/>').appendTo($home),
             $adder = $('<div/>').appendTo($home),
             $autoFill = $('<a/>').attr('href', '').attr('class', 'btn btn-primary').text(gettext('Auto fill translations'));
-        $autoFill.click(function(e) {
+        $autoFill.click(function (e) {
             e.preventDefault();
             $.ajax({
                 type: "get",
@@ -134,7 +134,7 @@ hqDefine("translations/js/translations", function() {
                     lang: translation_ui.lang,
                     one: true,
                 },
-                success: function(data) {
+                success: function (data) {
                     var key;
                     for (key in data) {
                         if (data.hasOwnProperty(key) && !translation_ui.translations[key]) {
@@ -158,18 +158,18 @@ hqDefine("translations/js/translations", function() {
 
         translation_ui.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved user interface translations."),
-            save: function() {
+            save: function () {
                 translation_ui.save();
             },
         });
         translation_ui.$home.prepend(translation_ui.saveButton.ui);
         translation_ui.$home.append($home);
 
-        translation_ui.translate = function(key) {
+        translation_ui.translate = function (key) {
             return translation_ui.translations[key].value.val();
         };
 
-        translation_ui.save = function() {
+        translation_ui.save = function () {
             var key, data = {};
             var error = false;
             for (key in translation_ui.translations) {
@@ -195,22 +195,22 @@ hqDefine("translations/js/translations", function() {
                         translations: JSON.stringify(data),
                     },
                     context: this,
-                    success: function(data) {
+                    success: function (data) {
                         hqImport("hqwebapp/js/main").updateDOM(data.update);
                     },
                 });
             }
         };
 
-        translation_ui.deleteTranslation = function(key) {
+        translation_ui.deleteTranslation = function (key) {
             translation_ui.saveButton.fire('change');
-            this.translations[key].ui.fadeOut(function() {
+            this.translations[key].ui.fadeOut(function () {
                 $(this).remove();
             });
             delete this.translations[key];
         };
 
-        translation_ui.addTranslation = function(translation) {
+        translation_ui.addTranslation = function (translation) {
             var error = translation_ui.validate_translation(translation);
             if (!error) {
                 translation.$error.hide();
@@ -228,12 +228,12 @@ hqDefine("translations/js/translations", function() {
             return error;
         };
 
-        translation_ui.appendAdder = function() {
+        translation_ui.appendAdder = function () {
             var adder = Translation.init("", "");
             adder.setSolid(false);
             $adder.append(adder.ui);
         };
-        translation_ui.render = function() {
+        translation_ui.render = function () {
             var key,
                 keys = [],
                 translation,
@@ -264,7 +264,7 @@ hqDefine("translations/js/translations", function() {
             translation_ui.appendAdder();
             $home.append($home);
         };
-        translation_ui.validate_translation = function(translation) {
+        translation_ui.validate_translation = function (translation) {
             var patt = /\$.*?}/g;
             var parameters = translation.value.val().match(patt);
             var error = false;

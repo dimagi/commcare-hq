@@ -49,19 +49,25 @@
 trunk: master
 name: autostaging
 branches:
-  - jls/requirejs-case-importer  # Jenny July 17
   - revert-21236-fr/add-secure-urllib3  # Danny July 18
-  - jls/requirejs-domain-billing  # Jenny July 19
-  - jls/enterprise-settings  # Jenny July 23
-#  - nh/fix_staging/why  # Norman July 24
 #  - jls/requirejs-login  # Jenny July 22
-#  - dmr/fix-package-security-vulnerabilities+nh/omrs/atom+leven
-#  - nh/omrs/atom+leven  # Norman July 31
-#  - nh/motech/set_repeater  # Norman Aug 6
-  - 30-day-minimum-subscription # Gabriella Aug 7
+#  - jls/requirejs-login-scrap  # Jenny Aug 27
   - rn_sending_report_to_celery_task # Rohit Aug 8
-  - jls/requirejs-my-saved-reports  # Jenny Aug 15
-  - np/celery-mail-exception  # Nick P Aug 15
+  - np/celery-4.x-monkeypatch  # Nick P Sept 4
+  - np/celery-4.x-2  # Nick P Aug 22
+  - nh/omrs/atom+create  # Norman Aug 23
+  - pv/deactivated-users # Preethi Aug 23
+  - rn_migrating_sms_pages # Rohit Aug 29
+  - rn_miration_sms_language # Rohit Aug 30
+#  - jls/requirejs-domain-billing+jls/build-requirejs-by-html  # Jenny Sept 5
+#  - jls/build-requirejs-by-html  # Jenny Sept 2
+#  - jls/requirejs-domain-billing+rn_migrating_more_messaging_pages  # Jenny Sept 5
+#  - jls/requirejs-domain-billing  # Jenny Sept 2
+  - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
+  - annual-pricing # Gabriella Sept 3
+  - sr-batch-ucrpillow # Sravan Sept 4
+  - je/upgrade-kafka+np/celery-4.x-2
+  - je/upgrade-kafka # Sept r
 submodules:
   submodules/django-digest-src:
     branches: []

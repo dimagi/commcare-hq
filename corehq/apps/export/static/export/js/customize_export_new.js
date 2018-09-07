@@ -1,4 +1,4 @@
-hqDefine('export/js/customize_export_new', function() {
+hqDefine('export/js/customize_export_new', function () {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     $(function () {
         var ExportInstance = hqImport('export/js/models').ExportInstance;

@@ -24,7 +24,12 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser
-from corehq.motech.openmrs.const import IMPORT_FREQUENCY_WEEKLY, IMPORT_FREQUENCY_MONTHLY, XMLNS_OPENMRS
+from corehq.motech.openmrs.const import (
+    IMPORT_FREQUENCY_MONTHLY,
+    IMPORT_FREQUENCY_WEEKLY,
+    OPENMRS_IMPORTER_DEVICE_ID_PREFIX,
+    XMLNS_OPENMRS,
+)
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.models import POSIX_MILLISECONDS
@@ -144,13 +149,13 @@ def import_patients_of_owner(requests, importer, domain_name, owner, location=No
     submit_case_blocks(
         [cb.case.as_string() for cb in case_blocks],
         domain_name,
-        username=owner.username,
+        device_id='{}{}'.format(OPENMRS_IMPORTER_DEVICE_ID_PREFIX, importer.get_id),
         user_id=owner.user_id,
         xmlns=XMLNS_OPENMRS,
     )
 
 
-@task(queue='background_queue')
+@task(serializer='pickle', queue='background_queue')
 def import_patients_to_domain(domain_name, force=False):
     """
     Iterates OpenmrsImporters of a domain, and imports patients
@@ -240,7 +245,7 @@ def import_patients_to_domain(domain_name, force=False):
             continue
 
 
-@periodic_task(
+@periodic_task(serializer='pickle',
     run_every=crontab(minute=4, hour=4),
     queue='background_queue'
 )
@@ -252,7 +257,7 @@ def import_patients():
         import_patients_to_domain(domain_name)
 
 
-@task(queue='background_queue')
+@task(serializer='pickle', queue='background_queue')
 def track_changes():
     """
     Uses the OpenMRS Atom Feed to track changes

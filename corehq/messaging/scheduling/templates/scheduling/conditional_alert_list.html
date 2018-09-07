@@ -18,6 +18,7 @@
     {% registerurl 'conditional_alert_list' domain %}
     {% registerurl 'edit_conditional_alert' domain '---' %}
     {% initial_page_data 'limit_rule_restarts' limit_rule_restarts %}
+    {% initial_page_data 'allow_copy' allow_copy %}
 
     <div class="btn-group">
         <a href="{% url 'create_conditional_alert' domain %}" class="btn btn-success">
@@ -35,6 +36,7 @@
                     <th class="col-md-2">{% trans 'Case Type' %}</th>
                     <th class="col-md-2">{% trans 'Status' %}</th>
                     <th class="col-md-2">{% trans 'Action' %}</th>
+                    <th class="col-md-2">{% trans 'Copy To' %}</th>
                 </tr>
             </thead>
         </table>

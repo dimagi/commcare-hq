@@ -368,3 +368,9 @@ def cancel_future_subscriptions(domain_name, from_date, web_user):
             web_user=web_user,
             note="Cancelled due to changing subscription",
         )
+
+
+def is_downgrade(current_edition, next_edition):
+    from corehq.apps.accounting.models import SoftwarePlanEdition
+    plans = SoftwarePlanEdition.SELF_SERVICE_ORDER + [SoftwarePlanEdition.ENTERPRISE]
+    return plans.index(current_edition) > plans.index(next_edition)

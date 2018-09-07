@@ -63,8 +63,9 @@ hqDefine('analytix/js/appcues', [
             }
         });
     }
-    function then(callback) {
-        _ready.then(callback, callback);
+
+    function then(successCallback, failureCallback) {
+        _ready.then(successCallback, failureCallback);
     }
 
     return {

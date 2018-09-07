@@ -9,12 +9,13 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling import util
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
-from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule, IVRSurveyContent, SMSCallbackContent
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
@@ -175,6 +176,23 @@ class ScheduleInstance(PartitionedModel):
 
         return obj
 
+    @staticmethod
+    def expand_group(group):
+        if not isinstance(group, Group):
+            raise TypeError("Expected Group")
+
+        for user in group.get_users(is_active=True, only_commcare=False):
+            yield user
+
+    @staticmethod
+    def expand_location_ids(domain, location_ids):
+        user_ids = set()
+        for location_id in location_ids:
+            for user in get_all_users_by_location(domain, location_id):
+                if user.is_active and user.get_id not in user_ids:
+                    user_ids.add(user.get_id)
+                    yield user
+
     def _expand_recipient(self, recipient):
         if recipient is None:
             return
@@ -185,8 +203,7 @@ class ScheduleInstance(PartitionedModel):
             for case in case_group.get_cases():
                 yield case
         elif isinstance(recipient, Group):
-            group = recipient
-            for user in group.get_users(is_active=True, only_commcare=False):
+            for user in self.expand_group(recipient):
                 yield user
         elif isinstance(recipient, SQLLocation):
             location = recipient
@@ -210,12 +227,8 @@ class ScheduleInstance(PartitionedModel):
             else:
                 location_ids = [location.location_id]
 
-            user_ids = set()
-            for location_id in location_ids:
-                for user in get_all_users_by_location(self.domain, location_id):
-                    if user.is_active and user.get_id not in user_ids:
-                        user_ids.add(user.get_id)
-                        yield user
+            for user in self.expand_location_ids(self.domain, location_ids):
+                yield user
         else:
             raise UnknownRecipientType(recipient.__class__.__name__)
 
@@ -278,6 +291,12 @@ class ScheduleInstance(PartitionedModel):
     def send_current_event_content_to_recipients(self):
         client = get_redis_client()
         content = self.memoized_schedule.get_current_event_content(self)
+
+        if isinstance(content, (IVRSurveyContent, SMSCallbackContent)):
+            raise TypeError(
+                "IVR and Callback use cases are no longer supported. "
+                "How did this schedule instance end up as active?"
+            )
 
         if isinstance(self, CaseScheduleInstanceMixin):
             content.set_context(case=self.case, schedule_instance=self)
@@ -493,7 +512,7 @@ class CaseScheduleInstanceMixin(object):
     RECIPIENT_TYPE_CASE_OWNER = 'Owner'
     RECIPIENT_TYPE_LAST_SUBMITTING_USER = 'LastSubmittingUser'
     RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
-    RECIPIENT_TYPE_CHILD_CASE = 'SubCase'
+    RECIPIENT_TYPE_ALL_CHILD_CASES = 'AllChildCases'
     RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
 
     @property
@@ -559,7 +578,10 @@ class CaseScheduleInstanceMixin(object):
                 return self.case.parent
 
             return None
-        elif self.recipient_type == self.RECIPIENT_TYPE_CHILD_CASE:
+        elif self.recipient_type == self.RECIPIENT_TYPE_ALL_CHILD_CASES:
+            if self.case:
+                return list(self.case.get_subcases(index_identifier=DEFAULT_PARENT_IDENTIFIER))
+
             return None
         elif self.recipient_type == self.RECIPIENT_TYPE_CUSTOM:
             custom_function = to_function(

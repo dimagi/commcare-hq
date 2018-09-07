@@ -1,5 +1,5 @@
 /* global _, $, django, window */
-hqDefine('userreports/js/report_config', function() {
+hqDefine('userreports/js/report_config', function () {
     return {
         reportBuilder: function () {
             var self = this;
@@ -21,7 +21,7 @@ hqDefine('userreports/js/report_config', function() {
                     },
                     write: function (value) {
                         self.calculation(value);
-                        if (window._bindingsApplied){
+                        if (window._bindingsApplied) {
                             //reorderColumns();
                         }
                     },
@@ -32,7 +32,7 @@ hqDefine('userreports/js/report_config', function() {
             ColumnProperty.prototype.constructor = ColumnProperty;
 
 
-            var ColumnList = function(options) {
+            var ColumnList = function (options) {
                 PropertyList.call(this, options);
                 this.newProperty = ko.observable(null);
             };
@@ -131,12 +131,12 @@ hqDefine('userreports/js/report_config', function() {
                     self.isAggregationEnabled(newValue === constants.REPORT_TYPE_TABLE);
                     self.previewChart(newValue === constants.REPORT_TYPE_TABLE && self.selectedChart() !== "none");
                     if (self.reportType() === constants.REPORT_TYPE_LIST) {
-                        self.columnList.columns().forEach(function(val, index) {
+                        self.columnList.columns().forEach(function (val, index) {
                             val.calculation(constants.GROUP_BY);
                         });
                     }
                     if (self.isAggregationEnabled() && !wasAggregationEnabled) {
-                        self.columnList.columns().forEach(function(val, index) {
+                        self.columnList.columns().forEach(function (val, index) {
                             if (index === 0) {
                                 val.calculation(constants.GROUP_BY);
                             } else {
@@ -177,7 +177,7 @@ hqDefine('userreports/js/report_config', function() {
                 self.tooManyChartCategoriesWarning = ko.observable(false);
                 self.noChartForConfigWarning = ko.observable(false);
 
-                self.previewChart.subscribe(function() {
+                self.previewChart.subscribe(function () {
                     // Clear these warnings before revealing the chart div. This prevents them from flickering.
                     // The warnings will be update in _renderChartPreview
                     self.tooManyChartCategoriesWarning(false);
@@ -204,7 +204,7 @@ hqDefine('userreports/js/report_config', function() {
                     }
                 };
 
-                var _getSelectableReportColumnOptions = function(reportColumnOptions, dataSourceIndicators) {
+                var _getSelectableReportColumnOptions = function (reportColumnOptions, dataSourceIndicators) {
                     var utils = hqImport('userreports/js/utils');
                     if (self._optionsContainQuestions(dataSourceIndicators)) {
                         return _.compact(_.map(
@@ -429,7 +429,7 @@ hqDefine('userreports/js/report_config', function() {
                         "ordering": false,
                         "paging": false,
                         "searching": false,
-                        "columns": _.map(data[0], function(column) { return {"title": column}; }),
+                        "columns": _.map(data[0], function (column) { return {"title": column}; }),
                         "data": data.slice(1),
                     });
                     $('#preview').show();
@@ -449,7 +449,7 @@ hqDefine('userreports/js/report_config', function() {
                         isValid = false;
                         $("#report-config-defaultfilters").collapse('show');
                     }
-                    if (!isValid){
+                    if (!isValid) {
                         alert('Invalid report configuration. Please fix the issues and try again.');
                     }
                     return isValid;
@@ -460,7 +460,7 @@ hqDefine('userreports/js/report_config', function() {
                     var default_filters = JSON.parse(self.defaultFilterList.serializedProperties());
                     default_filters = _.filter(
                         default_filters,
-                        function(c){return c.property && c.pre_value;}
+                        function (c) {return c.property && c.pre_value;}
                     );
                     return {
                         "existing_report": self.existingReportId,
