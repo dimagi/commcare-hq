@@ -118,7 +118,7 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'update_aggregate_awc_data.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregated_awc_data_weekly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
 ]
