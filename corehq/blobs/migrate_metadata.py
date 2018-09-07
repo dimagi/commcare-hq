@@ -178,8 +178,19 @@ class SqlBlobHelper(object):
         self.blobs = {"": BlobMetaRef(key=key, **reindexer.blob_kwargs(obj))}
         self.external_blobs = self.blobs
 
+    def __repr__(self):
+        return "<%s %s domain=%s id=%s>" % (
+            type(self).__name__,
+            self.doc_type,
+            self.domain,
+            self._id,
+        )
+
     @property
     def _id(self):
+        # NOTE unlike couch documents, this is different from `doc["_id"]`,
+        # the value used to set `BlobMeta.parent_id`. This value should
+        # only be used to identify the record in in case of error.
         return self.obj.id
 
     @property
@@ -212,7 +223,7 @@ class PkReindexAccessor(ReindexAccessor):
         raise NotImplementedError
 
     def doc_to_json(self, obj, id):
-        return {"_id": id, "_obj_not_json": obj, "external_blobs": True}
+        return {"_id": str(id), "_obj_not_json": obj, "external_blobs": True}
 
 
 class CaseUploadFileMetaReindexAccessor(PkReindexAccessor):
