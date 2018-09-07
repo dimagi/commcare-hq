@@ -6,9 +6,14 @@ from kafka.common import KafkaUnavailableError
 import logging
 
 
+_kafka_client = None
+
+
 def get_kafka_client():
-    # todo: we may want to make this more configurable
-    return KafkaClient(settings.KAFKA_BROKERS)
+    global _kafka_client
+    if _kafka_client is None:
+        _kafka_client = KafkaClient(settings.KAFKA_BROKERS)
+    return _kafka_client
 
 
 def get_kafka_client_or_none():
