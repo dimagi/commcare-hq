@@ -139,9 +139,12 @@ def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6), acks_late=True, queue='icds_aggregation_queue')
-def run_move_ucr_data_into_aggregation_tables_task(date=None):
-    move_ucr_data_into_aggregation_tables.delay(date)
+@periodic_task(serializer='pickle', run_every=crontab(day_of_week=6),
+               acks_late=True, queue='icds_aggregation_queue')
+def run_weekly_aggregation_of_historical_data():
+    date = datetime.utcnow().date().strftime('%Y-%m-%d')
+    res_awc = icds_aggregation_task.delay(date=date, func=_agg_awc_table_weekly)
+    res_awc.get()
 
 
 @serial_task('move-ucr-data-into-aggregate-tables', timeout=30 * 60, queue='icds_aggregation_queue')
@@ -476,6 +479,7 @@ def _agg_awc_table(day):
         "SELECT create_new_aggregate_table_for_month('agg_awc', %s)",
         "SELECT aggregate_awc_data(%s)"
     ], day)
+
 
 @track_time
 def _agg_awc_table_weekly(day):
