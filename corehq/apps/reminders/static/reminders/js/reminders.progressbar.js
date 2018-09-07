@@ -40,7 +40,7 @@ var ruleProgressBarGroup = function (progressUrl) {
 };
 
 
-var ruleProgressBar = function(handlerId, progressBarGroup) {
+var ruleProgressBar = function (handlerId, progressBarGroup) {
     'use strict';
     var self = {};
 
