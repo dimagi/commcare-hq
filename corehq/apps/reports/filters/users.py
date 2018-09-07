@@ -15,7 +15,7 @@ from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.commtrack.models import SQLLocation
-from corehq.toggles import PREETHI_TAG
+from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 
 from .. import util
 from ..models import HQUserType
@@ -359,7 +359,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
             group_and_location_filter = []
             if group_ids and location_ids:
-                if PREETHI_TAG.enabled(domain):
+                if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain):
                     group_and_location_filter = filters.AND(
                         filters.term("__group_ids", group_ids),
                         user_es.location(location_ids),
@@ -379,13 +379,13 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 return q.OR(id_filter,
                             group_and_location_filter,)
 
-            # Filter everything separately (locs and groups aren't connected)
+            # Filter everything separately (enters this when a location and group are not both selected)
             else:
                 return q.filter(filters.OR(
-                filters.term("_id", user_ids),
-                filters.term("__group_ids", group_ids),
-                user_es.location(location_ids),
-            ))
+                    filters.term("_id", user_ids),
+                    filters.term("__group_ids", group_ids),
+                    user_es.location(location_ids),
+                ))
 
 
     @staticmethod

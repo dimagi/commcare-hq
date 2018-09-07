@@ -1611,9 +1611,13 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-PREETHI_TAG = StaticToggle(
-    'PREETHI_LABEL',
-    'PREETHI-TODO',
+FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
+    'filter_on_groups_and_locations',
+    'Filter on groups AND locations in all reports with group and location filters',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    description='For reports filtered by groups and locations, change the OR logic to an AND, so that '
+                '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
+                'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
+                'have group and location filters, such as the Submissions by Form report.',
 )
