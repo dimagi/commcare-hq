@@ -67,6 +67,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     'jquery.rmi/jquery.rmi',
                     'jquery-ui/ui/sortable',
                     'select2-3.5.2-legacy/select2',
+                    'select2/dist/js/select2.full.min',
                 ];
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
