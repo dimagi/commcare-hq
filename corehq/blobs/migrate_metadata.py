@@ -100,8 +100,16 @@ def make_migrators(mod):
                     "doc_id": obj._id,
                 })
                 domain = UNKNOWN_DOMAIN
+            if getattr(obj, "_attachments", None):
+                self.error(obj, {
+                    "error": "ignored-couch-attachments",
+                    "doc_type": obj.doc_type,
+                    "doc_id": obj._id,
+                    "domain": obj.domain,
+                    "attachments": obj._attachments,
+                })
             with connections[db].cursor() as cursor:
-                for name, meta in six.iteritems(obj.blobs):
+                for name, meta in six.iteritems(obj.external_blobs):
                     if meta.blobmeta_id is not None:
                         # blobmeta already saved
                         continue
