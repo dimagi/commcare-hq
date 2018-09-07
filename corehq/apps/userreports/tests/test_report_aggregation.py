@@ -843,3 +843,44 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
              ['MA', '7-12', 2],
              ['TN', '13+', 1]]
         )
+
+    def test_sum_when(self):
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'sum_when',
+                    'display': 'under_six_month_olds',
+                    'field': 'age_at_registration',
+                    'column_id': 'under_six_month_olds',
+                    'whens': {
+                        "age_at_registration < 6": 1,
+                    },
+                    'else_': 0
+                },
+                {
+                    'type': 'field',
+                    'display': 'report_column_display_number',
+                    'field': 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'sum'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        self.assertItemsEqual(
+            view.export_table[0][1],
+            [['state', 'under_six_month_olds', 'report_column_display_number'],
+             ['MA', 2, 9],
+             ['TN', 0, 1]]
+        )

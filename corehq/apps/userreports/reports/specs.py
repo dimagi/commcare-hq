@@ -32,6 +32,7 @@ from sqlagg.columns import (
     MonthColumn,
     NonzeroSumColumn,
     SimpleColumn,
+    SumWhen,
     YearColumn,
 )
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
@@ -391,6 +392,28 @@ class ConditionalAggregationColumn(ReportColumn):
 
     def get_query_column_ids(self):
         return [self.column_id]
+
+
+class SumWhenColumn(ConditionalAggregationColumn):
+    type = TypeProperty("sum_when")
+    else_ = IntegerProperty()
+
+    def get_column_config(self, data_source_config, lang):
+        return ColumnConfig(columns=[
+            DatabaseColumn(
+                header=self.get_header(lang),
+                agg_column=SumWhen(
+                    whens=self.whens,
+                    else_=self.else_,
+                    alias=self.column_id,
+                ),
+                sortable=self.sortable,
+                data_slug=self.column_id,
+                format_fn=self.get_format_fn(),
+                help_text=self.description,
+                visible=self.visible,
+            )],
+        )
 
 
 class PercentageColumn(ReportColumn):
