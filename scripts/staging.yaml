@@ -59,10 +59,10 @@ branches:
   - pv/deactivated-users # Preethi Aug 23
   - rn_migrating_sms_pages # Rohit Aug 29
   - rn_miration_sms_language # Rohit Aug 30
-  - jls/requirejs-domain-billing+jls/build-requirejs-by-html  # Jenny Sept 5
-  - jls/build-requirejs-by-html  # Jenny Sept 2
-  - jls/requirejs-domain-billing+rn_migrating_more_messaging_pages  # Jenny Sept 5
-  - jls/requirejs-domain-billing  # Jenny Sept 2
+#  - jls/requirejs-domain-billing+jls/build-requirejs-by-html  # Jenny Sept 5
+#  - jls/build-requirejs-by-html  # Jenny Sept 2
+#  - jls/requirejs-domain-billing+rn_migrating_more_messaging_pages  # Jenny Sept 5
+#  - jls/requirejs-domain-billing  # Jenny Sept 2
   - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
   - annual-pricing # Gabriella Sept 3
   - sr-batch-ucrpillow # Sravan Sept 4
