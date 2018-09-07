@@ -66,8 +66,6 @@ branches:
   - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
   - annual-pricing # Gabriella Sept 3
   - sr-batch-ucrpillow # Sravan Sept 4
-  - some_migration_of_hqwebapps   # Rohit Sep 5
-  - rn_more_js_migration # Rohit Sep 6
 submodules:
   submodules/django-digest-src:
     branches: []
