@@ -20,7 +20,7 @@ hqDefine('sms/js/backend_map',[
 
         _.map(
             initial.backend_map,
-            function(mapping) {
+            function (mapping) {
                 self.backend_map.push(BackendMapping(mapping.prefix, mapping.backend_id));
             }
         );
@@ -36,7 +36,7 @@ hqDefine('sms/js/backend_map',[
             );
         });
 
-        self.addMapping = function() {
+        self.addMapping = function () {
             self.backend_map.push(BackendMapping('', ''));
         };
 

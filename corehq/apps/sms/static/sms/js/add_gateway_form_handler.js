@@ -1,7 +1,7 @@
 hqDefine('sms/js/add_gateway_form_handler',[
     "knockout",
 ], function (ko) {
-    var AddGatewayFormHandler = function(initial) {
+    var AddGatewayFormHandler = function (initial) {
         'use strict';
         var self = {};
 
@@ -20,7 +20,7 @@ hqDefine('sms/js/add_gateway_form_handler',[
         self.init = function () {
             if (self.use_load_balancing()) {
                 var arr = initial.phone_numbers;
-                for(var i = 0; i < arr.length; i++) {
+                for (var i = 0; i < arr.length; i++) {
                     self.phone_numbers.push(PhoneNumber(arr[i].phone_number));
                 }
                 if (self.phone_numbers().length === 0) {
@@ -29,7 +29,7 @@ hqDefine('sms/js/add_gateway_form_handler',[
             }
         };
 
-        self.addPhoneNumber = function() {
+        self.addPhoneNumber = function () {
             self.phone_numbers.push(PhoneNumber(""));
         };
 
