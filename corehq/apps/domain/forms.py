@@ -599,7 +599,7 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=ugettext_lazy(
             """
             Default time to wait between sending updated mobile report data to users.
-            Can be overrided on a per user bases.
+            Can be overridden on a per user bases.
             """
         )
     )
