@@ -50,3 +50,35 @@ def early_initiation_breastfeeding_help_text(html=False):
         "Early initiation of breastfeeding ensure the newborn recieves the \"first milk\" rich in "
         "nutrients and encourages exclusive breastfeeding practice".format("<br/><br/>" if html else "")
     )
+
+
+def exclusive_breastfeeding_help_text(html=False):
+    return _(
+        "Of the total children enrolled for Anganwadi services between the ages of 0 to 6 months, "
+        "the percentage that was exclusively fed with breast milk. {}"
+        "An infant is exclusively breastfed if they receive only breastmilk with no additional food or liquids "
+        "(even water), ensuring optimal nutrition and growth between 0 - 6 months".format(
+            "<br/><br/>" if html else ""
+        )
+    )
+
+
+def children_initiated_appropriate_complementary_feeding_help_text(html=False):
+    return _(
+        "Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, the percentage "
+        "that was given a timely introduction to solid, semi-solid or soft food. {}"
+        "Timely intiation of complementary feeding in addition to breastmilk at 6 months of age is a key feeding "
+        "practice to reduce malnutrition".format(
+            "<br/><br/>" if html else ""
+        )
+    )
+
+
+def institutional_deliveries_help_text(html=False):
+    return _(
+        "Of the total number of women enrolled for Anganwadi services who gave birth in the last month, the "
+        "percentage who delivered in a public or private medical facility. {}"
+        "Delivery in medical instituitions is associated with a decrease in maternal mortality rate".format(
+            "<br/><br/>" if html else ""
+        )
+    )

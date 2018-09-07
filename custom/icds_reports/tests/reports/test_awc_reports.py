@@ -10,7 +10,9 @@ from django.test import TestCase
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
     get_awc_report_beneficiary
-from custom.icds_reports.messages import new_born_with_low_weight_help_text, wasting_help_text
+from custom.icds_reports.messages import new_born_with_low_weight_help_text, wasting_help_text, \
+    exclusive_breastfeeding_help_text, early_initiation_breastfeeding_help_text, \
+    children_initiated_appropriate_complementary_feeding_help_text
 
 
 class TestAWCReport(TestCase):
@@ -1261,11 +1263,7 @@ class TestAWCReport(TestCase):
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
                 "label": "Early Initiation of Breastfeeding",
-                'help_text': (
-                    "Of the children born in the last month, the percentage whose breastfeeding was initiated "
-                    "within 1 hour of delivery. Early initiation of breastfeeding ensure the newborn recieves "
-                    "the \"first milk\" rich in nutrients and encourages exclusive breastfeeding practice"
-                ),
+                'help_text': early_initiation_breastfeeding_help_text(),
             }
         )
 
@@ -1292,12 +1290,7 @@ class TestAWCReport(TestCase):
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
                 "label": "Exclusive breastfeeding",
-                'help_text': (
-                    "Of the total children between the ages of 0 to 6 months, the percentage that was "
-                    "exclusively fed with breast milk. An infant is exclusively breastfed if they receive "
-                    "only breastmilk with no additional food or liquids (even water), ensuring optimal nutrition "
-                    "and growth between 0 - 6 months"
-                ),
+                'help_text': exclusive_breastfeeding_help_text(),
             }
         )
 
@@ -1324,12 +1317,7 @@ class TestAWCReport(TestCase):
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
                 "label": "Children initiated appropriate Complementary Feeding",
-                'help_text': (
-                    "Of the total children between the ages of 6 to 8 months, the percentage that was given a "
-                    "timely introduction to solid, semi-solid or soft food. Timely intiation of complementary "
-                    "feeding in addition to breastmilk at 6 months of age is a key feeding practice to reduce "
-                    "malnutrition"
-                ),
+                'help_text': children_initiated_appropriate_complementary_feeding_help_text(),
             }
         )
 
