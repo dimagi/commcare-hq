@@ -772,7 +772,7 @@ class AngularLocationSelectWidget(forms.Widget):
         """.format(validator='validate-location=""' if self.require else '')
 
 
-class PrimaryLocationWidget(forms.Widget):
+class PrimaryLocationWidgetV3(forms.Widget):
     """
     Options for this field are dynamically set in JS depending on what options are selected
     for 'assigned_locations'. This works in conjunction with LocationSelectWidgetV3.
@@ -783,12 +783,12 @@ class PrimaryLocationWidget(forms.Widget):
             css_id: css_id of primary_location field
             source_css_id: css_id of assigned_locations field
         """
-        super(PrimaryLocationWidget, self).__init__(attrs)
+        super(PrimaryLocationWidgetV3, self).__init__(attrs)
         self.css_id = css_id
         self.source_css_id = source_css_id
 
     def render(self, name, value, attrs=None):
-        return get_template('locations/manage/partials/drilldown_location_widget.html').render({
+        return get_template('locations/manage/partials/drilldown_location_widget_v3.html').render({
             'css_id': self.css_id,
             'source_css_id': self.source_css_id,
             'name': name,
@@ -819,7 +819,7 @@ class CommtrackUserForm(forms.Form):
         self.fields['assigned_locations'].widget = LocationSelectWidgetV3(
             self.domain, multiselect=True, id='id_assigned_locations'
         )
-        self.fields['primary_location'].widget = PrimaryLocationWidget(
+        self.fields['primary_location'].widget = PrimaryLocationWidgetV3(
             css_id='id_primary_location',
             source_css_id='id_assigned_locations'
         )

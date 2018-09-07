@@ -55,7 +55,7 @@ hqDefine("locations/js/widgets_main_v3", [
             });
         });
 
-        $(".locations-widget-primary").each(function () {
+        $(".locations-widget-primary-v3").each(function () {
             var $select = $(this),
                 $source = $('#' + $select.data("sourceCssId")),
                 value = $select.val();
