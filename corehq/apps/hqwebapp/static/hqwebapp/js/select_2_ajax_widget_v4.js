@@ -19,7 +19,7 @@ hqDefine("hqwebapp/js/select_2_ajax_widget_v4", [
                         return {
                             q: params.term,
                             page_limit: htmlData.pageSize,
-                            page: params.page
+                            page: params.page,
                         };
                     },
                     processResults: function (data, params) {
@@ -35,9 +35,9 @@ hqDefine("hqwebapp/js/select_2_ajax_widget_v4", [
             var initial = htmlData.initial;
             if (initial) {
                 if (!_.isArray(initial)) {
-                    initial = [initial]
+                    initial = [initial];
                 }
-                _.each(initial, function(result) {
+                _.each(initial, function (result) {
                     $select.append(new Option(result.text, result.id));
                 });
                 $select.val(_.pluck(initial, 'id')).trigger('change');
