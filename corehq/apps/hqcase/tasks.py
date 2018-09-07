@@ -23,7 +23,7 @@ from soil import DownloadBase
 from six.moves import range
 
 
-@task
+@task(serializer='pickle')
 def explode_case_task(domain, user_id, factor):
     return explode_cases(domain, user_id, factor, explode_case_task)
 
@@ -138,7 +138,7 @@ def topological_sort_cases(cases):
     return sorted_ids
 
 
-@task
+@task(serializer='pickle')
 def delete_exploded_case_task(domain, explosion_id):
     return delete_exploded_cases(domain, explosion_id, delete_exploded_case_task)
 

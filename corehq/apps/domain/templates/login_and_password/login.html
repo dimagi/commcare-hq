@@ -34,6 +34,7 @@
 {% endblock stylesheets %}
 
 {% block content %}
+  {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% block login-content %}
   {% include "login_and_password/partials/login_full.html" %}
   {% endblock %}
@@ -41,10 +42,8 @@
 
 {% block js %}
   {{ block.super }}
-  {% if implement_password_obfuscation %}
-      {% include "nic_compliance/password_encoder.html" %}
-  {% endif %}
   {% compress js %}
+    <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
     <script src="{% static 'blazy/blazy.js' %}"></script>
     <script src="{% static 'registration/js/login.js' %}"></script>
   {% endcompress %}

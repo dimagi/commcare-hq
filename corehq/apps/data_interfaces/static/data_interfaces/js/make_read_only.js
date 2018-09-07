@@ -1,7 +1,10 @@
-hqDefine("data_interfaces/js/make_read_only", function() {
+hqDefine("data_interfaces/js/make_read_only",[
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+], function ($,initialPageData) {
 
-    $(function() {
-        if(hqImport("hqwebapp/js/initial_page_data").get('read_only_mode')) {
+    $(function () {
+        if (initialPageData.get('read_only_mode')) {
             $('.main-form :input').prop('disabled', true);
         }
     });

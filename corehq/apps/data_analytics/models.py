@@ -8,7 +8,7 @@ from corehq.apps.data_analytics.const import NOT_SET, DEFAULT_EXPERIENCED_THRESH
 
 
 GIRExportRow = namedtuple('GIRExportRow',
-                          'domain country sector subsector bu self_service test start device active_users wam '
+                          'domain country sector subsector bu self_service test start device active_users '
                           'pam wam_current wam_1_prior wam_2_prior active_current active_1_prior active_2_prior '
                           'using_and_performing not_performing inactive_experienced inactive_not_experienced '
                           'not_experienced not_performing_not_experienced d1 d2 d3 d4 d5 d6 eligible '
@@ -63,7 +63,6 @@ class GIRRow(models.Model):
     test_domain = models.NullBooleanField(default=NOT_SET)
     start_date = models.DateField()
     device_id = models.TextField(blank=True, null=True)
-    wam = models.NullBooleanField(default=NOT_SET)
     pam = models.NullBooleanField(default=NOT_SET)
 
     wams_current = models.PositiveIntegerField()
@@ -89,9 +88,9 @@ class GIRRow(models.Model):
     def export_row(self, past_months):
         last_month = past_months[0] if past_months else None
         two_months_ago = past_months[1] if len(past_months) > 1 else None
-        wams_current = self.wams_current if self.wam else 0
-        wams_1_prior = last_month.wams_current if last_month and self.wam else 0
-        wams_2_prior = two_months_ago.wams_current if two_months_ago and self.wam else 0
+        wams_current = self.wams_current
+        wams_1_prior = last_month.wams_current if last_month else 0
+        wams_2_prior = two_months_ago.wams_current if two_months_ago else 0
         return GIRExportRow(domain=self.domain_name,
                             country=self.country,
                             sector=self.sector,
@@ -102,7 +101,6 @@ class GIRRow(models.Model):
                             start=self.start_date,
                             device=self.device_id,
                             active_users=self.active_users,
-                            wam=self.wam,
                             pam=self.pam,
                             wam_current=wams_current,
                             wam_1_prior=wams_1_prior,

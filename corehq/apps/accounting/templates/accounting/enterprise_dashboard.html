@@ -2,8 +2,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}{% trans "Enterprise Dashboard" %}{% endblock %}
-
 {% block page_title %}{{ account.name }}{% endblock %}
 
 {% requirejs_main 'accounting/js/enterprise_dashboard' %}

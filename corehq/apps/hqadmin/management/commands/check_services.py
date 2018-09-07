@@ -30,7 +30,7 @@ class Command(BaseCommand):
             sys.exit(-1)
         else:
             self.print_results(statuses)
-            if not all(status.success for status in statuses):
+            if not all(status[1].success for status in statuses):
                 sys.exit(1)
 
     @staticmethod

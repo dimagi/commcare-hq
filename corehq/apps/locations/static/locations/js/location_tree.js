@@ -6,7 +6,7 @@ hqDefine('locations/js/location_tree', [
     'hqwebapp/js/alert_user',
     'analytix/js/google',
     'locations/js/utils',
-], function(
+], function (
     $,
     ko,
     _,
@@ -20,7 +20,7 @@ hqDefine('locations/js/location_tree', [
             parent_id: loc_uuid,
         } : {});
         params.include_inactive = show_inactive;
-        $.getJSON(initialPageData.get('api_root'), params, function(allData) {
+        $.getJSON(initialPageData.get('api_root'), params, function (allData) {
             callback(allData.objects);
         });
     }
@@ -34,7 +34,7 @@ hqDefine('locations/js/location_tree', [
         self.root = ko.observable();
 
         // TODO this should reference location type settings for domain
-        self.location_types = $.map(hierarchy, function(e) {
+        self.location_types = $.map(hierarchy, function (e) {
             return {
                 type: e[0],
                 allowed_parents: e[1],
@@ -42,14 +42,14 @@ hqDefine('locations/js/location_tree', [
         });
 
         // search for a location within the tree by uuid; return path to location if found
-        self.find_loc = function(uuid, loc) {
+        self.find_loc = function (uuid, loc) {
             loc = loc || self.root();
 
             if (loc.uuid() === uuid) {
                 return [loc];
             } else {
                 var path = null;
-                $.each(loc.children(), function(i, e) {
+                $.each(loc.children(), function (i, e) {
                     var subpath = self.find_loc(uuid, e);
                     if (subpath) {
                         path = subpath;
@@ -81,14 +81,14 @@ hqDefine('locations/js/location_tree', [
         self.l__selected_location_id = ko.observable();
         self.clearLocationSelection = locationUtils.clearLocationSelection.bind(self, tree_model);
 
-        self.selected_location_id = ko.computed(function() {
+        self.selected_location_id = ko.computed(function () {
             if (!self.l__selected_location_id()) {
                 return;
             }
             return (self.l__selected_location_id().split("l__")[1]);
         });
 
-        self.selected_location = ko.computed(function() {
+        self.selected_location = ko.computed(function () {
             if (!self.selected_location_id()) {
                 return;
             }
@@ -99,7 +99,7 @@ hqDefine('locations/js/location_tree', [
             }, self);
         });
 
-        self.lineage = ko.computed(function() {
+        self.lineage = ko.computed(function () {
             if (!self.selected_location()) {
                 return;
             }
@@ -108,7 +108,7 @@ hqDefine('locations/js/location_tree', [
                 url: self.selected_location().loc_lineage_url(self.selected_location().uuid()),
                 dataType: 'json',
                 error: 'error',
-                success: function(response) {
+                success: function (response) {
                     tree_model.root(self.expand_tree(response.lineage));
                 }.bind(self),
             });
@@ -116,7 +116,7 @@ hqDefine('locations/js/location_tree', [
 
         self.expand_tree = function (lineage) {
             var child, level;
-            lineage.forEach(function(location, idx) {
+            lineage.forEach(function (location, idx) {
                 var data = {
                     name: location.name,
                     location_type: location.location_type,
@@ -131,7 +131,7 @@ hqDefine('locations/js/location_tree', [
                 child = Array.of(Object.assign({}, data));
             });
             var root_children = [];
-            tree_model.root().children().forEach(function(location) {
+            tree_model.root().children().forEach(function (location) {
                 if (location.name() === child[0].name) {
                     root_children.push(child[0]);
                 } else {
@@ -172,13 +172,13 @@ hqDefine('locations/js/location_tree', [
         self.reloadLocationSearchSelect = locationUtils.reloadLocationSearchSelect;
         self.clearLocationSelection = locationUtils.clearLocationSelection.bind(self, root);
 
-        self.expanded.subscribe(function(val) {
+        self.expanded.subscribe(function (val) {
             if (val === true && (self.children_status() === 'not_loaded' || self.children_status() === 'semi_loaded')) {
                 self.load_children_async();
             }
         }, self);
 
-        self.toggle = function() {
+        self.toggle = function () {
             if (self.expanded() === 'semi') {
                 self.expanded(self.can_have_children());
             } else {
@@ -186,7 +186,7 @@ hqDefine('locations/js/location_tree', [
             }
         };
 
-        self.load = function(data) {
+        self.load = function (data) {
             self.name(data.name);
             self.type(data.location_type);
             self.uuid(data.uuid);
@@ -202,10 +202,10 @@ hqDefine('locations/js/location_tree', [
             }
         };
 
-        self.set_children = function(children) {
+        self.set_children = function (children) {
             var sortedChildren = [];
             if (children) {
-                sortedChildren = _.sortBy(children, function(e) {
+                sortedChildren = _.sortBy(children, function (e) {
                     return e.name;
                 });
             }
@@ -218,7 +218,7 @@ hqDefine('locations/js/location_tree', [
                     }
                 }
 
-                var model_children = $.map(sortedChildren, function(e) {
+                var model_children = $.map(sortedChildren, function (e) {
                     return new LocationModel(e, root, self.depth + 1);
                 });
                 model_children.unshift(self.children()[0]);
@@ -236,9 +236,9 @@ hqDefine('locations/js/location_tree', [
             }
         };
 
-        self.load_children_async = function(callback) {
+        self.load_children_async = function (callback) {
             self.children_status('loading');
-            api_get_children(self.uuid(), root.show_inactive, function(resp) {
+            api_get_children(self.uuid(), root.show_inactive, function (resp) {
                 self.set_children(resp);
                 if (callback) {
                     callback(self);
@@ -246,11 +246,11 @@ hqDefine('locations/js/location_tree', [
             });
         };
 
-        self.allowed_child_types = function() {
+        self.allowed_child_types = function () {
             var loc = self;
             var types = [];
-            $.each(root.location_types, function(i, loc_type) {
-                $.each(loc_type.allowed_parents, function(i, parent_type) {
+            $.each(root.location_types, function (i, loc_type) {
+                $.each(loc_type.allowed_parents, function (i, parent_type) {
                     if (loc.type() === parent_type) {
                         types.push(loc_type.type);
                     }
@@ -259,40 +259,40 @@ hqDefine('locations/js/location_tree', [
             return types;
         };
 
-        self.can_have_children = ko.computed(function() {
+        self.can_have_children = ko.computed(function () {
             return (self.allowed_child_types().length > 0);
         }, self);
 
-        self.allowed_child_type = function() {
+        self.allowed_child_type = function () {
             var types = self.allowed_child_types();
             return (types.length === 1 ? types[0] : null);
         };
 
-        self.new_child_caption = ko.computed(function() {
+        self.new_child_caption = ko.computed(function () {
             var child_type = self.allowed_child_type();
             var top_level = (self.name() === '_root');
             return 'New ' + (child_type || 'location') + (top_level ? ' at top level' : ' in ' + self.name() + ' ' + self.type());
         }, self);
 
-        self.no_children_caption = ko.computed(function() {
+        self.no_children_caption = ko.computed(function () {
             var top_level = (self.name() === '_root');
 
             // TODO replace 'location' with proper type as applicable (what about pluralization?)
             return (top_level ? 'No locations created in this project yet' : 'No child locations inside ' + self.name());
         }, self);
 
-        self.show_archive_action_button = ko.computed(function() {
+        self.show_archive_action_button = ko.computed(function () {
             return !root.show_inactive || self.is_archived();
         }, self);
 
         self.load(data);
 
-        self.new_location_tracking = function() {
+        self.new_location_tracking = function () {
             googleAnalytics.track.event('Organization Structure', '+ New _______');
             return true;
         };
 
-        self.remove_elements_after_action = function(button) {
+        self.remove_elements_after_action = function (button) {
             $(button).closest('.loc_section').remove();
         };
 
@@ -304,23 +304,23 @@ hqDefine('locations/js/location_tree', [
 
         self.delete_error_message = _.template(gettext("An error occurred while deleting your location. If the problem persists, please report an issue"));
 
-        self.loc_archive_url = function(loc_id) {
+        self.loc_archive_url = function (loc_id) {
             return initialPageData.reverse('archive_location', loc_id);
         };
 
-        self.loc_unarchive_url = function(loc_id) {
+        self.loc_unarchive_url = function (loc_id) {
             return initialPageData.reverse('unarchive_location', loc_id);
         };
 
-        self.loc_delete_url = function(loc_id) {
+        self.loc_delete_url = function (loc_id) {
             return initialPageData.reverse('delete_location', loc_id, loc_id);
         };
 
-        self.loc_lineage_url = function(loc_id) {
+        self.loc_lineage_url = function (loc_id) {
             return initialPageData.reverse('location_lineage', loc_id);
         };
 
-        self.loc_descendant_url = function(loc_id) {
+        self.loc_descendant_url = function (loc_id) {
             return initialPageData.reverse('location_descendants_count', loc_id);
         };
 
@@ -329,15 +329,15 @@ hqDefine('locations/js/location_tree', [
             return initialPageData.reverse(urlName, loc_id);
         };
 
-        self.new_loc_url = function() {
+        self.new_loc_url = function () {
             return initialPageData.reverse('create_location');
         };
 
-        self.location_search_url = function() {
+        self.location_search_url = function () {
             return initialPageData.reverse('location_search_url');
         };
 
-        self.archive_loc = function(button, name, loc_id) {
+        self.archive_loc = function (button, name, loc_id) {
             var archive_location_modal = $('#archive-location-modal')[0];
 
             function archive_fn() {
@@ -347,7 +347,7 @@ hqDefine('locations/js/location_tree', [
                     url: self.loc_archive_url(loc_id),
                     dataType: 'json',
                     error: 'error',
-                    success: function() {
+                    success: function () {
                         alertUser.alert_user(self.archive_success_message({
                             "name": name,
                         }), "success");
@@ -369,21 +369,21 @@ hqDefine('locations/js/location_tree', [
             $(archive_location_modal).modal('show');
         };
 
-        self.unarchive_loc = function(button, loc_id) {
+        self.unarchive_loc = function (button, loc_id) {
             $(button).disableButton();
             $.ajax({
                 type: 'POST',
                 url: self.loc_unarchive_url(loc_id),
                 dataType: 'json',
                 error: 'error',
-                success: function() {
+                success: function () {
                     self.remove_elements_after_action(button);
                     locationUtils.reloadLocationSearchSelect();
                 },
             });
         };
 
-        self.delete_loc = function(button, name, loc_id) {
+        self.delete_loc = function (button, name, loc_id) {
             var delete_location_modal = $('#delete-location-modal')[0];
             var modal_context;
 
@@ -395,11 +395,11 @@ hqDefine('locations/js/location_tree', [
                         type: 'DELETE',
                         url: self.loc_delete_url(loc_id),
                         dataType: 'json',
-                        error: function() {
+                        error: function () {
                             alertUser.alert_user(self.delete_error_message, "warning");
                             $(button).enableButton();
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 alertUser.alert_user(self.delete_success_message({
                                     "name": name,
@@ -421,7 +421,7 @@ hqDefine('locations/js/location_tree', [
                 type: 'GET',
                 url: self.loc_descendant_url(loc_id),
                 dataType: 'json',
-                success: function(response) {
+                success: function (response) {
                     modal_context = {
                         "name": name,
                         "loc_id": loc_id,

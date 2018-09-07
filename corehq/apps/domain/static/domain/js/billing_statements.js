@@ -1,5 +1,5 @@
 /* global Stripe */
-hqDefine("domain/js/billing_statements", function() {
+hqDefine("domain/js/billing_statements", function () {
 
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         paymentMethodHandlers = hqImport("accounting/js/payment_method_handler"),

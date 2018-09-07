@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils import html, safestring
 
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq import privileges, toggles
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.util.quickcache import quickcache

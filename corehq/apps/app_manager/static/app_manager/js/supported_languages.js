@@ -10,8 +10,8 @@ hqDefine('app_manager/js/supported_languages', function () {
             if (self.message_content() === '') {
                 if (self.langcode()) {
                     var lang = self.langcode().toLowerCase();
-                    $.getJSON('/langcodes/langs.json', {term: lang}, function(res) {
-                        var index = _.map(res, function(r) { return r.code; }).indexOf(lang);
+                    $.getJSON('/langcodes/langs.json', {term: lang}, function (res) {
+                        var index = _.map(res, function (r) { return r.code; }).indexOf(lang);
                         if (index === -1) {
                             self.message_content(gettext("Warning: unrecognized language"));
                             self.show_error(true);
@@ -169,7 +169,7 @@ hqDefine('app_manager/js/supported_languages', function () {
             return message;
         };
 
-        this.showSmartLangDisplayOption = ko.computed(function() {
+        this.showSmartLangDisplayOption = ko.computed(function () {
             return self.languages().length > 2;
         });
     }

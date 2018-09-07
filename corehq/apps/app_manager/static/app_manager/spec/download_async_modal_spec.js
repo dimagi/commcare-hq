@@ -1,15 +1,15 @@
 /* global chai, $, sinon */
 
-describe('Async Download Modal', function() {
+describe('Async Download Modal', function () {
     var url = 'test_url';
     var asyncDownloader = hqImport('app_manager/js/download_async_modal').asyncDownloader;
 
-    describe('#AsyncDownloader.isDone', function() {
+    describe('#AsyncDownloader.isDone', function () {
         var downloader = null,
             modal = $('#modal'),
             download_poll_id = '12345';
 
-        beforeEach(function() {
+        beforeEach(function () {
             downloader = asyncDownloader(modal);
             downloader.download_poll_id = download_poll_id;
         });
@@ -27,8 +27,8 @@ describe('Async Download Modal', function() {
             },
         ];
 
-        test_done.forEach(function(test) {
-            it('should be done for input "' + test.input + '"', function() {
+        test_done.forEach(function (test) {
+            it('should be done for input "' + test.input + '"', function () {
                 assert.ok(downloader.isDone(test.input));
             });
         });
@@ -49,38 +49,38 @@ describe('Async Download Modal', function() {
             },
         ];
 
-        test_not_done.forEach(function(test) {
-            it('should not be done for input "' + test.input + '"', function() {
+        test_not_done.forEach(function (test) {
+            it('should not be done for input "' + test.input + '"', function () {
                 assert.notOk(downloader.isDone(test.input));
             });
         });
     });
 
-    describe('#AsyncDownloader', function() {
+    describe('#AsyncDownloader', function () {
         var downloader = null,
             modal = $('#download-zip-modal-test'),
             ajax_stub,
             clock;
 
-        before(function() {
+        before(function () {
             clock = sinon.useFakeTimers();
             downloader = asyncDownloader(modal);
         });
 
-        after(function() {
+        after(function () {
             clock.restore();
         });
 
-        beforeEach(function() {
+        beforeEach(function () {
             ajax_stub = sinon.stub($, 'ajax');
             downloader.init();
         });
 
-        afterEach(function() {
+        afterEach(function () {
             ajax_stub.restore();
         });
 
-        it('should only make one download request', function(done) {
+        it('should only make one download request', function (done) {
             downloader.generateDownload(url);
             assert.equal($.ajax.callCount, 1, 'Only expecting 1 ajax call');
             done();
@@ -113,13 +113,13 @@ describe('Async Download Modal', function() {
             state: 'error_',
         }];
 
-        tests_state.forEach(function(test) {
-            it('should poll until ' + test.state, function() {
+        tests_state.forEach(function (test) {
+            it('should poll until ' + test.state, function () {
                 verify_download(test.state);
             });
         });
 
-        it('should handle multiple downloads correctly', function() {
+        it('should handle multiple downloads correctly', function () {
             verify_download('ready_');
             verify_download('ready_');
         });

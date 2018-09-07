@@ -2,7 +2,7 @@ hqDefine("reminders/js/reminders.keywords.ko", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
-], function(
+], function (
     $,
     ko,
     initialPageData
@@ -53,7 +53,7 @@ hqDefine("reminders/js/reminders.keywords.ko", [
             return self.use_named_args() && self.use_named_args_separator();
         });
 
-        self.named_args = ko.observableArray((initial_values.named_args.length > 0) ? initial_values.named_args : [{"name" : "", "xpath" : ""}]);
+        self.named_args = ko.observableArray((initial_values.named_args.length > 0) ? initial_values.named_args : [{"name": "", "xpath": ""}]);
         self.named_args_separator = ko.observable(initial_values.named_args_separator);
         self.example_structured_sms = ko.observable("");
 
@@ -61,13 +61,13 @@ hqDefine("reminders/js/reminders.keywords.ko", [
             self.updateExampleStructuredSMS();
         };
 
-        self.addNamedArg = function() {
-            self.named_args.push({"name" : "", "xpath" : ""});
+        self.addNamedArg = function () {
+            self.named_args.push({"name": "", "xpath": ""});
             self.updateExampleStructuredSMS();
         };
 
-        self.removeNamedArg = function() {
-            if(self.named_args().length === 1) {
+        self.removeNamedArg = function () {
+            if (self.named_args().length === 1) {
                 alert("You must have at least one named answer.");
             } else {
                 self.named_args.remove(this);
@@ -75,7 +75,7 @@ hqDefine("reminders/js/reminders.keywords.ko", [
             self.updateExampleStructuredSMS();
         };
 
-        self.updateExampleStructuredSMS = function() {
+        self.updateExampleStructuredSMS = function () {
             var named_args_separator = "";
             if (self.use_named_args_separator() && self.named_args_separator()) {
                 named_args_separator = self.named_args_separator().toString().trim();
@@ -86,9 +86,9 @@ hqDefine("reminders/js/reminders.keywords.ko", [
             }
             var keyword = self.keyword() ? self.keyword().toString().trim() : "";
             var example = keyword.toLowerCase();
-            if(self.use_named_args()) {
+            if (self.use_named_args()) {
                 var toggle = false;
-                for(var i = 0; i < self.named_args().length; i++) {
+                for (var i = 0; i < self.named_args().length; i++) {
                     toggle = !toggle;
                     var arg_name = self.named_args()[i].name;
                     arg_name = arg_name ? arg_name.trim().toLowerCase() : "";

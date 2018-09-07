@@ -8,8 +8,6 @@ import casexml.apps.stock.models
 
 class Migration(migrations.Migration):
 
-    replaces = [(b'stock', '0001_initial'), (b'stock', '0002_stockreport_server_date')]
-
     dependencies = [
         ('products', '0001_initial'),
     ]

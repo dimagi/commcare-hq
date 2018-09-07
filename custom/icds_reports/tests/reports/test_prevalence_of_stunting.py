@@ -85,7 +85,7 @@ class TestPrevalenceOfStunting(TestCase):
         )
         expected = (
             "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
-            "children between 6 - 60 months who were moderately/severely stunted in the current month. "
+            "children between 0 - 5 years who were moderately/severely stunted in the current month. "
             "<br/><br/>"
             "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
             "on the growth of a child"
@@ -115,13 +115,13 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (6 - 60 months) eligible to have height measured:', 'value': '939'},
-                {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '939'},
+                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
                  'value': '0'},
-                {'indicator': 'Number of Children (6 - 60 months) unmeasured:', 'value': '939'},
-                {'indicator': '% children (6 - 60 months) with severely stunted growth:', 'value': '0.00%'},
-                {'indicator': '% children (6 - 60 months) with moderate stunted growth:', 'value': '0.00%'},
-                {'indicator': '% children (6 - 60 months) with normal stunted growth:', 'value': '0.00%'}
+                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '939'},
+                {'indicator': '% children (0 - 5 years) with severely stunted growth:', 'value': '0.00%'},
+                {'indicator': '% children (0 - 5 years) with moderate stunted growth:', 'value': '0.00%'},
+                {'indicator': '% children (0 - 5 years) with normal stunted growth:', 'value': '0.00%'}
             ]
         )
 
@@ -164,7 +164,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent of Children Stunted (6 - 60 months)')
+        self.assertEquals(data['label'], 'Percent of Children Stunted (0 - 5 years)')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_prevalence_of_stunting_data_map(
@@ -473,7 +473,7 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertEquals(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
-            "children between  (6 - 60 months) who were moderately/severely stunted in the current month. "
+            "children between  (0 - 5 years) who were moderately/severely stunted in the current month. "
             "<br/><br/>"
             "Stunting is a sign of chronic undernutrition and has long lasting harmful "
             "consequences on the growth of a child"

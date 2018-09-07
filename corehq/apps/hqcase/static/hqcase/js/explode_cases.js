@@ -3,12 +3,12 @@ hqDefine('hqcase/js/explode_cases', [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'select2-3.5.2-legacy/select2',
-], function(
+], function (
     $,
     ko,
     initialPageData
 ) {
-    $(function(){
+    $(function () {
         $('#explode').koApplyBindings({
             factor: ko.observable(''),
             user_id: ko.observable(''),

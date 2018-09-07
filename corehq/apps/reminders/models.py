@@ -19,7 +19,7 @@ from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
 from corehq.apps.reminders.util import enqueue_reminder_directly, get_two_way_number_for_recipient
 from couchdbkit.exceptions import ResourceConflict
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.util.quickcache import quickcache
@@ -102,11 +102,17 @@ RECIPIENT_SUBCASE = "SUBCASE"
 RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
 RECIPIENT_USER_GROUP = "USER_GROUP"
 RECIPIENT_LOCATION = "LOCATION"
+DEPRECATED_RECIPIENT_CHOICES = [
+    'TB_PERSON_CASE_FROM_VOUCHER_CASE',
+    'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID',
+    'TB_BENEFICIARY_REGISTRATION_RECIPIENTS',
+    'TB_PRESCRIPTION_VOUCHER_ALERT_RECIPIENTS',
+]
 RECIPIENT_CHOICES = [
     RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE,
     RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP,
     RECIPIENT_LOCATION
-] + list(settings.AVAILABLE_CUSTOM_REMINDER_RECIPIENTS)
+] + list(settings.AVAILABLE_CUSTOM_REMINDER_RECIPIENTS) + DEPRECATED_RECIPIENT_CHOICES
 
 KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER, RECIPIENT_USER_GROUP]
 KEYWORD_ACTION_CHOICES = [METHOD_SMS, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]
@@ -1484,14 +1490,10 @@ class CaseReminderHandler(Document):
                     "non-negative")
 
         if self.recipient == RECIPIENT_SUBCASE:
-            check_attr("recipient_case_match_property")
-            check_attr("recipient_case_match_type")
-            if self.recipient_case_match_type != MATCH_ANY_VALUE:
-                check_attr("recipient_case_match_value")
-
-        if (self.custom_content_handler and self.custom_content_handler not in
-            settings.ALLOWED_CUSTOM_CONTENT_HANDLERS):
-            raise IllegalModelStateException("unknown custom_content_handler")
+            if self.recipient_case_match_property != '_id' or self.recipient_case_match_type != MATCH_ANY_VALUE:
+                raise IllegalModelStateException(
+                    "must send to all child cases if child case recipients are chosen"
+                )
 
         self.check_min_tick()
 

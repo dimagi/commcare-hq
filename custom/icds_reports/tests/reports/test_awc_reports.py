@@ -10,6 +10,7 @@ from django.test import TestCase
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
     get_awc_report_beneficiary
+from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
 
 
 class TestAWCReport(TestCase):
@@ -1083,7 +1084,7 @@ class TestAWCReport(TestCase):
                 "label": "Wasting (Weight-for-Height)",
                 "help_text": (
                     "Of the children enrolled for Anganwadi services, whose weight and height was measured, "
-                    "the percentage of children between 6 - 60 months enrolled who were moderately/severely "
+                    "the percentage of children between 0 - 5 years enrolled who were moderately/severely "
                     "wasted in the current month. "
                     "<br/><br/>"
                     "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
@@ -1118,7 +1119,7 @@ class TestAWCReport(TestCase):
                 "label": "Stunting (Height-for-Age)",
                 "help_text": (
                     "Of the children whose height was measured, the percentage of children between "
-                    "6 - 60 months who were moderately/severely stunted in the current month."
+                    "0 - 5 years who were moderately/severely stunted in the current month."
                     "<br/><br/>"
                     "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
                     "on the growth of a child"
@@ -1248,10 +1249,7 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Newborns with Low Birth Weight",
                 'help_text': (
-                    "Of all the children born in the current month, the percentage that had a birth weight "
-                    "less than 2500 grams. Newborns with Low Birth Weight are closely associated wtih foetal "
-                    "and neonatal mortality and morbidity, inhibited growth and cognitive development, "
-                    "and chronic diseases later in life."
+                    get_new_born_with_low_weight_help_text(html=False)
                 ),
             }
         )

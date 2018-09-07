@@ -1,6 +1,33 @@
-hqDefine('case_importer/js/import_history', function () {
-    var urllib = hqImport('hqwebapp/js/initial_page_data');
-    var RecentUploads = function () {
+hqDefine('case_importer/js/import_history', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/components.ko',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData
+) {
+    var uploadModel = function (options) {
+        var self = _.extend({}, _.omit(options, 'comment', 'task_status'));
+
+        self.comment = ko.observable(options.comment || '');
+        self.task_status = ko.observable(options.task_status);
+
+        self.commentUrl = function () {
+            return initialPageData.reverse('case_importer_update_upload_comment', self.upload_id);
+        };
+
+        self.downloadUrl = function () {
+            return initialPageData.reverse('case_importer_upload_file_download', self.upload_id);
+        };
+
+        return self;
+    };
+
+    var recentUploads = function () {
         var self = {};
         // this is used both for the state of the ajax request
         // and for the state of celery task
@@ -18,10 +45,10 @@ hqDefine('case_importer/js/import_history', function () {
         };
         var taskStatusesInDataMatchCurrent = function (data) {
             return (
-                _.chain(self.case_uploads()).pluck('task_status').map(function (task_status) {
-                    return task_status();
-                }).isEqual(_(data).pluck('task_status').map(function (task_status) {
-                    return task_status();
+                _.chain(self.case_uploads()).pluck('task_status').map(function (taskStatus) {
+                    return taskStatus();
+                }).isEqual(_(data).pluck('task_status').map(function (taskStatus) {
+                    return taskStatus();
                 })).value()
             );
         };
@@ -32,12 +59,12 @@ hqDefine('case_importer/js/import_history', function () {
                     // this prevents some jumpiness when not necessary
                     // and is particularly bad if you're in the middle of editing a comment
                     _.each(_.zip(self.case_uploads(), data), function (pair) {
-                        var case_upload = pair[0];
-                        var new_case_upload = pair[1];
-                        if (case_upload.upload_id !== new_case_upload.upload_id) {
-                            throw {message: "Somehow even after checking, the case upload lists didn't line up."};
+                        var caseUpload = pair[0];
+                        var newCaseUpload = pair[1];
+                        if (caseUpload.upload_id !== newCaseUpload.upload_id) {
+                            throw new Error("Somehow even after checking, the case upload lists didn't line up.");
                         }
-                        case_upload.task_status(new_case_upload.task_status());
+                        caseUpload.task_status(newCaseUpload.task_status());
                     });
                 } else {
                     self.case_uploads(data);
@@ -49,17 +76,16 @@ hqDefine('case_importer/js/import_history', function () {
                 // only show spinner on first fetch
                 self.state(self.states.STARTED);
             }
-            $.get(urllib.reverse('case_importer_uploads'), {limit: urllib.getUrlParameter('limit')}).done(function (data) {
+            $.get(initialPageData.reverse('case_importer_uploads'), {limit: initialPageData.getUrlParameter('limit')}).done(function (data) {
                 self.state(self.states.SUCCESS);
-                _(data).each(function (case_upload) {
-                    case_upload.comment = ko.observable(case_upload.comment || '');
-                    case_upload.task_status = ko.observable(case_upload.task_status);
+                data = _.map(data, function (caseUpload) {
+                    return uploadModel(caseUpload);
                 });
                 self.updateCaseUploads(data);
 
-                var anyInProgress = _.any(self.case_uploads(), function (case_upload) {
-                    return case_upload.task_status().state === self.states.STARTED ||
-                            case_upload.task_status().state === self.states.NOT_STARTED;
+                var anyInProgress = _.any(self.case_uploads(), function (caseUpload) {
+                    return caseUpload.task_status().state === self.states.STARTED ||
+                            caseUpload.task_status().state === self.states.NOT_STARTED;
                 });
                 if (anyInProgress) {
                     _.delay(self.fetchCaseUploads, 5000);
@@ -71,9 +97,7 @@ hqDefine('case_importer/js/import_history', function () {
         return self;
     };
 
-    $(function () {
-        var recentUploads = RecentUploads();
-        $('#recent-uploads').koApplyBindings(recentUploads);
-        _.delay(recentUploads.fetchCaseUploads);
-    });
+    return {
+        recentUploadsModel: recentUploads,
+    };
 });

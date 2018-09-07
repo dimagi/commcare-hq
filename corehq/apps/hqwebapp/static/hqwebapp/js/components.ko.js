@@ -1,20 +1,33 @@
-(function () {
+hqDefine("hqwebapp/js/components.ko", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/components/inline_edit',
+    'hqwebapp/js/components/pagination',
+], function (
+    $,
+    ko,
+    _,
+    inlineEdit,
+    pagination
+) {
     var components = {
-        'inline-edit': 'hqwebapp/js/components/inline_edit',
+        'inline-edit': inlineEdit,
+        'pagination': pagination,
     };
 
-    _.each(components, function(moduleName, elementName) {
-        ko.components.register(elementName, hqImport(moduleName));
+    _.each(components, function (moduleName, elementName) {
+        ko.components.register(elementName, moduleName);
     });
 
-    $(function() {
-        _.each(_.keys(components), function(elementName) {
-            _.each($(elementName), function(el) {
+    $(function () {
+        _.each(_.keys(components), function (elementName) {
+            _.each($(elementName), function (el) {
                 var $el = $(el);
-                if (!$el.closest('.ko-template').length) {
+                if (!($el.data('apply-bindings') === false)) {
                     $(el).koApplyBindings();
                 }
             });
         });
     });
-}());
+});

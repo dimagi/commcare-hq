@@ -124,7 +124,7 @@ names to the aliases.
 ### Installing Bower
 
 We use bower to manage our javascript dependencies. In order to download the required javascript packages,
-you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
+you'll need to install `bower` and run `bower install`. Follow these steps to install:
 
 1. If you do not already have npm:
 
@@ -571,9 +571,6 @@ that you have a 32bit version of Python installed.
   + [Pillow][pillow]
   + [psycopg2][psycopg2]
   + [greenlet][greenlet]
-+ Install http-parser by adding MinGW/bin to the path and running `pip install http-parser`. You may also need to alter
-  $PYTHON_HOME/Lib/distutils/cygwincompiler.py to remove all instances of '-mno-cygwin' which is a depreciated compiler
-  option. The http-parser package is required by restkit.
 + Having installed those packages you can comment them out of the requirements/requirements.txt file.
 + Now run
 

@@ -35,7 +35,7 @@ from dimagi.ext.couchdbkit import (
     Document,
     DateProperty
 )
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq.util.dates import get_timestamp
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
@@ -120,6 +120,8 @@ class Permissions(DocumentSchema):
     view_web_apps = BooleanProperty(default=True)
     view_web_apps_list = StringListProperty(default=[])
 
+    view_file_dropzone = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data):
         # this is why you don't store module paths in the database...
@@ -203,6 +205,7 @@ class Permissions(DocumentSchema):
             view_reports=True,
             edit_billing=True,
             edit_shared_exports=True,
+            view_file_dropzone=True,
         )
 
 
@@ -1421,8 +1424,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return couch_user
 
     @classmethod
-    def from_django_user(cls, django_user):
-        return cls.get_by_username(django_user.username)
+    def from_django_user(cls, django_user, strict=False):
+        return cls.get_by_username(django_user.username, strict=strict)
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='',

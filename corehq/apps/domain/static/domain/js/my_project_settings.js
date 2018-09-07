@@ -2,32 +2,43 @@ hqDefine("domain/js/my_project_settings", [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-], function(
+], function (
     $,
     ko,
     initialPageData
 ) {
-    var HQTimezoneHandler = function(o) {
+    var HQTimezoneHandler = function (o) {
         var self = {};
 
         self.override_tz = ko.observable(o.override);
-        self.form_is_ready = ko.observable(false);
+        self.no_domain_membership = ko.observable(o.no_domain_membership);
+        self.disableUpdateSettings = ko.observable(true);
 
-        self.updateForm = function() {
-            self.form_is_ready(true);
+        self.updateForm = function () {
+            if ($('#override_global_tz')[0].checked) {
+                self.disableUpdateSettings(self.no_domain_membership());
+            } else {
+                self.disableUpdateSettings(true);
+            }
         };
 
         return self;
     };
 
-    $(function() {
+    $(function () {
         $('#my-project-settings-form').koApplyBindings(HQTimezoneHandler({
             override: initialPageData.get('override_global_tz'),
+            no_domain_membership: initialPageData.get('no_domain_membership'),
         }));
 
         var $globalTimezone = $('#id_global_timezone'),
             $userTimezone = $('#id_user_timezone'),
             $overrideGlobalTimezone = $('#id_override_global_tz');
+
+        $overrideGlobalTimezone.click(function () {
+            $userTimezone.val($globalTimezone.val());
+            $userTimezone.change();
+        });
 
         var $matchMessage = $('<span class="help-block" />');
         $userTimezone.parent().append($matchMessage);
@@ -43,13 +54,8 @@ hqDefine("domain/js/my_project_settings", [
         compareGlobalUserTimezones();
         $userTimezone.change(compareGlobalUserTimezones);
 
-        $('#update-proj-settings').click(function () {
-            if ($(this).hasClass('disabled'))
-                return false;
-        });
-
         function compareGlobalUserTimezones() {
-            if($globalTimezone.val() === $userTimezone.val()) {
+            if ($globalTimezone.val() === $userTimezone.val()) {
                 $userTimezone.parent().parent().addClass('has-success').removeClass('has-warning');
                 $matchMessage.html(gettext('This matches the global setting: ') + '<strong>' + $globalTimezone.val() + '</strong>');
             } else {

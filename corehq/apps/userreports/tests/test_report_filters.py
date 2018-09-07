@@ -196,7 +196,6 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
         config.save()
         rebuild_indicators(config._id)
         adapter = get_indicator_adapter(config)
-        adapter.refresh_table()
         cls.data_sources[UCR_SQL_BACKEND] = config
         cls.adapters[UCR_SQL_BACKEND] = adapter
 

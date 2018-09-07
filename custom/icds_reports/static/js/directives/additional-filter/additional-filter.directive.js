@@ -21,6 +21,11 @@ function AdditionalModalController($location, $uibModalInstance, filters, gender
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
 
     vm.apply = function() {
+        window.ga('send', 'event', {
+            'eventCategory': 'Additional Filter',
+            'eventAction': 'Filter Changed',
+            'eventLabel': '',
+        });
         $uibModalInstance.close({
             gender: vm.selectedGender,
             age: vm.selectedAge,

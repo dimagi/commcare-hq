@@ -58,10 +58,11 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
     quantize_accounting_decimal,
 )
+from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
@@ -78,6 +79,8 @@ MAX_INVOICE_COMMUNICATIONS = 5
 SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
+
+MINIMUM_SUBSCRIPTION_LENGTH = 30
 
 _soft_assert_domain_not_loaded = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
@@ -362,8 +365,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
         choices=BillingAccountType.CHOICES,
     )
     is_active = models.BooleanField(default=True)
-    is_customer_billing_account = models.BooleanField(default=False)
+    is_customer_billing_account = models.BooleanField(default=False, db_index=True)
     enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
+    enterprise_restricted_signup_domains = ArrayField(models.CharField(max_length=128), default=list, blank=True)
     invoicing_plan = models.CharField(
         max_length=25,
         default=InvoicingPlan.MONTHLY,
@@ -386,6 +390,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
         default=PreOrPostPay.NOT_SET,
         choices=PreOrPostPay.CHOICES,
     )
+
+    # Settings visible to external users
+    restrict_domain_creation = models.BooleanField(default=False)
+    restrict_signup = models.BooleanField(default=False, db_index=True)
+    restrict_signup_message = models.CharField(max_length=128, null=True, blank=True)
 
     class Meta(object):
         app_label = 'accounting'
@@ -448,6 +457,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
             )
             return cls.objects.filter(created_by_domain=domain).latest('date_created')
         return None
+
+    @classmethod
+    @quickcache([], timeout=60 * 60)
+    def get_enterprise_restricted_signup_accounts(cls):
+        return BillingAccount.objects.filter(is_customer_billing_account=True, restrict_signup=True)
 
     @property
     def autopay_card(self):
@@ -718,6 +732,7 @@ class SoftwarePlan(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     is_customer_software_plan = models.BooleanField(default=False)
     max_domains = models.IntegerField(blank=True, null=True)
+    is_annual_plan = models.BooleanField(default=False)
 
     class Meta(object):
         app_label = 'accounting'
@@ -1141,6 +1156,7 @@ class Subscription(models.Model):
         """
         assert date_start is not None
         for sub in Subscription.visible_objects.filter(
+            Q(date_end__isnull=True) | Q(date_end__gt=F('date_start')),
             subscriber=self.subscriber,
         ).exclude(
             id=self.id,
@@ -1725,6 +1741,18 @@ class Subscription(models.Model):
             last_subscription.account.pk == account.pk and
             last_subscription.plan_version.pk == plan_version.pk
         ), last_subscription
+
+    @property
+    def is_below_minimum_subscription(self):
+        if self.is_trial:
+            return False
+        elif self.date_start < datetime.date(2018, 9, 5):
+            # Only block upgrades for subscriptions created after the date we launched the 30-Day Minimum
+            return False
+        elif self.date_start + datetime.timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH) >= datetime.date.today():
+            return True
+        else:
+            return False
 
 
 class InvoiceBaseManager(models.Manager):
@@ -2797,9 +2825,11 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
     date_created = DateTimeProperty()
     is_wire = BooleanProperty(default=False)
     is_customer = BooleanProperty(default=False)
+    _blobdb_type_code = CODES.invoice
 
     def generate_pdf(self, invoice):
         self.save()
+        domain = invoice.get_domain()
         pdf_data = NamedTemporaryFile()
         account_name = ''
         if invoice.is_customer_invoice:
@@ -2808,7 +2838,7 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             pdf_data.name,
             invoice_number=invoice.invoice_number,
             to_address=get_address_from_invoice(invoice),
-            project_name=invoice.get_domain(),
+            project_name=domain,
             invoice_date=invoice.date_created.date(),
             due_date=invoice.date_due,
             date_start=invoice.date_start,
@@ -2862,12 +2892,13 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
 
         template.get_pdf()
         filename = self.get_filename(invoice)
+        blob_domain = domain or UNKNOWN_DOMAIN
         # this is slow and not unit tested
         # best to just skip during unit tests for speed
         if not settings.UNIT_TESTING:
-            self.put_attachment(pdf_data, filename, 'application/pdf')
+            self.put_attachment(pdf_data, filename, 'application/pdf', domain=blob_domain)
         else:
-            self.put_attachment('', filename, 'application/pdf')
+            self.put_attachment('', filename, 'application/pdf', domain=blob_domain)
         pdf_data.close()
 
         self.invoice_id = str(invoice.id)

@@ -205,6 +205,7 @@
                             <a href="#cta-form-get-demo"
                                target="_blank"
                                data-toggle="modal"
+                               id="cta-form-get-demo-button"
                                class="btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
                           {% endif %}
                         </div>
@@ -521,6 +522,10 @@
             });
           </script>
         {% endif %}
+
+        {# Knockout component templates #}
+        {% include 'hqwebapp/ko_pagination.html' %}
+        {% include 'hqwebapp/partials/ko_inline_edit.html' %}
 
         {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
         {# If it's loaded early, then execution of all following scripts block on it #}

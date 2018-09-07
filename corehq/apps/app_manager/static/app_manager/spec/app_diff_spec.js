@@ -1,14 +1,14 @@
 /* eslint-env mocha */
 
-describe('AppDiff', function() {
+describe('AppDiff', function () {
     var AppDiff = hqImport('app_manager/js/releases/app_diff');
 
-    describe('HtmlUtils', function() {
+    describe('HtmlUtils', function () {
         var HtmlUtils = AppDiff.HtmlUtils;
 
-        describe('#makeOl', function() {
+        describe('#makeOl', function () {
 
-            it('should make an OL with icon', function() {
+            it('should make an OL with icon', function () {
                 var el = HtmlUtils.makeOl('myclass', 'file');
                 assert.equal(
                     el,
@@ -16,20 +16,20 @@ describe('AppDiff', function() {
                 );
             });
 
-            it('should make an OL without icon', function() {
+            it('should make an OL without icon', function () {
                 var el = HtmlUtils.makeOl('myclass');
                 assert.equal(el, '<ol class="myclass"><span class="###"></span>');
             });
 
-            it('should close an OL', function() {
+            it('should close an OL', function () {
                 var el = HtmlUtils.closeOl();
                 assert.equal(el, '</ol>');
             });
         });
 
-        describe('#makeLi', function() {
+        describe('#makeLi', function () {
 
-            it('should make an Li with icon', function() {
+            it('should make an Li with icon', function () {
                 var el = HtmlUtils.makeLi('hi', 'cls', 'file');
                 assert.equal(
                     el,
@@ -37,7 +37,7 @@ describe('AppDiff', function() {
                 );
             });
 
-            it('should make an Li and close it', function() {
+            it('should make an Li and close it', function () {
                 var el = HtmlUtils.makeLi('hi', 'cls', 'file', true);
                 assert.equal(
                     el,
@@ -47,8 +47,8 @@ describe('AppDiff', function() {
 
         });
 
-        describe('#makeSpan', function() {
-            it('should make an Li with icon', function() {
+        describe('#makeSpan', function () {
+            it('should make an Li with icon', function () {
                 var el = HtmlUtils.makeSpan('hi', 'cls', 'file');
                 assert.equal(
                     el,
@@ -58,7 +58,7 @@ describe('AppDiff', function() {
         });
     });
 
-    describe('ModuleDatum', function() {
+    describe('ModuleDatum', function () {
         var ModuleDatum = AppDiff.ModuleDatum;
         var datum = {
             name: { 'en': 'Module' },
@@ -79,13 +79,13 @@ describe('AppDiff', function() {
                 },
             ],
         };
-        var checkHTML = function(html) {
+        var checkHTML = function (html) {
             var doc = document.createElement('div');
             doc.innerHTML = html;
             return (doc.innerHTML === html);
         };
 
-        it('should generate a toString', function() {
+        it('should generate a toString', function () {
             var html = (new ModuleDatum(datum, { lang: 'en' })).toString();
             assert.isTrue(checkHTML(html));
         });

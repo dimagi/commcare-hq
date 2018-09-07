@@ -204,7 +204,7 @@
             {% endif %}
         </ul>
 
-        {% include 'app_manager/partials/case_config_ko_templates.html' %}
+        {% include 'app_manager/partials/forms/case_config_ko_templates.html' %}
 
         <div class="tab-content appmanager-tab-content">
 
@@ -236,9 +236,9 @@
                       <div class="casexml" id="casexml_home">
                         {% if module.doc_type == 'AdvancedModule' %}
                             {% initial_page_data 'schedule_options' schedule_options %}
-                            {% include 'app_manager/partials/case_config_advanced.html' %}
+                            {% include 'app_manager/partials/forms/case_config_advanced.html' %}
                         {% else %}
-                            {% include 'app_manager/partials/case_config.html' %}
+                            {% include 'app_manager/partials/forms/case_config.html' %}
                         {% endif %}
                       </div>
                   {% else %}
@@ -251,7 +251,7 @@
 
 
             {% if nav_form %}
-                {% include "app_manager/partials/form_tab_settings.html" %}
+                {% include "app_manager/partials/forms/form_tab_settings.html" %}
             {% endif %}
 
 
@@ -290,7 +290,7 @@
                                     </p>
                                 </div>
                             {% endif %}
-                            {% include 'app_manager/partials/usercase_config.html' %}
+                            {% include 'app_manager/partials/forms/usercase_config.html' %}
                         {% endblock %}
                     </div>
                 {% else %}
@@ -303,11 +303,11 @@
 
             {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
                 {% if module.has_schedule  %}
-                    {% include "app_manager/partials/form_tab_visit_scheduler.html" %}
+                    {% include "app_manager/partials/forms/form_tab_visit_scheduler.html" %}
                 {% endif %}
             {% endif %}
             {% if form.form_type != "shadow_form" %}
-                {% include "app_manager/partials/form_tab_advanced.html" %}
+                {% include "app_manager/partials/forms/form_tab_advanced.html" %}
             {% endif %}
         </div>
     </div>
@@ -315,13 +315,13 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% include "app_manager/partials/form_view_modals.html" %}
+{% include "app_manager/partials/forms/form_view_modals.html" %}
 {% include "app_manager/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
 
 {% block breadcrumbs %}
     {{ block.super }}
-    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
+    {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
     <li>
         <a class="track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
            data-category="App Builder" data-action="View Form" data-label="Breadcrumb">

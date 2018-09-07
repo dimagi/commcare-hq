@@ -1,7 +1,7 @@
-hqDefine("reports/js/base_maps", function() {
+hqDefine("reports/js/base_maps", function () {
     var done = false;
 
-    $(document).ajaxComplete(function() {
+    $(document).ajaxComplete(function () {
         var $data = $(".base-maps-data");
         if ($data.length && !done) {
             var context = $data.data("context"),
