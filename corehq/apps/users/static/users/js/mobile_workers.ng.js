@@ -110,7 +110,7 @@
     mobileWorkers.constant('customFieldNames', []);
     mobileWorkers.constant('location_url', '');
 
-    var MobileWorker = function (data) {
+    var mobileWorker = function (data) {
         function generateStrongPassword() {
             function pick(possible, min, max) {
                 var n, chars = '';
@@ -158,14 +158,14 @@
             return shuffle(password);
         }
 
-        var self = this;
+        var self = {};
         self.creationStatus = STATUS.NEW;
 
         self.username = data.username || '';
-        self.first_name = data.first_name || '';
-        self.last_name = data.last_name || '';
+        self.firstName = data.first_name || '';
+        self.lastName = data.last_name || '';
         self.editUrl = data.editUrl || '';
-        self.location_id = data.location_id || '';
+        self.locationId = data.location_id || '';
 
         self.password = data.generateStrongPasswords ? generateStrongPassword() : '';
 
@@ -182,11 +182,13 @@
         } else if (_.isObject(data.customFields)) {
             self.customFields = data.customFields;
         }
+
+        return self;
     };
 
     var mobileWorkerControllers = {};
 
-    mobileWorkerControllers.MobileWorkerCreationController = function (
+    mobileWorkerControllers.mobileWorkerCreationController = function (
         $scope, workerCreationFactory, djangoRMI, customFields,
         customFieldNames, generateStrongPasswords, location_url, $http
     ) {
@@ -218,20 +220,20 @@
             );
         };
 
-        $scope.initializeMobileWorker = function (mobileWorker) {
+        $scope.initializeMobileWorker = function (existingMobileWorker) {
             visualFormCtrl.usernameClear();
             $scope.usernameAvailabilityStatus = null;
             $scope.usernameStatusMessage = null;
 
-            if (!_.isEmpty(mobileWorker)) {
+            if (!_.isEmpty(existingMobileWorker)) {
                 mobileWorker.creationStatus = STATUS.RETRIED;
-                $scope.mobileWorker = new MobileWorker({
-                    customFields: mobileWorker.customFields,
-                    username: mobileWorker.username,
+                $scope.mobileWorker = mobileWorker({
+                    customFields: existingMobileWorker.customFields,
+                    username: existingMobileWorker.username,
                 });
             } else {
                 $(".select2multiplechoicewidget").select2('data', null);
-                $scope.mobileWorker = new MobileWorker({
+                $scope.mobileWorker = mobileWorker({
                     customFields: customFields,
                     generateStrongPasswords: generateStrongPasswords,
                 });
