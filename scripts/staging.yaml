@@ -64,7 +64,6 @@ branches:
 #  - jls/requirejs-domain-billing+rn_migrating_more_messaging_pages  # Jenny Sept 5
 #  - jls/requirejs-domain-billing  # Jenny Sept 2
   - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
-  - annual-pricing # Gabriella Sept 3
   - sr-batch-ucrpillow # Sravan Sept 4
   - je/upgrade-kafka+np/celery-4.x-2
   - je/upgrade-kafka # Sept r
