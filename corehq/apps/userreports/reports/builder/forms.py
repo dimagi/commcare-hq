@@ -1305,9 +1305,9 @@ class ConfigureTableReportForm(ConfigureListReportForm):
                     ],
                 }]
             elif self.cleaned_data['chart'] == "pie":
-                if not agged_columns or not non_agged_columns:
+                if not agged_columns:
                     raise BadBuilderConfigError(_(
-                        'You must have at least one group by column and one indicator column to use pie charts!'
+                        'You must have at least one group by column to use pie charts!'
                     ))
                 return [{
                     "type": "pie",
