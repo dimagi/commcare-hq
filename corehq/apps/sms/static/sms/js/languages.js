@@ -8,8 +8,7 @@ hqDefine('sms/js/languages',[
         var saveURL = initialPageData.reverse("edit_sms_languages");
         var edit = true;
         var validate = true;
-        var SupportedLanguages = supportedLanguages.SupportedLanguages;
-        var sl = SupportedLanguages({
+        var sl = supportedLanguages.SupportedLanguages({
             langs: langs,
             saveURL: saveURL,
             edit: edit,
