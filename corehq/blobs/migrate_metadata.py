@@ -6,6 +6,7 @@ from functools import partial
 from itertools import groupby
 
 import six
+from couchdbkit import ResourceNotFound
 from django.db import connections
 
 from corehq.apps.domain import SHARED_DOMAIN, UNKNOWN_DOMAIN
@@ -195,7 +196,7 @@ def sql_blob_helper(key_attr):
         for blob migrations (currently only used by BlobMetaMigrator).
         """
         obj = doc["_obj_not_json"]
-        domain = self.get_domain(obj) or UNKNOWN_DOMAIN
+        domain = self.get_domain(obj)
         return SqlBlobHelper(obj, getattr(obj, key_attr), domain, self)
 
     return blob_helper
@@ -226,7 +227,10 @@ class CaseUploadFileMetaReindexAccessor(PkReindexAccessor):
         return CODES.data_import
 
     def get_domain(self, obj):
-        return CaseUploadRecord.objects.get(upload_file_meta_id=obj.id).domain
+        try:
+            return CaseUploadRecord.objects.get(upload_file_meta_id=obj.id).domain
+        except CaseUploadRecord.DoesNotExist:
+            return None
 
     def blob_kwargs(self, obj):
         return {"content_length": obj.length}
@@ -245,7 +249,10 @@ class DemoUserRestoreReindexAccessor(PkReindexAccessor):
         return CODES.demo_user_restore
 
     def get_domain(self, obj):
-        return CommCareUser.get(obj.demo_user_id).domain
+        try:
+            return CommCareUser.get(obj.demo_user_id).domain
+        except ResourceNotFound:
+            return None
 
     def blob_kwargs(self, obj):
         return {"content_length": obj.content_length, "content_type": "text/xml"}
