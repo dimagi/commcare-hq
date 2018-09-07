@@ -1,7 +1,7 @@
 var PROGRESS_BAR_UPDATE_INTERVAL = 30000;
 
 
-function ruleProgressBarGroup (progressUrl) {
+var ruleProgressBarGroup = function (progressUrl) {
     'use strict';
     var self = {};
 
@@ -11,18 +11,18 @@ function ruleProgressBarGroup (progressUrl) {
         self.progressBars[handlerId] = progressBar;
     };
 
-    self.updateProgress = function() {
+    self.updateProgress = function () {
         var request = $.ajax({
             url: progressUrl,
             type: "GET",
             dataType: "json",
         }).done(function (data, textStatus, jqXHR) {
-            for(var handlerId in data) {
-                if(handlerId in self.progressBars) {
+            for (var handlerId in data) {
+                if (handlerId in self.progressBars) {
                     var info = data[handlerId];
                     var progressBar = self.progressBars[handlerId];
                     progressBar.inProgress(!info.complete);
-                    if(progressBar.inProgress()) {
+                    if (progressBar.inProgress()) {
                         progressBar.current(info.current);
                         progressBar.total(info.total);
                     }
@@ -37,10 +37,10 @@ function ruleProgressBarGroup (progressUrl) {
     self.updateProgress();
 
     return self;
-}
+};
 
 
-function ruleProgressBar(handlerId, progressBarGroup) {
+var ruleProgressBar = function(handlerId, progressBarGroup) {
     'use strict';
     var self = {};
 
@@ -49,7 +49,7 @@ function ruleProgressBar(handlerId, progressBarGroup) {
     self.total = ko.observable(0);
 
     self.progressPct = ko.computed(function () {
-        if(self.total() > 0) {
+        if (self.total() > 0) {
             return Math.round((self.current() / self.total()) * 100) + "%";
         } else {
             return "0%";
@@ -63,4 +63,4 @@ function ruleProgressBar(handlerId, progressBarGroup) {
     progressBarGroup.add(handlerId, self);
 
     return self;
-}
+};

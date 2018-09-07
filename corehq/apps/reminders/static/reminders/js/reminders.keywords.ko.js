@@ -62,12 +62,12 @@ hqDefine("reminders/js/reminders.keywords.ko", [
         };
 
         self.addNamedArg = function () {
-            self.namedArgs.push({"name" : "", "xpath" : ""});
+            self.namedArgs.push({"name": "", "xpath": ""});
             self.updateExampleStructuredSMS();
         };
 
-        self.removeNamedArg = function() {
-            if(self.namedArgs().length === 1) {
+        self.removeNamedArg = function () {
+            if (self.namedArgs().length === 1) {
                 alert("You must have at least one named answer.");
             } else {
                 self.namedArgs.remove(this);
@@ -88,7 +88,7 @@ hqDefine("reminders/js/reminders.keywords.ko", [
             var keyword = self.keyword() ? self.keyword().toString().trim() : "";
             var example = keyword.toLowerCase();
 
-            if(self.useNamedArgs()) {
+            if (self.useNamedArgs()) {
                 var toggle = false;
                 for (var i = 0; i < self.namedArgs().length; i++) {
                     toggle = !toggle;
