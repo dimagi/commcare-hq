@@ -66,6 +66,7 @@ branches:
   - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
   - annual-pricing # Gabriella Sept 3
   - sr-batch-ucrpillow # Sravan Sept 4
+  - je/upgrade-kafka # Sept r
 submodules:
   submodules/django-digest-src:
     branches: []
