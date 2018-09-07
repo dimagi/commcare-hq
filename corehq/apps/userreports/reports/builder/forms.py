@@ -1291,27 +1291,24 @@ class ConfigureTableReportForm(ConfigureListReportForm):
     @property
     def _report_charts(self):
 
-        def get_non_agged_columns():
-            return [c for c in self._report_columns if c['aggregation'] != UCR_AGG_SIMPLE]
+        non_agged_columns = [c for c in self._report_columns if c['aggregation'] != UCR_AGG_SIMPLE]
+        agged_columns = [c for c in self._report_columns if c['aggregation'] == UCR_AGG_SIMPLE]
 
-        def get_agged_columns():
-            return [c for c in self._report_columns if c['aggregation'] == UCR_AGG_SIMPLE]
-
-        if get_non_agged_columns():
+        if non_agged_columns:
             if self.cleaned_data['chart'] == "bar":
                 return [{
                     "type": "multibar",
-                    "x_axis_column": get_agged_columns()[0]['column_id'] if get_agged_columns() else '',
+                    "x_axis_column": agged_columns[0]['column_id'] if agged_columns else '',
                     # TODO: Possibly use more columns?
                     "y_axis_columns": [
-                        {"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()
+                        {"column_id": c["column_id"], "display": c["display"]} for c in non_agged_columns
                     ],
                 }]
             elif self.cleaned_data['chart'] == "pie":
                 return [{
                     "type": "pie",
-                    "aggregation_column": get_agged_columns()[0]['column_id'],
-                    "value_column": get_non_agged_columns()[0]['column_id'],
+                    "aggregation_column": agged_columns[0]['column_id'],
+                    "value_column": non_agged_columns[0]['column_id'],
                 }]
         return []
 
