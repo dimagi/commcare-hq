@@ -143,7 +143,7 @@ simplejson==3.11.1
 six==1.11.0
 smartypants==2.0.1        # via pycco
 socketpool==0.5.3
-sqlagg==0.10.2
+sqlagg==0.10.3
 sqlalchemy==1.2.9
 stripe==1.67.0
 suds-jurko==0.6
