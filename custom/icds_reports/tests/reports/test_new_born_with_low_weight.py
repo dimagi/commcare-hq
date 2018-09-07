@@ -7,6 +7,8 @@ from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_wit
     get_newborn_with_low_birth_weight_chart, get_newborn_with_low_birth_weight_data
 from django.test import TestCase
 
+from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
+
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestNewBornWithLowWeight(TestCase):
@@ -80,11 +82,7 @@ class TestNewBornWithLowWeight(TestCase):
             loc_level='state'
         )
         expected = (
-            "Of all the children born in the current month and enrolled for Anganwadi services, the percentage "
-            "that had a birth weight less than 2500 grams. "
-            "<br/><br/>"
-            "Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality and "
-            "morbidity, inhibited growth and cognitive development, and chronic diseases later in life. "
+            get_new_born_with_low_weight_help_text(html=True)
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -376,11 +374,7 @@ class TestNewBornWithLowWeight(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Of all the children born in the current month and enrolled for Anganwadi services, the percentage "
-            "that had a birth weight less than 2500 grams. "
-            "<br/><br/>"
-            "Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality "
-            "and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. ",
+            get_new_born_with_low_weight_help_text(html=True)
         )
 
     def test_sector_data_tooltips_data(self):
