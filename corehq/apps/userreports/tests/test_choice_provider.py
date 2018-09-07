@@ -206,9 +206,9 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         choices = self.choice_provider.get_choices_for_known_values([
             loc_ids_by_name['Cambridge'], loc_ids_by_name['Somerville'], loc_ids_by_name['Bostone'],
         ], self.web_user)
-        self.assertItemsEqual(
-            [choice.value for choice in choices],
-            [loc_ids_by_name["Cambridge"], loc_ids_by_name["Somerville"]]
+        self.assertEqual(
+            {choice.value for choice in choices},
+            {loc_ids_by_name["Cambridge"], loc_ids_by_name["Somerville"]}
         )
         self.web_user.set_role(self.domain, 'none')
         self.web_user.unset_location(self.domain)

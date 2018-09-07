@@ -226,7 +226,7 @@ class RetireUserTestCase(TestCase):
         expected_call_args = [mock.call(self.domain, case_id, detail) for case_id in case_ids]
 
         self.assertEqual(rebuild_case.call_count, len(case_ids))
-        self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)
+        self.assertEqual(set(rebuild_case.call_args_list), set(expected_call_args))
 
     @run_with_all_backends
     @mock.patch("casexml.apps.case.cleanup.rebuild_case_from_forms")
@@ -256,7 +256,7 @@ class RetireUserTestCase(TestCase):
         expected_call_args = [mock.call(self.domain, case_id, detail) for case_id in case_ids[1:]]
 
         self.assertEqual(rebuild_case.call_count, len(case_ids) - 1)
-        self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)
+        self.assertEqual(set(rebuild_case.call_args_list), set(expected_call_args))
 
     @run_with_all_backends
     def test_all_case_forms_deleted(self):

@@ -93,27 +93,27 @@ class AllCommCareUsersTest(TestCase):
 
         usernames = lambda users: [u.username for u in users]
         # if no filters are passed, should return all cc-users in the domain
-        self.assertItemsEqual(
-            usernames(get_commcare_users_by_filters(self.ccdomain.name, {})),
-            usernames([self.ccuser_2, self.ccuser_1])
+        self.assertEqual(
+            set(usernames(get_commcare_users_by_filters(self.ccdomain.name, {}))),
+            set(usernames([self.ccuser_2, self.ccuser_1]))
         )
         self.assertEqual(
             get_commcare_users_by_filters(self.ccdomain.name, {}, count_only=True),
             2
         )
         # can search by username
-        self.assertItemsEqual(
-            usernames(get_commcare_users_by_filters(self.ccdomain.name, {'search_string': 'user_1'})),
-            [self.ccuser_1.username]
+        self.assertEqual(
+            set(usernames(get_commcare_users_by_filters(self.ccdomain.name, {'search_string': 'user_1'}))),
+            {self.ccuser_1.username}
         )
         self.assertEqual(
             get_commcare_users_by_filters(self.ccdomain.name, {'search_string': 'user_1'}, count_only=True),
             1
         )
         # can search by role_id
-        self.assertItemsEqual(
-            usernames(get_commcare_users_by_filters(self.ccdomain.name, {'role_id': self.custom_role._id})),
-            [self.ccuser_2.username]
+        self.assertEqual(
+            set(usernames(get_commcare_users_by_filters(self.ccdomain.name, {'role_id': self.custom_role._id}))),
+            {self.ccuser_2.username}
         )
         self.assertEqual(
             get_commcare_users_by_filters(self.ccdomain.name, {'role_id': self.custom_role._id}, count_only=True),
@@ -126,13 +126,13 @@ class AllCommCareUsersTest(TestCase):
         expected_users = [self.ccuser_2, self.ccuser_1]
         expected_usernames = [user.username for user in expected_users]
         actual_usernames = [user.username for user in get_all_commcare_users_by_domain(self.ccdomain.name)]
-        self.assertItemsEqual(actual_usernames, expected_usernames)
+        self.assertEqual(set(actual_usernames), set(expected_usernames))
 
     def test_get_all_usernames_by_domain(self):
         all_cc_users = [self.ccuser_1, self.ccuser_2, self.web_user]
         expected_usernames = [user.username for user in all_cc_users]
         actual_usernames = get_all_usernames_by_domain(self.ccdomain.name)
-        self.assertItemsEqual(actual_usernames, expected_usernames)
+        self.assertEqual(set(actual_usernames), set(expected_usernames))
 
     def test_exclude_retired_users(self):
         deleted_user = CommCareUser.create(
@@ -152,9 +152,9 @@ class AllCommCareUsersTest(TestCase):
     def test_get_user_docs_by_username(self):
         users = [self.ccuser_1, self.web_user, self.ccuser_other_domain]
         usernames = [u.username for u in users] + ['nonexistant@username.com']
-        self.assertItemsEqual(
-            get_user_docs_by_username(usernames),
-            [u.to_json() for u in users]
+        self.assertEqual(
+            set(get_user_docs_by_username(usernames)),
+            {u.to_json() for u in users}
         )
 
     def test_get_all_ids(self):

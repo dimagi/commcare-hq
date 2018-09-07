@@ -74,14 +74,14 @@ class TestCloneDomain(TestCase):
 
         self.make_clone(include=['locations', 'location_types'])
 
-        self.assertItemsEqual(
-            location_types_snapshot(self.old_domain),
-            location_types_snapshot(self.new_domain),
+        self.assertEqual(
+            set(location_types_snapshot(self.old_domain)),
+            set(location_types_snapshot(self.new_domain)),
         )
 
-        self.assertItemsEqual(
-            locations_snapshot(self.old_domain),
-            locations_snapshot(self.new_domain),
+        self.assertEqual(
+            set(locations_snapshot(self.old_domain)),
+            set(locations_snapshot(self.new_domain)),
         )
 
         # Make sure parents and types are in the same domain

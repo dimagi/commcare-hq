@@ -47,9 +47,9 @@ class DBAccessorsTest(TestCase):
         )
 
     def test_get_all_report_configs(self):
-        self.assertItemsEqual(
-            [o.to_json() for o in get_all_report_configs()],
-            [o.to_json() for o in self.report_configs]
+        self.assertEqual(
+            set(o.to_json() for o in get_all_report_configs()),
+            set(o.to_json() for o in self.report_configs)
         )
 
     def test_get_report_configs_for_domain(self):

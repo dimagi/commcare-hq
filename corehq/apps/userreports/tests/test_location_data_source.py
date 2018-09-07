@@ -61,9 +61,9 @@ class TestLocationDataSource(TestCase):
         adapter = get_indicator_adapter(self.data_source_config)
         query = adapter.get_query_object()
         data_source = query.all()
-        self.assertItemsEqual(
-            expected_locations,
-            [row[-1] for row in data_source]
+        self.assertEqual(
+            set(expected_locations),
+            set(row[-1] for row in data_source)
         )
 
     def test_location_data_source(self):

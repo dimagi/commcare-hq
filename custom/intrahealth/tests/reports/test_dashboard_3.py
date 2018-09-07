@@ -294,14 +294,14 @@ class TestDashboard3(YeksiTestCase):
             ['Produit', 'Octobre 2017', 'Novembre 2017', 'Décembre 2017', 'Janvier 2018',
              'Février 2018', 'Mars 2018']
         )
-        self.assertItemsEqual(
-            rows,
-            sorted([
+        self.assertEqual(
+            set(rows),
+            set([
                 ['Produit A', '442.500', '717.500', '412.500', '150.000', '437.500', '150.000'],
                 ['Produit B', '336.000', '558.000', '334.500', '157.500', '453.000', '127.500'],
                 ['Produit C', '198.000', '386.400', 'pas de donn\xe9es', '120.000', 'pas de donn\xe9es',
                  'pas de donn\xe9es'],
-            ], key=lambda x: x[0])
+            ])
         )
         self.assertEqual(
             total_row,
