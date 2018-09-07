@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 import jsonfield as old_jsonfield
+from contextlib import contextmanager
 from copy import deepcopy
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.exceptions import XFormIdNotUnique
@@ -29,6 +30,11 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
+
+
+@contextmanager
+def no_op_context_manager():
+    yield
 
 
 class SMSContent(Content):
@@ -187,6 +193,12 @@ class SMSSurveyContent(Content):
 
         return pb is not None and not pb.send_sms
 
+    def get_critical_section(self, recipient):
+        if self.critical_section_already_acquired:
+            return no_op_context_manager()
+
+        return critical_section_for_smsforms_sessions(recipient.get_id)
+
     def send(self, recipient, logged_event):
         app, module, form, requires_input = self.get_memoized_app_module_form(logged_event.domain)
         if any([o is None for o in (app, module, form)]):
@@ -221,7 +233,7 @@ class SMSSurveyContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_PHONE_OPTED_OUT)
             return
 
-        with critical_section_for_smsforms_sessions(recipient.get_id):
+        with self.get_critical_section(recipient):
             # Get the case to submit the form against, if any
             case_id = None
             if is_commcarecase(recipient):
