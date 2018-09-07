@@ -82,7 +82,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
 
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
 
-        self.assertItemsEqual(autopayable_invoices, autopayable_invoice)
+        self.assertEqual(set(autopayable_invoices), set(autopayable_invoice))
 
     def test_get_autopayable_invoices_returns_nothing(self):
         """
@@ -91,7 +91,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         not_autopayable_invoice = Invoice.objects.filter(subscription=self.non_autopay_subscription)
         date_due = not_autopayable_invoice.first().date_due
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
-        self.assertItemsEqual(autopayable_invoices, [])
+        self.assertEqual(len(autopayable_invoices), 0)
 
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(Charge, 'create')

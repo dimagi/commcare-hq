@@ -194,11 +194,11 @@ class TestRepeatRecordDBAccessors(TestCase):
     def test_get_repeat_records_by_payload_id(self):
         id_1_records = list(get_repeat_records_by_payload_id(self.domain, self.payload_id_1))
         self.assertEqual(len(id_1_records), 2)
-        self.assertItemsEqual([r._id for r in id_1_records], [r._id for r in self.records[0:2]])
+        self.assertEqual({r._id for r in id_1_records}, {r._id for r in self.records[0:2]})
 
         id_2_records = list(get_repeat_records_by_payload_id(self.domain, self.payload_id_2))
         self.assertEqual(len(id_2_records), 4)
-        self.assertItemsEqual([r._id for r in id_2_records], [r._id for r in self.records[2:6]])
+        self.assertEqual({r._id for r in id_2_records}, {r._id for r in self.records[2:6]})
 
 
 class TestRepeatersDBAccessors(TestCase):

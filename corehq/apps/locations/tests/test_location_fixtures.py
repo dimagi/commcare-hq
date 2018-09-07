@@ -96,7 +96,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
 
     def assert_fixture_queryset_equals_locations(self, desired_locations):
         actual = get_location_fixture_queryset(self.user).values_list('name', flat=True)
-        self.assertItemsEqual(actual, desired_locations)
+        self.assertEqual(set(actual), set(desired_locations))
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
@@ -481,7 +481,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
         super(LocationFixturesDataTest, cls).tearDownClass()
 
     def test_utility_method(self):
-        self.assertItemsEqual(self.field_slugs, [f.slug for f in _get_location_data_fields(self.domain)])
+        self.assertEqual(set(self.field_slugs), set(f.slug for f in _get_location_data_fields(self.domain)))
 
     def test_utility_method_empty(self):
         self.assertEqual([], [f.slug for f in _get_location_data_fields('no-fields-defined')])
@@ -496,7 +496,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
             location_data_nodes = [child for child in location_node.find('location_data')]
             self.assertEqual(2, len(location_data_nodes))
             tags = {n.tag for n in location_data_nodes}
-            self.assertItemsEqual(tags, self.field_slugs)
+            self.assertEqual(set(tags), set(self.field_slugs))
 
     def test_additional_metadata_not_included(self):
         mass = self.locations['Massachusetts']
@@ -514,7 +514,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
             field for field in fixture.find('locations/location[@id="{}"]/location_data'.format(mass.location_id))
         ]
         self.assertEqual(2, len(mass_data))
-        self.assertItemsEqual(self.field_slugs, [f.tag for f in mass_data])
+        self.assertEqual(set(self.field_slugs), set(f.tag for f in mass_data))
 
     def test_existing_metadata_works(self):
         mass = self.locations['Massachusetts']

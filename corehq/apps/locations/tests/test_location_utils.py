@@ -45,9 +45,9 @@ class TestGetLocationsAndChildren(MassachusettsTestCase):
         result = SQLLocation.objects.get_locations_and_children(
             [self.locations[name].location_id for name in names]
         )
-        self.assertItemsEqual(
-            [loc.name for loc in result],
-            ['Middlesex', 'Cambridge', 'Somerville', 'Suffolk', 'Boston']
+        self.assertEqual(
+            set(loc.name for loc in result),
+            {'Middlesex', 'Cambridge', 'Somerville', 'Suffolk', 'Boston'}
         )
 
     def test_get_locations_and_children2(self):
@@ -55,11 +55,11 @@ class TestGetLocationsAndChildren(MassachusettsTestCase):
         result = SQLLocation.objects.get_locations_and_children(
             [self.locations[name].location_id for name in names]
         )
-        self.assertItemsEqual(
-            [loc.name for loc in result],
-            ['Middlesex', 'Cambridge', 'Somerville', 'Boston']
+        self.assertEqual(
+            set(loc.name for loc in result),
+            {'Middlesex', 'Cambridge', 'Somerville', 'Boston'}
         )
 
     def test_get_locations_and_children_with_empty_list(self):
         result = SQLLocation.objects.get_locations_and_children([])
-        self.assertItemsEqual(list(result), [])
+        self.assertEqual(len(result), 0)

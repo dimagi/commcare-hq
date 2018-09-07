@@ -37,4 +37,4 @@ class DBAccessorTest(TestCase):
     def test_get_fixture_data_types_in_domain(self):
         expected = [data_type.to_json() for data_type in self.data_types if data_type.domain == self.domain]
         actual = [o.to_json() for o in get_fixture_data_types_in_domain(self.domain)]
-        self.assertItemsEqual(actual, expected)
+        self.assertEqual(set(actual), set(expected))

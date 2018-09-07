@@ -172,9 +172,9 @@ class TestDeleteLocations(LocationHierarchyPerTest):
 
     def test_trickle_down_delete(self):
         self.locations['Middlesex'].delete()
-        self.assertItemsEqual(
-            SQLLocation.objects.filter(domain=self.domain).values_list('name', flat=True),
-            ['Massachusetts', 'Suffolk', 'Boston']
+        self.assertEqual(
+            set(SQLLocation.objects.filter(domain=self.domain).values_list('name', flat=True)),
+            {'Massachusetts', 'Suffolk', 'Boston'}
         )
 
     def test_delete_queryset(self):
@@ -182,9 +182,9 @@ class TestDeleteLocations(LocationHierarchyPerTest):
          .filter(domain=self.domain,
                  name__in=['Boston', 'Suffolk', 'Cambridge'])
          .delete())
-        self.assertItemsEqual(
-            SQLLocation.objects.filter(domain=self.domain).values_list('name', flat=True),
-            ['Massachusetts', 'Middlesex', 'Somerville']
+        self.assertEqual(
+            set(SQLLocation.objects.filter(domain=self.domain).values_list('name', flat=True)),
+            {'Massachusetts', 'Middlesex', 'Somerville'}
         )
 
     def test_delete_queryset_across_domains(self):
@@ -199,14 +199,14 @@ class TestDeleteLocations(LocationHierarchyPerTest):
         SQLLocation.objects.create(
             domain=other_domain, name='Evil Suffolk', location_type=location_type
         )
-        self.assertItemsEqual(
-            SQLLocation.objects.all().values_list('name', flat=True),
-            ['Massachusetts', 'Middlesex', 'Cambridge', 'Somerville', 'Suffolk', 'Boston', 'Evil Suffolk']
+        self.assertEqual(
+            set(SQLLocation.objects.all().values_list('name', flat=True)),
+            {'Massachusetts', 'Middlesex', 'Cambridge', 'Somerville', 'Suffolk', 'Boston', 'Evil Suffolk'}
         )
         (SQLLocation.objects
          .filter(name__in=['Boston', 'Suffolk', 'Cambridge', 'Evil Suffolk'])
          .delete())
-        self.assertItemsEqual(
-            SQLLocation.objects.all().values_list('name', flat=True),
-            ['Massachusetts', 'Middlesex', 'Somerville']
+        self.assertEqual(
+            set(SQLLocation.objects.all().values_list('name', flat=True)),
+            {'Massachusetts', 'Middlesex', 'Somerville'}
         )

@@ -439,15 +439,15 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         names = ['Cape Winelands', 'Paarl', 'Cape Town']
         location_ids = [locations[name].location_id for name in names]
         result = SQLLocation.objects.get_locations_and_children(location_ids)
-        self.assertItemsEqual(
-            [loc.name for loc in result],
-            ['Cape Winelands', 'Stellenbosch', 'Paarl', 'Cape Town', 'Cape Town City']
+        self.assertEqual(
+            set(loc.name for loc in result),
+            {'Cape Winelands', 'Stellenbosch', 'Paarl', 'Cape Town', 'Cape Town City'}
         )
 
         result = SQLLocation.objects.get_locations_and_children([locations['Gauteng'].location_id])
-        self.assertItemsEqual(
-            [loc.name for loc in result],
-            ['Gauteng', 'Ekurhuleni ', 'Alberton', 'Benoni', 'Springs']
+        self.assertEqual(
+            set(loc.name for loc in result),
+            {'Gauteng', 'Ekurhuleni ', 'Alberton', 'Benoni', 'Springs'}
         )
 
     def test_sms(self):

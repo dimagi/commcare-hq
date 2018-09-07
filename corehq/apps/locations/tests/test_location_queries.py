@@ -32,34 +32,34 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
     def test_filter_by_user_input(self):
         middlesex_locs = (SQLLocation.objects
                           .filter_by_user_input(self.domain, "Middlesex"))
-        self.assertItemsEqual(
-            ['Middlesex'],
-            [loc.name for loc in middlesex_locs]
+        self.assertEqual(
+            {'Middlesex'},
+            set(loc.name for loc in middlesex_locs)
         )
 
     def test_filter_path_by_user_input(self):
         middlesex_locs = (SQLLocation.objects
                           .filter_path_by_user_input(self.domain, "Middlesex"))
-        self.assertItemsEqual(
-            ['Middlesex', 'Cambridge', 'Somerville'],
-            [loc.name for loc in middlesex_locs]
+        self.assertEqual(
+            {'Middlesex', 'Cambridge', 'Somerville'},
+            set(loc.name for loc in middlesex_locs)
         )
 
     def test_filter_by_partial_match(self):
         middlesex_locs = (SQLLocation.objects
                           .filter_path_by_user_input(self.domain, "Middle"))
-        self.assertItemsEqual(
-            ['Middlesex', 'Cambridge', 'Somerville'],
-            [loc.name for loc in middlesex_locs]
+        self.assertEqual(
+            {'Middlesex', 'Cambridge', 'Somerville'},
+            set(loc.name for loc in middlesex_locs)
         )
 
     def test_ancestors(self):
         boston_matches = (SQLLocation.objects
                           .filter_by_user_input(self.domain, "Boston"))
 
-        self.assertItemsEqual(
-            [loc.name for loc in boston_matches[0].get_ancestors()],
-            ['Suffolk', 'Massachusetts']
+        self.assertEqual(
+            set(loc.name for loc in boston_matches[0].get_ancestors()),
+            {'Suffolk', 'Massachusetts'}
         )
 
     def test_ancestor_of_type(self):
@@ -114,7 +114,7 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
         all_locs = (
             SQLLocation.objects.accessible_to_user(self.domain, self.web_user)
         )
-        self.assertItemsEqual(list(self.locations.values()), all_locs)
+        self.assertEqual(set(self.locations.values()), set(all_locs))
 
     def test_primary_location_assigned_and_descendants(self):
         self.restrict_user_to_assigned_locations(self.web_user)
@@ -122,9 +122,9 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
             SQLLocation.objects.accessible_to_user(self.domain, self.web_user)
         )
 
-        self.assertItemsEqual(
-            [self.locations[location] for location in ["Middlesex", "Cambridge", "Somerville"]],
-            accessible_locs
+        self.assertEqual(
+            set(self.locations[location] for location in ["Middlesex", "Cambridge", "Somerville"]),
+            set(accessible_locs)
         )
 
     def test_location_assigned_and_their_descendants(self):
@@ -135,18 +135,18 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
         )
 
         accessible_loc_names = ["Middlesex", "Cambridge", "Somerville", "California", "Los Angeles"]
-        self.assertItemsEqual(
-            [self.locations[location] for location in accessible_loc_names],
-            accessible_locs
+        self.assertEqual(
+            set(self.locations[location] for location in accessible_loc_names),
+            set(accessible_locs)
         )
 
     def test_location_restricted_but_unassigned(self):
         # unassigned users shouldn't be able to access any locations
         unassigned_user = WebUser.create(self.domain, 'unassigned', 'password')
         self.restrict_user_to_assigned_locations(unassigned_user)
-        self.assertItemsEqual(
-            [],
-            SQLLocation.objects.accessible_to_user(self.domain, unassigned_user)
+        self.assertEqual(
+            len(SQLLocation.objects.accessible_to_user(self.domain, unassigned_user)),
+            0
         )
 
     def test_filter_path_by_user_input(self):
@@ -159,9 +159,9 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
             .filter_path_by_user_input(self.domain, "Massachusetts")
             .accessible_to_user(self.domain, self.web_user)
         )
-        self.assertItemsEqual(
-            ['Middlesex', 'Cambridge', 'Somerville'],
-            [loc.name for loc in middlesex_locs]
+        self.assertEqual(
+            {'Middlesex', 'Cambridge', 'Somerville'},
+            set(loc.name for loc in middlesex_locs)
         )
 
         # User searching for a branch they don't have access to get nothing
@@ -170,4 +170,4 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
             .filter_path_by_user_input(self.domain, "Suffolk")
             .accessible_to_user(self.domain, self.web_user)
         )
-        self.assertItemsEqual([], no_locs)
+        self.assertEqual(len(no_locs), 0)

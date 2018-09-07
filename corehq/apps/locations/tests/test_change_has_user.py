@@ -42,10 +42,10 @@ class TestChangeHasUser(TestCase):
     def assertUserState(self, active, inactive):
         """active and inactive should be lists of usernames"""
         for usernames, is_active in [(active, True), (inactive, False)]:
-            self.assertItemsEqual(
-                usernames,
-                [user.raw_username for user in
-                 CommCareUser.by_domain(self.domain, is_active=is_active)]
+            self.assertEqual(
+                set(usernames),
+                set(user.raw_username for user in
+                 CommCareUser.by_domain(self.domain, is_active=is_active))
             )
 
     def submit_form(self, name):

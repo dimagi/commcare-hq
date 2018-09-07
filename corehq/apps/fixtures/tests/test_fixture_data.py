@@ -119,8 +119,8 @@ class FixtureDataTest(TestCase):
         """, ElementTree.tostring(self.data_item.to_xml()))
 
     def test_ownership(self):
-        self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
-        self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
+        self.assertEqual({self.data_item.get_id}, set(FixtureDataItem.by_user(self.user, wrap=False)))
+        self.assertEqual({self.user.get_id}, set(self.data_item.get_all_users(wrap=False)))
 
         fixture, = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
 
@@ -138,10 +138,10 @@ class FixtureDataTest(TestCase):
         """ % self.user.user_id, ElementTree.tostring(fixture))
 
         self.data_item.remove_user(self.user)
-        self.assertItemsEqual([], self.data_item.get_all_users())
+        self.assertEqual(len(self.data_item.get_all_users()), 0)
 
         self.fixture_ownership = self.data_item.add_user(self.user)
-        self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
+        self.assertEqual({self.user.get_id}, set(self.data_item.get_all_users(wrap=False)))
 
     def test_fixture_removal(self):
         """

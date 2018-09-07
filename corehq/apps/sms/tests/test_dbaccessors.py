@@ -24,9 +24,9 @@ class DBAccessorsTest(TestCase):
         super(DBAccessorsTest, cls).tearDownClass()
 
     def test_get_forwarding_rules_for_domain(self):
-        self.assertItemsEqual(
-            [rule.to_json()
-             for rule in get_forwarding_rules_for_domain(self.domain)],
-            [rule.to_json() for rule in self.forwarding_rules
-             if rule.domain == self.domain]
+        self.assertEqual(
+            set(rule.to_json()
+             for rule in get_forwarding_rules_for_domain(self.domain)),
+            set(rule.to_json() for rule in self.forwarding_rules
+             if rule.domain == self.domain)
         )

@@ -48,12 +48,12 @@ class TestUsersByLocation(TestCase):
 
     def test_get_users_by_location_id(self):
         users = get_users_by_location_id(self.domain, self.meereen._id)
-        self.assertItemsEqual([u._id for u in users],
-                              [self.tyrion._id, self.daenerys._id])
+        self.assertEqual(set(u._id for u in users),
+                              {self.tyrion._id, self.daenerys._id})
 
     def test_get_user_ids_by_location(self):
         user_ids = get_user_ids_by_location(self.domain, self.meereen._id)
-        self.assertItemsEqual(user_ids, [self.tyrion._id, self.daenerys._id])
+        self.assertEqual(set(user_ids), {self.tyrion._id, self.daenerys._id})
 
     def test_get_one_user_at_location(self):
         user = get_one_user_at_location(self.domain, self.meereen._id)
@@ -61,14 +61,14 @@ class TestUsersByLocation(TestCase):
 
     def test_get_user_docs_by_location(self):
         users = get_user_docs_by_location(self.domain, self.meereen._id)
-        self.assertItemsEqual([u['doc'] for u in users],
-                              [self.tyrion.to_json(), self.daenerys.to_json()])
+        self.assertEqual(set(u['doc'] for u in users),
+                         {self.tyrion.to_json(), self.daenerys.to_json()})
 
     def test_get_all_users_by_location(self):
         users = get_all_users_by_location(self.domain, self.meereen._id)
-        self.assertItemsEqual(
-            [u._id for u in users],
-            [self.tyrion._id, self.daenerys._id, self.george._id]
+        self.assertEqual(
+            set(u._id for u in users),
+            {self.tyrion._id, self.daenerys._id, self.george._id}
         )
 
     def test_users_have_locations(self):
@@ -80,18 +80,18 @@ class TestUsersByLocation(TestCase):
     def test_get_users_assigned_to_locations(self):
         other_user = CommCareUser.create(self.domain, 'other', 'password')
         users = get_users_assigned_to_locations(self.domain)
-        self.assertItemsEqual(
-            [u._id for u in users],
-            [self.varys._id, self.tyrion._id, self.daenerys._id, self.george._id]
+        self.assertEqual(
+            set(u._id for u in users),
+            {self.varys._id, self.tyrion._id, self.daenerys._id, self.george._id}
         )
         other_user.delete()
 
     def test_generate_user_ids_from_primary_location_ids_from_couch(self):
-        self.assertItemsEqual(
-            list(
+        self.assertEqual(
+            set(
                 generate_user_ids_from_primary_location_ids_from_couch(
                     self.domain, [self.pentos.location_id, self.meereen.location_id]
                 )
             ),
-            [self.varys._id, self.tyrion._id, self.daenerys._id]
+            {self.varys._id, self.tyrion._id, self.daenerys._id}
         )
