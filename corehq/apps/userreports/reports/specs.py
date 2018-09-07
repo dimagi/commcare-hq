@@ -7,6 +7,7 @@ import json
 from datetime import date
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
+from sqlalchemy import bindparam
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.userreports import const
 from corehq.apps.userreports.exceptions import InvalidQueryColumn
@@ -384,9 +385,8 @@ class ConditionalAggregationColumn(ReportColumn):
         )
 
     def get_whens(self):
-        transform_val = lambda val: "'{}'".format(val)
         return {
-            k: transform_val(v) for k, v in self.whens.items()
+            k: bindparam(None, v) for k, v in self.whens.items()
         }
 
     def get_query_column_ids(self):
