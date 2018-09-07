@@ -1,7 +1,7 @@
 hqDefine('settings/js/edit_my_account', [
     'jquery',
     'hqwebapp/js/initial_page_data',
-    'select2-3.5.2-legacy/select2',
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     initialPageData
