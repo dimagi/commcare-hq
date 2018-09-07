@@ -13,7 +13,7 @@ from django.contrib import messages
 from django.utils.decorators import method_decorator
 
 from corehq import toggles
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.translations.forms import (
     ConvertTranslationsForm,
     PullResourceForm,
@@ -168,7 +168,7 @@ class PullResource(BaseTranslationsView):
     template_name = 'pull_resource.html'
     section_name = ugettext_noop("Translations")
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(PullResource, self).dispatch(request, *args, **kwargs)
 

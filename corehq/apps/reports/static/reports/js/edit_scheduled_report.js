@@ -4,7 +4,7 @@ hqDefine("reports/js/edit_scheduled_report", [
     "analytix/js/google",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/multiselect_utils",
-    "hqwebapp/js/widgets",  // autocomplete widget for email recipient list
+    "hqwebapp/js/widgets_v4",  // autocomplete widget for email recipient list
 ], function (
     $,
     _,
