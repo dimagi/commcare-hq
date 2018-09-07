@@ -87,7 +87,7 @@ class KafkaChangeFeed(ChangeFeed):
 
             # this is how you tell the consumer to start from a certain point in the sequence
             for topic_partition, offset in since.items():
-                consumer.seek(TopicPartition(topic_partition[0], topic_partition[1]), offset)
+                consumer.seek(TopicPartition(topic_partition[0], topic_partition[1]), int(offset))
 
         try:
             for message in consumer:
