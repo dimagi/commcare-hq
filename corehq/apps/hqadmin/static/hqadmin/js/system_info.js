@@ -100,7 +100,7 @@ hqDefine('hqadmin/js/system_info', [
                     self.autoRefresh(false);
                     self.timer = null;
                 })
-                .always(function (){
+                .always(function () {
                     self.loading(false);
                 });
         };
@@ -180,11 +180,11 @@ hqDefine('hqadmin/js/system_info', [
             return self.dbOffset - self.seq;
         };
 
-        self.width = function() {
+        self.width = function () {
             return (self.seq * 100) / self.dbOffset;
         };
 
-        self.status = function() {
+        self.status = function () {
             if (self.changesBehind() < 500) {
                 return 'progress-bar-success';
             } else if (self.changesBehind() < 1000) {
@@ -218,12 +218,12 @@ hqDefine('hqadmin/js/system_info', [
             self.offsets(data.offsets);
             self.timeSinceLast(data.timeSinceLast);
             self.showSupervisorInfo(!!data.supervisorState);
-            self.supervisorState(data.supervisorState||'(unavailable)');
+            self.supervisorState(data.supervisorState || '(unavailable)');
             self.supervisorMessage(data.supervisorMessage);
 
             self.progress([]);
             if (self.seq_format() === 'json') {
-                _.each(self.offsets(), function(dbOffset, key) {
+                _.each(self.offsets(), function (dbOffset, key) {
                     var value;
                     if (self.seq() === null || !self.seq().hasOwnProperty(key)) {
                         value = 0;
@@ -248,11 +248,11 @@ hqDefine('hqadmin/js/system_info', [
             return self.processRunning() ? gettext("Stop") : gettext("Start");
         });
 
-        self.disabled = ko.computed(function() {
+        self.disabled = ko.computed(function () {
             return self.operationInProgress() || (self.supervisorState() !== 'RUNNING' && self.supervisorState() !== 'STOPPED');
         });
 
-        self.supervisorStateCss = ko.computed(function() {
+        self.supervisorStateCss = ko.computed(function () {
             switch (self.supervisorState()) {
                 case ('(unavailable)'):
                     return '';
@@ -265,7 +265,7 @@ hqDefine('hqadmin/js/system_info', [
             }
         });
 
-        self.checkpointStatusCss = ko.computed(function() {
+        self.checkpointStatusCss = ko.computed(function () {
             var hours = pillow.hours_since_last;
             switch (true) {
                 case (hours <= 1):
@@ -279,7 +279,7 @@ hqDefine('hqadmin/js/system_info', [
             }
         });
 
-        self.overallStatus = ko.computed(function() {
+        self.overallStatus = ko.computed(function () {
             var statusCombined = self.checkpointStatusCss() + self.supervisorStateCss();
             if (statusCombined.indexOf('important') !== -1) {
                 return 'error';
@@ -315,12 +315,12 @@ hqDefine('hqadmin/js/system_info', [
             self.performOperation('refresh');
         };
 
-        self.performOperation = function(operation) {
+        self.performOperation = function (operation) {
             self.operationInProgress(true);
             $.post(initialPageData.reverse("pillow_operation_api"), {
                 'pillow_name': self.name,
                 'operation': operation,
-            }, function( data ) {
+            }, function (data) {
                 self.operationInProgress(false);
                 self.update(data);
 
@@ -337,9 +337,9 @@ hqDefine('hqadmin/js/system_info', [
                     self.operationInProgress(false);
                     self.supervisorState('(unavailable)');
                     self.supervisorMessage(err);
-                }).always(function() {
+                }).always(function () {
                     $('#pillow_operation_modal').modal('hide');
-                    $("#" + self.name() +" td").fadeTo( "fast" , 0.5).fadeTo( "fast" , 1);
+                    $("#" + self.name() + " td").fadeTo("fast" , 0.5).fadeTo("fast" , 1);
                 });
         };
 

@@ -10,17 +10,17 @@ hqDefine('case_importer/js/import_history', [
     _,
     initialPageData
 ) {
-    var uploadModel = function(options) {
+    var uploadModel = function (options) {
         var self = _.extend({}, _.omit(options, 'comment', 'task_status'));
 
         self.comment = ko.observable(options.comment || '');
         self.task_status = ko.observable(options.task_status);
 
-        self.commentUrl = function() {
+        self.commentUrl = function () {
             return initialPageData.reverse('case_importer_update_upload_comment', self.upload_id);
         };
 
-        self.downloadUrl = function() {
+        self.downloadUrl = function () {
             return initialPageData.reverse('case_importer_upload_file_download', self.upload_id);
         };
 

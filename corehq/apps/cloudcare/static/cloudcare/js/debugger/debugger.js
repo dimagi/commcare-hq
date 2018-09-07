@@ -42,7 +42,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         MENU: 'menu',
     };
 
-    var CloudCareDebugger = function(options) {
+    var CloudCareDebugger = function (options) {
         var self = this;
         self.options = options || {};
         _.defaults(self.options, {
@@ -69,7 +69,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         // Whether or not the debugger is in the middle of updating from an ajax request
         self.updating = ko.observable(false);
 
-        self.toggleState = function() {
+        self.toggleState = function () {
             self.isMinimized(!self.isMinimized());
             // Wait to set the content heigh until after the CSS animation has completed.
             // In order to support multiple heights, we set the height with javascript since
@@ -82,11 +82,11 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             }
             hqImport('analytix/js/kissmetrix').track.event('[app-preview] User toggled CloudCare debugger');
         };
-        self.collapseNavbar = function() {
+        self.collapseNavbar = function () {
             $('.navbar-collapse').collapse('hide');
         };
 
-        self.setContentHeight = function() {
+        self.setContentHeight = function () {
             var contentHeight;
             if (self.isMinimized()) {
                 $('.debugger-content').outerHeight(0);
@@ -99,7 +99,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         };
 
         // Called afterRender, ensures that the debugger takes the whole screen
-        self.adjustWidth = function() {
+        self.adjustWidth = function () {
             var $debug = $('#instance-xml-home'),
                 $body = $('body');
 
@@ -108,17 +108,17 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
     };
 
     // By default do nothing when updating the debugger
-    CloudCareDebugger.prototype.onUpdate = function() {
+    CloudCareDebugger.prototype.onUpdate = function () {
         this.updating(false);
     };
 
-    var CloudCareDebuggerFormEntry = function(options) {
+    var CloudCareDebuggerFormEntry = function (options) {
         var self = this;
         CloudCareDebugger.call(self, $.extend({ sessionType: SessionTypes.FORM }, options));
 
         self.formattedQuestionsHtml = ko.observable('');
         self.instanceXml = ko.observable('');
-        self.instanceXml.subscribe(function(newXml) {
+        self.instanceXml.subscribe(function (newXml) {
             var $instanceTab = $('#debugger-xml-instance-tab'),
                 $viewer = $('#xml-viewer-pretty'),
                 editor = ace.edit($viewer.get(0), {
@@ -138,7 +138,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
     CloudCareDebuggerFormEntry.prototype = Object.create(CloudCareDebugger.prototype);
     CloudCareDebuggerFormEntry.prototype.constructor = CloudCareDebugger;
     // By default do nothing when updating the debugger
-    CloudCareDebuggerFormEntry.prototype.onUpdate = function() {
+    CloudCareDebuggerFormEntry.prototype.onUpdate = function () {
         API.formattedQuestions(
             this.options.baseUrl,
             {
@@ -147,7 +147,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,
             }
-        ).done(function(response) {
+        ).done(function (response) {
             this.formattedQuestionsHtml(response.formattedQuestions);
             hqImport("reports/js/readable_form").init();
             this.instanceXml(response.instanceXml);
@@ -157,13 +157,13 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         }.bind(this));
     };
 
-    var CloudCareDebuggerMenu = function(options) {
+    var CloudCareDebuggerMenu = function (options) {
         var self = this;
         CloudCareDebugger.call(self, $.extend({ sessionType: SessionTypes.MENU }, options));
     };
     CloudCareDebuggerMenu.prototype = Object.create(CloudCareDebugger.prototype);
     CloudCareDebuggerMenu.prototype.constructor = CloudCareDebugger;
-    CloudCareDebuggerMenu.prototype.onUpdate = function() {
+    CloudCareDebuggerMenu.prototype.onUpdate = function () {
         API.menuDebuggerContent(
             this.options.baseUrl,
             {
@@ -173,19 +173,19 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 domain: this.options.domain,
                 app_id: this.options.appId,
             }
-        ).done(function(response) {
+        ).done(function (response) {
             this.evalXPath.autocomplete(response.autoCompletableItems);
             this.evalXPath.setRecentXPathQueries(response.recentXPathQueries || []);
             this.updating(false);
         }.bind(this));
     };
 
-    var DebugResponseLevel = function(label, key) {
+    var DebugResponseLevel = function (label, key) {
         this.key = key;
         this.label = label;
     };
 
-    var EvaluateXPath = function(options) {
+    var EvaluateXPath = function (options) {
         var self = this;
         self.options = options || {};
         _.defaults(self.options, {
@@ -239,10 +239,10 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                         return this.processedOutput[1];
                     }
                 },
-                isSuccessTruncated: function() {
+                isSuccessTruncated: function () {
                     return this.success() && this.processedOutput[1];
                 },
-                getMaxLines: function() {
+                getMaxLines: function () {
                     return this.maxLines;
                 },
                 traceResult: function () {
@@ -250,7 +250,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                         return this.trace[0];
                     }
                 },
-                isTraceTruncated: function() {
+                isTraceTruncated: function () {
                     return this.hasTrace() && this.trace[1];
                 },
                 getFullTraceResult: function () {
@@ -263,7 +263,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 },
                 errorResult: function () {
                     if (!this.success()) {
-                        if(this.processedOutput) {
+                        if (this.processedOutput) {
                             return this.processedOutput[0];
                         }
                         return gettext('Error evaluating expression.');
@@ -284,14 +284,14 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result>\n*([\\s\\S]*?)\\s*</result>\\s*|' +
             '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result/>()\\s*$');
 
-        self.getBody = function(output) {
+        self.getBody = function (output) {
             if (!output) {
                 return ['',''];
             }
             var inlineBody = self.formatResult(output);
             var numLines = (inlineBody.match(/\r?\n/g) || '').length + 1;
             var fullBody = '';
-            if(numLines > self.maxLines) {
+            if (numLines > self.maxLines) {
                 fullBody = inlineBody;
                 inlineBody = self.truncateResult(fullBody, self.maxLines, false);
             }
@@ -302,11 +302,11 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             return output.replace(resultRegex, "$1");
         };
 
-        self.truncateResult = function(output, maxLines, addElipsis) {
+        self.truncateResult = function (output, maxLines, addElipsis) {
             var items = output.split(RegExp("\r?\n")); // eslint-disable-line no-control-regex
-            if(items.length > maxLines) {
-                var toReturn= items.slice(0, maxLines).join("\n");
-                if(addElipsis) {
+            if (items.length > maxLines) {
+                var toReturn = items.slice(0, maxLines).join("\n");
+                if (addElipsis) {
                     return toReturn + "\n" + "...";
                 }
                 return toReturn;
@@ -314,28 +314,28 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             return output;
         };
 
-        self.onSubmitXPath = function() {
+        self.onSubmitXPath = function () {
             self.evaluate(self.xpath());
         };
 
-        self.onClickSelectedXPath = function() {
+        self.onClickSelectedXPath = function () {
             if (self.selectedXPath()) {
                 self.evaluate(self.selectedXPath());
                 self.selectedXPath('');
             }
         };
 
-        self.onClickSavedQuery = function(query) {
+        self.onClickSavedQuery = function (query) {
             self.xpath(query.xpath);
         };
 
-        self.getSessionId = function() {
+        self.getSessionId = function () {
             if (self.options.sessionType === SessionTypes.FORM) {
                 return self.options.formSessionId;
             }
         };
 
-        self.evaluate = function(xpath) {
+        self.evaluate = function (xpath) {
             API.evaluateXPath(
                 self.options.baseUrl,
                 {
@@ -349,7 +349,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                     debugOutput: self.selectedDebugOption().key,
                 },
                 self.options.sessionType
-            ).done(function(response) {
+            ).done(function (response) {
                 var xPathQuery = self.newXPathQuery({
                     status: response.status,
                     output: response.output,
@@ -366,12 +366,12 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             hqImport('analytix/js/kissmetrix').track.event('[app-preview] User evaluated XPath');
         };
 
-        self.onMouseUp = function() {
+        self.onMouseUp = function () {
             var text = window.getSelection().toString();
             self.selectedXPath(text);
         };
 
-        self.matcher = function(flag, subtext) {
+        self.matcher = function (flag, subtext) {
             var match, regexp, currentQuery;
             // Match text that starts with the flag and then looks like a path.
             regexp = new RegExp('([\\s\(]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
@@ -391,12 +391,12 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
          *
          * @param {Array} autocompleteData - List of questions to be autocompleted for the xpath input
          */
-        self.autocomplete = function(autocompleteData) {
+        self.autocomplete = function (autocompleteData) {
             self.$xpath = $('#xpath');
             self.$xpath.atwho('destroy');
             self.$xpath.atwho('setIframe', window.frameElement, true);
             self.$xpath.off('inserted.atwho');
-            self.$xpath.on('inserted.atwho', function(atwhoEvent, $li) {
+            self.$xpath.on('inserted.atwho', function (atwhoEvent, $li) {
                 var input = atwhoEvent.currentTarget;
 
                 // Move cursor back one so we are inbetween the parenthesis
@@ -411,7 +411,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 searchKey: 'value',
                 maxLen: Infinity,
                 highlightFirst: false,
-                displayTpl: function(d) {
+                displayTpl: function (d) {
                     var icon = getIconFromType(d.type);
                     return '<li><i class="' + icon + '"></i> ${value}</li>';
                 },
@@ -423,7 +423,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         };
     };
 
-    var getIconFromType = function(type) {
+    var getIconFromType = function (type) {
         var icon = {
             'Trigger': 'fcc fcc-fd-variable',
             'Text': 'fcc fcc-fd-text',
@@ -453,17 +453,17 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
     };
 
     var API = {
-        evaluateXPath: function(url, params, sessionType) {
+        evaluateXPath: function (url, params, sessionType) {
             var action = sessionType === SessionTypes.MENU ? 'evaluate-menu-xpath' : 'evaluate-xpath';
             return API.request(url, action, params);
         },
-        formattedQuestions: function(url, params) {
+        formattedQuestions: function (url, params) {
             return API.request(url, 'formatted_questions', params);
         },
-        menuDebuggerContent: function(url, params) {
+        menuDebuggerContent: function (url, params) {
             return API.request(url, 'menu_debugger_content', params);
         },
-        request: function(url, action, params) {
+        request: function (url, action, params) {
             params['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
             return $.ajax({
                 type: 'POST',
@@ -477,9 +477,9 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         },
     };
 
-    _.delay(function  () {
+    _.delay(function () {
         ko.bindingHandlers.aceEditor = {
-            init: function(element, valueAccessor) {
+            init: function (element, valueAccessor) {
                 var editor = ace.edit(element, {
                     showGutter: false,      // no line numbers
                     showPrintMargin: false,
@@ -494,7 +494,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 editor.session.setValue(ko.unwrap(valueAccessor()));
                 element.editor = editor;
             },
-            update: function(element, valueAccessor) {
+            update: function (element, valueAccessor) {
                 var observedValue = ko.unwrap(valueAccessor());
                 if (element.editor) {
                     element.editor.session.setValue(observedValue);
@@ -502,10 +502,10 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             },
         };
         ko.bindingHandlers.clipboardButton = {
-            init: function(element, valueAccessor) {
+            init: function (element, valueAccessor) {
                 new Clipboard(element,
                     {
-                        text: function() {
+                        text: function () {
                             return ko.unwrap(valueAccessor());
                         },
                     });

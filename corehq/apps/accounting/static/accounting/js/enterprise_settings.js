@@ -4,14 +4,14 @@ hqDefine("accounting/js/enterprise_settings", [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-], function(
+], function (
     $,
     ko,
     _,
     assertProperties,
     initialPageData
 ) {
-    var settingsFormModel = function(options) {
+    var settingsFormModel = function (options) {
         assertProperties.assert(options, ['accounts_email'], ['restrict_signup', 'restricted_domains']);
 
         var self = {};
@@ -31,7 +31,7 @@ hqDefine("accounting/js/enterprise_settings", [
         return self;
     };
 
-    $(function() {
+    $(function () {
         var form = settingsFormModel({
             accounts_email: initialPageData.get('accounts_email'),
             restricted_domains: initialPageData.get('restricted_domains'),

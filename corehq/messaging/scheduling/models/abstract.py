@@ -299,6 +299,11 @@ class Content(models.Model):
     # (i.e., this was scheduled content), this is the ScheduleInstance.
     schedule_instance = None
 
+    # Set to True if any necessary critical section locks have
+    # already been acquired. This is currently only used for SMSSurveyContent
+    # under certain circumstances.
+    critical_section_already_acquired = False
+
     class Meta(object):
         abstract = True
 
@@ -312,12 +317,14 @@ class Content(models.Model):
         """
         raise NotImplementedError()
 
-    def set_context(self, case=None, schedule_instance=None):
+    def set_context(self, case=None, schedule_instance=None, critical_section_already_acquired=False):
         if case:
             self.case = case
 
         if schedule_instance:
             self.schedule_instance = schedule_instance
+
+        self.critical_section_already_acquired = critical_section_already_acquired
 
     @staticmethod
     def get_workflow(logged_event):

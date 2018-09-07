@@ -1,5 +1,5 @@
-hqDefine("sms/js/compose", function() {
-    $(function(){
+hqDefine("sms/js/compose", function () {
+    $(function () {
         $("#hint_id_recipients").addClass("alert alert-info");
         $("#hint_id_message").addClass("alert alert-info");
         $("#id_message").on('keyup', function () {

@@ -1,5 +1,5 @@
 /* global Stripe */
-hqDefine("domain/js/current_subscription", function() {
+hqDefine("domain/js/current_subscription", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         CreditsManager = hqImport('accounting/js/credits').CreditsManager,
         PaymentMethodHandler = hqImport('accounting/js/payment_method_handler').PaymentMethodHandler;
