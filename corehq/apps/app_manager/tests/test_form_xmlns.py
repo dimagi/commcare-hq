@@ -25,7 +25,7 @@ class FormXmlnsTest(SimpleTestCase, TestXmlMixin):
     def get_source(self, xmlns=DEFAULT_XMLNS):
         default_xmlns = DEFAULT_XMLNS
         xmlns_tag = ' xmlns="%s"' % default_xmlns
-        source = self.get_xml('original_form')
+        source = self.get_xml('original_form').decode('utf-8')
         assert xmlns_tag in source, source
         if xmlns is None:
             source = source.replace(xmlns_tag, '')
@@ -33,7 +33,7 @@ class FormXmlnsTest(SimpleTestCase, TestXmlMixin):
             if xmlns != default_xmlns:
                 source = source.replace(default_xmlns, xmlns)
             assert xmlns in source, source
-        return source
+        return source.encode('utf-8')
 
     def test_save_xform_changes_empty_xmlns(self):
         source = self.get_source(xmlns=None)
@@ -95,7 +95,7 @@ class FormXmlnsTest(SimpleTestCase, TestXmlMixin):
         new_form = self.app.copy_form(self.module, old_form, self.module)
 
         self.assertEqual(new_form.xmlns, XMLNS_PREFIX + new_form.unique_id)
-        self.assertIn(new_form.xmlns, new_form.source)
+        self.assertIn(new_form.xmlns, new_form.source.decode('utf-8'))
         self.assertNotEqual(new_form.xmlns, old_form.xmlns)
-        self.assertNotIn(old_form.xmlns, new_form.source)
-        self.assertNotIn(new_form.xmlns, old_form.source)
+        self.assertNotIn(old_form.xmlns, new_form.source.decode('utf-8'))
+        self.assertNotIn(new_form.xmlns, old_form.source.decode('utf-8'))

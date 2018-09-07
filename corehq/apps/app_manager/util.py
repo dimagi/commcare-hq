@@ -128,7 +128,7 @@ def first_elem(elem_list):
 def save_xform(app, form, xml):
 
     def change_xmlns(xform, old_xmlns, new_xmlns):
-        data = xform.data_node.render()
+        data = xform.data_node.render().decode('utf-8')
         data = data.replace(old_xmlns, new_xmlns, 1)
         xform.instance_node.remove(xform.data_node.xml)
         xform.instance_node.append(parse_xml(data))
