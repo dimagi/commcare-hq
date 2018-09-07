@@ -37,10 +37,10 @@ from .signals import location_edited
 from six.moves import filter
 
 
-class LocationSelectWidget(forms.Widget):
+class LocationSelectWidgetV3(forms.Widget):
 
     def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
-        super(LocationSelectWidget, self).__init__(attrs)
+        super(LocationSelectWidgetV3, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
@@ -55,7 +55,7 @@ class LocationSelectWidget(forms.Widget):
                          .filter(domain=self.domain, location_id__in=location_ids))
         initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
 
-        return get_template('locations/manage/partials/autocomplete_select_widget.html').render({
+        return get_template('locations/manage/partials/autocomplete_select_widget_v3.html').render({
             'id': self.id,
             'name': name,
             'value': ','.join(loc.location_id for loc in locations),
@@ -637,7 +637,7 @@ class RelatedLocationForm(forms.Form):
         kwargs['initial'] = {'related_locations': ','.join(self.related_location_ids)}
         super(RelatedLocationForm, self).__init__(*args, **kwargs)
 
-        self.fields['related_locations'].widget = LocationSelectWidget(
+        self.fields['related_locations'].widget = LocationSelectWidgetV3(
             domain, id='id_related_locations', multiselect=True
         )
 

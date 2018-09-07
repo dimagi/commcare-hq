@@ -4,7 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.apps.locations.forms import LocationSelectWidgetV3
 from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
@@ -219,7 +219,7 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
 
     def __init__(self, *args, **kwargs):
         super(OpenmrsRepeaterForm, self).__init__(*args, **kwargs)
-        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id')
+        self.fields['location_id'].widget = LocationSelectWidgetV3(self.domain, id='id_location_id')
 
     def get_ordered_crispy_form_fields(self):
         fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()

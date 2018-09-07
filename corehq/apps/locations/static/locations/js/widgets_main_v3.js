@@ -23,7 +23,7 @@ hqDefine("locations/js/widgets_main_v3", [
     }
 
     $(function () {
-        $(".locations-widget-autocomplete").each(function () {
+        $(".locations-widget-autocomplete-v3").each(function () {
             var $select = $(this),
                 options = $select.data();
             $select.select2({

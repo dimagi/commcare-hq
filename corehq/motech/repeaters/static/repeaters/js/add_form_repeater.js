@@ -2,7 +2,7 @@ hqDefine("repeaters/js/add_form_repeater", [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/widgets_v3',       // case repeaters ("Forward Cases") use .ko-select2
-    'locations/js/widgets_main_v3',    // openmrs repeaters use the LocationSelectWidget
+    'locations/js/widgets_main_v3',    // openmrs repeaters use the LocationSelectWidgetV3
 ], function (
     $,
     initialPageData

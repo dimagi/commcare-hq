@@ -775,7 +775,7 @@ class AngularLocationSelectWidget(forms.Widget):
 class PrimaryLocationWidget(forms.Widget):
     """
     Options for this field are dynamically set in JS depending on what options are selected
-    for 'assigned_locations'. This works in conjunction with LocationSelectWidget.
+    for 'assigned_locations'. This works in conjunction with LocationSelectWidgetV3.
     """
     def __init__(self, css_id, source_css_id, attrs=None):
         """
@@ -813,10 +813,10 @@ class CommtrackUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        from corehq.apps.locations.forms import LocationSelectWidget
+        from corehq.apps.locations.forms import LocationSelectWidgetV3
         self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        self.fields['assigned_locations'].widget = LocationSelectWidget(
+        self.fields['assigned_locations'].widget = LocationSelectWidgetV3(
             self.domain, multiselect=True, id='id_assigned_locations'
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(
