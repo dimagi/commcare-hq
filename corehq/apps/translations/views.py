@@ -98,14 +98,17 @@ class ConvertTranslations(BaseTranslationsView):
             )
         return translations
 
-    def _generate_po_file(self, worksheet):
+    def _generate_po_content(self, worksheet):
         """
         extract translations from worksheet and converts to a po file
-        :return: PoFileGenerator object
+
+        :return: content of file generated
         """
         translations = self._generate_translations_for_po(worksheet)
-        po_file_generator = PoFileGenerator(translations, {})
-        return po_file_generator
+        with PoFileGenerator(translations, {}) as po_file_generator:
+            generated_files = po_file_generator.generate_translation_files()
+            with open(generated_files[0].path, 'r', encoding="utf-8") as f:
+                return f.read()
 
     def _generate_excel_file(self):
         """
@@ -127,12 +130,7 @@ class ConvertTranslations(BaseTranslationsView):
     def _po_file_response(self):
         uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
         worksheet = openpyxl.load_workbook(uploaded_file).worksheets[0]
-        po_file_generator = self._generate_po_file(worksheet)
-        try:
-            with open(po_file_generator.generated_files[0][1], 'r', encoding="utf-8") as f:
-                content = f.read()
-        finally:
-            po_file_generator.cleanup()
+        content = self._generate_po_content(worksheet)
         response = HttpResponse(content, content_type="text/html; charset=utf-8")
         response['Content-Disposition'] = safe_filename_header(worksheet.title, 'po')
         return response
