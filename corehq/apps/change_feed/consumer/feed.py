@@ -128,7 +128,7 @@ class KafkaChangeFeed(ChangeFeed):
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {
-            'group_id': self._group_id,
+            'group_id': None,
             'bootstrap_servers': settings.KAFKA_BROKERS,
             'consumer_timeout_ms': timeout,
             'auto_offset_reset': auto_offset_reset,
