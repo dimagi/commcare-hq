@@ -48,8 +48,7 @@ class TestUsersByLocation(TestCase):
 
     def test_get_users_by_location_id(self):
         users = get_users_by_location_id(self.domain, self.meereen._id)
-        self.assertEqual(set(u._id for u in users),
-                              {self.tyrion._id, self.daenerys._id})
+        self.assertEqual(set(u._id for u in users), {self.tyrion._id, self.daenerys._id})
 
     def test_get_user_ids_by_location(self):
         user_ids = get_user_ids_by_location(self.domain, self.meereen._id)
