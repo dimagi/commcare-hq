@@ -260,9 +260,9 @@ class AdminRestoreView(TemplateView):
             else:
                 message = _('Unexpected restore response {}: {}. '
                             'If you believe this is a bug please report an issue.').format(response.status_code,
-                                                                                           response.content)
+                                                                                           response.content.decode('utf-8'))
                 xml_payload = E.error(message)
-        formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        formatted_payload = etree.tostring(xml_payload, pretty_print=True).decode('utf-8')
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
             'payload': formatted_payload,
