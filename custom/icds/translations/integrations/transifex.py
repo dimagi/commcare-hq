@@ -52,11 +52,12 @@ class Transifex(object):
         """
         submit translation files to transifex
         """
-        app_trans_generator = AppTranslationsGenerator(
+        self.app_trans_generator = AppTranslationsGenerator(
             self.domain, self.app_id, self.version,
             self.key_lang, self.source_lang, self.lang_prefix,
             self.exclude_if_default, self.use_version_postfix)
-        with PoFileGenerator(app_trans_generator.translations, app_trans_generator.metadata) as po_file_generator:
+        with PoFileGenerator(self.app_trans_generator.translations,
+                             self.app_trans_generator.metadata) as po_file_generator:
             generated_files = po_file_generator.generate_translation_files()
             return self._send_files_to_transifex(generated_files)
 
@@ -88,7 +89,7 @@ class Transifex(object):
         if MODULES_AND_FORMS_SHEET_NAME in resource_slug:
             return MODULES_AND_FORMS_SHEET_NAME
         module_or_form_unique_id = resource_slug.split('_')[1]
-        resource_name_in_all_langs = self.transifex_po_file_generator.slug_to_name[module_or_form_unique_id]
+        resource_name_in_all_langs = self.app_trans_generator.slug_to_name[module_or_form_unique_id]
         return resource_name_in_all_langs.get(self.transifex_project_source_lang,
                                               resource_name_in_all_langs.get('en', resource_slug))
 
