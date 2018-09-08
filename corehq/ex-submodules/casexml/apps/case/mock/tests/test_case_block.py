@@ -29,7 +29,7 @@ class CaseBlockTest(SimpleTestCase):
             '<update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update>'
             '</case>'
         )
-        self.assertEqual(actual, expected)
+        self.assertEqual(actual.decode('utf-8'), expected)
 
     def test_does_not_let_you_specify_a_keyword_twice(self):
         """Doesn't let you specify a keyword twice (here 'case_name')"""
@@ -57,4 +57,4 @@ class CaseBlockTest(SimpleTestCase):
             '<update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update>'
             '</case>'
         )
-        self.assertEqual(actual, expected)
+        self.assertEqual(actual, expected.decode('utf-8'))
