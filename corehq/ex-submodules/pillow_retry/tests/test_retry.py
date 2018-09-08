@@ -52,7 +52,7 @@ class CouchPillowRetryProcessingTest(TestCase, TestMixin):
         with trap_extra_setup(KafkaUnavailableError):
             self.consumer = KafkaConsumer(
                 topics.CASE,
-                group_id='test-consumer',
+                client_id='test-consumer',
                 bootstrap_servers=settings.KAFKA_BROKERS,
                 consumer_timeout_ms=100,
             )
@@ -118,7 +118,7 @@ class KakfaPillowRetryProcessingTest(TestCase, TestMixin):
             name='test-kafka-case-feed',
             checkpoint=None,
             change_feed=KafkaChangeFeed(
-                topics=[topics.CASE, topics.CASE_SQL], group_id='test-kafka-case-feed'
+                topics=[topics.CASE, topics.CASE_SQL], client_id='test-kafka-case-feed'
             ),
             processor=self.processor
         )

@@ -44,7 +44,7 @@ class Command(BaseCommand):
         since = options['from']
         sleep = float(options['sleep'] or '.01')
         last_domain = None
-        change_feed = KafkaChangeFeed(topics=[topics.FORM], group_id='form-feed')
+        change_feed = KafkaChangeFeed(topics=[topics.FORM], client_id='form-feed')
         for change in change_feed.iter_changes(since=since, forever=True):
             if not change.deleted:
                 # this is just helpful for demos to find domain transitions

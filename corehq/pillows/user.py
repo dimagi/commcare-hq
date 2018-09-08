@@ -93,7 +93,7 @@ def get_unknown_users_pillow(pillow_id='unknown-users-pillow', num_processes=1, 
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.FORM_TOPICS)
     processor = UnknownUsersProcessor()
     change_feed = KafkaChangeFeed(
-        topics=topics.FORM_TOPICS, group_id='unknown-users', num_processes=num_processes, process_num=process_num
+        topics=topics.FORM_TOPICS, client_id='unknown-users', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,
@@ -122,7 +122,7 @@ def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kw
         doc_prep_fn=transform_user_for_elasticsearch,
     )
     change_feed = KafkaChangeFeed(
-        topics=topics.USER_TOPICS, group_id='users-to-es', num_processes=num_processes, process_num=process_num
+        topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,
