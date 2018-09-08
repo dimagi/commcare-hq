@@ -32,7 +32,9 @@ class DeidGenerator(object):
     def _sha1_bytes(self):
         byte_list = hashlib.sha1(self.seed.encode('utf-8')).digest()
         for b in byte_list[:self.bytes]:
-            yield ord(b)
+            if six.PY2:
+                yield ord(b)
+            yield b
 
     def digest(self, alphabet="0123456789"):
         b = len(alphabet)
