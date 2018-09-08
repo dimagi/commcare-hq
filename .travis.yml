@@ -38,7 +38,7 @@ script:
     then
       bash scripts/test-make-requirements.sh
     fi
-  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
+  - "scripts/docker test --noinput --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
