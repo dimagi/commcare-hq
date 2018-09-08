@@ -55,23 +55,6 @@ class AppTranslationsGenerator:
         self.slug_to_name[MODULES_AND_FORMS_SHEET_NAME] = {'en': MODULES_AND_FORMS_SHEET_NAME}
         self._build_translations()
 
-    @property
-    @memoized
-    def app_id_to_build(self):
-        return self._find_build_id()
-
-    def _find_build_id(self):
-        # find build id if version specified
-        if self.version:
-            from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions
-            built_app_ids = get_all_built_app_ids_and_versions(self.domain, self.app_id)
-            for app_built_version in built_app_ids:
-                if app_built_version.version == self.version:
-                    return app_built_version.build_id
-            raise Exception("Build for version requested not found")
-        else:
-            return self.app_id
-
     def _translation_data(self, app):
         # get the translations data
         from corehq.apps.app_manager.app_translations.app_translations import expected_bulk_app_sheet_rows
@@ -214,7 +197,7 @@ class AppTranslationsGenerator:
     @memoized
     def app(self):
         from corehq.apps.app_manager.dbaccessors import get_current_app
-        return get_current_app(self.domain, self.app_id_to_build)
+        return get_current_app(self.domain, self.app_id)
 
     def _build_translations(self):
         """
@@ -245,7 +228,7 @@ class AppTranslationsGenerator:
             team = ""
         now = str(datetime.datetime.now())
         return {
-            'App-Id': self.app_id_to_build,
+            'App-Id': self.app_id,
             'PO-Creation-Date': now,
             'Language-Team': "{lang} ({team})".format(
                 lang=self.key_lang, team=team

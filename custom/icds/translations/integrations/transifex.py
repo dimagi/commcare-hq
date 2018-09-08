@@ -1,14 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import os
-import six
-import sys
 
 from django.utils.translation import ugettext as _
 from django.conf import settings
 from memoized import memoized
 
-
+from corehq.apps.app_manager.dbaccessors import get_version_build_id
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.app_translations.generators import AppTranslationsGenerator, PoFileGenerator
 from corehq.apps.app_manager.app_translations.parser import TranslationsParser
@@ -47,13 +44,26 @@ class Transifex(object):
         self.lock_translations = lock_translations
         self.use_version_postfix = use_version_postfix
         self.update_resource = update_resource
+        self.app_trans_generator = None
+
+    @property
+    @memoized
+    def app_id_to_build(self):
+        return self._find_build_id()
+
+    def _find_build_id(self):
+        # find build id if version specified
+        if self.version:
+            get_version_build_id(self.domain, self.app_id, self.version)
+        else:
+            return self.app_id
 
     def send_translation_files(self):
         """
         submit translation files to transifex
         """
         self.app_trans_generator = AppTranslationsGenerator(
-            self.domain, self.app_id, self.version,
+            self.domain, self.app_id_to_build, self.version,
             self.key_lang, self.source_lang, self.lang_prefix,
             self.exclude_if_default, self.use_version_postfix)
         with PoFileGenerator(self.app_trans_generator.translations,
