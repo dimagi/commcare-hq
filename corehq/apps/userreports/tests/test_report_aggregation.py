@@ -71,7 +71,6 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         cls.data_source.save()
         rebuild_indicators(cls.data_source._id)
         cls.adapter = get_indicator_adapter(cls.data_source)
-        cls.adapter.refresh_table()
 
     @classmethod
     def setUpClass(cls):
@@ -564,10 +563,10 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
     @classmethod
     def _create_data(cls):
         for row in [
-            {"state": "MA", "city": "Boston", "number": 4},
-            {"state": "MA", "city": "Boston", "number": 3},
-            {"state": "MA", "city": "Cambridge", "number": 2},
-            {"state": "TN", "city": "Nashville", "number": 1},
+            {"state": "MA", "city": "Boston", "number": 4, "age_at_registration": 1, "date": "2018-01-03"},
+            {"state": "MA", "city": "Boston", "number": 3, "age_at_registration": 5, "date": "2018-02-18"},
+            {"state": "MA", "city": "Cambridge", "number": 2, "age_at_registration": 8, "date": "2018-01-22"},
+            {"state": "TN", "city": "Nashville", "number": 1, "age_at_registration": 14, "date": "2017-01-03"},
         ]:
             cls._new_case(row).save()
 
@@ -617,13 +616,30 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     "column_id": 'indicator_col_id_number',
                     "datatype": "integer"
                 },
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'age_at_registration'
+                    },
+                    "column_id": 'age_at_registration',
+                    "datatype": "integer"
+                },
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'date'
+                    },
+                    "column_id": 'date',
+                    "datatype": "date"
+                },
             ],
         )
         cls.data_source.validate()
         cls.data_source.save()
         rebuild_indicators(cls.data_source._id)
         adapter = get_indicator_adapter(cls.data_source)
-        adapter.refresh_table()
         cls.adapter = adapter
 
     @classmethod
@@ -740,4 +756,131 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     ['MA', 'Cambridge', 2],
                 ]
             ]]
+        )
+
+    def test_aggregate_date(self):
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+                'month',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'report_column_display_state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'report_column_col_id_state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'aggregate_date',
+                    'display': 'month',
+                    'field': 'date',
+                    'column_id': 'month',
+                    'aggregation': 'simple',
+                    'format': '%Y-%m'
+                },
+                {
+                    'type': 'field',
+                    'display': 'report_column_display_number',
+                    'field': 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'sum'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        self.assertEqual(
+            view.export_table,
+            [['foo',
+              [['report_column_display_state', 'month', 'report_column_display_number'],
+               ['MA', '2018-01', 6],
+               ['MA', '2018-02', 3],
+               ['TN', '2017-01', 1]]]]
+        )
+
+    def test_conditional_aggregation(self):
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+                'age_range',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'conditional_aggregation',
+                    'display': 'age_range',
+                    'field': 'age_at_registration',
+                    'column_id': 'age_range',
+                    'whens': {
+                        "age_at_registration between 0 and 6": "0-6",
+                        "age_at_registration between 7 and 12": "7-12",
+                    },
+                    'else_': '13+'
+                },
+                {
+                    'type': 'field',
+                    'display': 'report_column_display_number',
+                    'field': 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'sum'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        self.assertItemsEqual(
+            view.export_table[0][1],
+            [['state', 'age_range', 'report_column_display_number'],
+             ['MA', '0-6', 7],
+             ['MA', '7-12', 2],
+             ['TN', '13+', 1]]
+        )
+
+    def test_sum_when(self):
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'sum_when',
+                    'display': 'under_six_month_olds',
+                    'field': 'age_at_registration',
+                    'column_id': 'under_six_month_olds',
+                    'whens': {
+                        "age_at_registration < 6": 1,
+                    },
+                    'else_': 0
+                },
+                {
+                    'type': 'field',
+                    'display': 'report_column_display_number',
+                    'field': 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'sum'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        self.assertItemsEqual(
+            view.export_table[0][1],
+            [['state', 'under_six_month_olds', 'report_column_display_number'],
+             ['MA', 2, 9],
+             ['TN', 0, 1]]
         )

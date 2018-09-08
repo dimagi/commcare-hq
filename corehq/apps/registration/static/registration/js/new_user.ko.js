@@ -37,7 +37,7 @@ hqDefine('registration/js/new_user.ko', function () {
     };
 
     // Can't set up analytics until the values for the A/B tests are ready
-    _kissmetrics.whenReadyAlways(function() {
+    _kissmetrics.whenReadyAlways(function () {
         _kissmetrics.track.event("Viewed CommCare signup page");
 
         _private.submitSuccessAnalytics = function (data) {
@@ -230,7 +230,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.isPersonaChoiceOtherNeeded = ko.computed(function () {
             return self.eulaConfirmed() && self.isPersonaChoiceOther() && !self.personaOther();
         });
-        self.isPersonaValid = ko.computed(function() {
+        self.isPersonaValid = ko.computed(function () {
             if (!self.hasPersonaFields) {
                 return true;
             }
@@ -244,7 +244,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.steps = ko.observableArray(steps);
         self.currentStep = ko.observable(0);
 
-        self.currentStep.subscribe(function(newValue) {
+        self.currentStep.subscribe(function (newValue) {
             if (newValue === 1) {
                 _kissmetrics.track.event("Clicked Next button on Step 1 of CommCare signup");
             }
@@ -252,8 +252,8 @@ hqDefine('registration/js/new_user.ko', function () {
 
         var _getDataForSubmission = function () {
             var password = self.password();
-            if (typeof(hex_parser) !== 'undefined') {
-                password = (new hex_parser()).encode(self.password());
+            if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
+                password = (hqImport("nic_compliance/js/encoder")()).encode(self.password());
             }
             var data = {
                 full_name: self.fullName(),
@@ -376,7 +376,7 @@ hqDefine('registration/js/new_user.ko', function () {
 
             _private.rmi(
                 "register_new_user",
-                {data : submitData},
+                {data: submitData},
                 {
                     success: function (response) {
                         if (response.errors !== undefined

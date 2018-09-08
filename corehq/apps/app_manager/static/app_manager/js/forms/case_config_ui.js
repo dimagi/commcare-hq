@@ -1,6 +1,6 @@
 /*globals $, hqDefine, hqImport, ko, _*/
 
-hqDefine('app_manager/js/forms/case_config_ui', function() {
+hqDefine('app_manager/js/forms/case_config_ui', function () {
     "use strict";
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
     var action_names = ["open_case", "update_case", "close_case", "case_preload",
@@ -8,10 +8,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
         "usercase_update", "usercase_preload",
     ];
 
-    var CaseConfig = function(params) {
+    var CaseConfig = function (params) {
         var self = this;
         var i;
-        self.makePopover = function() {
+        self.makePopover = function () {
             $('.property-description').closest('.read-only').popover({
                 'trigger': 'hover',
                 'placement': 'auto right',
@@ -19,10 +19,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
         };
 
         self.home = params.home;
-        self.actions = (function(a) {
+        self.actions = (function (a) {
             var actions = {},
                 i;
-            _(action_names).each(function(action_name) {
+            _(action_names).each(function (action_name) {
                 actions[action_name] = a[action_name];
             });
             actions.subcases = a.subcases;
@@ -38,12 +38,12 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
         self.moduleCaseTypes = params.moduleCaseTypes;
         self.allowUsercase = params.allowUsercase;
 
-        self.setPropertiesMap = function(propertiesMap) {
+        self.setPropertiesMap = function (propertiesMap) {
             self.propertiesMap = ko.mapping.fromJS(propertiesMap);
         };
         self.setPropertiesMap(params.propertiesMap);
 
-        self.setUsercasePropertiesMap = function(propertiesMap) {
+        self.setUsercasePropertiesMap = function (propertiesMap) {
             self.usercasePropertiesMap = ko.mapping.fromJS(propertiesMap);
         };
         self.setUsercasePropertiesMap(params.usercasePropertiesMap);
@@ -52,7 +52,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
 
         self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unchanged case settings"),
-            save: function() {
+            save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
                 var subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
                 var actions = JSON.stringify(_(self.actions).extend(
@@ -69,7 +69,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                         actions: actions,
                     },
                     dataType: 'json',
-                    success: function(data) {
+                    success: function (data) {
                         var app_manager = hqImport('app_manager/js/app_manager');
                         app_manager.updateDOM(data.update);
                         self.requires(requires);
@@ -87,7 +87,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
 
         self.saveUsercaseButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unchanged user properties settings"),
-            save: function() {
+            save: function () {
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction)
                 ));
@@ -98,7 +98,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                         actions: actions,
                     },
                     dataType: 'json',
-                    success: function(data) {
+                    success: function (data) {
                         var app_manager = hqImport('app_manager/js/app_manager');
                         app_manager.updateDOM(data.update);
                         self.setUsercasePropertiesMap(data.setUsercasePropertiesMap);
@@ -108,16 +108,16 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
         });
 
         self.questionMap = {};
-        var _buildQuestionMap = function() {
+        var _buildQuestionMap = function () {
             self.questionMap = {};
-            _(self.questions()).each(function(question) {
+            _(self.questions()).each(function (question) {
                 self.questionMap[question.value] = question;
             });
         };
         _buildQuestionMap();
         self.questions.subscribe(_buildQuestionMap);
 
-        self.get_repeat_context = function(path) {
+        self.get_repeat_context = function (path) {
             if (path && self.questionMap[path]) {
                 return self.questionMap[path].repeat;
             } else {
@@ -126,43 +126,43 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
         };
 
         var questionScores = {};
-        _(self.questions()).each(function(question, i) {
+        _(self.questions()).each(function (question, i) {
             questionScores[question.value] = i;
         });
         self.questionScores = questionScores;
         self.caseConfigViewModel = new CaseConfigViewModel(self);
 
-        self.ensureBlankProperties = function() {
+        self.ensureBlankProperties = function () {
             self.caseConfigViewModel.case_transaction.ensureBlankProperties();
-            _(self.caseConfigViewModel.subcases()).each(function(case_transaction) {
+            _(self.caseConfigViewModel.subcases()).each(function (case_transaction) {
                 case_transaction.ensureBlankProperties();
             });
         };
 
-        self.getQuestions = function(filter, excludeHidden, includeRepeat, excludeTrigger) {
+        self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
             return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
         };
 
-        self.refreshQuestions = function(url, formUniqueId, event) {
+        self.refreshQuestions = function (url, formUniqueId, event) {
             return caseConfigUtils.refreshQuestions(self.questions, url, formUniqueId, event);
         };
-        self.getAnswers = function(condition) {
+        self.getAnswers = function (condition) {
             return caseConfigUtils.getAnswers(self.questions(), condition);
         };
 
-        self.change = function() {
+        self.change = function () {
             self.saveButton.fire('change');
             self.ensureBlankProperties();
             self.forceRefreshTextchangeBinding(self.home);
         };
 
-        self.usercaseChange = function() {
+        self.usercaseChange = function () {
             self.saveUsercaseButton.fire('change');
             self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
             self.forceRefreshTextchangeBinding($('#usercase-config-ko'));
         };
 
-        self.forceRefreshTextchangeBinding = function(domNode) {
+        self.forceRefreshTextchangeBinding = function (domNode) {
             // This is a hack that I do not understand,
             // and really shouldn't be necessary.
             // For some reason, $home.on('textchange', 'input', blah)
@@ -172,16 +172,16 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
             // jigger that relationship back into place. #weird
             // (this is potentially expensive just because it's O(N)
             // but I'd be surprised if other things weren't too)
-            var x = function() {};
+            var x = function () {};
             domNode.find('input')
                 .off('textchange', x)
                 .on('textchange', x);
         };
 
-        self.init = function() {
+        self.init = function () {
             var $home = self.home;
             var $usercaseMgmt = $('#usercase-config-ko');
-            _.delay(function() {
+            _.delay(function () {
                 if ($home.length) {
                     $home.koApplyBindings(self);
                     $home.on('textchange', 'input', self.change)
@@ -204,7 +204,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                         $usercaseMgmt.find('select').prop('disabled', true);
                         $usercaseMgmt.find('a').off('click');
                         // Remove "Load properties" / "Save properties" link
-                        _.each($usercaseMgmt.find('.firstProperty'), function(elem) {
+                        _.each($usercaseMgmt.find('.firstProperty'), function (elem) {
                             elem.remove();
                         });
                     }
@@ -217,15 +217,15 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
     };
 
 
-    var CaseConfigViewModel = function(caseConfig) {
+    var CaseConfigViewModel = function (caseConfig) {
         var self = this;
 
         self.caseConfig = caseConfig;
         self.moduleCaseTypes = caseConfig.moduleCaseTypes;
-        self.caseTypes = _.unique(_(self.moduleCaseTypes).map(function(moduleCaseType) {
+        self.caseTypes = _.unique(_(self.moduleCaseTypes).map(function (moduleCaseType) {
             return moduleCaseType.case_type;
         }));
-        self.getCaseTypeLabel = function(caseType) {
+        self.getCaseTypeLabel = function (caseType) {
             var module_names = [],
                 label;
             for (var i = 0; i < self.moduleCaseTypes.length; i++) {
@@ -242,18 +242,18 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
         self.case_transaction = HQFormActions.to_case_transaction(caseConfig.actions, caseConfig);
         self.usercase_transaction = HQFormActions.to_usercase_transaction(caseConfig.actions, caseConfig);
         self.subcases = ko.observableArray(
-            _(caseConfig.actions.subcases).map(function(subcase) {
+            _(caseConfig.actions.subcases).map(function (subcase) {
                 return HQOpenSubCaseAction.to_case_transaction(subcase, caseConfig);
             })
         );
-        self.addSubCase = function() {
+        self.addSubCase = function () {
             self.subcases.push(HQOpenSubCaseAction.to_case_transaction({}, caseConfig));
         };
-        self.removeSubCase = function(subcase) {
+        self.removeSubCase = function (subcase) {
             self.subcases.remove(subcase);
         };
 
-        self.actionType = ko.observable((function() {
+        self.actionType = ko.observable((function () {
             var opens_case = self.case_transaction.condition.type() !== 'never';
             var requires_case = self.caseConfig.requires() === 'case';
             var has_subcases = self.subcases().length;
@@ -265,14 +265,14 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
             return 'update';
         }()));
 
-        self.showLeadRegistration = ko.computed(function() {
+        self.showLeadRegistration = ko.computed(function () {
             return self.actionType() === 'open';
         });
-        self.showLeadFollowup = ko.computed(function() {
+        self.showLeadFollowup = ko.computed(function () {
             return self.actionType() === 'update';
         });
 
-        self.actionType.subscribe(function(value) {
+        self.actionType.subscribe(function (value) {
             var required;
             if (value === 'open') {
                 required = ['name'];
@@ -288,7 +288,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
 
 
     var CaseTransaction = {
-        mapping: function(self) {
+        mapping: function (self) {
             return {
                 include: [
                     'case_type',
@@ -300,18 +300,18 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                     'allow',
                 ],
                 case_properties: {
-                    create: function(options) {
+                    create: function (options) {
                         return CaseProperty.wrap(options.data, self);
                     },
                 },
                 case_preload: {
-                    create: function(options) {
+                    create: function (options) {
                         return CasePreload.wrap(options.data, self);
                     },
                 },
             };
         },
-        wrap: function(data, caseConfig) {
+        wrap: function (data, caseConfig) {
             var self = {};
             ko.mapping.fromJS(data, CaseTransaction.mapping(self), self);
             self.case_type(self.case_type() || caseConfig.caseType);
@@ -320,23 +320,23 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
             // link self.case_name to corresponding path observable
             // in case_properties for convenience
             try {
-                self.case_name = _(self.case_properties()).find(function(p) {
+                self.case_name = _(self.case_properties()).find(function (p) {
                     return p.key() === 'name' && p.required();
                 }).path;
             } catch (e) {
                 self.case_name = null;
             }
-            self.suggestedPreloadProperties = ko.computed(function() {
+            self.suggestedPreloadProperties = ko.computed(function () {
                 if (!self.case_preload) {
                     return [];
                 }
                 return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
             }, self);
-            self.suggestedSaveProperties = ko.computed(function() {
+            self.suggestedSaveProperties = ko.computed(function () {
                 return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
             }, self);
 
-            self.addProperty = function() {
+            self.addProperty = function () {
                 var property = CaseProperty.wrap({
                     path: '',
                     key: '',
@@ -346,15 +346,15 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 self.case_properties.push(property);
             };
 
-            self.removeProperty = function(property) {
+            self.removeProperty = function (property) {
                 hqImport('analytix/js/google').track.event('Case Management', 'Form Level', 'Save Properties (remove)');
                 self.case_properties.remove(property);
                 self.caseConfig.saveButton.fire('change');
             };
 
-            self.propertyCounts = ko.computed(function() {
+            self.propertyCounts = ko.computed(function () {
                 var count = {};
-                _(self.case_properties()).each(function(p) {
+                _(self.case_properties()).each(function (p) {
                     var key = p.key();
                     if (!count.hasOwnProperty(key)) {
                         count[key] = 0;
@@ -365,7 +365,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
             });
 
             if (self.case_preload) {
-                self.addPreload = function() {
+                self.addPreload = function () {
                     var property = CasePreload.wrap({
                         path: '',
                         key: '',
@@ -375,15 +375,15 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                     self.case_preload.push(property);
                 };
 
-                self.removePreload = function(property) {
+                self.removePreload = function (property) {
                     hqImport('analytix/js/google').track.event('Case Management', 'Form Level', 'Load Properties (remove)');
                     self.case_preload.remove(property);
                     self.caseConfig.saveButton.fire('change');
                 };
 
-                self.preloadCounts = ko.computed(function() {
+                self.preloadCounts = ko.computed(function () {
                     var count = {};
-                    _(self.case_preload()).each(function(p) {
+                    _(self.case_preload()).each(function (p) {
                         var path = p.path();
                         if (!count.hasOwnProperty(path)) {
                             count[path] = 0;
@@ -394,7 +394,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 });
             }
 
-            self.repeat_context = function() {
+            self.repeat_context = function () {
                 if (self.case_name) {
                     return self.caseConfig.get_repeat_context(self.case_name());
                 } else {
@@ -403,7 +403,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
             };
 
             self.close_case = ko.computed({
-                read: function() {
+                read: function () {
                     if (self.close_condition) {
                         return self.close_condition.type() !== 'never';
                     } else {
@@ -411,15 +411,15 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                     }
 
                 },
-                write: function(value) {
+                write: function (value) {
                     self.close_condition.type(value ? 'always' : 'never');
                     self.caseConfig.saveButton.fire('change');
                 },
             });
 
-            self.setRequired = function(required) {
+            self.setRequired = function (required) {
                 var delete_me = [];
-                _(self.case_properties()).each(function(case_property) {
+                _(self.case_properties()).each(function (case_property) {
                     var key = case_property.key();
                     if (_(required).contains(key)) {
                         case_property.required(true);
@@ -434,10 +434,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
 
                     }
                 });
-                _(delete_me).each(function(case_property) {
+                _(delete_me).each(function (case_property) {
                     self.case_properties.remove(case_property);
                 });
-                _(required).each(function(key) {
+                _(required).each(function (key) {
                     self.case_properties.splice(0, 0, CaseProperty.wrap({
                         path: '',
                         key: key,
@@ -446,11 +446,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 });
             };
 
-            self.unwrap = function() {
+            self.unwrap = function () {
                 CaseTransaction.unwrap(self);
             };
 
-            self.ensureBlankProperties = function() {
+            self.ensureBlankProperties = function () {
                 var items = [{
                     properties: self.case_properties(),
                     addProperty: self.addProperty,
@@ -461,7 +461,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                         addProperty: self.addPreload,
                     });
                 }
-                _(items).each(function(item) {
+                _(items).each(function (item) {
                     var properties = item.properties;
                     var last = properties[properties.length - 1];
                     if (last && !last.isBlank()) {
@@ -472,60 +472,60 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
 
             return self;
         },
-        unwrap: function(self) {
+        unwrap: function (self) {
             return ko.mapping.toJS(self, CaseTransaction.mapping(self));
         },
     };
 
 
     var UserCaseTransaction = {
-        mapping: function(self) {
+        mapping: function (self) {
             return {
                 include: [
                     'case_properties',
                     'case_preload',
                 ],
                 case_properties: {
-                    create: function(options) {
+                    create: function (options) {
                         return CaseProperty.wrap(options.data, self);
                     },
                 },
                 case_preload: {
-                    create: function(options) {
+                    create: function (options) {
                         return CasePreload.wrap(options.data, self);
                     },
                 },
             };
         },
 
-        wrap: function(data, caseConfig) {
+        wrap: function (data, caseConfig) {
             var self = {};
             ko.mapping.fromJS(data, UserCaseTransaction.mapping(self), self);
             self.caseConfig = caseConfig;
-            self.case_type = function() {
+            self.case_type = function () {
                 return 'commcare-user';
             };
 
             // link self.case_name to corresponding path observable
             // in case_properties for convenience
             try {
-                self.case_name = _(self.case_properties()).find(function(p) {
+                self.case_name = _(self.case_properties()).find(function (p) {
                     return p.key() === 'name' && p.required();
                 }).path;
             } catch (e) {
                 self.case_name = null;
             }
-            self.suggestedPreloadProperties = ko.computed(function() {
+            self.suggestedPreloadProperties = ko.computed(function () {
                 if (!self.case_preload) {
                     return [];
                 }
                 return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
             }, self);
-            self.suggestedSaveProperties = ko.computed(function() {
+            self.suggestedSaveProperties = ko.computed(function () {
                 return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
             }, self);
 
-            self.addProperty = function() {
+            self.addProperty = function () {
                 var property = CaseProperty.wrap({
                     path: '',
                     key: '',
@@ -536,14 +536,14 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 hqImport('analytix/js/google').track.event('Case Management', 'User Case Management', 'Save Properties');
             };
 
-            self.removeProperty = function(property) {
+            self.removeProperty = function (property) {
                 self.case_properties.remove(property);
                 self.caseConfig.saveUsercaseButton.fire('change');
             };
 
-            self.propertyCounts = ko.computed(function() {
+            self.propertyCounts = ko.computed(function () {
                 var count = {};
-                _(self.case_properties()).each(function(p) {
+                _(self.case_properties()).each(function (p) {
                     var key = p.key();
                     if (!count.hasOwnProperty(key)) {
                         count[key] = 0;
@@ -554,7 +554,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
             });
 
             if (self.case_preload) {
-                self.addPreload = function() {
+                self.addPreload = function () {
                     var property = CasePreload.wrap({
                         path: '',
                         key: '',
@@ -565,14 +565,14 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                     hqImport('analytix/js/google').track.event('Case Management', 'User Case Management', 'Load Properties');
                 };
 
-                self.removePreload = function(property) {
+                self.removePreload = function (property) {
                     self.case_preload.remove(property);
                     self.caseConfig.saveUsercaseButton.fire('change');
                 };
 
-                self.preloadCounts = ko.computed(function() {
+                self.preloadCounts = ko.computed(function () {
                     var count = {};
-                    _(self.case_preload()).each(function(p) {
+                    _(self.case_preload()).each(function (p) {
                         var path = p.path();
                         if (!count.hasOwnProperty(path)) {
                             count[path] = 0;
@@ -583,7 +583,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 });
             }
 
-            self.repeat_context = function() {
+            self.repeat_context = function () {
                 if (self.case_name) {
                     return self.caseConfig.get_repeat_context(self.case_name());
                 } else {
@@ -591,9 +591,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 }
             };
 
-            self.setRequired = function(required) {
+            self.setRequired = function (required) {
                 var delete_me = [];
-                _(self.case_properties()).each(function(case_property) {
+                _(self.case_properties()).each(function (case_property) {
                     var key = case_property.key();
                     if (_(required).contains(key)) {
                         case_property.required(true);
@@ -608,10 +608,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
 
                     }
                 });
-                _(delete_me).each(function(case_property) {
+                _(delete_me).each(function (case_property) {
                     self.case_properties.remove(case_property);
                 });
-                _(required).each(function(key) {
+                _(required).each(function (key) {
                     self.case_properties.splice(0, 0, CaseProperty.wrap({
                         path: '',
                         key: key,
@@ -620,11 +620,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 });
             };
 
-            self.unwrap = function() {
+            self.unwrap = function () {
                 UserCaseTransaction.unwrap(self);
             };
 
-            self.ensureBlankProperties = function() {
+            self.ensureBlankProperties = function () {
                 var items = [{
                     properties: self.case_properties(),
                     addProperty: self.addProperty,
@@ -635,7 +635,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                         addProperty: self.addPreload,
                     });
                 }
-                _(items).each(function(item) {
+                _(items).each(function (item) {
                     var properties = item.properties;
                     var last = properties[properties.length - 1];
                     if (last && !last.isBlank()) {
@@ -647,7 +647,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
             return self;
         },
 
-        unwrap: function(self) {
+        unwrap: function (self) {
             return ko.mapping.toJS(self, UserCaseTransaction.mapping(self));
         },
     };
@@ -657,18 +657,18 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
         mapping: {
             include: ['key', 'path', 'required'],
         },
-        wrap: function(data, case_transaction) {
+        wrap: function (data, case_transaction) {
             var self = ko.mapping.fromJS(data, CaseProperty.mapping);
             self.case_transaction = case_transaction;
-            self.isBlank = ko.computed(function() {
+            self.isBlank = ko.computed(function () {
                 return !self.key() && !self.path();
             });
-            self.caseType = ko.computed(function() {
+            self.caseType = ko.computed(function () {
                 return self.case_transaction.case_type();
             });
             self.updatedDescription = ko.observable('');
             self.description = ko.computed({
-                read: function() {
+                read: function () {
                     if (self.updatedDescription()) {
                         return self.updatedDescription();
                     }
@@ -678,7 +678,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                         return type[self.key()] || '';
                     }
                 },
-                write: function(value) {
+                write: function (value) {
                     self.updatedDescription(value);
                 },
             });
@@ -688,18 +688,18 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
 
     var CaseProperty = {
         mapping: CasePropertyBase.mapping,
-        wrap: function(data, case_transaction) {
+        wrap: function (data, case_transaction) {
             var self = CasePropertyBase.wrap(data, case_transaction);
-            self.defaultKey = ko.computed(function() {
+            self.defaultKey = ko.computed(function () {
                 var path = self.path() || '';
                 var value = path.split('/');
                 value = value[value.length - 1];
                 return value;
             });
-            self.repeat_context = function() {
+            self.repeat_context = function () {
                 return case_transaction.caseConfig.get_repeat_context(self.path());
             };
-            self.validate = ko.computed(function() {
+            self.validate = ko.computed(function () {
                 if (self.path() || self.key()) {
                     if (case_transaction.propertyCounts()[self.key()] > 1) {
                         return gettext("Property updated by two questions");
@@ -722,12 +722,12 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
     };
 
     var CasePreload = {
-        wrap: function(data, case_transaction) {
+        wrap: function (data, case_transaction) {
             var self = CasePropertyBase.wrap(data, case_transaction);
-            self.defaultKey = ko.computed(function() {
+            self.defaultKey = ko.computed(function () {
                 return '';
             });
-            self.validateProperty = ko.computed(function() {
+            self.validateProperty = ko.computed(function () {
                 if (self.path() || self.key()) {
                     if (case_transaction.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
@@ -735,7 +735,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 }
                 return null;
             });
-            self.validateQuestion = ko.computed(function() {
+            self.validateQuestion = ko.computed(function () {
                 if (self.path()) {
                     if (case_transaction.preloadCounts()[self.path()] > 1) {
                         return gettext("Two properties load to the same question");
@@ -761,7 +761,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
         operator: null,
     };
 
-    var cleanCondition = function(condition) {
+    var cleanCondition = function (condition) {
         if (condition.type !== 'if') {
             condition.question = null;
             condition.answer = null;
@@ -771,7 +771,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
     };
 
     var HQFormActions = {
-        normalize: function(o) {
+        normalize: function (o) {
             var self = {};
             self.open_case = {
                 condition: (o.open_case || {}).condition || DEFAULT_CONDITION_ALWAYS,
@@ -794,7 +794,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
             };
             return self;
         },
-        to_case_transaction: function(o, caseConfig) {
+        to_case_transaction: function (o, caseConfig) {
             var self = HQFormActions.normalize(o);
             var required_properties = caseConfig.requires() === 'none' &&
                 caseConfig.actions.open_case.condition.type !== "never" &&
@@ -821,7 +821,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 case_preload: case_preload,
                 condition: self.open_case.condition,
                 close_condition: self.close_case.condition,
-                suggestedProperties: function() {
+                suggestedProperties: function () {
                     if (_(caseConfig.propertiesMap).has(this.case_type())) {
                         return caseConfig.propertiesMap[this.case_type()]();
                     } else {
@@ -829,22 +829,22 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                     }
                 },
             }, caseConfig);
-            _.delay(function() {
+            _.delay(function () {
                 x.allow = {
-                    condition: ko.computed(function() {
+                    condition: ko.computed(function () {
                         return caseConfig.caseConfigViewModel.actionType() === 'open';
                     }),
-                    case_preload: ko.computed(function() {
+                    case_preload: ko.computed(function () {
                         return caseConfig.caseConfigViewModel.actionType() === 'update';
                     }),
-                    repeats: function() {
+                    repeats: function () {
                         return false;
                     },
                 };
             });
             return x;
         },
-        from_case_transaction: function(case_transaction) {
+        from_case_transaction: function (case_transaction) {
             var o = CaseTransaction.unwrap(case_transaction);
             var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0],
@@ -884,7 +884,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 },
             };
         },
-        to_usercase_transaction: function(o, caseConfig) {
+        to_usercase_transaction: function (o, caseConfig) {
             var self = HQFormActions.normalize(o);
             var case_properties = caseConfigUtils.propertyDictToArray(
                 [], // usercase has no required properties; it has already been created with everything it needs
@@ -901,14 +901,14 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 case_properties: case_properties,
                 case_preload: case_preload,
                 allow: {
-                    repeats: function() {
+                    repeats: function () {
                         // This placeholder function allows us to reuse the "case-config:case-properties:question"
                         // template in case_config_ko_templates.html
                         return true;
                     },
                 },
 
-                suggestedProperties: function() {
+                suggestedProperties: function () {
                     if (_(caseConfig.usercasePropertiesMap).has('commcare-user')) {
                         return caseConfig.usercasePropertiesMap['commcare-user']();
                     } else {
@@ -917,7 +917,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 },
             }, caseConfig);
         },
-        from_usercase_transaction: function(usercase_transaction) {
+        from_usercase_transaction: function (usercase_transaction) {
             var o = UserCaseTransaction.unwrap(usercase_transaction);
             var x = caseConfigUtils.propertyArrayToDict([], o.case_properties);
             var case_properties = x[0];
@@ -935,7 +935,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
     };
 
     var HQOpenSubCaseAction = {
-        normalize: function(o) {
+        normalize: function (o) {
             var self = {};
             self.case_type = o.case_type || null;
             self.case_name = o.case_name || null;
@@ -947,7 +947,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
             self.relationship = o.relationship || null;
             return self;
         },
-        to_case_transaction: function(o, caseConfig) {
+        to_case_transaction: function (o, caseConfig) {
             var self = HQOpenSubCaseAction.normalize(o);
             var case_properties = caseConfigUtils.propertyDictToArray([{
                 path: self.case_name,
@@ -962,10 +962,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                 condition: self.condition,
                 close_condition: self.close_condition,
                 relationship: self.relationship,
-                suggestedProperties: function() {
+                suggestedProperties: function () {
                     if (this.case_type() && _(caseConfig.propertiesMap).has(this.case_type())) {
                         var all = caseConfig.propertiesMap[this.case_type()]();
-                        return _(all).filter(function(property) {
+                        return _(all).filter(function (property) {
                             return !_(property).contains('/');
                         });
                     } else {
@@ -973,22 +973,22 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                     }
                 },
                 allow: {
-                    condition: function() {
+                    condition: function () {
                         return true;
                     },
-                    case_preload: function() {
+                    case_preload: function () {
                         return false;
                     },
-                    repeats: function() {
+                    repeats: function () {
                         return true;
                     },
-                    parentProperties: function() {
+                    parentProperties: function () {
                         return false;
                     },
                 },
             }, caseConfig);
         },
-        from_case_transaction: function(case_transaction) {
+        from_case_transaction: function (case_transaction) {
             var o = CaseTransaction.unwrap(case_transaction);
             var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0],
@@ -1006,7 +1006,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
         },
     };
 
-    $(function() {
+    $(function () {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         if (initial_page_data('has_form_source')) {
             var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {

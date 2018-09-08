@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine('users/js/edit_commcare_user', function() {
+hqDefine('users/js/edit_commcare_user', function () {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
         couchUserId = initialPageData.get('couch_user_id');
 
@@ -8,19 +8,19 @@ hqDefine('users/js/edit_commcare_user', function() {
         placeholder: gettext('Select a language...'),
     });
 
-    $('#add_phone_number').submit(function() {
-        hqImport('analytix/js/google').track.event('Edit Mobile Worker', 'Update phone number', couchUserId, '', {}, function() {
+    $('#add_phone_number').submit(function () {
+        hqImport('analytix/js/google').track.event('Edit Mobile Worker', 'Update phone number', couchUserId, '', {}, function () {
             document.getElementById('add_phone_number').submit();
         });
         return false;
     });
 
-    $('#reset-password-form').submit(function() {
+    $('#reset-password-form').submit(function () {
         $(this).ajaxSubmit({
             url: $(this).attr('action'),
             type: 'POST',
             dataType: 'json',
-            success: function(response, status, xhr, form) {
+            success: function (response, status, xhr, form) {
                 form.find('#user-password').html(response.formHTML);
                 if (response.status === "OK") {
                     hqImport("hqwebapp/js/alert_user").alert_user(gettext("Password changed successfully"), 'success');
@@ -38,15 +38,15 @@ hqDefine('users/js/edit_commcare_user', function() {
         return false;
     });
     if (!initialPageData.get('is_currently_logged_in_user')) {
-        var deleteUserButtonModel = function() {
+        var deleteUserButtonModel = function () {
             var self = {};
             self.signOff = ko.observable('');
             self.formDeleteUserSent = ko.observable(false);
-            self.disabled = function() {
+            self.disabled = function () {
                 var understand = self.signOff().toLowerCase() === initialPageData.get('couch_user_username');
                 return self.formDeleteUserSent() || !understand;
             };
-            self.submit = function() {
+            self.submit = function () {
                 if (!self.disabled()) {
                     self.formDeleteUserSent(true);
                     return true;
@@ -60,8 +60,8 @@ hqDefine('users/js/edit_commcare_user', function() {
 
         // Event tracking
         var $deleteModalForm = $("#delete_user_" + couchUserId + " form");
-        $("button:submit", $deleteModalForm).on("click", function() {
-            hqImport('analytix/js/google').track.event("Edit Mobile Worker", "Deleted User", couchUserId, "", {}, function() {
+        $("button:submit", $deleteModalForm).on("click", function () {
+            hqImport('analytix/js/google').track.event("Edit Mobile Worker", "Deleted User", couchUserId, "", {}, function () {
                 $deleteModalForm.submit();
             });
             return false;
@@ -79,21 +79,21 @@ hqDefine('users/js/edit_commcare_user', function() {
 
     // "are you sure?" stuff
     var unsavedChanges = false;
-    $("#id_selected_ids").change(function() {
+    $("#id_selected_ids").change(function () {
         unsavedChanges = true;
     });
 
-    $(window).on('beforeunload', function() {
+    $(window).on('beforeunload', function () {
         if (unsavedChanges) {
             return gettext("Group membership has changed.");
         }
     });
-    $("#groups").submit(function() {
+    $("#groups").submit(function () {
         $(window).unbind("beforeunload");
     });
 
     // Input handling
-    $('#id_add_phone_number').on('paste', function(event) {
+    $('#id_add_phone_number').on('paste', function (event) {
         var clipboardData = event.clipboardData || event.originalEvent.clipboardData;
         var pasteText = clipboardData.getData("Text");
         var text = pasteText.replace(/\+|-|\(|\)|\s/g, '');
@@ -107,9 +107,9 @@ hqDefine('users/js/edit_commcare_user', function() {
     });
 
     var $userInformationForm = $('form[name="user_information"]');
-    $userInformationForm.on("change", null, null, function() {
+    $userInformationForm.on("change", null, null, function () {
         $(":submit").prop("disabled", false);
-    }).on("input", null, null, function() {
+    }).on("input", null, null, function () {
         $(":submit").prop("disabled", false);
     });
 
@@ -118,8 +118,8 @@ hqDefine('users/js/edit_commcare_user', function() {
     }
 
     // Analytics
-    $("button:submit", $userInformationForm).on("click", function() {
-        hqImport('analytix/js/google').track.event("Edit Mobile Worker", "Updated user info", couchUserId, "", {}, function() {
+    $("button:submit", $userInformationForm).on("click", function () {
+        hqImport('analytix/js/google').track.event("Edit Mobile Worker", "Updated user info", couchUserId, "", {}, function () {
             $userInformationForm.submit();
         });
         return false;

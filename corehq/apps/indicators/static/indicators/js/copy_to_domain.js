@@ -1,7 +1,7 @@
 hqDefine("indicators/js/copy_to_domain", [
     'jquery',
     'hqwebapp/js/multiselect_utils',
-], function(
+], function (
     $,
     multiselectUtils
 ) {

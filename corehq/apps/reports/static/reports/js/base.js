@@ -1,5 +1,5 @@
-hqDefine("reports/js/base", function() {
-    $(function() {
+hqDefine("reports/js/base", function () {
+    $(function () {
         hqImport("reports/js/filters/main").init();
 
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
@@ -17,13 +17,13 @@ hqDefine("reports/js/base", function() {
         if ($savedReports.length) {
             var reportConfigModels = hqImport("reports/js/report_config_models"),
                 reportConfigsView = reportConfigModels.reportConfigsViewModel({
-                filterForm: $("#reportFilters"),
-                items: initial_page_data('report_configs'),
-                defaultItem: defaultConfig,
-                saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
-            });
+                    filterForm: $("#reportFilters"),
+                    items: initial_page_data('report_configs'),
+                    defaultItem: defaultConfig,
+                    saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
+                });
             $savedReports.koApplyBindings(reportConfigsView);
-            reportConfigsView.setConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig))
+            reportConfigsView.setConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
         }
 
         $('#email-enabled').tooltip({

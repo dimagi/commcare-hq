@@ -93,7 +93,7 @@ jinja2==2.8
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.8
+jsonobject-couchdbkit==0.9.9
 jsonobject==0.9.3
 jsonpath-rw==1.4.0
 kafka-python==0.9.5
@@ -162,7 +162,7 @@ singledispatch==3.4.0.3   # via tornado
 six==1.11.0
 smartypants==2.0.1
 socketpool==0.5.3
-sqlagg==0.10.2
+sqlagg==0.10.3
 sqlalchemy==1.2.9
 stripe==1.67.0
 suds-jurko==0.6

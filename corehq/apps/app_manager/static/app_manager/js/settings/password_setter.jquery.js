@@ -16,7 +16,7 @@ $.fn.password_setter = function (options) {
 
     that.hide();
     that.after($popupLink);
-    $popupLink.click(function() {
+    $popupLink.click(function () {
         $modal.modal('show');
         $passwordRow.find("input").focus();
     });

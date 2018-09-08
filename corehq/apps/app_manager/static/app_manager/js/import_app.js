@@ -1,11 +1,11 @@
 hqDefine('app_manager/js/import_app', function () {
-    function CompressionViewModel(source, post_url){
+    function CompressionViewModel(source, post_url) {
         var self = this;
         self.name = ko.observable("");
         self.source = ko.observable(source);
-        self.save = function(formElement) {
+        self.save = function (formElement) {
             $.postGo(post_url, {
-                name : self.name(),
+                name: self.name(),
                 compressed: hqImport("hqwebapp/js/lib/compression").LZW.compress(self.source()),
             });
             return false;

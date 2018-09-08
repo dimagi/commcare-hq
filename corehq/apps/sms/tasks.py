@@ -357,10 +357,15 @@ def process_sms(queued_sms_pk):
         requeue = False
         # Process inbound SMS from a single contact one at a time
         recipient_block = msg.direction == INCOMING
+
+        # We check datetime_to_process against utcnow plus a small amount
+        # of time because timestamps can differ between machines which
+        # can cause us to miss sending the message the first time and
+        # result in an unnecessary delay.
         if (isinstance(msg.processed, bool)
             and not msg.processed
             and not msg.error
-            and msg.datetime_to_process < utcnow):
+            and msg.datetime_to_process < (utcnow + timedelta(seconds=10))):
             if recipient_block:
                 recipient_lock = get_lock(client, 
                     "sms-queue-recipient-phone-%s" % msg.phone_number)

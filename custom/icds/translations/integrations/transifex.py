@@ -8,8 +8,9 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 from memoized import memoized
 
+
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
-from corehq.apps.app_manager.app_translations.generators import TransifexPOFileGenerator
+from corehq.apps.app_manager.app_translations.generators import AppTranslationsGenerator, PoFileGenerator
 from corehq.apps.app_manager.app_translations.parser import TranslationsParser
 from custom.icds.translations.integrations.client import TransifexApiClient
 
@@ -27,6 +28,7 @@ class Transifex(object):
         :param lang_prefix: prefix if other than "default_"
         :param resource_slugs: resource slugs
         :param is_source_file: upload as source language file(True) or translation(False)
+        :param exclude_if_default: ignore translation if its same as the source lang when pushing target langs
         :param use_version_postfix: use version number at the end of resource slugs
         :param update_resource: update resource file
         """
@@ -34,29 +36,29 @@ class Transifex(object):
             version = int(version)
         self.version = version
         self.domain = domain
+        self.app_id = app_id
         self.key_lang = "en"  # the lang in which the string keys are, should be english
         self.lang_prefix = lang_prefix
         self.project_slug = project_slug
         self._resource_slugs = resource_slugs
         self.is_source_file = is_source_file
+        self.exclude_if_default = exclude_if_default
         self.source_lang = source_lang
         self.lock_translations = lock_translations
         self.use_version_postfix = use_version_postfix
         self.update_resource = update_resource
-        self.transifex_po_file_generator = TransifexPOFileGenerator(domain, app_id, version, self.key_lang,
-                                                                    source_lang, lang_prefix, exclude_if_default,
-                                                                    use_version_postfix)
 
     def send_translation_files(self):
         """
-        submit files to transifex for performing translations
+        submit translation files to transifex
         """
-        try:
-            self.transifex_po_file_generator.generate_translation_files()
-            file_uploads = self._send_files_to_transifex()
-        finally:
-            self._cleanup()
-        return file_uploads
+        app_trans_generator = AppTranslationsGenerator(
+            self.domain, self.app_id, self.version,
+            self.key_lang, self.source_lang, self.lang_prefix,
+            self.exclude_if_default, self.use_version_postfix)
+        with PoFileGenerator(app_trans_generator.translations, app_trans_generator.metadata) as po_file_generator:
+            generated_files = po_file_generator.generate_translation_files()
+            return self._send_files_to_transifex(generated_files)
 
     @property
     @memoized
@@ -90,9 +92,9 @@ class Transifex(object):
         return resource_name_in_all_langs.get(self.transifex_project_source_lang,
                                               resource_name_in_all_langs.get('en', resource_slug))
 
-    def _send_files_to_transifex(self):
+    def _send_files_to_transifex(self, generated_files):
         file_uploads = {}
-        for resource_slug, path_to_file in self.transifex_po_file_generator.generated_files:
+        for resource_slug, path_to_file in generated_files:
             resource_name = self._resource_name_in_project_lang(resource_slug)
             if self.is_source_file:
                 response = self.client.upload_resource(
@@ -111,9 +113,6 @@ class Transifex(object):
             else:
                 file_uploads[resource_name] = "{}: {}".format(response.status_code, response.content)
         return file_uploads
-
-    def _cleanup(self):
-        self.transifex_po_file_generator.cleanup()
 
     @property
     @memoized
@@ -137,6 +136,7 @@ class Transifex(object):
     def get_translations(self):
         """
         pull translations from transifex
+
         :return: dict of resource_slug mapped to POEntry objects
         """
         if self.version and self.use_version_postfix:

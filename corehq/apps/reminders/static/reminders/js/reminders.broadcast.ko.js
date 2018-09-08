@@ -1,30 +1,30 @@
-hqDefine("reminders/js/reminders.broadcast.ko", function() {
-    var BroadcastViewModel = function (initial_values) {
+hqDefine("reminders/js/reminders.broadcast.ko", function () {
+    var broadcastViewModel = function (initialValues) {
         'use strict';
-        var self = this;
+        var self = {};
 
-        self.recipient_type = ko.observable(initial_values.recipient_type);
-        self.timing = ko.observable(initial_values.timing);
-        self.date = ko.observable(initial_values.date);
-        self.time = ko.observable(initial_values.time);
-        self.case_group_id = ko.observable(initial_values.case_group_id);
-        self.user_group_id = ko.observable(initial_values.user_group_id);
-        self.content_type = ko.observable(initial_values.content_type);
-        self.subject = ko.observable(initial_values.subject);
-        self.message = ko.observable(initial_values.message);
-        self.form_unique_id = ko.observable(initial_values.form_unique_id);
-        self.role = ko.observable(initial_values.role);
+        self.recipientType = ko.observable(initialValues.recipient_type);
+        self.timing = ko.observable(initialValues.timing);
+        self.date = ko.observable(initialValues.date);
+        self.time = ko.observable(initialValues.time);
+        self.caseGroupId = ko.observable(initialValues.case_group_id);
+        self.userGroupId = ko.observable(initialValues.user_group_id);
+        self.contentType = ko.observable(initialValues.content_type);
+        self.subject = ko.observable(initialValues.subject);
+        self.message = ko.observable(initialValues.message);
+        self.formUniqueId = ko.observable(initialValues.formUniqueId);
+        self.role = ko.observable(initialValues.role);
 
-        self.is_trial_project = initial_values.is_trial_project;
-        self.displayed_email_trial_message = false;
-        self.content_type.subscribe(function(newValue) {
-            if(
+        self.isTrialProject = initialValues.isTrialProject;
+        self.displayedEmailTrialMessage = false;
+        self.contentType.subscribe(function (newValue) {
+            if (
                 self.is_trial_project &&
                 !self.displayed_email_trial_message &&
                 newValue === 'email'
             ) {
                 $('#email-trial-message-modal').modal('show');
-                self.displayed_email_trial_message = true;
+                self.displayedEmailTrialMessage = true;
             }
         });
 
@@ -33,32 +33,32 @@ hqDefine("reminders/js/reminders.broadcast.ko", function() {
         });
 
         self.showSubject = ko.computed(function () {
-            return self.content_type() === 'email';
+            return self.contentType() === 'email';
         });
 
         self.showMessage = ko.computed(function () {
-            var content_type = self.content_type();
-            return content_type === 'sms' || content_type === 'email';
+            var contentType = self.contentType();
+            return contentType === 'sms' || contentType === 'email';
         });
 
         self.showSurveySelect = ko.computed(function () {
-            return self.content_type() === 'survey';
+            return self.contentType() === 'survey';
         });
 
         self.showCaseGroupSelect = ko.computed(function () {
-            return self.recipient_type() === 'SURVEY_SAMPLE';
+            return self.recipientType() === 'SURVEY_SAMPLE';
         });
 
         self.showUserGroupSelect = ko.computed(function () {
-            return self.recipient_type() === 'USER_GROUP';
+            return self.recipientType() === 'USER_GROUP';
         });
 
         self.showLocationSelect = ko.computed(function () {
-            return self.recipient_type() === 'LOCATION';
+            return self.recipientType() === 'LOCATION';
         });
 
         self.initDatePicker = function () {
-            $("input[name='date']").datepicker({dateFormat : "yy-mm-dd"});
+            $("input[name='date']").datepicker({dateFormat: "yy-mm-dd"});
         };
 
         self.initTimePicker = function () {
@@ -74,10 +74,12 @@ hqDefine("reminders/js/reminders.broadcast.ko", function() {
             self.initDatePicker();
             self.initTimePicker();
         };
+
+        return self;
     };
 
     $(function () {
-        var bvm = new BroadcastViewModel(hqImport("hqwebapp/js/initial_page_data").get("current_values"));
+        var bvm = broadcastViewModel(hqImport("hqwebapp/js/initial_page_data").get("current_values"));
         $('#broadcast-form').koApplyBindings(bvm);
         bvm.init();
     });

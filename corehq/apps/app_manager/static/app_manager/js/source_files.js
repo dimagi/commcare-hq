@@ -1,7 +1,7 @@
 /* globals hqDefine */
-hqDefine('app_manager/js/source_files', function() {
-    $(function(){
-        $('.toggle-next').click(function(e){
+hqDefine('app_manager/js/source_files', function () {
+    $(function () {
+        $('.toggle-next').click(function (e) {
             e.preventDefault();
             $(this).parents('tr').next('tr').toggleClass("hide");
         });
@@ -11,13 +11,13 @@ hqDefine('app_manager/js/source_files', function() {
             $form = $("#compare-form"),
             $input = $form.find("input");
     
-        built_versions = _.sortBy(_.filter(built_versions, function(v) {
+        built_versions = _.sortBy(_.filter(built_versions, function (v) {
             return v.version != current_version;
-        }), function(v) { return parseInt(v.version); }).reverse();
+        }), function (v) { return parseInt(v.version); }).reverse();
         var version_map = _.indexBy(built_versions, 'version');
     
         $input.select2({
-            data: _.map(built_versions, function(v) {
+            data: _.map(built_versions, function (v) {
                 return {
                     id: v.version,
                     text: v.version + ": " + (v.comment || "no comment"),
@@ -25,7 +25,7 @@ hqDefine('app_manager/js/source_files', function() {
             }),
         });
     
-        $form.find("button").click(function() {
+        $form.find("button").click(function () {
             var version = $input.val();
             if (!version) {
                 alert("Please enter a version to compare");

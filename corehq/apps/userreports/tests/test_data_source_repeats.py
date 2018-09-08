@@ -93,7 +93,6 @@ class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
 
         # Save this document into the table
         adapter.save(doc)
-        adapter.refresh_table()
 
         # Get rows from the table
         rows = adapter.get_query_object()

@@ -1,5 +1,5 @@
 /* globals hqDefine hqImport django */
-hqDefine("app_manager/js/releases/app_view_release_manager", function() {
+hqDefine("app_manager/js/releases/app_view_release_manager", function () {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
     hqImport('app_manager/js/app_manager').setPrependedPageTitle(django.gettext("Publish"));
@@ -16,7 +16,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     var el = $('#releases-table');
     if (el.length) {
         var releasesMain = releasesMainModel(o);
-        _.defer(function(){ releasesMain.goToPage(1); });
+        _.defer(function () { releasesMain.goToPage(1); });
         el.koApplyBindings(releasesMain);
     }
 
@@ -40,7 +40,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         $profilesTab.koApplyBindings(profileManager);
     }
 
-    $(function() {
+    $(function () {
         if (initial_page_data('intro_only')) {
             hqImport('app_manager/js/preview_app').forceShowPreview();
         }

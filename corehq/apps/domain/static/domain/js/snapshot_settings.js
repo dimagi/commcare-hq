@@ -3,7 +3,7 @@ hqDefine("domain/js/snapshot_settings", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
-], function(
+], function (
     $,
     _,
     initialPageData,
@@ -13,22 +13,22 @@ hqDefine("domain/js/snapshot_settings", [
         var versionName = $(this).data('version');
         googleAnalytics.track.click($('#view-on-exchange'), 'Exchange', 'View on exchange', versionName);
     }
-    function projectPublishEventTrack(){
+    function projectPublishEventTrack() {
         var versionName = $(this).data('version');
         googleAnalytics.track.event('Exchange', 'Publish Most Recent', versionName);
     }
 
-    $(function() {
-        $("#contentDistributionAgreement").on("show.bs.modal", function() {
+    $(function () {
+        $("#contentDistributionAgreement").on("show.bs.modal", function () {
             $(this).find(".modal-body").load(initialPageData.reverse('cda_basic'));
         });
 
-        $('[data-target="#contentDistributionAgreement"]').click(function() {
+        $('[data-target="#contentDistributionAgreement"]').click(function () {
             var new_action = $(this).attr('data-action');
             $('#cda-agree').attr('action', new_action);
         });
 
-        $('#toggle-snapshots').click(function() {
+        $('#toggle-snapshots').click(function () {
             if ($(this).text() === 'Show previous versions') {
                 $('#snapshots').show(500);
                 $(this).text(gettext('Hide previous versions'));
@@ -39,11 +39,11 @@ hqDefine("domain/js/snapshot_settings", [
             }
         });
 
-        _.each(initialPageData.get('snapshots'), function(snapshot) {
-            $('#publish_' + snapshot.name).click(function() {
+        _.each(initialPageData.get('snapshots'), function (snapshot) {
+            $('#publish_' + snapshot.name).click(function () {
                 googleAnalytics.track.event('Exchange', 'Publish Previous Version', snapshot.name);
             });
-            $('#view_' + snapshot.name).click(function() {
+            $('#view_' + snapshot.name).click(function () {
                 googleAnalytics.track.click($('#view_' + snapshot.name), 'Exchange', 'View', snapshot.name);
             });
         });

@@ -999,7 +999,7 @@ class XForm(WrappedNode):
                 "relevant": cnode.relevant,
                 "required": cnode.required == "true()",
                 "constraint": cnode.constraint,
-                "comment": self._get_comment(leaf_data_nodes, path),
+                "comment": self.get_comment(path),
                 "hashtagValue": self.hashtag_path(path),
                 "setvalue": self.get_setvalue(path),
             }
@@ -1046,7 +1046,7 @@ class XForm(WrappedNode):
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                     "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
                     "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
-                    "comment": self._get_comment(leaf_data_nodes, path),
+                    "comment": self.get_comment(path),
                     "setvalue": self.get_setvalue(path)
                 }
 
@@ -1201,9 +1201,9 @@ class XForm(WrappedNode):
         for_each_control_node(self.find('{h}body'))
         return control_nodes
 
-    def _get_comment(self, leaf_data_nodes, path):
+    def get_comment(self, path):
         try:
-            return leaf_data_nodes[path].attrib.get('{v}comment')
+            return self.get_flattened_data_nodes()[path].attrib.get('{v}comment')
         except KeyError:
             return None
 
@@ -1234,8 +1234,11 @@ class XForm(WrappedNode):
         return path
 
     def get_leaf_data_nodes(self):
+        return self.get_flattened_data_nodes(leaves_only=True)
+
+    def get_flattened_data_nodes(self, leaves_only=False):
         if not self.exists():
-            return []
+            return {}
 
         data_nodes = {}
 
@@ -1244,7 +1247,7 @@ class XForm(WrappedNode):
             for child in children:
                 path = self.resolve_path(child.tag_name, path_context)
                 for_each_data_node(child, path_context=path)
-            if not children and path_context:
+            if (not leaves_only or not children) and path_context:
                 data_nodes[path_context] = parent
 
         for_each_data_node(self.data_node)

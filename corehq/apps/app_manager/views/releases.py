@@ -74,6 +74,7 @@ def _get_error_counts(domain, app_id, version_numbers):
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
+    build_comment = request.GET.get('build_comment')
     page = int(request.GET.get('page', 1))
     page = max(page, 1)
     try:
@@ -94,6 +95,8 @@ def paginate_releases(request, domain, app_id):
     )
     if only_show_released:
         app_es = app_es.is_released()
+    if build_comment:
+        app_es = app_es.build_comment(build_comment)
     apps = app_es.run()
     saved_apps = [SavedAppBuild.wrap(app).to_saved_build_json(timezone) for app in apps.hits]
 
@@ -479,7 +482,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
         return {
             "app": self.first_app,
             "other_app": self.second_app,
-            "files": self.app_diffs
+            "files": {None: self.app_diffs},
         }
 
     @property

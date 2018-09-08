@@ -4,9 +4,7 @@
 
 {% block title %}{% trans "Form Summary" %}{% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "app_manager/js/summary/form_summary.js" %}"></script>
-{% endblock js %}
+{% requirejs_main "app_manager/js/summary/form_summary" %}
 
 {% block content_extra %}
     {% initial_page_data 'errors' errors %}
