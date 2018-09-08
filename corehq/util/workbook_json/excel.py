@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-
 from zipfile import BadZipfile
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
