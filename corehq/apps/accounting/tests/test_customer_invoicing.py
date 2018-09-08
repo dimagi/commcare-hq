@@ -352,11 +352,11 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
         super(TestSmsLineItem, self).tearDown()
 
     def test_under_limit(self):
-        num_sms = random.randint(1, self.sms_rate.monthly_limit // 2)
+        num_sms = self.sms_rate.monthly_limit // 2
         arbitrary_sms_billables_for_domain(
             self.domain, self.sms_date, num_sms, direction=INCOMING
         )
-        num_sms_advanced = random.randint(1, self.advanced_rate.monthly_limit // 2)
+        num_sms_advanced = self.advanced_rate.monthly_limit // 2
         arbitrary_sms_billables_for_domain(
             self.domain2, self.sms_date, num_sms_advanced, direction=INCOMING
         )
