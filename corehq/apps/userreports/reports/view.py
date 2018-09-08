@@ -527,9 +527,10 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 self.report_export.create_export(temp, Format.HTML)
             except UserReportsError as e:
                 return self.render_json_response({'error': six.text_type(e)})
-            return HttpResponse(json.dumps({
-                'report': temp.getvalue(),
-            }), content_type='application/json')
+            return HttpResponse(
+                b'{"report": "%s"}' % temp.getvalue(),
+                content_type='application/json'
+            )
 
     @property
     @memoized
