@@ -5,7 +5,7 @@ from copy import copy
 
 from django.conf import settings
 from kafka import KafkaConsumer
-from kafka.common import ConsumerTimeout, TopicPartition
+from kafka.common import TopicPartition
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
@@ -93,7 +93,7 @@ class KafkaChangeFeed(ChangeFeed):
             for message in consumer:
                 self._processed_topic_offsets[(message.topic, message.partition)] = message.offset
                 yield change_from_kafka_message(message)
-        except ConsumerTimeout:
+        except StopIteration:
             assert not forever, 'Kafka pillow should not timeout when waiting forever!'
             # no need to do anything since this is just telling us we've reached the end of the feed
 
