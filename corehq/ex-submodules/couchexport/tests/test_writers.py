@@ -99,7 +99,7 @@ class HtmlExportWriterTests(SimpleTestCase):
 
         root = html.fromstring(html_string)
         html_rows = [
-            [etree.tostring(td).strip() for td in tr.xpath('./td')]
+            [etree.tostring(td).strip().decode('utf-8') for td in tr.xpath('./td')]
             for tr in root.xpath('./body/table/tbody/tr')
         ]
         self.assertEqual(html_rows,
