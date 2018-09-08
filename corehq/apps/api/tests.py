@@ -914,7 +914,7 @@ class TestRepeaterResource(APIResourceTest):
         api_repeaters = json.loads(response.content)['objects']
         self.assertEqual(len(api_repeaters), 2)
 
-        api_case_repeater = filter(lambda r: r['type'] == 'CaseRepeater', api_repeaters)[0]
+        api_case_repeater = list(filter(lambda r: r['type'] == 'CaseRepeater', api_repeaters))[0]
         self.assertEqual(api_case_repeater['id'], case_repeater._id)
         self.assertEqual(api_case_repeater['url'], case_repeater.url)
         self.assertEqual(api_case_repeater['domain'], case_repeater.domain)
