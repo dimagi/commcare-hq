@@ -54,7 +54,7 @@ class Transifex(object):
     def _find_build_id(self):
         # find build id if version specified
         if self.version:
-            get_version_build_id(self.domain, self.app_id, self.version)
+            return get_version_build_id(self.domain, self.app_id, self.version)
         else:
             return self.app_id
 

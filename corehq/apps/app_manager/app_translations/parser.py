@@ -113,7 +113,7 @@ class TranslationsParser(object):
         if module_sheet_name_match:
             module_unique_id = module_sheet_name_match.groups()[0]
             module_index = self.get_app.get_module_index(module_unique_id) + 1
-            return "module_%s" % module_index
+            return "module%s" % module_index
         form_sheet_name_match = TRANSIFEX_FORM_RESOURCE_NAME.match(resource_slug)
         if form_sheet_name_match:
             form_unique_id = form_sheet_name_match.groups()[0]
