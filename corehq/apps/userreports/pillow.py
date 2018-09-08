@@ -274,7 +274,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
     def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False):
         change_feed = KafkaChangeFeed(
-            topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
+            topics, client_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
         checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
         event_handler = KafkaCheckpointEventHandler(

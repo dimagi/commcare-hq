@@ -26,21 +26,21 @@ class KafkaChangeFeed(ChangeFeed):
     """
     sequence_format = 'json'
 
-    def __init__(self, topics, group_id, strict=False, num_processes=1, process_num=0):
+    def __init__(self, topics, client_id, strict=False, num_processes=1, process_num=0):
         """
-        Create a change feed listener for a list of kafka topics, a group ID, and partition.
+        Create a change feed listener for a list of kafka topics, a client ID, and partition.
 
         See http://kafka.apache.org/documentation.html#introduction for a description of what these are.
         """
         self._topics = topics
-        self._group_id = group_id
+        self._client_id = client_id
         self._processed_topic_offsets = {}
         self.strict = strict
         self.num_processes = num_processes
         self.process_num = process_num
 
     def __unicode__(self):
-        return 'KafkaChangeFeed: topics: {}, group: {}'.format(self._topics, self._group_id)
+        return 'KafkaChangeFeed: topics: {}, client: {}'.format(self._topics, self._client_id)
 
     @property
     def topics(self):
@@ -128,7 +128,7 @@ class KafkaChangeFeed(ChangeFeed):
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {
-            'group_id': None,
+            'client_id': self._client_id,
             'bootstrap_servers': settings.KAFKA_BROKERS,
             'consumer_timeout_ms': timeout,
             'auto_offset_reset': auto_offset_reset,

@@ -33,7 +33,6 @@ class ChangeFeedPillowTest(SimpleTestCase):
         with trap_extra_setup(KafkaUnavailableError):
             self.consumer = KafkaConsumer(
                 topics.CASE,
-                group_id=None,
                 bootstrap_servers=settings.KAFKA_BROKERS,
                 consumer_timeout_ms=100,
             )
