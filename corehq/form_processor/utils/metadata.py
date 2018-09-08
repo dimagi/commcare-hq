@@ -84,7 +84,7 @@ def _flatten_dict(dictionary):
 
 
 def _remove_unused_meta_attributes(meta_block):
-    for key in meta_block.keys():
+    for key in list(meta_block.keys()):
         # remove attributes from the meta block
         if key.startswith('@'):
             del meta_block[key]
