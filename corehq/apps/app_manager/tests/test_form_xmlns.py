@@ -37,16 +37,16 @@ class FormXmlnsTest(SimpleTestCase, TestXmlMixin):
 
     def test_save_xform_changes_empty_xmlns(self):
         source = self.get_source(xmlns=None)
-        self.assertNotIn(self.form.xmlns, source)
+        self.assertNotIn(self.form.xmlns, source.decode('utf-8'))
         save_xform(self.app, self.form, source)
-        self.assertIn(self.form.xmlns, self.form.source)
+        self.assertIn(self.form.xmlns, self.form.source.decode('utf-8'))
         self.assertNotEqual(self.form.xmlns, GENERIC_XMLNS)
 
     def test_save_xform_changes_generic_xmlns(self):
         source = self.get_source(xmlns=GENERIC_XMLNS)
-        self.assertNotIn(self.form.xmlns, source)
+        self.assertNotIn(self.form.xmlns, source.decode('utf-8'))
         save_xform(self.app, self.form, source)
-        self.assertIn(self.form.xmlns, self.form.source)
+        self.assertIn(self.form.xmlns, self.form.source.decode('utf-8'))
         self.assertNotEqual(self.form.xmlns, GENERIC_XMLNS)
 
     def test_save_xform_does_not_change_xmlns_if_already_unique(self):
@@ -68,10 +68,10 @@ class FormXmlnsTest(SimpleTestCase, TestXmlMixin):
         Application.get_xmlns_map.get_cache(self.app).clear()
         form2 = self.app.new_form(self.module.id, "Form 2", None)
         form2_xmlns = form2.xmlns
-        self.assertNotIn(form2_xmlns, source)
+        self.assertNotIn(form2_xmlns, source.decode('utf-8'))
         save_xform(self.app, form2, source)
-        self.assertIn(form2_xmlns, form2.source)
-        self.assertNotIn(DEFAULT_XMLNS, form2.source)
+        self.assertIn(form2_xmlns, form2.source.decode('utf-8'))
+        self.assertNotIn(DEFAULT_XMLNS, form2.source.decode('utf-8'))
 
     def test_save_xform_with_shadow_form_does_not_change_xmlns(self):
         source = self.get_source()
