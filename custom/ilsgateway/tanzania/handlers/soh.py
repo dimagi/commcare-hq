@@ -38,13 +38,18 @@ def parse_report(val):
     [('zi', 10), ('co', 20), ('la', 30)]
     """
 
-    from strop import maketrans
+    if six.PY3:
+        maketrans = str.maketrans
+    else:
+        from strop import maketrans
 
-    def _cleanup(s):
-        return six.text_type(s).encode('utf-8')
+    if six.PY3:
+        val = six.text_type(val)
+    else:
+        val = six.text_type(val).encode('utf-8')
 
     return [
-        (x[0], int(x[1].translate(maketrans("lLO", "110"))))
+        (x[0], int(x[1].replace(' ', '').translate(maketrans("lLO", "110"))))
         for x in findall(
             "\s*(?P<code>[A-Za-z]{%(minchars)d,%(maxchars)d})\s*"
             "(?P<quantity>[+-]?[ ]*[0-9%(numeric_letters)s]+)\s*" %
@@ -52,7 +57,7 @@ def parse_report(val):
                 "minchars": 2,
                 "maxchars": 4,
                 "numeric_letters": "lLO"
-            }, _cleanup(val))
+            }, val)
     ]
 
 
