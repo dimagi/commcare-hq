@@ -57,6 +57,8 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
     """
     attachments = attachments or {}
     now = json_format_datetime(datetime.datetime.utcnow())
+    if isinstance(case_blocks, six.binary_type):
+        case_blocks = case_blocks.decode('utf-8')
     if not isinstance(case_blocks, six.string_types):
         case_blocks = ''.join(case_blocks)
     form_id = form_id or uuid.uuid4().hex
