@@ -805,7 +805,7 @@ class XForm(WrappedNode):
         from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
         instance_declarations = self.get_instance_ids()
         missing_unknown_instances = set()
-        instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(domain, [self.render()])
+        instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(domain, [self.render().decode('utf-8')])
         for instance_id in unknown_instance_ids:
             if instance_id not in instance_declarations:
                 missing_unknown_instances.add(instance_id)
