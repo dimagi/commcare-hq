@@ -26,6 +26,9 @@ def log_request(func):
         except Exception as err:
             log_level = logging.ERROR
             request_error = str(err)
+            if getattr(err, 'response', None) is not None:
+                response_status = err.response.status_code
+                response_body = pformat_json(err.response.content)
             raise err
         else:
             return response
