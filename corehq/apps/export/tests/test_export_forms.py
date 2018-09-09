@@ -264,7 +264,8 @@ class TestEmwfFilterFormExportFilters(TestCase):
     @patch.object(form, '_get_selected_es_user_types', return_value=[HQUserType.ACTIVE, HQUserType.DEACTIVATED,
                                                                      HQUserType.ADMIN])
     @patch.object(filter_builder, 'get_user_ids_for_user_types')
-    def test_get_user_type_filter_for_admin_and_deactivated_and_active_mobile(self, fetch_user_ids_patch):
+    def test_get_user_type_filter_for_admin_and_deactivated_and_active_mobile(self, fetch_user_ids_patch,
+                                                                              *patches):
         self.filter_export = self.subject(self.domain, pytz.utc)
         self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
         fetch_user_ids_patch.return_value = self.user_ids
@@ -396,8 +397,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.assertTrue(self.export_filter.is_valid())
         case_filters = self.export_filter.get_case_filter('', True, None)
 
-        fetch_user_ids_patch.assert_called_once_with(admin=False, unknown=True, demo=True, commtrack=True,
-                                                     active=False, deactivated=False)
+        fetch_user_ids_patch.assert_called_once_with(admin=False, commtrack=True, demo=True, unknown=True)
         assert not filters_from_slugs_patch.called
 
         self.assertIsInstance(case_filters[0], NOT)
