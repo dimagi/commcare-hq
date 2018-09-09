@@ -269,8 +269,9 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     Return a new _Writer
     """
     format = Format.XLS_2007
-    if len(export_instances) == 1:
-        format = export_instances[0].export_format
+    # This is how I make it XLS_2007
+    # if len(export_instances) == 1:
+    #     format = export_instances[0].export_format
 
     legacy_writer = get_writer(format)
     if allow_pagination and PAGINATED_EXPORTS.enabled(export_instances[0].domain):
