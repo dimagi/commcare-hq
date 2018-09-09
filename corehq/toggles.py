@@ -1610,3 +1610,10 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+SEARCH_DEACTIVATED_USERS = StaticToggle(
+    'search_deactivated_users',
+    'Allow for searching by deactivating users in form and case reports and exports',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
