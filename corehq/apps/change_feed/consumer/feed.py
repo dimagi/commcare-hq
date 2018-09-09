@@ -5,7 +5,7 @@ from copy import copy
 
 from django.conf import settings
 from kafka import KafkaConsumer
-from kafka.common import ConsumerTimeout
+from kafka.common import ConsumerTimeout, TopicPartition
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
@@ -72,6 +72,8 @@ class KafkaChangeFeed(ChangeFeed):
 
         reset = 'largest' if start_from_latest else 'smallest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
+        consumer.assign([TopicPartition(a, b) for a, b in self.topic_and_partitions])
+
         if not start_from_latest:
             if self.strict:
                 validate_offsets(since)
@@ -83,12 +85,9 @@ class KafkaChangeFeed(ChangeFeed):
 
             self._processed_topic_offsets = copy(since)
 
-            offsets = [
-                copy(self._processed_topic_offsets)
-            ]
-
             # this is how you tell the consumer to start from a certain point in the sequence
-            consumer.set_topic_partitions(*offsets)
+            for topic_partition, offset in since.items():
+                consumer.seek(TopicPartition(topic_partition[0], topic_partition[1]), offset)
 
         try:
             for message in consumer:
@@ -135,7 +134,6 @@ class KafkaChangeFeed(ChangeFeed):
             'auto_offset_reset': auto_offset_reset,
         }
         return KafkaConsumer(
-            *self._topics,
             **config
         )
 
