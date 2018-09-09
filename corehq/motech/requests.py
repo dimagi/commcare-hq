@@ -29,7 +29,7 @@ def log_request(func):
             if getattr(err, 'response', None) is not None:
                 response_status = err.response.status_code
                 response_body = pformat_json(err.response.content)
-            raise err
+            raise
         else:
             return response
         finally:
