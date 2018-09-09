@@ -10,7 +10,7 @@ hqDefine("locations/js/widgets_main_v4", [
     // the selected values from another (multiselect) select2
     function updateSelect2($source, $select) {
         $select.find("option").remove();
-        _.each($source.select2('data'), function(result) {
+        _.each($source.select2('data'), function (result) {
             $select.append(new Option(result.text || result.name, result.id));
         });
     }
