@@ -21,18 +21,21 @@ from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.locations.dbaccessors import get_all_users_by_location
+from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser
+from corehq.motech.openmrs.atom_feed import get_updated_patients, update_patient
 from corehq.motech.openmrs.const import (
     IMPORT_FREQUENCY_MONTHLY,
     IMPORT_FREQUENCY_WEEKLY,
+    OPENMRS_ATOM_FEED_POLL_INTERVAL,
     OPENMRS_IMPORTER_DEVICE_ID_PREFIX,
     XMLNS_OPENMRS,
 )
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.models import POSIX_MILLISECONDS
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 from toggle.shortcuts import find_domains_with_toggle_enabled
@@ -123,12 +126,6 @@ def get_updatepatient_caseblock(case, patient, importer):
     )
 
 
-def get_commcare_users_by_location(domain_name, location_id):
-    for user in get_all_users_by_location(domain_name, location_id):
-        if user.is_commcare_user():
-            yield user
-
-
 def import_patients_of_owner(requests, importer, domain_name, owner, location=None):
     openmrs_patients = get_openmrs_patients(requests, importer, location)
     case_blocks = []
@@ -215,9 +212,8 @@ def import_patients_to_domain(domain_name, force=False):
                 locations = SQLLocation.objects.filter(domain=domain_name, location_type=location_type)
             for location in locations:
                 # Assign cases to the first user in the location, not to the location itself
-                try:
-                    owner = next(get_commcare_users_by_location(domain_name, location.location_id))
-                except StopIteration:
+                owner = get_one_commcare_user_at_location(domain_name, location.location_id)
+                if not owner:
                     logger.error(
                         'Project space "{domain}" at location "{location}" has no user to own cases imported from '
                         'OpenMRS Importer "{importer}"'.format(
@@ -257,9 +253,23 @@ def import_patients():
         import_patients_to_domain(domain_name)
 
 
-@task(serializer='pickle', queue='background_queue')
+@task(queue='background_queue')
+def poll_openmrs_atom_feeds(domain_name):
+    for repeater in OpenmrsRepeater.by_domain(domain_name):
+        if repeater.atom_feed_enabled and not repeater.paused:
+            updated_patients = get_updated_patients(repeater)
+            for patient_uuid, updated_at in updated_patients:
+                update_patient(repeater, patient_uuid, updated_at)
+
+
+@periodic_task(
+    run_every=crontab(**OPENMRS_ATOM_FEED_POLL_INTERVAL),
+    queue='background_queue'
+)
 def track_changes():
     """
     Uses the OpenMRS Atom Feed to track changes
     """
-    pass
+    domains = find_domains_with_toggle_enabled(toggles.OPENMRS_INTEGRATION)
+    for domain in domains:
+        poll_openmrs_atom_feeds.delay(domain)
