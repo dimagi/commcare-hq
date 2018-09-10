@@ -10,8 +10,7 @@ git+git://github.com/dimagi/architect@v0.5.7a2#egg=architect==0.5.7a2
 -e git+git://github.com/nickpell/django-package-monitor@np/handle-no-semver#egg=django-package-monitor
 alabaster==0.7.11         # via sphinx
 alembic==0.8.6
-amqp==1.4.9
-anyjson==0.3.3
+amqp==2.3.2
 appdirs==1.4.3
 argparse==1.4.0
 asn1crypto==0.24.0
@@ -20,11 +19,11 @@ babel==2.6.0
 backports.shutil-get-terminal-size==1.0.0  # via ipython
 bcrypt==3.1.4             # via paramiko
 beautifulsoup4==4.6.3
-billiard==3.3.0.23
+billiard==3.5.0.4
 boto3==1.4.4
 botocore==1.5.95
 cached-property==1.4.3
-celery==3.1.25
+celery==4.2.1
 cffi==1.11.5
 chardet==3.0.4
 click==6.7                # via pip-tools
@@ -46,7 +45,7 @@ django-angular==0.7.16
 django-appconf==1.0.2
 django-braces==1.8.1
 django-bulk-update==1.1.10
-django-celery==3.2.1
+django-celery-results==1.0.1
 django-compressor==2.1
 django-countries==4.6
 django-crispy-forms==1.7.0
@@ -112,7 +111,7 @@ jsonobject-couchdbkit==0.9.9
 jsonobject==0.9.3
 jsonpath-rw==1.4.0
 kafka-python==0.9.5
-kombu==3.0.37
+kombu==4.2.1
 laboratory==0.2.0
 line_profiler==1.0
 linecache2==1.0.0
@@ -211,6 +210,7 @@ unidecode==0.04.20
 unittest2==1.1.0
 urllib3==1.23
 user-agents==1.1.0
+vine==1.1.4
 wcwidth==0.1.7            # via prompt-toolkit
 werkzeug==0.11.15
 wheel==0.29.0
