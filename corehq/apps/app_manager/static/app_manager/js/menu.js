@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/menu", function() {
+hqDefine("app_manager/js/menu", function () {
     var setPublishStatus = function (isOn) {
         var layout = hqImport("hqwebapp/js/layout");
         if (isOn) {
@@ -38,12 +38,12 @@ hqDefine("app_manager/js/menu", function() {
         setInterval(_checkPublishStatus, 20000);
 
         // sniff ajax calls to other urls that make app changes
-        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function() {
+        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function () {
             setPublishStatus(true);
         });
     };
 
-    $(function() {
+    $(function () {
         initLangs();
         initPublishStatus();
     });

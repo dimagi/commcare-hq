@@ -5,8 +5,8 @@ hqDefine('hqadmin/js/authenticate_as', [
     $,
     initialPageData
 ) {
-    $(function() {
-        $('#id_username, #id_domain').change(function() {
+    $(function () {
+        $('#id_username, #id_domain').change(function () {
             var username = $('#id_username').val(),
                 domain = $('#id_domain').val();
             // add username and domain to get those tracked in auditsaudau

@@ -1,12 +1,12 @@
 /* eslint-env mocha */
 /* global $, sinon */
 
-describe('App Releases', function() {
+describe('App Releases', function () {
     function getSavedApps(num, extraProps, releasesMain) {
         extraProps = extraProps || {};
         var savedAppModel = hqImport('app_manager/js/releases/releases').savedAppModel,
             savedApps = [];
-        for (var version = 0; version <= num; version ++){
+        for (var version = 0; version <= num; version ++) {
             savedApps.push(savedAppModel(
                 _.extend({
                     id: version,
@@ -35,11 +35,11 @@ describe('App Releases', function() {
             recipient_contacts: [],
             download_modal_id: '#download-zip-modal-test',
         };
-    describe('SavedApp', function() {
+    describe('SavedApp', function () {
         var releases = null,
             ajax_stub;
 
-        beforeEach(function() {
+        beforeEach(function () {
             var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel,
                 registerUrl = hqImport("hqwebapp/js/initial_page_data").registerUrl;
             registerUrl("odk_install", "/a/test-domain/apps/odk/---/install/");
@@ -51,31 +51,31 @@ describe('App Releases', function() {
             releases.savedApps(getSavedApps(releases.fetchLimit(), {}, releases));
         });
 
-        afterEach(function() {
+        afterEach(function () {
             ajax_stub.restore();
         });
 
-        it('should only make one request when downloading zip', function() {
+        it('should only make one request when downloading zip', function () {
             var app = releases.savedApps()[0];
             app.download_application_zip();
             assert.equal($.ajax.callCount, 1);
         });
 
-        it('should use the correct URL for downloading ccz', function() {
+        it('should use the correct URL for downloading ccz', function () {
             var app = releases.savedApps()[0];
             app.download_application_zip();
             assert.equal($.ajax.callCount, 1);
             assert.equal(ajax_stub.firstCall.args[0].url, releases.reverse('download_ccz', app.id()));
         });
 
-        it('should use the correct URL for downloading multimedia', function() {
+        it('should use the correct URL for downloading multimedia', function () {
             var app = releases.savedApps()[0];
             app.download_application_zip(true);
             assert.equal($.ajax.callCount, 1);
             assert.equal(ajax_stub.firstCall.args[0].url, releases.reverse('download_multimedia_zip', app.id()));
         });
 
-        it('should use the correct URL for different saved apps', function() {
+        it('should use the correct URL for different saved apps', function () {
             _.each(releases.savedApps(), function (app) {
                 ajax_stub.reset();
                 ajax_stub.onFirstCall(0).yieldsTo("success", {
@@ -92,12 +92,12 @@ describe('App Releases', function() {
 
     });
 
-    describe('app_code', function() {
+    describe('app_code', function () {
         var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel;
         var savedAppModel = hqImport('app_manager/js/releases/releases').savedAppModel;
         var savedApp,
             releases;
-        beforeEach(function() {
+        beforeEach(function () {
             releases = releasesMainModel(options);
 
             this.server = sinon.fakeServer.create();
@@ -113,7 +113,7 @@ describe('App Releases', function() {
             );
         });
 
-        it('should correctly load media url', function() {
+        it('should correctly load media url', function () {
             var props = { include_media: true };
             props[savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL] = null;
             releases.savedApps(getSavedApps(1, props, releases));
@@ -130,7 +130,7 @@ describe('App Releases', function() {
             assert.equal(savedApp.app_code(), 'media');
         });
 
-        it('should correctly load non media url', function() {
+        it('should correctly load non media url', function () {
             var props = { include_media: false };
             props[savedAppModel.URL_TYPES.SHORT_ODK_URL] = null;
             releases.savedApps(getSavedApps(1, props, releases));
@@ -147,7 +147,7 @@ describe('App Releases', function() {
             assert.equal(savedApp.app_code(), 'nomedia');
         });
 
-        it('should correctly toggle between media and non media', function() {
+        it('should correctly toggle between media and non media', function () {
             var props = { include_media: false };
 
             props[savedAppModel.URL_TYPES.SHORT_ODK_URL] = null;

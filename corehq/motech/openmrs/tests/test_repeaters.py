@@ -25,7 +25,7 @@ import corehq.motech.openmrs.repeater_helpers
 from corehq.motech.openmrs.repeater_helpers import (
     get_case_location,
     get_case_location_ancestor_repeaters,
-    get_openmrs_location_uuid,
+    get_ancestor_location_openmrs_uuid,
     get_patient_by_identifier,
     get_patient_by_uuid,
     get_relevant_case_updates_from_form_json,
@@ -179,6 +179,7 @@ class GetPatientByUuidTests(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(GetPatientByUuidTests, cls).setUpClass()
         cls.patient = {
             'uuid': 'c83d9989-585f-4db3-bf55-ca1d0ee7c0af',
             'display': 'Luis Safiana Bassilo'
@@ -187,10 +188,6 @@ class GetPatientByUuidTests(SimpleTestCase):
         response.json.return_value = cls.patient
         cls.requests = mock.Mock()
         cls.requests.get.return_value = response
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
 
     def test_none(self):
         patient = get_patient_by_uuid(self.requests, uuid=None)
@@ -235,11 +232,13 @@ class AllowedToForwardTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AllowedToForwardTests, cls).setUpClass()
         cls.owner = CommCareUser.create(DOMAIN, 'chw@example.com', '123')
 
     @classmethod
     def tearDownClass(cls):
         cls.owner.delete()
+        super(AllowedToForwardTests, cls).tearDownClass()
 
     def test_update_from_openmrs(self):
         """
@@ -292,8 +291,13 @@ class CaseLocationTests(LocationHierarchyTestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.openmrs_capetown_uuid = '50017a7f-296d-4ab9-8d3a-b9498bcbf385'
         with mock.patch('corehq.apps.locations.document_store.publish_location_saved', mock.Mock()):
             super(CaseLocationTests, cls).setUpClass()
+
+            cape_town = cls.locations['Cape Town']
+            cape_town.metadata[LOCATION_OPENMRS_UUID] = cls.openmrs_capetown_uuid
+            cape_town.save()
 
     def tearDown(self):
         delete_all_users()
@@ -343,25 +347,22 @@ class CaseLocationTests(LocationHierarchyTestCase):
 
     def test_openmrs_location_uuid_set(self):
         """
-        get_openmrs_location_uuid should return the OpenMRS location UUID that corresponds to a case's location
+        get_ancestor_location_openmrs_uuid should return the OpenMRS
+        location UUID that corresponds to a case's location
         """
-        openmrs_capetown_uuid = '50017a7f-296d-4ab9-8d3a-b9498bcbf385'
         cape_town = self.locations['Cape Town']
-        cape_town.metadata[LOCATION_OPENMRS_UUID] = openmrs_capetown_uuid
-        with mock.patch('corehq.apps.locations.document_store.publish_location_saved', mock.Mock()):
-            cape_town.save()
-
         case_id = uuid.uuid4().hex
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=cape_town.location_id)
 
         self.assertEqual(
-            get_openmrs_location_uuid(self.domain, case_id),
-            openmrs_capetown_uuid
+            get_ancestor_location_openmrs_uuid(self.domain, case_id),
+            self.openmrs_capetown_uuid
         )
 
-    def test_openmrs_location_uuid_none(self):
+    def test_openmrs_location_uuid_ancestor(self):
         """
-        get_openmrs_location_uuid should return the OpenMRS location UUID that corresponds to a case's location
+        get_ancestor_location_openmrs_uuid should return the OpenMRS
+        location UUID that corresponds to a case's location's ancestor
         """
         gardens = self.locations['Gardens']
         self.assertIsNone(gardens.metadata.get(LOCATION_OPENMRS_UUID))
@@ -369,7 +370,24 @@ class CaseLocationTests(LocationHierarchyTestCase):
         case_id = uuid.uuid4().hex
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=gardens.location_id)
 
-        self.assertIsNone(get_openmrs_location_uuid(self.domain, case_id))
+        self.assertEqual(
+            get_ancestor_location_openmrs_uuid(self.domain, case_id),
+            self.openmrs_capetown_uuid
+        )
+
+    def test_openmrs_location_uuid_none(self):
+        """
+        get_ancestor_location_openmrs_uuid should return None if a
+        case's location and its ancestors do not have an OpenMRS
+        location UUID
+        """
+        joburg = self.locations['Johannesburg']
+        self.assertIsNone(joburg.metadata.get(LOCATION_OPENMRS_UUID))
+
+        case_id = uuid.uuid4().hex
+        form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=joburg.location_id)
+
+        self.assertIsNone(get_ancestor_location_openmrs_uuid(self.domain, case_id))
 
     def test_get_case_location_ancestor_repeaters_same(self):
         """

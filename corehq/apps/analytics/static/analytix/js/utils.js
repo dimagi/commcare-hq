@@ -61,7 +61,7 @@ hqDefine('analytix/js/utils', [
         if (typeof element === 'string') {
             $(element).on('click', eventHandler);
         } else {
-            if (element.nodeType){
+            if (element.nodeType) {
                 element = $(element);
             }
             element.click(eventHandler);
@@ -81,7 +81,7 @@ hqDefine('analytix/js/utils', [
      */
     var createSafeCallback = function (callback, timeout) {
         var oneTimeCallback = callback;
-        if (_.isFunction(callback)){
+        if (_.isFunction(callback)) {
             oneTimeCallback = _.once(callback);
             setInterval(oneTimeCallback, timeout ? timeout : 2000);
         }
@@ -101,7 +101,7 @@ hqDefine('analytix/js/utils', [
      *  This promise will be rejected if the API fails to initialize for any reason, most
      *  likely because analytics is disabled or because a script failed to load.
      */
-    var initApi = function(ready, apiId, scriptUrls, logger, initCallback) {
+    var initApi = function (ready, apiId, scriptUrls, logger, initCallback) {
         logger.verbose.log(apiId || "NOT SET", ["DATA", "API ID"]);
 
         if (_.isString(scriptUrls)) {
@@ -120,14 +120,14 @@ hqDefine('analytix/js/utils', [
             return ready;
         }
 
-        $.when.apply($, _.map(scriptUrls, function(url) { return $.getScript(url); }))
-            .done(function() {
+        $.when.apply($, _.map(scriptUrls, function (url) { return $.getScript(url); }))
+            .done(function () {
                 if (_.isFunction(initCallback)) {
                     initCallback();
                 }
                 logger.debug.log('Initialized');
                 ready.resolve();
-            }).fail(function() {
+            }).fail(function () {
                 logger.debug.log("Failed to Load Script - Check Adblocker");
                 ready.reject();
             });

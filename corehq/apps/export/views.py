@@ -9,7 +9,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import SuspiciousOperation
-from django.db.models import Sum
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
     HttpResponseServerError
@@ -30,7 +29,7 @@ from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_succ
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, SubmitHistoryFilter
 from corehq.apps.reports.views import should_update_export
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
@@ -48,14 +47,12 @@ from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.tasks import (
     generate_schema_for_all_builds,
     get_saved_export_task_status,
     rebuild_saved_export,
 )
 from corehq.apps.export.exceptions import (
-    ExportNotFound,
     ExportAppException,
     BadExportConfiguration,
     ExportFormValidationException,
@@ -128,7 +125,6 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, process_email_request
@@ -1255,7 +1251,7 @@ class DataFileDownloadList(BaseProjectDataView):
         context = super(DataFileDownloadList, self).get_context_data(**kwargs)
         context.update({
             'timezone': get_timezone_for_user(self.request.couch_user, self.domain),
-            'data_files': DataFile.active_objects.filter(domain=self.domain).order_by('filename').all(),
+            'data_files': DataFile.get_all(self.domain),
             'is_admin': self.request.couch_user.is_domain_admin(self.domain),
             'url_base': get_url_base(),
         })
@@ -1269,11 +1265,8 @@ class DataFileDownloadList(BaseProjectDataView):
             )
             return self.get(request, *args, **kwargs)
 
-        aggregate = DataFile.active_objects.filter(domain=self.domain).aggregate(total_size=Sum('content_length'))
-        if (
-            aggregate['total_size'] and
-            aggregate['total_size'] + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL
-        ):
+        total_size = DataFile.get_total_size(self.domain)
+        if total_size and total_size + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL:
             messages.warning(
                 request,
                 _('Uploading this data file would exceed the total allowance of {} GB for this project space. '
@@ -1282,14 +1275,14 @@ class DataFileDownloadList(BaseProjectDataView):
             )
             return self.get(request, *args, **kwargs)
 
-        data_file = DataFile()
-        data_file.domain = self.domain
-        data_file.filename = request.FILES['file'].name
-        data_file.description = request.POST['description']
-        data_file.content_type = request.FILES['file'].content_type
-        data_file.content_length = request.FILES['file'].size
-        data_file.delete_after = datetime.utcnow() + timedelta(hours=int(request.POST['ttl']))
-        data_file.save_blob(request.FILES['file'])
+        data_file = DataFile.save_blob(
+            request.FILES['file'],
+            domain=self.domain,
+            filename=request.FILES['file'].name,
+            description=request.POST['description'],
+            content_type=request.FILES['file'].content_type,
+            delete_after=datetime.utcnow() + timedelta(hours=int(request.POST['ttl'])),
+        )
         messages.success(request, _('Data file "{}" uploaded'.format(data_file.description)))
         return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
 
@@ -1306,7 +1299,7 @@ class DataFileDownloadDetail(BaseProjectDataView):
 
     def get(self, request, *args, **kwargs):
         try:
-            data_file = DataFile.active_objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+            data_file = DataFile.get(self.domain, kwargs['pk'])
             blob = data_file.get_blob()
         except (DataFile.DoesNotExist, NotFound):
             raise Http404
@@ -1318,7 +1311,7 @@ class DataFileDownloadDetail(BaseProjectDataView):
 
     def delete(self, request, *args, **kwargs):
         try:
-            data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+            data_file = DataFile.get(self.domain, kwargs['pk'])
         except DataFile.DoesNotExist:
             raise Http404
         data_file.delete()
@@ -1382,7 +1375,7 @@ class FormExportListView(BaseExportListView):
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
-            can_edit = export.can_edit(self.request.couch_user.user_id)
+            can_edit = export.can_edit(self.request.couch_user)
             description = export.description
             my_export = export.owner_id == self.request.couch_user.user_id
             sharing = export.sharing
@@ -2104,7 +2097,7 @@ class GenericDownloadNewExportMixin(object):
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
-    export_filter_class = ExpandedMobileWorkerFilter
+    export_filter_class = SubmitHistoryFilter
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)

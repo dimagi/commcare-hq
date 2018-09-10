@@ -1,16 +1,14 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from io import BytesIO
-from shutil import rmtree
-from tempfile import mkdtemp
+from uuid import uuid4
 
 from django.db import connections
 from django.test import TestCase
 
-import corehq.blobs.fsdb as fsdb
 from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
-from corehq.blobs.tests.util import get_meta, new_meta
+from corehq.blobs.tests.util import get_meta, new_meta, TemporaryFilesystemBlobDB
 from corehq.form_processor.tests.utils import only_run_with_partitioned_database
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 
@@ -20,14 +18,11 @@ class TestMetaDB(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestMetaDB, cls).setUpClass()
-        cls.rootdir = mkdtemp(prefix="blobdb")
-        cls.db = fsdb.FilesystemBlobDB(cls.rootdir)
+        cls.db = TemporaryFilesystemBlobDB()
 
     @classmethod
     def tearDownClass(cls):
-        cls.db = None
-        rmtree(cls.rootdir)
-        cls.rootdir = None
+        cls.db.close()
         super(TestMetaDB, cls).tearDownClass()
 
     def test_new(self):
@@ -104,6 +99,20 @@ class TestMetaDB(TestCase):
         meta = new_meta()
         with self.assertRaises(ValueError):
             self.db.metadb.bulk_delete([meta])
+
+    def test_get(self):
+        meta = self.db.put(BytesIO(b"cx"), meta=new_meta())
+        copy = self.db.metadb.get(
+            parent_id=meta.parent_id,
+            type_code=meta.type_code,
+            name="",
+        )
+        self.assertEqual(copy.key, meta.key)
+
+    def test_get_missing_blobmeta(self):
+        xid = uuid4().hex
+        with self.assertRaises(BlobMeta.DoesNotExist):
+            self.db.metadb.get(parent_id=xid, type_code=CODES.form_xml, name=xid)
 
 
 @only_run_with_partitioned_database

@@ -233,7 +233,7 @@ hqDefine('app_manager/js/app_manager', function () {
      */
     var _initMenuItemSorting = function () {
         function updateRelatedTags($elem, name, value) {
-            var relatedTags = $elem.find("[data-" + name +"]");
+            var relatedTags = $elem.find("[data-" + name + "]");
             _.each(relatedTags, function (related) {
                 $(related).data(name, value);
             });
@@ -255,7 +255,7 @@ hqDefine('app_manager/js/app_manager', function () {
         $('.sortable .sort-action').addClass('sort-disabled');
         $('.drag_handle').addClass('fa fa-arrows-v');
 
-        $('.js-appnav-drag-module').on('mouseenter', function() {
+        $('.js-appnav-drag-module').on('mouseenter', function () {
             $(this).closest('.js-sorted-li').addClass('appnav-highlight');
         }).on('mouseleave', function () {
             $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
@@ -332,10 +332,10 @@ hqDefine('app_manager/js/app_manager', function () {
                         $.ajax($form.attr('action'), {
                             method: 'POST',
                             data: $form.serialize(),
-                            success: function() {
+                            success: function () {
                                 hqImport('hqwebapp/js/alert_user').alert_user(gettext("Moved successfully."), "success");
                             },
-                            error: function(xhr) {
+                            error: function (xhr) {
                                 hqImport('hqwebapp/js/alert_user').alert_user(xhr.responseJSON.error, "danger");
                             },
                         });

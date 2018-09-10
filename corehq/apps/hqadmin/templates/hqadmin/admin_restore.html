@@ -8,15 +8,7 @@
     <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
 {% endblock stylesheets %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'jquery-treetable/jquery.treetable.js' %}"></script>
-        <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
-        <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
-        <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
-        <script src="{% static 'hqadmin/js/admin_restore.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% requirejs_main 'hqadmin/js/admin_restore' %}
 
 {% block content %}
     <div class="container-fluid">

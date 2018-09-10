@@ -4,14 +4,14 @@ hqDefine("accounting/js/enterprise_settings", [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-], function(
+], function (
     $,
     ko,
     _,
     assertProperties,
     initialPageData
 ) {
-    var settingsFormModel = function(options) {
+    var settingsFormModel = function (options) {
         assertProperties.assert(options, ['accounts_email'], ['restrict_signup', 'restricted_domains']);
 
         var self = {};
@@ -22,7 +22,8 @@ hqDefine("accounting/js/enterprise_settings", [
             domains: options.restricted_domains.join(", "),
             email: options.accounts_email,
         };
-        self.restrictSignupHelp = _.template(gettext("Do not allow new users to sign up on commcarehq.org." +
+        self.restrictSignupHelp = _.template(gettext("Do not allow new users to sign up on commcarehq.org. " +
+            "This may take up to an hour to take effect. " +
             "<br>This will affect users with email addresses from the following domains: " +
             "<strong><%= domains %></strong>" +
             "<br>Contact <a href='mailto:<%= email %>'><%= email %></a> to change the list of domains."))(context);
@@ -30,7 +31,7 @@ hqDefine("accounting/js/enterprise_settings", [
         return self;
     };
 
-    $(function() {
+    $(function () {
         var form = settingsFormModel({
             accounts_email: initialPageData.get('accounts_email'),
             restricted_domains: initialPageData.get('restricted_domains'),

@@ -1077,6 +1077,13 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
+COPY_CONDITIONAL_ALERTS = StaticToggle(
+    'copy_conditional_alerts',
+    'Allow copying conditional alerts to another project (or within the same project).',
+    TAG_SOLUTIONS,
+    [NAMESPACE_USER],
+)
+
 ABT_REMINDER_RECIPIENT = StaticToggle(
     'abt_reminder_recipient',
     "ABT: Custom reminder recipients",
@@ -1609,5 +1616,12 @@ ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS: Allow blank case tags',
     TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+SEARCH_DEACTIVATED_USERS = StaticToggle(
+    'search_deactivated_users',
+    'Allow for searching by deactivating users in form and case reports and exports',
+    TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
 )

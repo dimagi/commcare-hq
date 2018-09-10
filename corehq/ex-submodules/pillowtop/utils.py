@@ -237,7 +237,10 @@ def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
     payloads = [b'']
     for bulk_chunk in chunked(bulk_changes, chunk_size):
         current_payload = payloads[-1]
-        payload_chunk = b'\n'.join(map(simplejson.dumps, bulk_chunk)) + b'\n'
+        json_bulk_chunks = map(simplejson.dumps, bulk_chunk)
+        if six.PY3:
+            json_bulk_chunks = [chunk.encode('utf-8') for chunk in json_bulk_chunks]
+        payload_chunk = b'\n'.join(json_bulk_chunks) + b'\n'
         appended_payload = current_payload + payload_chunk
         new_payload_size = sys.getsizeof(appended_payload)
         if new_payload_size > max_size:

@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 import jsonfield as old_jsonfield
+from contextlib import contextmanager
+from copy import deepcopy
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.exceptions import XFormIdNotUnique
 from corehq.apps.app_manager.models import Form
@@ -30,8 +32,21 @@ from django.db import models
 from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 
 
+@contextmanager
+def no_op_context_manager():
+    yield
+
+
 class SMSContent(Content):
     message = old_jsonfield.JSONField(default=dict)
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return SMSContent(
+            message=deepcopy(self.message),
+        )
 
     def render_message(self, message, recipient, logged_subevent):
         if not message:
@@ -73,6 +88,15 @@ class EmailContent(Content):
     message = old_jsonfield.JSONField(default=dict)
 
     TRIAL_MAX_EMAILS = 50
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return EmailContent(
+            subject=deepcopy(self.subject),
+            message=deepcopy(self.message),
+        )
 
     def render_subject_and_message(self, subject, message, recipient):
         renderer = self.get_template_renderer(recipient)
@@ -135,6 +159,18 @@ class SMSSurveyContent(Content):
     submit_partially_completed_forms = models.BooleanField(default=False)
     include_case_updates_in_partial_submissions = models.BooleanField(default=False)
 
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return SMSSurveyContent(
+            form_unique_id=None,
+            expire_after=self.expire_after,
+            reminder_intervals=deepcopy(self.reminder_intervals),
+            submit_partially_completed_forms=self.submit_partially_completed_forms,
+            include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
+        )
+
     @memoized
     def get_memoized_app_module_form(self, domain):
         try:
@@ -156,6 +192,12 @@ class SMSSurveyContent(Content):
             pb = PhoneBlacklist.get_by_phone_number_or_none(phone_entry_or_number)
 
         return pb is not None and not pb.send_sms
+
+    def get_critical_section(self, recipient):
+        if self.critical_section_already_acquired:
+            return no_op_context_manager()
+
+        return critical_section_for_smsforms_sessions(recipient.get_id)
 
     def send(self, recipient, logged_event):
         app, module, form, requires_input = self.get_memoized_app_module_form(logged_event.domain)
@@ -191,7 +233,7 @@ class SMSSurveyContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_PHONE_OPTED_OUT)
             return
 
-        with critical_section_for_smsforms_sessions(recipient.get_id):
+        with self.get_critical_section(recipient):
             # Get the case to submit the form against, if any
             case_id = None
             if is_commcarecase(recipient):
@@ -376,6 +418,14 @@ class CustomContent(Content):
     # which points to a function to call at runtime to get a list of
     # messsages to send to the recipient.
     custom_content_id = models.CharField(max_length=126)
+
+    def create_copy(self):
+        """
+        See Content.create_copy() for docstring
+        """
+        return CustomContent(
+            custom_content_id=self.custom_content_id,
+        )
 
     def get_list_of_messages(self, recipient):
         if not self.schedule_instance:

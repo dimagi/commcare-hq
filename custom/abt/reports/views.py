@@ -4,7 +4,6 @@ import io
 import json
 
 from django.http import HttpResponse
-from memoized import memoized
 
 import openpyxl
 from openpyxl.formatting.rule import CellIsRule
@@ -186,11 +185,17 @@ class CombinedDataSource(object):
         self.original_data_source = original_data_source
         self.filters_data = filter_values
 
-    def get_data(self, start=None, limit=None):
+    def get_data(self, start, limit):
         original_data = self.original_data_source.get_data(start, limit)
         unique_sops = UniqueSOPSumDataSource(self.original_data_source.domain, self.filters_data).get_data()
         group_columns = tuple(self.original_data_source.group_by[:-1])
         unique = {}
+
+        def get_loc_names(row, loc_levels):
+            locs = []
+            for loc in loc_levels:
+                locs.append(row[loc])
+            return tuple(locs)
 
         for row in unique_sops:
             loc_names = tuple(row[x] for x in group_columns)
@@ -239,19 +244,10 @@ class CombinedDataSource(object):
     def get_total_row(self):
         return self.original_data_source.get_total_row()
 
-    @property
-    def top_level_columns(self):
-        return self.original_data_source.top_level_columns
-
-    @property
-    def config(self):
-        return self.original_data_source.config
-
 
 class FormattedSprayProgressReport(CustomConfigurableReport):
 
     @property
-    @memoized
     def data_source(self):
         original_data_source = super(FormattedSprayProgressReport, self).data_source
         return CombinedDataSource(original_data_source, self.filter_values)

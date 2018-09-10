@@ -279,6 +279,16 @@ class Event(ContentForeignKeyMixin):
     class Meta(object):
         abstract = True
 
+    def create_copy(self):
+        """
+        The point of this method is to create a copy of this object with no
+        primary keys set or references to other objects. It's used in the
+        process of copying schedules to a different project in the copy
+        conditional alert workflow, so there should also not be any
+        unresolved project-specific references in the returned copy.
+        """
+        raise NotImplementedError()
+
 
 class Content(models.Model):
     # If this this content is being invoked in the context of a case,
@@ -289,15 +299,32 @@ class Content(models.Model):
     # (i.e., this was scheduled content), this is the ScheduleInstance.
     schedule_instance = None
 
+    # Set to True if any necessary critical section locks have
+    # already been acquired. This is currently only used for SMSSurveyContent
+    # under certain circumstances.
+    critical_section_already_acquired = False
+
     class Meta(object):
         abstract = True
 
-    def set_context(self, case=None, schedule_instance=None):
+    def create_copy(self):
+        """
+        The point of this method is to create a copy of this object with no
+        primary keys set or references to other objects. It's used in the
+        process of copying schedules to a different project in the copy
+        conditional alert workflow, so there should also not be any
+        unresolved project-specific references in the returned copy.
+        """
+        raise NotImplementedError()
+
+    def set_context(self, case=None, schedule_instance=None, critical_section_already_acquired=False):
         if case:
             self.case = case
 
         if schedule_instance:
             self.schedule_instance = schedule_instance
+
+        self.critical_section_already_acquired = critical_section_already_acquired
 
     @staticmethod
     def get_workflow(logged_event):

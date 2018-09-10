@@ -100,10 +100,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             else:
                 self.get_table().drop(connection, checkfirst=True)
 
-    def refresh_table(self):
-        # SQL is always fresh
-        pass
-
     @unit_testing_only
     def clear_table(self):
         table = self.get_table()

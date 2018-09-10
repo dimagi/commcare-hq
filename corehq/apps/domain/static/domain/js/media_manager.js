@@ -7,7 +7,7 @@ hqDefine('domain/js/media_manager', [
     ko,
     initialPageData
 ) {
-    var MediaFile = function(data) {
+    var MediaFile = function (data) {
         var self = {};
         self.license = ko.observable(data.license || 'public');
         self.shared = ko.observable(data.shared);
@@ -21,7 +21,7 @@ hqDefine('domain/js/media_manager', [
         return self;
     };
 
-    var mediaManager = function(data, licenses) {
+    var mediaManager = function (data, licenses) {
         var self = {};
         self.media = [];
         self.licenses = [];
@@ -34,14 +34,14 @@ hqDefine('domain/js/media_manager', [
         }
 
         self.allShared = ko.computed({
-            read: function() {
-                var firstUnchecked = ko.utils.arrayFirst(self.media, function(m) {
+            read: function () {
+                var firstUnchecked = ko.utils.arrayFirst(self.media, function (m) {
                     return m.shared() === false;
                 });
                 return firstUnchecked === null;
             },
-            write: function(value) {
-                ko.utils.arrayForEach(self.media, function(m) {
+            write: function (value) {
+                ko.utils.arrayForEach(self.media, function (m) {
                     m.shared(value);
                 });
             },

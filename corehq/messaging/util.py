@@ -89,9 +89,6 @@ def use_phone_entries():
 
 
 def project_is_on_new_reminders(domain_obj):
-    if settings.SERVER_ENVIRONMENT in ('production', 'softlayer', 'staging'):
-        return domain_obj.uses_new_reminders
-
     return True
 
 

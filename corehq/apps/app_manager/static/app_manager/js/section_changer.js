@@ -32,11 +32,11 @@
 
  *  When the user shows or hides a section, that preference is stored in localStorage.
  */
-hqDefine("app_manager/js/section_changer", function() {
+hqDefine("app_manager/js/section_changer", function () {
     // Determine key for localStorage
     // page is something like "module-view"
     // section is something like "logic"
-    var getKey = function(page, section) {
+    var getKey = function (page, section) {
         return _.template("app-manager-collapse-<%= page %>-<%= section %>")({
             page: page,
             section: section,
@@ -44,14 +44,14 @@ hqDefine("app_manager/js/section_changer", function() {
     };
 
     // Determine if section should be shown or not, based on localStorage and given default
-    var shouldCollapse = function(page, section, defaultCollapse) {
+    var shouldCollapse = function (page, section, defaultCollapse) {
         var key = getKey(page, section);
         return localStorage.hasOwnProperty(key) ? localStorage.getItem(key) : defaultCollapse;
     };
 
     // Attach section changer UI to a form's save bar
     // $el can be the form or any element inside of it
-    var attachToForm = function($el) {
+    var attachToForm = function ($el) {
         var $form = $el.closest("form");
         $el.find(".savebtn-bar").append($form.find(".section-changer").detach());
     };
@@ -65,10 +65,10 @@ hqDefine("app_manager/js/section_changer", function() {
     // and knockout also controls which sections are shown. So for that case, don't do anything
     // until the user clicks on the section changer, and then look at which panels are visible
     // to decide which changer items to mark selected.
-    var init = function($sectionChanger) {
+    var init = function ($sectionChanger) {
         var $form = $sectionChanger.closest("form");
         if ($sectionChanger.length) {
-            $sectionChanger.find("ul a").each(function() {
+            $sectionChanger.find("ul a").each(function () {
                 var $link = $(this),
                     slug = $link.data("slug"),
                     key = getKey($sectionChanger.data("collapse-key"), slug);
@@ -84,18 +84,18 @@ hqDefine("app_manager/js/section_changer", function() {
             });
         }
     };
-    $(function() {
-        $(".section-changer").each(function() {
+    $(function () {
+        $(".section-changer").each(function () {
             var $changer = $(this);
             init($changer);
-            $changer.children("a").one("click", function() {
+            $changer.children("a").one("click", function () {
                 init($changer);
             });
         });
     });
 
     // Click handler for item in section changer
-    $(document).on("click", ".section-changer ul a", function(e) {
+    $(document).on("click", ".section-changer ul a", function (e) {
         var $link = $(this),
             $panel = $link.closest("form").find(".panel-appmanager[data-slug='" + $link.data("slug") + "']");
         if ($link.hasClass("selected")) {
