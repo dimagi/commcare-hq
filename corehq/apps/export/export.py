@@ -97,15 +97,11 @@ class _ExportWriter(object):
                             sheet_name
                         )
                     table_titles[table] = sheet_name
+            self.writer.open(headers, file, table_titles=table_titles, archive_basepath=name)
             try:
-                self.writer.open(headers, file, table_titles=table_titles, archive_basepath=name)
-                try:
-                    yield
-                finally:
-                    self.writer.close()
-            except Exception as e:
-                notify_exception(None, message="ERROR HEEEERE")
-                e.sentry_capture = False
+                yield
+            finally:
+                self.writer.close()
 
     def write(self, table, row):
         """
@@ -273,7 +269,6 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     Return a new _Writer
     """
     format = Format.XLS_2007
-    # This is how I make it XLS_2007
     if len(export_instances) == 1:
         format = export_instances[0].export_format
 

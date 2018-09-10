@@ -26,6 +26,9 @@ from six.moves import zip
 from six.moves import map
 
 
+class XlsxLengthException(Exception):
+    pass
+
 class UniqueHeaderGenerator(object):
 
     def __init__(self, max_column_size=None):
@@ -399,8 +402,8 @@ class Excel2007ExportWriter(ExportWriter):
             return dirty_chars.sub('?', value)
 
         cells = [WriteOnlyCell(sheet, get_write_value(val)) for val in row]
-        if len(cells) >= 256:
-            raise Exception("ERRRRROR!!!!!")
+        if len(cells) >= 256 and self.format == 'xlsx':
+            raise XlsxLengthException
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
@@ -432,7 +435,6 @@ class Excel2003ExportWriter(ExportWriter):
         sheet = self.tables[sheet_index]
         # have to deal with primary ids
         for i, val in enumerate(row):
-            # The error is here
             sheet.write(row_index, i, six.text_type(val))
         self.table_indices[sheet_index] = row_index + 1
 

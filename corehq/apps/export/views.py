@@ -39,6 +39,8 @@ import re
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 
+from couchexport.writers import XlsxLengthException
+
 from djangular.views.mixins import allow_remote_invocation
 import pytz
 from corehq import privileges, toggles
@@ -479,15 +481,17 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             download = self._get_download_task(in_data)
         except ExportAsyncException as e:
             return format_angular_error(e.message, log_error=True)
+        except XlsxLengthException:
+            return format_angular_error(
+                error_msg='This file has more than 256 columns, which is not supported '
+                          'by xlsx. Please change the output type to csv to export this '
+                          'file.', log_error=False)
         except Exception:
             return format_angular_error(_("There was an error."), log_error=True)
         send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, self.request)
-        if download:
-            return format_angular_success({
-                'download_id': download.download_id,
-            })
-        else:
-            return format_angular_error(error_msg="PREETHI ANGULAR ERROR MESSAGE", log_error=False)
+        return format_angular_success({
+            'download_id': download.download_id,
+        })
 
 
 class DownloadFormExportView(BaseDownloadExportView):
@@ -2021,23 +2025,11 @@ class GenericDownloadNewExportMixin(object):
         export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
         self._check_deid_permissions(export_instances)
         self._check_export_size(export_instances, export_filters)
-        export_download = None
-        try:
-            export_download = get_export_download(
-                export_instances=export_instances,
-                filters=export_filters,
-                filename=self._get_filename(export_instances)
-            )
-        except Exception:
-            messages.error(self.request, _('PV ERROR MESSAGE!!!!.'))
-
-        return export_download
-
-        # return get_export_download(
-        #     export_instances=export_instances,
-        #     filters=export_filters,
-        #     filename=self._get_filename(export_instances)
-        # )
+        return get_export_download(
+            export_instances=export_instances,
+            filters=export_filters,
+            filename=self._get_filename(export_instances)
+        )
 
     def _get_filename(self, export_instances):
         if len(export_instances) > 1:
