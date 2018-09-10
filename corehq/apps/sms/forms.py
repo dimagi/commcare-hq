@@ -949,6 +949,13 @@ class BackendForm(Form):
             ),
         )
 
+        if self._cchq_backend_id:
+            #   When editing, don't allow changing the name because name might be
+            # referenced as a contact-level backend preference.
+            #   By setting disabled to True, Django makes sure the value won't change
+            # even if something else gets posted.
+            self.fields['name'].disabled = True
+
     @property
     def gateway_specific_fields(self):
         return crispy.Div()
