@@ -19,7 +19,7 @@ def get_test_kafka_consumer(*topics):
         configs = {
             'bootstrap_servers': settings.KAFKA_BROKERS,
             'consumer_timeout_ms': 100,
-            'api_version': (0, 8, 2),
+            'api_version': settings.KAFKA_API_VERSION,
             'enable_auto_commit': False,
         }
         consumer = KafkaConsumer(*topics, **configs)

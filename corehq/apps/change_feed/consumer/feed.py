@@ -131,7 +131,7 @@ class KafkaChangeFeed(ChangeFeed):
             'bootstrap_servers': settings.KAFKA_BROKERS,
             'consumer_timeout_ms': timeout,
             'auto_offset_reset': auto_offset_reset,
-            'api_version': (0, 8, 2),
+            'api_version': settings.KAFKA_API_VERSION,
             'enable_auto_commit': False,
         }
         return KafkaConsumer(
