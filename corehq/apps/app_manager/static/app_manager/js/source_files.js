@@ -4,9 +4,9 @@ hqDefine('app_manager/js/source_files',[
     'underscore',
     'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
-], function($, _, initialPageData) {
-    $(function(){
-        $('.toggle-next').click(function(e){
+], function ($, _, initialPageData) {
+    $(function () {
+        $('.toggle-next').click(function (e) {
             e.preventDefault();
             $(this).parents('tr').next('tr').toggleClass("hide");
         });
@@ -16,9 +16,9 @@ hqDefine('app_manager/js/source_files',[
             $form = $("#compare-form"),
             $input = $form.find("input");
 
-        builtVersions = _.sortBy(_.filter(builtVersions, function(v) {
+        builtVersions = _.sortBy(_.filter(builtVersions, function (v) {
             return v.version != currentVersion;
-        }), function(v) { return parseInt(v.version); }).reverse();
+        }), function (v) { return parseInt(v.version); }).reverse();
         var versionMap = _.indexBy(builtVersions, 'version');
     
         $input.select2({
