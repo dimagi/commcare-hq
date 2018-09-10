@@ -3,11 +3,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
-from kafka.common import TopicAndPartition
 
-from pillowtop.models import (
-    DjangoPillowCheckpoint, KafkaCheckpoint, str_to_kafka_seq, kafka_seq_to_str
-)
+from pillowtop.models import KafkaCheckpoint
 from six.moves import input
 from six.moves import range
 
