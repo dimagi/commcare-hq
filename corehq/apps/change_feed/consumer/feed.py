@@ -65,8 +65,7 @@ class KafkaChangeFeed(ChangeFeed):
         if since is not None and (not isinstance(since, dict) or not since):
             raise ValueError("'since' must be None or a topic offset dictionary")
 
-        # in milliseconds, -1 means wait forever for changes
-        timeout = -1 if forever else MIN_TIMEOUT
+        timeout = float('inf') if forever else MIN_TIMEOUT
 
         start_from_latest = since is None
 
@@ -132,6 +131,8 @@ class KafkaChangeFeed(ChangeFeed):
             'bootstrap_servers': settings.KAFKA_BROKERS,
             'consumer_timeout_ms': timeout,
             'auto_offset_reset': auto_offset_reset,
+            'api_version': (0, 8, 2),
+            'enable_auto_commit': False,
         }
         return KafkaConsumer(
             **config

@@ -55,6 +55,8 @@ class CouchPillowRetryProcessingTest(TestCase, TestMixin):
                 client_id='test-consumer',
                 bootstrap_servers=settings.KAFKA_BROKERS,
                 consumer_timeout_ms=100,
+                api_version=(0, 8, 2),
+                enable_auto_commit=False,
             )
         try:
             next(self.consumer)

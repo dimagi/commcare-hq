@@ -35,6 +35,8 @@ class ChangeFeedPillowTest(SimpleTestCase):
                 topics.CASE,
                 bootstrap_servers=settings.KAFKA_BROKERS,
                 consumer_timeout_ms=100,
+                api_version=(0, 8, 2),
+                enable_auto_commit=False,
             )
         try:
             # This initialized the consumer listening from the latest offset
