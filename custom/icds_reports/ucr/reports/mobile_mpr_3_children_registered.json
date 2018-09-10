@@ -14,7 +14,9 @@
     "description": "New children registered during month.  Displays person cases grouped by month opened, owner ID, and age group at time of registration",
     "visible": false,
     "aggregation_columns": [
-      "owner_id"
+      "owner_id",
+      "month",
+      "age_group"
     ],
     "filters": [
       {
@@ -99,6 +101,22 @@
         "transform": {
           "type": "custom",
           "custom_type": "owner_display"
+        }
+      },
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "opened_on",
+        "format": "%Y-%m"
+      },
+      {
+        "display": "Age Group",
+        "column_id": "age_group",
+        "type": "conditional_aggregation",
+        "whens": {
+            "0 <= age_at_reg AND age_at_reg < 3": "under_3",
+            "3 <= age_at_reg AND age_at_reg <= 6": "over_3"
         }
       },
       {
