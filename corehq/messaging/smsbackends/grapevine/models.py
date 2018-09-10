@@ -39,6 +39,8 @@ class GrapevineException(Exception):
 
 class SQLGrapevineBackend(SQLSMSBackend):
 
+    show_inbound_api_key_during_edit = False
+
     class Meta(object):
         app_label = 'sms'
         proxy = True

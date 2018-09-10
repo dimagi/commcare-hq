@@ -2024,6 +2024,10 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # to this backend
     reply_to_phone_number = models.CharField(max_length=126, null=True)
 
+    # Some backends use their own inbound api key and not the default hq-generated one.
+    # For those, we don't show the inbound api key on the edit backend page.
+    show_inbound_api_key_during_edit = True
+
     class Meta(object):
         db_table = 'messaging_mobilebackend'
         app_label = 'sms'
