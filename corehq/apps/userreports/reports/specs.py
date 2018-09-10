@@ -7,7 +7,6 @@ import json
 from datetime import date
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
-from sqlalchemy import bindparam
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.userreports import const
 from corehq.apps.userreports.exceptions import InvalidQueryColumn
@@ -28,13 +27,10 @@ from dimagi.ext.jsonobject import (
 from jsonobject.base import DefaultProperty
 from sqlagg import CountUniqueColumn, SumColumn, CountColumn, MinColumn, MaxColumn, MeanColumn
 from sqlagg.columns import (
-    ConditionalAggregation,
     MonthColumn,
-    NonzeroSumColumn,
     SimpleColumn,
-    SumWhen,
     YearColumn,
-)
+    NonzeroSumColumn)
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.columns import ColumnConfig, get_expanded_column_config
 from corehq.apps.userreports.specs import TypeProperty
@@ -354,66 +350,6 @@ class AggregateDateColumn(ReportColumn):
 
     def get_query_column_ids(self):
         return [self._year_column_alias(), self._month_column_alias()]
-
-
-class ConditionalAggregationColumn(ReportColumn):
-    """
-    Used for grouping by SQL conditionals
-
-    Wraps a SQLAlchemy "case" expression:
-    http://docs.sqlalchemy.org/en/latest/core/sqlelement.html#sqlalchemy.sql.expression.case
-    """
-    type = TypeProperty('conditional_aggregation')
-    whens = DictProperty()
-    else_ = StringProperty()
-    sortable = BooleanProperty(default=False)
-
-    def get_column_config(self, data_source_config, lang):
-        return ColumnConfig(columns=[
-            DatabaseColumn(
-                header=self.get_header(lang),
-                agg_column=ConditionalAggregation(
-                    whens=self.get_whens(),
-                    else_=self.else_,
-                    alias=self.column_id,
-                ),
-                sortable=self.sortable,
-                data_slug=self.column_id,
-                format_fn=self.get_format_fn(),
-                help_text=self.description,
-                visible=self.visible,
-            )],
-        )
-
-    def get_whens(self):
-        return {
-            k: bindparam(None, v) for k, v in self.whens.items()
-        }
-
-    def get_query_column_ids(self):
-        return [self.column_id]
-
-
-class SumWhenColumn(ConditionalAggregationColumn):
-    type = TypeProperty("sum_when")
-    else_ = IntegerProperty()
-
-    def get_column_config(self, data_source_config, lang):
-        return ColumnConfig(columns=[
-            DatabaseColumn(
-                header=self.get_header(lang),
-                agg_column=SumWhen(
-                    whens=self.whens,
-                    else_=self.else_,
-                    alias=self.column_id,
-                ),
-                sortable=self.sortable,
-                data_slug=self.column_id,
-                format_fn=self.get_format_fn(),
-                help_text=self.description,
-                visible=self.visible,
-            )],
-        )
 
 
 class PercentageColumn(ReportColumn):
