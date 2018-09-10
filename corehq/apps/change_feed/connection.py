@@ -6,9 +6,14 @@ from kafka.common import KafkaUnavailableError
 import logging
 
 
-def get_kafka_client():
-    # todo: we may want to make this more configurable
-    return KafkaClient(settings.KAFKA_BROKERS)
+def get_kafka_client(client_id="general-cchq-kafka"):
+    # configure connections_max_idle_ms?
+    return KafkaClient(
+        bootstrap_servers=settings.KAFKA_BROKERS,
+        config_id=client_id,
+        request_timeout_ms=100,
+        api_version=(0, 8, 2),
+    )
 
 
 def get_kafka_client_or_none():
