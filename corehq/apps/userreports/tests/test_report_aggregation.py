@@ -597,6 +597,17 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     "display_name": 'indicator_display_name_state',
                     "datatype": "string"
                 },
+                # Except for column_id, this indicator is identical to the indicator above
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'state'
+                    },
+                    "column_id": 'report_column_col_id_state',
+                    "display_name": 'indicator_display_name_state',
+                    "datatype": "string"
+                },
                 {
                     "type": "expression",
                     "expression": {
@@ -724,6 +735,39 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     ['TN', 'Nashville', 1],
                 ]
             ]]
+        )
+
+    def test_aggregate_by_column_id_slash_data_source_indicator(self):
+        # Aggregate by the report column_id, which also happens to be a column
+        # in the data source. This has caused a bug in the past.
+        report_config = self._create_report(
+            aggregation_columns=[
+                'report_column_col_id_state',
+            ],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "report_column_display_state",
+                    "field": 'indicator_col_id_state',
+                    'column_id': 'report_column_col_id_state',
+                    'aggregation': 'simple'
+                },
+                {
+                    "type": "field",
+                    "display": "report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'sum'
+                }
+            ],
+        )
+        view = self._create_view(report_config)
+
+        self.assertItemsEqual(
+            view.export_table[0][1],
+            [['report_column_display_state', 'report_column_display_number'],
+             ['MA', 9],
+             ['TN', 1]]
         )
 
     def test_with_prefilter(self):
