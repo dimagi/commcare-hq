@@ -777,7 +777,7 @@ class PrimaryLocationWidget(forms.Widget):
     Options for this field are dynamically set in JS depending on what options are selected
     for 'assigned_locations'. This works in conjunction with LocationSelectWidget.
     """
-    def __init__(self, css_id, source_css_id, attrs=None):
+    def __init__(self, css_id, source_css_id, attrs=None, select2_version=None):
         """
         args:
             css_id: css_id of primary_location field
@@ -787,8 +787,16 @@ class PrimaryLocationWidget(forms.Widget):
         self.css_id = css_id
         self.source_css_id = source_css_id
 
+        versioned_templates = {
+            'v3': 'locations/manage/partials/drilldown_location_widget_v3.html',
+            'v4': 'locations/manage/partials/drilldown_location_widget_v4.html',
+        }
+        if select2_version not in versioned_templates:
+            raise ValueError("select2_version must be in {}".format(", ".join(versioned_templates.keys())))
+        self.template = versioned_templates[select2_version]
+
     def render(self, name, value, attrs=None):
-        return get_template('locations/manage/partials/drilldown_location_widget.html').render({
+        return get_template(self.template).render({
             'css_id': self.css_id,
             'source_css_id': self.source_css_id,
             'name': name,
@@ -817,11 +825,12 @@ class CommtrackUserForm(forms.Form):
         self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['assigned_locations'].widget = LocationSelectWidget(
-            self.domain, multiselect=True, id='id_assigned_locations'
+            self.domain, multiselect=True, id='id_assigned_locations', select2_version='v3'
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',
-            source_css_id='id_assigned_locations'
+            source_css_id='id_assigned_locations',
+            select2_version='v3'
         )
         if self.commtrack_enabled:
             programs = Program.by_domain(self.domain, wrap=False)

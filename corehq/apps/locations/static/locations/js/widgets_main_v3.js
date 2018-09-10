@@ -1,4 +1,4 @@
-hqDefine("locations/js/widgets_main", [
+hqDefine("locations/js/widgets_main_v3", [
     'jquery',
     'underscore',
     'select2-3.5.2-legacy/select2',
@@ -23,7 +23,7 @@ hqDefine("locations/js/widgets_main", [
     }
 
     $(function () {
-        $(".locations-widget-autocomplete").each(function () {
+        $(".locations-widget-autocomplete-v3").each(function () {
             var $select = $(this),
                 options = $select.data();
             $select.select2({
@@ -55,7 +55,7 @@ hqDefine("locations/js/widgets_main", [
             });
         });
 
-        $(".locations-widget-primary").each(function () {
+        $(".locations-widget-primary-v3").each(function () {
             var $select = $(this),
                 $source = $('#' + $select.data("sourceCssId")),
                 value = $select.val();
