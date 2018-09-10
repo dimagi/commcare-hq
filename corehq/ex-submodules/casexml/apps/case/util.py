@@ -63,7 +63,7 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None, user_id=None, d
         domain = domain or TEST_DOMAIN_NAME
 
     return submit_case_blocks(
-        [ElementTree.tostring(case_block) for case_block in case_blocks],
+        [ElementTree.tostring(case_block).decode('utf-8') for case_block in case_blocks],
         domain=domain,
         form_extras=form_extras,
         user_id=user_id,
