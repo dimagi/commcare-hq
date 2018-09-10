@@ -2491,6 +2491,7 @@ class BroadcastForm(Form):
         self.fields['location_ids'].widget = LocationSelectWidget(
             self.domain,
             multiselect=True,
+            select2_version='v3',
         )
 
         self.helper = FormHelper()
