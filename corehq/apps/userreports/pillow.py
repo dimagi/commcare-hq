@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 
 import six
 from alembic.autogenerate.api import compare_metadata
-from kafka.util import kafka_bytestring
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.const import KAFKA_TOPICS
@@ -421,7 +420,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          num_processes=1, process_num=0,
                          processor_chunk_size=100, **kwargs):
     topics = topics or KAFKA_TOPICS
-    topics = [kafka_bytestring(t) for t in topics]
+    topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
@@ -443,7 +442,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 num_processes=1, process_num=0,
                                 processor_chunk_size=100, **kwargs):
     topics = topics or KAFKA_TOPICS
-    topics = [kafka_bytestring(t) for t in topics]
+    topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
