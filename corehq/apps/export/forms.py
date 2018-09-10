@@ -42,7 +42,7 @@ from corehq.apps.hqwebapp.widgets import (
     Select2MultipleChoiceWidget,
     DateRangePickerWidget,
     Select2,
-    Select2Ajax,
+    Select2AjaxV3,
 )
 from corehq.pillows import utils
 from couchexport.util import SerializableFunction
@@ -431,12 +431,12 @@ class DashboardFeedFilterForm(forms.Form):
     emwf_case_filter = forms.Field(
         label=ugettext_lazy("Case Owner(s)"),
         required=False,
-        widget=Select2Ajax(multiple=True),
+        widget=Select2AjaxV3(multiple=True),
     )
     emwf_form_filter = forms.Field(
         label=ugettext_lazy("User(s)"),
         required=False,
-        widget=Select2Ajax(multiple=True),
+        widget=Select2AjaxV3(multiple=True),
     )
     date_range = forms.ChoiceField(
         label=ugettext_lazy("Date Range"),
