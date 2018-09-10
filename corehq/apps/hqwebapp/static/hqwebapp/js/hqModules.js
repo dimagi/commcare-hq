@@ -1,4 +1,3 @@
-/* globals jQuery */
 /*
  * hqModules provides a poor man's module system for js. It is not a module *loader*,
  * only a module *referencer*: "importing" a module doesn't automatically load it as
@@ -52,6 +51,8 @@ function hqDefine(path, dependencies, moduleAccessor) {
 
     (function (factory) {
         if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
+            // HQ's requirejs build process (build_requirejs.py) replaces hqDefine calls with
+            // define calls, so it's important that this do nothing but pass through to require
             define(path, dependencies, factory);
         } else {
             var thirdPartyGlobals = {
@@ -113,7 +114,9 @@ function hqImport(path) {
 // introduce a circular dependency.
 function hqRequire(paths, callback) {
     if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
-        requirejs(paths, callback);
+        // HQ's requirejs build process (build_requirejs.py) replaces hqRequire calls with
+        // require calls, so it's important that this do nothing but pass through to require
+        require(paths, callback);
     } else {
         var args = [];
         for (var i = 0; i < paths.length; i++) {
