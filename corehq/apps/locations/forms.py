@@ -589,8 +589,12 @@ class UsersAtLocationForm(forms.Form):
         for doc in iter_docs(CommCareUser.get_db(), users):
             CommCareUser.wrap(doc).add_to_assigned_locations(self.location)
 
+    def clean_selected_ids(self):
+        # Django uses get by default, but selected_ids is actually a list
+        return self.data.getlist('users-selected_ids')
+
     def save(self):
-        selected_users = set(self.cleaned_data['selected_ids'].split(','))
+        selected_users = set(self.cleaned_data['selected_ids'])
         previous_users = set([u['id'] for u in self.get_users_at_location()])
         to_remove = previous_users - selected_users
         to_add = selected_users - previous_users
