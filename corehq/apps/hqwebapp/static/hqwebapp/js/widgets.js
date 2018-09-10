@@ -6,17 +6,18 @@
 hqDefine("hqwebapp/js/widgets", [
     'jquery',
 ], function ($) {
-    var init = function () {
+    var init = function (additionalConfig) {
+        additionalConfig = additionalConfig || {};
         _.each($(".hqwebapp-autocomplete"), function (input) {
             var $input = $(input);
-            $input.select2({
+            $input.select2(_.extend({
                 multiple: true,
                 tags: $input.data("choices"),
-            });
+            }, additionalConfig));
         });
 
         _.each($(".ko-select2"), function (element) {
-            $(element).select2();
+            $(element).select2(additionalConfig);
         });
     };
 
