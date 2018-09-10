@@ -13,7 +13,6 @@ GENERIC_KAFKA_CLIENT_ID = 'cchq-kafka-client'
 
 
 def get_simple_kafka_client(client_id=GENERIC_KAFKA_CLIENT_ID):
-    # this uses the old SimpleClient because we are using the old SimpleProducer interface
     return SimpleClient(
         hosts=settings.KAFKA_BROKERS,
         client_id=client_id,
