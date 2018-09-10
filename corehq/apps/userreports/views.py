@@ -483,14 +483,7 @@ class ConfigureReport(ReportBuilderView):
             context.update(self.main_context)
             return self.render_to_response(context)
 
-        self._properties_by_column_id = {}
-        for p in data_source_builder.data_source_properties.values():
-            column = p.to_report_column_option()
-            for agg in column.aggregation_options:
-                indicators = column.get_indicators(agg)
-                for i in indicators:
-                    self._properties_by_column_id[i['column_id']] = p
-
+        self._populate_data_source_properties_from_builder(data_source_builder)
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -503,6 +496,15 @@ class ConfigureReport(ReportBuilderView):
         if self.existing_report:
             return self.existing_report.description or None
         return None
+
+    def _populate_data_source_properties_from_builder(self, data_source_builder):
+        self._properties_by_column_id = {}
+        for p in data_source_builder.data_source_properties.values():
+            column = p.to_report_column_option()
+            for agg in column.aggregation_options:
+                indicators = column.get_indicators(agg)
+                for i in indicators:
+                    self._properties_by_column_id[i['column_id']] = p
 
     def _get_report_name(self, request=None):
         if self.existing_report:
