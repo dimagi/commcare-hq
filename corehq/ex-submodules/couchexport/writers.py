@@ -399,6 +399,8 @@ class Excel2007ExportWriter(ExportWriter):
             return dirty_chars.sub('?', value)
 
         cells = [WriteOnlyCell(sheet, get_write_value(val)) for val in row]
+        if len(cells) >= 256:
+            raise Exception("ERRRRROR!!!!!")
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
