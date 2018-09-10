@@ -100,7 +100,9 @@ def paginate_releases(request, domain, app_id):
         app_es = app_es.build_comment(build_comment)
     app_ids = app_es.get_ids()
     apps = get_docs(Application.get_db(), app_ids)
-    saved_apps = [SavedAppBuild.wrap(app).to_saved_build_json(timezone) for app in apps]
+    for app in apps:
+        app.pop('translations')
+    saved_apps = [SavedAppBuild.wrap(app, scrap_old_conventions=False).to_saved_build_json(timezone) for app in apps]
 
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
