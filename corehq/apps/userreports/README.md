@@ -1432,6 +1432,30 @@ Keep in mind that the only variables available for formatting are `year` and `mo
 | "%b (%y)" | "Sep (08)"        |
 
 
+### ConditionalAggregationColumn
+
+Conditional aggregation columns allow you to define a series of conditional expressions with corresponding names, then group together rows which which meet the same conditions. They have a type of `"conditional_aggregation"`.
+
+Here's an example that groups children based on their age at the time of registration:
+
+```json
+{
+    "type": "conditional_aggregation",
+    "display": "age_range",
+    "field": "age_at_registration",
+    "column_id": "age_range",
+    "whens": {
+        "0 <= age_at_registration AND age_at_registration < 12": "infant",
+        "12 <= age_at_registration AND age_at_registration < 36": "toddler",
+        "36 <= age_at_registration AND age_at_registration < 60": "preschooler"
+    },
+    "else_": "older"
+}
+```
+
+The `"whens"` attribute maps conditional expressions to labels.  If none of the conditions are met, the row will receive the `"else_"` value, if provided.
+
+
 ### Expanded Columns
 
 Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded" into a new column for each distinct value in this column of the data source. For example:
