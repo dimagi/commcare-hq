@@ -10,3 +10,7 @@ class PillowNotFoundError(Exception):
 
 class PillowtopIndexingError(Exception):
     pass
+
+
+class PillowConfigError(Exception):
+    pass
