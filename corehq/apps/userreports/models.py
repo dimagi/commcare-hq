@@ -8,6 +8,7 @@ import json
 import os
 import re
 
+from bulk_update.helper import bulk_update as bulk_update_helper
 from couchdbkit.exceptions import BadValueError
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
@@ -936,6 +937,34 @@ class AsyncIndicator(models.Model):
         AsyncIndicator.objects.bulk_create([
             AsyncIndicator(doc_id=doc_id, doc_type=doc_type, domain=domain, indicator_config_ids=config_ids)
             for doc_id in doc_ids
+        ])
+
+    @classmethod
+    def bulk_update_records(cls, configs_by_docs, domain, doc_type_by_id):
+        # type (Dict[str, List[str]], str, Dict[str, str]) -> None
+        # configs_by_docs should be a dict of doc_id -> list of config_ids
+        if not configs_by_docs:
+            return
+        doc_ids = configs_by_docs.keys()
+
+        current_indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids).all()
+        to_update = []
+
+        for indicator in current_indicators:
+            new_configs = set(configs_by_docs[indicator.doc_id])
+            current_configs = set(indicator.indicator_config_ids)
+            if not new_configs.issubset(current_configs):
+                indicator.indicator_config_ids = sorted(current_configs.union(new_configs))
+                indicator.unsuccessful_attempts = 0
+                to_update.append(indicator)
+        if to_update:
+            bulk_update_helper(to_update)
+
+        new_doc_ids = set(doc_ids) - set([i.doc_id for i in current_indicators])
+        AsyncIndicator.objects.bulk_create([
+            AsyncIndicator(doc_id=doc_id, doc_type=doc_type_by_id[doc_id], domain=domain,
+                indicator_config_ids=sorted(configs_by_docs[doc_id]))
+            for doc_id in new_doc_ids
         ])
 
 
