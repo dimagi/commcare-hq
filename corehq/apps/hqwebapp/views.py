@@ -107,7 +107,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
         exc_message = six.text_type(exc)
     else:
         exc_message = exc.message
-        if isinstance(exc_message, six.binary_type):
+        if isinstance(exc_message, bytes):
             exc_message = exc_message.decode('utf-8')
 
     return 'Traceback (most recent call last):\n{}{}: {}'.format(

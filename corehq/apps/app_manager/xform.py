@@ -166,7 +166,7 @@ class WrappedAttribs(object):
 class WrappedNode(object):
 
     def __init__(self, xml, namespaces=namespaces):
-        if isinstance(xml, six.binary_type):
+        if isinstance(xml, bytes):
             xml = xml.decode('utf-8')
         if isinstance(xml, six.string_types):
             self.xml = parse_xml(xml) if xml else None

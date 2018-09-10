@@ -294,7 +294,7 @@ class FixtureDataTest(TestCase):
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {frank.user_id})
         self.assertTrue(get_blob_db().exists(key=FIXTURE_BUCKET + '/' + self.domain))
 
-        bytes_ = six.binary_type
+        bytes_ = bytes
         fixtures = [ElementTree.fromstring(f) if isinstance(f, bytes_) else f
             for f in call_fixture_generator(fixturegenerators.item_lists, sammy)]
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {sammy.user_id})
