@@ -72,9 +72,9 @@ class LocationTypesViewTest(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(
             str(messages[0].message),
-            u'Looks like you are assigning a location name/code to a different location in the same request. '
-            u'Please do this in two separate updates by using a temporary name to free up the name/code to be '
-            u're-assigned.'
+            'Looks like you are assigning a location name/code to a different location in the same request. '
+            'Please do this in two separate updates by using a temporary name to free up the name/code to be '
+            're-assigned.'
         )
 
     def test_swap_code(self):
@@ -87,9 +87,9 @@ class LocationTypesViewTest(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(
             str(messages[0].message),
-            u'Looks like you are assigning a location name/code to a different location in the same request. '
-            u'Please do this in two separate updates by using a temporary name to free up the name/code to be '
-            u're-assigned.'
+            'Looks like you are assigning a location name/code to a different location in the same request. '
+            'Please do this in two separate updates by using a temporary name to free up the name/code to be '
+            're-assigned.'
         )
 
     def test_valid_update(self):
