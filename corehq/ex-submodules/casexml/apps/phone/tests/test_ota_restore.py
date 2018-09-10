@@ -6,6 +6,8 @@ from django.test.utils import override_settings
 from casexml.apps.phone.tests.utils import deprecated_generate_restore_payload
 from casexml.apps.phone.utils import get_restore_config
 from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
+from lxml.etree import XMLSyntaxError
+
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
     delete_all_xforms
@@ -112,15 +114,20 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         return SyncLogSQL.objects.count()
 
     def test_user_restore(self):
-        self.assertEqual(0, self._get_synclog_count())
-        restore_payload = deprecated_generate_restore_payload(
-            self.project, self.restore_user, items=True)
-        sync_log = self._get_the_first_synclog()
-        check_xml_line_by_line(
-            self,
-            dummy_restore_xml(sync_log.get_id, items=3, user=self.restore_user),
-            restore_payload,
-        )
+        try:
+            self.assertEqual(0, self._get_synclog_count())
+            restore_payload = deprecated_generate_restore_payload(
+                self.project, self.restore_user, items=True)
+            sync_log = self._get_the_first_synclog()
+            check_xml_line_by_line(
+                self,
+                dummy_restore_xml(sync_log.get_id, items=3, user=self.restore_user),
+                restore_payload,
+            )
+        except XMLSyntaxError as e:
+            print(e)
+            raise Exception('broken test_user_restore')
+
 
     def testOverwriteCache(self):
         restore_config = get_restore_config(
