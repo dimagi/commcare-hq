@@ -6,7 +6,10 @@ from kafka.common import KafkaUnavailableError
 import logging
 
 
-def get_kafka_client(client_id="general-cchq-kafka"):
+GENERIC_KAFKA_CLIENT_ID = 'cchq-kafka-client'
+
+
+def get_kafka_client(client_id=GENERIC_KAFKA_CLIENT_ID):
     # configure connections_max_idle_ms?
     return KafkaClient(
         bootstrap_servers=settings.KAFKA_BROKERS,
@@ -16,9 +19,9 @@ def get_kafka_client(client_id="general-cchq-kafka"):
     )
 
 
-def get_kafka_client_or_none():
+def get_kafka_client_or_none(client_id=GENERIC_KAFKA_CLIENT_ID):
     try:
-        return get_kafka_client()
+        return get_kafka_client(client_id)
     except KafkaUnavailableError:
         logging.warning('Ignoring missing kafka client during unit testing')
         return None
