@@ -886,6 +886,11 @@ class BackendForm(Form):
         required=False,
         label=ugettext_noop("Reply-To Phone Number"),
     )
+    inbound_api_key = CharField(
+        required=False,
+        label=ugettext_lazy("Inbound API Key"),
+        disabled=True,
+    )
 
     @property
     def is_global_backend(self):
@@ -911,6 +916,12 @@ class BackendForm(Form):
                     data_bind="visible: showAuthorizedDomains",
                 ),
             ])
+
+        if self._cchq_backend_id:
+            backend = SQLMobileBackend.load(self._cchq_backend_id)
+            if backend.show_inbound_api_key_during_edit:
+                self.fields['inbound_api_key'].initial = backend.inbound_api_key
+                fields.append(crispy.Field('inbound_api_key'))
 
         return fields
 
