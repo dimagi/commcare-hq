@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 
 import six
 from alembic.autogenerate.api import compare_metadata
-from kafka.util import kafka_bytestring
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.const import KAFKA_TOPICS
@@ -275,7 +274,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
     def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False):
         change_feed = KafkaChangeFeed(
-            topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
+            topics, client_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
         checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
         event_handler = KafkaCheckpointEventHandler(
@@ -310,7 +309,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
                          num_processes=1, process_num=0, **kwargs):
     topics = topics or KAFKA_TOPICS
-    topics = [kafka_bytestring(t) for t in topics]
+    topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
@@ -330,7 +329,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
                                 num_processes=1, process_num=0, **kwargs):
     topics = topics or KAFKA_TOPICS
-    topics = [kafka_bytestring(t) for t in topics]
+    topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),

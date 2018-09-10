@@ -13,7 +13,7 @@ hqDefine("reports/js/case_details", [
     'reports/js/readable_form',
     'bootstrap',    // needed for $.tab
     'jquery-memoized-ajax/jquery.memoized.ajax.min',
-], function(
+], function (
     $,
     ko,
     _,
@@ -24,19 +24,19 @@ hqDefine("reports/js/case_details", [
     dataCorrections,
     singleForm
 ) {
-    var xformDataModel = function(data) {
+    var xformDataModel = function (data) {
         var self = {};
         self.id = ko.observable(data.id);
 
 
-        self.format_user = function(username) {
+        self.format_user = function (username) {
             if (username === undefined || username === null) {
                 return gettext("Unknown");
             }
             return username.split('@')[0];
         };
 
-        self.pad_zero = function(val) {
+        self.pad_zero = function (val) {
             if (val < 10) {
                 return "0" + val;
             }
@@ -51,7 +51,7 @@ hqDefine("reports/js/case_details", [
         return self;
     };
 
-    var xformListViewModel = function() {
+    var xformListViewModel = function () {
         var self = {};
 
         self.pagination_options = [10,25,50,100];
@@ -69,7 +69,7 @@ hqDefine("reports/js/case_details", [
 
         self.data_loading = ko.observable(false);
 
-        self.getParameterByName = function(name, url) {
+        self.getParameterByName = function (name, url) {
             if (!url) url = window.location.href;
             name = name.replace(/[[\]]/g, "\\$&");
             var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
@@ -79,11 +79,11 @@ hqDefine("reports/js/case_details", [
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         };
 
-        self.get_xform_data = function(xformId) {
+        self.get_xform_data = function (xformId) {
             $.memoizedAjax({
                 "type": "GET",
                 "url": initialPageData.reverse('case_form_data', xformId),
-                "success": function(data) {
+                "success": function (data) {
                     var $panel = $("#xform_data_panel");
                     $panel.html(data.html);
 
@@ -103,7 +103,7 @@ hqDefine("reports/js/case_details", [
         };
 
         var apiUrl = initialPageData.get('xform_api_url');
-        var loadForm = function() {
+        var loadForm = function () {
             var hash = window.location.hash.split('?');
             if (hash[0] === '#history') {
                 var formId = self.getParameterByName('form_id', window.location.hash);
@@ -122,7 +122,7 @@ hqDefine("reports/js/case_details", [
         });
 
 
-        self.xform_history_cb = function(data) {
+        self.xform_history_cb = function (data) {
             self.total_rows(initialPageData.get('xform_ids').length);
             var mappedXforms = $.map(data, function (item) {
                 return xformDataModel(item);
@@ -136,12 +136,12 @@ hqDefine("reports/js/case_details", [
             }
         };
 
-        self.all_rows_loaded = ko.computed(function() {
+        self.all_rows_loaded = ko.computed(function () {
             return self.total_rows() === self.xforms().length;
         });
 
-        self.page_count = ko.computed(function() {
-            return Math.ceil(self.total_rows()/self.page_size());
+        self.page_count = ko.computed(function () {
+            return Math.ceil(self.total_rows() / self.page_size());
         });
 
         self.refresh_forms = ko.computed(function () {
@@ -159,29 +159,29 @@ hqDefine("reports/js/case_details", [
             var endRange = startRange + self.page_size();
             $.ajax({
                 "type": "GET",
-                "url":  apiUrl,
+                "url": apiUrl,
                 "data": {
                     'start_range': startRange,
                     'end_range': endRange,
                 },
-                "success": function(data) {
+                "success": function (data) {
                     self.xform_history_cb(data);
                 },
-                "complete": function() {
+                "complete": function () {
                     self.data_loading(false);
                 },
             });
         }, this).extend({deferred: true});
 
-        self.nextPage = function() {
+        self.nextPage = function () {
             self.disp_page_index(self.disp_page_index() + 1);
         };
 
-        self.prevPage = function() {
+        self.prevPage = function () {
             self.disp_page_index(self.disp_page_index() - 1);
         };
 
-        self.clickRow = function(item) {
+        self.clickRow = function (item) {
             $("#xform_data_panel").html("<img src='/static/hqwebapp/images/ajax-loader.gif' alt='loading indicator' />");
             var idx = self.xforms().indexOf(item);
 
@@ -195,13 +195,13 @@ hqDefine("reports/js/case_details", [
             window.history.pushState({}, '', '#history?form_id=' + self.selected_xform_doc_id());
         };
 
-        self.page_start_num = ko.computed(function() {
+        self.page_start_num = ko.computed(function () {
             var startNum = self.disp_page_index() || 1;
             var calcStartNum = ((startNum - 1) * self.page_size()) + 1;
             return calcStartNum;
         });
 
-        self.page_end_num = ko.computed(function() {
+        self.page_end_num = ko.computed(function () {
             var startNum = self.disp_page_index() || 1;
             var endPageNum = ((startNum - 1) * self.page_size()) + self.page_size();
             if (endPageNum > self.total_rows()) {
@@ -212,15 +212,15 @@ hqDefine("reports/js/case_details", [
             }
         });
 
-        self.all_pages = function() {
-            return _.range(1, self.page_count()+1);
+        self.all_pages = function () {
+            return _.range(1, self.page_count() + 1);
         };
 
         self.xform_view = ko.computed(function () {
             return self.selected_xform_doc_id() !== undefined;
         });
 
-        self.row_highlight = ko.computed(function() {
+        self.row_highlight = ko.computed(function () {
             //hitting next page will not disappear the xform display just remove the highlight
             if (self.selected_xform_idx() === -1) {
                 return false;
@@ -236,8 +236,8 @@ hqDefine("reports/js/case_details", [
         return self;
     };
 
-    $(function() {
-        $('#close_case').submit(function() {
+    $(function () {
+        $('#close_case').submit(function () {
             googleAnalytics.track.event('Edit Data', 'Close Case', '-', "", {}, function () {
                 document.getElementById('close_case').submit();
             });
@@ -264,7 +264,7 @@ hqDefine("reports/js/case_details", [
             $propertiesModal = $("#case-properties-modal"),
             modalData = casePropertyModal.casePropertyModal();
         $propertiesModal.koApplyBindings(modalData);
-        $casePropertyNames.click(function(){
+        $casePropertyNames.click(function () {
             modalData.init($(this).data('property-name'));
             $propertiesModal.modal();
         });

@@ -16,7 +16,7 @@ hqDefine('builds/js/edit-builds', [
 
         // subscribe for change in version to update j2me_enabled
         // property and hence the checkbox in view
-        self.version.subscribe(function(newValue){
+        self.version.subscribe(function (newValue) {
             self.j2me_enabled(buildsMenu.j2me_enabled_versions.
                 includes(newValue)
             );
@@ -36,18 +36,18 @@ hqDefine('builds/js/edit-builds', [
         self.default_one = ko.observable();
         self.default_two = ko.observable();
 
-        self.addVersion = function() {
+        self.addVersion = function () {
             self.versions.push(versionModel('', '', false));
         };
-        self.removeVersion = function(version) { self.versions.remove(version); };
+        self.removeVersion = function (version) { self.versions.remove(version); };
 
-        _.each(doc.menu, function(version) {
+        _.each(doc.menu, function (version) {
             self.versions.push(versionModel(
                 version.build.version, version.label,
                 version.superuser_only, version.j2me_enabled
             ));
         });
-        _.each(doc.defaults, function(version_doc) {
+        _.each(doc.defaults, function (version_doc) {
             var version = version_doc.version;
             if (version[0] === '1') {
                 self.default_one(version);
@@ -55,7 +55,7 @@ hqDefine('builds/js/edit-builds', [
                 self.default_two(version);
             }
         });
-        _.each(self.available_versions, function(version) {
+        _.each(self.available_versions, function (version) {
             if (version[0] === '1') {
                 self.available_ones.push(version);
             } else if (version[0] === '2') {
@@ -68,7 +68,7 @@ hqDefine('builds/js/edit-builds', [
 
     function outputJSON(menu) {
         doc.menu = [];
-        _.each(menu.versions(), function(version) {
+        _.each(menu.versions(), function (version) {
             doc.menu.push({
                 'j2me_enabled': version.j2me_enabled(),
                 'superuser_only': version.superuser_only(),
@@ -81,7 +81,7 @@ hqDefine('builds/js/edit-builds', [
             });
         });
         doc.defaults = [];
-        _.each([menu.default_one, menu.default_two], function(deflt) {
+        _.each([menu.default_one, menu.default_two], function (deflt) {
             doc.defaults.push({
                 'version': deflt(),
                 'build_number': null,
@@ -106,7 +106,7 @@ hqDefine('builds/js/edit-builds', [
         $form.submit();
     }
 
-    $('#menu-form .btn-primary').click(function() {
+    $('#menu-form .btn-primary').click(function () {
         postGo(
             $('#menu-form')[0].action,
             {'doc': JSON.stringify(outputJSON(buildsMenu))}

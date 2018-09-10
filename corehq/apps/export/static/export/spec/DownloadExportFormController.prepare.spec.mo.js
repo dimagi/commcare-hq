@@ -1,5 +1,5 @@
 /* globals DnldExpData */
-describe('DownloadExportFormController - Prepare Download', function() {
+describe('DownloadExportFormController - Prepare Download', function () {
     DnldExpData.prepareTests();
     DnldExpData.prepareDownloadController();
     DnldExpData.prepareBackends();
@@ -16,7 +16,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
             DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.PREPARE_CUSTOM_EXPORT);
         });
 
-        it('trigger downloadInProgress', function() {
+        it('trigger downloadInProgress', function () {
             DnldExpData.createController([
                 DnldExpData.simpleFormExport,
             ], true);

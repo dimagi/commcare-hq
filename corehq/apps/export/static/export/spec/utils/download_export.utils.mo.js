@@ -1,4 +1,4 @@
-(function() {
+(function () {
     'use strict';
 
     window.DnldExpData = {
@@ -225,7 +225,7 @@
             DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS);
         });
 
-        afterEach(function() {
+        afterEach(function () {
             DnldExpData.$httpBackend.verifyNoOutstandingExpectation();
             DnldExpData.$httpBackend.verifyNoOutstandingRequest();
         });

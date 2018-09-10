@@ -1,5 +1,5 @@
 /* globals L */
-hqDefine("reports/js/maps_utils", function() {
+hqDefine("reports/js/maps_utils", function () {
     var module = {};
     module.displayDimensions = ['size', 'color', 'icon'];
     module.tableToggle = false;
@@ -16,7 +16,7 @@ hqDefine("reports/js/maps_utils", function() {
         if (animate) {
             $map.animate({
                 height: height,
-            }, null, null, function() {
+            }, null, null, function () {
                 map.invalidateSize();
             });
         } else {
@@ -26,7 +26,7 @@ hqDefine("reports/js/maps_utils", function() {
     }
 
     function forEachDimension(metric, callback) {
-        $.each(module.displayDimensions, function(i, e) {
+        $.each(module.displayDimensions, function (i, e) {
             if (typeof metric[e] === 'object') {
                 callback(e, metric[e]);
             }
@@ -35,7 +35,7 @@ hqDefine("reports/js/maps_utils", function() {
 
     // iterate over all metrics, which can potentially be stored in a tree structure
     function forEachMetric(metrics, callback) {
-        $.each(metrics, function(i, e) {
+        $.each(metrics, function (i, e) {
             if (e.group) {
                 forEachMetric(e.children, callback);
             } else {
@@ -50,7 +50,7 @@ hqDefine("reports/js/maps_utils", function() {
         this.root = ko.observable();
         this.defaultMetric = null;
 
-        this.load = function(metrics) {
+        this.load = function (metrics) {
             this.root(new MetricModel({
                 title: '_root',
                 children: metrics,
@@ -64,13 +64,13 @@ hqDefine("reports/js/maps_utils", function() {
             }
         };
 
-        this.renderMetric = function(metric) {
+        this.renderMetric = function (metric) {
             control.render(metric);
         };
 
-        this.unselectAll = function() {
-            var unselect = function(node) {
-                $.each(node.children(), function(i, e) {
+        this.unselectAll = function () {
+            var unselect = function (node) {
+                $.each(node.children(), function (i, e) {
                     unselect(e);
                 });
                 node.selected(false);
@@ -89,11 +89,11 @@ hqDefine("reports/js/maps_utils", function() {
         this.selected = ko.observable(false);
         this.parent = parent;
 
-        this.group = ko.computed(function() {
+        this.group = ko.computed(function () {
             return this.children().length > 0;
         }, this);
 
-        this.onclick = function() {
+        this.onclick = function () {
             if (this.group()) {
                 this.toggle();
             } else {
@@ -102,11 +102,11 @@ hqDefine("reports/js/maps_utils", function() {
             }
         };
 
-        this.toggle = function() {
+        this.toggle = function () {
             this.expanded(!this.expanded());
         };
 
-        this.select = function() {
+        this.select = function () {
             root.unselectAll();
 
             var node = this;
@@ -117,10 +117,10 @@ hqDefine("reports/js/maps_utils", function() {
             }
         };
 
-        this.load = function(data) {
+        this.load = function (data) {
             this.metric = data;
             this.name(data.title);
-            this.children($.map(data.children || [], function(e) {
+            this.children($.map(data.children || [], function (e) {
                 return new MetricModel(e, m, root);
             }));
             if (data['default']) {
@@ -136,13 +136,13 @@ hqDefine("reports/js/maps_utils", function() {
             position: 'bottomright',
         },
 
-        onAdd: function(map) {
+        onAdd: function (map) {
             this.$div = $('#legend');
             this.div = this.$div[0];
             return this.div;
         },
 
-        render: function(metric) {
+        render: function (metric) {
             if (metric == null) {
                 this.$div.hide();
                 return;
@@ -159,13 +159,13 @@ hqDefine("reports/js/maps_utils", function() {
             position: 'bottomright',
         },
 
-        onAdd: function(map) {
+        onAdd: function (map) {
             this.$div = $('#info');
             this.div = this.$div[0];
             return this.div;
         },
 
-        setActive: function(feature, metric) {
+        setActive: function (feature, metric) {
             if (feature == null ||
                 (metric == null && !this.options.config.name_column)) { // nothing to show
                 this.$div.hide();
@@ -174,7 +174,7 @@ hqDefine("reports/js/maps_utils", function() {
 
             var cols = [];
             if (metric != null) {
-                forEachDimension(metric, function(type, meta) {
+                forEachDimension(metric, function (type, meta) {
                     var col = meta.column;
                     if (cols.indexOf(col) == -1) {
                         cols.push(col);
@@ -197,9 +197,9 @@ hqDefine("reports/js/maps_utils", function() {
             position: 'topright',
         },
 
-        onAdd: function(map) {
+        onAdd: function (map) {
             this.$div = $('#zoomtofit');
-            this.$div.find('#zoomtofit-target').click(function() {
+            this.$div.find('#zoomtofit-target').click(function () {
                 zoomToAll(map);
             });
             return this.$div[0];
@@ -212,9 +212,9 @@ hqDefine("reports/js/maps_utils", function() {
             position: 'topright',
         },
 
-        onAdd: function(map) {
+        onAdd: function (map) {
             this.$div = $('#toggletable');
-            this.$div.find('#toggletable-target').click(function() {
+            this.$div.find('#toggletable-target').click(function () {
                 module.tableToggle = !module.tableToggle;
                 setMapHeight(map, true);
             });
@@ -226,7 +226,7 @@ hqDefine("reports/js/maps_utils", function() {
         L.Icon.Default.imagePath = iconPath;
         var map = mapsInit(context);
 
-        var resize = function() {
+        var resize = function () {
             setMapHeight(map);
         };
         $(window).resize(resize);
@@ -239,7 +239,7 @@ hqDefine("reports/js/maps_utils", function() {
     function initData(data, config) {
         // instantiate data formatting functions
         config._fmt = {};
-        $.each(config.numeric_format || {}, function(k, v) {
+        $.each(config.numeric_format || {}, function (k, v) {
             try {
                 // TODO allow these functions to access other properties for that row?
                 config._fmt[k] = eval('(function(x) { ' + v + '})');
@@ -257,14 +257,14 @@ hqDefine("reports/js/maps_utils", function() {
         }
 
         // typecast values
-        $.each(data.features, function(i, e) {
-            $.each(e.properties, function(k, v) {
+        $.each(data.features, function (i, e) {
+            $.each(e.properties, function (k, v) {
                 e.properties[k] = typecast(v);
             });
         });
 
         // pre-cache popup detail
-        $.each(data.features, function(i, e) {
+        $.each(data.features, function (i, e) {
             e.popupContent = formatDetailPopup(e, config);
         });
 
@@ -287,24 +287,24 @@ hqDefine("reports/js/maps_utils", function() {
             }]);
         }
         // set sensible defaults for metric parameters (if omitted)
-        forEachMetric(config.metrics, function(metric) {
+        forEachMetric(config.metrics, function (metric) {
             setMetricDefaults(metric, data, config);
         });
 
         // typecast values
-        $.each(config.metrics, function(i, e) {
-            forEachDimension(e, function(dim, meta) {
+        $.each(config.metrics, function (i, e) {
+            forEachDimension(e, function (dim, meta) {
                 if (meta.thresholds) {
                     meta.thresholds = _.map(meta.thresholds, typecast);
                 }
                 if (meta.colorstops) {
-                    meta.colorstops = _.map(meta.colorstops, function(e) {
+                    meta.colorstops = _.map(meta.colorstops, function (e) {
                         return [typecast(e[0]), e[1]];
                     });
                 }
                 if (meta.categories) {
                     var _cat = {};
-                    $.each(meta.categories, function(k, v) {
+                    $.each(meta.categories, function (k, v) {
                         _cat[typecast(k)] = v;
                     });
                     meta.categories = _cat;
@@ -313,12 +313,12 @@ hqDefine("reports/js/maps_utils", function() {
         });
 
         // necessary closures (TODO make a class?)
-        forEachMetric(config.metrics, function(metric) {
-            forEachDimension(metric, function(type, meta) {
-                meta._enumCaption = function(val, labelFallbacks) {
+        forEachMetric(config.metrics, function (metric) {
+            forEachDimension(metric, function (type, meta) {
+                meta._enumCaption = function (val, labelFallbacks) {
                     return getEnumCaption(meta.column, val, config, labelFallbacks);
                 };
-                meta._formatNum = function(val) {
+                meta._formatNum = function (val) {
                     return formatValue(meta.column, val, config);
                 };
             });
@@ -360,12 +360,12 @@ hqDefine("reports/js/maps_utils", function() {
             },
         };
 
-        var mkLayer = function(spec) {
+        var mkLayer = function (spec) {
             if (spec.family) {
                 var family_spec = LAYER_FAMILIES[spec.family];
                 spec.url_template = family_spec.url_template;
                 spec.args = spec.args || {};
-                $.each(family_spec.args || {}, function(k, v) {
+                $.each(family_spec.args || {}, function (k, v) {
                     spec.args[k] = v;
                 });
             }
@@ -374,7 +374,7 @@ hqDefine("reports/js/maps_utils", function() {
 
         var layers = {};
         var defaultLayer = null;
-        $.each(layers_spec, function(k, v) {
+        $.each(layers_spec, function (k, v) {
             layers[k] = mkLayer(v);
             if (v['default']) {
                 defaultLayer = k;
@@ -399,7 +399,7 @@ hqDefine("reports/js/maps_utils", function() {
 
     function zoomToAll(map) {
         if (map.activeOverlay) {
-            setTimeout(function() {
+            setTimeout(function () {
                 var bounds = map.activeOverlay.getBounds();
                 if (bounds.isValid()) {
                     map.fitBounds(map.activeOverlay.getBounds(), {
@@ -414,7 +414,7 @@ hqDefine("reports/js/maps_utils", function() {
     // generate the proper geojson styling for the given display metric
     function makeDisplayContext(metric, setActiveFeature) {
         return {
-            filter: function(feature, layer) {
+            filter: function (feature, layer) {
                 if (feature.geometry.type == "Point") {
                     feature._conf = markerFactory(metric, feature.properties);
                 } else {
@@ -431,13 +431,13 @@ hqDefine("reports/js/maps_utils", function() {
                 }
                 return feature.visible;
             },
-            style: function(feature) {
+            style: function (feature) {
                 return feature._conf;
             },
-            pointToLayer: function(feature, latlng) {
+            pointToLayer: function (feature, latlng) {
                 return feature._conf(latlng);
             },
-            onEachFeature: function(feature, layer) {
+            onEachFeature: function (feature, layer) {
                 // popup
                 layer.bindPopup(feature.popupContent, {
                     maxWidth: 600,
@@ -445,16 +445,16 @@ hqDefine("reports/js/maps_utils", function() {
                 });
                 var tableEnabled = feature.$tr; // todo: might want to make this more explicit
 
-                var handlePopups = function() {
+                var handlePopups = function () {
                     // open popup on table row click / highlight table row on popup open
-                    var selectRow = function($tr) {
+                    var selectRow = function ($tr) {
                         $('#tabular tr').removeClass('selected-row');
                         if ($tr != null) {
                             $tr.addClass('selected-row');
                         }
                     };
 
-                    feature.$tr.click(function() {
+                    feature.$tr.click(function () {
                         var popupAnchor = null;
                         $(".selected-row").removeClass('selected-row');
                         if (layer.getBounds) { // polygon layer
@@ -465,10 +465,10 @@ hqDefine("reports/js/maps_utils", function() {
                         // FIXME openPopup seems to crash for MultiPolygons (https://github.com/Leaflet/Leaflet/issues/2046)
                         selectRow(feature.$tr);
                     });
-                    layer.on('popupopen', function() {
+                    layer.on('popupopen', function () {
                         selectRow(feature.$tr);
                     });
-                    layer.on('popupclose', function() {
+                    layer.on('popupclose', function () {
                         selectRow(null);
                     });
                 };
@@ -480,14 +480,14 @@ hqDefine("reports/js/maps_utils", function() {
 
                 // highlight layer / table row on hover-over
                 if (feature.geometry.type != 'Point') {
-                    layer._activate = function() {
+                    layer._activate = function () {
                         layer.setStyle(module.activeStyle);
                     };
-                    layer._deactivate = function() {
+                    layer._deactivate = function () {
                         layer.setStyle(feature._conf);
                     };
                 }
-                var hoverOn = function() {
+                var hoverOn = function () {
                     if (layer._activate) {
                         layer._activate();
                         if (layer.bringToFront) {
@@ -500,7 +500,7 @@ hqDefine("reports/js/maps_utils", function() {
                     }
                     setActiveFeature(feature);
                 };
-                var hoverOff = function() {
+                var hoverOff = function () {
                     if (layer._deactivate) {
                         layer._deactivate();
                     }
@@ -577,10 +577,10 @@ hqDefine("reports/js/maps_utils", function() {
         options.riseOnHover = true;
 
         var marker = new L.marker(latlng, options);
-        marker._activate = function() {
+        marker._activate = function () {
             $(marker._icon).addClass('glow');
         };
-        marker._deactivate = function() {
+        marker._deactivate = function () {
             $(marker._icon).removeClass('glow');
         };
 
@@ -608,7 +608,7 @@ hqDefine("reports/js/maps_utils", function() {
             return null;
         }
 
-        return function(latlng) {
+        return function (latlng) {
             var style = {
                 color: "#000",
                 weight: 1,
@@ -618,10 +618,10 @@ hqDefine("reports/js/maps_utils", function() {
                 fillOpacity: fill.alpha,
             };
             var marker = L.circleMarker(latlng, style);
-            marker._activate = function() {
+            marker._activate = function () {
                 marker.setStyle(module.activeStyle);
             };
-            marker._deactivate = function() {
+            marker._deactivate = function () {
                 marker.setStyle(style);
             };
             return marker;
@@ -634,14 +634,14 @@ hqDefine("reports/js/maps_utils", function() {
             return null;
         }
 
-        return function(latlng) {
+        return function (latlng) {
             var marker = mkMarker(latlng, {
                 icon: L.icon({
                     iconUrl: icon.url,
                 }),
             });
             var img = new Image();
-            img.onload = function() {
+            img.onload = function () {
                 // leaflet needs explicit icon dimensions
                 marker.setIcon(L.icon({
                     iconUrl: icon.url,
@@ -682,7 +682,7 @@ hqDefine("reports/js/maps_utils", function() {
     DEFAULT_COLOR = 'rgba(255, 120, 0, .8)';
 
     function getColor(meta, props) {
-        var c = (function() {
+        var c = (function () {
             if (meta == null) {
                 return DEFAULT_COLOR;
             } else if (typeof meta === 'string') {
@@ -717,7 +717,7 @@ hqDefine("reports/js/maps_utils", function() {
 
     function getIcon(meta, props) {
         //TODO support css sprites
-        var icon = (function() {
+        var icon = (function () {
             if (typeof meta === 'string') {
                 return meta;
             } else {
@@ -764,7 +764,7 @@ hqDefine("reports/js/maps_utils", function() {
             prop_cols = mode;
             info_cols = mode;
         }
-        var formatForDisplay = function(col, datum) {
+        var formatForDisplay = function (col, datum) {
             // if display value was explicitly provided from server, use it above all else
             // note: this pattern has drawbacks -- namely the browser doesn't know how to
             // properly format legend labels -- so should only really be used for
@@ -783,7 +783,7 @@ hqDefine("reports/js/maps_utils", function() {
         var displayProperties = {};
         var rawProperties = {};
         var propTitles = {};
-        $.each(prop_cols, function(i, k) {
+        $.each(prop_cols, function (i, k) {
             var v = feature.properties[k];
             displayProperties[k] = formatForDisplay(k, v);
             rawProperties[k] = (v instanceof Date ? v.getTime() : v);
@@ -798,7 +798,7 @@ hqDefine("reports/js/maps_utils", function() {
             name: (config.name_column ? feature.properties[config.name_column] : null),
             info: [],
         };
-        $.each(info_cols, function(i, e) {
+        $.each(info_cols, function (i, e) {
             context.info.push({
                 slug: e, // FIXME this will cause problems if column keys have weird chars or spaces
                 label: propTitles[e],
@@ -829,13 +829,13 @@ hqDefine("reports/js/maps_utils", function() {
 
         if (!metric.title) {
             var varcols = [];
-            forEachDimension(metric, function(type, meta) {
+            forEachDimension(metric, function (type, meta) {
                 var col = meta.column;
                 if (varcols.indexOf(col) == -1) {
                     varcols.push(col);
                 }
             });
-            metric.title = $.map(varcols, function(e) {
+            metric.title = $.map(varcols, function (e) {
                 return getColumnTitle(e, config);
             }).join(' / ');
         }
@@ -870,7 +870,7 @@ hqDefine("reports/js/maps_utils", function() {
                     }
 
                     var cat = {};
-                    $.each(enums, function(i, e) {
+                    $.each(enums, function (i, e) {
                         var hue = i * 360. / enums.length;
                         cat[e] = 'hsla(' + hue + ', 100%, 50%, .8)';
                     });
@@ -889,7 +889,7 @@ hqDefine("reports/js/maps_utils", function() {
     }
 
     function getAllCols(config, data) {
-        var isIgnored = function(col) {
+        var isIgnored = function (col) {
             var ignoreCols = [config.name_column];
             var ignorePrefix = '__disp_';
             return (ignoreCols.indexOf(col) != -1 ||
@@ -897,20 +897,20 @@ hqDefine("reports/js/maps_utils", function() {
         };
 
         var _cols = {};
-        $.each(data.features, function(i, e) {
-            $.each(e.properties, function(k, v) {
+        $.each(data.features, function (i, e) {
+            $.each(e.properties, function (k, v) {
                 if (!isIgnored(k)) {
                     _cols[k] = true;
                 }
             });
         });
-        return _.sortBy(_.keys(_cols), function(e) {
+        return _.sortBy(_.keys(_cols), function (e) {
             return getColumnTitle(e, config);
         });
     }
 
     function autoConfiguration(config, data) {
-        var metrics = $.map(getAllCols(config, data), function(e) {
+        var metrics = $.map(getAllCols(config, data), function (e) {
             return {
                 auto: e,
             };
@@ -958,8 +958,8 @@ hqDefine("reports/js/maps_utils", function() {
         var nonpoint = false;
         var hasDates = false;
 
-        var iterate = function(callback) {
-            $.each(data.features, function(i, e) {
+        var iterate = function (callback) {
+            $.each(data.features, function (i, e) {
                 var val = getPropValue(e.properties, meta);
                 if (isNull(val)) {
                     return;
@@ -974,7 +974,7 @@ hqDefine("reports/js/maps_utils", function() {
             });
         };
 
-        iterate(function(val, numeric, polygon) {
+        iterate(function (val, numeric, polygon) {
             _uniq[val] = true;
             if (numeric) {
                 if (val instanceof Date) {
@@ -994,7 +994,7 @@ hqDefine("reports/js/maps_utils", function() {
             }
         });
         var uniq = [];
-        $.each(_uniq, function(k, v) {
+        $.each(_uniq, function (k, v) {
             uniq.push(k);
         });
         uniq.sort();
@@ -1003,7 +1003,7 @@ hqDefine("reports/js/maps_utils", function() {
         var stdev = null;
         if (count > 1) {
             var _accum = 0;
-            iterate(function(val, numeric) {
+            iterate(function (val, numeric) {
                 if (numeric) {
                     _accum += Math.pow(val - mean, 2.);
                 }
@@ -1038,7 +1038,7 @@ hqDefine("reports/js/maps_utils", function() {
 
     function getEnumValues(meta) {
         var labelFallbacks = {};
-        var toLabel = function(e) {
+        var toLabel = function (e) {
             return meta._enumCaption(e, labelFallbacks);
         };
 
@@ -1046,8 +1046,8 @@ hqDefine("reports/js/maps_utils", function() {
             var enums = meta.thresholds.slice(0);
             enums.splice(0, 0, '-');
 
-            $.each(enums, function(i, e) {
-                labelFallbacks[e] = (function() {
+            $.each(enums, function (i, e) {
+                labelFallbacks[e] = (function () {
                     if (i == 0) {
                         return '< ' + meta._formatNum(enums[1]);
                     } else if (i == enums.length - 1) {
@@ -1063,23 +1063,23 @@ hqDefine("reports/js/maps_utils", function() {
             }
         } else {
             var enums = _.keys(meta.categories);
-            var special = _.filter(enums, function(e) {
+            var special = _.filter(enums, function (e) {
                 return e[0] == '_';
             });
-            enums = _.filter(enums, function(e) {
+            enums = _.filter(enums, function (e) {
                 return e[0] != '_';
             });
 
             enums = _.sortBy(enums, toLabel);
             // move special categories to the end
-            $.each(['_other', '_null'], function(i, e) {
+            $.each(['_other', '_null'], function (i, e) {
                 if (special.indexOf(e) != -1) {
                     enums.push(e);
                 }
             });
         }
 
-        return $.map(enums, function(e, i) {
+        return $.map(enums, function (e, i) {
             return {
                 label: toLabel(e),
                 value: e,
@@ -1100,7 +1100,7 @@ hqDefine("reports/js/maps_utils", function() {
         $.each({
             '_other': OTHER_LABEL,
             '_null': NULL_LABEL,
-        }, function(k, v) {
+        }, function (k, v) {
             fallbacks[k] = fallbacks[k] || v;
         });
         var fallback = fallbacks[value] || value;
@@ -1113,7 +1113,7 @@ hqDefine("reports/js/maps_utils", function() {
             return null;
         }
 
-        var defaultFormat = function(val) {
+        var defaultFormat = function (val) {
             var raw = '' + val;
 
             if (val instanceof Date) {
@@ -1146,7 +1146,7 @@ hqDefine("reports/js/maps_utils", function() {
     }
 
     function renderLegend($e, metric, config) {
-        forEachDimension(metric, function(type, meta) {
+        forEachDimension(metric, function (type, meta) {
             var col = meta.column;
             var $h = $('<h4>');
             $h.text(getColumnTitle(col, config));
@@ -1163,7 +1163,7 @@ hqDefine("reports/js/maps_utils", function() {
     }
 
     function sizeLegend($e, meta) {
-        var rows = $.map([.5, 0, -.5], function(e) {
+        var rows = $.map([.5, 0, -.5], function (e) {
             var val = niceRoundNumber(Math.pow(10., e) * meta.baseline);
             return {
                 val: val,
@@ -1176,7 +1176,7 @@ hqDefine("reports/js/maps_utils", function() {
             entries: rows,
         }));
 
-        $.each(rows, function(i, e) {
+        $.each(rows, function (i, e) {
             var $r = $rendered.find('#sizerow-' + i);
             var diameter = 2 * e.radius;
             $r.find('.circle').css('width', diameter + 'px');
@@ -1190,14 +1190,14 @@ hqDefine("reports/js/maps_utils", function() {
         if (meta.colorstops) {
             colorScaleLegend($e, meta);
         } else {
-            enumLegend($e, meta, function($cell, value) {
+            enumLegend($e, meta, function ($cell, value) {
                 $cell.css('background-color', value);
             });
         }
     }
 
     function iconLegend($e, meta) {
-        enumLegend($e, meta, function($cell, value) {
+        enumLegend($e, meta, function ($cell, value) {
             var $icon = $('<img>');
             $icon.attr('src', value);
             $cell.append($icon);
@@ -1210,10 +1210,10 @@ hqDefine("reports/js/maps_utils", function() {
     MIN_BUFFER = 15; //px
     function colorScaleLegend($e, meta) {
         var EPOCH2000 = 946684800;
-        var fromDate = function(s) {
+        var fromDate = function (s) {
             return s / 1000. - EPOCH2000;
         };
-        var toDate = function(s) {
+        var toDate = function (s) {
             return new Date((s + EPOCH2000) * 1000.);
         };
 
@@ -1251,7 +1251,7 @@ hqDefine("reports/js/maps_utils", function() {
             tickvals.push(max);
         }
 
-        var ticks = $.map(tickvals, function(e) {
+        var ticks = $.map(tickvals, function (e) {
             return {
                 label: meta._formatNum(dateScale ? toDate(e) : e),
                 coord: (1. - (e - min) / range) * SCALEBAR_HEIGHT,
@@ -1272,7 +1272,7 @@ hqDefine("reports/js/maps_utils", function() {
             enums: enums,
         }));
 
-        $.each(enums, function(i, e) {
+        $.each(enums, function (i, e) {
             var $r = $rendered.find('#enumrow-' + i);
             var cat = matchCategories(e.value, meta.categories);
             renderValue($r.find('.enum'), cat);
@@ -1319,7 +1319,7 @@ hqDefine("reports/js/maps_utils", function() {
     // return the lower bound of the matching bucket, or '-' for the lowest bucket
     function matchThresholds(val, thresholds, returnIndex) {
         var cat = (returnIndex ? -1 : '-');
-        $.each(thresholds, function(i, e) {
+        $.each(thresholds, function (i, e) {
             if (e <= val) {
                 cat = (returnIndex ? i : e);
             } else {
@@ -1353,12 +1353,12 @@ hqDefine("reports/js/maps_utils", function() {
     function matchSpline(val, stops, blendfunc) {
         blendfunc = blendfunc || blendLinear;
 
-        stops = _.sortBy(stops, function(e) {
+        stops = _.sortBy(stops, function (e) {
             return e[0];
         });
         var x = [];
         var y = [];
-        $.each(stops, function(i, e) {
+        $.each(stops, function (i, e) {
             x.push(e[0]);
             y.push(e[1]);
         });
@@ -1386,7 +1386,7 @@ hqDefine("reports/js/maps_utils", function() {
         var GAMMA = 2.2;
 
         // convert to linear color space and premultiply alpha
-        var toLinear = function(c) {
+        var toLinear = function (c) {
             var channels = $.Color(c).rgba();
             for (var i = 0; i < 3; i++) {
                 channels[i] = Math.pow((channels[i] + .5) / 256., GAMMA);
@@ -1396,7 +1396,7 @@ hqDefine("reports/js/maps_utils", function() {
         };
 
         // reverse toLinear()
-        var fromLinear = function(channels) {
+        var fromLinear = function (channels) {
             for (var i = 0; i < 3; i++) {
                 channels[i] /= channels[3];
                 channels[i] = Math.floor(256. * Math.pow(channels[i], 1. / GAMMA));
@@ -1422,10 +1422,10 @@ hqDefine("reports/js/maps_utils", function() {
         var exponent = Math.floor(xLog);
         var xNorm = Math.pow(orderOfMagnitude, xLog - exponent);
 
-        var getStop = function(i) {
+        var getStop = function (i) {
             return (i == stops.length ? orderOfMagnitude * stops[0] : stops[i]);
         };
-        var cutoffs = $.map(stops, function(e, i) {
+        var cutoffs = $.map(stops, function (e, i) {
             var multiplier = getStop(i + 1);
             var cutoff = Math.sqrt(e * multiplier);
             if (cutoff >= orderOfMagnitude) {
@@ -1437,11 +1437,11 @@ hqDefine("reports/js/maps_utils", function() {
                 mult: multiplier,
             };
         });
-        cutoffs = _.sortBy(cutoffs, function(co) {
+        cutoffs = _.sortBy(cutoffs, function (co) {
             return co.cutoff;
         });
 
-        var bucket = matchThresholds(xNorm, $.map(cutoffs, function(co) {
+        var bucket = matchThresholds(xNorm, $.map(cutoffs, function (co) {
             return co.cutoff;
         }), true);
         var multiplier = (bucket == -1 ? cutoffs.slice(-1)[0].mult / orderOfMagnitude : cutoffs[bucket].mult);
@@ -1470,13 +1470,13 @@ hqDefine("reports/js/maps_utils", function() {
     }
 
     function testNiceRoundNumber() {
-        var test = function(args) {
+        var test = function (args) {
             var result = niceRoundNumber.apply(this, args);
             console.log(args, result);
         };
-        var testStops = function(stops, vals) {
+        var testStops = function (stops, vals) {
             for (var OoM = -2; OoM < 3; OoM++) {
-                $.each(vals, function(i, e) {
+                $.each(vals, function (i, e) {
                     test([Math.pow(10., OoM) * e, stops]);
                 });
             }
@@ -1495,7 +1495,7 @@ hqDefine("reports/js/maps_utils", function() {
         var Y = 365.2425 * D;
         var MO = Y / 12;
 
-        var format = function(x) {
+        var format = function (x) {
             var units = [1, M, H, D, MO, Y];
             var labels = ['s', 'm', 'h', 'd', 'mo', 'y'];
             var i = matchThresholds(x, units, true);
@@ -1504,7 +1504,7 @@ hqDefine("reports/js/maps_utils", function() {
             }
             return (x / units[i]).toFixed(2) + labels[i];
         };
-        var test = function(x) {
+        var test = function (x) {
             var result = niceRoundInterval(x);
             console.log(format(x), format(result));
         };
@@ -1536,7 +1536,7 @@ hqDefine("reports/js/maps_utils", function() {
             position: 'bottomleft',
         },
 
-        onAdd: function(map) {
+        onAdd: function (map) {
             this.activeMetric = null;
 
             this.$div = $('#metrics');
@@ -1547,7 +1547,7 @@ hqDefine("reports/js/maps_utils", function() {
             this.init();
 
             var m = this;
-            map.on('popupopen', function(e) {
+            map.on('popupopen', function (e) {
                 var $popup = $(e.popup._container);
                 var metric = m.activeMetric;
                 if (metric == null) {
@@ -1556,7 +1556,7 @@ hqDefine("reports/js/maps_utils", function() {
 
                 // highlight in detail popup
                 $popup.find('.data').removeClass('detail_active');
-                forEachDimension(metric, function(type, meta) {
+                forEachDimension(metric, function (type, meta) {
                     $popup.find('.data-' + meta.column).addClass('detail_active');
                 });
             });
@@ -1564,7 +1564,7 @@ hqDefine("reports/js/maps_utils", function() {
             return this.div;
         },
 
-        init: function() {
+        init: function () {
             var koModel = new MetricsViewModel(this);
             $('#metrics').koApplyBindings(koModel);
             koModel.load(this.options.metrics);
@@ -1572,12 +1572,12 @@ hqDefine("reports/js/maps_utils", function() {
 
         // TODO support an explicit 'show just markers again' option
 
-        render: function(metric) {
+        render: function (metric) {
             this.activeMetric = metric;
             resetTable(this.options.data); // clear out handlers on table before makeDisplayContext adds new ones
 
             var m = this;
-            loadData(this._map, this.options.data, makeDisplayContext(metric, function(f) {
+            loadData(this._map, this.options.data, makeDisplayContext(metric, function (f) {
                 m.options.info.setActive(f, m.activeMetric);
             }));
 
@@ -1621,10 +1621,10 @@ hqDefine("reports/js/maps_utils", function() {
     }
 
     function initTable(data, config) {
-        var row = function($table, header, items, toCell) {
+        var row = function ($table, header, items, toCell) {
             var $container = $table.find(header ? 'thead' : 'tbody');
             var $tr = $('<tr>');
-            $.each(items, function(i, e) {
+            $.each(items, function (i, e) {
                 var $cell = $(header ? '<th>' : '<td>');
                 toCell($cell, e);
                 $tr.append($cell);
@@ -1635,9 +1635,9 @@ hqDefine("reports/js/maps_utils", function() {
 
         $('#tabular').append('<thead></thead><tbody></tbody>');
         var colSorting = initTableHeader(config, data, row);
-        $.each(data.features, function(i, e) {
+        $.each(data.features, function (i, e) {
             var ctx = infoContext(e, config, 'table');
-            e.$tr = row($('#tabular'), false, ctx.info, function($cell, e) {
+            e.$tr = row($('#tabular'), false, ctx.info, function ($cell, e) {
                 $cell.html(e.value);
                 var $sortkey = $('<span>');
                 $sortkey.attr('title', e.raw);
@@ -1646,7 +1646,7 @@ hqDefine("reports/js/maps_utils", function() {
         });
 
         $.fn.dataTableExt.afnFiltering.push(
-            function(settings, row, i) {
+            function (settings, row, i) {
                 // datatables doesn't really offer a better way to do this;
                 // you have to set all filtering up-front
                 if (data.features[i] != void(0)) {
@@ -1668,14 +1668,14 @@ hqDefine("reports/js/maps_utils", function() {
     function initTableHeader(config, data, mkRow) {
         var cols = getTableColumns(config);
 
-        var maxDepth = function(col) {
+        var maxDepth = function (col) {
             return 1 + (typeof col === 'string' ? 0 :
-                _.reduce(_.map(col.subcolumns, maxDepth), function(a, b) { return Math.max(a, b); }, 0));
+                _.reduce(_.map(col.subcolumns, maxDepth), function (a, b) { return Math.max(a, b); }, 0));
         };
         var totalMaxDepth = maxDepth({subcolumns: cols}) - 1;
-        var breadth = function(col) {
+        var breadth = function (col) {
             return (typeof col === 'string' ? 1 :
-                _.reduce(_.map(col.subcolumns, breadth), function(a, b) { return a + b; }, 0));
+                _.reduce(_.map(col.subcolumns, breadth), function (a, b) { return a + b; }, 0));
         };
 
         var headerRows = [];
@@ -1685,13 +1685,13 @@ hqDefine("reports/js/maps_utils", function() {
 
         config._table_columns_flat = [];
 
-        var process = function(col, depth) {
+        var process = function (col, depth) {
             if (typeof col === 'string') {
                 var entry = {title: getColumnTitle(col, config), terminal: true};
                 config._table_columns_flat.push(col); // a bit hacky
             } else {
                 var entry = {title: col.title, span: breadth(col)};
-                $.each(col.subcolumns, function(i, e) {
+                $.each(col.subcolumns, function (i, e) {
                     process(e, depth + 1);
                 });
             }
@@ -1701,8 +1701,8 @@ hqDefine("reports/js/maps_utils", function() {
         };
         process({subcolumns: cols}, -1);
 
-        $.each(headerRows, function(depth, row) {
-            mkRow($('#tabular'), true, row, function($cell, e) {
+        $.each(headerRows, function (depth, row) {
+            mkRow($('#tabular'), true, row, function ($cell, e) {
                 $cell.text(e.title);
                 if (e.span) {
                     $cell.attr('colspan', e.span);
@@ -1714,12 +1714,12 @@ hqDefine("reports/js/maps_utils", function() {
             });
         });
 
-        var sortColumnAs = function(datatype) {
+        var sortColumnAs = function (datatype) {
             return {
                 'numeric': {sType: 'title-numeric'},
             }[datatype];
         };
-        return _.map(getTableColumns(config, true), function(col) {
+        return _.map(getTableColumns(config, true), function (col) {
             var stats = summarizeColumn({column: col}, data);
             return sortColumnAs(stats.nonnumeric ? 'text' : 'numeric');
         });
@@ -1728,7 +1728,7 @@ hqDefine("reports/js/maps_utils", function() {
     function resetTable(data) {
         // we can't use $('#tabular tr') as that will only select the rows currently shown by datatables
         var rows = [];
-        $.each(data.features, function(i, e) {
+        $.each(data.features, function (i, e) {
             if (e.$tr) {
                 rows.push(e.$tr[0]);
             }

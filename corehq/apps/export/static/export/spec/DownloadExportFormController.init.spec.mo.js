@@ -1,5 +1,5 @@
 /* globals DnldExpData */
-describe('DownloadExportFormController - Initialization', function() {
+describe('DownloadExportFormController - Initialization', function () {
     DnldExpData.prepareTests();
     DnldExpData.prepareDownloadController();
 

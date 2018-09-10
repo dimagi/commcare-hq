@@ -1,4 +1,4 @@
-describe('DownloadExportFormController - Prepare Multimedia Download', function() {
+describe('DownloadExportFormController - Prepare Multimedia Download', function () {
     DnldExpData.prepareTests();
     DnldExpData.prepareDownloadController();
     DnldExpData.prepareBackends();
