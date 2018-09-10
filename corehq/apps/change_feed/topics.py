@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from kafka.common import OffsetRequestPayload
 
 from corehq.apps.app_manager.util import app_doc_types
-from corehq.apps.change_feed.connection import get_kafka_client
+from corehq.apps.change_feed.connection import get_simple_kafka_client
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from couchforms.models import all_known_formlike_doc_types
 
@@ -113,7 +113,7 @@ def _get_topic_offsets(topics, latest):
     # https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol#AGuideToTheKafkaProtocol-OffsetRequest
     # https://cfchou.github.io/blog/2015/04/23/a-closer-look-at-kafka-offsetrequest/
     assert set(topics) <= set(ALL)
-    client = get_kafka_client()
+    client = get_simple_kafka_client()
     partition_meta = client.topic_partitions
 
     # only return the offset of the latest message in the partition

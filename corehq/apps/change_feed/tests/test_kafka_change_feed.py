@@ -7,7 +7,7 @@ from django.test import SimpleTestCase, TestCase
 from kafka import SimpleProducer
 from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.connection import get_kafka_client_or_none
+from corehq.apps.change_feed.connection import get_simple_kafka_client_or_none
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from corehq.apps.change_feed.producer import send_to_kafka
@@ -125,7 +125,7 @@ class KafkaCheckpointTest(TestCase):
 
 @memoized
 def _get_producer():
-    return SimpleProducer(get_kafka_client_or_none())
+    return SimpleProducer(get_simple_kafka_client_or_none())
 
 
 def publish_stub_change(topic):
