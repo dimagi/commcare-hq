@@ -3,8 +3,6 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% requirejs_main 'app_manager/js/source_files' %}
-
 {% block page_content %}
     {% registerurl 'diff' app.domain app.id '---' %}
     {% initial_page_data 'built_versions' built_versions %}
