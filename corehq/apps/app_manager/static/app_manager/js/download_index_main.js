@@ -1,13 +1,16 @@
 
 hqDefine('app_manager/js/download_index_main',[
-   'jquery',
-   'ace-builds/src-min-noconflict/ace',
+    'jquery',
+    'underscore',
+    'ace-builds/src-min-noconflict/ace',
     'app_manager/js/download_async_modal',
-    'app_manager/js/source_files'
-],function ($) {
-   $(function() {
+    'app_manager/js/source_files',
+
+],function ($, _, ace) {
+    $(function () {
         var elements = $('.prettyprint');
-        for (var elem of elements) {
+
+        _.each(elements, function (elem) {
             var editor = ace.edit(
                 elem,
                 {
@@ -21,13 +24,13 @@ hqDefine('app_manager/js/download_index_main',[
             );
             var fileName = $(elem).data('filename');
 
-            if(fileName.endsWith('json')){
+            if (fileName.endsWith('json')) {
                 editor.session.setMode('ace/mode/json');
-            }else{
+            } else {
                 editor.session.setMode('ace/mode/xml');
             }
             editor.setReadOnly(true);
-        }
+        });
 
     });
 });

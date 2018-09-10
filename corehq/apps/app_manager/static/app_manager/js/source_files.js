@@ -17,12 +17,12 @@ hqDefine('app_manager/js/source_files',[
             $input = $form.find("input");
 
         builtVersions = _.sortBy(_.filter(builtVersions, function (v) {
-            return v.version != currentVersion;
+            return v.version !== currentVersion;
         }), function (v) { return parseInt(v.version); }).reverse();
         var versionMap = _.indexBy(builtVersions, 'version');
     
         $input.select2({
-            data: _.map(builtVersions, function(v) {
+            data: _.map(builtVersions, function (v) {
                 return {
                     id: v.version,
                     text: v.version + ": " + (v.comment || "no comment"),
