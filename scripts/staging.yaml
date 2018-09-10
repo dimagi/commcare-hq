@@ -66,7 +66,9 @@ branches:
   - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
   - sr-batch-ucrpillow # Sravan Sept 4
   - je/upgrade-kafka+np/celery-4.x-2
-  - je/upgrade-kafka # Sept r
+  - je/upgrade-kafka # Sept 7
+  - jls/split-hqwebapp-select-2-ajax-widget  # Jenny Sept 9
+  - jls/split-locations-widgets-main  # Jenny Sept 9
 submodules:
   submodules/django-digest-src:
     branches: []

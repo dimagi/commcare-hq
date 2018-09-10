@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 from django.db import models
-from kafka.common import TopicAndPartition
+from kafka.common import TopicPartition
 
 SEQUENCE_FORMATS = (
     ('text', 'text'),
@@ -16,7 +16,7 @@ def str_to_kafka_seq(seq):
     marshaled_seq = {}
     for key, val in seq.items():
         topic, partition = key.split(',')
-        marshaled_seq[TopicAndPartition(topic, int(partition))] = val
+        marshaled_seq[TopicPartition(topic, int(partition))] = val
     return marshaled_seq
 
 
