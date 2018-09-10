@@ -1,7 +1,7 @@
 {% extends "app_manager/source_files.html" %}
 {% load hq_shared_tags %}
 {% load compress %}
-
+{% requirejs_main 'app_manager/js/download_index_main' %}
 {% block stylesheets %}{{ block.super }}
     {% compress css %}
         <link type="text/css" rel="stylesheet" href="{% static 'app_manager/css/diff.css' %}"/>
@@ -36,7 +36,7 @@
 {% endblock file_description %}
 
 {% block file_source %}
-    <pre class="prettyprint linenums">{{ file.source|force_escape }}</pre>
+    <pre class="prettyprint linenums" data-filename="{{ file.name }}">{{ file.source|force_escape }}</pre>
 {% endblock file_source %}
 
 {% block post_files %}
@@ -54,12 +54,12 @@
     {% url "download_ccz" app.domain app.id as ccz_url %}
     {% include 'app_manager/partials/download_async_modal.html' with element_id="download_ccz" url=ccz_url %}
 {% endblock %}
-
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{##}
+{#{% block js %}{{ block.super }}#}
+{#    {% compress js %}#}
+{#        <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>#}
+{#    {% endcompress %}#}
+{#{% endblock %}#}
 
 {% block js-inline %}
     {{ block.super }}

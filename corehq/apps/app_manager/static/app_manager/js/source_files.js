@@ -1,13 +1,18 @@
 /* globals hqDefine */
-hqDefine('app_manager/js/source_files', function () {
-    $(function () {
-        $('.toggle-next').click(function (e) {
+hqDefine('app_manager/js/source_files',[
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'select2/dist/js/select2.full.min'
+], function($, _, initialPageData) {
+    $(function(){
+        $('.toggle-next').click(function(e){
             e.preventDefault();
             $(this).parents('tr').next('tr').toggleClass("hide");
         });
     
-        var current_version = hqImport('hqwebapp/js/initial_page_data').get('current_version'),
-            built_versions = hqImport('hqwebapp/js/initial_page_data').get('built_versions'),
+        var current_version = initialPageData.get('current_version'),
+            built_versions = initialPageData.get('built_versions'),
             $form = $("#compare-form"),
             $input = $form.find("input");
     
@@ -34,7 +39,7 @@ hqDefine('app_manager/js/source_files', function () {
                 alert(version + " is not a valid version");
                 return;
             }
-            window.location = hqImport('hqwebapp/js/initial_page_data').reverse('diff', version_map[version].build_id);
+            window.location = initialPageData.reverse('diff', version_map[version].build_id);
         });
     });
 });
