@@ -25,17 +25,19 @@
         "datatype": "date"
       },
       {
-        "display": "Age at Registration Low Bound",
-        "slug": "age_at_reg",
-        "type": "numeric",
+        "slug": "age_at_registration_exists",
+        "type": "pre",
         "field": "age_at_reg",
+        "pre_operator": "!=",
+        "pre_value": "",
         "datatype": "integer"
       },
       {
-        "display": "Age at Registration High Bound",
-        "slug": "age_at_reg1",
-        "type": "numeric",
+        "slug": "age_at_registration_in_bounds",
+        "type": "pre",
         "field": "age_at_reg",
+        "pre_operator": "<=",
+        "pre_value": 6,
         "datatype": "integer"
       },
       {
