@@ -11,6 +11,7 @@ from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
+from corehq.apps.change_feed.data_sources import SOURCE_COUCH
 from corehq.pillows.case import get_case_to_elasticsearch_pillow
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.test_utils import trap_extra_setup
@@ -32,7 +33,6 @@ class ChangeFeedPillowTest(SimpleTestCase):
         with trap_extra_setup(KafkaUnavailableError):
             self.consumer = KafkaConsumer(
                 topics.CASE,
-                group_id='test-consumer',
                 bootstrap_servers=settings.KAFKA_BROKERS,
                 consumer_timeout_ms=100,
             )
@@ -46,6 +46,38 @@ class ChangeFeedPillowTest(SimpleTestCase):
     def tearDown(self):
         self.consumer.close()
         super(ChangeFeedPillowTest, self).tearDown()
+
+    def test_process_change(self):
+        document = {
+            'doc_type': 'CommCareCase',
+            'type': 'mother',
+            'domain': 'kafka-test-domain',
+        }
+        self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
+
+        message = next(self.consumer)
+        change_meta = change_meta_from_kafka_message(message.value)
+        self.assertEqual(SOURCE_COUCH, change_meta.data_source_type)
+        self.assertEqual(self._fake_couch.dbname, change_meta.data_source_name)
+        self.assertEqual('test-id', change_meta.document_id)
+        self.assertEqual(document['doc_type'], change_meta.document_type)
+        self.assertEqual(document['type'], change_meta.document_subtype)
+        self.assertEqual(document['domain'], change_meta.domain)
+        self.assertEqual(False, change_meta.is_deletion)
+
+        with self.assertRaises(StopIteration):
+            next(self.consumer)
+
+    def test_process_change_with_unicode_domain(self):
+        document = {
+            'doc_type': 'CommCareCase',
+            'type': 'mother',
+            'domain': 'हिंदी',
+        }
+        self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
+        message = next(self.consumer)
+        change_meta = change_meta_from_kafka_message(message.value)
+        self.assertEqual(document['domain'], change_meta.domain)
 
     def test_no_domain(self):
         document = {
