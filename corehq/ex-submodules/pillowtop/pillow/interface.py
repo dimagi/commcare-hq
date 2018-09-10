@@ -10,7 +10,7 @@ from django.db.utils import DatabaseError, InterfaceError
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
-from kafka.common import TopicAndPartition
+from kafka.common import TopicPartition
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
@@ -21,7 +21,7 @@ import six
 
 def _topic_for_ddog(topic):
     # can be a string for couch pillows, but otherwise is topic, partition
-    if isinstance(topic, TopicAndPartition):
+    if isinstance(topic, TopicPartition):
         return 'topic:{}-{}'.format(topic.topic, topic.partition)
     elif isinstance(topic, tuple) and len(topic) == 2:
         return 'topic:{}-{}'.format(topic[0], topic[1])

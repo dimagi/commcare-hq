@@ -30,7 +30,7 @@ def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadat
     other processing that needs to happen on each form
     """
     change_feed = KafkaChangeFeed(
-        topics=topics.FORM_TOPICS, group_id='form-processsor',
+        topics=topics.FORM_TOPICS, client_id='form-processsor',
         num_processes=num_processes, process_num=process_num
     )
     checkpoint = KafkaPillowCheckpoint('form-submission-metadata-tracker', topics.FORM_TOPICS)

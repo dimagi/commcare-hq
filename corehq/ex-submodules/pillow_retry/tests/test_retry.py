@@ -46,20 +46,27 @@ class TestMixin(object):
 
 class CouchPillowRetryProcessingTest(TestCase, TestMixin):
     def setUp(self):
+        super(CouchPillowRetryProcessingTest, self).setUp()
         self._fake_couch = FakeCouchDb()
         self._fake_couch.dbname = 'test_commcarehq'
         with trap_extra_setup(KafkaUnavailableError):
             self.consumer = KafkaConsumer(
                 topics.CASE,
-                group_id='test-consumer',
+                client_id='test-consumer',
                 bootstrap_servers=settings.KAFKA_BROKERS,
                 consumer_timeout_ms=100,
             )
+        try:
+            next(self.consumer)
+        except StopIteration:
+            pass
         self.pillow = get_change_feed_pillow_for_db('fake-changefeed-pillow-id', self._fake_couch)
         self.original_process_change = self.pillow.process_change
 
     def tearDown(self):
         PillowError.objects.all().delete()
+        self.consumer.close()
+        super(CouchPillowRetryProcessingTest, self).tearDown()
 
     def test(self):
         document = {
@@ -111,7 +118,7 @@ class KakfaPillowRetryProcessingTest(TestCase, TestMixin):
             name='test-kafka-case-feed',
             checkpoint=None,
             change_feed=KafkaChangeFeed(
-                topics=[topics.CASE, topics.CASE_SQL], group_id='test-kafka-case-feed'
+                topics=[topics.CASE, topics.CASE_SQL], client_id='test-kafka-case-feed'
             ),
             processor=self.processor
         )
