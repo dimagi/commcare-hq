@@ -483,9 +483,9 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             return format_angular_error(e.message, log_error=True)
         except XlsxLengthException:
             return format_angular_error(
-                error_msg='This file has more than 256 columns, which is not supported '
-                          'by xlsx. Please change the output type to csv to export this '
-                          'file.', log_error=False)
+                error_msg=_('This file has more than 256 columns, which is not supported '
+                            'by xlsx. Please change the output type to csv to export this '
+                            'file.', log_error=False))
         except Exception:
             return format_angular_error(_("There was an error."), log_error=True)
         send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, self.request)
