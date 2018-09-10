@@ -1604,6 +1604,14 @@ RELATED_LOCATIONS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
 )
 
+ICDS_DISHA_API = StaticToggle(
+    'icds_disha_access',
+    'ICDS: Access DISHA API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'icds-new', 'softlayer'},
+)
+
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS: Allow blank case tags',
