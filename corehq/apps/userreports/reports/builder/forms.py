@@ -2,19 +2,12 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple, OrderedDict
 import datetime
-from itertools import chain
-import json
 import uuid
 from django.conf import settings
 from django import forms
-from django.forms import Widget
-from django.forms.utils import flatatt
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
-from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_CHOICES, \
-    get_data_source_doc_type, make_case_data_source_filter, make_form_data_source_filter, get_app_data_source_meta
+from corehq.apps.userreports.app_manager.data_source_meta import get_app_data_source_meta
 
 from corehq.apps.userreports.reports.builder.columns import (
     QuestionColumnOption,
@@ -31,11 +24,8 @@ from crispy_forms.helper import FormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
-from corehq.apps.app_manager.models import (
-    Application,
-    Form,
-)
-from corehq.apps.app_manager.xform import XForm
+from corehq.apps.app_manager.models import Application
+
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import (
