@@ -26,6 +26,9 @@ from six.moves import zip
 from six.moves import map
 
 
+class XlsxLengthException(Exception):
+    pass
+
 class UniqueHeaderGenerator(object):
 
     def __init__(self, max_column_size=None):
@@ -399,6 +402,8 @@ class Excel2007ExportWriter(ExportWriter):
             return dirty_chars.sub('?', value)
 
         cells = [WriteOnlyCell(sheet, get_write_value(val)) for val in row]
+        if len(cells) >= 256 and self.format == 'xlsx':
+            raise XlsxLengthException
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
