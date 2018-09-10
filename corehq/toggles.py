@@ -1595,6 +1595,14 @@ AGGREGATE_UCRS = StaticToggle(
 )
 
 
+SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
+    'show_raw_data_sources_in_report_builder',
+    'Allow building report builder reports directly from raw UCR Data Sources',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
 RELATED_LOCATIONS = StaticToggle(
     'related_locations',
     'REACH: Enable experimental location many-to-many mappings',

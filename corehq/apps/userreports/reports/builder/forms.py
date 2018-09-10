@@ -69,6 +69,7 @@ from corehq.apps.userreports.reports.builder.const import (
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
+from corehq.toggles import SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER
 from memoized import memoized
 import six
 
@@ -597,9 +598,11 @@ class DataSourceForm(forms.Form):
         self.max_allowed_reports = max_allowed_reports
 
         # TODO: Map reports.
-        self.app_source_helper = ApplicationDataSourceUIHelper()
+        self.app_source_helper = ApplicationDataSourceUIHelper(
+            enable_raw=SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER.enabled(self.domain)
+
+        )
         self.app_source_helper.source_type_field.label = _('Forms or Cases')
-        self.app_source_helper.source_type_field.choices = DATA_SOURCE_TYPE_CHOICES
         self.app_source_helper.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()

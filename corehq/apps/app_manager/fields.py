@@ -13,6 +13,7 @@ from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
+from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from couchforms.analytics import get_exports_by_form
 from memoized import memoized
 from six.moves import map
@@ -61,18 +62,21 @@ class ApplicationDataSourceUIHelper(object):
     See usages for examples.
     """
 
-    def __init__(self, enable_cases=True, enable_forms=True):
+    def __init__(self, enable_cases=True, enable_forms=True, enable_raw=False):
         self.all_sources = {}
         self.enable_cases = enable_cases
         self.enable_forms = enable_forms
+        self.enable_raw = enable_raw
         source_choices = []
         if enable_cases:
             source_choices.append(("case", _("Case")))
         if enable_forms:
             source_choices.append(("form", _("Form")))
+        if enable_raw:
+            source_choices.append(("data_source", _("Data Source")))
 
         self.application_field = forms.ChoiceField(label=_('Application'), widget=forms.Select())
-        if enable_cases and enable_forms:
+        if len(source_choices) > 1:
             self.source_type_field = forms.ChoiceField(label=_('Type of Data'),
                                                        choices=source_choices,
                                                        widget=forms.Select(choices=source_choices))
@@ -106,6 +110,18 @@ class ApplicationDataSourceUIHelper(object):
                 self.source_field,
                 [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['form']]
             )
+        if self.enable_raw:
+            available_data_sources = get_datasources_for_domain(domain, include_static=True)
+            _add_choices(
+                self.source_field,
+                [(ds._id, ds.display_name) for ds in available_data_sources]
+            )
+            # also shove these into app sources for every app for now to avoid substantially
+            # messing with this code for this widget
+            # (this is not the best ux / should probably be cleaned up later)
+            for app_data in self.all_sources.values():
+                app_data['data_source'] = [{"text": ds.display_name, "value": ds._id}
+                                           for ds in available_data_sources]
 
         # NOTE: This corresponds to a view-model that must be initialized in your template.
         # See the doc string of this class for more information.
