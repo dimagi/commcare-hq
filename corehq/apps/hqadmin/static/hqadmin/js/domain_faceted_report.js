@@ -23,7 +23,7 @@ hqDefine('hqadmin/js/domain_faceted_report', function () {
     }
     var url_params = parse_url_params();
 
-    $(function() {
+    $(function () {
         for (var key in visualizations) {
             if (visualizations.hasOwnProperty(key)) {
                 visualizations[key].viz = hqImport("hqadmin/js/visualizations").hqVisualizations({
@@ -38,7 +38,7 @@ hqDefine('hqadmin/js/domain_faceted_report', function () {
             }
         }
 
-        $("#all-charts-filter").on("submit", function() {
+        $("#all-charts-filter").on("submit", function () {
             var $this = $(this);
             var startdate = $this.find('[name="startdate"]').val();
             var enddate = $this.find('[name="enddate"]').val();

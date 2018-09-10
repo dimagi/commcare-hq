@@ -6,10 +6,10 @@ hqDefine('appstore/js/appstore_base', [
 ) {
     // This assures that all the result elements are the same height
     function assure_correct_spacing() {
-        $('.results').each(function(){
+        $('.results').each(function () {
             var highest = 0;
             var $wells = $(this).find('.well');
-            $wells.each(function(){
+            $wells.each(function () {
                 var height = $(this).children(":first").height();
                 highest = (height > highest) ? height : highest;
             });

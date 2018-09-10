@@ -1,28 +1,29 @@
-/* globals RuleProgressBarGroup, RuleProgressBar */
-hqDefine("reminders/js/reminders.list", function() {
-    var RemindersListModel = function (reminders, progressUrl) {
+/* globals ruleProgressBarGroup, ruleProgressBar */
+hqDefine("reminders/js/reminders.list", function () {
+    var remindersListModel = function (reminders, progressUrl) {
         'use strict';
-        var self = this;
+        var self = {};
         self.reminders = ko.observableArray();
-        self.progress_bar_group = new RuleProgressBarGroup(progressUrl);
+        self.progressBarGroup = ruleProgressBarGroup(progressUrl);
 
         self.init = function () {
-            _(reminders).each(function (reminder) {
-                self.reminders.push(new Reminder(reminder, self));
+            _(reminders).each(function (reminderObj) {
+                self.reminders.push(reminder(reminderObj, self));
             });
         };
 
         self.removeReminder = function (id) {
-            self.reminders.remove(function(item) { return item.id() === id; });
+            self.reminders.remove(function (item) { return item.id() === id; });
             var dt = $("#reminder-list-table").dataTable();
             var row = dt.$("#" + id)[0];
             dt.fnDeleteRow(row);
         };
+        return self;
     };
 
-    var Reminder = function (o, parentModel) {
+    var reminder = function (o, parentModel) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.reminderList = parentModel;
 
@@ -30,7 +31,7 @@ hqDefine("reminders/js/reminders.list", function() {
         self.name = ko.observable(o.name);
         self.caseType = ko.observable(o.caseType);
         self.url = ko.observable(o.url);
-        self.progressBar = new RuleProgressBar(o.id, parentModel.progress_bar_group);
+        self.progressBar = ruleProgressBar(o.id, parentModel.progressBarGroup);
         self.active = ko.observable(o.isActive);
 
         self.activate = function (_, event) {
@@ -41,7 +42,7 @@ hqDefine("reminders/js/reminders.list", function() {
             self.processReminder('deactivate', event.target);
         };
 
-        self.del = function(_, event) {
+        self.del = function (_, event) {
             self.processReminder('delete', event.target);
         };
 
@@ -61,7 +62,7 @@ hqDefine("reminders/js/reminders.list", function() {
                 success: function (data) {
                     if (data.success) {
                         $(target_button).button('success');
-                        if(method === 'delete') {
+                        if (method === 'delete') {
                             self.reminderList.removeReminder(self.id());
                         } else if (method === 'activate') {
                             self.active(true);
@@ -69,7 +70,7 @@ hqDefine("reminders/js/reminders.list", function() {
                             self.active(false);
                         }
                     } else {
-                        if(data.locked) {
+                        if (data.locked) {
                             $(target_button).button('locked');
                         } else {
                             $(target_button).button('error');
@@ -78,10 +79,12 @@ hqDefine("reminders/js/reminders.list", function() {
                 },
             });
         };
+
+        return self;
     };
 
-    $(function() {
-        var remindersList = new RemindersListModel(hqImport("hqwebapp/js/initial_page_data").get('reminders'),
+    $(function () {
+        var remindersList = remindersListModel(hqImport("hqwebapp/js/initial_page_data").get('reminders'),
             hqImport("hqwebapp/js/initial_page_data").reverse("reminder_rule_progress"));
         $('#reminders-list').koApplyBindings(remindersList);
         remindersList.init();
@@ -90,7 +93,7 @@ hqDefine("reminders/js/reminders.list", function() {
             "paginateType": "bootstrap",
             "lengthChange": false,
             "filter": true,
-            "oLanguage": {"emptyTable": gettext('There are no reminders to display.'), "infoEmpty" : ""},
+            "oLanguage": {"emptyTable": gettext('There are no reminders to display.'), "infoEmpty": ""},
             "sort": true,
             "sorting": [[0, "asc"]],
             "displayLength": 5,

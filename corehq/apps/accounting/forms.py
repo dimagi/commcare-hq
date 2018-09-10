@@ -1036,6 +1036,7 @@ class PlanInformationForm(forms.Form):
     visibility = forms.ChoiceField(choices=SoftwarePlanVisibility.CHOICES)
     max_domains = forms.IntegerField(required=False)
     is_customer_software_plan = forms.BooleanField(required=False)
+    is_annual_plan = forms.BooleanField(required=False)
 
     def __init__(self, plan, *args, **kwargs):
         self.plan = plan
@@ -1046,7 +1047,8 @@ class PlanInformationForm(forms.Form):
                 'edition': plan.edition,
                 'visibility': plan.visibility,
                 'max_domains': plan.max_domains,
-                'is_customer_software_plan': plan.is_customer_software_plan
+                'is_customer_software_plan': plan.is_customer_software_plan,
+                'is_annual_plan': plan.is_annual_plan
             }
         else:
             kwargs['initial'] = {
@@ -1065,7 +1067,8 @@ class PlanInformationForm(forms.Form):
                 'edition',
                 'visibility',
                 'max_domains',
-                'is_customer_software_plan'
+                'is_customer_software_plan',
+                'is_annual_plan'
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -1094,12 +1097,14 @@ class PlanInformationForm(forms.Form):
         visibility = self.cleaned_data['visibility']
         max_domains = self.cleaned_data['max_domains']
         is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
+        is_annual_plan = self.cleaned_data['is_annual_plan']
         plan = SoftwarePlan(name=name,
                             description=description,
                             edition=edition,
                             visibility=visibility,
                             max_domains=max_domains,
-                            is_customer_software_plan=is_customer_software_plan
+                            is_customer_software_plan=is_customer_software_plan,
+                            is_annual_plan=is_annual_plan
                             )
         plan.save()
         return plan
@@ -1114,6 +1119,7 @@ class PlanInformationForm(forms.Form):
             plan.visibility = self.cleaned_data['visibility']
             plan.max_domains = self.cleaned_data['max_domains']
             plan.is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
+            plan.is_annual_plan = self.cleaned_data['is_annual_plan']
             plan.save()
             messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
 
@@ -1742,7 +1748,77 @@ class EnterprisePlanContactForm(forms.Form):
             'domain': self.domain,
             'email': self.web_user.email
         }
-        html_content = render_to_string('accounting/email/enterprise_request.html', context)
+        html_content = render_to_string('accounting/email/sales_request.html', context)
+        text_content = """
+        Email: %(email)s
+        Name: %(name)s
+        Company: %(company)s
+        Domain: %(domain)s
+        Message:
+        %(message)s
+        """ % context
+        send_html_email_async.delay(subject, settings.BILLING_EMAIL,
+                                    html_content, text_content,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
+
+
+class AnnualPlanContactForm(forms.Form):
+    name = forms.CharField(
+        label=ugettext_noop("Name")
+    )
+    company_name = forms.CharField(
+        required=False,
+        label=ugettext_noop("Company / Organization")
+    )
+    message = forms.CharField(
+        required=False,
+        label=ugettext_noop("Message"),
+        widget=forms.Textarea
+    )
+
+    def __init__(self, domain, web_user, on_annual_plan, data=None, *args, **kwargs):
+        self.domain = domain
+        self.web_user = web_user
+        super(AnnualPlanContactForm, self).__init__(data, *args, **kwargs)
+        from corehq.apps.domain.views import SelectPlanView, DomainSubscriptionView
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = "form-horizontal"
+        if on_annual_plan:
+            back_button_text = "Back to my Subscription"
+            urlname = DomainSubscriptionView.urlname
+        else:
+            back_button_text = "Select different plan"
+            urlname = SelectPlanView.urlname
+        self.helper.layout = crispy.Layout(
+            'name',
+            'company_name',
+            'message',
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Submit"),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+                hqcrispy.LinkButton(
+                    _(back_button_text),
+                    reverse(urlname, args=[self.domain]),
+                    css_class="btn btn-default"
+                ),
+            )
+        )
+
+    def send_message(self):
+        subject = "[Annual Plan Request] %s" % self.domain
+        context = {
+            'name': self.cleaned_data['name'],
+            'company': self.cleaned_data['company_name'],
+            'message': self.cleaned_data['message'],
+            'domain': self.domain,
+            'email': self.web_user.email
+        }
+        html_content = render_to_string('accounting/email/sales_request.html', context)
         text_content = """
         Email: %(email)s
         Name: %(name)s

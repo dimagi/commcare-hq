@@ -1,8 +1,8 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("SessionNavigate.SessionList", function(SessionList, FormplayerFrontend, Backbone, Marionette, $){
+FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, FormplayerFrontend, Backbone, Marionette, $) {
     SessionList.Controller = {
-        listSessions: function(){
+        listSessions: function () {
             var fetchingSessions = FormplayerFrontend.request("sessions");
 
             $.when(fetchingSessions).done(function (sessions) {

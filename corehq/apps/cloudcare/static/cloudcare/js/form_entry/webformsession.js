@@ -2,7 +2,7 @@
 
 // IE compliance
 if (!Array.prototype.indexOf) {
-    Array.prototype.indexOf = function(e) {
+    Array.prototype.indexOf = function (e) {
         var ix = -1;
         for (var i = 0; i < this.length; i++) {
             if (this[i] === e) {
@@ -22,7 +22,7 @@ function TaskQueue() {
  * Executes the queue in a FIFO action. If name is supplied, will execute the first
  * task for that name.
  */
-TaskQueue.prototype.execute = function(name) {
+TaskQueue.prototype.execute = function (name) {
     var task,
         idx;
     if (name) {
@@ -40,7 +40,7 @@ TaskQueue.prototype.execute = function(name) {
     task.fn.apply(task.thisArg, task.parameters);
 };
 
-TaskQueue.prototype.addTask = function(name, fn, parameters, thisArg) {
+TaskQueue.prototype.addTask = function (name, fn, parameters, thisArg) {
     var task = {
         name: name,
         fn: fn,
@@ -51,7 +51,7 @@ TaskQueue.prototype.addTask = function(name, fn, parameters, thisArg) {
     return task;
 };
 
-TaskQueue.prototype.clearTasks = function(name) {
+TaskQueue.prototype.clearTasks = function (name) {
     var idx;
     if (name) {
         idx = _.indexOf(_.pluck(this.queue, 'name'), name);
@@ -125,13 +125,13 @@ function WebFormSession(params) {
     self.numPendingRequests = 0;
 
     // workaround for "forever loading" bugs...
-    $(document).ajaxStop(function() {
+    $(document).ajaxStop(function () {
         self.NUM_PENDING_REQUESTS = 0;
         self.blockingRequestInProgress = false;
     });
 }
 
-WebFormSession.prototype.load = function($form, initLang) {
+WebFormSession.prototype.load = function ($form, initLang) {
     if (this.session_id) {
         this.resumeForm($form, this.session_id);
     } else {
@@ -139,7 +139,7 @@ WebFormSession.prototype.load = function($form, initLang) {
     }
 };
 
-WebFormSession.prototype.isOneQuestionPerScreen = function() {
+WebFormSession.prototype.isOneQuestionPerScreen = function () {
     if (self.displayOptions === undefined) {
         return false;
     }
@@ -152,7 +152,7 @@ WebFormSession.prototype.isOneQuestionPerScreen = function() {
  * @param {boolean} blocking - whether the request should be blocking
  * @param {function} failureCallback - function to be called on failure
  */
-WebFormSession.prototype.serverRequest = function(requestParams, callback, blocking, failureCallback) {
+WebFormSession.prototype.serverRequest = function (requestParams, callback, blocking, failureCallback) {
     var self = this;
     var url = self.urls.xform;
     if (requestParams.action === Formplayer.Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
@@ -189,10 +189,10 @@ WebFormSession.prototype.serverRequest = function(requestParams, callback, block
         xhrFields: {
             withCredentials: true,
         },
-        success: function(resp) {
+        success: function (resp) {
             self.handleSuccess(resp, requestParams.action, callback);
         },
-        error: function(resp, textStatus) {
+        error: function (resp, textStatus) {
             self.handleFailure(resp, requestParams.action, textStatus, failureCallback);
         },
     });
@@ -203,7 +203,7 @@ WebFormSession.prototype.serverRequest = function(requestParams, callback, block
  * @param {Object} response - touchforms response object
  * @param {function} callback - callback to be called if no errors occured
  */
-WebFormSession.prototype.handleSuccess = function(resp, action, callback) {
+WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
     var self = this;
     if (resp.status === 'error' || resp.error) {
         self.onerror(resp);
@@ -236,7 +236,7 @@ WebFormSession.prototype.handleSuccess = function(resp, action, callback) {
     }
 };
 
-WebFormSession.prototype.handleFailure = function(resp, action, textStatus, failureCallback) {
+WebFormSession.prototype.handleFailure = function (resp, action, textStatus, failureCallback) {
     var errorMessage;
     if (resp.status === 423) {
         errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
@@ -259,7 +259,7 @@ WebFormSession.prototype.handleFailure = function(resp, action, textStatus, fail
 /*
  * Subscribes to form action events which then get directed to a response to touchforms
  */
-WebFormSession.prototype.applyListeners = function() {
+WebFormSession.prototype.applyListeners = function () {
     var self = this;
     $.unsubscribe([
         'formplayer.' + Formplayer.Const.ANSWER,
@@ -272,36 +272,36 @@ WebFormSession.prototype.applyListeners = function() {
         'formplayer.' + Formplayer.Const.QUESTIONS_FOR_INDEX,
         'formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS,
     ].join(' '));
-    $.subscribe('formplayer.' + Formplayer.Const.SUBMIT, function(e, form) {
+    $.subscribe('formplayer.' + Formplayer.Const.SUBMIT, function (e, form) {
         self.submitForm(form);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.ANSWER, function(e, question) {
+    $.subscribe('formplayer.' + Formplayer.Const.ANSWER, function (e, question) {
         self.answerQuestion(question);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.DELETE_REPEAT, function(e, group) {
+    $.subscribe('formplayer.' + Formplayer.Const.DELETE_REPEAT, function (e, group) {
         self.deleteRepeat(group);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.NEW_REPEAT, function(e, repeat) {
+    $.subscribe('formplayer.' + Formplayer.Const.NEW_REPEAT, function (e, repeat) {
         self.newRepeat(repeat);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.EVALUATE_XPATH, function(e, xpath, callback) {
+    $.subscribe('formplayer.' + Formplayer.Const.EVALUATE_XPATH, function (e, xpath, callback) {
         self.evaluateXPath(xpath, callback);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.NEXT_QUESTION, function(e, opts) {
+    $.subscribe('formplayer.' + Formplayer.Const.NEXT_QUESTION, function (e, opts) {
         self.nextQuestion(opts);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.PREV_QUESTION, function(e, opts) {
+    $.subscribe('formplayer.' + Formplayer.Const.PREV_QUESTION, function (e, opts) {
         self.prevQuestion(opts);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.QUESTIONS_FOR_INDEX, function(e, index) {
+    $.subscribe('formplayer.' + Formplayer.Const.QUESTIONS_FOR_INDEX, function (e, index) {
         self.getQuestionsForIndex(index);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, function(e, callback) {
+    $.subscribe('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, function (e, callback) {
         self.getFormattedQuestions(callback);
     });
 };
 
-WebFormSession.prototype.loadForm = function($form, initLang) {
+WebFormSession.prototype.loadForm = function ($form, initLang) {
     var args = {
         'action': Formplayer.Const.NEW_FORM,
         'instance-content': this.instance_xml,
@@ -327,7 +327,7 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
     this.initForm(args, $form);
 };
 
-WebFormSession.prototype.resumeForm = function($form, session_id) {
+WebFormSession.prototype.resumeForm = function ($form, session_id) {
     var args = {
         "action": Formplayer.Const.CURRENT,
     };
@@ -335,7 +335,7 @@ WebFormSession.prototype.resumeForm = function($form, session_id) {
     this.initForm(args, $form);
 };
 
-WebFormSession.prototype.answerQuestion = function(q) {
+WebFormSession.prototype.answerQuestion = function (q) {
     var self = this;
     var ix = getIx(q);
     var answer = q.answer();
@@ -348,89 +348,89 @@ WebFormSession.prototype.answerQuestion = function(q) {
             'answer': answer,
             'oneQuestionPerScreen': oneQuestionPerScreen,
         },
-        function(resp) {
+        function (resp) {
             $.publish('session.reconcile', [resp, q]);
             if (self.answerCallback !== undefined) {
                 self.answerCallback(self.session_id);
             }
         },
         false,
-        function() {
+        function () {
             q.serverError(
                 gettext("We were unable to save this answer. Please try again later."));
             q.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
         });
 };
 
-WebFormSession.prototype.nextQuestion = function(opts) {
+WebFormSession.prototype.nextQuestion = function (opts) {
     this.serverRequest(
         {
             'action': Formplayer.Const.NEXT_QUESTION,
         },
-        function(resp) {
+        function (resp) {
             opts.callback(parseInt(resp.currentIndex), resp.isAtFirstIndex, resp.isAtLastIndex);
             resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
         });
 };
 
-WebFormSession.prototype.prevQuestion = function(opts) {
+WebFormSession.prototype.prevQuestion = function (opts) {
     this.serverRequest(
         {
             'action': Formplayer.Const.PREV_QUESTION,
         },
-        function(resp) {
+        function (resp) {
             opts.callback(parseInt(resp.currentIndex), resp.isAtFirstIndex, resp.isAtLastIndex);
             resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
         });
 };
 
-WebFormSession.prototype.getQuestionsForIndex = function(index) {
+WebFormSession.prototype.getQuestionsForIndex = function (index) {
     this.serverRequest(
         {
             'action': Formplayer.Const.QUESTIONS_FOR_INDEX,
             'ix': index,
         },
-        function(resp) {
+        function (resp) {
             $.publish('session.reconcile', [resp, {}]);
         });
 };
 
-WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
+WebFormSession.prototype.evaluateXPath = function (xpath, callback) {
     this.serverRequest(
         {
             'action': Formplayer.Const.EVALUATE_XPATH,
             'xpath': xpath,
         },
-        function(resp) {
+        function (resp) {
             callback(resp);
         });
 };
 
-WebFormSession.prototype.getFormattedQuestions = function(callback) {
+WebFormSession.prototype.getFormattedQuestions = function (callback) {
     this.serverRequest(
         {
             'action': Formplayer.Const.FORMATTED_QUESTIONS,
         },
-        function(resp) {
+        function (resp) {
             callback(resp);
         });
 };
 
-WebFormSession.prototype.newRepeat = function(repeat) {
+WebFormSession.prototype.newRepeat = function (repeat) {
     this.serverRequest(
         {
             'action': Formplayer.Const.NEW_REPEAT,
             'ix': getIx(repeat),
         },
-        function(resp) {
+        function (resp) {
             $.publish('session.reconcile', [resp, repeat]);
         },
         true);
 };
 
-WebFormSession.prototype.deleteRepeat = function(repetition) {
+WebFormSession.prototype.deleteRepeat = function (repetition) {
     var juncture = getIx(repetition.parent);
     var rep_ix = +(repetition.rel_ix().replace('_', ':').split(":").slice(-1)[0]);
     this.serverRequest(
@@ -439,33 +439,33 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
             'ix': rep_ix,
             'form_ix': juncture,
         },
-        function(resp) {
+        function (resp) {
             $.publish('session.reconcile', [resp, repetition]);
         },
         true);
 };
 
-WebFormSession.prototype.switchLanguage = function(lang) {
+WebFormSession.prototype.switchLanguage = function (lang) {
     this.serverRequest(
         {
             'action': Formplayer.Const.SET_LANG,
             'lang': lang,
         },
-        function(resp) {
+        function (resp) {
             $.publish('session.reconcile', [resp, lang]);
         });
 };
 
-WebFormSession.prototype.submitForm = function(form) {
+WebFormSession.prototype.submitForm = function (form) {
     var self = this,
         answers = {},
         accumulate_answers,
         prevalidated = true;
 
-    accumulate_answers = function(o) {
+    accumulate_answers = function (o) {
         if (ko.utils.unwrapObservable(o.type) !== 'question') {
             if (o.hasOwnProperty("children")) {
-                $.each(o.children(), function(i, val) {
+                $.each(o.children(), function (i, val) {
                     accumulate_answers(val);
                 });
             }
@@ -486,12 +486,12 @@ WebFormSession.prototype.submitForm = function(form) {
             'answers': answers,
             'prevalidated': prevalidated,
         },
-        function(resp) {
+        function (resp) {
             if (resp.status == 'success') {
                 form.submitting();
                 self.onsubmit(resp);
             } else {
-                $.each(resp.errors, function(ix, error) {
+                $.each(resp.errors, function (ix, error) {
                     self.serverError(getForIx(form, ix), error);
                 });
                 if (resp.notification) {
@@ -507,7 +507,7 @@ WebFormSession.prototype.submitForm = function(form) {
         true);
 };
 
-WebFormSession.prototype.serverError = function(q, resp) {
+WebFormSession.prototype.serverError = function (q, resp) {
     if (resp.type === "required") {
         q.serverError("An answer is required");
     } else if (resp.type === "constraint") {
@@ -515,15 +515,15 @@ WebFormSession.prototype.serverError = function(q, resp) {
     }
 };
 
-WebFormSession.prototype.initForm = function(args, $form) {
+WebFormSession.prototype.initForm = function (args, $form) {
     var self = this;
-    this.serverRequest(args, function(resp) {
+    this.serverRequest(args, function (resp) {
         self.renderFormXml(resp, $form, self.displayOptions);
         self.onload(self, resp);
     });
 };
 
-WebFormSession.prototype.renderFormXml = function(resp, $form) {
+WebFormSession.prototype.renderFormXml = function (resp, $form) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
     self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);

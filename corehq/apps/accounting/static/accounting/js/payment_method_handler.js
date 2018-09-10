@@ -39,7 +39,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
         };
     };
 
-    var WireInvoiceHandler = function(formId, opts) {
+    var WireInvoiceHandler = function (formId, opts) {
         'use strict';
         var self = this;
         opts = opts ? opts : {};
@@ -52,7 +52,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
             self.serverErrorMsg(self.errorMessages[errorThrown]);
         };
 
-        self.handleSuccess = function(response) {
+        self.handleSuccess = function (response) {
             if (response.success) {
                 self.costItem().reset();
                 self.paymentIsComplete(true);
@@ -76,9 +76,9 @@ hqDefine('accounting/js/payment_method_handler', function () {
         BillingHandler.apply(this, arguments);
         self.paymentMethod = ko.observable(self.CREDIT_CARD);
 
-        self.submitURL = self.submitURL || ko.computed(function(){
+        self.submitURL = self.submitURL || ko.computed(function () {
             var url = opts.credit_card_url;
-            if (self.paymentMethod() === self.WIRE){
+            if (self.paymentMethod() === self.WIRE) {
                 url = opts.wire_url;
             }
             return url;
@@ -109,14 +109,14 @@ hqDefine('accounting/js/payment_method_handler', function () {
             }
             return self.newCard();
         });
-        self.hasAgreedToPrivacy = ko.computed(function() {
-            if(self.paymentMethod() === self.CREDIT_CARD){
+        self.hasAgreedToPrivacy = ko.computed(function () {
+            if (self.paymentMethod() === self.CREDIT_CARD) {
                 return self.selectedCard() && self.selectedCard().cardFormIsValid();
             }
             return true;
         });
 
-        if (opts.wire_email){
+        if (opts.wire_email) {
             self.wireEmails(opts.wire_email);
         }
 
@@ -128,10 +128,10 @@ hqDefine('accounting/js/payment_method_handler', function () {
         });
 
         self.isSubmitDisabled = ko.computed(function () {
-            if (self.paymentMethod() === self.CREDIT_CARD){
+            if (self.paymentMethod() === self.CREDIT_CARD) {
                 return !(!! self.costItem() && self.costItem().isValid()) || self.selectedCard().isProcessing();
             }
-            else{
+            else {
                 return (self.paymentProcessing());
             }
         });
@@ -157,7 +157,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
             if (self.costItem().isValid() && self.paymentMethod() === self.CREDIT_CARD) {
                 self.selectedCard().process(self.submitForm);
             }
-            else{
+            else {
                 self.paymentProcessing(true);
                 self.submitForm();
             }
@@ -215,7 +215,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
             self.selectedCard().isProcessing(false);
         };
 
-        self.handleSuccess = function(response) {
+        self.handleSuccess = function (response) {
             if (response.success) {
                 self.costItem().reset(response);
                 if (response.wasSaved) {
@@ -235,9 +235,9 @@ hqDefine('accounting/js/payment_method_handler', function () {
 
     };
 
-    PaymentMethodHandler.prototype = Object.create( BillingHandler.prototype );
+    PaymentMethodHandler.prototype = Object.create(BillingHandler.prototype);
     PaymentMethodHandler.prototype.constructor = PaymentMethodHandler;
-    WireInvoiceHandler.prototype = Object.create( BillingHandler.prototype );
+    WireInvoiceHandler.prototype = Object.create(BillingHandler.prototype);
     WireInvoiceHandler.prototype.constructor = WireInvoiceHandler;
 
     var BaseCostItem = function () {
@@ -319,7 +319,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
         });
     };
 
-    ChargedCostItem.prototype = Object.create( BaseCostItem.prototype );
+    ChargedCostItem.prototype = Object.create(BaseCostItem.prototype);
     ChargedCostItem.prototype.constructor = ChargedCostItem;
 
 
@@ -342,14 +342,14 @@ hqDefine('accounting/js/payment_method_handler', function () {
 
         self.reset = function (response) {
             self.paginatedList.refreshList(self.paginatedItem);
-            if(response.success){
+            if (response.success) {
                 var oldBalance = self.paginatedList.totalDue();
                 self.paginatedList.totalDue(oldBalance - response.changedBalance);
             }
         };
     };
 
-    Invoice.prototype = Object.create( ChargedCostItem.prototype );
+    Invoice.prototype = Object.create(ChargedCostItem.prototype);
     Invoice.prototype.constructor = Invoice;
 
     /* initData contains totalBalance and paginatedListModel */
@@ -368,10 +368,10 @@ hqDefine('accounting/js/payment_method_handler', function () {
         };
     };
 
-    TotalCostItem.prototype = Object.create( ChargedCostItem.prototype );
+    TotalCostItem.prototype = Object.create(ChargedCostItem.prototype);
     TotalCostItem.prototype.constructor = TotalCostItem;
 
-    var PrepaymentItems = function(data){
+    var PrepaymentItems = function (data) {
         'use strict';
         BaseCostItem.call(this, data);
         var self = this;
@@ -379,12 +379,12 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.features = data.features;
         self.general_credit = data.general_credit;
 
-        self.amount = ko.computed(function(){
-            var product_sum = _.reduce(self.products(), function(memo, product){
+        self.amount = ko.computed(function () {
+            var product_sum = _.reduce(self.products(), function (memo, product) {
                 return memo + parseFloat(product.addAmount());
             }, 0);
 
-            var feature_sum =_.reduce(self.features(), function(memo, feature){
+            var feature_sum = _.reduce(self.features(), function (memo, feature) {
                 return memo + parseFloat(feature.addAmount());
             }, 0);
             var sum = product_sum + feature_sum + parseFloat(self.general_credit().addAmount());
@@ -393,11 +393,11 @@ hqDefine('accounting/js/payment_method_handler', function () {
 
         self.reset = function (response) {
             var items = self.products().concat(self.features());
-            _.each(response.balances, function(balance){
-                var update_balance = _.find(items, function(item){
+            _.each(response.balances, function (balance) {
+                var update_balance = _.find(items, function (item) {
                     return item.creditType() === balance.type;
                 });
-                if (update_balance){
+                if (update_balance) {
                     update_balance.amount(balance.balance);
                 }
             });
@@ -439,7 +439,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
         };
     };
 
-    CreditCostItem.prototype = Object.create( BaseCostItem.prototype );
+    CreditCostItem.prototype = Object.create(BaseCostItem.prototype);
     CreditCostItem.prototype.constructor = CreditCostItem;
 
     var stripeCardModel = function () {
@@ -456,8 +456,8 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.isProcessing = ko.observable(false);
         self.newSavedCard = ko.observable(false);
 
-        self.autopayCard = ko.computed(function(){
-            if (!self.newSavedCard()){
+        self.autopayCard = ko.computed(function () {
+            if (!self.newSavedCard()) {
                 return false;
             }
         });

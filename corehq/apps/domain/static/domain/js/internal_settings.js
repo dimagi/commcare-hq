@@ -5,7 +5,7 @@ hqDefine("domain/js/internal_settings", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/multiselect_utils',
     'jquery-ui/ui/datepicker',
-], function(
+], function (
     $,
     ko,
     _,
@@ -14,7 +14,7 @@ hqDefine("domain/js/internal_settings", [
 ) {
     var areas = initialPageData.get('areas');
 
-    var internalSettingsViewModel = function(initialValues) {
+    var internalSettingsViewModel = function (initialValues) {
         var self = {};
         self.use_custom_auto_case_update_limit = ko.observable(initialValues.use_custom_auto_case_update_limit);
         return self;
@@ -29,7 +29,7 @@ hqDefine("domain/js/internal_settings", [
             validSubAreas = areas[area];
         }
         $subarea.empty().append($("<option></option>").attr("value", '').text('---'));
-        _.each(validSubAreas, function(val) {
+        _.each(validSubAreas, function (val) {
             var $opt = $("<option></option>").attr("value", val).text(val);
             if (val === chosenSubArea) {
                 $opt.prop("selected", true);
@@ -48,13 +48,13 @@ hqDefine("domain/js/internal_settings", [
         }
     }
 
-    $(function() {
+    $(function () {
         updateSubareas();
         updateWorkshopRegion();
-        $('[name="area"]').change(function() {
+        $('[name="area"]').change(function () {
             updateSubareas();
         });
-        $('[name="initiative"]').change(function() {
+        $('[name="initiative"]').change(function () {
             updateWorkshopRegion();
         });
 

@@ -50,7 +50,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
         return hqDefine(path, [], dependencies);
     }
 
-    (function(factory) {
+    (function (factory) {
         if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
             define(path, dependencies, factory);
         } else {

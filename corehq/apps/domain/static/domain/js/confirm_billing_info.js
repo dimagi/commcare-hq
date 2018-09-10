@@ -1,5 +1,5 @@
 /* global Stripe */
-hqDefine("domain/js/confirm_billing_info", function() {
+hqDefine("domain/js/confirm_billing_info", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         stripeCardManager = hqImport("accounting/js/stripe_card_manager");
 
@@ -17,7 +17,7 @@ hqDefine("domain/js/confirm_billing_info", function() {
         cards: initialPageData.get("cards"),
         url: initialPageData.reverse("cards_view"),
     });
-    $(function() {
+    $(function () {
         $("#card-manager").koApplyBindings(cardManager);
     });
 });

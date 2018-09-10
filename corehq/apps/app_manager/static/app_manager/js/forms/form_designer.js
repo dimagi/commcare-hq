@@ -1,5 +1,5 @@
 /* globals hqDefine, hqImport, define, require, WS4Redis, django */
-hqDefine("app_manager/js/forms/form_designer", function() {
+hqDefine("app_manager/js/forms/form_designer", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
         appcues = hqImport('analytix/js/appcues'),
         FORM_TYPES = {
@@ -17,7 +17,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
             appcues.trackEvent(eventType + " (" + formType + ")");
         };
 
-    $(function() {
+    $(function () {
         var VELLUM_OPTIONS = _.extend({}, initialPageData("vellum_options"), {
             itemset: {
                 dataSourcesFilter: function (sources) {
@@ -47,10 +47,10 @@ hqDefine("app_manager/js/forms/form_designer", function() {
 
         // Add callbacks to core, which has already been provided by the server
         VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
-            formLoadingCallback: function() {
+            formLoadingCallback: function () {
                 $('#formdesigner').addClass('loading');
             },
-            formLoadedCallback: function() {
+            formLoadedCallback: function () {
                 $('#formdesigner').removeClass('loading');
                 $('#formdesigner .fd-content-left .fd-head-text').before(
                     $('#fd-hq-edit-formname-button').html()
@@ -58,7 +58,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
             },
         });
         VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
-            onFormSave: function(data) {
+            onFormSave: function (data) {
                 var appManager = hqImport('app_manager/js/app_manager');
                 appManager.updateDOM(data.update);
                 $('.js-preview-toggle').removeAttr('disabled');
@@ -67,7 +67,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 }
                 trackFormEvent(appcues.EVENT_TYPES.FORM_SAVE);
             },
-            onReady: function() {
+            onReady: function () {
                 if (initialPageData('vellum_debug') === 'dev') {
                     var lessErrorId = "#less-error-message\\:static-style-less-hqstyle-core",
                         lessError = $(lessErrorId);
@@ -78,15 +78,15 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                     }
                 }
 
-                var kissmetrixTrack = function() {};
+                var kissmetrixTrack = function () {};
                 if (initialPageData('days_since_created') === 0) {
-                    kissmetrixTrack = function() {
+                    kissmetrixTrack = function () {
                         hqImport('analytix/js/kissmetrix').track.event(
                             'Added question in Form Builder within first 24 hours'
                         );
                     };
                 }
-                $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
+                $("#formdesigner").vellum("get").data.core.form.on("question-create", function () {
                     kissmetrixTrack();
                     trackFormEvent(appcues.EVENT_TYPES.QUESTION_CREATE);
                 });
@@ -104,8 +104,8 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         // corrupting or invalidating the data in some way. By requiring
         // appcues to have completed its init prior to importing requirejs
         // or using it to incorporate vellum, these issues disappear.
-        var initFormBuilder = function() {
-            $.getScript(initialPageData("requirejs_static_url"), function() {
+        var initFormBuilder = function () {
+            $.getScript(initialPageData("requirejs_static_url"), function () {
                 define("jquery", [], function () { return window.jQuery; });
                 define("jquery.bootstrap", ["jquery"], function () {});
                 define("underscore", [], function () { return window._; });
@@ -211,7 +211,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                     $('#edit-form-name-modal').find('.disable-on-submit').enableButton();
                 });
                 $('#edit-form-name-modal').koApplyBindings(editDetails);
-                $("#edit-form-name-modal button[type='submit']").click(function() {
+                $("#edit-form-name-modal button[type='submit']").click(function () {
                     hqImport('analytix/js/kissmetrix').track.event("Renamed form from form builder");
                 });
             });

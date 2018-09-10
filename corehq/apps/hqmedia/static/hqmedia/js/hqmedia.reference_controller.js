@@ -10,24 +10,24 @@ function MultimediaReferenceController(references, obj_map, totals) {
     self.showMissingReferences = ko.observable(false);
     self.totals = ko.observable(totals);
 
-    self.toggleRefsText = ko.computed(function() {
+    self.toggleRefsText = ko.computed(function () {
         return (self.showMissingReferences()) ? django.gettext("Show All References") : django.gettext("Show Only Missing References");
     }, self);
 
-    self.render = function() {
-        _.each(references, function(ref) {
+    self.render = function () {
+        _.each(references, function (ref) {
             if (!self.modules[ref.module.id]) {
                 self.modules[ref.module.id] = new ModuleReferences(ref.module.name, self.obj_map, ref.module.id);
             }
             self.modules[ref.module.id].processReference(ref);
         });
         self.modules = _.compact(self.modules);
-        _.each(self.modules, function(mod) {
+        _.each(self.modules, function (mod) {
             mod.forms = _.compact(mod.forms);
         });
     };
 
-    self.toggleMissingRefs = function(sender, event) {
+    self.toggleMissingRefs = function (sender, event) {
         var showMissing = !self.showMissingReferences();
         self.showMissingReferences(showMissing);
         for (var m = 0; m < self.modules.length; m++) {
@@ -45,8 +45,8 @@ function MultimediaReferenceController(references, obj_map, totals) {
         event.preventDefault();
     };
 
-    self.incrementTotals = function(trigger, event, data) {
-        var newTotals = _.map(self.totals(), function(media) {
+    self.incrementTotals = function (trigger, event, data) {
+        var newTotals = _.map(self.totals(), function (media) {
             if (media.media_type == data.media_type && media.paths.indexOf(data.path) < 0) {
                 media = _.clone(media);
                 media.paths.push(data.path);
@@ -68,15 +68,15 @@ function BaseReferenceGroup(name, obj_map, group_id) {
     self.menu_references = ko.observableArray();
     self.showOnlyMissing = ko.observable(false);
 
-    self.active_menu_references = ko.computed(function() {
+    self.active_menu_references = ko.computed(function () {
         return (self.showOnlyMissing()) ? self.getMissingRefs(self.menu_references()) : self.menu_references();
     }, self);
 
-    self.showMenuRefs = ko.computed(function() {
+    self.showMenuRefs = ko.computed(function () {
         return self.active_menu_references().length > 0;
     }, self);
 
-    self.createReferenceObject = function(ref) {
+    self.createReferenceObject = function (ref) {
         var obj_ref = self.obj_map[ref.path];
         if (ref.media_class == "CommCareImage") {
             var imageRef = new ImageReference(ref);
@@ -94,7 +94,7 @@ function BaseReferenceGroup(name, obj_map, group_id) {
         return null;
     };
 
-    self.getMissingRefs = function(refs) {
+    self.getMissingRefs = function (refs) {
         var missing = [];
         for (var r = 0; r < refs.length; r++) {
             var ref = refs[r];
@@ -113,7 +113,7 @@ function ModuleReferences(name, obj_map, group_id) {
     self.forms = [];
     self.id = "module-" + self.id;
 
-    self.processReference = function(ref) {
+    self.processReference = function (ref) {
         if (ref.form.id) {
             if (!self.forms[ref.form.order]) {
                 self.forms[ref.form.order] = new FormReferences(ref.form.name, self.obj_map, ref.form.id);
@@ -137,31 +137,31 @@ function FormReferences(name, obj_map, group_id) {
     self.audio = ko.observableArray();
     self.video = ko.observableArray();
 
-    self.active_images = ko.computed(function() {
+    self.active_images = ko.computed(function () {
         return (self.showOnlyMissing()) ? self.getMissingRefs(self.images()) : self.images();
     }, self);
-    self.active_audio = ko.computed(function() {
+    self.active_audio = ko.computed(function () {
         return (self.showOnlyMissing()) ? self.getMissingRefs(self.audio()) : self.audio();
     }, self);
-    self.active_video = ko.computed(function() {
+    self.active_video = ko.computed(function () {
         return (self.showOnlyMissing()) ? self.getMissingRefs(self.video()) : self.video();
     }, self);
 
-    self.showImageRefs = ko.computed(function() {
+    self.showImageRefs = ko.computed(function () {
         return self.active_images().length > 0;
     }, self);
-    self.showAudioRefs = ko.computed(function() {
+    self.showAudioRefs = ko.computed(function () {
         return self.active_audio().length > 0;
     }, self);
-    self.showVideoRefs = ko.computed(function() {
+    self.showVideoRefs = ko.computed(function () {
         return self.active_video().length > 0;
     }, self);
 
-    self.showForm = ko.computed(function() {
+    self.showForm = ko.computed(function () {
         return self.showImageRefs() || self.showAudioRefs() || self.showVideoRefs() || self.showMenuRefs();
     });
 
-    self.processReference = function(ref) {
+    self.processReference = function (ref) {
         var ref_obj = self.createReferenceObject(ref);
         if (ref.is_menu_media) {
             self.menu_references.push(ref_obj);
@@ -201,15 +201,15 @@ function BaseMediaReference(ref) {
     self.humanized_content_length = ko.observable();
     self.image_size = ko.observable();
 
-    self.status_icon = ko.computed(function() {
+    self.status_icon = ko.computed(function () {
         return (self.is_matched()) ? "fa fa-check media-status-ok" : "fa fa-exclamation-triangle media-status-warning";
     }, self);
 
-    self.upload_button_class = ko.computed(function() {
+    self.upload_button_class = ko.computed(function () {
         return (self.is_matched()) ? "btn btn-success" : "btn btn-warning";
     }, self);
 
-    self.upload_button_text = ko.computed(function() {
+    self.upload_button_text = ko.computed(function () {
         return ((self.is_matched()) ? django.gettext("Replace ") : django.gettext("Upload ")) + self.media_type;
     }, self);
 
@@ -221,7 +221,7 @@ function BaseMediaReference(ref) {
     self.searched = ko.observable(false);
     self.searchOptions = ko.observableArray();
 
-    self.setObjReference = function(obj_ref) {
+    self.setObjReference = function (obj_ref) {
         if (obj_ref) {
             self.m_id(obj_ref.m_id);
             self.uid(obj_ref.uid);
@@ -233,7 +233,7 @@ function BaseMediaReference(ref) {
         }
     };
 
-    self.search = function() {
+    self.search = function () {
         throw new Error("This functionality is currently broken");
         // leftovers from Tim. todo: fix
         //        if (self.query()) {
@@ -249,7 +249,7 @@ function BaseMediaReference(ref) {
         //        }
     };
 
-    self.triggerUpload = function() {
+    self.triggerUpload = function () {
         self.upload_controller.resetUploader();
         self.upload_controller.currentReference = self;
         if (self.upload_controller) {
@@ -267,16 +267,16 @@ function BaseMediaReference(ref) {
     // Needed for Upload Controller
 
     // we don't want to be dependent on a knockout structure (vellum)
-    self.getUrl = function() {
+    self.getUrl = function () {
         return self.url();
     };
 
-    self.isMediaMatched = function() {
+    self.isMediaMatched = function () {
         return self.is_matched();
     };
 
     // bound to event mediaUploadComplete
-    self.uploadComplete = function(trigger, event, data) {
+    self.uploadComplete = function (trigger, event, data) {
         if (data && !data.errors.length) {
             self.setObjReference(data.ref);
         }
@@ -289,7 +289,7 @@ function ImageReference(ref) {
     var self = this;
     self.upload_controller = HQMediaUploaders['hqimage'];
     self.preview_template = "image-preview-template";
-    self.thumb_url = ko.computed(function() {
+    self.thumb_url = ko.computed(function () {
         return (self.url()) ? self.url() + "?thumb=50" : "";
     }, self);
 }
@@ -334,12 +334,12 @@ function MediaOption(mediaRef, data) {
     self.uid = '';
     self.tags = data.tags;
 
-    self.choose = function() {
+    self.choose = function () {
         $.post(chooseImageUrl, {
             media_type: self.mediaRef.type(),
             path: self.mediaRef.path(),
             id: self.m_id,
-        }, function(res) {
+        }, function (res) {
             if (self.mediaRef.type() == "Image")
                 self.mediaRef.foundNewImage(null, res);
             else if (self.mediaRef.type() == "Audio")

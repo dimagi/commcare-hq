@@ -68,7 +68,7 @@ hqDefine('accounting/js/widgets', [
         self.init = function () {
             $('form [name="' + self.fieldName + '"]').select2({
                 createSearchChoice: function (term, data) {
-                    var matchedData = $(data).filter(function() {
+                    var matchedData = $(data).filter(function () {
                         return this.text.localeCompare(term) === 0;
                     });
 
@@ -116,26 +116,26 @@ hqDefine('accounting/js/widgets', [
     var adjustBalanceFormModel = function () {
         var self = {};
         self.adjustmentType = ko.observable("current");
-        self.showCustomAmount = ko.computed(function() {
+        self.showCustomAmount = ko.computed(function () {
             return self.adjustmentType() === 'credit';
         }, self);
 
         return self;
     };
 
-    $(function() {
-        _.each($(".accounting-email-select2"), function(input) {
+    $(function () {
+        _.each($(".accounting-email-select2"), function (input) {
             var handler = emailSelect2Handler($(input).attr("name"));
             handler.init();
         });
         $(".accounting-email-select2").removeAttr('required');
 
-        _.each($(".accounting-async-select2"), function(input) {
+        _.each($(".accounting-async-select2"), function (input) {
             var handler = asyncSelect2Handler($(input).attr("name"));
             handler.init();
         });
 
-        _.each($(".accounting-country-select2"), function() {
+        _.each($(".accounting-country-select2"), function () {
             var country = asyncSelect2Handler('country');
             country.initSelection = function (element, callback) {
                 var data = {
@@ -147,7 +147,7 @@ hqDefine('accounting/js/widgets', [
             country.init();
         });
 
-        _.each($('.ko-adjust-balance-form'), function(form) {
+        _.each($('.ko-adjust-balance-form'), function (form) {
             $(form).koApplyBindings(adjustBalanceFormModel());
         });
     });

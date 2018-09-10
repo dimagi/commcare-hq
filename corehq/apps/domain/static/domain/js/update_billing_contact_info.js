@@ -3,7 +3,7 @@ hqDefine('domain/js/update_billing_contact_info', function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         stripeCardManager = hqImport("accounting/js/stripe_card_manager").stripeCardManager;
 
-    $(function() {
+    $(function () {
         Stripe.setPublishableKey(initialPageData.get("stripe_public_key"));
         var cardManager = new stripeCardManager({
             cards: initialPageData.get("cards"),
@@ -11,7 +11,7 @@ hqDefine('domain/js/update_billing_contact_info', function () {
         });
         $("#card-manager").koApplyBindings(cardManager);
 
-        $("#show_emails").click(function() {
+        $("#show_emails").click(function () {
             $('#emails-text').show();
             $(this).parent().hide();
         });

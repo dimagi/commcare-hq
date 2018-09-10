@@ -4,8 +4,6 @@ import os
 import polib
 import datetime
 import tempfile
-import six
-import sys
 
 from django.conf import settings
 from memoized import memoized
@@ -15,13 +13,14 @@ from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHE
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
+POFileInfo = namedtuple("POFileInfo", "name path")
 
 
-class TransifexPOFileGenerator:
+class AppTranslationsGenerator:
     def __init__(self, domain, app_id, version, key_lang, source_lang, lang_prefix,
                  exclude_if_default=False, use_version_postfix=True):
         """
-        Generates PO files for source/default lang files and also for translated files
+        Generates translations for source/default lang files and also for translated files
         :param domain: domain name
         :param app_id: app UUID
         :param version: version of the app to use, usually the built version. If none, the
@@ -48,8 +47,8 @@ class TransifexPOFileGenerator:
         self.version = version
         self.use_version_postfix = use_version_postfix
         self.headers = dict()  # headers for each sheet name
-        self.po_file_generator = None
         self.sheet_name_to_module_or_form_type_and_id = dict()
+        self._build_translations()
 
     @property
     @memoized
@@ -172,7 +171,7 @@ class TransifexPOFileGenerator:
             )
 
     @property
-    def _metadata(self):
+    def metadata(self):
         if settings.TRANSIFEX_DETAILS:
             team = settings.TRANSIFEX_DETAILS['teams'][self.domain].get(self.source_lang)
         else:
@@ -190,37 +189,25 @@ class TransifexPOFileGenerator:
             'Version': self.version
         }
 
-    def generate_translation_files(self):
-        self._build_translations()
-        self.po_file_generator = PoFileGenerator(self.translations, self._metadata)
-
-    @property
-    def generated_files(self):
-        if self.po_file_generator:
-            return self.po_file_generator.generated_files
-        return []
-
-    def cleanup(self):
-        if self.po_file_generator:
-            self.po_file_generator.cleanup()
-
 
 class PoFileGenerator(object):
     def __init__(self, translations, metadata):
-        self.generated_files = list()  # list of tuples (filename, filepath)
-        try:
-            self._generate_translation_files(translations, metadata)
-        except Exception:
-            exc_info = sys.exc_info()
-            self.cleanup()
-            six.reraise(*exc_info)
+        self._generated_files = list()  # list of tuples (filename, filepath)
+        self.translations = translations
+        self.metadata = metadata
 
-    def _generate_translation_files(self, translations, metadata):
-        for file_name in translations:
-            sheet_translations = translations[file_name]
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        self._cleanup()
+
+    def generate_translation_files(self):
+        for file_name in self.translations:
+            sheet_translations = self.translations[file_name]
             po = polib.POFile()
             po.check_for_duplicates = False
-            po.metadata = metadata
+            po.metadata = self.metadata
             for translation in sheet_translations:
                 source = translation.key
                 if source:
@@ -233,10 +220,11 @@ class PoFileGenerator(object):
                     po.append(entry)
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             po.save(temp_file.name)
-            self.generated_files.append((file_name, temp_file.name))
+            self._generated_files.append(POFileInfo(file_name, temp_file.name))
+        return self._generated_files
 
-    def cleanup(self):
-        for resource_name, filepath in self.generated_files:
+    def _cleanup(self):
+        for resource_name, filepath in self._generated_files:
             if os.path.exists(filepath):
                 os.remove(filepath)
         self.generated_files = []
