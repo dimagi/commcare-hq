@@ -65,6 +65,7 @@ branches:
   - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
   - sr-batch-ucrpillow # Sravan Sept 4
   - rn_migratin_download_index # Rohit Sept 10
+  - jls/select2-upgrade-locations  # Jenny Sept 10
 submodules:
   submodules/django-digest-src:
     branches: []
