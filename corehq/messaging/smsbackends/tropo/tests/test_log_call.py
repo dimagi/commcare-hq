@@ -24,7 +24,7 @@ class TropoLogCallTestCase(util.LogCallTestCase):
 
     def simulate_inbound_call(self, phone_number):
         return Client().post(
-            '/tropo/ivr/%s/' % cls.tropo_backend.inbound_api_key,
+            '/tropo/ivr/%s/' % self.tropo_backend.inbound_api_key,
             json.dumps({'session': {'from': {'id': phone_number}}}),
             content_type='application/json'
         )
