@@ -482,9 +482,12 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
         except Exception:
             return format_angular_error(_("There was an error."), log_error=True)
         send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, self.request)
-        return format_angular_success({
-            'download_id': download.download_id,
-        })
+        if download:
+            return format_angular_success({
+                'download_id': download.download_id,
+            })
+        else:
+            return format_angular_error(error_msg="PREETHI ANGULAR ERROR MESSAGE", log_error=False)
 
 
 class DownloadFormExportView(BaseDownloadExportView):
@@ -2018,12 +2021,23 @@ class GenericDownloadNewExportMixin(object):
         export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
         self._check_deid_permissions(export_instances)
         self._check_export_size(export_instances, export_filters)
+        export_download = None
+        try:
+            export_download = get_export_download(
+                export_instances=export_instances,
+                filters=export_filters,
+                filename=self._get_filename(export_instances)
+            )
+        except Exception:
+            messages.error(self.request, _('PV ERROR MESSAGE!!!!.'))
 
-        return get_export_download(
-            export_instances=export_instances,
-            filters=export_filters,
-            filename=self._get_filename(export_instances)
-        )
+        return export_download
+
+        # return get_export_download(
+        #     export_instances=export_instances,
+        #     filters=export_filters,
+        #     filename=self._get_filename(export_instances)
+        # )
 
     def _get_filename(self, export_instances):
         if len(export_instances) > 1:
