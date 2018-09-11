@@ -979,7 +979,6 @@ class FormBase(DocumentSchema):
     def case_references(self):
         return self.case_references_data or CaseReferences()
 
-
     def requires_case(self):
         return False
 
@@ -2522,6 +2521,14 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
             return self.forms[i].with_id(i % len(self.forms), self)
         except IndexError:
             raise FormNotFoundException()
+
+    def get_form_index(self, unique_id):
+        for index, form in enumerate(self.get_forms()):
+            if form.unique_id == unique_id:
+                return index
+        error = _("Could not find form with ID='{unique_id}' in module '{module_name}'.").format(
+            module_name=self.name, unique_id=unique_id)
+        raise FormNotFoundException(error)
 
     def get_child_modules(self):
         return [
@@ -5992,6 +5999,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not error:
             error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
                 app_name=self.name, unique_id=unique_id)
+        raise ModuleNotFoundException(error)
+
+    def get_module_index(self, unique_id):
+        for index, module in enumerate(self.get_modules()):
+            if module.unique_id == unique_id:
+                return index
+        error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+            app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
     def get_forms(self, bare=True):
