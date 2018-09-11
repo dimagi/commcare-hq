@@ -22,7 +22,7 @@ from soil import heartbeat
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.app_manager.models import Application
-from corehq.apps.change_feed.connection import get_kafka_client
+from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.es import GroupES
 from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
@@ -73,14 +73,12 @@ def check_rabbitmq():
 
 @change_log_level('kafka.client', logging.WARNING)
 def check_kafka():
-    try:
-        client = get_kafka_client()
-    except Exception as e:
-        return ServiceStatus(False, "Could not connect to Kafka: %s" % e)
-
-    if len(client.cluster.brokers()) == 0:
+    client = get_kafka_client_or_none()
+    if not client:
+        return ServiceStatus(False, "Could not connect to Kafka")
+    elif len(client.brokers) == 0:
         return ServiceStatus(False, "No Kafka brokers found")
-    elif len(client.cluster.topics()) == 0:
+    elif len(client.topics) == 0:
         return ServiceStatus(False, "No Kafka topics found")
     else:
         return ServiceStatus(True, "Kafka seems to be in order")
