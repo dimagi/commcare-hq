@@ -149,14 +149,8 @@ hqDefine("accounting/js/stripe_card_manager", [
     };
 
 
-<<<<<<< HEAD
-    var stripeCardManager = function(data){
+    var stripeCardManager = function (data){
         var self = {};
-=======
-    var stripeCardManager = function (data) {
-        'use strict';
-        var self = this;
->>>>>>> master
         var mapping = {
             'cards': {
                 create: function (card) {
