@@ -330,8 +330,11 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
 
     @property
     def report_column_options(self):
-        # todo
-        return {}
+        options = OrderedDict()
+        for id_, prop in six.iteritems(self.data_source_properties):
+            options[id_] = prop.to_report_column_option()
+
+        return options
 
 
 class DataSourceBuilder(ReportBuilderDataSourceInterface):
