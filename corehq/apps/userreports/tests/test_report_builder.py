@@ -5,6 +5,7 @@ from django.test import TestCase
 from mock import patch
 
 from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_FORM, DATA_SOURCE_TYPE_CASE, \
     DATA_SOURCE_TYPE_RAW
 from corehq.apps.userreports.app_manager.helpers import get_form_data_source
@@ -26,10 +27,15 @@ class ReportBuilderDBTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(ReportBuilderDBTest, cls).setUpClass()
-        cls.app = Application.new_app(cls.domain, 'Untitled Application')
-        module = cls.app.add_module(Module.new_module('Untitled Module', None))
-        module.case_type = cls.case_type
-        cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', get_simple_xform())
+        factory = AppFactory(domain=cls.domain)
+        module, form = factory.new_basic_module('Untitled Module', cls.case_type)
+        form.source = get_simple_xform()
+        cls.form = form
+        factory.form_requires_case(form, case_type=cls.case_type, update={
+            'first_name': '/data/first_name',
+            'last_name': '/data/last_name',
+        })
+        cls.app = factory.app
         cls.app.save()
 
     @classmethod
@@ -99,6 +105,17 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             "property_value": self.case_type,
         }
         self.assertEqual(expected_filter, builder.filter)
+        expected_property_names = [
+            "closed", "first_name", "last_name", "modified_on", "name", "opened_on", "owner_id", "user_id",
+            "computed/owner_name", "computed/user_name",
+        ]
+        self.assertEqual(expected_property_names, builder.data_source_properties.keys())
+        owner_name_prop = builder.data_source_properties['computed/owner_name']
+        self.assertEqual('computed/owner_name', owner_name_prop.get_id())
+        self.assertEqual('Case Owner', owner_name_prop.get_text())
+        first_name_prop = builder.data_source_properties['first_name']
+        self.assertEqual('first_name', first_name_prop.get_id())
+        self.assertEqual('first name', first_name_prop.get_text())
 
 
 class DataSourceReferenceTest(ReportBuilderDBTest):
@@ -114,7 +131,9 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
             "doc_id", "inserted_at", "completed_time", "started_time", "username", "userID", "@xmlns", "@name",
             "App Version", "deviceID", "location", "app_id", "build_id", "@version", "state", "last_sync_token",
             "partial_submission", "received_on", "edited_on", "submit_ip",
-            "form.first_name", "form.last_name", "form.children", "form.dob", "form.state", "count"
+            "form.first_name", "form.last_name", "form.children", "form.dob", "form.state",
+            "form.case.@date_modified", 'form.case.@user_id', 'form.case.@case_id', 'form.case.update.first_name',
+            'form.case.update.last_name', "count",
         ]
 
         self.assertEqual(expected_property_names, reference.data_source_properties.keys())
