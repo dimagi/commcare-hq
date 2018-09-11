@@ -910,7 +910,10 @@ class ConfigureNewReportBase(forms.Form):
 
         :raises BadSpecError if validation fails when building data source, or report is invalid
         """
-        data_source_config_id = self._build_data_source()
+        if self.ds_builder.uses_managed_data_source:
+            data_source_config_id = self._build_data_source()
+        else:
+            data_source_config_id = self.ds_builder.source_id
         report = ReportConfiguration(
             domain=self.domain,
             config_id=data_source_config_id,
