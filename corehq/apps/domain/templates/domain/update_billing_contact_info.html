@@ -3,12 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/widgets.js' %}"></script>
-    <script src="https://js.stripe.com/v2/"></script>
-    <script src="{% static 'accounting/js/stripe_card_manager.js' %}"></script>
-    <script src="{% static 'domain/js/update_billing_contact_info.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'domain/js/update_billing_contact_info' %}
 
 {% block additional_initial_page_data %}{{ block.super }}
     {% initial_page_data "stripe_public_key" stripe_public_key %}
