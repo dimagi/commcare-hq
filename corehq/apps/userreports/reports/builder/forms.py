@@ -19,7 +19,7 @@ from corehq.apps.userreports.reports.builder.columns import (
     OwnernameComputedCasePropertyOption,
     UsernameComputedCasePropertyOption,
     CasePropertyColumnOption,
-)
+    RawPropertyColumnOption)
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -57,7 +57,7 @@ from corehq.apps.userreports.reports.builder.const import (
     UI_AGG_COUNT_PER_CHOICE,
     UI_AGG_GROUP_BY,
     UI_AGG_SUM,
-)
+    PROPERTY_TYPE_RAW)
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
@@ -107,7 +107,7 @@ class DataSourceProperty(object):
 
     Class attributes:
 
-    type -- either "case_property", "question", or "meta"
+    type -- either "case_property", "question", "meta", or "raw"
     id -- A string that uniquely identifies this property. For question based
         properties this is the question id, for case based properties this is
         the case property name.
@@ -157,13 +157,16 @@ class DataSourceProperty(object):
                 return QuestionColumnOption(self._id, self._data_types, self._text, self._source)
         elif self._type == PROPERTY_TYPE_META:
             return FormMetaColumnOption(self._id, self._data_types, self._text, self._source)
-        else:  # self._type == PROPERTY_TYPE_CASE_PROP
+        elif self._type == PROPERTY_TYPE_CASE_PROP:
             if self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
                 return OwnernameComputedCasePropertyOption(self._id, self._data_types, self._text)
             elif self._id == COMPUTED_USER_NAME_PROPERTY_ID:
                 return UsernameComputedCasePropertyOption(self._id, self._data_types, self._text)
             else:
                 return CasePropertyColumnOption(self._id, self._data_types, self._text)
+        else:
+            assert self._type == PROPERTY_TYPE_RAW
+            return RawPropertyColumnOption(self._id, self._data_types, self._text)
 
     def _get_filter_format(self, filter_configuration):
         """
@@ -316,7 +319,7 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
             # note: using column ID as the display text is a bummer but we don't have a a better
             # way to easily access a readable name for these yet
             return DataSourceProperty(
-                type='raw',
+                type=PROPERTY_TYPE_RAW,
                 id=column.id,
                 text=column.id,
                 source=(column.id, column.datatype),

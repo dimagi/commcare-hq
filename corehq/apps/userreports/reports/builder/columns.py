@@ -366,3 +366,18 @@ class CountColumn(ColumnOption):
         # will make more sense to users than "Sum", which would technically
         # be more accurate.
         return ("Count",)
+
+
+class RawPropertyColumnOption(ColumnOption):
+    """
+    Column option for raw properties (properties that just reference an existing data source)
+    """
+
+    def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
+        return {
+            "type": "expression",
+            "column_id": self._property,
+            "datatype": self._data_types[0],
+            "display_name": self.get_property(),
+            # "expression": expression,
+        }
