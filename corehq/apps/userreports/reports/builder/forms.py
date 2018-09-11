@@ -790,7 +790,8 @@ class ConfigureNewReportBase(forms.Form):
     report_title = forms.CharField(widget=forms.HiddenInput, required=False)
     report_description = forms.CharField(widget=forms.HiddenInput, required=False)
 
-    def __init__(self, domain, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
+    def __init__(self, domain, report_name, app_id, source_type, report_source_id, existing_report=None,
+                 *args, **kwargs):
         """
         This form can be used to create a new ReportConfiguration, or to modify
         an existing one if existing_report is set.

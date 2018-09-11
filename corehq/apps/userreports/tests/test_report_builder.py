@@ -84,7 +84,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             'username', 'userID', 'timeStart', 'timeEnd', 'deviceID',
             '/data/first_name', '/data/last_name', '/data/children', '/data/dob', '/data/state'
         ]
-        self.assertEqual(expected_property_names, builder.data_source_properties.keys())
+        self.assertEqual(expected_property_names, list(builder.data_source_properties.keys()))
         user_id_prop = builder.data_source_properties['userID']
         self.assertEqual('userID', user_id_prop.get_id())
         self.assertEqual('User ID', user_id_prop.get_text())
@@ -109,7 +109,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             "closed", "first_name", "last_name", "modified_on", "name", "opened_on", "owner_id", "user_id",
             "computed/owner_name", "computed/user_name",
         ]
-        self.assertEqual(expected_property_names, builder.data_source_properties.keys())
+        self.assertEqual(expected_property_names, list(builder.data_source_properties.keys()))
         owner_name_prop = builder.data_source_properties['computed/owner_name']
         self.assertEqual('computed/owner_name', owner_name_prop.get_id())
         self.assertEqual('Case Owner', owner_name_prop.get_text())
@@ -136,7 +136,7 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
             'form.case.update.last_name', "count",
         ]
 
-        self.assertEqual(expected_property_names, reference.data_source_properties.keys())
+        self.assertEqual(expected_property_names, list(reference.data_source_properties.keys()))
         user_id_prop = reference.data_source_properties['userID']
         self.assertEqual('userID', user_id_prop.get_id())
         self.assertEqual('userID', user_id_prop.get_text())
@@ -157,7 +157,7 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
             "owner_id", "server_last_modified_date", "state",
             "first_name", "last_name", "count",
         ]
-        self.assertEqual(expected_property_names, reference.data_source_properties.keys())
+        self.assertEqual(expected_property_names, list(reference.data_source_properties.keys()))
         owner_id_prop = reference.data_source_properties['owner_id']
         self.assertEqual('owner_id', owner_id_prop.get_id())
         self.assertEqual('owner_id', owner_id_prop.get_text())
