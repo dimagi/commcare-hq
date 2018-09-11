@@ -4,7 +4,6 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
     'knockout',
     "hqmedia/js/hqmediauploaders",
 ],function ($, _, ko, hQMediaUploaders) {
-
     var HQMediaUploaders = hQMediaUploaders.get();
 
     function MultimediaReferenceController(references, objMap, totals) {
@@ -52,7 +51,7 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
 
         self.incrementTotals = function (trigger, event, data) {
             var newTotals = _.map(self.totals(), function (media) {
-                if (media.media_type == data.media_type && media.paths.indexOf(data.path) < 0) {
+                if (media.media_type === data.media_type && media.paths.indexOf(data.path) < 0) {
                     media = _.clone(media);
                     media.paths.push(data.path);
                     media.matched = media.paths.length;
@@ -64,11 +63,11 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
 
     }
 
-    function BaseReferenceGroup(name, objMap, group_id) {
+    function BaseReferenceGroup(name, objMap, groupId) {
         'use strict';
         var self = this;
         self.name = name;
-        self.id = group_id;
+        self.id = groupId;
         self.objMap = objMap;
         self.menu_references = ko.observableArray();
         self.showOnlyMissing = ko.observable(false);
@@ -82,18 +81,18 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         }, self);
 
         self.createReferenceObject = function (ref) {
-            var obj_ref = self.objMap[ref.path];
-            if (ref.media_class == "CommCareImage") {
+            var objRef = self.objMap[ref.path];
+            if (ref.media_class === "CommCareImage") {
                 var imageRef = new ImageReference(ref);
-                imageRef.setObjReference(obj_ref);
+                imageRef.setObjReference(objRef);
                 return imageRef;
-            } else if (ref.media_class == "CommCareAudio") {
+            } else if (ref.media_class === "CommCareAudio") {
                 var audioRef = new AudioReference(ref);
-                audioRef.setObjReference(obj_ref);
+                audioRef.setObjReference(objRef);
                 return audioRef;
-            } else if (ref.media_class == "CommCareVideo") {
+            } else if (ref.media_class === "CommCareVideo") {
                 var videoRef = new VideoReference(ref);
-                videoRef.setObjReference(obj_ref);
+                videoRef.setObjReference(objRef);
                 return videoRef;
             }
             return null;
@@ -135,10 +134,10 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
     ModuleReferences.prototype.constructor = ModuleReferences;
 
 
-    function FormReferences(name, objMap, group_id) {
+    function FormReferences(name, objMap, groupId) {
         'use strict';
         var self = {};
-        BaseReferenceGroup.call(self, name, objMap, group_id);
+        BaseReferenceGroup.call(self, name, objMap, groupId);
 
         self.images = ko.observableArray();
         self.audio = ko.observableArray();
@@ -169,15 +168,15 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         });
 
         self.processReference = function (ref) {
-            var ref_obj = self.createReferenceObject(ref);
+            var refObj = self.createReferenceObject(ref);
             if (ref.is_menu_media) {
-                self.menu_references.push(ref_obj);
-            } else if (ref.media_class == "CommCareImage") {
-                self.images.push(ref_obj);
-            } else if (ref.media_class == "CommCareAudio") {
-                self.audio.push(ref_obj);
-            } else if (ref.media_class == "CommCareVideo") {
-                self.video.push(ref_obj);
+                self.menu_references.push(refObj);
+            } else if (ref.media_class === "CommCareImage") {
+                self.images.push(refObj);
+            } else if (ref.media_class === "CommCareAudio") {
+                self.audio.push(refObj);
+            } else if (ref.media_class === "CommCareVideo") {
+                self.video.push(refObj);
             }
         };
 
@@ -230,13 +229,13 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         self.searched = ko.observable(false);
         self.searchOptions = ko.observableArray();
 
-        self.setObjReference = function (obj_ref) {
-            if (obj_ref) {
-                self.m_id(obj_ref.m_id);
-                self.uid(obj_ref.uid);
-                self.url(obj_ref.url);
-                self.humanized_content_length(obj_ref.humanized_content_length);
-                self.image_size(obj_ref.image_size);
+        self.setObjReference = function (objRef) {
+            if (objRef) {
+                self.m_id(objRef.m_id);
+                self.uid(objRef.uid);
+                self.url(objRef.url);
+                self.humanized_content_length(objRef.humanized_content_length);
+                self.image_size(objRef.image_size);
                 $('.media-totals').trigger('refMediaAdded', self);
                 self.is_matched(true);
             }
@@ -351,9 +350,9 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
                 path: self.mediaRef.path(),
                 id: self.m_id,
             }, function (res) {
-                if (self.mediaRef.type() == "Image")
+                if (self.mediaRef.type() === "Image")
                     self.mediaRef.foundNewImage(null, res);
-                else if (self.mediaRef.type() == "Audio")
+                else if (self.mediaRef.type() === "Audio")
                     self.mediaRef.foundNewAudio(null, res);
             }, 'json');
         };
