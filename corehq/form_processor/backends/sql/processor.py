@@ -153,6 +153,7 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def publish_changes_to_kafka(processed_forms, cases, stock_result):
+        # todo: batch these changes?
         # todo: form deprecations?
         publish_form_saved(processed_forms.submitted)
         if processed_forms.submitted.is_duplicate:
