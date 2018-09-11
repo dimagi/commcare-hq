@@ -44,7 +44,6 @@ class Transifex(object):
         self.lock_translations = lock_translations
         self.use_version_postfix = use_version_postfix
         self.update_resource = update_resource
-        self.app_trans_generator = None
 
     @property
     @memoized
@@ -62,14 +61,14 @@ class Transifex(object):
         """
         submit translation files to transifex
         """
-        self.app_trans_generator = AppTranslationsGenerator(
+        app_trans_generator = AppTranslationsGenerator(
             self.domain, self.app_id_to_build, self.version,
             self.key_lang, self.source_lang, self.lang_prefix,
             self.exclude_if_default, self.use_version_postfix)
-        with PoFileGenerator(self.app_trans_generator.translations,
-                             self.app_trans_generator.metadata) as po_file_generator:
+        with PoFileGenerator(app_trans_generator.translations,
+                             app_trans_generator.metadata) as po_file_generator:
             generated_files = po_file_generator.generate_translation_files()
-            return self._send_files_to_transifex(generated_files)
+            return self._send_files_to_transifex(generated_files, app_trans_generator)
 
     @property
     @memoized
@@ -90,7 +89,7 @@ class Transifex(object):
     def transifex_project_source_lang(self):
         return self.client.transifex_lang_code(self.client.get_source_lang())
 
-    def _resource_name_in_project_lang(self, resource_slug):
+    def _resource_name_in_project_lang(self, resource_slug, app_trans_generator):
         """
         return the name of the resource i.e module/form in source lang on Transifex
 
@@ -99,14 +98,14 @@ class Transifex(object):
         if MODULES_AND_FORMS_SHEET_NAME in resource_slug:
             return MODULES_AND_FORMS_SHEET_NAME
         module_or_form_unique_id = resource_slug.split('_')[1]
-        resource_name_in_all_langs = self.app_trans_generator.slug_to_name[module_or_form_unique_id]
+        resource_name_in_all_langs = app_trans_generator.slug_to_name[module_or_form_unique_id]
         return resource_name_in_all_langs.get(self.transifex_project_source_lang,
                                               resource_name_in_all_langs.get('en', resource_slug))
 
-    def _send_files_to_transifex(self, generated_files):
+    def _send_files_to_transifex(self, generated_files, app_trans_generator):
         file_uploads = {}
         for resource_slug, path_to_file in generated_files:
-            resource_name = self._resource_name_in_project_lang(resource_slug)
+            resource_name = self._resource_name_in_project_lang(resource_slug, app_trans_generator)
             if self.is_source_file:
                 response = self.client.upload_resource(
                     path_to_file,
