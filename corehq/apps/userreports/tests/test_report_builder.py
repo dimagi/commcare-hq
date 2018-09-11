@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_FORM, DATA_SOURCE_TYPE_CASE, \
     DATA_SOURCE_TYPE_RAW
-from corehq.apps.userreports.app_manager.helpers import get_form_data_source
+from corehq.apps.userreports.app_manager.helpers import get_form_data_source, get_case_data_source
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 
@@ -143,6 +143,27 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
         name_prop = reference.data_source_properties['form.first_name']
         self.assertEqual('form.first_name', name_prop.get_id())
         self.assertEqual('form.first_name', name_prop.get_text())
+
+    def test_reference_for_cases(self):
+        case_data_source = get_case_data_source(self.app, self.case_type)
+        case_data_source.save()
+        reference = ReportBuilderDataSourceReference(
+            self.domain, self.app, DATA_SOURCE_TYPE_RAW, case_data_source._id,
+        )
+        # todo: we should filter out some of these columns
+        expected_property_names = [
+            "doc_id", "inserted_at", "name", "case_type", "closed", "closed_by_user_id", "closed_date",
+            "external_id", "last_modified_by_user_id", "last_modified_date", "opened_by_user_id", "opened_date",
+            "owner_id", "server_last_modified_date", "state",
+            "first_name", "last_name", "count",
+        ]
+        self.assertEqual(expected_property_names, reference.data_source_properties.keys())
+        owner_id_prop = reference.data_source_properties['owner_id']
+        self.assertEqual('owner_id', owner_id_prop.get_id())
+        self.assertEqual('owner_id', owner_id_prop.get_text())
+        first_name_prop = reference.data_source_properties['first_name']
+        self.assertEqual('first_name', first_name_prop.get_id())
+        self.assertEqual('first_name', first_name_prop.get_text())
 
 
 class ReportBuilderTest(ReportBuilderDBTest):
