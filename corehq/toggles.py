@@ -483,7 +483,8 @@ DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
     'Offer hosting and sharing data files for downloading from a secure dropzone',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
