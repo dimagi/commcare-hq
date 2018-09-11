@@ -709,10 +709,14 @@ class ReportPreview(BaseDomainView):
             report_data
         )
         if bound_form.is_valid():
-            temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
-            response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
-            if response_data:
-                return json_response(response_data)
+            try:
+                temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
+                response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
+                if response_data:
+                    return json_response(response_data)
+            except BadBuilderConfigError as e:
+                return json_response({'status': 'error', 'message': str(e)}, status_code=400)
+
         return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
 
 
