@@ -83,7 +83,7 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV3
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
@@ -512,7 +512,7 @@ USE_LOCATION_CHOICE = "user_location"
 USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
 
 
-class CallCenterOwnerWidget(Select2Ajax):
+class CallCenterOwnerWidget(Select2AjaxV3):
 
     def set_domain(self, domain):
         self.domain = domain
@@ -599,7 +599,7 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=ugettext_lazy(
             """
             Default time to wait between sending updated mobile report data to users.
-            Can be overrided on a per user bases.
+            Can be overridden on a per user basis.
             """
         )
     )

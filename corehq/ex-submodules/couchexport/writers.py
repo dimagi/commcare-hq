@@ -118,7 +118,7 @@ class CsvFileWriter(ExportFileWriter):
         buffer = io.StringIO()
         csvwriter = csv.writer(buffer, csv.excel)
         csvwriter.writerow([
-            col.decode('utf-8') if isinstance(col, six.binary_type) else col
+            col.decode('utf-8') if isinstance(col, bytes) else col
             for col in row
         ])
         self._file.write(buffer.getvalue().encode('utf-8'))
@@ -188,7 +188,7 @@ class ExportWriter(object):
 
     def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
-            if isinstance(name, six.binary_type):
+            if isinstance(name, bytes):
                 name = name.decode('utf8')
             elif isinstance(name, Promise):
                 # noinspection PyCompatibility
@@ -390,7 +390,7 @@ class Excel2007ExportWriter(ExportWriter):
         def get_write_value(value):
             if isinstance(value, six.integer_types + (float,)):
                 return value
-            if isinstance(value, six.binary_type):
+            if isinstance(value, bytes):
                 value = six.text_type(value, encoding="utf-8")
             elif value is not None:
                 value = six.text_type(value)

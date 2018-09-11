@@ -59,6 +59,6 @@ module.exports = {
         "space-in-parens": ["error", "never"],
         "space-infix-ops": ["error"],   // match flake8 E225
 
-        "eslint-dimagi/no-unblessed-new": ["error", ["Date", "Error", "RegExp", "Clipboard"]],
+        "eslint-dimagi/no-unblessed-new": ["error", ["Date", "Error", "Option", "RegExp", "Clipboard"]],
     }
 };

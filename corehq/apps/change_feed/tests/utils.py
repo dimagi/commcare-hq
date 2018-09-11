@@ -16,8 +16,13 @@ def get_test_kafka_consumer(*topics):
     """
     with trap_extra_setup(KafkaUnavailableError):
         configs = {
-            'group_id': 'test-{}'.format(uuid.uuid4().hex),
             'bootstrap_servers': settings.KAFKA_BROKERS,
             'consumer_timeout_ms': 100,
         }
-        return KafkaConsumer(*topics, **configs)
+        consumer = KafkaConsumer(*topics, **configs)
+        try:
+            # initialize consumer
+            next(consumer)
+        except StopIteration:
+            pass
+        return consumer

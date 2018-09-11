@@ -1,14 +1,14 @@
-/* globals RuleProgressBarGroup, RuleProgressBar */
+/* globals ruleProgressBarGroup, ruleProgressBar */
 hqDefine("reminders/js/reminders.list", function () {
-    var RemindersListModel = function (reminders, progressUrl) {
+    var remindersListModel = function (reminders, progressUrl) {
         'use strict';
-        var self = this;
+        var self = {};
         self.reminders = ko.observableArray();
-        self.progress_bar_group = new RuleProgressBarGroup(progressUrl);
+        self.progressBarGroup = ruleProgressBarGroup(progressUrl);
 
         self.init = function () {
-            _(reminders).each(function (reminder) {
-                self.reminders.push(new Reminder(reminder, self));
+            _(reminders).each(function (reminderObj) {
+                self.reminders.push(reminder(reminderObj, self));
             });
         };
 
@@ -18,11 +18,12 @@ hqDefine("reminders/js/reminders.list", function () {
             var row = dt.$("#" + id)[0];
             dt.fnDeleteRow(row);
         };
+        return self;
     };
 
-    var Reminder = function (o, parentModel) {
+    var reminder = function (o, parentModel) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.reminderList = parentModel;
 
@@ -30,7 +31,7 @@ hqDefine("reminders/js/reminders.list", function () {
         self.name = ko.observable(o.name);
         self.caseType = ko.observable(o.caseType);
         self.url = ko.observable(o.url);
-        self.progressBar = new RuleProgressBar(o.id, parentModel.progress_bar_group);
+        self.progressBar = ruleProgressBar(o.id, parentModel.progressBarGroup);
         self.active = ko.observable(o.isActive);
 
         self.activate = function (_, event) {
@@ -78,10 +79,12 @@ hqDefine("reminders/js/reminders.list", function () {
                 },
             });
         };
+
+        return self;
     };
 
     $(function () {
-        var remindersList = new RemindersListModel(hqImport("hqwebapp/js/initial_page_data").get('reminders'),
+        var remindersList = remindersListModel(hqImport("hqwebapp/js/initial_page_data").get('reminders'),
             hqImport("hqwebapp/js/initial_page_data").reverse("reminder_rule_progress"));
         $('#reminders-list').koApplyBindings(remindersList);
         remindersList.init();
