@@ -31,6 +31,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_RAW
 from corehq.apps.userreports.reports.builder.sources import get_source_type_from_report_config
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -452,16 +453,20 @@ class ConfigureReport(ReportBuilderView):
     def dispatch(self, request, *args, **kwargs):
         if self.existing_report:
             self.source_type = get_source_type_from_report_config(self.existing_report)
-            self.source_id = self.existing_report.config.meta.build.source_id
-            self.app_id = self.existing_report.config.meta.build.app_id
-            self.app = Application.get(self.app_id) if self.app_id else None
+            if self.source_type != DATA_SOURCE_TYPE_RAW:
+                self.source_id = self.existing_report.config.meta.build.source_id
+                self.app_id = self.existing_report.config.meta.build.app_id
+                self.app = Application.get(self.app_id) if self.app_id else None
+            else:
+                self.source_id = self.existing_report.config_id
+                self.app_id = self.app = None
         else:
             self.app_id = self.request.GET['application']
             self.app = Application.get(self.app_id)
             self.source_type = self.request.GET['source_type']
             self.source_id = self.request.GET['source']
 
-        if not self.app_id:
+        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         try:
             data_source_interface = get_data_source_interface(
@@ -696,7 +701,6 @@ class ReportPreview(BaseDomainView):
         report_data['user_filters'] = []
 
         _munge_report_data(report_data)
-
         bound_form = form_class(
             '{}_{}_{}'.format(TEMP_REPORT_PREFIX, self.domain, data_source),
             report_data['app'],
