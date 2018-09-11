@@ -36,7 +36,7 @@ from corehq.apps.userreports.models import (
     DataSourceMeta,
     ReportConfiguration,
     ReportMeta,
-)
+    get_datasource_config)
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
@@ -306,9 +306,27 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
         return False
 
     @property
+    @memoized
+    def data_source(self):
+        return get_datasource_config(self.source_id, self.domain)[0]
+
+    @property
     def data_source_properties(self):
-        # todo
-        return {}
+        def _data_source_property_from_ucr_column(column):
+            # note: using column ID as the display text is a bummer but we don't have a a better
+            # way to easily access a readable name for these yet
+            return DataSourceProperty(
+                type='raw',
+                id=column.id,
+                text=column.id,
+                source=(column.id, column.datatype),
+                data_types=[column.datatype],
+            )
+
+        properties = OrderedDict()
+        for column in self.data_source.get_columns():
+            properties[column.id] = _data_source_property_from_ucr_column(column)
+        return properties
 
     @property
     def report_column_options(self):

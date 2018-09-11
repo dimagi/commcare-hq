@@ -5,7 +5,9 @@ from django.test import TestCase
 from mock import patch
 
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_FORM, DATA_SOURCE_TYPE_CASE
+from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_FORM, DATA_SOURCE_TYPE_CASE, \
+    DATA_SOURCE_TYPE_RAW
+from corehq.apps.userreports.app_manager.helpers import get_form_data_source
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 
@@ -13,7 +15,7 @@ from corehq.apps.userreports.reports.builder.columns import MultiselectQuestionC
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
-    DataSourceBuilder)
+    DataSourceBuilder, ReportBuilderDataSourceReference)
 from corehq.apps.userreports.tests.utils import get_simple_xform
 
 
@@ -97,6 +99,31 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             "property_value": self.case_type,
         }
         self.assertEqual(expected_filter, builder.filter)
+
+
+class DataSourceReferenceTest(ReportBuilderDBTest):
+
+    def test_reference_for_forms(self):
+        form_data_source = get_form_data_source(self.app, self.form)
+        form_data_source.save()
+        reference = ReportBuilderDataSourceReference(
+            self.domain, self.app, DATA_SOURCE_TYPE_RAW, form_data_source._id,
+        )
+        # todo: we should filter out some of these columns
+        expected_property_names = [
+            "doc_id", "inserted_at", "completed_time", "started_time", "username", "userID", "@xmlns", "@name",
+            "App Version", "deviceID", "location", "app_id", "build_id", "@version", "state", "last_sync_token",
+            "partial_submission", "received_on", "edited_on", "submit_ip",
+            "form.first_name", "form.last_name", "form.children", "form.dob", "form.state", "count"
+        ]
+
+        self.assertEqual(expected_property_names, reference.data_source_properties.keys())
+        user_id_prop = reference.data_source_properties['userID']
+        self.assertEqual('userID', user_id_prop.get_id())
+        self.assertEqual('userID', user_id_prop.get_text())
+        name_prop = reference.data_source_properties['form.first_name']
+        self.assertEqual('form.first_name', name_prop.get_id())
+        self.assertEqual('form.first_name', name_prop.get_text())
 
 
 class ReportBuilderTest(ReportBuilderDBTest):
