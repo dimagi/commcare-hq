@@ -176,6 +176,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make report
         builder_form = ConfigureListReportForm(
+            self.domain,
             "Report one",
             self.app._id,
             "form",
@@ -193,6 +194,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make another report
         builder_form = ConfigureListReportForm(
+            self.domain,
             "Report two",
             self.app._id,
             "form",
@@ -218,6 +220,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make report
         builder_form = ConfigureTableReportForm(
+            self.domain,
             "Test Report",
             self.app._id,
             "case",
@@ -238,6 +241,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make an edit to the first report builder report
         builder_form = ConfigureTableReportForm(
+            self.domain,
             "Test Report",
             self.app._id,
             "case",
@@ -272,6 +276,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make report
         builder_form = ConfigureListReportForm(
+            self.domain,
             "Test Report",
             self.app._id,
             "form",
@@ -296,6 +301,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make an edit to the first report builder report
         builder_form = ConfigureListReportForm(
+            self.domain,
             "Test Report",
             self.app._id,
             "form",
@@ -321,6 +327,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
         (FB 268655)
         """
         builder_form = ConfigureListReportForm(
+            self.domain,
             "My Report",
             self.app._id,
             "form",
@@ -370,6 +377,7 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
         """
 
         builder_form = ConfigureListReportForm(
+            self.domain,
             "My Report",
             self.app._id,
             "form",
@@ -385,6 +393,7 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
         Confirm that data sources for reports with multiselects use "choice_list" indicators for mselect questions.
         """
         builder_form = ConfigureListReportForm(
+            self.domain,
             "My Report",
             self.app._id,
             "form",
@@ -412,6 +421,7 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
         Check report column aggregation for multi-select questions set to "group by"
         """
         builder_form = ConfigureTableReportForm(
+            self.domain,
             "My Report",
             self.app._id,
             "form",

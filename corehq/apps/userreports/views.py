@@ -563,7 +563,7 @@ class ConfigureReport(ReportBuilderView):
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
         report_form = form_type(
-            self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
+            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
 
@@ -595,6 +595,7 @@ class ConfigureReport(ReportBuilderView):
     def _get_bound_form(self, report_data):
         form_class = _get_form_type(report_data['report_type'])
         return form_class(
+            self.domain,
             self._get_report_name(),
             self.app._id,
             self.source_type,
@@ -702,6 +703,7 @@ class ReportPreview(BaseDomainView):
 
         _munge_report_data(report_data)
         bound_form = form_class(
+            domain,
             '{}_{}_{}'.format(TEMP_REPORT_PREFIX, self.domain, data_source),
             report_data['app'],
             report_data['source_type'],

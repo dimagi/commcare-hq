@@ -790,13 +790,14 @@ class ConfigureNewReportBase(forms.Form):
     report_title = forms.CharField(widget=forms.HiddenInput, required=False)
     report_description = forms.CharField(widget=forms.HiddenInput, required=False)
 
-    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
+    def __init__(self, domain, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
         """
         This form can be used to create a new ReportConfiguration, or to modify
         an existing one if existing_report is set.
         """
         super(ConfigureNewReportBase, self).__init__(*args, **kwargs)
         self.existing_report = existing_report
+        self.domain = domain
 
         if self.existing_report:
             self._bootstrap(self.existing_report)
@@ -805,8 +806,9 @@ class ConfigureNewReportBase(forms.Form):
             assert source_type in REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
             self.source_type = source_type
             self.report_source_id = report_source_id
-            self.app = Application.get(app_id)
-            self.domain = self.app.domain
+            self.app = Application.get(app_id) if app_id else None
+            if self.app:
+                assert self.domain == self.app.domain
 
         self.ds_builder = get_data_source_interface(
             self.domain, self.app, self.source_type, self.report_source_id
@@ -830,7 +832,7 @@ class ConfigureNewReportBase(forms.Form):
         self.report_name = existing_report.title
 
         self.source_type = get_source_type_from_report_config(existing_report)
-        self.domain = existing_report.domain
+        assert self.domain == existing_report.domain
         if self.source_type in APP_DATA_SOURCE_TYPE_VALUES:
             self.report_source_id = existing_report.config.meta.build.source_id
             app_id = existing_report.config.meta.build.app_id
@@ -1465,9 +1467,10 @@ class ConfigureMapReportForm(ConfigureListReportForm):
     report_type = 'map'
     location = forms.ChoiceField(label="Location field", required=False)
 
-    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
+    def __init__(self, domain, report_name, app_id, source_type, report_source_id, existing_report=None,
+                 *args, **kwargs):
         super(ConfigureMapReportForm, self).__init__(
-            report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
+            domain, report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
         )
         self.fields['location'].choices = self._location_choices
 
