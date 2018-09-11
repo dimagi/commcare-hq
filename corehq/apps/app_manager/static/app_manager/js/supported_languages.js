@@ -18,8 +18,8 @@ hqDefine('app_manager/js/supported_languages',[
 
             if (self.langcode()) {
                 var lang = self.langcode().toLowerCase();
-                $.getJSON('/langcodes/langs.json', {term: lang}, function(res) {
-                    var index = _.map(res, function(r) { return r.code; }).indexOf(lang);
+                $.getJSON('/langcodes/langs.json', {term: lang}, function (res) {
+                    var index = _.map(res, function (r) { return r.code; }).indexOf(lang);
                     if (index === -1) {
                         self.message_content(gettext("Warning: unrecognized language"));
                         self.show_error(true);
@@ -88,7 +88,7 @@ hqDefine('app_manager/js/supported_languages',[
                     success: function (data) {
                         var i;
                         for (i = 0; i < langs.length; i++) {
-                            if (langs[i] != data[i]) {
+                            if (langs[i] !== data[i]) {
                                 throw "There was an error saving.";
                             }
                         }
@@ -165,7 +165,7 @@ hqDefine('app_manager/js/supported_languages',[
             for (var i = 0; i < self.languages().length; i++) {
                 self.languages()[i].langcode();
                 self.languages()[i].originalLangcode();
-                if (message || language == self.languages()[i]) {
+                if (message || language === self.languages()[i]) {
                     continue;
                 } else if (language.langcode() === self.languages()[i].langcode()) {
                     message = gettext("Language appears twice");
