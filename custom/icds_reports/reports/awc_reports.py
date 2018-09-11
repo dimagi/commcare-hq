@@ -13,7 +13,8 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.messages import wasting_help_text, stunting_help_text, \
     early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
-    children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text
+    children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text, \
+    percent_children_enrolled_help_text
 from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
@@ -802,8 +803,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             [
                 {
                     'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
-                    'help_text': _('Of the total number of children between 0-6 years, the percentage '
-                                   'of children who are enrolled for Anganwadi Services'),
+                    'help_text': percent_children_enrolled_help_text(),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
                     'color': 'green' if percent_diff(
                         'child_health_all',

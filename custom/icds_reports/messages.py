@@ -82,3 +82,80 @@ def institutional_deliveries_help_text(html=False):
             "<br/><br/>" if html else ""
         )
     )
+
+
+def awcs_launched_help_text():
+    return _(
+        'Total AWCs that have launched ICDS-CAS. AWCs are considered launched after submitting at least '
+        'one Household Registration form. '
+    )
+
+
+def percent_aadhaar_seeded_beneficiaries_help_text():
+    return _(
+        'Of the total number of ICDS beneficiaries, the percentage whose Adhaar '
+        'identification has been captured. '
+    )
+
+
+def percent_children_enrolled_help_text(age_label="0-6 years"):
+    return _(
+        'Of the total number of children between {}, '
+        'the percentage of children who are enrolled for Anganwadi Services'.format(age_label)
+    )
+
+
+def percent_pregnant_women_enrolled_help_text():
+    return _(
+        'Of the total number of pregnant women, '
+        'the percentage of pregnant women enrolled for Anganwadi Services'
+    )
+
+
+def percent_lactating_women_enrolled_help_text():
+    return _(
+        'Of the total number of lactating women, '
+        'the percentage of lactating women enrolled for Anganwadi Services'
+    )
+
+
+def percent_adolescent_girls_enrolled_help_text():
+    return _(
+        "Of the total number of adolescent girls (aged 11-14 years), "
+        "the percentage of girls enrolled for Anganwadi Services"
+    )
+
+
+def awcs_reported_clean_drinking_water_help_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, the '
+        'percentage of AWCs that reported having a source of clean drinking water. '
+    )
+
+
+def awcs_reported_functional_toilet_help_text():
+    return _(
+        'Of the AWCs that submitted an Infrastructure Details form, the percentage '
+        'of AWCs that reported having a functional toilet'
+    )
+
+
+def awcs_reported_weighing_scale_infants_help_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, the '
+        'percentage of AWCs that reported having a weighing scale for infants'
+    )
+
+
+def awcs_reported_weighing_scale_mother_and_child_help_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
+        'AWCs that reported having a weighing scale for mother and child'
+    )
+
+
+def awcs_reported_medicine_kit_help_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, '
+        'the percentage of AWCs that reported having a Medicine Kit'
+    )
