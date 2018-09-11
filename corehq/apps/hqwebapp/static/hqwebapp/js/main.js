@@ -308,7 +308,7 @@ hqDefine('hqwebapp/js/main', [
                 state = valueAccessor(),
                 deleteButton;
 
-            deleteButton = initDeleteButton({
+            deleteButton = DeleteButton.init({
                 save: function () {
                     deleteButton.ajax(saveOptions());
                 },
