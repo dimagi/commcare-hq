@@ -5,35 +5,35 @@ hqDefine("app_manager/js/settings/app_logos", function () {
     var refs = initial_page_data('media_refs');
     var media_info = initial_page_data('media_info');
 
-    var image_refs = {};
+    var imageRefs = {};
     for (var slug in refs) {
-        image_refs[slug] = new hqImport('hqmedia/js/hqmedia.reference_controller').ImageReference(refs[slug]);
-        image_refs[slug].upload_controller = HQMediaUploaders[slug];
-        image_refs[slug].setObjReference(media_info[slug]);
+        imageRefs[slug] = hqImport('hqmedia/js/hqmedia.reference_controller').ImageReference(refs[slug]);
+        imageRefs[slug].upload_controller = HQMediaUploaders[slug];
+        imageRefs[slug].setObjReference(media_info[slug]);
     }
 
     self.urlFromLogo = function (slug) {
-        return image_refs[slug].url;
+        return imageRefs[slug].url;
     };
 
     self.thumbUrlFromLogo = function (slug) {
-        return image_refs[slug].thumb_url;
+        return imageRefs[slug].thumb_url;
     };
 
     self.triggerUploadForLogo = function (slug) {
-        if (image_refs[slug]) {
-            image_refs[slug].triggerUpload();
+        if (imageRefs[slug]) {
+            imageRefs[slug].triggerUpload();
         }
     };
 
     self.uploadCompleteForLogo = function (slug, response) {
-        if (image_refs[slug]) {
-            image_refs[slug].uploadComplete(null, null, response);
+        if (imageRefs[slug]) {
+            imageRefs[slug].uploadComplete(null, null, response);
         }
     };
 
     self.getPathFromSlug = function (slug) {
-        return image_refs[slug].path;
+        return imageRefs[slug].path;
     };
 
     self.removeLogo = function (slug) {
@@ -44,7 +44,7 @@ hqDefine("app_manager/js/settings/app_logos", function () {
             },
             function (data, status) {
                 if (status === 'success') {
-                    image_refs[slug].url("");
+                    imageRefs[slug].url("");
                 }
             }
         );

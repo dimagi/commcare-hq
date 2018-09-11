@@ -8,7 +8,7 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
 
     function MultimediaReferenceController(references, objMap, totals) {
         'use strict';
-        var self = this;
+        var self = {};
         self.objMap = objMap;
         self.modules = [];
         self.showMissingReferences = ko.observable(false);
@@ -60,12 +60,13 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
             });
             self.totals(newTotals);
         };
-
+        
+        return self;
     }
 
     function BaseReferenceGroup(name, objMap, groupId) {
         'use strict';
-        var self = this;
+        var self = {};
         self.name = name;
         self.id = groupId;
         self.objMap = objMap;
@@ -83,15 +84,15 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         self.createReferenceObject = function (ref) {
             var objRef = self.objMap[ref.path];
             if (ref.media_class === "CommCareImage") {
-                var imageRef = new ImageReference(ref);
+                var imageRef = ImageReference(ref);
                 imageRef.setObjReference(objRef);
                 return imageRef;
             } else if (ref.media_class === "CommCareAudio") {
-                var audioRef = new AudioReference(ref);
+                var audioRef = AudioReference(ref);
                 audioRef.setObjReference(objRef);
                 return audioRef;
             } else if (ref.media_class === "CommCareVideo") {
-                var videoRef = new VideoReference(ref);
+                var videoRef = VideoReference(ref);
                 videoRef.setObjReference(objRef);
                 return videoRef;
             }
@@ -108,12 +109,12 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
             }
             return missing;
         };
+        return self
     }
 
     function ModuleReferences(name, objMap, groupId) {
         'use strict';
-        var self = {};
-        BaseReferenceGroup.call(self, name, objMap, groupId);
+        var self = BaseReferenceGroup(name, objMap, groupId);
         self.forms = [];
         self.id = "module-" + self.id;
 
@@ -136,8 +137,7 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
 
     function FormReferences(name, objMap, groupId) {
         'use strict';
-        var self = {};
-        BaseReferenceGroup.call(self, name, objMap, groupId);
+        var self = BaseReferenceGroup(name, objMap, groupId);
 
         self.images = ko.observableArray();
         self.audio = ko.observableArray();
@@ -189,7 +189,7 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
 
     function BaseMediaReference(ref) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.media_class = ref.media_class;
         self.media_type = ref.media_type;
@@ -289,12 +289,14 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
                 self.setObjReference(data.ref);
             }
         };
+
+        return self;
     }
 
     function ImageReference(ref) {
         'use strict';
         var self = {};
-        BaseMediaReference.call(self, ref);
+        self = BaseMediaReference(ref);
         self.upload_controller = HQMediaUploaders['hqimage'];
         self.preview_template = "image-preview-template";
         self.thumb_url = ko.computed(function () {
@@ -310,10 +312,11 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
 
     function AudioReference(ref) {
         'use strict';
-        BaseMediaReference.call(this, ref);
-        var self = this;
+        var self = {};
+        self = BaseMediaReference(ref);
         self.upload_controller = HQMediaUploaders['hqaudio'];
         self.preview_template = "audio-preview-template";
+        return self;
     }
 
     AudioReference.prototype = Object.create(BaseMediaReference.prototype);
@@ -322,10 +325,11 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
 
     function VideoReference(ref) {
         'use strict';
-        BaseMediaReference.call(this, ref);
-        var self = this;
+        var self = {};
+        self = BaseMediaReference(ref);
         self.upload_controller = HQMediaUploaders['hqvideo'];
         self.preview_template = "video-preview-template";
+        return self;
     }
 
     VideoReference.prototype = Object.create(BaseMediaReference.prototype);
