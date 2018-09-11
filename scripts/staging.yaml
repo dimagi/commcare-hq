@@ -68,6 +68,7 @@ branches:
   - jls/select2-upgrade-locations  # Jenny Sept 10
   - rn_fix_role_delete # Rohit sept 11
   - migratin_user_pages # Rohit sept 11
+  - rn_fix_duplicate_lang_Error # Rohit Sept 11 
 submodules:
   submodules/django-digest-src:
     branches: []
