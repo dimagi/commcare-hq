@@ -39,7 +39,7 @@ import re
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 
-from couchexport.writers import XlsxLengthException
+from couchexport.writers import XlsLengthException
 
 from djangular.views.mixins import allow_remote_invocation
 import pytz
@@ -481,11 +481,11 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             download = self._get_download_task(in_data)
         except ExportAsyncException as e:
             return format_angular_error(e.message, log_error=True)
-        except XlsxLengthException:
+        except XlsLengthException:
             return format_angular_error(
                 error_msg=_('This file has more than 256 columns, which is not supported '
-                            'by xlsx. Please change the output type to csv to export this '
-                            'file.', log_error=False))
+                            'by xls. Please change the output type to csv or xlsx to export this '
+                            'file.'), log_error=False)
         except Exception:
             return format_angular_error(_("There was an error."), log_error=True)
         send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, self.request)
