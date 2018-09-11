@@ -17,7 +17,7 @@ from pillowtop.models import kafka_seq_to_str
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 from six.moves import range
 
-MIN_TIMEOUT = 100
+MIN_TIMEOUT = 500
 
 
 class KafkaChangeFeed(ChangeFeed):
