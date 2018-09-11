@@ -1772,4 +1772,4 @@ class DishaAPIView(View):
     @property
     @quickcache([])
     def valid_state_names(self):
-        return AwcLocationMonths.objects.values_list('state_name', flat=True).distinct()
+        return list(AwcLocationMonths.objects.values_list('state_name', flat=True).distinct())
