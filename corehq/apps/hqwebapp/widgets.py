@@ -65,9 +65,9 @@ class _Select2Mixin(object):
 
     class Media(object):
         css = {
-            'all': ('select2-3.4.5-legacy/select2.css',)
+            'all': ('select2-3.5.2-legacy/select2.css',)
         }
-        js = ('select2-3.4.5-legacy/select2.js',)
+        js = ('select2-3.5.2-legacy/select2.js',)
 
     def render(self, name, value, attrs=None, choices=()):
         output = super(_Select2Mixin, self).render(name, value, attrs)
