@@ -51,7 +51,7 @@ numpy==1.7.1
 six==1.11.0
 socketpool==0.5.3
 markdown==2.2.1
-sqlagg==0.10.3
+sqlagg==0.10.4
 django-redis==4.2
 redis==2.10.5
 twilio==6.5.1
