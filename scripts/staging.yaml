@@ -56,7 +56,7 @@ branches:
   - nh/omrs/atom+create  # Norman Aug 23
   - pv/deactivated-users # Preethi Aug 23
   - rn_migrating_sms_pages # Rohit Aug 29
-#  - jls/requirejs-domain-billing+rn_migrating_more_messaging_pages  # Jenny Sept 5
+  - jls/requirejs-domain-billing+rn_migrating_more_messaging_pages  # Jenny Sept 5
   - jls/requirejs-domain-billing  # Jenny Sept 2
   - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
   - sr-batch-ucrpillow # Sravan Sept 4
