@@ -442,7 +442,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
         content_readable = content
         if isinstance(content, six.text_type):
             content_readable = StringIO(content)
-        elif isinstance(content, six.binary_type):
+        elif isinstance(content, bytes):
             content_readable = BytesIO(content)
         db = get_blob_db()
         bucket = self.blobdb_bucket()

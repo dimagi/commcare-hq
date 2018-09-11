@@ -113,9 +113,9 @@ def parse_normalize(xml, to_string=True, is_html=False):
 
 def _check_shared(expected, actual, checker, extension):
     # snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
-    if isinstance(expected, six.binary_type):
+    if isinstance(expected, bytes):
         expected = expected.decode('utf-8')
-    if isinstance(actual, six.binary_type):
+    if isinstance(actual, bytes):
         actual = actual.decode('utf-8')
     if not checker.check_output(expected, actual, 0):
         original_message = message = "{} mismatch\n\n".format(extension.upper())

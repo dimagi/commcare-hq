@@ -579,7 +579,7 @@ class CaseTileHelper(object):
                     )
                 ).serialize()
             )
-        return ''.join([six.binary_type(variable).decode('utf-8') for variable in variables])
+        return ''.join([bytes(variable).decode('utf-8') for variable in variables])
 
     @property
     @memoized
