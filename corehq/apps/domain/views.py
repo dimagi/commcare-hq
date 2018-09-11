@@ -55,7 +55,6 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
-    use_select2_v4,
     use_multiselect,
 )
 from corehq.apps.accounting.exceptions import (
@@ -350,7 +349,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     page_title = ugettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
-    @use_select2_v4
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
