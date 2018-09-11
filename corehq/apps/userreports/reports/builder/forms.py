@@ -10,6 +10,7 @@ from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.userreports.app_manager.data_source_meta import get_app_data_source_meta, DATA_SOURCE_TYPE_VALUES
+from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE
 
 from corehq.apps.userreports.reports.builder.columns import (
     QuestionColumnOption,
@@ -834,10 +835,7 @@ class ConfigureNewReportBase(forms.Form):
         if app_id:
             self.app = Application.get(app_id)
         else:
-            raise BadBuilderConfigError(_(
-                "Report builder data source doesn't reference an application. "
-                "It is likely this report has been customized and it is no longer editable. "
-            ))
+            raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
 
     @property
     def _configured_columns(self):

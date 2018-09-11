@@ -68,7 +68,7 @@ from corehq.apps.userreports.const import (
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
-)
+    DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -464,11 +464,7 @@ class ConfigureReport(ReportBuilderView):
             self.source_id = self.request.GET['source']
 
         if not self.app_id:
-            raise BadBuilderConfigError(_(
-                "Report builder data source doesn't reference an application. "
-                "It is likely this report has been customized and it is no longer editable. "
-            ))
-
+            raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         try:
             data_source_interface = get_data_source_interface(
                 self.domain, self.app, self.source_type, self.source_id

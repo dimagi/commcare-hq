@@ -12,6 +12,10 @@ DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE = _(
     'In order to view this data using the Report Builder you will have to delete this report '
     'and then build it again. Click below to delete it.'
 )
+DATA_SOURCE_MISSING_APP_ERROR_MESSAGE = _(
+    "Report builder data source doesn't reference an application. "
+    "It is likely this report has been customized and it is no longer editable. "
+)
 
 UCR_SQL_BACKEND = "SQL"
 
