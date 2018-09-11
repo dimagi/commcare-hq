@@ -208,8 +208,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain'),
-    ModelDeletion('data_interfaces', 'AutomaticUpdateAction', 'rule__domain'),
-    ModelDeletion('data_interfaces', 'AutomaticUpdateRuleCriteria', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleAction', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleCriteria', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'rule__domain'),

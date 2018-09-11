@@ -7,8 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
-    AutomaticUpdateRuleCriteria,
-    AutomaticUpdateAction, AUTO_UPDATE_XMLNS,
+    AUTO_UPDATE_XMLNS,
     MatchPropertyDefinition,
     ClosedParentDefinition,
     CustomMatchDefinition,
