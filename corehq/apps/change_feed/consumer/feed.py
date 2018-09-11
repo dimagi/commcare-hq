@@ -17,7 +17,7 @@ from pillowtop.models import kafka_seq_to_str
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 from six.moves import range
 
-MIN_TIMEOUT = 500
+MIN_TIMEOUT = 100
 
 
 class KafkaChangeFeed(ChangeFeed):
@@ -65,7 +65,8 @@ class KafkaChangeFeed(ChangeFeed):
         if since is not None and (not isinstance(since, dict) or not since):
             raise ValueError("'since' must be None or a topic offset dictionary")
 
-        timeout = float('inf') if forever else MIN_TIMEOUT
+        # in milliseconds, -1 means wait forever for changes
+        timeout = -1 if forever else MIN_TIMEOUT
 
         start_from_latest = since is None
 
@@ -131,8 +132,6 @@ class KafkaChangeFeed(ChangeFeed):
             'bootstrap_servers': settings.KAFKA_BROKERS,
             'consumer_timeout_ms': timeout,
             'auto_offset_reset': auto_offset_reset,
-            'api_version': settings.KAFKA_API_VERSION,
-            'enable_auto_commit': False,
         }
         return KafkaConsumer(
             **config

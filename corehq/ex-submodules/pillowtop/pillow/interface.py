@@ -5,6 +5,8 @@ from datetime import datetime
 
 import sys
 
+from django.db.utils import DatabaseError, InterfaceError
+
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
