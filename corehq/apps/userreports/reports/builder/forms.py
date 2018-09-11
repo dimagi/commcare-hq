@@ -9,7 +9,8 @@ from django.conf import settings
 from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
-from corehq.apps.userreports.app_manager.data_source_meta import get_app_data_source_meta, APP_DATA_SOURCE_TYPE_VALUES
+from corehq.apps.userreports.app_manager.data_source_meta import get_app_data_source_meta, \
+    APP_DATA_SOURCE_TYPE_VALUES, REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
 from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE
 
 from corehq.apps.userreports.reports.builder.columns import (
@@ -800,7 +801,7 @@ class ConfigureNewReportBase(forms.Form):
             self._bootstrap(self.existing_report)
         else:
             self.report_name = report_name
-            assert source_type in ['case', 'form', 'data_source']
+            assert source_type in REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
             self.source_type = source_type
             self.report_source_id = report_source_id
             self.app = Application.get(app_id)
