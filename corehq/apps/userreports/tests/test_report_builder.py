@@ -72,6 +72,17 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             ]
         }
         self.assertEqual(expected_filter, builder.filter)
+        expected_property_names = [
+            'username', 'userID', 'timeStart', 'timeEnd', 'deviceID',
+            '/data/first_name', '/data/last_name', '/data/children', '/data/dob', '/data/state'
+        ]
+        self.assertEqual(expected_property_names, builder.data_source_properties.keys())
+        user_id_prop = builder.data_source_properties['userID']
+        self.assertEqual('userID', user_id_prop.get_id())
+        self.assertEqual('User ID', user_id_prop.get_text())
+        name_prop = builder.data_source_properties['/data/first_name']
+        self.assertEqual('/data/first_name', name_prop.get_id())
+        self.assertEqual('First Name', name_prop.get_text())
 
     def test_builder_for_cases(self):
         builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
