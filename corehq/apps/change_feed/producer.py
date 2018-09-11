@@ -18,7 +18,7 @@ def send_to_kafka(producer, topic, change_meta):
         if six.PY3:
             change_meta_json = change_meta_json.encode('utf-8')
         producer.send_messages(
-            topic.encode('utf-8'),
+            topic,
             change_meta_json,
         )
 
