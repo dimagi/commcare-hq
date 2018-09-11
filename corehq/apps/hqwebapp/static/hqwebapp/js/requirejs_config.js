@@ -12,6 +12,8 @@ requirejs.config({
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
     },
     shim: {
+        "accounting/js/lib/stripe": { exports: 'Stripe' },
+        "ace-builds/src-min-noconflict/ace": { exports: "ace" },
         "bootstrap": { deps: ['jquery'] },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
@@ -20,7 +22,7 @@ requirejs.config({
             deps: ['jquery', 'knockout', 'underscore'],
             exports: 'RMI',
         },
-        "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "nvd3/nv.d3.min":{deps:['d3/d3.min']},
     },
     map: {
         "datatables.fixedColumns": {
