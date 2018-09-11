@@ -272,13 +272,12 @@ def server_up(req):
     statuses = run_checks(checks_to_do)
     failed_checks = [(check, status) for check, status in statuses if not status.success]
 
-    tags = [
-        'status:{}'.format('failed' if failed_checks else 'ok'),
-    ]
     for check_name, status in statuses:
-        datadog_gauge('commcare.serverup.check', status.duration, tags=tags + [
+        tags = [
+            'status:{}'.format('failed' if not status.success else 'ok'),
             'check:{}'.format(check_name)
-        ])
+        ]
+        datadog_gauge('commcare.serverup.check', status.duration, tags=tags)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
