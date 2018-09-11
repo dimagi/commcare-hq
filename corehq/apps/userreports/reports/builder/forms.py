@@ -243,9 +243,15 @@ class ReportBuilderDataSourceInterface(six.with_metaclass(ABCMeta)):
     """
 
     @abstractproperty
-    def uses_temp_data_source(self):
+    def uses_managed_data_source(self):
         """
-        Whether this interface uses the temporary data source workflow.
+        Whether this interface uses a managed data source.
+
+        If true, the data source will be created / modified with the report, and the
+        temporary data source workflow will be enageld.
+
+        If false, the data source is assumed to exist and be available as self.source_id.
+
         :return:
         """
         pass
@@ -305,7 +311,7 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
         self.source_id = source_id
 
     @property
-    def uses_temp_data_source(self):
+    def uses_managed_data_source(self):
         return False
 
     @property
@@ -373,7 +379,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
 
     @property
-    def uses_temp_data_source(self):
+    def uses_managed_data_source(self):
         return True
 
     @property
@@ -954,7 +960,7 @@ class ConfigureNewReportBase(forms.Form):
         """
         Build a temp datasource and return the ID
         """
-        if not self.ds_builder.uses_temp_data_source:
+        if not self.ds_builder.uses_managed_data_source:
             # if the data source interface doens't use a temp data source then the id is just the source_id
             return self.ds_builder.source_id
 
@@ -1003,7 +1009,7 @@ class ConfigureNewReportBase(forms.Form):
         data_source_config.save()
 
     def _update_temp_datasource(self, data_source_config_id, username):
-        if not self.ds_builder.uses_temp_data_source:
+        if not self.ds_builder.uses_managed_data_source:
             return
 
         data_source_config = DataSourceConfiguration.get(data_source_config_id)
