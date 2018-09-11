@@ -4,7 +4,7 @@ hqDefine("users/js/web_users",[
     'underscore',
     "hqwebapp/js/initial_page_data",
     'users/js/roles',
-    'bootstrap',
+    'bootstrap', // for bootstrap modal
     'hqwebapp/js/components.ko',    // pagination widget
     'hqwebapp/js/knockout_bindings.ko', // for staticChecked data binding in web_users.html
 ], function ($, ko, _, initialPageData, userRoles) {
