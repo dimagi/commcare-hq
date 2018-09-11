@@ -98,7 +98,7 @@ def paginate_releases(request, domain, app_id):
         app_es = app_es.is_released()
     if build_comment:
         app_es = app_es.build_comment(build_comment)
-    results = app_es.run()
+    results = app_es.exclude_source().run()
     app_ids = results.doc_ids
     apps = get_docs(Application.get_db(), app_ids)
     for app in apps:
