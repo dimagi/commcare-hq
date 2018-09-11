@@ -294,10 +294,13 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
 
         datadog_histogram('commcare.change_feed.chunked.processing_time_total', processing_time,
             tags=tags + ["chunk_size:{}".format(str(len(changes_chunk)))])
-        datadog_histogram(
-            'commcare.change_feed.processing_time',
-            processing_time / len(changes_chunk),
-            tags=tags + ["chunk_size:".format(str(len(changes_chunk)))])
+
+        if len(changes_chunk) == self.processor_chunk_size:
+            # don't report offset chunks to ease up datadog calculations
+            datadog_histogram(
+                'commcare.change_feed.processing_time',
+                processing_time / len(changes_chunk),
+                tags=tags + ["chunk_size:".format(str(len(changes_chunk)))])
 
     def _record_checkpoint_in_datadog(self):
         datadog_counter('commcare.change_feed.change_feed.checkpoint', tags=[
