@@ -10,7 +10,7 @@ from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.userreports.app_manager.data_source_meta import get_app_data_source_meta, \
-    APP_DATA_SOURCE_TYPE_VALUES, REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
+    APP_DATA_SOURCE_TYPE_VALUES, REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES, DATA_SOURCE_TYPE_RAW
 from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE
 
 from corehq.apps.userreports.reports.builder.columns import (
@@ -806,8 +806,8 @@ class ConfigureNewReportBase(forms.Form):
             self.source_type = source_type
             self.report_source_id = report_source_id
             self.app = Application.get(app_id)
+            self.domain = self.app.domain
 
-        self.domain = self.app.domain
         self.ds_builder = get_data_source_interface(
             self.domain, self.app, self.source_type, self.report_source_id
         )
@@ -830,12 +830,19 @@ class ConfigureNewReportBase(forms.Form):
         self.report_name = existing_report.title
 
         self.source_type = get_source_type_from_report_config(existing_report)
-        self.report_source_id = existing_report.config.meta.build.source_id
-        app_id = existing_report.config.meta.build.app_id
-        if app_id:
-            self.app = Application.get(app_id)
+        self.domain = existing_report.domain
+        if self.source_type in APP_DATA_SOURCE_TYPE_VALUES:
+            self.report_source_id = existing_report.config.meta.build.source_id
+            app_id = existing_report.config.meta.build.app_id
+            if app_id:
+                self.app = Application.get(app_id)
+            else:
+                raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         else:
-            raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
+            assert self.source_type == DATA_SOURCE_TYPE_RAW
+            self.report_source_id = existing_report.config_id
+            self.app = None
+
 
     @property
     def _configured_columns(self):
