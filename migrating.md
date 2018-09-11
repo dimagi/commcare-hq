@@ -120,19 +120,15 @@ Common issues on non-RequireJS pages:
 
 Tactics that can help track down problems with the RequireJS build process, which usually manifest as errors that happen on staging but not locally:
 
-- To turn off minification, add an `optimize: none` line to [requirejs.yaml](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/static/hqwebapp/yaml/requirejs.yaml).
+- To turn off minification, you can run `build_requirejs` with the `--no_optimize` option. This also makes the script run much faster.
 - To stop using the CDN, comment out [resource_versions.js in hqwebapp/base.html](https://github.com/dimagi/commcare-hq/pull/18116/files#diff-1ecb20ffccb745a5c0fc279837215a25R433). Note that this will still fetch a few files, such as `hqModules.js` and `requirejs_config.js`, from the CDN. To turn off the CDN entirely, comment out all of the code that manipulates `resource_versions` in [build_requirejs](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/build_requirejs.py).
 - To mimic the entire build process locally:
    - Collect static files: `manage.py collectstatic --noinput`  This is necessary if you've made any changes to `requirejs.yaml` or `requirejs_config.js`, since the build script pulls these files from `staticfiles`, not `corehq`.
    - Compile translation files: `manage.py compilejsi18n`
-   - Run build script: `manage.py build_requirejs`
-   - Copy build-generated files back into `corehq` since you're in a development environment:
-      - Updated config, including bundle setup: `cp staticfiles/hqwebapp/js/requirejs_config.js corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js`
-      - CDN paths: `cp staticfiles/hqwebapp/js/resource_versions.js corehq/apps/hqwebapp/static/hqwebapp/js/resource_versions.js`
-      - Bundles
-         - `cp staticfiles/hqwebapp/js/common.js corehq/apps/hqwebapp/static/hqwebapp/js/common.js`
-         - `cp staticfiles/hqwebapp/js/bundle.js   corehq/apps/hqwebapp/static/hqwebapp/js/bundle.js`
-         - ...and the same for any other bundles used on the page you're testing. The easiest way to check this is to open the page on staging, open the browser console, and check the resources tab to see what javascript files are requested.
+   - Run the build script: `manage.py build_requirejs --local`
+      - This will **overwrite** your local versions of `requirejs_config.js` and `resource_versions.js`, so be cautious running it if you have uncommitted changes.
+      - This will also copy the generated bundle files from `staticfiles` back into `corehq`.
+      - If you don't need to test locally but just want to see the results of dependency tracing, leave off the `--local`. A list of each bundle's contents will be written to `staticfiles/build.txt`, but no files will be added to or overwritten in `corehq`.
 
 ## Moving away from classical inheritance
 
