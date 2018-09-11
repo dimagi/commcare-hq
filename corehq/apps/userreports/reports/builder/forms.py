@@ -1000,6 +1000,9 @@ class ConfigureNewReportBase(forms.Form):
         data_source_config.save()
 
     def _update_temp_datasource(self, data_source_config_id, username):
+        if not self.ds_builder.uses_temp_data_source:
+            return
+
         data_source_config = DataSourceConfiguration.get(data_source_config_id)
 
         filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
