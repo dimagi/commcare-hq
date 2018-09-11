@@ -299,8 +299,8 @@ subclasses.
 
 The `PatientFinder.find_patients()` method must be implemented by
 subclasses. It returns a list of zero, one, or many patients. If it
-returns one patient, the OpenmrsRepeater.find_patient() will accept that
-patient as a true match.
+returns one patient, the OpenmrsRepeater.find_or_create_patient() will
+accept that patient as a true match.
 
 **NOTE**: The consequences of a false positive (a Type II error) are
 severe: A real patient will have their valid values overwritten by those

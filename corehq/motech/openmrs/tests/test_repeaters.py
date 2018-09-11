@@ -24,7 +24,7 @@ from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 from corehq.util.test_utils import TestFileMixin, _create_case
 import corehq.motech.openmrs.repeater_helpers
 from corehq.motech.openmrs.repeater_helpers import (
-    find_patient,
+    find_or_create_patient,
     get_case_location,
     get_case_location_ancestor_repeaters,
     get_openmrs_location_uuid,
@@ -467,7 +467,7 @@ class FindPatientTest(SimpleTestCase):
             CaseAccessorsPatch.return_value = mock.Mock(get_case=mock.Mock())
             create_patient_patch.return_value = None
 
-            find_patient(requests, DOMAIN, info, openmrs_config)
+            find_or_create_patient(requests, DOMAIN, info, openmrs_config)
 
             create_patient_patch.assert_called()
 

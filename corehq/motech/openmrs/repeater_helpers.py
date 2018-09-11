@@ -598,7 +598,7 @@ def create_patient(requests, info, case_config):
             return get_patient_by_uuid(requests, response.json()['uuid'])
 
 
-def find_patient(requests, domain, info, openmrs_config):
+def find_or_create_patient(requests, domain, info, openmrs_config):
     case = CaseAccessors(domain).get_case(info.case_id)
     patient_finder = PatientFinder.wrap(openmrs_config.case_config.patient_finder)
     patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
@@ -629,7 +629,7 @@ def get_patient(requests, domain, info, openmrs_config):
         # Definitive IDs did not match a patient in OpenMRS.
         if openmrs_config.case_config.patient_finder:
             # Search for patients based on other case properties
-            patient = find_patient(requests, domain, info, openmrs_config)
+            patient = find_or_create_patient(requests, domain, info, openmrs_config)
 
     return patient
 

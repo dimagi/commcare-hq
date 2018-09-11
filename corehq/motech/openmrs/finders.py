@@ -55,7 +55,7 @@ class PatientFinder(DocumentSchema):
     Subclasses must implement the `find_patients()` method.
     """
 
-    # If no patients are found, should a new one be created?
+    # Whether to create a new patient if no patients are found
     create_missing = BooleanProperty(default=False)
 
     @classmethod
