@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from abc import ABCMeta
 from collections import namedtuple, OrderedDict
 import datetime
 import uuid
@@ -229,8 +231,29 @@ class DataSourceProperty(object):
         return self.to_report_column_option()._get_indicator(ui_aggregation)
 
 
-class DataSourceBuilder(object):
+class ReportBuilderDataSourceInterface(six.with_metaclass(ABCMeta)):
     """
+    Abstract interface to a data source in report builder.
+
+    A data source could be an (app, form), (app, case_type) pair (see DataSourceBuilder),
+    or it can be a real UCR data soure (see ReportBuilderDataSourceReference)
+    """
+    pass
+
+
+class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
+    """
+    A ReportBuilderDataSourceInterface that encapsulates an existing data source.
+    """
+    pass
+
+
+class DataSourceBuilder(ReportBuilderDataSourceInterface):
+    """
+    A ReportBuilderDataSourceInterface that encapsulates an (app, form) or (app, case_type) pair.
+    It also provides convenience methods for creating the underlying UCR data source associated
+    with the data.
+
     When configuring a report, one can use DataSourceBuilder to determine some
     of the properties of the required report data source, such as:
         - referenced doc type
