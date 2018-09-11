@@ -31,6 +31,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.userreports.reports.builder.sources import get_source_type_from_report_config
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -450,10 +451,7 @@ class ConfigureReport(ReportBuilderView):
     @use_nvd3
     def dispatch(self, request, *args, **kwargs):
         if self.existing_report:
-            self.source_type = {
-                "CommCareCase": "case",
-                "XFormInstance": "form"
-            }[self.existing_report.config.referenced_doc_type]
+            self.source_type = get_source_type_from_report_config(self.existing_report)
             self.source_id = self.existing_report.config.meta.build.source_id
             self.app_id = self.existing_report.config.meta.build.app_id
             self.app = Application.get(self.app_id) if self.app_id else None

@@ -60,6 +60,7 @@ from corehq.apps.userreports.reports.builder.const import (
     UI_AGG_GROUP_BY,
     UI_AGG_SUM,
     PROPERTY_TYPE_RAW)
+from corehq.apps.userreports.reports.builder.sources import get_source_type_from_report_config
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
@@ -827,10 +828,8 @@ class ConfigureNewReportBase(forms.Form):
         form. This method is used when editing an existing report.
         """
         self.report_name = existing_report.title
-        self.source_type = {
-            "CommCareCase": "case",
-            "XFormInstance": "form"
-        }[existing_report.config.referenced_doc_type]
+
+        self.source_type = get_source_type_from_report_config(existing_report)
         self.report_source_id = existing_report.config.meta.build.source_id
         app_id = existing_report.config.meta.build.app_id
         if app_id:
