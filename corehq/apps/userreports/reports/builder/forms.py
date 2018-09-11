@@ -9,7 +9,7 @@ from django.conf import settings
 from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
-from corehq.apps.userreports.app_manager.data_source_meta import get_app_data_source_meta, DATA_SOURCE_TYPE_VALUES
+from corehq.apps.userreports.app_manager.data_source_meta import get_app_data_source_meta, APP_DATA_SOURCE_TYPE_VALUES
 from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE
 
 from corehq.apps.userreports.reports.builder.columns import (
@@ -673,7 +673,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
 
 
 def get_data_source_interface(domain, app, source_type, source_id):
-    if source_type in DATA_SOURCE_TYPE_VALUES:
+    if source_type in APP_DATA_SOURCE_TYPE_VALUES:
         return DataSourceBuilder(domain, app, source_type, source_id)
     else:
         return ReportBuilderDataSourceReference(domain, app, source_type, source_id)

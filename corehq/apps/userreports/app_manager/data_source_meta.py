@@ -9,7 +9,7 @@ from corehq.apps.app_manager.xform import XForm
 DATA_SOURCE_TYPE_CASE = 'case'
 DATA_SOURCE_TYPE_FORM = 'form'
 DATA_SOURCE_TYPE_RAW = 'data_source'  # this is only used in report builder
-DATA_SOURCE_TYPE_VALUES = (DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM)
+APP_DATA_SOURCE_TYPE_VALUES = (DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM)
 DATA_SOURCE_TYPE_CHOICES = (
     (DATA_SOURCE_TYPE_CASE, _("Cases")),
     (DATA_SOURCE_TYPE_FORM, _("Forms")),
@@ -70,7 +70,7 @@ def get_app_data_source_meta(domain, data_source_type, data_source_id):
     :param data_source_id: for forms - the unique form ID, for cases the case type
     :return: an AppDataSourceMeta object corresponding to the data source type and ID
     """
-    assert data_source_type in DATA_SOURCE_TYPE_VALUES
+    assert data_source_type in APP_DATA_SOURCE_TYPE_VALUES
     if data_source_type == DATA_SOURCE_TYPE_CASE:
         return CaseDataSourceMeta(domain, data_source_type, data_source_id)
     else:
