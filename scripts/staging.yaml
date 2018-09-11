@@ -66,6 +66,7 @@ branches:
   - sr-batch-ucrpillow # Sravan Sept 4
   - rn_migratin_download_index # Rohit Sept 10
   - jls/select2-upgrade-locations  # Jenny Sept 10
+  - migratin_user_pages # Rohit sept 11
 submodules:
   submodules/django-digest-src:
     branches: []
