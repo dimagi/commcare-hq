@@ -14,7 +14,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 
-from corehq.apps.hqwebapp.widgets import Select2Ajax
+from corehq.apps.hqwebapp.widgets import Select2AjaxV3
 from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
 
@@ -38,8 +38,8 @@ from six.moves import filter
 
 
 class LocationSelectWidget(forms.Widget):
-
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None,
+                 select2_version=None):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
@@ -49,13 +49,21 @@ class LocationSelectWidget(forms.Widget):
         else:
             self.query_url = reverse('child_locations_for_select2', args=[self.domain])
 
+        versioned_templates = {
+            'v3': 'locations/manage/partials/autocomplete_select_widget_v3.html',
+            'v4': 'locations/manage/partials/autocomplete_select_widget_v4.html',
+        }
+        if select2_version not in versioned_templates:
+            raise ValueError("select2_version must be in {}".format(", ".join(list(versioned_templates.keys()))))
+        self.template = versioned_templates[select2_version]
+
     def render(self, name, value, attrs=None):
         location_ids = value.split(',') if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
         initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
 
-        return get_template('locations/manage/partials/autocomplete_select_widget.html').render({
+        return get_template(self.template).render({
             'id': self.id,
             'name': name,
             'value': ','.join(loc.location_id for loc in locations),
@@ -524,7 +532,7 @@ class UsersAtLocationForm(forms.Form):
     selected_ids = forms.Field(
         label=ugettext_lazy("Workers at Location"),
         required=False,
-        widget=Select2Ajax(multiple=True),
+        widget=Select2AjaxV3(multiple=True),
     )
 
     def __init__(self, domain_object, location, *args, **kwargs):
@@ -638,7 +646,7 @@ class RelatedLocationForm(forms.Form):
         super(RelatedLocationForm, self).__init__(*args, **kwargs)
 
         self.fields['related_locations'].widget = LocationSelectWidget(
-            domain, id='id_related_locations', multiselect=True
+            domain, id='id_related_locations', multiselect=True, select2_version='v3'
         )
 
         locations = (
