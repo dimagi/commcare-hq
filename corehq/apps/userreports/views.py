@@ -30,6 +30,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
+from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -171,11 +172,10 @@ class BaseUserConfigReportsView(BaseDomainView):
     @property
     def main_context(self):
         static_reports = list(StaticReportConfiguration.by_domain(self.domain))
-        static_data_sources = list(StaticDataSourceConfiguration.by_domain(self.domain))
         context = super(BaseUserConfigReportsView, self).main_context
         context.update({
             'reports': ReportConfiguration.by_domain(self.domain) + static_reports,
-            'data_sources': DataSourceConfiguration.by_domain(self.domain) + static_data_sources,
+            'data_sources': get_datasources_for_domain(self.domain, include_static=True)
         })
         if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
             from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
