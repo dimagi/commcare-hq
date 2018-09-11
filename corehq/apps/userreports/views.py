@@ -92,10 +92,9 @@ from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
     DataSourceForm,
     ConfigureMapReportForm,
-    DataSourceBuilder,
     ConfigureListReportForm,
     ConfigureTableReportForm,
-)
+    get_data_source_interface)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
@@ -471,7 +470,9 @@ class ConfigureReport(ReportBuilderView):
             ))
 
         try:
-            data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+            data_source_interface = get_data_source_interface(
+                self.domain, self.app, self.source_type, self.source_id
+            )
         except ResourceNotFound:
             self.template_name = 'userreports/report_error.html'
             if self.existing_report:
@@ -483,7 +484,7 @@ class ConfigureReport(ReportBuilderView):
             context.update(self.main_context)
             return self.render_to_response(context)
 
-        self._populate_data_source_properties_from_builder(data_source_builder)
+        self._populate_data_source_properties_from_interface(data_source_interface)
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -497,9 +498,9 @@ class ConfigureReport(ReportBuilderView):
             return self.existing_report.description or None
         return None
 
-    def _populate_data_source_properties_from_builder(self, data_source_builder):
+    def _populate_data_source_properties_from_interface(self, data_source_interface):
         self._properties_by_column_id = {}
-        for p in data_source_builder.data_source_properties.values():
+        for p in data_source_interface.data_source_properties.values():
             column = p.to_report_column_option()
             for agg in column.aggregation_options:
                 indicators = column.get_indicators(agg)

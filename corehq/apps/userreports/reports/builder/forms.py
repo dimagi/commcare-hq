@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from abc import ABCMeta
+from abc import ABCMeta, abstractproperty
 from collections import namedtuple, OrderedDict
 import datetime
 import uuid
@@ -9,7 +9,7 @@ from django.conf import settings
 from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
-from corehq.apps.userreports.app_manager.data_source_meta import get_app_data_source_meta
+from corehq.apps.userreports.app_manager.data_source_meta import get_app_data_source_meta, DATA_SOURCE_TYPE_VALUES
 
 from corehq.apps.userreports.reports.builder.columns import (
     QuestionColumnOption,
@@ -238,14 +238,69 @@ class ReportBuilderDataSourceInterface(six.with_metaclass(ABCMeta)):
     A data source could be an (app, form), (app, case_type) pair (see DataSourceBuilder),
     or it can be a real UCR data soure (see ReportBuilderDataSourceReference)
     """
-    pass
+    @abstractproperty
+    def data_source_properties(self):
+        """
+        A dictionary containing the various properties that may be used as indicators
+        or columns in the data source or report.
+
+        Keys are strings that uniquely identify properties.
+        Values are DataSourceProperty instances.
+
+        >> self.data_source_properties
+        {
+            "/data/question1": DataSourceProperty(
+                type="question",
+                id="/data/question1",
+                text="Enter the child's name",
+                source={
+                    'repeat': None,
+                    'group': None,
+                    'value': '/data/question1',
+                    'label': 'question1',
+                    'tag': 'input',
+                    'type': 'Text'
+                },
+                data_types=["string"]
+            ),
+            "meta/deviceID": DataSourceProperty(
+                type="meta",
+                id="meta/deviceID",
+                text="deviceID",
+                source=("deviceID", "string"),
+                data_types=["string"]
+            )
+        }
+        """
+        pass
+
+    @abstractproperty
+    def report_column_options(self):
+        pass
 
 
 class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
     """
     A ReportBuilderDataSourceInterface that encapsulates an existing data source.
     """
-    pass
+
+    def __init__(self, domain, app, source_type, source_id):
+        assert source_type == 'data_source'
+        self.domain = domain
+        self.app = app
+        self.source_type = source_type
+        # source_id is the ID of a UCR data source
+        self.source_id = source_id
+
+    @property
+    def data_source_properties(self):
+        # todo
+        return {}
+
+    @property
+    def report_column_options(self):
+        # todo
+        return {}
 
 
 class DataSourceBuilder(ReportBuilderDataSourceInterface):
@@ -406,39 +461,6 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
     @property
     @memoized
     def data_source_properties(self):
-        """
-        A dictionary containing the various properties that may be used as indicators
-        or columns in the data source or report.
-
-        Keys are strings that uniquely identify properties.
-        Values are DataSourceProperty instances.
-
-        >> self.data_source_properties
-        {
-            "/data/question1": DataSourceProperty(
-                type="question",
-                id="/data/question1",
-                text="Enter the child's name",
-                source={
-                    'repeat': None,
-                    'group': None,
-                    'value': '/data/question1',
-                    'label': 'question1',
-                    'tag': 'input',
-                    'type': 'Text'
-                },
-                data_types=["string"]
-            ),
-            "meta/deviceID": DataSourceProperty(
-                type="meta",
-                id="meta/deviceID",
-                text="deviceID",
-                source=("deviceID", "string"),
-                data_types=["string"]
-            )
-        }
-        """
-
         if self.source_type == 'case':
             return self._get_data_source_properties_from_case(self.case_properties)
 
@@ -602,6 +624,13 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
 
 
+def get_data_source_interface(domain, app, source_type, source_id):
+    if source_type in DATA_SOURCE_TYPE_VALUES:
+        return DataSourceBuilder(domain, app, source_type, source_id)
+    else:
+        return ReportBuilderDataSourceReference(domain, app, source_type, source_id)
+
+
 class DataSourceForm(forms.Form):
     report_name = forms.CharField()
 
@@ -723,13 +752,13 @@ class ConfigureNewReportBase(forms.Form):
             self._bootstrap(self.existing_report)
         else:
             self.report_name = report_name
-            assert source_type in ['case', 'form']
+            assert source_type in ['case', 'form', 'data_source']
             self.source_type = source_type
             self.report_source_id = report_source_id
             self.app = Application.get(app_id)
 
         self.domain = self.app.domain
-        self.ds_builder = DataSourceBuilder(
+        self.ds_builder = get_data_source_interface(
             self.domain, self.app, self.source_type, self.report_source_id
         )
         self.report_column_options = self.ds_builder.report_column_options
