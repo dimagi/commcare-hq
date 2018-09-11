@@ -105,6 +105,7 @@ class AutomaticUpdateRule(models.Model):
     # number of days old that a case's server_modified_on date must be
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField(null=True)
+    migrated = models.BooleanField(default=True)
 
     # One of the WORKFLOW_* constants on this class describing the workflow
     # that this rule belongs to.
