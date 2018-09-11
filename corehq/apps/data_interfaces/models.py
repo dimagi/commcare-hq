@@ -105,7 +105,6 @@ class AutomaticUpdateRule(models.Model):
     # number of days old that a case's server_modified_on date must be
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField(null=True)
-    migrated = models.BooleanField(default=False)
 
     # One of the WORKFLOW_* constants on this class describing the workflow
     # that this rule belongs to.
@@ -124,62 +123,6 @@ class AutomaticUpdateRule(models.Model):
 
     def __unicode__(self):
         return six.text_type("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
-
-    def migrate(self):
-        if not self.pk:
-            raise ValueError("Expected model to be saved first")
-
-        with CriticalSection(['migrate-rule-%s' % self.pk]):
-            rule = AutomaticUpdateRule.objects.get(pk=self.pk)
-            if not rule.migrated:
-                with transaction.atomic():
-                    # Migrate Criteria
-                    for old_criteria in rule.automaticupdaterulecriteria_set.all():
-                        property_value = old_criteria.property_value
-                        if old_criteria.match_type == AutomaticUpdateRuleCriteria.MATCH_DAYS_BEFORE:
-                            property_value = int(property_value) * -1
-                            property_value = str(property_value)
-
-                        new_criteria_definition = MatchPropertyDefinition(
-                            property_name=old_criteria.property_name,
-                            property_value=property_value,
-                            match_type=old_criteria.match_type,
-                        )
-                        new_criteria_definition.save()
-
-                        new_criteria = CaseRuleCriteria(rule=rule)
-                        new_criteria.definition = new_criteria_definition
-                        new_criteria.save()
-
-                    # Migrate Actions
-                    properties_to_update = []
-                    close_case = False
-                    for old_action in rule.automaticupdateaction_set.all():
-                        if old_action.action == AutomaticUpdateAction.ACTION_UPDATE:
-                            properties_to_update.append(
-                                UpdateCaseDefinition.PropertyDefinition(
-                                    name=old_action.property_name,
-                                    value_type=old_action.property_value_type,
-                                    value=old_action.property_value,
-                                )
-                            )
-                        elif old_action.action == AutomaticUpdateAction.ACTION_CLOSE:
-                            close_case = True
-                        else:
-                            raise ValueError("Unexpected action found: %s" % old_action.action)
-
-                    new_action_definition = UpdateCaseDefinition(close_case=close_case)
-                    new_action_definition.set_properties_to_update(properties_to_update)
-                    new_action_definition.save()
-
-                    new_action = CaseRuleAction(rule=rule)
-                    new_action.definition = new_action_definition
-                    new_action.save()
-
-                    rule.migrated = True
-                    rule.save()
-
-            return rule
 
     @property
     def references_parent_case(self):
@@ -332,7 +275,6 @@ class AutomaticUpdateRule(models.Model):
                 filter_on_server_modified=self.filter_on_server_modified,
                 server_modified_boundary=self.server_modified_boundary,
                 workflow=self.workflow,
-                migrated=True,
             )
 
             for criterion in self.memoized_criteria:
@@ -626,9 +568,6 @@ class AutomaticUpdateRule(models.Model):
         """
         :return: CaseRuleActionResult object aggregating the results from all actions.
         """
-        if not self.migrated:
-            raise self.MigrationError("Attempted to call new method on non-migrated model.")
-
         if self.deleted:
             raise self.RuleError("Attempted to call run_rule on a deleted rule")
 
@@ -644,9 +583,6 @@ class AutomaticUpdateRule(models.Model):
             return self.run_actions_when_case_does_not_match(case)
 
     def criteria_match(self, case, now):
-        if not self.migrated:
-            raise self.MigrationError("Attempted to call new method on non-migrated model.")
-
         if case.is_deleted or case.closed:
             return False
 
@@ -671,9 +607,6 @@ class AutomaticUpdateRule(models.Model):
         return True
 
     def _run_method_on_action_definitions(self, case, method):
-        if not self.migrated:
-            raise self.MigrationError("Attempted to call new method on non-migrated model.")
-
         aggregated_result = CaseRuleActionResult()
 
         for action in self.memoized_actions:

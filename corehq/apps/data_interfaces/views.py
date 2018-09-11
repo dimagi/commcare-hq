@@ -1040,7 +1040,6 @@ class AddCaseRuleView(DataInterfaceSection):
                     rule = AutomaticUpdateRule(
                         domain=self.domain,
                         active=True,
-                        migrated=True,
                         workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
                     )
 
@@ -1075,9 +1074,6 @@ class EditCaseRuleView(AddCaseRuleView):
             raise Http404()
 
         if rule.domain != self.domain or rule.deleted:
-            raise Http404()
-
-        if not rule.migrated:
             raise Http404()
 
         return rule
