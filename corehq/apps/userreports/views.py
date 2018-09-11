@@ -566,7 +566,7 @@ class ConfigureReport(ReportBuilderView):
         report_form = form_type(
             self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
-        temp_ds_id = report_form.create_temp_data_source(self.request.user.username)
+        temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
 
         return {
             'existing_report': self.existing_report,

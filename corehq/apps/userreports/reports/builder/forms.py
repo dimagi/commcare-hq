@@ -238,6 +238,15 @@ class ReportBuilderDataSourceInterface(six.with_metaclass(ABCMeta)):
     A data source could be an (app, form), (app, case_type) pair (see DataSourceBuilder),
     or it can be a real UCR data soure (see ReportBuilderDataSourceReference)
     """
+
+    @abstractproperty
+    def uses_temp_data_source(self):
+        """
+        Whether this interface uses the temporary data source workflow.
+        :return:
+        """
+        pass
+
     @abstractproperty
     def data_source_properties(self):
         """
@@ -293,6 +302,10 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
         self.source_id = source_id
 
     @property
+    def uses_temp_data_source(self):
+        return False
+
+    @property
     def data_source_properties(self):
         # todo
         return {}
@@ -334,6 +347,10 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 include_parent_properties=True,
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
+
+    @property
+    def uses_temp_data_source(self):
+        return True
 
     @property
     @memoized
@@ -909,10 +926,13 @@ class ConfigureNewReportBase(forms.Form):
         report.save()
         return report
 
-    def create_temp_data_source(self, username):
+    def create_temp_data_source_if_necessary(self, username):
         """
         Build a temp datasource and return the ID
         """
+        if not self.ds_builder.uses_temp_data_source:
+            # if the data source interface doens't use a temp data source then the id is just the source_id
+            return self.ds_builder.source_id
 
         filters = [f._asdict() for f in self.initial_user_filters + self.initial_default_filters]
         columns = [c._asdict() for c in self.initial_columns]

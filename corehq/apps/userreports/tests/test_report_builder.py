@@ -259,7 +259,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
         )
         self.assertTrue(builder_form.is_valid())
         with patch('corehq.apps.userreports.tasks.delete_data_source_task'):
-            data_source_config_id = builder_form.create_temp_data_source('admin@example.com')
+            data_source_config_id = builder_form.create_temp_data_source_if_necessary('admin@example.com')
         data_source = DataSourceConfiguration.get(data_source_config_id)
         indicators = sorted([(ind['column_id'], ind['type']) for ind in data_source.configured_indicators])
         expected_indicators = [
