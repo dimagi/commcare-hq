@@ -4,7 +4,7 @@ hqDefine('locations/js/location_types', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
-    'select2-3.5.2-legacy/select2',
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,

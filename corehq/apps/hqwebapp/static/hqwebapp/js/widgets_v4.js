@@ -4,6 +4,8 @@ hqDefine("hqwebapp/js/widgets_v4", [
     'select2/dist/js/select2.full.min',
 ], function ($, hqWidgets) {
     $(function () {
-        hqWidgets.init();
+        hqWidgets.init({
+            width: '100%',
+        });
     });
 });
