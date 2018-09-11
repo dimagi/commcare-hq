@@ -1,0 +1,31 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load i18n %}
+
+{% block page_content %}
+    {% if can_view_cases %}
+        {# TODO #}
+    {% endif %}
+
+    {% if can_view_forms %}
+        <h2>Find Form Submission</h2>
+        <div class="help-block">
+            {% blocktrans %}
+                Use this to find a specific form submission.
+                IDs can be found in a <a href="{{ form_export_url }}">Form Data Export</a>.
+            {% endblocktrans %}
+        </div>
+        <form method="GET" action="{% url 'global_quick_find' %}" class="form-horizontal">
+            <div class="form-group">
+                <div class="col-sm-4 col-md-3">
+                    <input type="text" name="q" class="form-control" placeholder="{% trans "Form Submission ID"|escapejs %}" />
+                </div>
+                <div class="col-sm-8 col-md-9">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-search"></i>
+                        {% trans "Find" %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    {% endif %}
+{% endblock page_content %}

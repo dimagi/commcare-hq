@@ -10,6 +10,7 @@ import six
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
+from django.views.decorators.http import require_GET
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -20,7 +21,11 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
-from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports, can_download_data_files
+from corehq.apps.users.permissions import (
+    can_view_form_exports,
+    can_view_case_exports,
+    can_download_data_files,
+)
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
     InvalidExcelFileException
@@ -53,6 +58,7 @@ from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, 
 from django.shortcuts import render
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
+from no_exceptions.exceptions import Http403
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -609,6 +615,34 @@ def xform_management_job_poll(request, domain, download_id,
                                        args=[domain, BulkFormManagementInterface.slug])
     })
     return render(request, template, context)
+
+
+@login_and_domain_required
+@require_GET
+def find_by_id(request, domain):
+    can_view_cases = can_view_case_exports(request.couch_user, domain)
+    can_view_forms = can_view_form_exports(request.couch_user, domain)
+
+    if not can_view_cases and not can_view_forms:
+        raise Http403()
+
+    name = _("Find Case or Form Submission by ID")
+    return render(request, 'data_interfaces/find_by_id.html', {
+        'domain': domain,
+        'current_page': {
+            'title': name,
+            'page_name': name,
+        },
+        'section': {
+            'page_name': DataInterfaceSection.section_name,
+            'url': reverse(DataInterfaceSection.urlname, args=[domain]),
+        },
+        'can_view_cases': can_view_cases,
+        'can_view_forms': can_view_forms,
+        'case_export_url': reverse('list_case_exports', args=[domain]),
+        'form_export_url': reverse('list_form_exports', args=[domain]),
+    })
+
 
 
 class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
