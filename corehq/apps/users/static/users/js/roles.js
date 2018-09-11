@@ -1,4 +1,6 @@
-hqDefine('users/js/roles', function () {
+hqDefine('users/js/roles',[
+    'knockout',
+], function (ko) {
     var RolesViewModel = function (o) {
         'use strict';
         var self = this,
