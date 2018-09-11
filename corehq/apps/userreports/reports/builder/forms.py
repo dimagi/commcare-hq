@@ -1241,8 +1241,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     def _get_default_columns(self):
         if self.source_type == "case":
             return self._get_default_case_report_columns()
-        else:
+        elif self.source_type == "form":
             return self._get_default_form_report_columns()
+        else:
+            return []
 
     def _get_default_case_report_columns(self):
         cols = []
