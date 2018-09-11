@@ -65,8 +65,7 @@ class KafkaChangeFeed(ChangeFeed):
         if since is not None and (not isinstance(since, dict) or not since):
             raise ValueError("'since' must be None or a topic offset dictionary")
 
-        # in milliseconds, -1 means wait forever for changes
-        timeout = -1 if forever else MIN_TIMEOUT
+        timeout = float('inf') if forever else MIN_TIMEOUT
 
         start_from_latest = since is None
 
