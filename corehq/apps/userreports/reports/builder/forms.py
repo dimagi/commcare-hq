@@ -924,7 +924,8 @@ class ConfigureNewReportBase(forms.Form):
             report_meta=ReportMeta(
                 created_by_builder=True,
                 report_builder_version="2.0",
-                builder_report_type=self.report_type
+                builder_report_type=self.report_type,
+                builder_source_type=self.source_type,
             )
         )
         report.validate()

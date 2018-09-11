@@ -15,6 +15,7 @@ from django.db import models
 from django.utils.translation import ugettext as _
 import yaml
 
+from corehq.apps.userreports.app_manager.data_source_meta import REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
@@ -473,6 +474,7 @@ class ReportMeta(DocumentSchema):
     edited_manually = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
+    builder_source_type = StringProperty(choices=REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES)
 
 
 class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
