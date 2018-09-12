@@ -14,6 +14,7 @@ from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.messages import wasting_help_text, stunting_help_text
 from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView, CcsRecordMonthly
+from custom.icds_reports.models.views import CcsRecordMonthlyView
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
@@ -1106,7 +1107,7 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
     'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_pregnant(order, reversed_order, awc_id):
-    data = CcsRecordMonthly.objects.filter(
+    data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         pregnant=1,
     ).order_by('case_id', '-age_in_months').distinct('case_id').values(
@@ -1146,7 +1147,7 @@ def get_awc_report_pregnant(order, reversed_order, awc_id):
 
 @quickcache(['case_id', 'awc_id'], timeout=30 * 60)
 def get_pregnant_details(case_id, awc_id):
-    data = CcsRecordMonthly.objects.filter(
+    data = CcsRecordMonthlyView.objects.filter(
         case_id=case_id,
         awc_id=awc_id,
     ).order_by('home_visit_date', '-age_in_months').distinct('home_visit_date').values(
@@ -1205,7 +1206,7 @@ def get_pregnant_details(case_id, awc_id):
     'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_lactating(order, reversed_order, awc_id):
-    data = CcsRecordMonthly.objects.filter(
+    data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         lactating=1,
     ).order_by('case_id', '-age_in_months').distinct('case_id').values(

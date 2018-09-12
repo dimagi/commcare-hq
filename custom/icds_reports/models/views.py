@@ -502,6 +502,76 @@ class AggCcsRecordMonthly(models.Model):
         db_table = 'agg_ccs_record_monthly'
 
 
+class CcsRecordMonthlyView(models.Model):
+    awc_id = models.TextField(primary_key=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    add = models.DateField(blank=True, null=True)
+    age_in_months = models.IntegerField(blank=True, null=True)
+    anc_hemoglobin = models.DecimalField(max_digits=64, decimal_places=20, blank=True, null=True)
+    anc_weight = models.SmallIntegerField(blank=True, null=True)
+    anemic_moderate = models.IntegerField(blank=True, null=True)
+    anemic_normal = models.IntegerField(blank=True, null=True)
+    anemic_severe = models.IntegerField(blank=True, null=True)
+    anemic_unknown = models.IntegerField(blank=True, null=True)
+    bleeding = models.SmallIntegerField(blank=True, null=True)
+    blurred_vision = models.SmallIntegerField(blank=True, null=True)
+    bp_dia = models.SmallIntegerField(blank=True, null=True)
+    bp_sys = models.SmallIntegerField(blank=True, null=True)
+    breastfed_at_birth = models.SmallIntegerField(blank=True, null=True)
+    case_id = models.TextField(primary_key=True)
+    convulsions = models.SmallIntegerField(blank=True, null=True)
+    counsel_accessible_postpartum_fp = models.IntegerField(blank=True, null=True)
+    counsel_bp_vid = models.IntegerField(blank=True, null=True)
+    counsel_fp_methods = models.IntegerField(blank=True, null=True)
+    counsel_fp_vid = models.IntegerField(blank=True, null=True)
+    counsel_immediate_bf = models.IntegerField(blank=True, null=True)
+    counsel_immediate_conception = models.IntegerField(blank=True, null=True)
+    counsel_preparation = models.IntegerField(blank=True, null=True)
+    delivery_nature = models.SmallIntegerField(blank=True, null=True)
+    edd = models.DateField(blank=True, null=True)
+    home_visit_date = models.DateField(blank=True, null=True)
+    ifa_consumed_last_seven_days = models.IntegerField(blank=True, null=True)
+    institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
+    is_ebf = models.SmallIntegerField(blank=True, null=True)
+    last_date_thr = models.DateField(blank=True, null=True)
+    mobile_number = models.TextField(blank=True, null=True)
+    num_anc_complete = models.SmallIntegerField(blank=True, null=True)
+    num_pnc_visits = models.SmallIntegerField(blank=True, null=True)
+    num_rations_distributed = models.IntegerField(blank=True, null=True)
+    opened_on = models.DateField(blank=True, null=True)
+    person_name = models.TextField(blank=True, null=True)
+    preg_order = models.SmallIntegerField(blank=True, null=True)
+    pregnant = models.IntegerField(blank=True, null=True)
+    rupture = models.SmallIntegerField(blank=True, null=True)
+    swelling = models.SmallIntegerField(blank=True, null=True)
+    trimester = models.IntegerField(blank=True, null=True)
+    tt_1 = models.DateField(blank=True, null=True)
+    tt_2 = models.DateField(blank=True, null=True)
+    using_ifa = models.IntegerField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_model'
+        managed = False
+        db_table = 'ccs_record_monthly_view'
+
+
 class AggChildHealthMonthly(models.Model):
     """Contains one row every month for AWC, Superviosr, Block, District, State, gender and age_tranche.
     Each indicator is summed up to the above groupings.

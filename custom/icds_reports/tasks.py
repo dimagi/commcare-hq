@@ -132,6 +132,7 @@ SQL_VIEWS_PATHS = [
     ('migrations', 'sql_templates', 'database_views', 'agg_awc_daily.sql'),
     ('migrations', 'sql_templates', 'database_views', 'child_health_monthly.sql'),
     ('migrations', 'sql_templates', 'database_views', 'disha_indicators.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'ccs_record_monthly_view.sql'),
 ]
 
 
