@@ -149,7 +149,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
         doc_filter_fn=xform_pillow_filter,
     )
     kafka_change_feed = KafkaChangeFeed(
-        topics=FORM_TOPICS, group_id='forms-to-es', num_processes=num_processes, process_num=process_num
+        topics=FORM_TOPICS, client_id='forms-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,

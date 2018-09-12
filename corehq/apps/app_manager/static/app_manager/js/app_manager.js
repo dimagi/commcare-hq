@@ -89,23 +89,12 @@ hqDefine('app_manager/js/app_manager', function () {
         }
     };
 
-    module.setPublishStatus = function (isOn) {
-        var layout = hqImport("hqwebapp/js/layout");
-        if (isOn) {
-            layout.showPublishStatus();
-        } else {
-            layout.hidePublishStatus();
-        }
-    };
-
     module.init = function (args) {
         _initCommcareVersion(args);
         _initSaveButtons();
         _initMenuItemSorting();
-        _initLangs();
         _initResponsiveMenus();
         _initAddItemPopovers();
-        _initPublishStatus();
     };
 
     /**
@@ -141,26 +130,6 @@ hqDefine('app_manager/js/app_manager', function () {
             });
         });
         module.setCommcareVersion(args.commcareVersion);
-    };
-
-    var _initPublishStatus = function () {
-        var currentAppVersionUrl = hqImport('hqwebapp/js/initial_page_data').get('current_app_version_url');
-        var _checkPublishStatus = function () {
-            $.ajax({
-                url: currentAppVersionUrl,
-                success: function (data) {
-                    module.setPublishStatus((!data.latestBuild && data.currentVersion > 1) || (data.latestBuild !== null && data.latestBuild < data.currentVersion));
-                },
-            });
-        };
-        _checkPublishStatus();
-        // check publish status every 20 seconds
-        setInterval(_checkPublishStatus, 20000);
-
-        // sniff ajax calls to other urls that make app changes
-        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function() {
-            module.setPublishStatus(true);
-        });
     };
 
     /**
@@ -264,7 +233,7 @@ hqDefine('app_manager/js/app_manager', function () {
      */
     var _initMenuItemSorting = function () {
         function updateRelatedTags($elem, name, value) {
-            var relatedTags = $elem.find("[data-" + name +"]");
+            var relatedTags = $elem.find("[data-" + name + "]");
             _.each(relatedTags, function (related) {
                 $(related).data(name, value);
             });
@@ -286,7 +255,7 @@ hqDefine('app_manager/js/app_manager', function () {
         $('.sortable .sort-action').addClass('sort-disabled');
         $('.drag_handle').addClass('fa fa-arrows-v');
 
-        $('.js-appnav-drag-module').on('mouseenter', function() {
+        $('.js-appnav-drag-module').on('mouseenter', function () {
             $(this).closest('.js-sorted-li').addClass('appnav-highlight');
         }).on('mouseleave', function () {
             $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
@@ -363,14 +332,14 @@ hqDefine('app_manager/js/app_manager', function () {
                         $.ajax($form.attr('action'), {
                             method: 'POST',
                             data: $form.serialize(),
-                            success: function() {
+                            success: function () {
                                 hqImport('hqwebapp/js/alert_user').alert_user(gettext("Moved successfully."), "success");
                             },
-                            error: function(xhr) {
+                            error: function (xhr) {
                                 hqImport('hqwebapp/js/alert_user').alert_user(xhr.responseJSON.error, "danger");
                             },
                         });
-                        module.setPublishStatus(true);
+                        hqImport("app_manager/js/menu").setPublishStatus(true);
                     }
                 },
             };
@@ -412,17 +381,6 @@ hqDefine('app_manager/js/app_manager', function () {
             button.ui.appendTo($buttonHolder);
             $buttonHolder.data('button', button);
             hqImport("app_manager/js/section_changer").attachToForm($form);
-        });
-    };
-
-    /**
-     * Initialize the language dropdown.
-     * @private
-     */
-    var _initLangs = function () {
-        $('#langs select').change(function () {
-            var lang = $(this).find('option:selected').attr('value');
-            $(document).attr('location', window.location.href + (window.location.search ? '&' : '?') + 'lang=' + lang);
         });
     };
 

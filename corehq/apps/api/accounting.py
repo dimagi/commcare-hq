@@ -186,7 +186,9 @@ class InvoiceResource(ModelResource):
 
 
 class LineItemResource(ModelResource):
-    invoice = fields.IntegerField('invoice_id', null=True)
+    invoice = fields.IntegerField('subscription_invoice_id', null=True)
+    subscription_invoice = fields.IntegerField('subscription_invoice_id', null=True)
+    customer_invoice = fields.IntegerField('customer_invoice_id', null=True)
     feature_rate = fields.IntegerField('feature_rate_id', null=True)
     product_rate = fields.IntegerField('product_rate_id', null=True)
     subtotal = fields.DecimalField('subtotal')

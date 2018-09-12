@@ -22,8 +22,9 @@ from PIL import Image
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.xform import XFormValidationError
+from corehq.apps.domain import SHARED_DOMAIN
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobMixin, CODES
 import six
 from io import open
 
@@ -80,6 +81,7 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     licenses = SchemaListProperty(HQMediaLicense, default=[])
     shared_by = StringListProperty(default=[])  # list of domains that can share this file
     tags = DictProperty(default={})  # dict of string lists
+    _blobdb_type_code = CODES.multimedia
 
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
@@ -139,7 +141,12 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
                 # this should only be files that had attachments deleted while the bug
                 # was in effect, so hopefully we will stop seeing it after a few days
                 logging.error('someone is uploading a file that should have existed for multimedia %s' % self._id)
-            self.put_attachment(data, attachment_id, content_type=self.get_mime_type(data, filename=original_filename))
+            self.put_attachment(
+                data,
+                attachment_id,
+                content_type=self.get_mime_type(data, filename=original_filename),
+                domain=SHARED_DOMAIN,
+            )
         new_media = AuxMedia()
         new_media.uploaded_date = datetime.utcnow()
         new_media.attachment_id = attachment_id
@@ -433,7 +440,7 @@ class HQMediaMapItem(DocumentSchema):
 
     @classmethod
     def gen_unique_id(cls, m_id, path):
-        return hashlib.md5("%s: %s" % (path.encode('utf-8'), str(m_id))).hexdigest()
+        return hashlib.md5(b"%s: %s" % (path.encode('utf-8'), m_id.encode('utf-8'))).hexdigest()
 
 
 class ApplicationMediaReference(object):
@@ -445,10 +452,9 @@ class ApplicationMediaReference(object):
         Useful info for user-facing things.
     """
 
-    def __init__(self, path,
-                 module_id=None, module_name=None,
-                 form_id=None, form_name=None, form_order=None,
-                 media_class=None, is_menu_media=False, app_lang=None):
+    def __init__(self, path, module_id=None, module_name=None, form_id=None,
+                 form_name=None, form_order=None, media_class=None,
+                 is_menu_media=False, app_lang=None, use_default_media=False):
 
         if not isinstance(path, six.string_types):
             path = ''
@@ -468,6 +474,8 @@ class ApplicationMediaReference(object):
         self.is_menu_media = is_menu_media
 
         self.app_lang = app_lang or "en"
+
+        self.use_default_media = use_default_media
 
     def __str__(self):
         detailed_location = ""
@@ -497,6 +505,7 @@ class ApplicationMediaReference(object):
             'path': self.path,
             "icon_class": self.media_class.get_icon_class(),
             "media_type": self.media_class.get_nice_name(),
+            "use_default_media": self.use_default_media,
         }
 
     def _get_name(self, raw_name, lang=None):
@@ -682,6 +691,7 @@ class HQMediaMixin(Document):
         image_ref = ApplicationMediaReference(
             item.icon_by_language(to_language),
             media_class=CommCareImage,
+            use_default_media=item.use_default_image_for_all,
             **media_kwargs
         )
         image_ref = image_ref.as_dict()
@@ -690,6 +700,7 @@ class HQMediaMixin(Document):
         audio_ref = ApplicationMediaReference(
             item.audio_by_language(to_language),
             media_class=CommCareAudio,
+            use_default_media=item.use_default_audio_for_all,
             **media_kwargs
         )
         audio_ref = audio_ref.as_dict()
@@ -850,7 +861,7 @@ class HQMediaMixin(Document):
         has_archived = False
         if LOGO_ARCHIVE_KEY not in self.archived_media:
             self.archived_media[LOGO_ARCHIVE_KEY] = {}
-        for slug, logo_data in self.logo_refs.items():
+        for slug, logo_data in list(self.logo_refs.items()):
             self.archived_media[LOGO_ARCHIVE_KEY][slug] = logo_data
             has_archived = True
             del self.logo_refs[slug]
@@ -862,7 +873,7 @@ class HQMediaMixin(Document):
         """
         has_restored = False
         if hasattr(self, 'archived_media') and LOGO_ARCHIVE_KEY in self.archived_media:
-            for slug, logo_data in self.archived_media[LOGO_ARCHIVE_KEY].items():
+            for slug, logo_data in list(self.archived_media[LOGO_ARCHIVE_KEY].items()):
                 self.logo_refs[slug] = logo_data
                 has_restored = True
                 del self.archived_media[LOGO_ARCHIVE_KEY][slug]

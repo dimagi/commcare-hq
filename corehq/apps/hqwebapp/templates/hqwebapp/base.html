@@ -205,6 +205,7 @@
                             <a href="#cta-form-get-demo"
                                target="_blank"
                                data-toggle="modal"
+                               id="cta-form-get-demo-button"
                                class="btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
                           {% endif %}
                         </div>
@@ -363,19 +364,12 @@
                 });
                 requirejs([
                     'hqwebapp/js/common',
-                    'jquery.cookie/jquery.cookie',
-                    'hqwebapp/js/layout',
-                    'hqwebapp/js/hq-bug-report',
-                    'hqwebapp/js/main',
-                    'notifications/js/notifications_service_main',
-                    'analytix/js/appcues',
-                    'analytix/js/drift',
-                    'analytix/js/google',
-                    'analytix/js/hubspot',
-                    'analytix/js/kissmetrix',
-                    'hqwebapp/js/mobile_experience_warning',
-                ], function () {
-                    requirejs(['{{ requirejs_main }}']);
+                ], function() {
+                    requirejs([
+                        'hqwebapp/js/base_main',
+                    ], function () {
+                        requirejs(['{{ requirejs_main }}']);
+                    });
                 });
             </script>
         {% endif %}
@@ -520,6 +514,10 @@
             });
           </script>
         {% endif %}
+
+        {# Knockout component templates #}
+        {% include 'hqwebapp/ko_pagination.html' %}
+        {% include 'hqwebapp/partials/ko_inline_edit.html' %}
 
         {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
         {# If it's loaded early, then execution of all following scripts block on it #}

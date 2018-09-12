@@ -23,9 +23,9 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         this.practice_users = [{'id': '', 'text': ''}].concat(practice_users);
         this.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your application profiles"),
-            save: function() {
+            save: function () {
                 var postProfiles = [];
-                _.each(self.app_profiles(), function(element) {
+                _.each(self.app_profiles(), function (element) {
                     // move default lang to first element of array
                     var postLangs = element.langs();
                     postLangs.splice(postLangs.indexOf(element.defaultLang()), 1);
@@ -41,7 +41,7 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
                     url: _p.profileUrl, // this should resolve to LanguageProfilesView
                     type: 'post',
                     data: JSON.stringify({'profiles': postProfiles}),
-                    error: function() {
+                    error: function () {
                         throw gettext("There was an error saving");
                     },
                 });
@@ -53,25 +53,25 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         var select2config = {
             'allowClear': true,
             'width': '100%',
-            'placeholder': gettext(practice_users.length > 0 ? 'Select a user': 'No practice mode mobile workers available'),
+            'placeholder': gettext(practice_users.length > 0 ? 'Select a user' : 'No practice mode mobile workers available'),
         };
-        this.addProfile = function(langs, name, id, practiceUser) {
+        this.addProfile = function (langs, name, id, practiceUser) {
             var profile = new Profile(langs, name, id, practiceUser);
             profile.name.subscribe(changeSaveButton);
             profile.langs.subscribe(changeSaveButton);
             profile.defaultLang.subscribe(changeSaveButton);
-            if (self.enable_practice_users){
+            if (self.enable_practice_users) {
                 profile.practiceUser.subscribe(changeSaveButton);
             }
             self.app_profiles.push(profile);
         };
-        _.each(app_profiles, function(value, key) {
+        _.each(app_profiles, function (value, key) {
             self.addProfile(value.langs, value.name, key, value.practice_mobile_worker_id || '');
         });
-        this.newProfile = function() {
+        this.newProfile = function () {
             self.addProfile([], '', '', '');
             var index = self.app_profiles().length - 1;
-            _.delay(function() {
+            _.delay(function () {
                 $('#profile-' + index).select2();
                 $('#practice-user-' + index).select2(select2config);
             });
@@ -79,11 +79,11 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         if (!self.app_profiles()) {
             self.newProfile();
         }
-        this.removeProfile = function(profile) {
+        this.removeProfile = function (profile) {
             self.app_profiles.remove(profile);
         };
         this.app_profiles.subscribe(changeSaveButton);
-        _.delay(function() {
+        _.delay(function () {
             $('.language-select').select2();
             $('.practice-user').select2(select2config);
         });

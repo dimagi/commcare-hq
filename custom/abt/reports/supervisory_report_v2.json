@@ -60,7 +60,10 @@
                 "type": "date",
                 "display": {
                     "fra": "Date soumis",
+                    "frm": "Date soumis",
                     "en": "Date submitted",
+                    "sw": "Date submitted",
+                    "kin": "Date submitted",
                     "por": "Data de Submiss\u00e3o"
                 }
             },
@@ -74,7 +77,10 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Pays",
+                    "frm": "Pays",
                     "en": "Country",
+                    "sw": "Country",
+                    "kin": "Country",
                     "por": "Pa\u00eds"
                 }
             },
@@ -88,7 +94,10 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 1",
+                    "frm": "Niveau 1",
                     "en": "Level 1",
+                    "sw": "Level 1",
+                    "kin": "Level 1",
                     "por": "N\u00edvel 1"
                 }
             },
@@ -102,7 +111,10 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 2",
+                    "frm": "Niveau 2",
                     "en": "Level 2",
+                    "sw": "Level 2",
+                    "kin": "Level 2",
                     "por": "N\u00edvel 2"
                 }
             },
@@ -116,7 +128,10 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 3",
+                    "frm": "Niveau 3",
                     "en": "Level 3",
+                    "sw": "Level 3",
+                    "kin": "Level 3",
                     "por": "N\u00edvel 3"
                 }
             },
@@ -130,7 +145,10 @@
                 "type": "dynamic_choice_list",
                 "display": {
                     "fra": "Niveau 4",
+                    "frm": "Niveau 4",
                     "en": "Level 4",
+                    "sw": "Level 4",
+                    "kin": "Level 4",
                     "por": "N\u00edvel 4"
                 }
             }
@@ -162,7 +180,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Date et heure soumis",
+                    "frm": "Date et heure soumis",
                     "en": "Date and Time Submitted",
+                    "sw": "Date and Time Submitted",
+                    "kin": "Date and Time Submitted",
                     "por": "Data e Hora de Submiss\u00e3o"
                 },
                 "aggregation": "simple"
@@ -180,7 +201,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Nom d'utilisateur",
+                    "frm": "Nom d'utilisateur",
                     "en": "Username",
+                    "sw": "Username",
+                    "kin": "Username",
                     "por": "Utilizador"
                 },
                 "aggregation": "simple"
@@ -198,7 +222,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Pays",
+                    "frm": "Pays",
                     "en": "Country",
+                    "sw": "Country",
+                    "kin": "Country",
                     "por": "Pa\u00eds"
                 },
                 "aggregation": "simple"
@@ -216,7 +243,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 1",
+                    "frm": "Niveau 1",
                     "en": "Level 1",
+                    "sw": "Level 1",
+                    "kin": "Level 1",
                     "por": "N\u00edvel 1"
                 },
                 "aggregation": "simple"
@@ -234,7 +264,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 2",
+                    "frm": "Niveau 2",
                     "en": "Level 2",
+                    "sw": "Level 2",
+                    "kin": "Level 2",
                     "por": "N\u00edvel 2"
                 },
                 "aggregation": "simple"
@@ -252,7 +285,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 3",
+                    "frm": "Niveau 3",
                     "en": "Level 3",
+                    "sw": "Level 3",
+                    "kin": "Level 3",
                     "por": "N\u00edvel 3"
                 },
                 "aggregation": "simple"
@@ -270,7 +306,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Niveau 4",
+                    "frm": "Niveau 4",
                     "en": "Level 4",
+                    "sw": "Level 4",
+                    "kin": "Level 4",
                     "por": "N\u00edvel 4"
                 },
                 "aggregation": "simple"
@@ -288,7 +327,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Noms de Inspecteurs/Superviseurs",
+                    "frm": "Noms de Inspecteurs/Superviseurs",
                     "en": "Inspector names",
+                    "sw": "Inspector names",
+                    "kin": "Inspector names",
                     "por": "Nome do Supervisor"
                 },
                 "aggregation": "simple"
@@ -306,7 +348,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Nom du formulaire",
+                    "frm": "Nom du formulaire",
                     "en": "Form Name",
+                    "sw": "Form Name",
+                    "kin": "Form Name",
                     "por": "Nome do formulario"
                 },
                 "aggregation": "simple"
@@ -324,7 +369,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Question",
+                    "frm": "Question",
                     "en": "Form Question",
+                    "sw": "Form Question",
+                    "kin": "Form Question",
                     "por": "Quest\u00E3o do formulario"
                 },
                 "aggregation": "simple"
@@ -342,7 +390,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Avertissement",
+                    "frm": "Avertissement",
                     "en": "Red Flag Warning",
+                    "sw": "Red Flag Warning",
+                    "kin": "Red Flag Warning",
                     "por": "Aviso de Alerta Vermelho"
                 },
                 "aggregation": "simple"
@@ -360,7 +411,10 @@
                 "type": "field",
                 "display": {
                     "fra": "Commentaires",
+                    "frm": "Commentaires",
                     "en": "Comments",
+                    "sw": "Comments",
+                    "kin": "Comments",
                     "por": "Coment\u00E1rio"
                 },
                 "aggregation": "simple"

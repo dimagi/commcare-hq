@@ -67,7 +67,6 @@ class TestLocationDataSource(TestCase):
     def assertDataSourceAccurate(self, expected_locations):
         adapter = get_indicator_adapter(self.data_source_config)
         query = adapter.get_query_object()
-        adapter.refresh_table()
         data_source = query.all()
         self.assertItemsEqual(
             expected_locations,

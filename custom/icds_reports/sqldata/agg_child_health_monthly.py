@@ -2,8 +2,8 @@ from __future__ import absolute_import, division
 
 from __future__ import unicode_literals
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SumColumn, SimpleColumn
-from sqlagg.filters import EQ, OR, BETWEEN, IN, NOT, AND
+from sqlagg.columns import SumWhen, SumColumn, SimpleColumn
+from sqlagg.filters import BETWEEN, IN, NOT
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
@@ -11,9 +11,9 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColu
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils.mixins import ProgressReportMixIn
-from custom.icds_reports.utils import percent_num, get_age_filters, wasting_severe_column, \
+from custom.icds_reports.utils import percent_num, wasting_severe_column, \
     wasting_moderate_column, wasting_normal_column, stunting_severe_column, stunting_moderate_column, \
-    stunting_normal_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column
+    stunting_normal_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, get_age_condition
 from custom.utils.utils import clean_IN_filter_value
 
 
@@ -68,12 +68,14 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 '% Weighing efficiency (Children <5 weighed)',
                 percent_num,
                 [
-                    SumColumn('nutrition_status_weighed', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
-                    SumColumn('wer_eligible', alias='wer_eligible', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ])
+                    SumWhen(
+                        whens={"age_tranche != :age_72": 'nutrition_status_weighed'},
+                        alias='nutrition_status_weighed'
+                    ),
+                    SumWhen(
+                        whens={"age_tranche != :age_72": 'wer_eligible'},
+                        alias='wer_eligible'
+                    )
                 ],
                 slug='status_weighed'
             ),
@@ -81,35 +83,33 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 '% Height measurement efficiency (Children <5 measured)',
                 percent_num,
                 [
-                    SumColumn(
-                        'height_measured_in_month',
-                        alias='height_measured_in_month_less_5',
-                        filters=filters + [
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ]
+                    SumWhen(
+                        whens={"age_tranche != :age_72": 'height_measured_in_month'},
+                        alias='height_measured_in_month_less_5'
                     ),
-                    SumColumn('height_eligible', alias='height_eligible', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ])
+                    SumWhen(
+                        whens={"age_tranche != :age_72": 'height_eligible'},
+                        alias='height_eligible'
+                    )
                 ],
                 slug='status_height_efficiency'
             ),
             DatabaseColumn(
                 'Total number Unweighed',
-                SumColumn('nutrition_status_unweighed', filters=filters + [
-                    NOT(EQ('age_tranche', 'age_72'))
-                ])
+                SumWhen(
+                    whens={"age_tranche != :age_72": 'nutrition_status_unweighed'},
+                    alias='nutrition_status_unweighed'
+                )
             ),
             AggregateColumn(
                 'Percent Children severely underweight (weight for age)',
                 percent_num,
                 [
-                    SumColumn('nutrition_status_severely_underweight', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
-                    SumColumn('nutrition_status_weighed', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
+                    SumWhen(
+                        whens={"age_tranche != :age_72": 'nutrition_status_severely_underweight'},
+                        alias='nutrition_status_severely_underweight'
+                    ),
+                    AliasColumn('nutrition_status_weighed')
                 ],
                 slug='severely_underweight'
             ),
@@ -117,12 +117,11 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent Children moderately underweight (weight for age)',
                 percent_num,
                 [
-                    SumColumn('nutrition_status_moderately_underweight', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
-                    SumColumn('nutrition_status_weighed', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
+                    SumWhen(
+                        whens={"age_tranche != :age_72": 'nutrition_status_moderately_underweight'},
+                        alias='nutrition_status_moderately_underweight'
+                    ),
+                    AliasColumn('nutrition_status_weighed')
                 ],
                 slug='moderately_underweight'
             ),
@@ -130,12 +129,11 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent Children normal (weight for age)',
                 percent_num,
                 [
-                    SumColumn('nutrition_status_normal', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
-                    SumColumn('nutrition_status_weighed', filters=filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
+                    SumWhen(
+                        whens={"age_tranche != :age_72": 'nutrition_status_normal'},
+                        alias='nutrition_status_normal'
+                    ),
+                    AliasColumn('nutrition_status_weighed')
                 ],
                 slug='status_normal'
             ),
@@ -143,14 +141,13 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent children with severe acute malnutrition (weight-for-height)',
                 percent_num,
                 [
-                    SumColumn(
-                        wasting_severe_column(self.beta),
-                        filters=filters + get_age_filters(self.beta)
+                    SumWhen(
+                        whens={get_age_condition(self.beta): wasting_severe_column(self.beta)},
+                        alias='wasting_severe'
                     ),
-                    SumColumn(
-                        wfh_recorded_in_month_column(self.beta),
-                        alias='weighed_and_height_measured_in_month',
-                        filters=filters + get_age_filters(self.beta)
+                    SumWhen(
+                        whens={get_age_condition(self.beta): wfh_recorded_in_month_column(self.beta)},
+                        alias='weighed_and_height_measured_in_month'
                     )
                 ],
                 slug='wasting_severe'
@@ -159,9 +156,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent children with moderate acute malnutrition (weight-for-height)',
                 percent_num,
                 [
-                    SumColumn(
-                        wasting_moderate_column(self.beta),
-                        filters=filters + get_age_filters(self.beta)
+                    SumWhen(
+                        whens={get_age_condition(self.beta): wasting_moderate_column(self.beta)},
+                        alias='wasting_moderate'
                     ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
@@ -171,9 +168,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent children normal (weight-for-height)',
                 percent_num,
                 [
-                    SumColumn(
-                        wasting_normal_column(self.beta),
-                        filters=filters + get_age_filters(self.beta)
+                    SumWhen(
+                        whens={get_age_condition(self.beta): wasting_normal_column(self.beta)},
+                        alias='wasting_normal'
                     ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
@@ -183,14 +180,13 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent children with severe stunting (height for age)',
                 percent_num,
                 [
-                    SumColumn(
-                        stunting_severe_column(self.beta),
-                        filters=filters + get_age_filters(self.beta)
+                    SumWhen(
+                        whens={get_age_condition(self.beta): stunting_severe_column(self.beta)},
+                        alias='zscore_grading_hfa_severe'
                     ),
-                    SumColumn(
-                        hfa_recorded_in_month_column(self.beta),
-                        alias='height_measured_in_month',
-                        filters=filters + get_age_filters(self.beta)
+                    SumWhen(
+                        whens={get_age_condition(self.beta): hfa_recorded_in_month_column(self.beta)},
+                        alias='height_measured_in_month'
                     )
                 ],
                 slug='stunting_severe'
@@ -199,9 +195,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent children with moderate stunting (height for age)',
                 percent_num,
                 [
-                    SumColumn(
-                        stunting_moderate_column(self.beta),
-                        filters=filters + get_age_filters(self.beta)
+                    SumWhen(
+                        whens={get_age_condition(self.beta): stunting_moderate_column(self.beta)},
+                        alias='zscore_grading_hfa_moderate'
                     ),
                     AliasColumn('height_measured_in_month')
                 ],
@@ -211,9 +207,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent children with normal (height for age)',
                 percent_num,
                 [
-                    SumColumn(
-                        stunting_normal_column(self.beta),
-                        filters=filters + get_age_filters(self.beta)
+                    SumWhen(
+                        whens={get_age_condition(self.beta): stunting_normal_column(self.beta)},
+                        alias='zscore_grading_hfa_normal'
                     ),
                     AliasColumn('height_measured_in_month')
                 ],
@@ -294,52 +290,43 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
             ),
             DatabaseColumn(
                 'Children (0 - 28 Days) Seeking Services',
-                SumColumn(
-                    'valid_in_month',
-                    filters=filters + [EQ('age_tranche', 'age_0')],
+                SumWhen(
+                    whens={'age_tranche = :age_0': 'valid_in_month'},
                     alias='zero'
                 ),
                 slug='zero'
             ),
             DatabaseColumn(
                 'Children (28 Days - 6 mo) Seeking Services',
-                SumColumn(
-                    'valid_in_month',
-                    filters=filters + [EQ('age_tranche', 'age_6')],
+                SumWhen(
+                    whens={'age_tranche = :age_6': 'valid_in_month'},
                     alias='one'
                 ),
                 slug='one'
             ),
             DatabaseColumn(
                 'Children (6 mo - 1 year) Seeking Services',
-                SumColumn(
-                    'valid_in_month',
-                    filters=filters + [EQ('age_tranche', 'age_12')],
+                SumWhen(
+                    whens={'age_tranche = :age_12': 'valid_in_month'},
                     alias='two'
                 ),
                 slug='two'
             ),
             DatabaseColumn(
                 'Children (1 year - 3 years) Seeking Services',
-                SumColumn(
-                    'valid_in_month',
-                    filters=filters + [OR([
-                        EQ('age_tranche', 'age_24'),
-                        EQ('age_tranche', 'age_36')
-                    ])],
+                SumWhen(
+                    whens={'age_tranche = :age_24 OR age_tranche = :age_36': 'valid_in_month'},
                     alias='three'
                 ),
                 slug='three'
             ),
             DatabaseColumn(
                 'Children (3 years - 6 years) Seeking Services',
-                SumColumn(
-                    'valid_in_month',
-                    filters=filters + [OR([
-                        EQ('age_tranche', 'age_48'),
-                        EQ('age_tranche', 'age_60'),
-                        EQ('age_tranche', 'age_72')
-                    ])],
+                SumWhen(
+                    whens={
+                        'age_tranche = :age_48 OR age_tranche = :age_60 OR age_tranche = :age_72':
+                            'valid_in_month'
+                    },
                     alias='four'
                 ),
                 slug='four'

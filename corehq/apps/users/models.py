@@ -35,7 +35,7 @@ from dimagi.ext.couchdbkit import (
     Document,
     DateProperty
 )
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq.util.dates import get_timestamp
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
@@ -120,6 +120,8 @@ class Permissions(DocumentSchema):
     view_web_apps = BooleanProperty(default=True)
     view_web_apps_list = StringListProperty(default=[])
 
+    view_file_dropzone = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data):
         # this is why you don't store module paths in the database...
@@ -203,6 +205,7 @@ class Permissions(DocumentSchema):
             view_reports=True,
             edit_billing=True,
             edit_shared_exports=True,
+            view_file_dropzone=True,
         )
 
 
@@ -436,6 +439,7 @@ class DomainMembership(Membership):
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     override_global_tz = BooleanProperty(default=False)
     role_id = StringProperty()
+    # This should not be set directly but using set_location method only
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
     program_id = StringProperty()
@@ -572,8 +576,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.set_role(domain, role)
         if project.commtrack_enabled:
             self.get_domain_membership(domain).program_id = program_id
-        if project.uses_locations:
-            self.get_domain_membership(domain).location_id = location_id
+        if project.uses_locations and location_id:
+            self.set_location(domain, location_id)
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
@@ -958,6 +962,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
     user_data = DictProperty()
+    # This should not be set directly but using set_location method only
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
     has_built_app = BooleanProperty(default=False)
@@ -1421,8 +1426,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return couch_user
 
     @classmethod
-    def from_django_user(cls, django_user):
-        return cls.get_by_username(django_user.username)
+    def from_django_user(cls, django_user, strict=False):
+        return cls.get_by_username(django_user.username, strict=strict)
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='',
@@ -1709,7 +1714,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     def filter_flag(self):
         from corehq.apps.reports.models import HQUserType
-        return HQUserType.REGISTERED
+        return HQUserType.ACTIVE
 
     @property
     def project(self):

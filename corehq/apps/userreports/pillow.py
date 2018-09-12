@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 
 import six
 from alembic.autogenerate.api import compare_metadata
-from kafka.util import kafka_bytestring
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
@@ -279,7 +278,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
     def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False):
         change_feed = KafkaChangeFeed(
-            topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
+            topics, client_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
         checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
         event_handler = KafkaCheckpointEventHandler(
@@ -314,7 +313,7 @@ def get_location_pillow(pillow_id='location-pillow', include_ucrs=None,
                         configs=None, num_processes=1, process_num=0, **kwargs):
     # Todo; is ucr_division needed?
     change_feed = KafkaChangeFeed(
-        [LOCATION_TOPIC], group_id=pillow_id, num_processes=num_processes, process_num=process_num
+        [LOCATION_TOPIC], client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],

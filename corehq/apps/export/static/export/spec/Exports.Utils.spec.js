@@ -1,23 +1,23 @@
 /* eslint-env mocha */
-describe('Export Utility functions', function() {
+describe('Export Utility functions', function () {
     var constants = hqImport('export/js/const');
     var utils = hqImport('export/js/utils');
     var models = hqImport('export/js/models');
 
-    describe('#getTagCSSClass', function() {
-        it('Should get regular tag class', function() {
+    describe('#getTagCSSClass', function () {
+        it('Should get regular tag class', function () {
             var cls = utils.getTagCSSClass('random-tag');
             assert.equal(cls, 'label label-default');
         });
 
-        it('Should get warning tag class', function() {
+        it('Should get warning tag class', function () {
             var cls = utils.getTagCSSClass(constants.TAG_DELETED);
             assert.equal(cls, 'label label-warning');
         });
     });
 
-    describe('#readablePath', function() {
-        it('Should convert an anrray of PathNode to a dot path', function() {
+    describe('#readablePath', function () {
+        it('Should convert an anrray of PathNode to a dot path', function () {
             var nodes = [
                 new models.PathNode({ name: 'form', is_repeat: false, doc_type: 'PathNode' }),
                 new models.PathNode({ name: 'photo', is_repeat: false, doc_type: 'PathNode' }),
@@ -25,7 +25,7 @@ describe('Export Utility functions', function() {
             assert.equal(utils.readablePath(nodes), 'form.photo');
         });
 
-        it('Should convert an array of PathNode to a dot path with repeats', function() {
+        it('Should convert an array of PathNode to a dot path with repeats', function () {
             var nodes = [
                 new models.PathNode({ name: 'form', is_repeat: false, doc_type: 'PathNode' }),
                 new models.PathNode({ name: 'repeat', is_repeat: true, doc_type: 'PathNode' }),
@@ -34,13 +34,13 @@ describe('Export Utility functions', function() {
         });
     });
 
-    describe('#customPathToNodes', function() {
-        it('Should convert a string path to PathNodes', function() {
+    describe('#customPathToNodes', function () {
+        it('Should convert a string path to PathNodes', function () {
             var customPath = 'form.photo';
             var nodes = utils.customPathToNodes(customPath);
 
             assert.equal(nodes.length, 2);
-            assert.isTrue(_.all(nodes, function(n) { return n instanceof models.PathNode; }));
+            assert.isTrue(_.all(nodes, function (n) { return n instanceof models.PathNode; }));
 
             assert.equal(nodes[0].name(), 'form');
             assert.isFalse(nodes[0].is_repeat());
@@ -54,7 +54,7 @@ describe('Export Utility functions', function() {
             var nodes = utils.customPathToNodes(customPath);
 
             assert.equal(nodes.length, 2);
-            assert.isTrue(_.all(nodes, function(n) { return n instanceof models.PathNode; }));
+            assert.isTrue(_.all(nodes, function (n) { return n instanceof models.PathNode; }));
 
             assert.equal(nodes[0].name(), 'form');
             assert.isFalse(nodes[0].is_repeat());

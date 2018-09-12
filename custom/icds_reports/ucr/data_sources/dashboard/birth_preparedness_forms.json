@@ -5,7 +5,8 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds-new",
+    "icds"
   ],
   "config": {
     "table_id": "static-dashboard_birth_preparedness_forms",
@@ -242,6 +243,198 @@
           "true_values": ["yes"],
           "false_values": ["no"]
         }
+      },
+      {
+        "column_id": "anc_weight",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "anc_weight"
+          }
+        }
+      },
+      {
+        "column_id": "anc_blood_pressure",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "nested",
+            "argument_expression": {
+              "type": "named",
+              "name": "anc_details"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "anc_blood_pressure"
+            }
+          },
+          "cases": {
+            "normal": {
+              "type": "constant",
+              "constant": 1
+            },
+            "high": {
+              "type": "constant",
+              "constant": 2
+            },
+            "not_measured": {
+              "type": "constant",
+              "constant": 3
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "column_id": "bp_sys",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "bp_sys"
+          }
+        }
+      },
+      {
+        "column_id": "bp_dia",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "bp_dias"
+          }
+        }
+      },
+      {
+        "column_id": "anc_abnormalities",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "nested",
+            "argument_expression": {
+              "type": "named",
+              "name": "anc_details"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "anc_abnormalities"
+            }
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "anc_hemoglobin",
+        "datatype": "decimal",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "anc_hemoglobin"
+          }
+        }
+      },
+      {
+        "column_id": "bleeding",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "bp2", "bleeding"]
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "swelling",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "bp2", "swelling"]
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "blurred_vision",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "bp2", "blurred_vision"]
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "convulsions",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "bp2", "convulsions"]
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "rupture",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "bp2", "rupture"]
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       }
     ],
     "named_expressions": {
@@ -250,6 +443,24 @@
         "user_id_expression": {
           "type": "property_path",
           "property_path": ["form", "meta", "userID"]
+        }
+      },
+      "anc_details": {
+        "type": "nested",
+        "argument_expression": {
+          "type": "array_index",
+          "array_expression": {
+	        "type": "property_path",
+	        "property_path": ["form", "bp1", "iteration", "item"]
+          },
+          "index_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "value_expression": {
+          "type": "property_path",
+          "property_path": ["filter", "anc_details"]
         }
       }
     },

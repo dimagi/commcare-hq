@@ -26,8 +26,7 @@ from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
-from corehq.sql_db.models import PartitionedModel, RequireDBManager
-from corehq.sql_db.routers import db_for_read_write
+from corehq.sql_db.models import PartitionedModel, RestrictedManager
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
@@ -131,18 +130,6 @@ class AttachmentMixin(SaveStateMixin):
 
     def _get_attachments_from_db(self):
         raise NotImplementedError
-
-
-class RestrictedManager(RequireDBManager):
-
-    def raw(self, raw_query, params=None, translations=None, using=None):
-        from django.db.models.query import RawQuerySet
-        if not using:
-            using = db_for_read_write(self.model)
-        return RawQuerySet(
-            raw_query, model=self.model,
-            params=params, translations=translations, using=using
-        )
 
 
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
@@ -455,10 +442,11 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
         content_readable = content
         if isinstance(content, six.text_type):
             content_readable = StringIO(content)
-        elif isinstance(content, six.binary_type):
+        elif isinstance(content, bytes):
             content_readable = BytesIO(content)
         db = get_blob_db()
         bucket = self.blobdb_bucket()
+        assert bucket != "", "blob migrated from couch, should never happen"
         if self.blob_id:
             # Overwrite and rewrite the existing entry in the database with this identifier
             info = db.put(content_readable, self.blob_id, bucket=bucket)
@@ -484,7 +472,10 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
 
         db = get_blob_db()
         try:
-            blob = db.get(self.blob_id, self.blobdb_bucket())
+            if self.blobdb_bucket() == "":
+                blob = db.get(key=self.blob_id)
+            else:
+                blob = db.get(self.blob_id, self.blobdb_bucket())
         except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
 
@@ -497,7 +488,11 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
     def delete_content(self):
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        deleted = db.delete(self.blob_id, bucket)
+        if bucket == "":
+            # blob was migrated from couch using new blobmeta API
+            deleted = db.delete(key=self.blob_id)
+        else:
+            deleted = db.delete(self.blob_id, bucket)
         if deleted:
             self.blob_id = None
 

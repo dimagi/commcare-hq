@@ -151,7 +151,13 @@ from corehq.util.couch import get_document_or_404
 from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.export import WorkBook
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.view_utils import absolute_reverse, reverse, get_case_or_404, get_form_or_404
+from corehq.util.view_utils import (
+    absolute_reverse,
+    reverse,
+    get_case_or_404,
+    get_form_or_404,
+    request_as_dict
+)
 
 from .dispatcher import ProjectReportDispatcher
 from .export import (
@@ -808,51 +814,19 @@ class AddSavedReportConfigView(View):
 @datespan_default
 def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix, once=False):
     from .forms import EmailReportForm
-    user_id = request.couch_user._id
 
     form = EmailReportForm(request.GET)
     if not form.is_valid():
         return HttpResponseBadRequest()
 
-    config = ReportConfig()
-    # see ReportConfig.query_string()
-    object.__setattr__(config, '_id', 'dummy')
-    config.name = _("Emailed report")
-    config.report_type = report_type
-
-    config.report_slug = report_slug
-    config.owner_id = user_id
-    config.domain = domain
-
-    config.start_date = request.datespan.startdate.date()
-    if request.datespan.enddate:
-        config.date_range = 'range'
-        config.end_date = request.datespan.enddate.date()
-    else:
-        config.date_range = 'since'
-
-    GET = dict(request.GET.iterlists())
-    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
-    filters = {}
-    for field in GET:
-        if not field in exclude:
-            filters[field] = GET.get(field)
-
-    config.filters = filters
-
-    subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
-    content = _render_report_configs(
-        request, [config], domain, user_id, request.couch_user, True, lang=request.couch_user.language,
-        notes=form.cleaned_data['notes'], once=once
-    )[0]
-
     recipient_emails = set(form.cleaned_data['recipient_emails'])
     if form.cleaned_data['send_to_owner']:
         recipient_emails.add(request.couch_user.get_email())
 
-    body = render_full_report_notification(request, content).content
-    send_email_report.delay(recipient_emails, request, body, subject, config)
+    request_data = request_as_dict(request)
 
+    send_email_report.delay(recipient_emails, domain, report_slug, report_type,
+                            request_data, once, form.cleaned_data)
     return HttpResponse()
 
 

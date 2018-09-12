@@ -108,7 +108,7 @@ def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kw
         data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
     )
     change_feed = KafkaChangeFeed(
-        topics=topics.USER_TOPICS, group_id=pillow_id, num_processes=num_processes, process_num=process_num
+        topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,

@@ -1,6 +1,6 @@
 /* globals FormplayerFrontend */
-hqDefine("cloudcare/js/formplayer/main", function() {
-    $(function() {
+hqDefine("cloudcare/js/formplayer/main", function () {
+    $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
         window.GMAPS_API_KEY = initialPageData('maps_api_key'); // maps api is loaded on-demand
         var options = {
@@ -17,21 +17,29 @@ hqDefine("cloudcare/js/formplayer/main", function() {
         };
         FormplayerFrontend.start(options);
 
-        // todo cookies to save state
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation');
-        // if cookie exists:
-        $menuToggle.data('minimized', 'yes');
-        $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
+        var hideMenu = function () {
+            $menuToggle.data('minimized', 'yes');
+            $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
+            $menuToggle.text(gettext('Show Full Menu'));
+        };
+        var showMenu = function () {
+            $menuToggle.data('minimized', 'no');
+            $navbar.css('margin-top', '');
+            $menuToggle.text(gettext('Hide Full Menu'));
+        };
+
+        if (initialPageData("appcues_test")) {
+            showMenu();
+        } else {
+            hideMenu();
+        }
         $menuToggle.click(function (e) {
             if ($menuToggle.data('minimized') === 'yes') {
-                $menuToggle.data('minimized', 'no');
-                $navbar.css('margin-top', '');
-                $menuToggle.text(gettext('Hide Full Menu'));
+                showMenu();
             } else {
-                $menuToggle.data('minimized', 'yes');
-                $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
-                $menuToggle.text(gettext('Show Full Menu'));
+                hideMenu();
             }
             e.preventDefault();
         });

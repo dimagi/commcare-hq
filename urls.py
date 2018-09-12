@@ -84,7 +84,8 @@ domain_specific = [
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
     url(r'^zipline/', include('custom.zipline.urls')),
-    url(r'^remote_link/', include('corehq.apps.linked_domain.urls'))
+    url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
+    url(r'^translations/', include('corehq.apps.translations.urls')),
 ]
 
 urlpatterns = [
@@ -115,7 +116,6 @@ urlpatterns = [
     url(r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
     url(r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
     url(r'^dropbox/', include('corehq.apps.dropbox.urls')),
-    url(r'^megamobile/', include('corehq.messaging.smsbackends.megamobile.urls')),
     url(r'^start_enterprise/', include('corehq.messaging.smsbackends.start_enterprise.urls')),
     url(r'^telerivet/', include('corehq.messaging.smsbackends.telerivet.urls')),
     url(r'^kookoo/', include('corehq.messaging.ivrbackends.kookoo.urls')),

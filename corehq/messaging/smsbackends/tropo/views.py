@@ -1,22 +1,23 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-from .models import SQLTropoBackend
-from tropo import Tropo
 from corehq.apps.sms.api import incoming as incoming_sms
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import INCOMING, PhoneNumber
+from corehq.apps.sms.views import IncomingBackendView
+from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 from datetime import datetime
 from corehq.apps.sms.util import strip_plus
 
 
 @csrf_exempt
-def sms_in(request):
+def sms_in(request, backend_id=None):
     """
     Handles tropo messaging requests
     """
+    from tropo import Tropo
     if request.method == "POST":
         data = json.loads(request.body)
         session = data["session"]
@@ -40,7 +41,7 @@ def sms_in(request):
         if phone_number is not None and len(phone_number) > 1:
             if phone_number[0] == "+":
                 phone_number = phone_number[1:]
-        incoming_sms(phone_number, text, SQLTropoBackend.get_api_id())
+        incoming_sms(phone_number, text, SQLTropoBackend.get_api_id(), backend_id=backend_id)
         t = Tropo()
         t.hangup()
         return HttpResponse(t.RenderJson())
@@ -53,10 +54,10 @@ def ivr_in(request):
     """
     Handles tropo call requests
     """
+    from tropo import Tropo
     if request.method == "POST":
         data = json.loads(request.body)
         phone_number = data["session"]["from"]["id"]
-        # TODO: Implement tropo as an ivr backend. In the meantime, just log the call.
 
         if phone_number:
             cleaned_number = strip_plus(phone_number)
@@ -82,3 +83,25 @@ def ivr_in(request):
         return HttpResponse(t.RenderJson())
     else:
         return HttpResponseBadRequest("Bad Request")
+
+
+class TropoIncomingSMSView(IncomingBackendView):
+    urlname = 'tropo_sms'
+
+    @property
+    def backend_class(self):
+        return SQLTropoBackend
+
+    def post(self, request, api_key, *args, **kwargs):
+        return sms_in(request, backend_id=self.backend_couch_id)
+
+
+class TropoIncomingIVRView(IncomingBackendView):
+    urlname = 'tropo_ivr'
+
+    @property
+    def backend_class(self):
+        return SQLTropoBackend
+
+    def post(self, request, api_key, *args, **kwargs):
+        return ivr_in(request)

@@ -16,7 +16,7 @@ from corehq.util.translation import localize
 from corehq.util.log import send_HTML_email
 
 
-@task
+@task(serializer='pickle')
 def upload(dropbox_helper_id, access_token, size, max_retries):
     from .models import DropboxUploadHelper
     helper = DropboxUploadHelper.objects.get(id=dropbox_helper_id)

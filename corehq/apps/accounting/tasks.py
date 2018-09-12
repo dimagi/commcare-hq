@@ -199,7 +199,7 @@ def warn_active_subscriptions_per_domain_not_one():
             log_accounting_error("There is no active subscription for domain %s" % domain_name)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=5), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=5), acks_late=True)
 def update_subscriptions():
     deactivate_subscriptions(datetime.date.today())
     deactivate_subscriptions()
@@ -211,7 +211,7 @@ def update_subscriptions():
     warn_active_subscriptions_per_domain_not_one()
 
 
-@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
@@ -316,7 +316,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
@@ -326,7 +326,7 @@ def remind_subscription_ending():
     send_subscription_reminder_emails(1)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_dimagi_contact_subscription_ending_60_days():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
@@ -366,7 +366,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
             subscription.send_dimagi_ending_reminder_email()
 
 
-@task(ignore_result=True, acks_late=True)
+@task(serializer='pickle', ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
                                 account_created_by,
@@ -398,7 +398,7 @@ def create_wire_credits_invoice(domain_name,
         record.save()
 
 
-@task(ignore_result=True, acks_late=True)
+@task(serializer='pickle', ignore_result=True, acks_late=True)
 def send_purchase_receipt(payment_record, domain,
                           template_html, template_plaintext,
                           additional_context):
@@ -434,7 +434,7 @@ def send_purchase_receipt(payment_record, domain,
     )
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
 def send_autopay_failed(invoice, payment_method):
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user
@@ -471,7 +471,7 @@ def send_autopay_failed(invoice, payment_method):
 
 
 # Email this out every Monday morning.
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
 def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
@@ -566,13 +566,13 @@ def weekly_digest():
         })
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(hour=1, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
 def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
     if app_id:
         try:
@@ -635,7 +635,7 @@ def assign_explicit_community_subscription(domain_name, start_date, method, acco
     )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
 def run_downgrade_process(today=None):
     today = today or datetime.date.today()
 
@@ -763,7 +763,7 @@ def _create_overdue_notification(invoice, context):
     note.activate()
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def archive_logos(self, domain_name):
     try:
@@ -782,7 +782,7 @@ def archive_logos(self, domain_name):
         raise e
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def restore_logos(self, domain_name):
     try:
@@ -801,7 +801,7 @@ def restore_logos(self, domain_name):
         raise e
 
 
-@periodic_task(run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
 def send_prepaid_credits_export():
     if settings.ENTERPRISE_MODE:
         return
@@ -860,7 +860,7 @@ def send_prepaid_credits_export():
     writer.writerow(headers)
     for row in body:
         writer.writerow([
-            val if isinstance(val, six.text_type) else six.binary_type(val)
+            val if isinstance(val, six.text_type) else bytes(val)
             for val in row
         ])
 
@@ -874,7 +874,7 @@ def send_prepaid_credits_export():
     )
 
 
-@task(queue="email_queue")
+@task(serializer='pickle', queue="email_queue")
 def email_enterprise_report(domain, slug, couch_user):
     account = BillingAccount.get_account_by_domain(domain)
     report = EnterpriseReport.create(slug, account.id, couch_user)
@@ -902,7 +902,7 @@ def email_enterprise_report(domain, slug, couch_user):
     send_html_email_async(subject, couch_user.username, body)
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
 def calculate_users_in_all_domains():
     for domain in Domain.get_all_names():
         num_users = CommCareUser.total_by_domain(domain)

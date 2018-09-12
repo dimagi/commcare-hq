@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from datetime import datetime, time
 from functools import wraps
 
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from django.http import Http404
 from django.utils.translation import ugettext as _
 

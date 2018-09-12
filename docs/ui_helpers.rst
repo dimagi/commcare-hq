@@ -22,14 +22,14 @@ In its very basic form (a simple paginated view) it should look like:
 
 .. code-block:: python
 
-    class PuppiesCRUDView(BaseSectionView, CRUDPaginatedMixin):
+    class PuppiesCRUDView(BaseSectionView, CRUDPaginatedViewMixin):
         # your template should extend hqwebapp/base_paginated_crud.html
         template_name = 'puppyapp/paginated_puppies.html
 
         # all the user-visible text
         limit_text = "puppies per page"
         empty_notification = "you have no puppies"
-        loading_messagge = "loading_puppies"
+        loading_message = "loading_puppies"
 
         # required properties you must implement:
 
@@ -39,7 +39,7 @@ In its very basic form (a simple paginated view) it should look like:
             Specify a GET or POST from an HttpRequest object.
             """
             # Usually, something like:
-            return self.request.POST if self.request.method == 'post' else self.request.GET
+            return self.request.POST if self.request.method == 'POST' else self.request.GET
 
         @property
         def total(self):
@@ -54,6 +54,11 @@ In its very basic form (a simple paginated view) it should look like:
                 "Breed",
                 "Age",
             ]
+            
+        @property
+        def page_context(self):
+            # This should at least include the pagination_context that CRUDPaginatedViewMixin provides
+            return self.pagination_context
 
         @property
         def paginated_list(self):
@@ -81,7 +86,7 @@ In its very basic form (a simple paginated view) it should look like:
                 }
 
         def post(self, *args, **kwargs):
-            return self.paginated_crud_response
+            return self.paginate_crud_response
 
 The template should use `knockout templates <http://knockoutjs.com/documentation/template-binding.html>`_
 to render the data you pass back to the view. Each template will have access to
@@ -319,37 +324,41 @@ You should add the following to your `base-puppy-template` knockout template:
                         }
                     "
                     class="btn btn-danger">
-                <i class="icon-remove"></i> Delete Puppy
+                <i class="fa fa-remove"></i> Delete Puppy
             </button>
 
-            <div class="modal hide fade"
+            <div class="modal fade"
                  data-bind="
                     attr: {
                         id: 'delete-puppy-' + id
                     }
                  ">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h3>
-                       Delete puppy <strong data-bind="text: name"></strong>?
-                    </h3>
-                </div>
-                <div class="modal-body">
-                    <p>
-                        Yes, delete the puppy named <strong data-bind="text: name"></strong>.
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button"
-                            class="btn"
-                            data-dismiss="modal">
-                        Cancel
-                    </button>
-                    <button type="button"
-                            class="btn btn-danger delete-item-confirm"
-                            data-loading-text="Deleting Puppy...">
-                        <i class="icon-remove"></i> Delete Puppy
-                    </button>
+                 <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h3>
+                               Delete puppy <strong data-bind="text: name"></strong>?
+                            </h3>
+                        </div>
+                        <div class="modal-body">
+                            <p class="lead">
+                                Yes, delete the puppy named <strong data-bind="text: name"></strong>.
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button"
+                                    class="btn btn-default"
+                                    data-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button type="button"
+                                    class="btn btn-danger delete-item-confirm"
+                                    data-loading-text="Deleting Puppy...">
+                                <i class="fa fa-remove"></i> Delete Puppy
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </td>

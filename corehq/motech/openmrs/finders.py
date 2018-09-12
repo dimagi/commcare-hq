@@ -7,24 +7,41 @@ See `README.md`__ for more context.
 """
 from __future__ import absolute_import
 from __future__ import division
-
 from __future__ import unicode_literals
+
 from collections import namedtuple
+from functools import partial
 from operator import eq
 from pprint import pformat
 
 import six
 from jsonpath_rw import Child, parse, Fields, Slice, Where
 
-from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
+from corehq.motech.openmrs.finders_utils import (
+    le_days_diff,
+    le_levenshtein_percent,
+)
 from corehq.motech.openmrs.jsonpath import Cmp
 from corehq.motech.value_source import recurse_subclasses
 from dimagi.ext.couchdbkit import (
+    BooleanProperty,
     DecimalProperty,
     DocumentSchema,
     ListProperty,
     StringProperty,
 )
+
+
+MATCH_TYPE_EXACT = 'exact'
+MATCH_TYPE_LEVENSHTEIN = 'levenshtein'  # Useful for words translated across alphabets
+MATCH_TYPE_DAYS_DIFF = 'days_diff'  # Useful for estimated dates of birth
+MATCH_FUNCTIONS = {
+    MATCH_TYPE_EXACT: eq,
+    MATCH_TYPE_LEVENSHTEIN: le_levenshtein_percent,
+    MATCH_TYPE_DAYS_DIFF: le_days_diff,
+}
+MATCH_TYPES = tuple(MATCH_FUNCTIONS)
+MATCH_TYPE_DEFAULT = MATCH_TYPE_EXACT
 
 
 class PatientFinder(DocumentSchema):
@@ -37,6 +54,9 @@ class PatientFinder(DocumentSchema):
 
     Subclasses must implement the `find_patients()` method.
     """
+
+    # Whether to create a new patient if no patients are found
+    create_missing = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -106,6 +126,8 @@ PatientScore = namedtuple('PatientScore', ['patient', 'score'])
 class PropertyWeight(DocumentSchema):
     case_property = StringProperty()
     weight = DecimalProperty()
+    match_type = StringProperty(required=False, choices=MATCH_TYPES, default=MATCH_TYPE_DEFAULT)
+    match_params = ListProperty(required=False)
 
 
 class WeightedPropertyPatientFinder(PatientFinder):
@@ -123,8 +145,22 @@ class WeightedPropertyPatientFinder(PatientFinder):
     # [
     #     {"case_property": "bahmni_id", "weight": 0.9},
     #     {"case_property": "household_id", "weight": 0.9},
-    #     {"case_property": "dob", "weight": 0.75},
-    #     {"case_property": "first_name", "weight": 0.025},
+    #     {
+    #         "case_property": "dob",
+    #         "weight": 0.75,
+    #         "match_type": "days_diff",
+    #         // days_diff matches based on days difference from given date
+    #         "match_params": [364]
+    #     },
+    #     {
+    #         "case_property": "first_name",
+    #         "weight": 0.025,
+    #         "match_type": "levenshtein",
+    #         // levenshtein function takes edit_distance / len
+    #         "match_params": [0.2]
+    #         // i.e. 20% is one edit for every 5 characters
+    #         // e.g. "Riyaz" matches "Riaz" but not "Riazz"
+    #     },
     #     {"case_property": "last_name", "weight": 0.025},
     #     {"case_property": "municipality", "weight": 0.2},
     # ]
@@ -265,8 +301,11 @@ class WeightedPropertyPatientFinder(PatientFinder):
                     patient_value = match.value
                     value_map = self._property_map[prop].value_map
                     case_value = case.get_case_property(prop)
-                    is_equal = value_map.get(patient_value, patient_value) == case_value
-                    yield weight if is_equal else 0
+                    match_type = property_weight['match_type']
+                    match_params = property_weight['match_params']
+                    match_function = partial(MATCH_FUNCTIONS[match_type], *match_params)
+                    is_equivalent = match_function(value_map.get(patient_value, patient_value), case_value)
+                    yield weight if is_equivalent else 0
 
         return sum(weights())
 

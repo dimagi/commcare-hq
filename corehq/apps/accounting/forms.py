@@ -20,7 +20,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.bootstrap import InlineField, PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from django_countries.data import COUNTRIES
@@ -104,7 +104,12 @@ class BillingAccountBasicForm(forms.Form):
     )
     enterprise_admin_emails = forms.CharField(
         label="Enterprise Admin Emails",
-        required=False
+        required=False,
+    )
+    enterprise_restricted_signup_domains = forms.CharField(
+        label="Enterprise Domains for Restricting Signups",
+        required=False,
+        help_text='ex: dimagi.com, commcarehq.org',
     )
     invoicing_plan = forms.ChoiceField(label="Invoicing Plan")
     active_accounts = forms.IntegerField(
@@ -146,6 +151,7 @@ class BillingAccountBasicForm(forms.Form):
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
                 'enterprise_admin_emails': ','.join(account.enterprise_admin_emails),
+                'enterprise_restricted_signup_domains': ','.join(account.enterprise_restricted_signup_domains),
                 'invoicing_plan': account.invoicing_plan,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
@@ -195,6 +201,15 @@ class BillingAccountBasicForm(forms.Form):
                     ),
                     data_bind='visible: is_customer_billing_account'
                 )
+            )
+            additional_fields.append(
+                crispy.Div(
+                    crispy.Field(
+                        'enterprise_restricted_signup_domains',
+                        css_class='input-xxlarge',
+                    ),
+                    data_bind='visible: is_customer_billing_account'
+                ),
             )
             if account.subscription_set.count() > 0:
                 additional_fields.append(crispy.Div(
@@ -272,8 +287,26 @@ class BillingAccountBasicForm(forms.Form):
     def clean_enterprise_admin_emails(self):
         # Do not return a list with an empty string
         if self.cleaned_data['enterprise_admin_emails']:
-            return self.cleaned_data['enterprise_admin_emails'].split(',')
+            return [e.strip() for e in self.cleaned_data['enterprise_admin_emails'].split(r',')]
         else:
+            return []
+
+    def clean_enterprise_restricted_signup_domains(self):
+        if self.cleaned_data['enterprise_restricted_signup_domains']:
+            # Check that no other account has claimed these domains, or we won't know which message to display
+            errors = []
+            accounts = BillingAccount.get_enterprise_restricted_signup_accounts()
+            domains = [e.strip() for e in self.cleaned_data['enterprise_restricted_signup_domains'].split(r',')]
+            for domain in domains:
+                for account in accounts:
+                    if domain in account.enterprise_restricted_signup_domains and account.id != self.account.id:
+                        errors.append("{} is restricted by {}".format(domain, account.name))
+            if errors:
+                raise ValidationError("The following domains are already restricted by another account: " +
+                                      ", ".join(errors))
+            return domains
+        else:
+            # Do not return a list with an empty string
             return []
 
     def clean_active_accounts(self):
@@ -325,6 +358,7 @@ class BillingAccountBasicForm(forms.Form):
         account.is_active = self.cleaned_data['is_active']
         account.is_customer_billing_account = self.cleaned_data['is_customer_billing_account']
         account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
+        account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
         account.invoicing_plan = self.cleaned_data['invoicing_plan']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
@@ -1002,6 +1036,7 @@ class PlanInformationForm(forms.Form):
     visibility = forms.ChoiceField(choices=SoftwarePlanVisibility.CHOICES)
     max_domains = forms.IntegerField(required=False)
     is_customer_software_plan = forms.BooleanField(required=False)
+    is_annual_plan = forms.BooleanField(required=False)
 
     def __init__(self, plan, *args, **kwargs):
         self.plan = plan
@@ -1012,7 +1047,8 @@ class PlanInformationForm(forms.Form):
                 'edition': plan.edition,
                 'visibility': plan.visibility,
                 'max_domains': plan.max_domains,
-                'is_customer_software_plan': plan.is_customer_software_plan
+                'is_customer_software_plan': plan.is_customer_software_plan,
+                'is_annual_plan': plan.is_annual_plan
             }
         else:
             kwargs['initial'] = {
@@ -1031,7 +1067,8 @@ class PlanInformationForm(forms.Form):
                 'edition',
                 'visibility',
                 'max_domains',
-                'is_customer_software_plan'
+                'is_customer_software_plan',
+                'is_annual_plan'
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -1060,12 +1097,14 @@ class PlanInformationForm(forms.Form):
         visibility = self.cleaned_data['visibility']
         max_domains = self.cleaned_data['max_domains']
         is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
+        is_annual_plan = self.cleaned_data['is_annual_plan']
         plan = SoftwarePlan(name=name,
                             description=description,
                             edition=edition,
                             visibility=visibility,
                             max_domains=max_domains,
-                            is_customer_software_plan=is_customer_software_plan
+                            is_customer_software_plan=is_customer_software_plan,
+                            is_annual_plan=is_annual_plan
                             )
         plan.save()
         return plan
@@ -1080,6 +1119,7 @@ class PlanInformationForm(forms.Form):
             plan.visibility = self.cleaned_data['visibility']
             plan.max_domains = self.cleaned_data['max_domains']
             plan.is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
+            plan.is_annual_plan = self.cleaned_data['is_annual_plan']
             plan.save()
             messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
 
@@ -1708,7 +1748,77 @@ class EnterprisePlanContactForm(forms.Form):
             'domain': self.domain,
             'email': self.web_user.email
         }
-        html_content = render_to_string('accounting/email/enterprise_request.html', context)
+        html_content = render_to_string('accounting/email/sales_request.html', context)
+        text_content = """
+        Email: %(email)s
+        Name: %(name)s
+        Company: %(company)s
+        Domain: %(domain)s
+        Message:
+        %(message)s
+        """ % context
+        send_html_email_async.delay(subject, settings.BILLING_EMAIL,
+                                    html_content, text_content,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
+
+
+class AnnualPlanContactForm(forms.Form):
+    name = forms.CharField(
+        label=ugettext_noop("Name")
+    )
+    company_name = forms.CharField(
+        required=False,
+        label=ugettext_noop("Company / Organization")
+    )
+    message = forms.CharField(
+        required=False,
+        label=ugettext_noop("Message"),
+        widget=forms.Textarea
+    )
+
+    def __init__(self, domain, web_user, on_annual_plan, data=None, *args, **kwargs):
+        self.domain = domain
+        self.web_user = web_user
+        super(AnnualPlanContactForm, self).__init__(data, *args, **kwargs)
+        from corehq.apps.domain.views import SelectPlanView, DomainSubscriptionView
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = "form-horizontal"
+        if on_annual_plan:
+            back_button_text = "Back to my Subscription"
+            urlname = DomainSubscriptionView.urlname
+        else:
+            back_button_text = "Select different plan"
+            urlname = SelectPlanView.urlname
+        self.helper.layout = crispy.Layout(
+            'name',
+            'company_name',
+            'message',
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Submit"),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+                hqcrispy.LinkButton(
+                    _(back_button_text),
+                    reverse(urlname, args=[self.domain]),
+                    css_class="btn btn-default"
+                ),
+            )
+        )
+
+    def send_message(self):
+        subject = "[Annual Plan Request] %s" % self.domain
+        context = {
+            'name': self.cleaned_data['name'],
+            'company': self.cleaned_data['company_name'],
+            'message': self.cleaned_data['message'],
+            'domain': self.domain,
+            'email': self.web_user.email
+        }
+        html_content = render_to_string('accounting/email/sales_request.html', context)
         text_content = """
         Email: %(email)s
         Name: %(name)s
@@ -2379,3 +2489,74 @@ class CreateAdminForm(forms.Form):
         if not user_role.role.has_privilege(ops_role):
             Grant.objects.create(from_role=user_role.role, to_role=ops_role)
         return user
+
+
+class EnterpriseSettingsForm(forms.Form):
+    restrict_domain_creation = forms.BooleanField(
+        label=ugettext_lazy("Restrict Project Space Creation"),
+        required=False,
+        help_text=ugettext_lazy("Do not allow current web users, other than enterprise admins, "
+            "to create new project spaces."),
+    )
+    restrict_signup = forms.BooleanField(
+        label=ugettext_lazy("Restrict User Signups"),
+        required=False,
+        help_text=ugettext_lazy("<span data-bind='html: restrictSignupHelp'></span>"),
+    )
+    restrict_signup_message = forms.CharField(
+        label="Signup Restriction Message",
+        required=False,
+        help_text=ugettext_lazy("Message to display to users who attempt to sign up for an account"),
+        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 128}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain', None)
+        self.account = kwargs.pop('account', None)
+        kwargs['initial'] = {
+            "restrict_domain_creation": self.account.restrict_domain_creation,
+            "restrict_signup": self.account.restrict_signup,
+            "restrict_signup_message": self.account.restrict_signup_message,
+        }
+        super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_id = 'enterprise-settings-form'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = reverse("edit_enterprise_settings", args=[self.domain])
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Edit Enterprise Settings"),
+                PrependedText('restrict_domain_creation', ''),
+                crispy.Div(
+                    PrependedText('restrict_signup', '', data_bind='checked: restrictSignup'),
+                ),
+                crispy.Div(
+                    crispy.Field('restrict_signup_message'),
+                    data_bind='visible: restrictSignup',
+                ),
+            )
+        )
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Enterprise Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def clean_restrict_signup_message(self):
+        message = self.cleaned_data['restrict_signup_message']
+        if self.cleaned_data['restrict_signup'] and not message:
+            raise ValidationError(_("If restricting signups, a message is required."))
+        return message
+
+    def save(self, account):
+        account.restrict_domain_creation = self.cleaned_data.get('restrict_domain_creation', False)
+        account.restrict_signup = self.cleaned_data.get('restrict_signup', False)
+        account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
+        account.save()
+        return True

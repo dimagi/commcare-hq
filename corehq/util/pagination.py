@@ -4,7 +4,7 @@ import hashlib
 from datetime import datetime
 
 from couchdbkit import ResourceNotFound
-from jsonobject.properties import ListProperty, BooleanProperty
+from jsonobject.properties import ListProperty, BooleanProperty, JsonArray, JsonSet, JsonDict
 
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
 from dimagi.utils.couch.database import get_db
@@ -30,15 +30,6 @@ class PaginationEventHandler(object):
         :param kwargs: Keyword arguments that were passed to the ``data_function`` for this page
         """
         pass
-
-    def page_exception(self, exception):
-        """Called on the load if it raises an exception
-
-        :param exception: the exception that was raised
-
-        returns a boolean of whether the exception was handled
-        """
-        return False
 
 
 class DelegatingPaginationEventHandler(PaginationEventHandler):
@@ -112,13 +103,7 @@ def paginate_function(data_function, args_provider, event_handler=None):
         event_handler.page_start(total_emitted, *args, **kwargs)
         results = data_function(*args, **kwargs)
         start_time = datetime.utcnow()
-        try:  # this is where the results are loaded, since it's lazy
-            len_results = len(results)
-        except Exception as e:
-            if event_handler.page_exception(e):
-                continue
-            else:
-                raise
+        len_results = len(results)
 
         for item in results:
             yield item
@@ -145,6 +130,18 @@ class ResumableIteratorState(JsonObject):
     complete = BooleanProperty(default=False)
 
 
+def unpack_jsonobject(json_object):
+    if isinstance(json_object, JsonArray):
+        return [unpack_jsonobject(x) for x in json_object]
+    elif isinstance(json_object, JsonSet):
+        return {unpack_jsonobject(x) for x in json_object}
+    elif isinstance(json_object, JsonDict):
+        return {
+            unpack_jsonobject(k): unpack_jsonobject(v) for k, v in six.iteritems(json_object)
+        }
+    return json_object
+
+
 class ResumableArgsProvider(ArgsProvider):
     def __init__(self, iterator_state, args_provider):
         self.args_provider = args_provider
@@ -154,7 +151,7 @@ class ResumableArgsProvider(ArgsProvider):
 
     def get_initial_args(self):
         if self.resume:
-            return self.resume_args, self.resume_kwargs
+            return unpack_jsonobject(self.resume_args), unpack_jsonobject(self.resume_kwargs)
         return self.args_provider.get_initial_args()
 
     def get_next_args(self, last_item, *last_args, **last_kwargs):
@@ -182,7 +179,7 @@ class ResumableFunctionIterator(object):
         self.args_provider = args_provider
         self.item_getter = item_getter
         self.event_handler = event_handler
-        self.iteration_id = hashlib.sha1(self.iteration_key).hexdigest()
+        self.iteration_id = hashlib.sha1(self.iteration_key.encode('utf-8')).hexdigest()
 
         self.couch_db = get_db('meta')
         self._state = None

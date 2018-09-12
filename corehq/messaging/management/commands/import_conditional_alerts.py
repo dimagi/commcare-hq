@@ -101,7 +101,6 @@ class Command(BaseCommand):
                     case_type=json_rule.case_type,
                     active=True,
                     filter_on_server_modified=False,
-                    migrated=True,
                     workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
                 )
 

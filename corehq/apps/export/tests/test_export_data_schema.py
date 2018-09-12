@@ -45,6 +45,7 @@ from corehq.apps.export.const import (
     CASE_CREATE_ELEMENTS,
 )
 from six.moves import map
+from six.moves import zip
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -1212,7 +1213,7 @@ class TestOrderingOfSchemas(SimpleTestCase):
         )
 
     def _assert_item_order(self, schema, path, items):
-        group_schema = filter(lambda gs: gs.path == path, schema.group_schemas)[0]
+        group_schema = [gs for gs in schema.group_schemas if gs.path == path][0]
 
         for item in group_schema.items:
             if not items:

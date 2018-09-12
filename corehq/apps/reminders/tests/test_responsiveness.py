@@ -22,8 +22,8 @@ class ReminderResponsivenessTest(TestCase):
 
     def get_reminders(self):
         return CaseReminder.view('reminders/by_domain_handler_case',
-            start_key=[self.domain],
-            end_key=[self.domain, {}],
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
             include_docs=True).all()
 
     def get_all_reminders(self):

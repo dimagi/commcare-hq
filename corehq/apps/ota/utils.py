@@ -60,7 +60,7 @@ def reset_demo_user_restore(commcare_user, domain):
         restore_user=commcare_user.to_ota_restore_user(),
         params=RestoreParams(version=V2),
     ).get_payload().as_file()
-    demo_restore = DemoUserRestore.create(commcare_user._id, restore)
+    demo_restore = DemoUserRestore.create(commcare_user._id, restore, domain)
 
     # Set reference to new restore
     try:

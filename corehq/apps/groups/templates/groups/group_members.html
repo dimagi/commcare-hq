@@ -13,7 +13,7 @@
 
 {% block js %}{{ block.super }}
     {% include 'hqwebapp/includes/ui_element_js.html' %}
-    <script src="{% static 'hqwebapp/js/select_2_ajax_widget.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/select_2_ajax_widget_v4.js' %}"></script>
     <script src="{% static 'groups/js/group_members.js' %}"></script>
 {% endblock %}
 
@@ -76,8 +76,8 @@
         </div>
         <hr />
 
-        <ul class="nav nav-tabs" role="tablist" style="margin-bottom: 20px;">
-            <li role="presentation" class="active">
+        <ul class="nav nav-tabs sticky-tabs" role="tablist" style="margin-bottom: 20px;">
+            <li role="presentation">
                 <a href="#membership-tab" aria-controls="home" role="tab" data-toggle="tab">
                     {% trans "Group Membership" %}
                 </a>
@@ -91,7 +91,7 @@
 
         <!-- Tab panes -->
         <div class="tab-content">
-            <div role="tabpanel" class="tab-pane active" id="membership-tab">
+            <div role="tabpanel" class="tab-pane" id="membership-tab">
                 <div class="row">
                     <div class="col-sm-12">
                         <div class="alert alert-info" id="membership_updating" style="display: none">

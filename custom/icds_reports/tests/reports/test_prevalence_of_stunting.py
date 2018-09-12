@@ -10,6 +10,7 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestPrevalenceOfStunting(TestCase):
+    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_prevalence_of_stunting_data_map(
@@ -20,7 +21,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -36,7 +37,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -85,12 +86,12 @@ class TestPrevalenceOfStunting(TestCase):
         )
         expected = (
             "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
-            "children between 6 - 60 months who were moderately/severely stunted in the current month. "
+            "children between 0 - 5 years who were moderately/severely stunted in the current month. "
             "<br/><br/>"
             "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
             "on the growth of a child"
         )
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_prevalence_of_stunting_data_map(
@@ -101,7 +102,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], "63.71")
+        self.assertEqual(data['rightLegend']['average'], "63.71")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_stunting_data_map(
@@ -115,13 +116,13 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (6 - 60 months) eligible to have height measured:', 'value': '939'},
-                {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '939'},
+                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
                  'value': '32'},
-                {'indicator': 'Number of Children (6 - 60 months) unmeasured:', 'value': '907'},
-                {'indicator': '% children (6 - 60 months) with severely stunted growth:', 'value': '34.38%'},
-                {'indicator': '% children (6 - 60 months) with moderate stunted growth:', 'value': '25.00%'},
-                {'indicator': '% children (6 - 60 months) with normal stunted growth:', 'value': '40.62%'}
+                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '907'},
+                {'indicator': '% children (0 - 5 years) with severely stunted growth:', 'value': '34.38%'},
+                {'indicator': '% children (0 - 5 years) with moderate stunted growth:', 'value': '25.00%'},
+                {'indicator': '% children (0 - 5 years) with normal stunted growth:', 'value': '40.62%'}
             ]
         )
 
@@ -153,7 +154,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'severe')
+        self.assertEqual(data['slug'], 'severe')
 
     def test_map_data_label(self):
         data = get_prevalence_of_stunting_data_map(
@@ -164,7 +165,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent of Children Stunted (6 - 60 months)')
+        self.assertEqual(data['label'], 'Percent of Children Stunted (0 - 5 years)')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_prevalence_of_stunting_data_map(
@@ -203,7 +204,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], "75.00")
+        self.assertEqual(data['rightLegend']['average'], "75.00")
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -214,7 +215,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
 
     def test_chart_data_location_type(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -225,7 +226,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['location_type'], 'State')
+        self.assertEqual(data['location_type'], 'State')
 
     def test_chart_data_bottom_five(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -282,7 +283,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data['chart_data']), 3)
+        self.assertEqual(len(data['chart_data']), 3)
 
     def test_chart_data_pink(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -455,7 +456,7 @@ class TestPrevalenceOfStunting(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
 
     def test_sector_data_info(self):
         data = get_prevalence_of_stunting_sector_data(
@@ -470,10 +471,10 @@ class TestPrevalenceOfStunting(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
-            "children between  (6 - 60 months) who were moderately/severely stunted in the current month. "
+            "children between  (0 - 5 years) who were moderately/severely stunted in the current month. "
             "<br/><br/>"
             "Stunting is a sign of chronic undernutrition and has long lasting harmful "
             "consequences on the growth of a child"
@@ -540,471 +541,6 @@ class TestPrevalenceOfStunting(TestCase):
                         [
                             "s2",
                             0.5
-                        ]
-                    ],
-                    "key": ""
-                }
-            ]
-        )
-
-
-@override_settings(SERVER_ENVIRONMENT='icds-new')
-class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
-    maxDiff = None
-
-    def test_map_data_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['data'],
-            {
-                "st1": {
-                    "severe": 0,
-                    "moderate": 0,
-                    "normal": 0,
-                    "total_measured": 0,
-                    "total": 454,
-                    'original_name': ["st1"],
-                    "fillKey": "0%-25%"
-                },
-                "st2": {
-                    "severe": 0,
-                    "moderate": 0,
-                    "normal": 0,
-                    "total_measured": 0,
-                    "total": 497,
-                    'original_name': ["st2"],
-                    "fillKey": "0%-25%"
-                }
-            }
-        )
-
-    def test_map_data_right_legend_info_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        expected = (
-            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
-            "children between 0 - 5 years who were moderately/severely stunted in the current month. "
-            "<br/><br/>"
-            "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
-            "on the growth of a child"
-        )
-        self.assertEquals(data['rightLegend']['info'], expected)
-
-    def test_map_data_right_legend_average_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertEquals(data['rightLegend']['average'], "0.00")
-
-    def test_map_data_right_legend_extended_info_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertListEqual(
-            data['rightLegend']['extended_info'],
-            [
-                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '951'},
-                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
-                 'value': '0'},
-                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '951'},
-                {'indicator': '% children (0 - 5 years) with severely stunted growth:', 'value': '0.00%'},
-                {'indicator': '% children (0 - 5 years) with moderate stunted growth:', 'value': '0.00%'},
-                {'indicator': '% children (0 - 5 years) with normal stunted growth:', 'value': '0.00%'}
-            ]
-        )
-
-    def test_map_data_label_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertEquals(data['label'], 'Percent of Children Stunted (0 - 5 years)')
-
-    def test_map_name_two_locations_represent_by_one_topojson_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'aggregation_level': 3
-            },
-            loc_level='block',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['data'],
-            {
-                'block_map': {
-                    'moderate': 0,
-                    'total_measured': 0,
-                    'normal': 0,
-                    'original_name': ['b1', 'b2'],
-                    'severe': 0,
-                    'total': 454,
-                    'fillKey': '0%-25%'
-                }
-            }
-        )
-
-    def test_average_with_two_locations_represent_by_one_topojson_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'aggregation_level': 3
-            },
-            loc_level='block',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertEquals(data['rightLegend']['average'], "0.00")
-
-    def test_chart_data_bottom_five_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertListEqual(
-            data['bottom_five'],
-            [
-                {
-                    "loc_name": "st1",
-                    "percent": 0
-                },
-                {
-                    "loc_name": "st2",
-                    "percent": 0
-                },
-            ]
-        )
-
-    def test_chart_data_top_five_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertListEqual(
-            data['top_five'],
-            [
-                {
-                    "loc_name": "st1",
-                    "percent": 0
-                },
-                {
-                    "loc_name": "st2",
-                    "percent": 0
-                },
-            ]
-        )
-
-    def test_chart_data_pink_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['chart_data'][0],
-            {
-                "color": ChartColors.PINK,
-                "classed": "dashed",
-                "strokeWidth": 2,
-                "values": [
-                    {
-                        "y": 0.0,
-                        "x": 1485907200000,
-                        "all": 0,
-                        "measured": 0
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1488326400000,
-                        "all": 0,
-                        "measured": 0
-                    },
-                    {
-                        "y": 1.0,
-                        "x": 1491004800000,
-                        "all": 981,
-                        "measured": 1
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1493596800000,
-                        "all": 951,
-                        "measured": 0
-                    }
-                ],
-                "key": "% normal"
-            }
-        )
-
-    def test_chart_data_orange_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['chart_data'][1],
-            {
-                "color": ChartColors.ORANGE,
-                "classed": "dashed",
-                "strokeWidth": 2,
-                "values": [
-                    {
-                        "y": 0.0,
-                        "x": 1485907200000,
-                        "all": 0,
-                        "measured": 0
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1488326400000,
-                        "all": 0,
-                        "measured": 0
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1491004800000,
-                        "all": 981,
-                        "measured": 1
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1493596800000,
-                        "all": 951,
-                        "measured": 0
-                    }
-                ],
-                "key": "% moderately stunted"
-            }
-        )
-
-    def test_chart_data_red_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['chart_data'][2],
-            {
-                "color": ChartColors.RED,
-                "classed": "dashed",
-                "strokeWidth": 2,
-                "values": [
-                    {
-                        "y": 0.0,
-                        "x": 1485907200000,
-                        "all": 0,
-                        "measured": 0
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1488326400000,
-                        "all": 0,
-                        "measured": 0
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1491004800000,
-                        "all": 981,
-                        "measured": 1
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1493596800000,
-                        "all": 951,
-                        "measured": 0
-                    }
-                ],
-                "key": "% severely stunted"
-            }
-        )
-
-    def test_chart_data_all_locations_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertListEqual(
-            data['all_locations'],
-            [
-                {
-                    "loc_name": "st1",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st2",
-                    "percent": 0.0
-                },
-            ]
-        )
-
-    def test_sector_data_info_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_sector_data(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'aggregation_level': 4
-            },
-            location_id='b1',
-            loc_level='supervisor',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertEquals(
-            data['info'],
-            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
-            "children between  (0 - 5 years) who were moderately/severely stunted in the current month. "
-            "<br/><br/>"
-            "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
-            "on the growth of a child"
-        )
-
-    def test_sector_data_tooltips_data_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_sector_data(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'aggregation_level': 4
-            },
-            location_id='b1',
-            loc_level='supervisor',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['tooltips_data'],
-            {
-                "s1": {
-                    "total": 71,
-                    "severe": 0,
-                    "moderate": 0,
-                    "total_measured": 0,
-                    "normal": 0
-                },
-                "s2": {
-                    "total": 153,
-                    "severe": 0,
-                    "moderate": 0,
-                    "total_measured": 0,
-                    "normal": 0
-                },
-            }
-        )
-
-    def test_sector_data_chart_data_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_stunting_sector_data(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'aggregation_level': 4
-            },
-            location_id='b1',
-            loc_level='supervisor',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertListEqual(
-            data['chart_data'],
-            [
-                {
-                    "color": MapColors.BLUE,
-                    "classed": "dashed",
-                    "strokeWidth": 2,
-                    "values": [
-                        [
-                            "s1",
-                            0.0
-                        ],
-                        [
-                            "s2",
-                            0.0
                         ]
                     ],
                     "key": ""

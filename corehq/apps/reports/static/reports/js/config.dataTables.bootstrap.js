@@ -2,11 +2,11 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
     'jquery',
     'analytix/js/google',
     'datatables.bootstrap',
-], function(
+], function (
     $,
     googleAnalytics
 ) {
-    var HQReportDataTables = function(options) {
+    var HQReportDataTables = function (options) {
         var self = {};
         self.dataTableElem = options.dataTableElem || '.datatable';
         self.paginationType = options.paginationType || 'bs_normal';
@@ -47,9 +47,9 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         self.datatable = null;
         self.rendered = false;
 
-        self.render_footer_row = (function() {
+        self.render_footer_row = (function () {
             var $dataTableElem = $(self.dataTableElem);
-            return function(id, row) {
+            return function (id, row) {
                 if ($dataTableElem.find('tfoot').length === 0) {
                     var $row = $dataTableElem.find('#' + id);
                     if ($row.length == 0) {
@@ -92,8 +92,8 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
             }
             applyBootstrapMagic();
 
-            var dataTablesDom = "frt<'row dataTables_control'<'col-sm-5'il><'col-sm-7'p>>";
-            $(self.dataTableElem).each(function(){
+            var dataTablesDom = "frt<'row dataTables_control'<'col-sm-5'il><'col-sm-7 text-right'p>>";
+            $(self.dataTableElem).each(function () {
                 var params = {
                     sDom: dataTablesDom,
                     bPaginate: self.show_pagination,
@@ -121,8 +121,8 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                         for (var p in ajaxParams) {
                             if (ajaxParams.hasOwnProperty(p)) {
                                 var currentParam = ajaxParams[p];
-                                if(_.isObject(currentParam.value)) {
-                                    for (var j=0; j < currentParam.value.length; j++) {
+                                if (_.isObject(currentParam.value)) {
+                                    for (var j = 0; j < currentParam.value.length; j++) {
                                         defParams.push({
                                             name: currentParam.name,
                                             value: currentParam.value[j],
@@ -135,22 +135,22 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                         }
                         return defParams;
                     };
-                    params.fnServerData = function ( sSource, aoData, fnCallback, oSettings ) {
-                        var custom_callback = function(data) {
+                    params.fnServerData = function (sSource, aoData, fnCallback, oSettings) {
+                        var custom_callback = function (data) {
                             var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
                             var i;
                             if ('total_row' in data) {
                                 self.render_footer_row('ajax_total_row', data['total_row']);
                             }
                             if ('statistics_rows' in data) {
-                                for (i = 0; i < data.statistics_rows.length; i++){
+                                for (i = 0; i < data.statistics_rows.length; i++) {
                                     self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
                                 }
                             }
                             applyBootstrapMagic();
                             if ('context' in data) {
                                 var iconPath = data['icon_path'] || $(".base-maps-data").data("icon_path");
-                                hqRequire(["reports/js/maps_utils"], function(mapsUtils) {
+                                hqRequire(["reports/js/maps_utils"], function (mapsUtils) {
                                     mapsUtils.load(data['context'], iconPath);
                                 });
                             }
@@ -161,16 +161,16 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                             }
                             return result;
                         };
-                        oSettings.jqXHR = $.ajax( {
+                        oSettings.jqXHR = $.ajax({
                             "url": sSource.url,
                             "method": sSource.method,
                             "data": self.fmtParams(aoData),
                             "success": custom_callback,
-                            "error": function(jqXHR, textStatus, errorThrown) {
+                            "error": function (jqXHR, textStatus, errorThrown) {
                                 $(".dataTables_processing").hide();
                                 if (jqXHR.status === 400) {
                                     var errorMessage = self.badRequestErrorText;
-                                    if (jqXHR.responseText){
+                                    if (jqXHR.responseText) {
                                         errorMessage = "<p><span class='label label-danger'>" + gettext("Sorry!") + "</span> " + jqXHR.responseText + "</p>";
                                     }
                                     $(".dataTables_empty").html(errorMessage);
@@ -184,7 +184,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                                     }
                                 }
                             },
-                        } );
+                        });
                     };
                 }
                 params.oLanguage = {
@@ -200,7 +200,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                     }
                 };
 
-                if(self.aoColumns)
+                if (self.aoColumns)
                     params.aoColumns = self.aoColumns;
 
                 var datatable = $(this).dataTable(params);
@@ -232,16 +232,16 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                 // as fnAdjustColumnSizing fixes the issue and it remains fixed
                 // without intervention afterward.
                 self._lengthsSeen = [];
-                datatable.on( 'length.dt', function (e, settings, length) {
+                datatable.on('length.dt', function (e, settings, length) {
                     if (self._lengthsSeen.indexOf(length) < 0) {
                         datatable.fnAdjustColumnSizing();
                         self._lengthsSeen.push(length);
                     }
-                } );
+                });
 
                 var $dataTablesFilter = $(".dataTables_filter");
-                if($dataTablesFilter && $("#extra-filter-info")) {
-                    if($dataTablesFilter.length > 1) {
+                if ($dataTablesFilter && $("#extra-filter-info")) {
+                    if ($dataTablesFilter.length > 1) {
                         $($dataTablesFilter.first()).remove();
                         $dataTablesFilter = $($dataTablesFilter.last());
                     }
@@ -261,7 +261,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
 
                 var $dataTablesLength = $(self.dataTableElem).parents('.dataTables_wrapper').find(".dataTables_length"),
                     $dataTablesInfo = $(self.dataTableElem).parents('.dataTables_wrapper').find(".dataTables_info");
-                if($dataTablesLength && $dataTablesInfo) {
+                if ($dataTablesLength && $dataTablesInfo) {
                     var $selectField = $dataTablesLength.find("select"),
                         $selectLabel = $dataTablesLength.find("label");
 
@@ -271,7 +271,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                     if (self.showAllRowsOption)
                         $selectField.append($('<option value="-1" />').text("All Rows"));
                     $selectField.addClass('form-control');
-                    $selectField.on("change", function(){
+                    $selectField.on("change", function () {
                         var selected_value = $selectField.find('option:selected').val();
                         googleAnalytics.track.event("Reports", "Changed number of items shown", selected_value);
                     });
@@ -285,11 +285,11 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         return self;
     };
 
-    $.extend( $.fn.dataTableExt.oStdClasses, {
+    $.extend($.fn.dataTableExt.oStdClasses, {
         "sSortAsc": "header headerSortAsc",
         "sSortDesc": "header headerSortDesc",
         "sSortable": "header headerSort",
-    } );
+    });
 
     // For sorting rows
 
@@ -321,15 +321,15 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         return new Date(m[1]);
     }
 
-    $.fn.dataTableExt.oSort['title-numeric-asc'] = function(a, b) { return sortSpecial(a, b, true, convertNum); };
+    $.fn.dataTableExt.oSort['title-numeric-asc'] = function (a, b) { return sortSpecial(a, b, true, convertNum); };
 
-    $.fn.dataTableExt.oSort['title-numeric-desc'] = function(a, b) { return sortSpecial(a, b, false, convertNum); };
+    $.fn.dataTableExt.oSort['title-numeric-desc'] = function (a, b) { return sortSpecial(a, b, false, convertNum); };
 
-    $.fn.dataTableExt.oSort['title-date-asc']  = function(a,b) { return sortSpecial(a, b, true, convertDate); };
+    $.fn.dataTableExt.oSort['title-date-asc']  = function (a,b) { return sortSpecial(a, b, true, convertDate); };
 
-    $.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) { return sortSpecial(a, b, false, convertDate); };
+    $.fn.dataTableExt.oSort['title-date-desc']  = function (a,b) { return sortSpecial(a, b, false, convertDate); };
 
     return {
-        HQReportDataTables: function(options) { return new HQReportDataTables(options); },
+        HQReportDataTables: function (options) { return new HQReportDataTables(options); },
     };
 });

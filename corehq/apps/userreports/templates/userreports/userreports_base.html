@@ -15,7 +15,7 @@
         {% with report as selected_report %}
         {% for report in reports %}
         <li {% if report.get_id == selected_report.get_id %} class="active"{% endif %}>
-            <a href="{% url 'edit_configurable_report' domain report.get_id %}">
+            <a href="{% url 'edit_configurable_report' domain report.get_id %}"  title="{{ report.title }}" class='report-nav'>
                 {{ report.title }}
                 {% if report.is_static %}
                     <span class="label label-default">static</span>

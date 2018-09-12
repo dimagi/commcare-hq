@@ -218,7 +218,7 @@ ValueSource:
        }
     ```
 
-2. It can map a case property value to a Concept UUID.
+3. It can map a case property value to a Concept UUID.
    CasePropertyMap does this. e.g.
    ```javascript
        "person_attributes": {
@@ -235,6 +235,17 @@ ValueSource:
          }
        }
     ```
+
+**GOTCHA**: An easy mistake when configuring "person_attributes": The
+OpenMRS UUID of a Person Attribute Type is different from the UUID of
+its Concept. For the Person Attribute Type UUID, navigate to
+Administration > Person > Manage Person Attribute Types and select the
+Person Attribute Type you want. Note the greyed-out UUID. This is the
+UUID that you need. If the Person Attribute Type is a Concept, navigate
+to Administration > Concepts > View Concept Dictionary and search for
+the Person Attribute Type by name. Select it from the search results.
+Note the UUID of the concept is different. Select each of its Answers.
+Use their UUIDs in the "value_map".
 
 There are two more OpenmrsCaseConfig fields:
 
@@ -288,8 +299,8 @@ subclasses.
 
 The `PatientFinder.find_patients()` method must be implemented by
 subclasses. It returns a list of zero, one, or many patients. If it
-returns one patient, the OpenmrsRepeater.find_patient() will accept that
-patient as a true match.
+returns one patient, the OpenmrsRepeater.find_or_create_patient() will
+accept that patient as a true match.
 
 **NOTE**: The consequences of a false positive (a Type II error) are
 severe: A real patient will have their valid values overwritten by those
@@ -298,23 +309,66 @@ skew towards false negatives (Type I errors). In other words, it is much
 better not to choose a patient than to choose the wrong patient.
 
 
-Provider UUID
--------------
+Creating Missing Patients
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If a corresponding OpenMRS patient is not found for a CommCare case,
+then a PatientFinder has the option to create a patient in OpenMRS. This
+is an optional property named "create_missing". Its value defaults to
+`false`. If it is set to `true`, then it will create a new patient if
+none are found.
+
+For example:
+
+    "patient_finder": {
+        "doc_type": "WeightedPropertyPatientFinder",
+        "property_weights": [
+            {"case_property": "given_name", "weight": 0.5},
+            {"case_property": "family_name", "weight": 0.6}
+        ],
+        "searchable_properties": ["family_name"],
+        "create_missing": true
+    }
+
+If more than one matching patient is found, a new patient will not be
+created.
+
+All required properties must be included in the payload. This is sure to
+include a name and a date of birth, possibly estimated. It may include
+an identifier. You can find this out from the OpenMRS Administration UI,
+or by testing the OpenMRS REST API.
+
+
+WeightedPropertyPatientFinder
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The first (and currently only) subclass of `PatientFinder` is the
+`WeightedPropertyPatientFinder` class. As the name suggests, it assigns
+weights to case properties, and scores the patients it finds in OpenMRS
+to select an OpenMRS patient that matches a CommCare case.
+
+See [the source code](finders.py) for more details on its properties and
+how to define it.
+
+
+Provider
+--------
 
 In OpenMRS, observations about a patient, like their height or their
 blood pressure, can be associated with a data provider. A "provider" is
 usually an OpenMRS user who can enter data.
 
 It is useful to label data from CommCare. OpenMRS Configuration has a
-field called "Provider UUID", and the value entered here is stored in
-OpenmrsConfig.openmrs_provider.
+field called "Provider's Person UUID", and the value entered here is
+stored in OpenmrsConfig.openmrs_provider.
 
 There are three different kinds of entities involved in setting up a
 provider in OpenMRS: A Person instance; a Provider instance; and a User
 instance.
 
-**NOTE**: The value that OpenMRS expects in the "Provider UUID" field is
-a **Person UUID**.
+**NOTE**: The value that OpenMRS expects in the "Provider's Person UUID"
+field is a **Person UUID**, not a **Provider UUID**. The distinction is
+not obvious in the OpenMRS interface.
 
 Use the following steps to create a provider for CommCare:
 
@@ -328,8 +382,8 @@ binary about it. You will have to decided whether CommCare is male or
 female. When you are done, click "Create Person".
 
 Make a note of the greyed UUID at the bottom of the next page. This is
-the value you will need for "Provider UUID" in the configuration for the
-OpenMRS Repeater.
+the value you will need for "Provider's Person UUID" in the
+configuration for the OpenMRS Repeater.
 
 Go back to the OpenMRS Administration page, choose "Manage Providers"
 and click "Add Provider". In the "Person" field, type the name of the

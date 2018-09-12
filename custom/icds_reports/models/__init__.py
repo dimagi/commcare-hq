@@ -14,6 +14,9 @@ from custom.icds_reports.models.aggregate import (
     AggregateCcsRecordPostnatalCareForms,
     AggregateChildHealthTHRForms,
     AggregateGrowthMonitoringForms,
+    AggregateCcsRecordTHRForms,
+    AggregateCcsRecordDeliveryForms,
+    AggregateBirthPreparednesForms,
     AggregateInactiveAWW,
     AggregateAwcInfrastructureForms,
 )
@@ -24,7 +27,8 @@ from custom.icds_reports.models.views import (
     AggAwcMonthly,
     AggCcsRecordMonthly,
     AggChildHealthMonthly,
-    AwcLocationMonths
+    AwcLocationMonths,
+    DishaIndicatorView
 )
 from custom.icds_reports.models.util import (
     UcrTableNameMapping,

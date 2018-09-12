@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
-from corehq.apps.change_feed.connection import get_kafka_client_or_none
+from corehq.apps.change_feed.connection import get_simple_kafka_client_or_none
 from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from corehq.apps.domain.models import Domain
@@ -56,7 +56,7 @@ def get_application_db_kafka_pillow(pillow_id, **kwargs):
 
 
 def get_change_feed_pillow_for_db(pillow_id, couch_db):
-    kafka_client = get_kafka_client_or_none()
+    kafka_client = get_simple_kafka_client_or_none()
     processor = KafkaProcessor(
         kafka_client, data_source_type=data_sources.SOURCE_COUCH, data_source_name=couch_db.dbname
     )

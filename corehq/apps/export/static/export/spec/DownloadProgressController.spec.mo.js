@@ -1,4 +1,4 @@
-describe('DownloadProgressController', function() {
+describe('DownloadProgressController', function () {
     DnldExpData.prepareTests();
     DnldExpData.prepareDownloadProgressController();
     describe('$watch on exportDownloadService', function () {

@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from collections import namedtuple
 import uuid
 import mock
 import os
@@ -7,7 +9,7 @@ from xml.etree import cElementTree as ElementTree
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.locations.views import LocationFieldsView
 
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, generate_cases
 
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -30,8 +32,8 @@ from .util import (
 )
 from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
     flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture, \
-    _get_location_data_fields, get_location_fixture_queryset
-from ..models import SQLLocation, LocationType, make_location, LocationFixtureConfiguration
+    _get_location_data_fields, get_location_fixture_queryset, related_locations_fixture_generator
+from ..models import SQLLocation, LocationType, make_location, LocationFixtureConfiguration, LocationRelation
 import six
 
 EMPTY_LOCATION_FIXTURE_TEMPLATE = """
@@ -81,8 +83,13 @@ class FixtureHasLocationsMixin(TestXmlMixin):
     # Adding this feature flag allows rendering of hierarchical fixture where requested
     # and wont interfere with flat fixture generation
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
-    def _assert_fixture_matches_file(self, xml_name, desired_locations, flat=False):
-        generator = flat_location_fixture_generator if flat else location_fixture_generator
+    def _assert_fixture_matches_file(self, xml_name, desired_locations, flat=False, related=False):
+        if flat:
+            generator = flat_location_fixture_generator
+        elif related:
+            generator = related_locations_fixture_generator
+        else:
+            generator = location_fixture_generator
         fixture = ElementTree.tostring(call_fixture_generator(generator, self.user)[-1])
         desired_fixture = self._assemble_expected_fixture(xml_name, desired_locations)
         self.assertXmlEqual(desired_fixture, fixture)
@@ -416,8 +423,8 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
         self.locations = setup_locations_with_structure(self.domain, location_structure, location_metadata)
 
     def tearDown(self):
-        super(ForkedHierarchiesTest, self).tearDown()
         delete_all_users()
+        super(ForkedHierarchiesTest, self).tearDown()
 
     def test_include_without_expanding_includes_all_ancestors(self):
         self.user._couch_user.set_location(self.locations['DTO'])
@@ -647,6 +654,54 @@ class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
         ])
 
 
+@flag_enabled("RELATED_LOCATIONS")
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
+class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
+    """
+    - State
+        - County
+            - City
+    """
+    location_type_names = ['state', 'county', 'city']
+    location_structure = TEST_LOCATION_STRUCTURE
+
+    @classmethod
+    def setUpClass(cls):
+        super(RelatedLocationFixturesTest, cls).setUpClass()
+        cls.user = create_restore_user(cls.domain, 'user', '123')
+        cls.relation = LocationRelation.objects.create(
+            location_a=cls.locations["Cambridge"],
+            location_b=cls.locations["Boston"]
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user._couch_user.delete()
+        super(RelatedLocationFixturesTest, cls).tearDownClass()
+
+    def tearDown(self):
+        self.user._couch_user.reset_locations([])
+
+    def test_related_locations(self, *args):
+        self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
+        self._assert_fixture_matches_file(
+            'related_location',
+            ['Massachusetts', 'Middlesex', 'Cambridge'],
+            related=True
+        )
+
+    def test_related_locations_with_distance(self, *args):
+        self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
+        self.relation.distance = 5
+        self.relation.save()
+        self.addCleanup(lambda: LocationRelation.objects.filter(pk=self.relation.pk).update(distance=None))
+        self._assert_fixture_matches_file(
+            'related_location_with_distance',
+            ['Massachusetts', 'Middlesex', 'Cambridge'],
+            related=True
+        )
+
+
 class ShouldSyncLocationFixturesTest(TestCase):
 
     @classmethod
@@ -741,60 +796,90 @@ class ShouldSyncLocationFixturesTest(TestCase):
         )
 
 
+MockApp = namedtuple("MockApp", ["location_fixture_restore"])
+
+
 @mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
 class LocationFixtureSyncSettingsTest(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super(LocationFixtureSyncSettingsTest, cls).setUpClass()
+        cls.domain_obj = Domain(name=uuid.uuid4().hex)
+        cls.domain_obj.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(LocationFixtureSyncSettingsTest, cls).tearDownClass()
+
     def test_should_sync_hierarchical_format_default(self):
-        self.assertEqual(False, should_sync_hierarchical_fixture(Domain()))
+        self.assertEqual(False, should_sync_hierarchical_fixture(self.domain_obj, app=None))
 
     def test_should_sync_flat_format_default(self):
-        self.assertEqual(True, should_sync_flat_fixture(Domain()))
+        self.assertEqual(True, should_sync_flat_fixture(self.domain_obj, app=None))
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_sync_format_with_toggle_enabled(self):
-        # Considering cases for domains during migration
-        domain = uuid.uuid4().hex
-        project = Domain(name=domain)
-        project.save()
-
         # in prep for migration to flat fixture as default, values set for domains which
         # have locations and does not have the old FF FLAT_LOCATION_FIXTURE enabled
-        conf = LocationFixtureConfiguration.for_domain(domain)
+        conf = LocationFixtureConfiguration.for_domain(self.domain_obj.name)
         conf.sync_hierarchical_fixture = True
         conf.sync_flat_fixture = False  # default value
         conf.save()
 
         # stay on hierarchical by default
-        self.assertEqual(True, should_sync_hierarchical_fixture(project))
-        self.assertEqual(False, should_sync_flat_fixture(project))
+        self.assertEqual(True, should_sync_hierarchical_fixture(self.domain_obj, app=None))
+        self.assertEqual(False, should_sync_flat_fixture(self.domain_obj, app=None))
 
         # when domains are tested for migration by switching conf
         conf.sync_hierarchical_fixture = False
         conf.sync_flat_fixture = True  # default value
         conf.save()
 
-        self.assertEqual(False, should_sync_hierarchical_fixture(project))
-        self.assertEqual(True, should_sync_flat_fixture(project))
-
-        self.addCleanup(project.delete)
+        self.assertEqual(False, should_sync_hierarchical_fixture(self.domain_obj, app=None))
+        self.assertEqual(True, should_sync_flat_fixture(self.domain_obj, app=None))
 
     def test_sync_format_with_disabled_toggle(self):
-        domain = uuid.uuid4().hex
-        project = Domain(name=domain)
-        project.save()
-
-        self.assertEqual(False, should_sync_hierarchical_fixture(project))
-        self.assertEqual(True, should_sync_flat_fixture(project))
+        self.assertEqual(False, should_sync_hierarchical_fixture(self.domain_obj, app=None))
+        self.assertEqual(True, should_sync_flat_fixture(self.domain_obj, app=None))
 
         # This should not happen ideally since the conf can not be set without having HIERARCHICAL_LOCATION_FIXTURE
         # enabled. Considering that a domain has sync hierarchical fixture set to False without the FF
         # HIERARCHICAL_LOCATION_FIXTURE. In such case the domain stays on flat fixture format
-        conf = LocationFixtureConfiguration.for_domain(domain)
+        conf = LocationFixtureConfiguration.for_domain(self.domain_obj.name)
         conf.sync_hierarchical_fixture = False
         conf.sync_flat_fixture = True  # default value
         conf.save()
 
-        self.assertEqual(False, should_sync_hierarchical_fixture(project))
-        self.assertEqual(True, should_sync_flat_fixture(project))
+        self.assertEqual(False, should_sync_hierarchical_fixture(self.domain_obj, app=None))
+        self.assertEqual(True, should_sync_flat_fixture(self.domain_obj, app=None))
 
-        self.addCleanup(project.delete)
+    @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
+    def test_sync_format_with_app_aware_project_default(self):
+        app = MockApp(location_fixture_restore='project_default')
+        conf = LocationFixtureConfiguration.for_domain(self.domain_obj.name)
+        conf.sync_hierarchical_fixture = True
+        conf.sync_flat_fixture = False
+        conf.save()
+
+        self.assertTrue(should_sync_hierarchical_fixture(self.domain_obj, app))
+        self.assertFalse(should_sync_flat_fixture(self.domain_obj, app))
+
+
+@generate_cases([
+    ('both_fixtures', True, True),
+    ('only_flat_fixture', True, False),
+    ('only_hierarchical_fixture', False, True),
+], LocationFixtureSyncSettingsTest)
+@flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
+@mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
+def test_sync_format(self, fixture_restore_type, sync_flat, sync_hierarchical):
+    app = MockApp(location_fixture_restore=fixture_restore_type)
+    conf = LocationFixtureConfiguration.for_domain(self.domain_obj.name)
+    conf.sync_hierarchical_fixture = not sync_hierarchical
+    conf.sync_flat_fixture = not sync_flat
+    conf.save()
+
+    self.assertIs(should_sync_hierarchical_fixture(self.domain_obj, app), sync_hierarchical)
+    self.assertIs(should_sync_flat_fixture(self.domain_obj, app), sync_flat)

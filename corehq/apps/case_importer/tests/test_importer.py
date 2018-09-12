@@ -12,7 +12,7 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.locations.models import LocationType
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.workbook_reading import make_worksheet
@@ -410,6 +410,23 @@ class ImporterTest(TestCase):
             ])
         case = CaseAccessors(self.domain).get_case(case.case_id)
         self.assertEqual(case.opened_on, PhoneTime(parse_datetime(new_date)).done())
+
+    @run_with_all_backends
+    def test_columns_and_rows_align(self):
+        case_owner = CommCareUser.create(self.domain, 'username', 'pw')
+        res = self.import_mock_file([
+            ['case_id', 'name', '', 'favorite_color', 'owner_id'],
+            ['', 'Jeff', '', 'blue', case_owner._id],
+            ['', 'Caroline', '', 'yellow', case_owner._id],
+        ])
+        self.assertEqual(res['errors'], {})
+
+        case_ids = self.accessor.get_case_ids_in_domain()
+        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+        self.assertEqual(cases['Jeff'].owner_id, case_owner._id)
+        self.assertEqual(cases['Jeff'].get_case_property('favorite_color'), 'blue')
+        self.assertEqual(cases['Caroline'].owner_id, case_owner._id)
+        self.assertEqual(cases['Caroline'].get_case_property('favorite_color'), 'yellow')
 
 
 def make_worksheet_wrapper(*rows):

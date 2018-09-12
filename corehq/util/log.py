@@ -14,7 +14,6 @@ from pygments import highlight
 from pygments.lexers import PythonLexer
 from pygments.formatters import HtmlFormatter
 
-from celery.utils.mail import ErrorMail
 from dimagi.utils.django.email import send_HTML_email as _send_HTML_email
 from django.core import mail
 from django.http import HttpRequest
@@ -192,18 +191,6 @@ class NotifyExceptionEmailer(HqAdminEmailHandler):
         context = super(NotifyExceptionEmailer, self).get_context(record)
         context['subject'] = record.getMessage()
         return context
-
-
-class SensitiveErrorMail(ErrorMail):
-    """
-    Extends Celery's ErrorMail class to prevents task args and kwargs from being printed in error emails.
-    """
-    replacement = '(excluded due to sensitive nature)'
-
-    def format_body(self, context):
-        context['args'] = self.replacement
-        context['kwargs'] = self.replacement
-        return self.body.strip() % context
 
 
 class HQRequestFilter(Filter):

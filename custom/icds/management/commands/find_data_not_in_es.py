@@ -3,14 +3,16 @@ from __future__ import unicode_literals
 
 from __future__ import print_function
 import csv342 as csv
-from datetime import date
+from datetime import datetime
 from io import open
 
 from django.core.management import BaseCommand
+from django.db.models import Min
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.es import CaseES, FormES
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from couchforms.const import DEVICE_LOG_XMLNS
 
@@ -21,22 +23,30 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
+        parser.add_argument('domain')
         parser.add_argument(
             'csv_file',
             help="File path for csv file",
         )
 
-    def handle(self, csv_file, **options):
-        self.domain = 'icds-cas'
+    def handle(self, domain, csv_file, **options):
+        self.domain = domain
+        if not should_use_sql_backend(domain):
+            print("This domain doesn't use SQL backend, exiting!")
+            return
+
+        current_date = self.first_form_received_on()
+        if not current_date:
+            print("No submissions in this domain yet, exiting!")
+            return
+
         with open(csv_file, "w", encoding='utf-8') as csv_file:
             field_names = ('date', 'doc_type', 'in_sql', 'in_es', 'diff')
 
             csv_writer = csv.DictWriter(csv_file, field_names, extrasaction='ignore')
             csv_writer.writeheader()
 
-            current_date = date(2017, 1, 1)
-
-            while current_date <= date.today():
+            while current_date <= datetime.today():
                 cases_in_sql = self._get_sql_cases_modified_on_date(current_date)
                 cases_in_es = self._get_es_cases_modified_on_date(current_date)
                 properties = {
@@ -62,6 +72,19 @@ class Command(BaseCommand):
                 print(properties)
 
                 current_date += relativedelta(months=1)
+
+    def first_form_received_on(self):
+        min_date = datetime(2200, 1, 1)
+        for db in get_db_aliases_for_partitioned_query():
+            result = XFormInstanceSQL.objects.using(db).filter(
+                domain=self.domain).aggregate(Min('received_on'))
+            date = result.get('received_on__min')
+            if date and date < min_date:
+                min_date = date
+        if min_date.year == 2200:
+            return None
+        else:
+            return min_date
 
     def _get_sql_cases_modified_on_date(self, date):
         num_cases = 0

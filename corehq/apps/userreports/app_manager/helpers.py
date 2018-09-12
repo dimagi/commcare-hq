@@ -76,7 +76,7 @@ def get_form_data_source(app, form):
         referenced_doc_type='XFormInstance',
         table_id=clean_table_name(app.domain, form_name),
         display_name=form_name,
-        configured_filter=make_form_data_source_filter(xform.data_node.tag_xmlns),
+        configured_filter=make_form_data_source_filter(xform.data_node.tag_xmlns, app.get_id),
         configured_indicators=meta_properties + dynamic_properties + _get_shared_indicators(),
     )
 

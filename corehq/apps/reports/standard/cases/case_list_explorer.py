@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
+from memoized import memoized
 from six.moves import range
 
 from corehq.apps.analytics.tasks import track_workflow
@@ -25,6 +26,7 @@ from corehq.apps.reports.standard.cases.filters import (
     XpathCaseSearchFilter,
 )
 from corehq.elastic import iter_es_docs_from_query
+from corehq.util.datadog.gauges import datadog_bucket_timer
 
 
 class CaseListExplorer(CaseListReport):
@@ -44,6 +46,17 @@ class CaseListExplorer(CaseListReport):
         CaseTypeFilter,
         SelectOpenCloseFilter,
     ]
+
+    @property
+    @memoized
+    def es_results(self):
+        timer = datadog_bucket_timer(
+            'commcare.case_list_explorer_query.es_timings',
+            tags=[],
+            timing_buckets=(0.01, 0.05, 1, 5),
+        )
+        with timer:
+            return super(CaseListExplorer, self).es_results
 
     def _build_query(self, sort=True):
         query = super(CaseListExplorer, self)._build_query()
@@ -144,12 +157,18 @@ class CaseListExplorer(CaseListReport):
         return self._get_rows(data)
 
     def _get_rows(self, data):
-        for case in data:
-            case_display = SafeCaseDisplay(self, case)
-            yield [
-                case_display.get(column.prop_name)
-                for column in self.columns
-            ]
+        timer = datadog_bucket_timer(
+            'commcare.case_list_explorer_query.row_fetch_timings',
+            tags=[],
+            timing_buckets=(0.01, 0.05, 1, 5),
+        )
+        with timer:
+            for case in data:
+                case_display = SafeCaseDisplay(self, case)
+                yield [
+                    case_display.get(column.prop_name)
+                    for column in self.columns
+                ]
 
     @property
     def export_table(self):

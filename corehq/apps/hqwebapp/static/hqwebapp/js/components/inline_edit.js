@@ -1,4 +1,3 @@
-/* global DOMPurify */
 /*
  * Component for an inline editing widget: a piece of text that, when clicked on, turns into an input (textarea or
  * text input). The input is accompanied by a save button capable of saving the new value to the server via ajax.
@@ -18,9 +17,19 @@
  *  - errorMessage: Message to display if server returns an error.
  */
 
-hqDefine('hqwebapp/js/components/inline_edit', function() {
+hqDefine('hqwebapp/js/components/inline_edit', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'DOMPurify/dist/purify.min',
+], function (
+    $,
+    ko,
+    _,
+    DOMPurify
+) {
     return {
-        viewModel: function(params) {
+        viewModel: function (params) {
             var self = this;
 
             // Attributes passed on to the input
@@ -59,18 +68,18 @@ hqDefine('hqwebapp/js/components/inline_edit', function() {
             self.postSave = params.postSave;
 
             // On edit, set editing mode, which controls visibility of inner components
-            self.edit = function() {
+            self.edit = function () {
                 self.isEditing(true);
             };
 
-            self.beforeUnload = function() {
+            self.beforeUnload = function () {
                 return gettext("You have unsaved changes.");
             };
 
             // Save to server
             // On button press, flip back to read-only mode and show a spinner.
             // On server success, just hide the spinner. On error, display error and go back to edit mode.
-            self.save = function() {
+            self.save = function () {
                 self.isEditing(false);
 
                 if (self.url) {
@@ -116,62 +125,13 @@ hqDefine('hqwebapp/js/components/inline_edit', function() {
             };
 
             // Revert to last value and switch modes
-            self.cancel = function() {
+            self.cancel = function () {
                 self.readOnlyValue = self.serverValue;
                 self.value(self.readOnlyValue);
                 self.isEditing(false);
                 self.hasError(false);
             };
         },
-        template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\
-            <div class="read-only" data-bind="visible: !isEditing(), click: edit, attr: readOnlyAttrs">\
-                <span data-bind="visible: isSaving()" class="pull-right">\
-                    <img src="/static/hqstyle/images/loading.gif"/>\
-                </span>\
-                <!-- ko if: iconClass -->\
-                <span class="prefixed-icon" data-bind="css: containerClass">\
-                    <i data-bind="css: iconClass"></i>\
-                </span>\
-                <!-- /ko -->\
-                <!-- ko if: lang -->\
-                    <span class="btn btn-xs btn-info btn-langcode-preprocessed" data-bind="text: lang, visible: !value()"></span>\
-                <!-- /ko -->\
-                <span data-bind="text: value, attr: {\'class\': containerClass + \' \' + readOnlyClass + \' text\'}"></span>\
-                <span class="placeholder text-muted" data-bind="text: placeholder, css: containerClass, visible: !value()"></span>\
-                <span class="inline-edit-icon" data-bind="css: containerClass"><i class="fa fa-pencil"></i></span>\
-            </div>\
-            <div class="read-write form-inline" data-bind="visible: isEditing(), css: containerClass">\
-                <div class="form-group langcode-container" data-bind="css: {\'has-lang\': lang}">\
-                    <!-- ko if: nodeName === "textarea" -->\
-                        <textarea class="form-control" data-bind="\
-                            attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
-                            value: value,\
-                            hasFocus: isEditing(),\
-                        "></textarea>\
-                    <!-- /ko -->\
-                    <!-- ko if: nodeName === "input" -->\
-                        <input type="text" class="form-control" data-bind="\
-                            attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
-                            value: value,\
-                            hasFocus: isEditing(),\
-                        " />\
-                    <!-- /ko -->\
-                    <!-- ko if: lang -->\
-                        <span class="btn btn-xs btn-info btn-langcode-preprocessed langcode-input pull-right"\
-                              data-bind="text: lang, visible: !value()"\
-                        ></span>\
-                    <!-- /ko -->\
-                </div>\
-                <div class="help-block" data-bind="text: errorMessage, visible: hasError()"></div>\
-                <div class="form-group">\
-                    <button class="btn btn-success" data-bind="click: save, hasFocus: saveHasFocus, visible: !isSaving()">\
-                        <i class="fa fa-check"></i>\
-                    </button>\
-                    <button class="btn btn-danger" data-bind="click: cancel, hasFocus: cancelHasFocus, visible: !isSaving()">\
-                        <i class="fa fa-remove"></i>\
-                    </button>\
-                </div>\
-            </div>\
-        </div><span data-bind="template: {afterRender: afterRenderFunc}"></span>',
+        template: '<div data-bind="template: { name: \'ko-inline-edit-template\' }"></div>',
     };
 });

@@ -10,7 +10,6 @@ from corehq.apps.hqadmin.views.data import (
 )
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
-    callcenter_test,
     mass_email,
     ReprocessMessagingCaseUpdatesView,
 )
@@ -74,7 +73,6 @@ urlpatterns = [
     url(r'^doc_in_es/$', doc_in_es, name='doc_in_es'),
     url(r'^raw_couch/$', raw_couch, name='raw_couch'),
     url(r'^raw_doc/$', raw_doc, name='raw_doc'),
-    url(r'^callcenter_test/$', callcenter_test, name='callcenter_test'),
     url(r'^api/', include(admin_api_urlpatterns)),
     url(r'^callcenter_ucr_check/$', CallcenterUCRCheck.as_view(), name=CallcenterUCRCheck.urlname),
     url(r'^api/', include(admin_api_urlpatterns)),

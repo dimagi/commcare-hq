@@ -119,8 +119,8 @@
         </ul>
     </div>
 </div>
-<ul class="nav nav-tabs">
-    <li class="active">
+<ul class="nav nav-tabs sticky-tabs">
+    <li>
         <a href="#form-data" data-toggle="tab">
             {% trans "Form Properties" %}
         </a>
@@ -163,7 +163,7 @@
     </li>
 </ul>
 <div class="tab-content form-details" style="overflow:visible; margin-top: 10px;">
-    <div class="tab-pane active" id="form-data">
+    <div class="tab-pane" id="form-data">
         <div class="btn-toolbar row" id='form-actions-toolbar'>
             {% if context_case_id %}
                 <a class="btn btn-default"

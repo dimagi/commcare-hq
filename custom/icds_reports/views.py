@@ -20,7 +20,6 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
 from django.utils.translation import ugettext as _, ugettext_lazy
-from django.conf import settings
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
@@ -30,13 +29,18 @@ from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
-from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.decorators import (
+    use_daterangepicker,
+    use_select2_v4,
+)
+from corehq.apps.translations.views import ConvertTranslations, BaseTranslationsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
+from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds.tasks import (
     push_translation_files_to_transifex,
@@ -45,12 +49,12 @@ from custom.icds.tasks import (
 )
 from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
-from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
 from custom.icds_reports.forms import AppTranslationsForm
 from custom.icds_reports.models.helper import IcdsFile
+from custom.icds_reports.models.views import AwcLocationMonths
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -71,6 +75,7 @@ from custom.icds_reports.reports.children_initiated_data import get_children_ini
 from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
     get_clean_water_sector_data
 from custom.icds_reports.reports.demographics_data import get_demographics_data
+from custom.icds_reports.reports.disha import DishaDump
 from custom.icds_reports.reports.early_initiation_breastfeeding import get_early_initiation_breastfeeding_chart,\
     get_early_initiation_breastfeeding_data, get_early_initiation_breastfeeding_map
 from custom.icds_reports.reports.enrolled_children import get_enrolled_children_data_chart,\
@@ -584,7 +589,8 @@ class AwcReportsView(BaseReportView):
                 domain,
                 config,
                 tuple(current_month.timetuple())[:3],
-                include_test
+                include_test,
+                beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'beneficiary':
             if 'awc_id' in config:
@@ -1492,6 +1498,9 @@ class AggregationScriptPage(BaseDomainView):
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+            return HttpResponse("This page is only available for QA and not available for production instances.")
+
         couch_user = self.request.couch_user
         domain = self.domain
         domain_membership = couch_user.get_domain_membership(domain)
@@ -1595,10 +1604,15 @@ class ICDSImagesAccessorAPI(View):
 
 @location_safe
 @method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
-class ICDSAppTranslations(BaseDomainView):
-    page_title = ugettext_lazy('ICDS App Translations')
-    urlname = 'icds_app_translations'
+class AppTranslations(BaseTranslationsView):
+    page_title = ugettext_lazy('App Translations')
+    urlname = 'app_translations'
     template_name = 'icds_reports/icds_app/app_translations.html'
+    section_name = ugettext_lazy("Translations")
+
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(AppTranslations, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -1610,20 +1624,21 @@ class ICDSAppTranslations(BaseDomainView):
 
     @property
     def page_context(self):
-        transifex_details_available = transifex_details_available_for_domain(self.domain)
-        context = {'integration_available': transifex_details_available}
-        if transifex_details_available:
+        context = super(AppTranslations, self).page_context
+        if context['transifex_details_available']:
             context['translations_form'] = self.translations_form
         return context
 
     def section_url(self):
-        return
+        return reverse(ConvertTranslations.urlname, args=self.args, kwargs=self.kwargs)
 
     def transifex(self, domain, form_data):
         transifex_project_slug = form_data.get('transifex_project_slug')
         source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
-                         form_data['version'])
+                         form_data['version'],
+                         use_version_postfix='yes' in form_data['use_version_postfix'],
+                         update_resource='yes' in form_data['update_resource'])
 
     def perform_push_request(self, request, form_data):
         if form_data['target_lang']:
@@ -1691,9 +1706,7 @@ class ICDSAppTranslations(BaseDomainView):
                 return self.perform_delete_request(request, form_data)
 
     def post(self, request, *args, **kwargs):
-        if not transifex_details_available_for_domain(self.domain):
-            messages.error(request, _('Transifex account not set up for this environment'))
-        else:
+        if self.transifex_integration_enabled(request):
             form = self.translations_form
             if form.is_valid():
                 form_data = form.cleaned_data
@@ -1718,3 +1731,45 @@ class InactiveAWW(View):
             return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
         except NotFound:
             raise Http404
+
+
+class DishaAPIView(View):
+
+    def message(self, message_name):
+        state_names = ", ".join(self.valid_state_names)
+        error_messages = {
+            "missing_date": "Please specify valid month and year",
+            "invalid_month": "Please specify a month that's older than a month and 5 days",
+            "invalid_state": "Please specify one of {} as state_name".format(state_names),
+        }
+        return {"message": error_messages[message_name]}
+
+    @method_decorator([api_auth, toggles.ICDS_DISHA_API.required_decorator()])
+    def get(self, request, *args, **kwargs):
+        try:
+            month = int(request.GET.get('month'))
+            year = int(request.GET.get('year'))
+        except (ValueError, TypeError):
+            return JsonResponse(self.message('missing_date'), status=400)
+
+        # Can return only one month old data if today is after 5th, otherwise
+        #   can return two month's old data
+        query_month = date(year, month, 1)
+        today = date.today()
+        current_month = today - relativedelta(months=1) if today.day <= 5 else today
+        if query_month > current_month:
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        state_name = self.request.GET.get('state_name')
+        if state_name not in self.valid_state_names:
+            return JsonResponse(self.message('invalid_state'), status=400)
+
+        data = DishaDump(state_name, query_month).get_data()
+        if not data:
+            return JsonResponse({"message": "Data is not updated for this month"})
+        return HttpResponse(data, content_type='application/json')
+
+    @property
+    @quickcache([])
+    def valid_state_names(self):
+        return list(AwcLocationMonths.objects.values_list('state_name', flat=True).distinct())

@@ -15,6 +15,7 @@ from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
     indian_formatted_number, get_child_locations
+from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -60,11 +61,7 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
         "rightLegend": {
             "average": average,
             "info": _((
-                "Of all the children born in the current month and enrolled for Anganwadi services, the "
-                "percentage that had a birth weight less than 2500 grams. "
-                "<br/><br/>"
-                "Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality "
-                "and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. "
+                get_new_born_with_low_weight_help_text(html=True)
             )),
             "extended_info": [
                 {
@@ -236,11 +233,7 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_i
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Of all the children born in the current month and enrolled for Anganwadi services, the percentage "
-            "that had a birth weight less than 2500 grams. "
-            "<br/><br/>"
-            "Newborns with Low Birth Weight are closely associated wtih foetal and neonatal mortality and "
-            "morbidity, inhibited growth and cognitive development, and chronic diseases later in life. "
+            get_new_born_with_low_weight_help_text(html=True)
         )),
         "chart_data": [
             {

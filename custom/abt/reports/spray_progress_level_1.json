@@ -30,6 +30,7 @@
     "server_environment": ["production"],
     "data_source_table":"static-sms-indicators-001",
     "report_id":"spray-progress-report-level-1",
+    "custom_configurable_report": "custom.abt.reports.views.FormattedSprayProgressReport",
     "config": {
         "description":"",
         "title":"Spray Progress Report (Level 1)",
@@ -138,7 +139,8 @@
                     "en": "SOPs Worked",
                     "por": "Roceadores que trabalharam"
                 },
-                "aggregation":"sum"
+                "aggregation":"sum",
+                "comment": "This column is recalculated in FormattedSprayProgressReport"
             },
             {
                 "description":null,

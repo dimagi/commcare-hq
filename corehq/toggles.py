@@ -481,10 +481,10 @@ COPY_FORM_TO_APP = StaticToggle(
 
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
-    'UW: Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    # TODO: Create Confluence docs and add help link
+    'Offer hosting and sharing data files for downloading from a secure dropzone',
+    TAG_SOLUTIONS,
+    help_link='https://confluence.dimagi.com/display/ccinternal/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -1078,6 +1078,13 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
+COPY_CONDITIONAL_ALERTS = StaticToggle(
+    'copy_conditional_alerts',
+    'Allow copying conditional alerts to another project (or within the same project).',
+    TAG_SOLUTIONS,
+    [NAMESPACE_USER],
+)
+
 ABT_REMINDER_RECIPIENT = StaticToggle(
     'abt_reminder_recipient',
     "ABT: Custom reminder recipients",
@@ -1250,6 +1257,14 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     'Uses latest build for Web Apps instead of latest published',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
+    'language_linked_multimedia',
+    'Add a setting to link multimedia to the default language',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+    help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1525,14 +1540,6 @@ TARGET_COMMCARE_FLAVOR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-APPCUES_AB_TEST = PredictablyRandomToggle(
-    'appcues_ab_test',
-    'True if user is in variant group for Appcues AB test. Irrelevent if user is not in test.',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    randomness=0.5
-)
-
 WAREHOUSE_APP_STATUS = StaticToggle(
     'warehouse_app_status',
     "User warehouse backend for the app status report. Currently only for sql domains",
@@ -1595,4 +1602,27 @@ RELATED_LOCATIONS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['jemord'],
+    help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
+)
+
+ICDS_DISHA_API = StaticToggle(
+    'icds_disha_access',
+    'ICDS: Access DISHA API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'icds-new', 'softlayer'},
+)
+
+ALLOW_BLANK_CASE_TAGS = StaticToggle(
+    'allow_blank_case_tags',
+    'eCHIS: Allow blank case tags',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+SEARCH_DEACTIVATED_USERS = StaticToggle(
+    'search_deactivated_users',
+    'Allow for searching by deactivating users in form and case reports and exports',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
 )

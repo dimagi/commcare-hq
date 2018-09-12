@@ -1089,7 +1089,73 @@
 		"column_id": "is_availing",
 		"is_nullable": true,
 		"datatype": "integer"
-	 }
+	 },
+     {
+        "column_id": "delivery_nature",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "delivery_type"
+          },
+          "cases": {
+            "vaginal": {
+              "type": "constant",
+              "constant": 1
+            },
+            "caesarean": {
+              "type": "constant",
+              "constant": 2
+            },
+            "instrumental": {
+              "type": "constant",
+              "constant": 3
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+     },
+     {
+        "transform": {},
+        "datatype": "small_integer",
+        "type": "expression",
+        "is_nullable": true,
+        "column_id": "preg_order",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "preg_order"
+        }
+     },
+     {
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_nullable": true,
+        "column_id": "mobile_number",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "mobile_number"
+        }
+     },
+     {
+        "transform": {},
+        "datatype": "small_integer",
+        "type": "expression",
+        "is_nullable": true,
+        "column_id": "num_pnc_visits",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "num_pnc_visits"
+        }
+     }
     ],
     "named_expressions": {
       "parent_id": {
@@ -1836,6 +1902,7 @@
         ]
       }
     ],
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "asynchronous": true
   }
 }

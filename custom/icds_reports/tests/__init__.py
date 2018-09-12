@@ -21,7 +21,8 @@ from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
     create_views,
     move_ucr_data_into_aggregation_tables,
-    _aggregate_child_health_pnc_forms)
+    _aggregate_child_health_pnc_forms,
+    _aggregate_gm_forms)
 from io import open
 
 FILE_NAME_TO_TABLE_MAPPING = {
@@ -80,6 +81,12 @@ def setUpModule():
         location_id='st1',
         location_type=state_location_type
     )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='st2',
+        location_id='st2',
+        location_type=state_location_type
+    )
 
     awc_location_type = LocationType.objects.create(
         domain=domain.name,
@@ -115,6 +122,7 @@ def setUpModule():
                     postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
 
         _aggregate_child_health_pnc_forms('st1', datetime(2017, 3, 31))
+        _aggregate_gm_forms('st1', datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)

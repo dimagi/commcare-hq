@@ -1,7 +1,7 @@
 hqDefine('notifications/js/manage_notifications', [
     'jquery',
     'hqwebapp/js/initial_page_data',
-], function(
+], function (
     $,
     initialPageData
 ) {

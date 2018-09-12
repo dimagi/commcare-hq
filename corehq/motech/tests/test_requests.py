@@ -68,3 +68,16 @@ class RequestsTests(SimpleTestCase):
             self.assertEqual(response.status_code, 201)
             self.assertEqual(response.json()['status'], 'SUCCESS')
             self.assertEqual(response.json()['importCount']['imported'], 2)
+
+    def test_verify_ssl(self):
+        with patch('corehq.motech.requests.RequestLog', Mock()), \
+                patch('corehq.motech.requests.requests') as requests_mock:
+
+            requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD, verify=False)
+            requests.get('me')
+            requests_mock.get.assert_called_with(
+                TEST_API_URL + 'me',
+                headers={'Accept': 'application/json'},
+                auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
+                verify=False
+            )

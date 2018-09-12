@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.api.accounting import *
-from corehq.apps.api.domain_metadata import DomainMetadataResource, MaltResource
+from corehq.apps.api.domain_metadata import DomainMetadataResource, MaltResource, GIRResource
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI, FormAttachmentAPI
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
@@ -112,6 +112,7 @@ ADMIN_API_LIST = (
     SubscriptionAndAdjustmentResource,
     BillingRecordResource,
     MaltResource,
+    GIRResource,
 )
 
 

@@ -51,7 +51,7 @@ class OtaFixtureTest(TestCase):
             item_list[0].delete()
             item_list[1].delete()
 
-        get_blob_db().delete(DOMAIN, FIXTURE_BUCKET)
+        get_blob_db().delete(key=FIXTURE_BUCKET + "/" + DOMAIN)
         cls.domain.delete()
         super(OtaFixtureTest, cls).tearDownClass()
 

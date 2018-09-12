@@ -39,8 +39,8 @@
         </div>
         <div class="row">
             <div class="col-sm-12">
-                <ul class="nav nav-tabs" style="margin-bottom: 10px;">
-                    <li class="active">
+                <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
+                    <li>
                         <a href="#properties" data-toggle="tab">
                             {% trans "Case Properties" %}
                         </a>
@@ -61,7 +61,7 @@
                 </ul>
 
                 <div class="tab-content">
-                    <div class="tab-pane active" id="properties">
+                    <div class="tab-pane" id="properties">
                         <div class="row-fluid">
                             {% if dynamic_properties %}
                                 {% include "hqwebapp/proptable/property_table.html" with tables=dynamic_properties_as_table %}

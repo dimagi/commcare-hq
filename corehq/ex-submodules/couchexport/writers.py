@@ -118,7 +118,7 @@ class CsvFileWriter(ExportFileWriter):
         buffer = io.StringIO()
         csvwriter = csv.writer(buffer, csv.excel)
         csvwriter.writerow([
-            col.decode('utf-8') if isinstance(col, six.binary_type) else col
+            col.decode('utf-8') if isinstance(col, bytes) else col
             for col in row
         ])
         self._file.write(buffer.getvalue().encode('utf-8'))
@@ -188,7 +188,7 @@ class ExportWriter(object):
 
     def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
-            if isinstance(name, six.binary_type):
+            if isinstance(name, bytes):
                 name = name.decode('utf8')
             elif isinstance(name, Promise):
                 # noinspection PyCompatibility
@@ -390,7 +390,7 @@ class Excel2007ExportWriter(ExportWriter):
         def get_write_value(value):
             if isinstance(value, six.integer_types + (float,)):
                 return value
-            if isinstance(value, str):
+            if isinstance(value, bytes):
                 value = six.text_type(value, encoding="utf-8")
             elif value is not None:
                 value = six.text_type(value)
@@ -480,7 +480,10 @@ class JsonExportWriter(InMemoryExportWriter):
         for tablename, data in self.tables.items():
             new_tables[self.table_names[tablename]] = {"headers":data[0], "rows": data[1:]}
 
-        self.file.write(json.dumps(new_tables, cls=self.ConstantEncoder))
+        json_dump = json.dumps(new_tables, cls=self.ConstantEncoder)
+        if six.PY3:
+            json_dump = json_dump.encode('utf-8')
+        self.file.write(json_dump)
 
 
 class PythonDictWriter(InMemoryExportWriter):

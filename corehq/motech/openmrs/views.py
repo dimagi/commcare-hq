@@ -13,6 +13,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.tasks import import_patients_to_domain
@@ -31,9 +32,6 @@ from memoized import memoized
 from dimagi.utils.web import json_response
 from six.moves import map
 from six.moves import range
-
-
-PASSWORD_PLACEHOLDER = '*' * 16
 
 
 @login_and_domain_required
@@ -183,7 +181,6 @@ class OpenmrsImporterView(BaseProjectSettingsView):
 
     @property
     def page_context(self):
-        # TODO: JsonField fields must render with CodeMirror
         # TODO: Look up locations for location_id field.
 
         openmrs_importers = []

@@ -1,10 +1,10 @@
 /* globals d3, django, moment, nv */
-hqDefine("reports/js/project_health_dashboard", function() {
+hqDefine("reports/js/project_health_dashboard", function () {
     // "Performing / Active User Trends" Chart
     function setupCharts(data) {
         var highPerformingSeries = {
             'key': 'high performing',
-            values: _.map(data, function(item) {
+            values: _.map(data, function (item) {
                 return {
                     x: moment(item.month).format("MMM YYYY"),
                     y: item.performing,
@@ -14,7 +14,7 @@ hqDefine("reports/js/project_health_dashboard", function() {
         };
         var lowPerformingSeries = {
             'key': 'low performing',
-            values: _.map(data, function(item) {
+            values: _.map(data, function (item) {
                 return {
                     x: moment(item.month).format("MMM YYYY"),
                     y: item.active - item.performing,
@@ -22,7 +22,7 @@ hqDefine("reports/js/project_health_dashboard", function() {
                 };
             }),
         };
-        function chevronIcon(value){
+        function chevronIcon(value) {
             var chevronUp = '<span class="fa fa-chevron-up" style="color: #006400;"></span> ';
             var chevronDown = '<span class="fa fa-chevron-down" style="color: #8b0000;"></span> ';
             if (value > 0) {
@@ -33,7 +33,7 @@ hqDefine("reports/js/project_health_dashboard", function() {
                 return '';
             }
         }
-        nv.addGraph(function() {
+        nv.addGraph(function () {
             var chart = nv.models.multiBarChart()
                 .showControls(false)
                 .stacked(true)
@@ -41,7 +41,7 @@ hqDefine("reports/js/project_health_dashboard", function() {
 
             chart.yAxis.tickFormat(d3.format(',.0f'));
             chart.color(["#004ebc", "#e53e30"]);
-            chart.tooltipContent(function(key, x, y, e){
+            chart.tooltipContent(function (key, x, y, e) {
                 var d = e.series.values[e.pointIndex];
                 var chevron = chevronIcon(d.z);
                 return '<h3>' + key + '</h3>' + '<p>' +  y + ' in ' + x + '</p>' +
@@ -55,10 +55,10 @@ hqDefine("reports/js/project_health_dashboard", function() {
         });
     }
 
-    function setupLineChart(data){
+    function setupLineChart(data) {
         var proportionActiveSeries = [{
             key: 'active users (%)',
-            values: _.map(data, function(item) {
+            values: _.map(data, function (item) {
                 return {
                     x: moment(item.month),
                     y: item.percent_active,
@@ -68,7 +68,7 @@ hqDefine("reports/js/project_health_dashboard", function() {
                 };
             }),
         }];
-        nv.addGraph(function() {
+        nv.addGraph(function () {
             var chart = nv.models.lineChart()
                 .margin({right: 50})
                 .showYAxis(true)
@@ -78,10 +78,10 @@ hqDefine("reports/js/project_health_dashboard", function() {
             chart.xScale(d3.time.scale());
             chart.xAxis.showMaxMin(false)
                 .ticks(6)
-                .tickFormat(function(d){
+                .tickFormat(function (d) {
                     return moment(d).format("MMM YYYY");
                 });
-            chart.tooltipContent(function(key, x, y, e){
+            chart.tooltipContent(function (key, x, y, e) {
                 var d = e.series.values[e.pointIndex];
                 return '<h3>' + key + '</h3>' +
                        '<p>' +  y + ' in ' + x + '</p>' +
@@ -96,7 +96,7 @@ hqDefine("reports/js/project_health_dashboard", function() {
                 .datum(proportionActiveSeries)
                 .call(chart);
 
-            nv.utils.windowResize(function() {
+            nv.utils.windowResize(function () {
                 chart.update();
             });
 
@@ -110,7 +110,7 @@ hqDefine("reports/js/project_health_dashboard", function() {
         // ajax popover: http://stackoverflow.com/a/14560039/8207
         $('a.user-popover').popover({
             "html": true,
-            "content": function() {
+            "content": function () {
                 var div_id =  "tmp-id-" + $.now();
                 return details_in_popup($(this).data('url'), div_id);
             },
@@ -119,10 +119,10 @@ hqDefine("reports/js/project_health_dashboard", function() {
         function details_in_popup(link, div_id) {
             $.ajax({
                 url: link,
-                success: function(response) {
+                success: function (response) {
                     $('#' + div_id).html(response);
                 },
-                error: function() {
+                error: function () {
                     $('#' + div_id).html(gettext("Sorry, we couldn't load that."));
                 },
             });
@@ -130,7 +130,7 @@ hqDefine("reports/js/project_health_dashboard", function() {
         }
     }
 
-    function setupDataTables(){
+    function setupDataTables() {
         $('.datatable').DataTable({
             "ordering": false,
             "searching": false,
@@ -143,7 +143,7 @@ hqDefine("reports/js/project_health_dashboard", function() {
         });
     }
 
-    $(document).ajaxSuccess(function(event, xhr, settings) {
+    $(document).ajaxSuccess(function (event, xhr, settings) {
         if (settings.url.match(/reports\/async\/project_health/)) {
             var sixMonthsReports = $("#six-months-reports").data("value");
             setupCharts(sixMonthsReports);

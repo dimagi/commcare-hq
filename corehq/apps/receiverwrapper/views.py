@@ -46,8 +46,8 @@ from dimagi.utils.logging import notify_exception
 from corehq.apps.ota.utils import handle_401_response
 from corehq import toggles
 
-PROFILE_PROBABILITY = float(os.getenv(b'COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
-PROFILE_LIMIT = os.getenv(b'COMMCARE_PROFILE_SUBMISSION_LIMIT')
+PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
+PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 
