@@ -8,12 +8,12 @@ import itertools
 from django import forms
 from django.utils.translation import ugettext as _
 
-from corehq import toggles
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.toggles import AGGREGATE_UCRS
 from couchforms.analytics import get_exports_by_form
 from memoized import memoized
 from six.moves import map
@@ -111,16 +111,17 @@ class ApplicationDataSourceUIHelper(object):
                 [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['form']]
             )
         if self.enable_raw:
-            available_data_sources = get_datasources_for_domain(domain, include_static=True)
+            available_data_sources = get_datasources_for_domain(domain, include_static=True,
+                                                                include_aggregate=AGGREGATE_UCRS.enabled(domain))
             _add_choices(
                 self.source_field,
-                [(ds._id, ds.display_name) for ds in available_data_sources]
+                [(ds.data_source_id, ds.display_name) for ds in available_data_sources]
             )
             # also shove these into app sources for every app for now to avoid substantially
             # messing with this code for this widget
             # (this is not the best ux / should probably be cleaned up later)
             for app_data in self.all_sources.values():
-                app_data['data_source'] = [{"text": ds.display_name, "value": ds._id}
+                app_data['data_source'] = [{"text": ds.display_name, "value": ds.data_source_id}
                                            for ds in available_data_sources]
 
         # NOTE: This corresponds to a view-model that must be initialized in your template.
