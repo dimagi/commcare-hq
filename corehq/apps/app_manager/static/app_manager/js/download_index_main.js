@@ -5,8 +5,16 @@ hqDefine('app_manager/js/download_index_main',[
     'ace-builds/src-min-noconflict/ace',
     'app_manager/js/download_async_modal',
     'app_manager/js/source_files',
+    'd3/d3.min'
 ],function ($, _, ace) {
-    ace.config.set('basePath', '/ace-builds/src-noconflict');
+
+    var requirejsConfig = requirejs.s.contexts._.config;
+
+    if(requirejsConfig.paths["ace-builds/src-min-noconflict/mode-json"])
+        ace.config.setModuleUrl('ace/mode/json',requirejsConfig.paths["ace-builds/src-min-noconflict/mode-json"]);
+    if(requirejsConfig.paths["ace-builds/src-min-noconflict/mode-xml"])
+        ace.config.setModuleUrl('ace/mode/xml',requirejsConfig.paths["ace-builds/src-min-noconflict/mode-xml"]);
+
     $(function () {
         var elements = $('.prettyprint');
 
@@ -31,6 +39,6 @@ hqDefine('app_manager/js/download_index_main',[
             }
             editor.setReadOnly(true);
         });
-
     });
+
 });
