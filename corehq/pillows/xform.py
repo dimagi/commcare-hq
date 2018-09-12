@@ -170,7 +170,7 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
     topics = topics or FORM_TOPICS
     change_feed = KafkaChangeFeed(
-        topics, group_id=pillow_id, num_processes=num_processes, process_num=process_num
+        topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
     checkpoint = KafkaPillowCheckpoint(pillow_id, topics)
     ucr_processor = ConfigurableReportPillowProcessor(
