@@ -19,7 +19,6 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
-    create_views,
     move_ucr_data_into_aggregation_tables,
     _aggregate_child_health_pnc_forms,
     _aggregate_gm_forms)
