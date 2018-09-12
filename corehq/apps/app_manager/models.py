@@ -5528,7 +5528,7 @@ class SavedAppBuild(ApplicationBase):
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
         for key in ('modules', 'user_registration', 'external_blobs',
-                    '_attachments', 'profile', 'translations'
+                    '_attachments', 'profile', 'translations',
                     'description', 'short_description'):
             data.pop(key, None)
         built_on_user_time = ServerTime(self.built_on).user_time(timezone)
