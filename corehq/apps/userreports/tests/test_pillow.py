@@ -116,7 +116,6 @@ class ChunkedUCRProcessorTest(TestCase):
         cases = self._create_cases(docs=docs)
         # run pillow and check changes
         self.pillow.process_changes(since=since, forever=False)
-        self.adapter.refresh_table()
         return cases
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_changes_chunk')
