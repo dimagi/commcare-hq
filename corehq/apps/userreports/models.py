@@ -7,6 +7,7 @@ import glob
 import json
 import os
 import re
+from uuid import UUID
 
 from couchdbkit.exceptions import BadValueError
 from django.conf import settings
@@ -939,6 +940,30 @@ class AsyncIndicator(models.Model):
             AsyncIndicator(doc_id=doc_id, doc_type=doc_type, domain=domain, indicator_config_ids=config_ids)
             for doc_id in doc_ids
         ])
+
+
+def guess_data_source_type(data_source_id):
+    """
+    Given a data source ID, try to guess its type (standard or aggregate).
+    """
+    # ints are definitely aggregate
+    if isinstance(data_source_id, int):
+        return DATA_SOURCE_TYPE_AGGREGATE
+    # static ids are standard
+    if id_is_static(data_source_id):
+        return DATA_SOURCE_TYPE_STANDARD
+    try:
+        # uuids are standard
+        UUID(data_source_id)
+        return DATA_SOURCE_TYPE_STANDARD
+    except ValueError:
+        try:
+            # int-like-things are aggregate
+            int(data_source_id)
+            return DATA_SOURCE_TYPE_AGGREGATE
+        except ValueError:
+            # default should be standard
+            return DATA_SOURCE_TYPE_STANDARD
 
 
 def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_STANDARD):
