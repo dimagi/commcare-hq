@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from corehq.apps.userreports.datatypes import NUMERIC_TYPE_CHOICES
 from corehq.apps.userreports.reports.builder import (
     make_case_property_indicator,
     make_multiselect_question_indicator,
@@ -53,7 +55,7 @@ class ColumnOption(object):
     @property
     @memoized
     def aggregation_options(self):
-        if "decimal" in self._data_types:
+        if self._has_a_numeric_type():
             return UI_AGGREGATIONS  # All aggregations can be applied to numbers
         else:
             return (UI_AGG_GROUP_BY, UI_AGG_COUNT_PER_CHOICE)
@@ -112,6 +114,9 @@ class ColumnOption(object):
             "display": display_text,
             "transform": {'type': 'custom', 'custom_type': 'short_decimal_display'},
         }]
+
+    def _has_a_numeric_type(self):
+        return any([datatype in self._data_types for datatype in NUMERIC_TYPE_CHOICES])
 
 
 class QuestionColumnOption(ColumnOption):
