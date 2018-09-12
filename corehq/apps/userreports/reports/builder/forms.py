@@ -38,7 +38,7 @@ from corehq.apps.userreports.models import (
     DataSourceMeta,
     ReportConfiguration,
     ReportMeta,
-    get_datasource_config)
+    get_datasource_config_infer_type, guess_data_source_type)
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
@@ -320,7 +320,7 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
     @property
     @memoized
     def data_source(self):
-        return get_datasource_config(self.source_id, self.domain)[0]
+        return get_datasource_config_infer_type(self.source_id, self.domain)[0]
 
     @property
     def data_source_properties(self):
@@ -960,6 +960,7 @@ class ConfigureNewReportBase(forms.Form):
             columns=self._report_columns,
             filters=self._report_filters,
             configured_charts=self._report_charts,
+            data_source_type=guess_data_source_type(data_source_id),
             report_meta=ReportMeta(
                 created_by_builder=True,
                 report_builder_version="2.0",

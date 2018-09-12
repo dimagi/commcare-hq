@@ -942,6 +942,10 @@ class AsyncIndicator(models.Model):
         ])
 
 
+def get_datasource_config_infer_type(config_id, domain):
+    return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
+
+
 def guess_data_source_type(data_source_id):
     """
     Given a data source ID, try to guess its type (standard or aggregate).
