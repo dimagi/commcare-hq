@@ -1,4 +1,3 @@
-
 hqDefine('app_manager/js/download_index_main',[
     'jquery',
     'underscore',
@@ -6,10 +5,10 @@ hqDefine('app_manager/js/download_index_main',[
     'app_manager/js/download_async_modal',
     'app_manager/js/source_files',
 ],function ($, _, ace) {
-    ace.config.set('basePath', '/ace-builds/src-noconflict');
+    ace.require("ace/config").set("packaged", false);
+
     $(function () {
         var elements = $('.prettyprint');
-
         _.each(elements, function (elem) {
             var editor = ace.edit(
                 elem,
