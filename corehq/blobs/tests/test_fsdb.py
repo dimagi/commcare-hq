@@ -1,176 +1,134 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 import os
+from datetime import datetime, timedelta
+from io import BytesIO, open
 from os.path import isdir, join
 from shutil import rmtree
 from tempfile import mkdtemp
-from unittest import TestCase
-from io import BytesIO
+from django.test import TestCase
 
 import corehq.blobs.fsdb as mod
-from corehq.blobs.exceptions import ArgumentError
-from corehq.blobs.tests.util import get_id
+from corehq.blobs import CODES
+from corehq.blobs.metadata import MetaDB
+from corehq.blobs.tests.util import new_meta
 from corehq.util.test_utils import generate_cases, patch_datadog
-from six.moves import zip
-from io import open
 
 
 class _BlobDBTests(object):
 
+    def test_has_metadb(self):
+        self.assertIsInstance(self.db.metadb, MetaDB)
+
     def test_put_and_get(self):
-        identifier = get_id()
-        info = self.db.put(BytesIO(b"content"), identifier)
-        self.assertEqual(identifier, info.identifier)
-        with self.db.get(info.identifier) as fh:
+        identifier = new_meta()
+        meta = self.db.put(BytesIO(b"content"), meta=identifier)
+        self.assertEqual(identifier, meta)
+        with self.db.get(key=meta.key) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_size(self):
-        identifier = get_id()
+        identifier = new_meta()
         with patch_datadog() as stats:
-            info = self.db.put(BytesIO(b"content"), identifier)
+            meta = self.db.put(BytesIO(b"content"), meta=identifier)
         size = len(b'content')
         self.assertEqual(sum(s for s in stats["commcare.blobs.added.count"]), 1)
         self.assertEqual(sum(s for s in stats["commcare.blobs.added.bytes"]), size)
-        self.assertEqual(self.db.size(info.identifier), size)
+        self.assertEqual(self.db.size(key=meta.key), size)
+
+    def test_put_with_timeout(self):
+        meta = self.db.put(
+            BytesIO(b"content"),
+            domain="test",
+            parent_id="test",
+            type_code=CODES.tempfile,
+            timeout=60,
+        )
+        with self.db.get(key=meta.key) as fh:
+            self.assertEqual(fh.read(), b"content")
+        self.assertLessEqual(
+            meta.expires_on - datetime.utcnow(),
+            timedelta(minutes=60),
+        )
 
     def test_put_and_get_with_unicode_names(self):
-        bucket = "doc.4500"
-        info = self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
-        with self.db.get(info.identifier, bucket) as fh:
-            self.assertEqual(fh.read(), b"content")
-
-    def test_put_and_get_with_bucket(self):
-        bucket = "doc.2"
-        info = self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
-        with self.db.get(info.identifier, bucket) as fh:
-            self.assertEqual(fh.read(), b"content")
-
-    def test_put_with_bucket_and_get_without_bucket(self):
-        bucket = "doc.3"
-        info = self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
-        with self.assertRaises(mod.NotFound):
-            self.db.get(info.identifier)
-
-    def test_put_with_double_dotted_name(self):
-        info = self.db.put(BytesIO(b"content"), get_id())
-        with self.db.get(info.identifier) as fh:
+        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        with self.db.get(key=meta.key) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_from_get_stream(self):
-        old = self.db.put(BytesIO(b"content"), get_id(), bucket="old_bucket")
-        with self.db.get(old.identifier, "old_bucket") as fh:
-            new = self.db.put(fh, get_id(), bucket="new_bucket")
-        with self.db.get(new.identifier, "new_bucket") as fh:
+        old = self.db.put(BytesIO(b"content"), meta=new_meta())
+        with self.db.get(key=old.key) as fh:
+            new = self.db.put(fh, meta=new_meta())
+        with self.db.get(key=new.key) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_exists(self):
-        bucket = "doc.3.0"
-        info = self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
-        self.assertTrue(self.db.exists(info.identifier, bucket), 'not found')
+        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        self.assertTrue(self.db.exists(key=meta.key), 'not found')
 
     def test_delete_not_exists(self):
-        bucket = "doc.3.1"
-        info = self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
-        self.db.delete(info.identifier, bucket)
-        self.assertFalse(self.db.exists(info.identifier, bucket), 'not deleted')
+        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        self.db.delete(key=meta.key)
+        self.assertFalse(self.db.exists(key=meta.key), 'not deleted')
 
     def test_delete(self):
-        bucket = "doc.4"
-        info = self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
-
-        self.assertTrue(self.db.delete(info.identifier, bucket), 'delete failed')
-
+        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        self.assertTrue(self.db.delete(key=meta.key), 'delete failed')
         with self.assertRaises(mod.NotFound):
-            self.db.get(info.identifier, bucket)
-
-        return info, bucket
+            self.db.get(key=meta.key)
+        return meta
 
     def test_bulk_delete(self):
-        blobs = [
-            ('test.5', 'doc.5'),
-            ('test.6', 'doc.6'),
-        ]
-        infos = [
-            self.db.put(BytesIO(b"content-{}".format(blob[0])), get_id(), bucket=blob[1])
-            for blob in blobs
+        metas = [
+            self.db.put(BytesIO(b"content-{}".format(key)), meta=new_meta())
+            for key in ['test.5', 'test.6']
         ]
 
-        blob_infos = list(zip(blobs, infos))
-        paths = [self.db.get_path(info.identifier, blob[1]) for blob, info in blob_infos]
         with patch_datadog() as stats:
-            self.assertTrue(self.db.bulk_delete(paths), 'delete failed')
+            self.assertTrue(self.db.bulk_delete(metas=metas), 'delete failed')
         self.assertEqual(sum(s for s in stats["commcare.blobs.deleted.count"]), 2)
         self.assertEqual(sum(s for s in stats["commcare.blobs.deleted.bytes"]), 28)
 
-        for blob, info in blob_infos:
+        for meta in metas:
             with self.assertRaises(mod.NotFound):
-                self.db.get(info.identifier, blob[1])
+                self.db.get(key=meta.key)
 
-        return paths
-
-    def test_delete_bucket(self):
-        bucket = join("doctype", "ys7v136b")
-        info = self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
-        with patch_datadog() as stats:
-            self.assertTrue(self.db.delete(bucket=bucket))
-        self.assertEqual(sum(s for s in stats["commcare.blobs.deleted.count"]), 1)
-        self.assertEqual(sum(s for s in stats["commcare.blobs.deleted.bytes"]), 7)
-
-        self.assertTrue(info.identifier)
-        with self.assertRaises(mod.NotFound):
-            self.db.get(info.identifier, bucket=bucket)
-
-    def test_delete_identifier_in_default_bucket(self):
-        info = self.db.put(BytesIO(b"content"), get_id())
-        self.assertTrue(self.db.delete(info.identifier), 'delete failed')
-        with self.assertRaises(mod.NotFound):
-            self.db.get(info.identifier)
+        return metas
 
     def test_delete_no_args(self):
-        info = self.db.put(BytesIO(b"content"), get_id())
-        with self.assertRaises(ArgumentError):
+        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        with self.assertRaises(TypeError):
             self.db.delete()
-        # blobs in default bucket should not be deleted
-        with self.db.get(info.identifier) as fh:
+        with self.db.get(key=meta.key) as fh:
             self.assertEqual(fh.read(), b"content")
-        self.assertTrue(self.db.delete(bucket=mod.DEFAULT_BUCKET))
-
-    def test_prevent_delete_bucket_by_mistake(self):
-        info = self.db.put(BytesIO(b"content"), get_id())
-        id_mistake = None
-        with self.assertRaises(ArgumentError):
-            self.db.delete(id_mistake, mod.DEFAULT_BUCKET)
-        # blobs in default bucket should not be deleted
-        with self.db.get(info.identifier) as fh:
-            self.assertEqual(fh.read(), b"content")
-        self.assertTrue(self.db.delete(bucket=mod.DEFAULT_BUCKET))
+        self.assertTrue(self.db.delete(key=meta.key))
 
     def test_empty_attachment_name(self):
-        info = self.db.put(BytesIO(b"content"), get_id())
-        self.assertNotIn(".", info.identifier)
-        return info
+        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        self.assertNotIn(".", meta.key)
+        return meta
 
     def test_put_with_colliding_blob_id(self):
-        ident = get_id()
-        self.db.put(BytesIO(b"bing"), ident)
-        self.db.put(BytesIO(b"bang"), ident)
-        with self.db.get(ident) as fh:
+        meta = new_meta()
+        self.db.put(BytesIO(b"bing"), meta=meta)
+        self.db.put(BytesIO(b"bang"), meta=meta)
+        with self.db.get(key=meta.key) as fh:
             self.assertEqual(fh.read(), b"bang")
 
 
 @generate_cases([
-    ("test.1", "\u4500.1"),
-    ("test.1", "/tmp/notallowed"),
-    ("test.1", "."),
-    ("test.1", ".."),
-    ("test.1", "../notallowed"),
-    ("test.1", "notallowed/.."),
-    ("/test.1",),
+    ("\u4500.1/test.1",),
+    ("/tmp/notallowed/test.1",),
+    ("./test.1",),
     ("../test.1",),
+    ("../notallowed/test.1",),
+    ("notallowed/../test.1",),
+    ("/test.1",),
 ], _BlobDBTests)
-def test_bad_name(self, name, bucket=mod.DEFAULT_BUCKET):
+def test_bad_name(self, key):
     with self.assertRaises(mod.BadName):
-        self.db.get(name, bucket)
+        self.db.get(key=key)
 
 
 class TestFilesystemBlobDB(TestCase, _BlobDBTests):
@@ -189,50 +147,22 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
         super(TestFilesystemBlobDB, cls).tearDownClass()
 
     def test_delete(self):
-        info, bucket = super(TestFilesystemBlobDB, self).test_delete()
-        self.assertFalse(self.db.delete(info.identifier, bucket), 'delete should fail')
+        meta = super(TestFilesystemBlobDB, self).test_delete()
+        self.assertFalse(self.db.delete(key=meta.key), 'delete should fail')
 
     def test_bulk_delete(self):
-        paths = super(TestFilesystemBlobDB, self).test_bulk_delete()
-        self.assertFalse(self.db.bulk_delete(paths), 'delete should fail')
+        metas = super(TestFilesystemBlobDB, self).test_bulk_delete()
+        self.assertFalse(self.db.bulk_delete(metas=metas), 'delete should fail')
 
-    def test_delete_bucket(self):
-        super(TestFilesystemBlobDB, self).test_delete_bucket()
-        names = os.listdir(self.db.get_path(bucket="doctype"))
-        self.assertNotIn("ys7v136b", names, "bucket not deleted")
-
-    def test_bucket_path(self):
-        bucket = join("doctype", "8cd98f0")
-        self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
-        path = self.db.get_path(bucket=bucket)
+    def test_blob_path(self):
+        meta = new_meta(key=join("doctype", "8cd98f0", "blob_id"))
+        self.db.put(BytesIO(b"content"), meta=meta)
+        path = os.path.dirname(self.db.get_path(key=meta.key))
         self.assertTrue(isdir(path), path)
         self.assertTrue(os.listdir(path))
 
     def test_empty_attachment_name(self):
-        info = super(TestFilesystemBlobDB, self).test_empty_attachment_name()
-        path = self.db.get_path(info.identifier)
+        meta = super(TestFilesystemBlobDB, self).test_empty_attachment_name()
+        path = self.db.get_path(key=meta.key)
         with open(path, "rb") as fh:
             self.assertEqual(fh.read(), b"content")
-
-
-@generate_cases([
-    ((1, 2), {}, 1, 2),
-    ((1,), {"bucket": 2}, 1, 2),
-    ((1,), {}, 1, mod.DEFAULT_BUCKET),
-    ((), {"identifier": 1}, 1, mod.DEFAULT_BUCKET),
-    ((), {"identifier": 1, "bucket": 2}, 1, 2),
-    ((), {"bucket": 2}, None, 2),
-    ((), {"bucket": mod.DEFAULT_BUCKET}, None, mod.DEFAULT_BUCKET),
-    ((), {}, ArgumentError),
-    ((None,), {}, ArgumentError),
-    ((None, 2), {}, ArgumentError),
-    ((), {"identifier": None}, ArgumentError),
-], TestFilesystemBlobDB)
-def test_get_args_for_delete(self, args, kw, identifier, bucket=None):
-    if isinstance(identifier, type):
-        with self.assertRaises(identifier):
-            self.db.get_args_for_delete(*args, **kw)
-    else:
-        ident, buck = self.db.get_args_for_delete(*args, **kw)
-        self.assertEqual(ident, identifier)
-        self.assertEqual(buck, bucket)

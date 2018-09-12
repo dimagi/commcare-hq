@@ -53,7 +53,6 @@ from gevent import sleep
 import six
 import logging
 from collections import defaultdict, deque
-from http_parser import http
 from corehq.util import cache_utils
 _logger = logging.getLogger('main_couch_sql_datamigration')
 
@@ -485,9 +484,9 @@ def _migrate_form_attachments(sql_form, couch_form):
             attachment_id=uuid.uuid4().hex,
             content_type=blob.content_type,
             content_length=blob.content_length,
-            blob_id=blob.id,
-            blob_bucket=couch_form._blobdb_bucket(),
-            md5=blob.info.md5_hash
+            blob_id=blob.key,
+            blob_bucket="",  # temporary/special value -> new blob db API
+            md5=blob.info.md5_hash or "unknown-md5",
         ))
     sql_form.unsaved_attachments = attachments
 
@@ -632,15 +631,6 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
 
     def _cache_key(self):
         return "couchsqlmigration.%s" % self.domain
-
-    def page_exception(self, e):
-        if self.retries <= 0:
-            return False
-        self.retries -= 1
-        if isinstance(e, http.NoMoreData):
-            sleep(min(60, cache_utils.get_exponential(self._cache_key())))
-            return True
-        return False
 
     def page_end(self, total_emitted, duration, *args, **kwargs):
         self.retries = self.RETRIES

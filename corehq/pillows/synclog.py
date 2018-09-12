@@ -29,7 +29,7 @@ def get_user_sync_history_pillow(
     This gets a pillow which iterates through all synclogs
     """
     change_feed = KafkaChangeFeed(
-        topics=[topics.SYNCLOG_SQL], group_id=SYNCLOG_SQL_USER_SYNC_GROUP_ID,
+        topics=[topics.SYNCLOG_SQL], client_id=SYNCLOG_SQL_USER_SYNC_GROUP_ID,
         num_processes=num_processes, process_num=process_num)
     checkpoint = KafkaPillowCheckpoint(pillow_id, [topics.SYNCLOG_SQL])
     return ConstructedPillow(

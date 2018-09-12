@@ -3,7 +3,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
     "jquery",
     "knockout",
     "underscore",
-], function(
+], function (
     $,
     ko,
     _
@@ -18,7 +18,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
         'use strict';
         options = options || {};
 
-        var self = this;
+        var self = {};
 
         self.PaginatedItem = paginatedItem || PaginatedItem;
 
@@ -68,7 +68,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
         });
 
         self.maxPage = ko.computed(function () {
-            return Math.ceil(self.total()/self.pageLimit());
+            return Math.ceil(self.total() / self.pageLimit());
         });
         self.currentPage = ko.observable(currentPage);
         self.nextPage = ko.computed(function () {
@@ -109,7 +109,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                     self.paginatedList(_.map(
                         data.paginatedList,
                         function (listItem) {
-                            return new self.PaginatedItem(listItem, self.initRow);
+                            return self.PaginatedItem(listItem, self.initRow);
                         }
                     ));
                     self.deletedList([]);
@@ -160,7 +160,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                             if (data.newItem.error) {
                                 self.alertHtml(data.newItem.error);
                             } else {
-                                self.newList.push(new self.PaginatedItem(data.newItem, self.initRow));
+                                self.newList.push(self.PaginatedItem(data.newItem, self.initRow));
                             }
                         }
                     },
@@ -254,8 +254,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
     };
 
     var PaginatedItem = function (itemSpec, initRow) {
-        'use strict';
-        var self = this;
+        var self = {};
         self.itemId = itemSpec.itemData.id;
         self.itemRowId = 'item-row-' + self.itemId;
         self.itemData = ko.observable(itemSpec.itemData);
@@ -339,7 +338,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
     };
 
     ko.bindingHandlers.disabledOnUndefined = {
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var value = valueAccessor()();
             if (value === undefined) {
                 $(element).addClass('disabled');
@@ -350,7 +349,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
     };
 
     ko.bindingHandlers.activeOnSimilar = {
-        update: function(element, valueAccessor, allBindingsAccessor) {
+        update: function (element, valueAccessor, allBindingsAccessor) {
             var current = valueAccessor()();
             var compare = parseInt(allBindingsAccessor()['compareText']);
             if (current === compare) {
@@ -363,5 +362,6 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
 
     return {
         CRUDPaginatedListModel: CRUDPaginatedListModel,
+        PaginatedItem: PaginatedItem,
     };
 });

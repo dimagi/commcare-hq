@@ -25,11 +25,12 @@ from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.analytics.tasks import update_hubspot_properties, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
+from corehq.apps.analytics.tasks import update_hubspot_properties_v2, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
+from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -171,11 +172,10 @@ class BaseUserConfigReportsView(BaseDomainView):
     @property
     def main_context(self):
         static_reports = list(StaticReportConfiguration.by_domain(self.domain))
-        static_data_sources = list(StaticDataSourceConfiguration.by_domain(self.domain))
         context = super(BaseUserConfigReportsView, self).main_context
         context.update({
             'reports': ReportConfiguration.by_domain(self.domain) + static_reports,
-            'data_sources': DataSourceConfiguration.by_domain(self.domain) + static_data_sources,
+            'data_sources': get_datasources_for_domain(self.domain, include_static=True)
         })
         if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
             from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
@@ -369,7 +369,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
             settings.DEFAULT_FROM_EMAIL,
             [settings.REPORT_BUILDER_ADD_ON_EMAIL],
         )
-        update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
+        update_hubspot_properties_v2.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
 
 
@@ -709,10 +709,14 @@ class ReportPreview(BaseDomainView):
             report_data
         )
         if bound_form.is_valid():
-            temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
-            response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
-            if response_data:
-                return json_response(response_data)
+            try:
+                temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
+                response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
+                if response_data:
+                    return json_response(response_data)
+            except BadBuilderConfigError as e:
+                return json_response({'status': 'error', 'message': str(e)}, status_code=400)
+
         return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
 
 

@@ -30,35 +30,24 @@ from django.views.generic import FormView, TemplateView, View
 from lxml import etree
 from lxml.builder import E
 
+from couchforms.openrosa_response import RESPONSE_XMLNS
+from dimagi.utils.django.email import send_HTML_email
+
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
-    require_superuser, require_superuser_or_contractor,
-    login_or_basic, domain_admin_required,
-    check_lockout)
+    require_superuser, login_or_basic, domain_admin_required, check_lockout)
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, \
-    use_nvd3_v3
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
-    CommCareCaseSQLRawDocSerializer
 from corehq.util import reverse
-from corehq.util.supervisord.api import (
-    PillowtopSupervisorApi,
-    SupervisorException,
-    all_pillows_supervisor_status,
-    pillow_supervisor_status
-)
 from corehq.util.timer import TimingContext
-from couchforms.openrosa_response import RESPONSE_XMLNS
-from dimagi.utils.django.email import send_HTML_email
+
 from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm, EmailForm, SuperuserManagementForm,
-    ReprocessMessagingCaseUpdatesForm,
-    DisableTwoFactorForm, DisableUserForm)
+    AuthenticateAsForm, SuperuserManagementForm, DisableTwoFactorForm, DisableUserForm)
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
+
 from six.moves import filter
 
 
@@ -193,6 +182,66 @@ class AdminRestoreView(TemplateView):
             **get_restore_params(self.request)
         )
 
+    @staticmethod
+    def _parse_reports(xpath, xml_payload):
+        reports = xml_payload.findall(xpath)
+        report_row_counts = {
+            report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
+            for report in reports
+            if 'report_id' in report.attrib
+        }
+        return len(reports), report_row_counts
+
+    @staticmethod
+    def get_stats_from_xml(xml_payload):
+        restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
+        restore_id = restore_id_element.text if restore_id_element else None
+        cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
+        num_cases = len(cases)
+
+        create_case_type = filter(None, [case.find(
+            '{http://commcarehq.org/case/transaction/v2}create/'
+            '{http://commcarehq.org/case/transaction/v2}case_type'
+        ) for case in cases])
+        update_case_type = filter(None, [case.find(
+            '{http://commcarehq.org/case/transaction/v2}update/'
+            '{http://commcarehq.org/case/transaction/v2}case_type'
+        ) for case in cases])
+        case_type_counts = dict(Counter([
+            case.type for case in itertools.chain(create_case_type, update_case_type)
+        ]))
+
+        locations = xml_payload.findall(
+            "{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location".format(RESPONSE_XMLNS)
+        )
+        num_locations = len(locations)
+        location_type_counts = dict(Counter(location.attrib['type'] for location in locations))
+
+        num_v1_reports, v1_report_row_counts = AdminRestoreView._parse_reports(
+            "{{{0}}}fixture[@id='commcare:reports']/{{{0}}}reports/".format(RESPONSE_XMLNS), xml_payload
+        )
+
+        num_v2_reports, v2_report_row_counts = AdminRestoreView._parse_reports(
+            # the @id is dynamic, so we can't search for it directly - instead, look for the right format
+            "{{{0}}}fixture[@report_id][{{{0}}}rows]".format(RESPONSE_XMLNS), xml_payload
+        )
+
+        num_ledger_entries = len(xml_payload.findall(
+            "{{{0}}}balance/{{{0}}}entry".format(COMMTRACK_REPORT_XMLNS)
+        ))
+        return {
+            'restore_id': restore_id,
+            'num_cases': num_cases,
+            'num_locations': num_locations,
+            'num_v1_reports': num_v1_reports,
+            'num_v2_reports': num_v2_reports,
+            'case_type_counts': case_type_counts,
+            'location_type_counts': location_type_counts,
+            'v1_report_row_counts': v1_report_row_counts,
+            'v2_report_row_counts': v2_report_row_counts,
+            'num_ledger_entries': num_ledger_entries,
+        }
+
     def get_context_data(self, **kwargs):
         context = super(AdminRestoreView, self).get_context_data(**kwargs)
         response, timing_context = self._get_restore_response()
@@ -200,41 +249,7 @@ class AdminRestoreView(TemplateView):
         if isinstance(response, StreamingHttpResponse):
             string_payload = b''.join(response.streaming_content)
             xml_payload = etree.fromstring(string_payload)
-            restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-            cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
-            num_cases = len(cases)
-
-            create_case_type = filter(None, [case.find(
-                '{http://commcarehq.org/case/transaction/v2}create/'
-                '{http://commcarehq.org/case/transaction/v2}case_type'
-            ) for case in cases])
-            update_case_type = filter(None, [case.find(
-                '{http://commcarehq.org/case/transaction/v2}update/'
-                '{http://commcarehq.org/case/transaction/v2}case_type'
-            ) for case in cases])
-            case_type_counts = dict(Counter([
-                case.type for case in itertools.chain(create_case_type, update_case_type)
-            ]))
-
-            locations = xml_payload.findall(
-                "{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location".format(RESPONSE_XMLNS)
-            )
-            num_locations = len(locations)
-            location_type_counts = dict(Counter(location.attrib['type'] for location in locations))
-
-            reports = xml_payload.findall(
-                "{{{0}}}fixture[@id='commcare:reports']/{{{0}}}reports/".format(RESPONSE_XMLNS)
-            )
-            num_reports = len(reports)
-            report_row_counts = {
-                report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
-                for report in reports
-                if 'report_id' in report.attrib
-            }
-
-            num_ledger_entries = len(xml_payload.findall(
-                "{{{0}}}balance/{{{0}}}entry".format(COMMTRACK_REPORT_XMLNS)
-            ))
+            context.update(self.get_stats_from_xml(xml_payload))
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
@@ -247,29 +262,13 @@ class AdminRestoreView(TemplateView):
                             'If you believe this is a bug please report an issue.').format(response.status_code,
                                                                                            response.content)
                 xml_payload = E.error(message)
-            restore_id_element = None
-            num_cases = 0
-            case_type_counts = {}
-            num_locations = 0
-            location_type_counts = {}
-            num_reports = 0
-            report_row_counts = {}
-            num_ledger_entries = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
             'payload': formatted_payload,
-            'restore_id': restore_id_element.text if restore_id_element is not None else None,
             'status_code': response.status_code,
             'timing_data': timing_context.to_list(),
-            'num_cases': num_cases,
-            'num_locations': num_locations,
-            'num_reports': num_reports,
             'hide_xml': hide_xml,
-            'case_type_counts': case_type_counts,
-            'location_type_counts': location_type_counts,
-            'report_row_counts': report_row_counts,
-            'num_ledger_entries': num_ledger_entries,
         })
         return context
 

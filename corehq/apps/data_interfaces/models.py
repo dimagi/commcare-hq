@@ -8,6 +8,7 @@ from collections import defaultdict
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_case_updates
+from copy import deepcopy
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
@@ -24,7 +25,15 @@ from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+from corehq.messaging.scheduling.models import (
+    AlertSchedule,
+    TimedSchedule,
+    Schedule,
+    SMSContent,
+    EmailContent,
+    SMSSurveyContent,
+    CustomContent,
+)
 from corehq.messaging.scheduling.tasks import (
     refresh_case_alert_schedule_instances,
     refresh_case_timed_schedule_instances,
@@ -35,6 +44,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
     get_case_timed_schedule_instances_for_schedule_id,
 )
+from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
 from corehq.sql_db.util import run_query_across_partitioned_databases, get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
@@ -95,7 +105,6 @@ class AutomaticUpdateRule(models.Model):
     # number of days old that a case's server_modified_on date must be
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField(null=True)
-    migrated = models.BooleanField(default=False)
 
     # One of the WORKFLOW_* constants on this class describing the workflow
     # that this rule belongs to.
@@ -114,62 +123,6 @@ class AutomaticUpdateRule(models.Model):
 
     def __unicode__(self):
         return six.text_type("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
-
-    def migrate(self):
-        if not self.pk:
-            raise ValueError("Expected model to be saved first")
-
-        with CriticalSection(['migrate-rule-%s' % self.pk]):
-            rule = AutomaticUpdateRule.objects.get(pk=self.pk)
-            if not rule.migrated:
-                with transaction.atomic():
-                    # Migrate Criteria
-                    for old_criteria in rule.automaticupdaterulecriteria_set.all():
-                        property_value = old_criteria.property_value
-                        if old_criteria.match_type == AutomaticUpdateRuleCriteria.MATCH_DAYS_BEFORE:
-                            property_value = int(property_value) * -1
-                            property_value = str(property_value)
-
-                        new_criteria_definition = MatchPropertyDefinition(
-                            property_name=old_criteria.property_name,
-                            property_value=property_value,
-                            match_type=old_criteria.match_type,
-                        )
-                        new_criteria_definition.save()
-
-                        new_criteria = CaseRuleCriteria(rule=rule)
-                        new_criteria.definition = new_criteria_definition
-                        new_criteria.save()
-
-                    # Migrate Actions
-                    properties_to_update = []
-                    close_case = False
-                    for old_action in rule.automaticupdateaction_set.all():
-                        if old_action.action == AutomaticUpdateAction.ACTION_UPDATE:
-                            properties_to_update.append(
-                                UpdateCaseDefinition.PropertyDefinition(
-                                    name=old_action.property_name,
-                                    value_type=old_action.property_value_type,
-                                    value=old_action.property_value,
-                                )
-                            )
-                        elif old_action.action == AutomaticUpdateAction.ACTION_CLOSE:
-                            close_case = True
-                        else:
-                            raise ValueError("Unexpected action found: %s" % old_action.action)
-
-                    new_action_definition = UpdateCaseDefinition(close_case=close_case)
-                    new_action_definition.set_properties_to_update(properties_to_update)
-                    new_action_definition.save()
-
-                    new_action = CaseRuleAction(rule=rule)
-                    new_action.definition = new_action_definition
-                    new_action.save()
-
-                    rule.migrated = True
-                    rule.save()
-
-            return rule
 
     @property
     def references_parent_case(self):
@@ -202,6 +155,272 @@ class AutomaticUpdateRule(models.Model):
                     return True
 
         return False
+
+    @classmethod
+    def get_referenced_form_unique_ids_from_sms_surveys(cls, domain):
+        """
+        Examines all of the scheduling rules in the given domain and returns
+        all form_unique_ids that are referenced from SMS Surveys.
+        """
+        result = []
+        for rule in cls.by_domain(domain, cls.WORKFLOW_SCHEDULING, active_only=False):
+            schedule = rule.get_messaging_rule_schedule()
+            for event in schedule.memoized_events:
+                if isinstance(event.content, SMSSurveyContent):
+                    result.append(event.content.form_unique_id)
+
+        return list(set(result))
+
+    def conditional_alert_can_be_copied(self, allow_sms_surveys=False, allow_custom_references=False):
+        """
+        Only scheduling rules (conditional alerts) are copied to the exchange now,
+        so all of the validation in this method pertains to scheduling rules only.
+
+        We need to make sure that the rule doesn't reference any domain-specific
+        objects, like specific user or location recipients.
+
+        We also need to make sure that the alert matches the use cases supported
+        by copy_conditional_alert().
+        """
+        if self.deleted:
+            return False
+
+        if self.workflow != self.WORKFLOW_SCHEDULING:
+            return False
+
+        allowed_criteria_definitions = (MatchPropertyDefinition, )
+        if allow_custom_references:
+            allowed_criteria_definitions += (CustomMatchDefinition, )
+
+        for criterion in self.memoized_criteria:
+            definition = criterion.definition
+            if not isinstance(definition, allowed_criteria_definitions):
+                return False
+
+        action_definition = self.get_messaging_rule_action_definition()
+
+        allowed_recipient_types = (
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES,
+        )
+
+        if allow_custom_references:
+            allowed_recipient_types += (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, )
+
+        for recipient_type, recipient_id in action_definition.recipients:
+            if recipient_type not in allowed_recipient_types:
+                return False
+
+        if action_definition.get_scheduler_module_info().enabled:
+            return False
+
+        schedule = action_definition.schedule
+
+        if schedule.ui_type not in (
+            Schedule.UI_TYPE_IMMEDIATE,
+            Schedule.UI_TYPE_DAILY,
+            Schedule.UI_TYPE_WEEKLY,
+            Schedule.UI_TYPE_MONTHLY,
+            Schedule.UI_TYPE_CUSTOM_DAILY,
+            Schedule.UI_TYPE_CUSTOM_IMMEDIATE,
+        ):
+            return False
+
+        if schedule.location_type_filter:
+            return False
+
+        allowed_content_types = (SMSContent, EmailContent)
+        if allow_sms_surveys:
+            allowed_content_types += (SMSSurveyContent, )
+
+        if allow_custom_references:
+            allowed_content_types += (CustomContent, )
+
+        for event in schedule.memoized_events:
+            if not isinstance(event.content, allowed_content_types):
+                return False
+
+        return True
+
+    def copy_conditional_alert(self, to_domain, convert_form_unique_id_function=None,
+            allow_custom_references=False):
+        """
+        Attempts to copy this rule, which should be a conditional alert, to the given domain.
+        If it cannot be copied, it returns None. Otherwise the new alert is returned.
+
+        :param to_domain: The name of the domain to attempt copying this alert to
+
+        :param convert_form_unique_id_function: A function which should take one argument, the form unique id
+        which pertains to the form unique id of a form in this alert's domain, and returns the form unique id
+        of the same copied form in to_domain. This is optional, and if omitted, alerts which use SMS Surveys
+        will not be copied.
+        """
+        allow_sms_surveys = convert_form_unique_id_function is not None
+        if not self.conditional_alert_can_be_copied(
+            allow_sms_surveys=allow_sms_surveys,
+            allow_custom_references=allow_custom_references,
+        ):
+            return None
+
+        with transaction.atomic():
+            new_rule = AutomaticUpdateRule.objects.create(
+                domain=to_domain,
+                name=self.name,
+                case_type=self.case_type,
+                active=self.active,
+                last_run=self.last_run,
+                filter_on_server_modified=self.filter_on_server_modified,
+                server_modified_boundary=self.server_modified_boundary,
+                workflow=self.workflow,
+            )
+
+            for criterion in self.memoized_criteria:
+                definition = criterion.definition
+                if isinstance(definition, MatchPropertyDefinition):
+                    new_rule.add_criteria(
+                        MatchPropertyDefinition,
+                        property_name=definition.property_name,
+                        property_value=definition.property_value,
+                        match_type=definition.match_type,
+                    )
+                elif isinstance(definition, CustomMatchDefinition):
+                    new_rule.add_criteria(
+                        CustomMatchDefinition,
+                        name=definition.name,
+                    )
+                else:
+                    raise TypeError(
+                        "Unexpected criteria definition. Did conditional_alert_can_be_copied() get called?"
+                    )
+
+            action_definition = self.get_messaging_rule_action_definition()
+            schedule = action_definition.schedule
+
+            new_schedule = self.copy_schedule(schedule, to_domain,
+                convert_form_unique_id_function=convert_form_unique_id_function)
+
+            new_rule.add_action(
+                CreateScheduleInstanceActionDefinition,
+                alert_schedule_id=new_schedule.schedule_id if isinstance(new_schedule, AlertSchedule) else None,
+                timed_schedule_id=new_schedule.schedule_id if isinstance(new_schedule, TimedSchedule) else None,
+                recipients=deepcopy(action_definition.recipients),
+                reset_case_property_name=action_definition.reset_case_property_name,
+                start_date_case_property=action_definition.start_date_case_property,
+                specific_start_date=action_definition.specific_start_date,
+                scheduler_module_info=deepcopy(action_definition.scheduler_module_info),
+            )
+
+        return new_rule
+
+    def fix_sms_survey_reference(self, copied_content, original_content, convert_form_unique_id_function):
+        copied_content.form_unique_id = convert_form_unique_id_function(original_content.form_unique_id)
+
+    def copy_schedule(self, schedule, to_domain, convert_form_unique_id_function=None):
+        """
+        Before calling this method, conditional_alert_can_be_copied() should be tested on
+        the rule to ensure that it can be copied.
+        """
+        extra_scheduling_options = {
+            'active': False,
+            'include_descendant_locations': schedule.include_descendant_locations,
+            'location_type_filter': [],
+            'default_language_code': schedule.default_language_code,
+            'custom_metadata': deepcopy(schedule.custom_metadata),
+            'use_utc_as_default_timezone': schedule.use_utc_as_default_timezone,
+            'user_data_filter': deepcopy(schedule.user_data_filter),
+            'stop_date_case_property_name': schedule.stop_date_case_property_name,
+        }
+
+        if schedule.ui_type in (
+            Schedule.UI_TYPE_IMMEDIATE,
+            Schedule.UI_TYPE_DAILY,
+            Schedule.UI_TYPE_WEEKLY,
+            Schedule.UI_TYPE_MONTHLY,
+        ):
+            model_event = schedule.memoized_events[0].create_copy()
+            model_content = schedule.memoized_events[0].content.create_copy()
+            if isinstance(model_content, SMSSurveyContent):
+                self.fix_sms_survey_reference(model_content, schedule.memoized_events[0].content,
+                    convert_form_unique_id_function)
+
+            if schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
+                return AlertSchedule.create_simple_alert(
+                    to_domain,
+                    model_content,
+                    extra_options=extra_scheduling_options,
+                )
+            elif schedule.ui_type == Schedule.UI_TYPE_DAILY:
+                return TimedSchedule.create_simple_daily_schedule(
+                    to_domain,
+                    model_event,
+                    model_content,
+                    total_iterations=schedule.total_iterations,
+                    start_offset=schedule.start_offset,
+                    start_day_of_week=schedule.start_day_of_week,
+                    extra_options=extra_scheduling_options,
+                    repeat_every=schedule.repeat_every,
+                )
+            elif schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
+                if (schedule.repeat_every % 7) != 0 or schedule.repeat_every < 7:
+                    raise ValueError("Invalid schedule.repeat_every for a weekly schedule")
+
+                return TimedSchedule.create_simple_weekly_schedule(
+                    to_domain,
+                    model_event,
+                    model_content,
+                    schedule.get_weekdays(),
+                    schedule.start_day_of_week,
+                    total_iterations=schedule.total_iterations,
+                    extra_options=extra_scheduling_options,
+                    repeat_every=schedule.repeat_every // 7,
+                )
+            elif schedule.ui_type == Schedule.UI_TYPE_MONTHLY:
+                if schedule.repeat_every >= 0:
+                    raise ValueError("Invalid schedule.repeat_every for a monthly schedule")
+
+                return TimedSchedule.create_simple_monthly_schedule(
+                    to_domain,
+                    model_event,
+                    [e.day for e in schedule.memoized_events],
+                    model_content,
+                    total_iterations=schedule.total_iterations,
+                    extra_options=extra_scheduling_options,
+                    repeat_every=schedule.repeat_every * -1,
+                )
+        elif schedule.ui_type in (
+            Schedule.UI_TYPE_CUSTOM_DAILY,
+            Schedule.UI_TYPE_CUSTOM_IMMEDIATE,
+        ):
+            event_and_content_objects = []
+            for e in schedule.memoized_events:
+                model_event = e.create_copy()
+                model_content = e.content.create_copy()
+                if isinstance(model_content, SMSSurveyContent):
+                    self.fix_sms_survey_reference(model_content, e.content, convert_form_unique_id_function)
+
+                event_and_content_objects.append((model_event, model_content))
+
+            if schedule.ui_type == Schedule.UI_TYPE_CUSTOM_DAILY:
+                return TimedSchedule.create_custom_daily_schedule(
+                    to_domain,
+                    event_and_content_objects,
+                    total_iterations=schedule.total_iterations,
+                    start_offset=schedule.start_offset,
+                    start_day_of_week=schedule.start_day_of_week,
+                    extra_options=extra_scheduling_options,
+                    repeat_every=schedule.repeat_every,
+                )
+            elif schedule.ui_type == Schedule.UI_TYPE_CUSTOM_IMMEDIATE:
+                return AlertSchedule.create_custom_alert(
+                    to_domain,
+                    event_and_content_objects,
+                    extra_options=extra_scheduling_options,
+                )
+
+        raise ValueError("Unexpected schedule ui_type: %s" % schedule.ui_type)
 
     @classmethod
     def by_domain(cls, domain, workflow, active_only=True):
@@ -349,9 +568,6 @@ class AutomaticUpdateRule(models.Model):
         """
         :return: CaseRuleActionResult object aggregating the results from all actions.
         """
-        if not self.migrated:
-            raise self.MigrationError("Attempted to call new method on non-migrated model.")
-
         if self.deleted:
             raise self.RuleError("Attempted to call run_rule on a deleted rule")
 
@@ -367,9 +583,6 @@ class AutomaticUpdateRule(models.Model):
             return self.run_actions_when_case_does_not_match(case)
 
     def criteria_match(self, case, now):
-        if not self.migrated:
-            raise self.MigrationError("Attempted to call new method on non-migrated model.")
-
         if case.is_deleted or case.closed:
             return False
 
@@ -394,9 +607,6 @@ class AutomaticUpdateRule(models.Model):
         return True
 
     def _run_method_on_action_definitions(self, case, method):
-        if not self.migrated:
-            raise self.MigrationError("Attempted to call new method on non-migrated model.")
-
         aggregated_result = CaseRuleActionResult()
 
         for action in self.memoized_actions:
@@ -466,7 +676,7 @@ class AutomaticUpdateRule(models.Model):
                 active_only=active_only,
             )
 
-    def get_messaging_rule_schedule(self):
+    def get_messaging_rule_action_definition(self):
         if self.workflow != self.WORKFLOW_SCHEDULING:
             raise ValueError("Expected scheduling workflow")
 
@@ -478,7 +688,10 @@ class AutomaticUpdateRule(models.Model):
         if not isinstance(action_definition, CreateScheduleInstanceActionDefinition):
             raise TypeError("Expected CreateScheduleInstanceActionDefinition")
 
-        return action_definition.schedule
+        return action_definition
+
+    def get_messaging_rule_schedule(self):
+        return self.get_messaging_rule_action_definition().schedule
 
 
 class CaseRuleCriteria(models.Model):
@@ -686,108 +899,6 @@ class ClosedParentDefinition(CaseRuleCriteriaDefinition):
                 return True
 
         return False
-
-
-class AutomaticUpdateRuleCriteria(models.Model):
-    # True when today < (the date in property_name - property_value days)
-    MATCH_DAYS_BEFORE = 'DAYS_BEFORE'
-    # True when today >= (the date in property_name + property_value days)
-    MATCH_DAYS_AFTER = 'DAYS'
-    MATCH_EQUAL = 'EQUAL'
-    MATCH_NOT_EQUAL = 'NOT_EQUAL'
-    MATCH_HAS_VALUE = 'HAS_VALUE'
-
-    MATCH_TYPE_CHOICES = (
-        (MATCH_DAYS_BEFORE, MATCH_DAYS_BEFORE),
-        (MATCH_DAYS_AFTER, MATCH_DAYS_AFTER),
-        (MATCH_EQUAL, MATCH_EQUAL),
-        (MATCH_NOT_EQUAL, MATCH_NOT_EQUAL),
-        (MATCH_HAS_VALUE, MATCH_HAS_VALUE),
-    )
-
-    rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
-    property_name = models.CharField(max_length=126)
-    property_value = models.CharField(max_length=126, null=True)
-    match_type = models.CharField(max_length=15)
-
-    class Meta(object):
-        app_label = "data_interfaces"
-
-    def get_case_values(self, case):
-        values = case.resolve_case_property(self.property_name)
-        return [element.value for element in values]
-
-    def clean_datetime(self, timestamp):
-        if not isinstance(timestamp, datetime):
-            timestamp = datetime.combine(timestamp, time(0, 0))
-
-        if timestamp.tzinfo:
-            # Convert to UTC and make it a naive datetime for comparison to datetime.utcnow()
-            timestamp = timestamp.astimezone(pytz.utc).replace(tzinfo=None)
-
-        return timestamp
-
-    def check_days_before(self, case, now):
-        values = self.get_case_values(case)
-        for date_to_check in values:
-            date_to_check = _try_date_conversion(date_to_check)
-
-            if not isinstance(date_to_check, date):
-                continue
-
-            date_to_check = self.clean_datetime(date_to_check)
-
-            days = int(self.property_value)
-            if now < (date_to_check - timedelta(days=days)):
-                return True
-
-        return False
-
-    def check_days_after(self, case, now):
-        values = self.get_case_values(case)
-        for date_to_check in values:
-            date_to_check = _try_date_conversion(date_to_check)
-
-            if not isinstance(date_to_check, date):
-                continue
-
-            date_to_check = self.clean_datetime(date_to_check)
-
-            days = int(self.property_value)
-            if now >= (date_to_check + timedelta(days=days)):
-                return True
-
-        return False
-
-    def check_equal(self, case, now):
-        return any([
-            value == self.property_value for value in self.get_case_values(case)
-        ])
-
-    def check_not_equal(self, case, now):
-        return any([
-            value != self.property_value for value in self.get_case_values(case)
-        ])
-
-    def check_has_value(self, case, now):
-        values = self.get_case_values(case)
-        for value in values:
-            if value is None:
-                continue
-            if isinstance(value, six.string_types) and not value.strip():
-                continue
-            return True
-
-        return False
-
-    def matches(self, case, now):
-        return {
-            self.MATCH_DAYS_BEFORE: self.check_days_before,
-            self.MATCH_DAYS_AFTER: self.check_days_after,
-            self.MATCH_EQUAL: self.check_equal,
-            self.MATCH_NOT_EQUAL: self.check_not_equal,
-            self.MATCH_HAS_VALUE: self.check_has_value,
-        }.get(self.match_type)(case, now)
 
 
 class CaseRuleAction(models.Model):
@@ -1288,38 +1399,6 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
             raise ValueError("Expected CreateScheduleInstanceActionDefinition.SchedulerModuleInfo")
 
         self.scheduler_module_info = info.to_json()
-
-
-class AutomaticUpdateAction(models.Model):
-    ACTION_UPDATE = 'UPDATE'
-    ACTION_CLOSE = 'CLOSE'
-
-    ACTION_CHOICES = (
-        (ACTION_UPDATE, ACTION_UPDATE),
-        (ACTION_CLOSE, ACTION_CLOSE),
-    )
-
-    EXACT = "EXACT"
-    CASE_PROPERTY = "CASE_PROPERTY"
-
-    PROPERTY_TYPE_CHOICES = (
-        (EXACT, ugettext_lazy("Exact value")),
-        (CASE_PROPERTY, ugettext_lazy("Case property")),
-    )
-
-
-    rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
-    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
-
-    # property_name and property_value are ignored unless action is UPDATE
-    property_name = models.CharField(max_length=126, null=True)
-    property_value = models.CharField(max_length=126, null=True)
-
-    property_value_type = models.CharField(max_length=15,
-                                           default=EXACT)
-
-    class Meta(object):
-        app_label = "data_interfaces"
 
 
 class CaseRuleSubmission(models.Model):

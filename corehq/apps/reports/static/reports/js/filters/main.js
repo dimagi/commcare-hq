@@ -14,7 +14,7 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/case_list_explorer',
     'select2-3.5.2-legacy/select2',
     'reports/js/filters/case_list_explorer_knockout_bindings',
-], function(
+], function (
     $,
     ko,
     hqMain,
@@ -29,9 +29,9 @@ hqDefine("reports/js/filters/main", [
     choiceListUtils,
     caseListExplorer
 ) {
-    var init = function() {
+    var init = function () {
         // Datespans
-        $('.report-filter-datespan').each(function() {
+        $('.report-filter-datespan').each(function () {
             var $filterRange = $(this);
             if ($filterRange.data("init")) {
                 var separator = $filterRange.data('separator');
@@ -43,7 +43,7 @@ hqDefine("reports/js/filters/main", [
                     $filterRange.data('startDate'),
                     $filterRange.data('endDate')
                 );
-                $filterRange.on('change apply', function() {
+                $filterRange.on('change apply', function () {
                     var dates = $(this).val().split(separator);
                     $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
                     $('#report_filter_datespan_startdate').val(dates[0]);
@@ -54,7 +54,7 @@ hqDefine("reports/js/filters/main", [
         });
 
         // other Datespans *groan* TODO unify on this one
-        $('.report-filter-datespan-filter').each(function(i, el) {
+        $('.report-filter-datespan-filter').each(function (i, el) {
             var $el = $(el), data = $el.data();
             var $filterStart = $("#" + data.cssId + "-start");
             var $filterEnd = $("#" + data.cssId + "-end");
@@ -89,7 +89,7 @@ hqDefine("reports/js/filters/main", [
         }
 
         // Date ranges (used in accounting)
-        $('.date-range').each(function() {
+        $('.date-range').each(function () {
             $(this).datepicker({
                 changeMonth: true,
                 changeYear: true,
@@ -98,30 +98,30 @@ hqDefine("reports/js/filters/main", [
         });
 
         // Optional date ranges, optional month+year (used in accounting)
-        $(".report-filter-optional").each(function() {
+        $(".report-filter-optional").each(function () {
             $(this).koApplyBindings({
                 showFilterName: ko.observable($(this).data("showFilterName")),
             });
         });
 
         // Selects
-        $('.report-filter-single-option').each(function() {
+        $('.report-filter-single-option').each(function () {
             select2Filter.initSingle(this);
         });
-        $('.report-filter-single-option-paginated').each(function() {
+        $('.report-filter-single-option-paginated').each(function () {
             select2Filter.initSinglePaginated(this);
         });
-        $('.report-filter-multi-option').each(function() {
+        $('.report-filter-multi-option').each(function () {
             select2Filter.initMulti(this);
         });
 
         // Submission type (Raw Forms, Errors, & Duplicates)
-        $('.report-filter-button-group').each(function() {
+        $('.report-filter-button-group').each(function () {
             buttonGroup.link(this);
         });
 
         // Tags (to filter by CC version in global device logs soft asserts report)
-        $('.report-filter-tags').each(function() {
+        $('.report-filter-tags').each(function () {
             $(this).select2({tags: $(this).data("tags"), allowClear: true});
         });
 
@@ -136,7 +136,7 @@ hqDefine("reports/js/filters/main", [
             var model = scheduleInstanceFilter.model(data.initialValue, data.conditionalAlertChoices);
             $el.koApplyBindings(model);
 
-            $('[name=rule_id]').each(function(i, el) {
+            $('[name=rule_id]').each(function (i, el) {
                 $(el).select2({
                     allowClear: true,
                     placeholder: gettext("All"),
@@ -158,16 +158,16 @@ hqDefine("reports/js/filters/main", [
             var model = caseListExplorer.casePropertyColumns(data.initialvalue, data.columnsuggestions);
             $el.koApplyBindings(model);
         });
-        $casePropertyColumns.on('keyup', function(){
+        $casePropertyColumns.on('keyup', function () {
             $fieldsetExplorerColumns.trigger('change');
         });
-        $fieldsetExplorerColumns.on('hidden.bs.collapse', function(e){
+        $fieldsetExplorerColumns.on('hidden.bs.collapse', function (e) {
             $fieldsetExplorerColumns.find("#panel-chevron i").removeClass('fa-chevron-up').addClass('fa-chevron-down');
             // this is a nested panel, so we stop propagation of this event to
             // prevent the text from changing on the outside panel
             e.stopPropagation();
         });
-        $fieldsetExplorerColumns.on('show.bs.collapse', function(e){
+        $fieldsetExplorerColumns.on('show.bs.collapse', function (e) {
             $fieldsetExplorerColumns.find("#panel-chevron i").removeClass('fa-chevron-down').addClass('fa-chevron-up');
             // this is a nested panel, so we stop propagation of this event to
             // prevent the text from changing on the outside panel
@@ -182,13 +182,13 @@ hqDefine("reports/js/filters/main", [
             $el.koApplyBindings(model);
         });
 
-        $('[name=selected_group]').each(function(i, el) {
+        $('[name=selected_group]').each(function (i, el) {
             $(el).select2({
                 allowClear: true,
                 placeholder: gettext("Select a group"),
             });
         });
-        $('.report-filter-location-async').each(function(i, el) {
+        $('.report-filter-location-async').each(function (i, el) {
             var $el = $(el), data = $el.data();
             var model = locationDrilldown.locationSelectViewModel({
                 "hierarchy": data.hierarchy,
@@ -243,7 +243,7 @@ hqDefine("reports/js/filters/main", [
                 );
             }
         });
-        $('.report-filter-logtag').each(function(i, el) {
+        $('.report-filter-logtag').each(function (i, el) {
             var $el = $(el), data = $el.data();
             if (data.defaultOn) {
                 $el.attr("name", "");
@@ -271,7 +271,7 @@ hqDefine("reports/js/filters/main", [
 
         $('.report-filter-dynamic-choice-list').each(function (i, el) {
             var $el = $(el), data = $el.data();
-            var initialValues = _.map(data.initialValues, function(value) {
+            var initialValues = _.map(data.initialValues, function (value) {
                     return choiceListUtils.formatValueForSelect2(value);
                 }),
                 // TODO: Ideally the separator would be defined in one place. Right now it is

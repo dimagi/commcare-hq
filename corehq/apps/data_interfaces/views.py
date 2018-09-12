@@ -31,11 +31,9 @@ from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
-    AddAutomaticCaseUpdateRuleForm, CaseUpdateRuleForm, CaseRuleCriteriaForm,
+    CaseUpdateRuleForm, CaseRuleCriteriaForm,
     CaseRuleActionsForm)
-from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
-                                                AutomaticUpdateRuleCriteria,
-                                                AutomaticUpdateAction)
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -87,7 +85,7 @@ def default_data_view_url(request, domain):
     if user_can_view_deid_exports(domain, request.couch_user):
         return reverse(DeIdFormExportListView.urlname, args=[domain])
 
-    if can_download_data_files(domain):
+    if can_download_data_files(domain, request.couch_user):
         return reverse(DataFileDownloadList.urlname, args=[domain])
 
     raise Http404()
@@ -99,6 +97,7 @@ class BulkUploadCasesException(Exception):
 
 class DataInterfaceSection(BaseDomainView):
     section_name = ugettext_noop("Data")
+    urlname = 'data_interfaces_default'
 
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
@@ -612,33 +611,58 @@ def xform_management_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
-class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
+class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
     page_title = ugettext_lazy("Automatically Close Cases")
 
+    limit_text = ugettext_lazy("rules per page")
+    empty_notification = ugettext_lazy("You have no case rules.")
+    loading_message = ugettext_lazy("Loading rules...")
+    deleted_items_header = ugettext_lazy("Deleted Rules")
+
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
-    ACTION_DELETE = 'delete'
 
-    @property
-    @memoized
-    def project_timezone(self):
-        return get_timezone_for_user(None, self.domain)
-
-    @use_angular_js
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
         return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
 
     @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    def allowed_actions(self):
+        actions = super(AutomaticUpdateRuleListView, self).allowed_actions
+        actions.append(self.ACTION_ACTIVATE)
+        actions.append(self.ACTION_DEACTIVATE)
+        return actions
+
+    @property
     def page_context(self):
-        return {
-            'pagination_limit_cookie_name': ('hq.pagination.limit'
-                                             '.automatic_update_rule_list.%s'
-                                             % self.domain),
-            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
-        }
+        context = self.pagination_context
+        context['help_site_url'] = 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases'
+        return context
+
+    @property
+    def total(self):
+        return self._rules().count()
+
+    @property
+    def column_names(self):
+        return [
+            _("Name"),
+            _("Case Type"),
+            _("Status"),
+            _("Last Run"),
+            _("Action"),
+        ]
+
+    @property
+    @memoized
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
 
     def _format_rule(self, rule):
         return {
@@ -651,288 +675,75 @@ class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
                          .done()
                          .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
             'edit_url': reverse(EditCaseRuleView.urlname, args=[self.domain, rule.pk]),
+            'action_error': "",     # must be provided because knockout template looks for it
         }
 
-    @allow_remote_invocation
-    def get_pagination_data(self, in_data):
-        try:
-            limit = int(in_data['limit'])
-            page = int(in_data['page'])
-        except (TypeError, KeyError, ValueError):
-            return {
-                'success': False,
-                'error': _("Please provide pagination info."),
+    @property
+    def paginated_list(self):
+        for rule in self._rules()[self.skip:self.skip + self.limit]:
+            yield {
+                'itemData': self._format_rule(rule),
+                'template': 'base-rule-template',
             }
 
-        start = (page - 1) * limit
-        stop = limit * page
-
-        rules = AutomaticUpdateRule.by_domain(
+    @memoized
+    def _rules(self):
+        return AutomaticUpdateRule.by_domain(
             self.domain,
             AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
             active_only=False,
-        )
+        ).order_by('name', 'id')
 
-        rule_page = rules.order_by('name')[start:stop]
-        total = rules.count()
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
 
-        return {
-            'response': {
-                'itemList': list(map(self._format_rule, rule_page)),
-                'total': total,
-                'page': page,
-            },
-            'success': True,
-        }
-
-    @allow_remote_invocation
-    def update_rule(self, in_data):
-        try:
-            rule_id = in_data['id']
-        except KeyError:
-            return {
-                'error': _("Please provide an id."),
-            }
-
-        try:
-            action = in_data['update_action']
-        except KeyError:
-            return {
-                'error': _("Please provide an update_action."),
-            }
-
-        if action not in (
-            self.ACTION_ACTIVATE,
-            self.ACTION_DEACTIVATE,
-            self.ACTION_DELETE,
-        ):
-            return {
-                'error': _("Unrecognized update_action."),
-            }
+    def _get_rule(self, rule_id):
+        if rule_id is None:
+            return None, _("Please provide an id.")
 
         try:
             rule = AutomaticUpdateRule.objects.get(pk=rule_id, workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         except AutomaticUpdateRule.DoesNotExist:
-            return {
-                'error': _("Rule not found."),
-            }
+            return None, _("Rule not found.")
 
         if rule.domain != self.domain:
-            return {
-                'error': _("Rule not found."),
-            }
+            return None, _("Rule not found.")
 
-        if action == self.ACTION_ACTIVATE:
+        return rule, None
+
+    def get_deleted_item_data(self, rule_id):
+        (rule, error) = self._get_rule(rule_id)
+        if rule is None:
+            return {'success': False, 'error': error}
+
+        rule.soft_delete()
+
+        return {
+            'itemData': {
+                'name': rule.name,
+            },
+            'template': 'rule-deleted-template',
+        }
+
+    def update_rule(self):
+        (rule, error) = self._get_rule(self.parameters.get('id'))
+        if rule is None:
+            return {'success': False, 'error': error}
+
+        if self.action == self.ACTION_ACTIVATE:
             rule.activate()
-        elif action == self.ACTION_DEACTIVATE:
+        elif self.action == self.ACTION_DEACTIVATE:
             rule.activate(False)
-        elif action == self.ACTION_DELETE:
-            rule.soft_delete()
 
-        return {
-            'success': True,
-        }
-
-
-class AddAutomaticUpdateRuleView(HQJSONResponseMixin, DataInterfaceSection):
-    template_name = 'data_interfaces/add_automatic_update_rule.html'
-    urlname = 'add_automatic_update_rule'
-    page_title = ugettext_lazy("Add Automatic Case Close Rule")
+        return {'success': True, 'itemData': self._format_rule(rule)}
 
     @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
+    def activate_response(self):
+        return self.update_rule()
 
     @property
-    def initial_rule_form(self):
-        return AddAutomaticCaseUpdateRuleForm(
-            domain=self.domain,
-            initial={
-                'action': AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE,
-                'property_value_type': AutomaticUpdateAction.EXACT,
-            }
-        )
-
-    @property
-    @memoized
-    def rule_form(self):
-        if self.request.method == 'POST':
-            return AddAutomaticCaseUpdateRuleForm(self.request.POST, domain=self.domain)
-        else:
-            return self.initial_rule_form
-
-    @property
-    def page_context(self):
-        return {
-            'form': self.rule_form,
-        }
-
-    @allow_remote_invocation
-    def get_case_property_map(self):
-        data = all_case_properties_by_domain(self.domain, include_parent_properties=False)
-        return {
-            'data': data,
-            'success': True,
-        }
-
-    @use_angular_js
-    @use_typeahead
-    @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
-    def dispatch(self, *args, **kwargs):
-        return super(AddAutomaticUpdateRuleView, self).dispatch(*args, **kwargs)
-
-    def create_criteria(self, rule):
-        for condition in self.rule_form.cleaned_data['conditions']:
-            AutomaticUpdateRuleCriteria.objects.create(
-                rule=rule,
-                property_name=condition['property_name'],
-                property_value=condition['property_value'],
-                match_type=condition['property_match_type'],
-            )
-
-    def create_actions(self, rule):
-        if self.rule_form._closes_case():
-            AutomaticUpdateAction.objects.create(
-                rule=rule,
-                action=AutomaticUpdateAction.ACTION_CLOSE,
-            )
-        if self.rule_form._updates_case():
-            AutomaticUpdateAction.objects.create(
-                rule=rule,
-                action=AutomaticUpdateAction.ACTION_UPDATE,
-                property_name=self.rule_form.cleaned_data['update_property_name'],
-                property_value=self.rule_form.cleaned_data['update_property_value'],
-                property_value_type=self.rule_form.cleaned_data['property_value_type']
-            )
-
-    def create_rule(self):
-        with transaction.atomic():
-            rule = AutomaticUpdateRule.objects.create(
-                domain=self.domain,
-                name=self.rule_form.cleaned_data['name'],
-                case_type=self.rule_form.cleaned_data['case_type'],
-                active=True,
-                server_modified_boundary=self.rule_form.cleaned_data['server_modified_boundary'],
-                filter_on_server_modified=self.rule_form.cleaned_data['filter_on_server_modified'],
-                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
-            )
-            self.create_criteria(rule)
-            self.create_actions(rule)
-
-    def post(self, request, *args, **kwargs):
-        if self.rule_form.is_valid():
-            self.create_rule()
-            return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
-        # We can't call self.get() because JSONResponseMixin gets confused
-        # since we're processing a post request. So instead we have to call
-        # .get() directly on super(JSONResponseMixin, self), which correctly
-        # is DataInterfaceSection in this case
-        return super(JSONResponseMixin, self).get(request, *args, **kwargs)
-
-
-class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
-    urlname = 'edit_automatic_update_rule'
-    page_title = ugettext_lazy("Edit Automatic Case Close Rule")
-
-    @property
-    @memoized
-    def rule_id(self):
-        return self.kwargs.get('rule_id')
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.rule_id])
-
-    @property
-    @memoized
-    def rule(self):
-        try:
-            rule = AutomaticUpdateRule.objects.get(pk=self.rule_id,
-                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
-        except AutomaticUpdateRule.DoesNotExist:
-            raise Http404()
-
-        if rule.domain != self.domain or rule.deleted:
-            raise Http404()
-
-        return rule
-
-    @property
-    def initial_rule_form(self):
-        conditions = []
-        for criterion in self.rule.automaticupdaterulecriteria_set.order_by('property_name'):
-            conditions.append({
-                'property_name': criterion.property_name,
-                'property_match_type': criterion.match_type,
-                'property_value': criterion.property_value,
-            })
-
-        close_case = False
-        update_case = False
-        update_property_name = None
-        update_property_value = None
-        property_value_type = AutomaticUpdateAction.EXACT
-        for action in self.rule.automaticupdateaction_set.all():
-            if action.action == AutomaticUpdateAction.ACTION_UPDATE:
-                update_case = True
-                update_property_name = action.property_name
-                update_property_value = action.property_value
-                property_value_type = action.property_value_type
-            elif action.action == AutomaticUpdateAction.ACTION_CLOSE:
-                close_case = True
-
-        if close_case and update_case:
-            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE_AND_CLOSE
-        elif update_case and not close_case:
-            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE
-        else:
-            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE
-
-        initial = {
-            'name': self.rule.name,
-            'case_type': self.rule.case_type,
-            'server_modified_boundary': self.rule.server_modified_boundary,
-            'conditions': json.dumps(conditions),
-            'action': initial_action,
-            'update_property_name': update_property_name,
-            'update_property_value': update_property_value,
-            'property_value_type': property_value_type,
-            'filter_on_server_modified': json.dumps(self.rule.filter_on_server_modified),
-        }
-        return AddAutomaticCaseUpdateRuleForm(domain=self.domain, initial=initial)
-
-    @property
-    @memoized
-    def rule_form(self):
-        if self.request.method == 'POST':
-            return AddAutomaticCaseUpdateRuleForm(
-                self.request.POST,
-                domain=self.domain,
-                # Pass the original case_type so that we can always continue to
-                # properly display and edit rules based off of deleted case types
-                initial={'case_type': self.rule.case_type}
-            )
-        else:
-            return self.initial_rule_form
-
-    def update_rule(self, rule):
-        with transaction.atomic():
-            rule.name = self.rule_form.cleaned_data['name']
-            rule.case_type = self.rule_form.cleaned_data['case_type']
-            rule.server_modified_boundary = self.rule_form.cleaned_data['server_modified_boundary']
-            rule.filter_on_server_modified = self.rule_form.cleaned_data['filter_on_server_modified']
-            rule.last_run = None
-            rule.save()
-            rule.automaticupdaterulecriteria_set.all().delete()
-            rule.automaticupdateaction_set.all().delete()
-            self.create_criteria(rule)
-            self.create_actions(rule)
-
-    def post(self, request, *args, **kwargs):
-        if self.rule_form.is_valid():
-            self.update_rule(self.rule)
-            return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
-        return super(JSONResponseMixin, self).get(request, *args, **kwargs)
+    def deactivate_response(self):
+        return self.update_rule()
 
 
 class AddCaseRuleView(DataInterfaceSection):
@@ -1026,7 +837,6 @@ class AddCaseRuleView(DataInterfaceSection):
                     rule = AutomaticUpdateRule(
                         domain=self.domain,
                         active=True,
-                        migrated=True,
                         workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
                     )
 
@@ -1061,9 +871,6 @@ class EditCaseRuleView(AddCaseRuleView):
             raise Http404()
 
         if rule.domain != self.domain or rule.deleted:
-            raise Http404()
-
-        if not rule.migrated:
             raise Http404()
 
         return rule

@@ -19,21 +19,20 @@
 {% if strong_mobile_passwords %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
 {% endif %}
-{% if implement_password_obfuscation %}
-    {% include "nic_compliance/password_encoder.html" %}
-{% endif %}
+<script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
     {% initial_page_data 'custom_fields' custom_fields %}
     {% initial_page_data 'custom_field_names' custom_field_names %}
     {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+    {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
     {% initial_page_data 'location_url' location_url %}
     {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
     {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
 
     <div ng-app="mobileWorkerApp">
-        <div ng-controller="MobileWorkerCreationController">
+        <div ng-controller="mobileWorkerCreationController">
             <div class="row">
                 <div class="col-sm-12">
                     <p class="lead">

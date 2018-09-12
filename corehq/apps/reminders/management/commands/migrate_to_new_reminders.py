@@ -54,7 +54,10 @@ from corehq.messaging.scheduling.models import (
     SMSContent,
     EmailContent,
     SMSSurveyContent,
+    IVRSurveyContent,
+    SMSCallbackContent,
     MigratedReminder,
+    CustomContent,
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -72,6 +75,7 @@ from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from datetime import time, datetime, timedelta
 from django.db import transaction
 from django.db.models import Q
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from six import moves
 from time import sleep
@@ -395,6 +399,9 @@ def get_single_dict_value(d):
 
 def get_content(handler, event, translated=True):
     if handler.method == METHOD_SMS:
+        if handler.custom_content_handler:
+            return CustomContent(custom_content_id=handler.custom_content_handler)
+
         check_days_until(event.message)
         if translated:
             return SMSContent(message=event.message)
@@ -433,6 +440,24 @@ def get_content(handler, event, translated=True):
             reminder_intervals=reminder_intervals,
             submit_partially_completed_forms=submit_partially_completed_forms,
             include_case_updates_in_partial_submissions=include_case_updates_in_partial_submissions,
+        )
+    elif handler.method == METHOD_IVR_SURVEY:
+        return IVRSurveyContent(
+            form_unique_id=event.form_unique_id,
+            reminder_intervals=event.callback_timeout_intervals,
+            submit_partially_completed_forms=handler.submit_partial_forms,
+            include_case_updates_in_partial_submissions=handler.include_case_side_effects,
+            max_question_attempts=handler.max_question_retries,
+        )
+    elif handler.method == METHOD_SMS_CALLBACK:
+        if translated:
+            message = event.message
+        else:
+            message = {'*': get_single_dict_value(event.message)}
+
+        return SMSCallbackContent(
+            message=message,
+            reminder_intervals=event.callback_timeout_intervals,
         )
     else:
         raise ValueError("Unexpected method '%s'" % handler.method)
@@ -482,6 +507,8 @@ def get_rule_recipients(handler):
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, None)]
     elif handler.recipient == RECIPIENT_PARENT_CASE:
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, None)]
+    elif handler.recipient == RECIPIENT_SUBCASE:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES, None)]
     elif handler.recipient == RECIPIENT_USER_GROUP:
         return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
     elif handler.recipient in CUSTOM_RECIPIENTS:
@@ -510,7 +537,6 @@ def migrate_rule(handler, schedule, until_references_timestamp):
         deleted=False,
         filter_on_server_modified=False,
         server_modified_boundary=None,
-        migrated=True,
         workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
     )
     if not handler.start_property:
@@ -732,7 +758,16 @@ class Command(BaseCommand):
         if handler.start_condition_type != CASE_CRITERIA:
             return None
 
-        if handler.method not in (METHOD_SMS, METHOD_EMAIL, METHOD_SMS_SURVEY):
+        if handler.method not in (
+            METHOD_SMS,
+            METHOD_EMAIL,
+            METHOD_SMS_SURVEY,
+            METHOD_IVR_SURVEY,
+            METHOD_SMS_CALLBACK,
+        ):
+            return None
+
+        if handler.active and handler.method in (METHOD_IVR_SURVEY, METHOD_SMS_CALLBACK):
             return None
 
         event_timeout_lengths = [len(event.callback_timeout_intervals) for event in handler.events]
@@ -747,15 +782,25 @@ class Command(BaseCommand):
         if handler.include_child_locations:
             return None
 
-        if handler.custom_content_handler:
+        if handler.custom_content_handler and handler.method != METHOD_SMS:
             return None
+
+        if (
+            handler.custom_content_handler and
+            handler.custom_content_handler not in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT
+        ):
+            if not self.confirm(
+                "Custom content id %s not found in the new framework. Migrate anyway? y/n "
+                % handler.custom_content_handler
+            ):
+                return None
 
         for event in handler.events:
             try:
                 if handler.method == METHOD_EMAIL:
                     check_days_until(event.subject)
 
-                if handler.method in (METHOD_SMS, METHOD_EMAIL):
+                if handler.method in (METHOD_SMS, METHOD_EMAIL, METHOD_SMS_CALLBACK):
                     check_days_until(event.message)
             except ValueError:
                 return None
@@ -766,7 +811,14 @@ class Command(BaseCommand):
             RECIPIENT_USER_GROUP,
             RECIPIENT_USER,
             RECIPIENT_PARENT_CASE,
+            RECIPIENT_SUBCASE,
         )):
+            return None
+
+        if handler.recipient == RECIPIENT_SUBCASE and not (
+            handler.recipient_case_match_property == '_id' and
+            handler.recipient_case_match_type == MATCH_ANY_VALUE
+        ):
             return None
 
         if handler.recipient == RECIPIENT_USER_GROUP and not handler.user_group_id:

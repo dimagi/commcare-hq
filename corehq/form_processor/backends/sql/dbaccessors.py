@@ -104,7 +104,7 @@ class ShardAccessor(object):
     hash_key = b'\x00' * 16
 
     @staticmethod
-    def hash_doc_ids_sql(doc_ids):
+    def hash_doc_ids_sql_for_testing(doc_ids):
         """Get HASH for each doc_id from PostgreSQL
 
         This is used to ensure the python version is consistent with what's
@@ -123,7 +123,7 @@ class ShardAccessor(object):
             return {row.doc_id: row.hash for row in rows}
 
     @staticmethod
-    def hash_doc_uuid_sql(doc_uuid):
+    def hash_doc_uuid_sql_for_testing(doc_uuid):
         """Get the hash for a UUID from PostgreSQL
 
         This is used to ensure the python version is consistent with what's
@@ -392,13 +392,13 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         :returns: An iterator of XFormInstanceSQL objects
         '''
-        from corehq.sql_db.util import run_query_across_partitioned_databases
+        from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
         annotate = {
             'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
         }
 
-        return run_query_across_partitioned_databases(
+        return paginate_query_across_partitioned_databases(
             XFormInstanceSQL,
             Q(last_modified__gt=start_datetime),
             annotate=annotate,

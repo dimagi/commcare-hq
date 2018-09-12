@@ -51,11 +51,11 @@
     {% endcompress %}
 
     {% include 'hqwebapp/partials/key_value_mapping.html' %}
-    {% include 'app_manager/partials/graph_configuration_modal.html' %}
+    {% include 'app_manager/partials/modules/graph_configuration_modal.html' %}
 {% endblock %}
 
 {% block pre_form_content %}
-  {% include 'app_manager/partials/module_view_heading.html' %}
+  {% include 'app_manager/partials/modules/module_view_heading.html' %}
 {% endblock %}
 
 {% block form-view %}
@@ -110,18 +110,19 @@
 
     <div class="tab-content">
       {% block tab-content %}
-        <div class="tab-pane" id="module-settings">
-          {% include "app_manager/partials/module_view_settings.html" %}
+        <!-- Survey modules don't actually use tabs, so the sticky-tabs logic doesn't run, so content must be explicitly set to .active -->
+        <div class="tab-pane{% if module.is_surveys %} active{% endif %}" id="module-settings">
+          {% include "app_manager/partials/modules/module_view_settings.html" %}
         </div>
 
         {% if not module.is_surveys %}
           {% for detail in details %}
             <div class="tab-pane ko-template" id="{{ detail.type }}-detail-screen-config-tab">
-              {% include 'app_manager/partials/case_list.html' %}
+              {% include 'app_manager/partials/modules/case_list.html' %}
             </div>
             {% if detail.long %}
               <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
-                {% include 'app_manager/partials/case_detail.html' %}
+                {% include 'app_manager/partials/modules/case_detail.html' %}
               </div>
             {% endif %}
           {% endfor %}
@@ -129,7 +130,7 @@
             {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
             {% if available_modules %}
             <div class="tab-pane" id="module-actions">
-                {% include 'app_manager/partials/module_actions.html' %}
+                {% include 'app_manager/partials/modules/module_actions.html' %}
             </div>
             {% endif %}
             {% endwith %}
@@ -162,5 +163,5 @@
 
 {% block breadcrumbs %}
     {{ block.super }}
-    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
+    {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
 {% endblock %}

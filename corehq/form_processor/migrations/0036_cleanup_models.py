@@ -56,7 +56,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='xformattachmentsql',
             name='form',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'form_uuid', to='form_processor.XFormInstanceSQL', on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field='form_uuid', to='form_processor.XFormInstanceSQL', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.RenameField(
@@ -86,32 +86,32 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='xformattachmentsql',
             name='form',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'form_id', to='form_processor.XFormInstanceSQL', on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field='form_id', to='form_processor.XFormInstanceSQL', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='xformoperationsql',
             name='form',
-            field=models.ForeignKey(to='form_processor.XFormInstanceSQL', to_field=b'form_id', on_delete=models.CASCADE),
+            field=models.ForeignKey(to='form_processor.XFormInstanceSQL', to_field='form_id', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         # ---- end rename xforminstancesql.form_uuid rename
         migrations.AlterField(
             model_name='caseattachmentsql',
             name='case',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field='case_uuid', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='casetransaction',
             name='case',
-            field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL', db_index=False, on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field='case_uuid', to='form_processor.CommCareCaseSQL', db_index=False, on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='commcarecaseindexsql',
             name='case',
-            field=models.ForeignKey(related_query_name=b'index', related_name='index_set', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name=b'index', related_name='index_set', to_field='case_uuid', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.RenameField(
@@ -151,32 +151,32 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='caseattachmentsql',
             name='case',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'case_id', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field='case_id', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='casetransaction',
             name='case',
-            field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL', db_index=False, on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field='case_id', to='form_processor.CommCareCaseSQL', db_index=False, on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='commcarecaseindexsql',
             name='case',
-            field=models.ForeignKey(related_query_name=b'index', related_name='index_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name=b'index', related_name='index_set', to_field='case_id', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         # ---- end rename commcarecasesql.case_uuid rename
         migrations.AlterField(
             model_name='caseattachmentsql',
             name='case',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachment_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachment_set', to_field='case_id', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='xformattachmentsql',
             name='form',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachment_set', to_field=b'form_id', to='form_processor.XFormInstanceSQL', on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachment_set', to_field='form_id', to='form_processor.XFormInstanceSQL', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.RenameField(
@@ -217,7 +217,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='casetransaction',
             name='case',
-            field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field='case_id', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

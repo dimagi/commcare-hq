@@ -19,6 +19,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import SimpleTableWriter, CSVRowFormatter, TableRowFormatter
 from couchforms.models import doc_types
+from six.moves import range
 
 DATE_FORMAT = "%Y-%m-%d"
 

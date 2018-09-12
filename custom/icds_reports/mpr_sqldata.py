@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
-from operator import mul, div, sub
+from operator import mul, truediv, sub
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -295,8 +295,8 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
 
     @property
     def subtitle(self):
-        return 'Average no. days AWCs were open during the month? %.1f' % div(
-            self.awc_open_count, float(self.awc_number or 1)
+        return 'Average no. days AWCs were open during the month? %.1f' % (
+            self.awc_open_count / (self.awc_number or 1)
         ),
 
     @property
@@ -341,22 +341,22 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
                 _('a. Average number of days services were provided'),
                 {
                     'column': 'open_bfast_count',
-                    'func': div,
+                    'func': truediv,
                     'second_value': "location_number",
                 },
                 {
                     'column': 'open_hotcooked_count',
-                    'func': div,
+                    'func': truediv,
                     'second_value': "location_number",
                 },
                 {
                     'column': 'days_thr_provided_count',
-                    'func': div,
+                    'func': truediv,
                     'second_value': "location_number",
                 },
                 {
                     'column': 'open_pse_count',
-                    'func': div,
+                    'func': truediv,
                     'second_value': "location_number",
                 }
             ),
@@ -364,13 +364,13 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
                 _('b. % of AWCs provided supplementary food for 21 or more days'),
                 {
                     'column': 'open_bfast_count_21',
-                    'func': div,
+                    'func': truediv,
                     'second_value': "location_number",
                     'format': 'percent'
                 },
                 {
                     'column': 'open_hotcooked_count_21',
-                    'func': div,
+                    'func': truediv,
                     'second_value': "location_number",
                     'format': 'percent'
                 },
@@ -384,7 +384,7 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
                 '--',
                 {
                     'column': 'open_hotcooked_count_16',
-                    'func': div,
+                    'func': truediv,
                     'second_value': "location_number",
                     'format': 'percent'
                 }
@@ -393,20 +393,20 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
                 _('d. % of AWCs providing services for 9 days or less'),
                 {
                     'column': 'open_bfast_count_9',
-                    'func': div,
+                    'func': truediv,
                     'second_value': "location_number",
                     'format': 'percent'
                 },
                 {
                     'column': 'open_hotcooked_count_9',
-                    'func': div,
+                    'func': truediv,
                     'second_value': "location_number",
                     'format': 'percent'
                 },
                 '',
                 {
                     'column': 'open_hotcooked_count_9',
-                    'func': div,
+                    'func': truediv,
                     'second_value': "location_number",
                     'format': 'percent'
                 }
@@ -800,47 +800,47 @@ class MPRProgrammeCoverage(ICDSMixin, MPRData):
                         _('VI. Feeding Efficiency'),
                         {
                             'columns': ('thr_total_rations_female',),
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'rations_partial_female',
                         },
                         {
                             'columns': ('thr_total_rations_male',),
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'rations_partial_male',
                         },
                         {
                             'columns': ('thr_total_rations_female_1',),
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'rations_partial_female_1',
                         },
                         {
                             'columns': ('thr_total_rations_male_1',),
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'rations_partial_male_1',
                         },
                         {
                             'columns': ('total_thr_total_rations_female',),
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'all_rations_partial_female',
                         },
                         {
                             'columns': ('total_thr_total_rations_male',),
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'all_rations_partial_male',
                         },
                         {
                             'columns': ('total_thr_total_rations',),
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'rations_partial',
                         },
                         {
                             'columns': ('thr_rations_pregnant_minority',),
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'rations_partial_pregnant',
                         },
                         {
                             'columns': ('thr_rations_lactating_minority',),
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'rations_partial_lactating',
                         },
                     ),
@@ -1131,19 +1131,19 @@ class MPRPreschoolEducation(ICDSMixin, MPRData):
                         _('VI. PSE Attendance Efficiency'),
                         {
                             'columns': ('attendance_female',),
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'expected_attendance_female',
                             'format': 'percent',
                         },
                         {
                             'columns': 'attendance_male',
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'expected_attendance_male',
                             'format': 'percent',
                         },
                         {
                             'columns': 'attendance',
-                            'func': div,
+                            'func': truediv,
                             'second_value': 'expected_attendance',
                             'format': 'percent',
                         }
@@ -1304,47 +1304,47 @@ class MPRGrowthMonitoring(ICDSMixin, MPRData):
                 '',
                 {
                     'columns': ('F_resident_weighed_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'child_count_female'
                 },
                 {
                     'columns': ('M_resident_weighed_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'child_count_male'
                 },
                 {
                     'columns': ('F_resident_weighed_count_1',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'child_count_female_1'
                 },
                 {
                     'columns': ('M_resident_weighed_count_1',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'child_count_male_1'
                 },
                 {
                     'columns': ('F_resident_weighed_count_2',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'child_count_female_2'
                 },
                 {
                     'columns': ('M_resident_weighed_count_2',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'child_count_male_2'
                 },
                 {
                     'columns': ('resident_female_weight',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'child_female'
                 },
                 {
                     'columns': ('resident_male_weight',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'child_male'
                 },
                 {
                     'columns': ('all_resident_weight',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'all_child'
                 }
             ),
@@ -1426,47 +1426,47 @@ class MPRGrowthMonitoring(ICDSMixin, MPRData):
                 '%',
                 {
                     'columns': ('F_sub_weight',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'F_resident_weighed_count',
                 },
                 {
                     'columns': ('M_sub_weight',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'M_resident_weighed_count',
                 },
                 {
                     'columns': ('F_sub_weight_1',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'F_resident_weighed_count_1',
                 },
                 {
                     'columns': ('M_sub_weight_1',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'M_resident_weighed_count_1',
                 },
                 {
                     'columns': ('F_sub_weight_2',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'F_resident_weighed_count_2',
                 },
                 {
                     'columns': ('M_sub_weight_2',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'M_resident_weighed_count_2',
                 },
                 {
                     'columns': ('all_F_sub_weight',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'resident_female_weight'
                 },
                 {
                     'columns': ('all_M_sub_weight',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'resident_male_weight'
                 },
                 {
                     'columns': ('all_sub_weight',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'all_resident_weight'
                 },
             ),
@@ -1503,47 +1503,47 @@ class MPRGrowthMonitoring(ICDSMixin, MPRData):
                 '%',
                 {
                     'columns': ('F_mod_resident_weighed_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'F_resident_weighed_count',
                 },
                 {
                     'columns': ('M_mod_resident_weighed_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'M_resident_weighed_count',
                 },
                 {
                     'columns': ('F_mod_resident_weighed_count_1',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'F_resident_weighed_count_1',
                 },
                 {
                     'columns': ('M_mod_resident_weighed_count_1',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'M_resident_weighed_count_1',
                 },
                 {
                     'columns': ('F_mod_resident_weighed_count_2',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'F_resident_weighed_count_2',
                 },
                 {
                     'columns': ('M_mod_resident_weighed_count_2',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'M_resident_weighed_count_2',
                 },
                 {
                     'columns': ('F_sum_mod_resident_weighted',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'resident_female_weight'
                 },
                 {
                     'columns': ('M_sum_mod_resident_weighted',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'resident_male_weight'
                 },
                 {
                     'columns': ('all_mod_resident_weighted',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'all_resident_weight'
                 },
             ),
@@ -1580,47 +1580,47 @@ class MPRGrowthMonitoring(ICDSMixin, MPRData):
                 '%',
                 {
                     'columns': ('F_sev_resident_weighed_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'F_resident_weighed_count',
                 },
                 {
                     'columns': ('M_sev_resident_weighed_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'M_resident_weighed_count',
                 },
                 {
                     'columns': ('F_sev_resident_weighed_count_1',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'F_resident_weighed_count_1',
                 },
                 {
                     'columns': ('M_sev_resident_weighed_count_1',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'M_resident_weighed_count_1',
                 },
                 {
                     'columns': ('F_sev_resident_weighed_count_2',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'F_resident_weighed_count_2',
                 },
                 {
                     'columns': ('M_sev_resident_weighed_count_2',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'M_resident_weighed_count_2',
                 },
                 {
                     'columns': ('F_sum_sev_resident_weighted',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'resident_female_weight'
                 },
                 {
                     'columns': ('M_sum_sev_resident_weighted',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'resident_male_weight'
                 },
                 {
                     'columns': ('all_sev_resident_weighted',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'all_resident_weight'
                 },
             )
@@ -1682,7 +1682,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'done_when_planned',
                 {
                     'column': 'done_when_planned',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1691,7 +1691,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'aww_present',
                 {
                     'column': 'aww_present',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1700,7 +1700,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'icds_sup',
                 {
                     'column': 'icds_sup',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1709,7 +1709,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'asha_present',
                 {
                     'column': 'asha_present',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1718,7 +1718,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'anm_mpw',
                 {
                     'column': 'anm_mpw',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1727,7 +1727,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'health_edu_org',
                 {
                     'column': 'health_edu_org',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1736,7 +1736,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'display_tools',
                 {
                     'column': 'display_tools',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1745,7 +1745,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'thr_distr',
                 {
                     'column': 'thr_distr',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1754,7 +1754,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'child_immu',
                 {
                     'column': 'child_immu',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1763,7 +1763,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'vit_a_given',
                 {
                     'column': 'vit_a_given',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1772,7 +1772,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'anc_today',
                 {
                     'column': 'anc_today',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1781,7 +1781,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'local_leader',
                 {
                     'column': 'local_leader',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1795,7 +1795,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'due_list_prep_immunization',
                 {
                     'column': 'due_list_prep_immunization',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1804,7 +1804,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'due_list_prep_vita_a',
                 {
                     'column': 'due_list_prep_vita_a',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             ),
@@ -1813,7 +1813,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'due_list_prep_antenatal_checkup',
                 {
                     'column': 'due_list_prep_antenatal_checkup',
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number'
                 }
             )
@@ -1905,7 +1905,7 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 },
                 {
                     'columns': ('max_children',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
@@ -1919,7 +1919,7 @@ class MPRReferralServices(ICDSMixin, MPRData):
                         'referred_severely_underweight_all',
                         'referred_other_child_all'
                     ),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'number_location'
                 },
                 {
@@ -1932,7 +1932,7 @@ class MPRReferralServices(ICDSMixin, MPRData):
                         'sev_underweight_reached_count',
                         'other_child_reached_count'
                     ),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'number_location'
                 },
             ),
@@ -1941,18 +1941,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_premature',
                 {
                     'columns': ('referred_premature',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_premature_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('premature_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -1961,18 +1961,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_sepsis',
                 {
                     'columns': ('referred_sepsis',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_sepsis_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('sepsis_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -1981,18 +1981,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_diarrhoea',
                 {
                     'columns': ('referred_diarrhoea',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_diarrhoea_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('diarrhoea_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2001,18 +2001,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_pneumonia',
                 {
                     'columns': ('referred_pneumonia',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_pneumonia_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('pneumonia_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2021,18 +2021,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_fever_child',
                 {
                     'columns': ('referred_fever_child',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_fever_child_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('fever_child_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2041,18 +2041,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_severely_underweight',
                 {
                     'columns': ('referred_severely_underweight',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_severely_underweight_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('sev_underweight_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2061,18 +2061,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_other_child',
                 {
                     'columns': ('referred_other_child',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_other_child_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('other_child_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2092,7 +2092,7 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 },
                 {
                     'columns': ('max_pregnant',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
@@ -2105,7 +2105,7 @@ class MPRReferralServices(ICDSMixin, MPRData):
                         'referred_fever_discharge_all',
                         'referred_other_all'
                     ),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'number_location'
                 },
                 {
@@ -2117,7 +2117,7 @@ class MPRReferralServices(ICDSMixin, MPRData):
                         'fever_discharge_reached_count',
                         'other_reached_count'
                     ),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'number_location'
                 },
             ),
@@ -2126,18 +2126,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_bleeding',
                 {
                     'columns': ('referred_bleeding',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_bleeding_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('bleeding_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2146,18 +2146,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_convulsions',
                 {
                     'columns': ('referred_convulsions',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_convulsions_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('convulsions_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2166,18 +2166,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_prolonged_labor',
                 {
                     'columns': ('referred_prolonged_labor',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_prolonged_labor_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('prolonged_labor_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2186,18 +2186,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_abortion_complications',
                 {
                     'columns': ('referred_abortion_complications',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_abortion_complications_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('abort_comp_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2206,18 +2206,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_fever_discharge',
                 {
                     'columns': ('referred_fever_discharge',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_fever_discharge_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('fever_discharge_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2226,18 +2226,18 @@ class MPRReferralServices(ICDSMixin, MPRData):
                 'referred_other',
                 {
                     'columns': ('referred_other',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                     'format': 'percent'
                 },
                 {
                     'columns': ('referred_other_all',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 },
                 {
                     'columns': ('other_reached_count',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             )
@@ -2289,7 +2289,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_icds_sup',
                 {
                     'columns': ('visitor_icds_sup',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2298,7 +2298,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_anm',
                 {
                     'columns': ('visitor_anm',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2307,7 +2307,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_health_sup',
                 {
                     'columns': ('visitor_health_sup',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2316,7 +2316,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_cdpo',
                 {
                     'columns': ('visitor_cdpo',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2325,7 +2325,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_med_officer',
                 {
                     'columns': ('visitor_med_officer',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2334,7 +2334,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_dpo',
                 {
                     'columns': ('visitor_dpo',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2343,7 +2343,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_officer_state',
                 {
                     'columns': ('visitor_officer_state',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             ),
@@ -2352,7 +2352,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_officer_central',
                 {
                     'columns': ('visitor_officer_central',),
-                    'func': div,
+                    'func': truediv,
                     'second_value': 'location_number',
                 }
             )

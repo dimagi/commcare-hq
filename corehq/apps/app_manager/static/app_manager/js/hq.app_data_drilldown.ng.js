@@ -74,11 +74,11 @@
 
         self._select2Test = {};
 
-        var _formElemContainer = function(fieldSlug) {
+        var _formElemContainer = function (fieldSlug) {
             return $('#div_id_' + fieldSlug);
         };
 
-        var _formElemGetter = function(fieldSlug) {
+        var _formElemGetter = function (fieldSlug) {
             return $('#id_' + fieldSlug);
         };
 

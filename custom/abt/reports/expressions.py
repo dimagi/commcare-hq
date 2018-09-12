@@ -124,7 +124,16 @@ class AbtExpressionSpec(JsonObject):
         """
         Return the language in which this row should be rendered.
         """
-        if item.get("domain", None) in ("airsmadagascar", "abtmali", "vectorlink-burkina-faso"):
+        french_domains = (
+            "airsmadagascar",
+            "abtmali",
+            "vectorlink-burkina-faso",
+            "vectorlink-benin",
+            "vectorlink-madagascar",
+            "vectorlink-mali",
+        )
+
+        if item.get("domain", None) in french_domains:
             return "fra"
         country = cls._get_val(item, ["location_data", "country"])
         if country in ["Senegal", 'S\xe9n\xe9gal', "Benin", "Mali", "Madagascar"]:

@@ -97,13 +97,13 @@ if USE_PARTITIONED_DATABASE:
 
 ####### Couch Config ######
 COUCH_DATABASES = {
-    b'default': {
+    'default': {
         # for production this ought to be set to true on your configured couch instance
-        b'COUCH_HTTPS': False,
-        b'COUCH_SERVER_ROOT': b'couch:5984',  # 6984 for https couch
-        b'COUCH_USERNAME': b'',
-        b'COUCH_PASSWORD': b'',
-        b'COUCH_DATABASE_NAME': b'commcarehq'
+        'COUCH_HTTPS': False,
+        'COUCH_SERVER_ROOT': b'couch:5984',  # 6984 for https couch
+        'COUCH_USERNAME': '',
+        'COUCH_PASSWORD': '',
+        'COUCH_DATABASE_NAME': b'commcarehq'
     }
 }
 
@@ -138,7 +138,7 @@ S3_BLOB_DB_SETTINGS = {
     },
 }
 
-KAFKA_URL = 'kafka:9092'
+KAFKA_BROKERS = ['kafka:9092']
 
 SHARED_DRIVE_ROOT = '/sharedfiles'
 
@@ -233,7 +233,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     UNIT_TESTING = False
     ADMINS = (('Admin', 'admin@example.com'),)
 
-    CELERY_SEND_TASK_ERROR_EMAILS = True
     LESS_DEBUG = True
     COMPRESS_OFFLINE = False
 

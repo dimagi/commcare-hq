@@ -28,7 +28,7 @@
         {% initial_page_data 'schedule_phases' schedule_phases %}
         {% registerurl 'edit_schedule_phases' app.domain app.id module.unique_id %}
         <div class="tab-pane" id="visit-scheduler-module-config-tab">
-            {% include "app_manager/partials/enable_schedule.html" %}
+            {% include "app_manager/partials/modules/enable_schedule.html" %}
         </div>
     {% endif %}
 {% endblock %}

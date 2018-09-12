@@ -138,7 +138,7 @@ class ConnectionManager(object):
         """
         Dispose all engines associated with this. Useful for tests.
         """
-        for engine_id in self._session_helpers.keys():
+        for engine_id in list(self._session_helpers.keys()):
             self.dispose_engine(engine_id)
 
     def get_connection_string(self, engine_id):

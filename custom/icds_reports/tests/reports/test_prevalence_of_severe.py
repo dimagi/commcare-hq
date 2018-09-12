@@ -21,7 +21,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -37,7 +37,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -56,20 +56,20 @@ class TestPrevalenceOfSevere(TestCase):
             {
                 "st1": {
                     "severe": 0,
-                    "moderate": 0,
-                    "normal": 0,
+                    "moderate": 4,
+                    "normal": 3,
                     'total_height_eligible': 449,
-                    "total_measured": 0,
+                    "total_measured": 7,
                     "total_weighed": 302,
                     'original_name': ["st1"],
-                    "fillKey": "0%-5%"
+                    "fillKey": "7%-100%"
                 },
                 "st2": {
                     "severe": 0,
-                    "moderate": 1,
-                    "normal": 0,
+                    "moderate": 5,
+                    "normal": 16,
                     'total_height_eligible': 490,
-                    "total_measured": 0,
+                    "total_measured": 20,
                     "total_weighed": 366,
                     'original_name': ["st2"],
                     "fillKey": "7%-100%"
@@ -88,13 +88,13 @@ class TestPrevalenceOfSevere(TestCase):
         )
         expected = (
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6 - 60 months who were moderately/severely wasted in the "
+            "percentage of children between 0 - 5 years who were moderately/severely wasted in the "
             "current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
         )
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_prevalence_of_severe_data_map(
@@ -105,7 +105,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], "0.14")
+        self.assertEqual(data['rightLegend']['average'], "1.35")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_severe_data_map(
@@ -119,13 +119,13 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '668'},
-                {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
-                 'value': '0'},
-                {'indicator': 'Number of children (6 - 60 months) unmeasured:', 'value': '271'},
-                {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.00%'},
-                {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '100.00%'},
-                {'indicator': '% Normal (6 - 60 months):', 'value': '0.00%'}
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '668'},
+                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
+                 'value': '27'},
+                {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '271'},
+                {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
+                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '33.33%'},
+                {'indicator': '% Normal (0 - 5 years):', 'value': '70.37%'}
             ]
         )
 
@@ -157,7 +157,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'severe')
+        self.assertEqual(data['slug'], 'severe')
 
     def test_map_data_label(self):
         data = get_prevalence_of_severe_data_map(
@@ -168,7 +168,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent of Children Wasted (6 - 60 months)')
+        self.assertEqual(data['label'], 'Percent of Children Wasted (0 - 5 years)')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_prevalence_of_severe_data_map(
@@ -185,14 +185,14 @@ class TestPrevalenceOfSevere(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'moderate': 0,
-                    'total_measured': 0,
-                    'normal': 0,
+                    'moderate': 4,
+                    'total_measured': 7,
+                    'normal': 3,
                     'original_name': ['b1', 'b2'],
                     'severe': 0,
                     'total_height_eligible': 449,
                     'total_weighed': 302,
-                    'fillKey': '0%-5%'
+                    'fillKey': '7%-100%'
                 }
             }
         )
@@ -208,7 +208,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], "0.00")
+        self.assertEqual(data['rightLegend']['average'], "1.33")
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_severe_data_chart(
@@ -219,7 +219,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
 
     def test_chart_data_location_type(self):
         data = get_prevalence_of_severe_data_chart(
@@ -230,7 +230,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['location_type'], 'State')
+        self.assertEqual(data['location_type'], 'State')
 
     def test_chart_data_bottom_five(self):
         data = get_prevalence_of_severe_data_chart(
@@ -244,14 +244,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st1",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st2",
-                    "percent": 100.0
-                },
+                {"loc_name": "st2", "percent": 25.0},
+                {"loc_name": "st1", "percent": 57.142857142857146},
             ]
         )
 
@@ -267,14 +261,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st1",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st2",
-                    "percent": 100.0
-                },
+                {"loc_name": "st2", "percent": 25.0},
+                {"loc_name": "st1", "percent": 57.142857142857146},
             ]
         )
 
@@ -287,7 +275,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data['chart_data']), 3)
+        self.assertEqual(len(data['chart_data']), 3)
 
     def test_chart_data_pink(self):
         data = get_prevalence_of_severe_data_chart(
@@ -320,17 +308,17 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0
                     },
                     {
-                        "y": 0.0,
+                        "y": 0.75,
                         "x": 1491004800000,
                         "total_weighed": 659,
-                        'total_measured': 0,
+                        'total_measured': 8,
                         'total_height_eligible': 964,
                     },
                     {
-                        "y": 0.0,
+                        "y": 0.7037037037037037,
                         "x": 1493596800000,
                         "total_weighed": 668,
-                        'total_measured': 0,
+                        'total_measured': 27,
                         'total_height_eligible': 939,
                     }
                 ],
@@ -369,17 +357,17 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0,
                     },
                     {
-                        "y": 0.0,
+                        "y": 0.125,
                         "x": 1491004800000,
                         "total_weighed": 659,
-                        'total_measured': 0,
+                        'total_measured': 8,
                         'total_height_eligible': 964,
                     },
                     {
-                        "y": 1.0,
+                        "y": 0.3333333333333333,
                         "x": 1493596800000,
                         "total_weighed": 668,
-                        'total_measured': 0,
+                        'total_measured': 27,
                         'total_height_eligible': 939,
                     }
                 ],
@@ -418,17 +406,17 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0
                     },
                     {
-                        "y": 0.0,
+                        "y": 0.125,
                         "x": 1491004800000,
                         "total_weighed": 659,
-                        'total_measured': 0,
+                        'total_measured': 8,
                         'total_height_eligible': 964,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "total_weighed": 668,
-                        'total_measured': 0,
+                        'total_measured': 27,
                         'total_height_eligible': 939,
                     }
                 ],
@@ -448,14 +436,8 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st1",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st2",
-                    "percent": 100.0
-                },
+                {"loc_name": "st2", "percent": 25.0},
+                {"loc_name": "st1", "percent": 57.142857142857146},
             ]
         )
 
@@ -472,7 +454,7 @@ class TestPrevalenceOfSevere(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
 
     def test_sector_data_info(self):
         data = get_prevalence_of_severe_sector_data(
@@ -487,12 +469,11 @@ class TestPrevalenceOfSevere(TestCase):
             location_id='b1',
             loc_level='supervisor',
             show_test=False,
-            icds_feature_flag=False
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 6 - 60 months enrolled who were moderately/severely wasted in the "
+            "percentage of children between 0 - 5 years enrolled who were moderately/severely wasted in the "
             "current month. "
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
@@ -513,9 +494,8 @@ class TestPrevalenceOfSevere(TestCase):
             location_id='b1',
             loc_level='supervisor',
             show_test=False,
-            icds_feature_flag=False
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
             "percentage of children between 0-6 months (0-180 days) enrolled who were moderately/severely wasted "
@@ -539,9 +519,8 @@ class TestPrevalenceOfSevere(TestCase):
             location_id='b1',
             loc_level='supervisor',
             show_test=False,
-            icds_feature_flag=False
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
             "percentage of children between 6-12 months (181-365 days) enrolled who were moderately/severely "
@@ -565,9 +544,8 @@ class TestPrevalenceOfSevere(TestCase):
             location_id='b1',
             loc_level='supervisor',
             show_test=False,
-            icds_feature_flag=False
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
             "percentage of children between 48-60 months (1461-1825 days) enrolled who were moderately/severely "
@@ -590,9 +568,8 @@ class TestPrevalenceOfSevere(TestCase):
             location_id='b1',
             loc_level='supervisor',
             show_test=False,
-            icds_feature_flag=True
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
             "percentage of children between 0 - 5 years enrolled who were moderately/severely wasted in the "
@@ -616,9 +593,8 @@ class TestPrevalenceOfSevere(TestCase):
             location_id='b1',
             loc_level='supervisor',
             show_test=False,
-            icds_feature_flag=True
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
             "percentage of children between 0-6 months (0-180 days) enrolled who were moderately/severely wasted "
@@ -642,9 +618,8 @@ class TestPrevalenceOfSevere(TestCase):
             location_id='b1',
             loc_level='supervisor',
             show_test=False,
-            icds_feature_flag=True
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
             "percentage of children between 6-12 months (181-365 days) enrolled who were moderately/severely "
@@ -668,9 +643,8 @@ class TestPrevalenceOfSevere(TestCase):
             location_id='b1',
             loc_level='supervisor',
             show_test=False,
-            icds_feature_flag=True
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
             "percentage of children between 48-60 months (1461-1825 days) enrolled who were moderately/severely "
@@ -699,9 +673,9 @@ class TestPrevalenceOfSevere(TestCase):
                 "s2": {
                     "total_weighed": 84,
                     "severe": 0,
-                    "moderate": 0,
-                    "total_measured": 0,
-                    "normal": 0,
+                    "moderate": 3,
+                    "total_measured": 4,
+                    "normal": 1,
                     "total_height_eligible": 150,
                 },
                 "s1": {
@@ -735,474 +709,7 @@ class TestPrevalenceOfSevere(TestCase):
                     "color": MapColors.BLUE,
                     "classed": "dashed",
                     "strokeWidth": 2,
-                    "values": [
-                        [
-                            "s1",
-                            0.0
-                        ],
-                        [
-                            "s2",
-                            0.0
-                        ]
-                    ],
-                    "key": ""
-                }
-            ]
-        )
-
-
-@override_settings(SERVER_ENVIRONMENT='icds')
-class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
-    maxDiff = None
-
-    def test_map_data_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['data'],
-            {
-                "st1": {
-                    "severe": 0,
-                    "moderate": 0,
-                    "normal": 0,
-                    'total_height_eligible': 454,
-                    "total_measured": 0,
-                    "total_weighed": 317,
-                    'original_name': ["st1"],
-                    "fillKey": "0%-5%"
-                },
-                "st2": {
-                    "severe": 0,
-                    "moderate": 1,
-                    "normal": 0,
-                    'total_height_eligible': 497,
-                    "total_measured": 0,
-                    "total_weighed": 379,
-                    'original_name': ["st2"],
-                    "fillKey": "7%-100%"
-                }
-            }
-        )
-
-    def test_map_data_right_legend_info_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        expected = (
-            "Of the children enrolled for Anganwadi services, whose weight and height was measured, the "
-            "percentage of children between 0 - 5 years who were moderately/severely wasted in the current month. "
-            "<br/><br/>"
-            "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
-            "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
-        )
-        self.assertEquals(data['rightLegend']['info'], expected)
-
-    def test_map_data_right_legend_average_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertEquals(data['rightLegend']['average'], "0.13")
-
-    def test_map_data_right_legend_extended_info_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertListEqual(
-            data['rightLegend']['extended_info'],
-            [
-                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '696'},
-                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
-                 'value': '0'},
-                {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '255'},
-                {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
-                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '100.00%'},
-                {'indicator': '% Normal (0 - 5 years):', 'value': '0.00%'}
-            ]
-        )
-
-    def test_map_data_label_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertEquals(data['label'], 'Percent of Children Wasted (0 - 5 years)')
-
-    def test_map_name_two_locations_represent_by_one_topojson_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'aggregation_level': 3
-            },
-            loc_level='block',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['data'],
-            {
-                'block_map': {
-                    'moderate': 0,
-                    'total_measured': 0,
-                    'normal': 0,
-                    'original_name': ['b1', 'b2'],
-                    'severe': 0,
-                    'total_height_eligible': 454,
-                    'total_weighed': 317,
-                    'fillKey': '0%-5%'
-                }
-            }
-        )
-
-    def test_average_with_two_locations_represent_by_one_topojson_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_map(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'aggregation_level': 3
-            },
-            loc_level='block',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertEquals(data['rightLegend']['average'], "0.00")
-
-    def test_chart_data_bottom_fiveicds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertListEqual(
-            data['bottom_five'],
-            [
-                {
-                    "loc_name": "st1",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st2",
-                    "percent": 100.0,
-                },
-            ]
-        )
-
-    def test_chart_data_top_five_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertListEqual(
-            data['top_five'],
-            [
-                {
-                    "loc_name": "st1",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st2",
-                    "percent": 100.0,
-                },
-            ]
-        )
-
-    def test_chart_data_pink_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['chart_data'][0],
-            {
-                "color": ChartColors.PINK,
-                "classed": "dashed",
-                "strokeWidth": 2,
-                "values": [
-                    {
-                        "y": 0.0,
-                        "x": 1485907200000,
-                        "total_weighed": 0,
-                        'total_measured': 0,
-                        'total_height_eligible': 0
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1488326400000,
-                        "total_weighed": 0,
-                        'total_measured': 0,
-                        'total_height_eligible': 0
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1491004800000,
-                        "total_weighed": 691,
-                        'total_measured': 1,
-                        'total_height_eligible': 981,
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1493596800000,
-                        "total_weighed": 696,
-                        'total_measured': 0,
-                        'total_height_eligible': 951,
-                    }
-                ],
-                "key": "% normal"
-            }
-        )
-
-    def test_chart_data_orange_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['chart_data'][1],
-            {
-                "color": ChartColors.ORANGE,
-                "classed": "dashed",
-                "strokeWidth": 2,
-                "values": [
-                    {
-                        "y": 0.0,
-                        "x": 1485907200000,
-                        "total_weighed": 0,
-                        'total_measured': 0,
-                        'total_height_eligible': 0,
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1488326400000,
-                        "total_weighed": 0,
-                        'total_measured': 0,
-                        'total_height_eligible': 0,
-                    },
-                    {
-                        "y": 0.00,
-                        "x": 1491004800000,
-                        "total_weighed": 691,
-                        'total_measured': 1,
-                        'total_height_eligible': 981,
-                    },
-                    {
-                        "y": 1.0,
-                        "x": 1493596800000,
-                        "total_weighed": 696,
-                        'total_measured': 00,
-                        'total_height_eligible': 951,
-                    }
-                ],
-                "key": "% moderately wasted (moderate acute malnutrition)"
-            }
-        )
-
-    def test_chart_data_red_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['chart_data'][2],
-            {
-                "color": ChartColors.RED,
-                "classed": "dashed",
-                "strokeWidth": 2,
-                "values": [
-                    {
-                        "y": 0.0,
-                        "x": 1485907200000,
-                        "total_weighed": 0,
-                        'total_measured': 0,
-                        'total_height_eligible': 0
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1488326400000,
-                        "total_weighed": 0,
-                        'total_measured': 0,
-                        'total_height_eligible': 0
-                    },
-                    {
-                        "y": 1.0,
-                        "x": 1491004800000,
-                        "total_weighed": 691,
-                        'total_measured': 1,
-                        'total_height_eligible': 981,
-                    },
-                    {
-                        "y": 0.0,
-                        "x": 1493596800000,
-                        "total_weighed": 696,
-                        'total_measured': 0,
-                        'total_height_eligible': 951,
-                    }
-                ],
-                "key": "% severely wasted (severe acute malnutrition)"
-            }
-        )
-
-    def test_chart_data_all_locations_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_data_chart(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'aggregation_level': 1
-            },
-            loc_level='state',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertListEqual(
-            data['all_locations'],
-            [
-                {
-                    "loc_name": "st1",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st2",
-                    "percent": 100.0,
-                },
-            ]
-        )
-
-    def test_sector_data_tooltips_data_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_sector_data(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'aggregation_level': 4
-            },
-            location_id='b1',
-            loc_level='supervisor',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertDictEqual(
-            data['tooltips_data'],
-            {
-                "s1": {
-                    "total_weighed": 67,
-                    "severe": 0,
-                    "moderate": 0,
-                    "total_measured": 0,
-                    "normal": 0,
-                    "total_height_eligible": 71,
-                },
-                "s2": {
-                    "total_weighed": 91,
-                    "severe": 0,
-                    "moderate": 0,
-                    "total_measured": 0,
-                    "normal": 0,
-                    "total_height_eligible": 153,
-                },
-            }
-        )
-
-    def test_sector_data_chart_data_icds_feature_flag_enabled(self):
-        data = get_prevalence_of_severe_sector_data(
-            'icds-cas',
-            config={
-                'month': (2017, 5, 1),
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'aggregation_level': 4
-            },
-            location_id='b1',
-            loc_level='supervisor',
-            show_test=False,
-            icds_feature_flag=True
-        )
-        self.assertListEqual(
-            data['chart_data'],
-            [
-                {
-                    "color": MapColors.BLUE,
-                    "classed": "dashed",
-                    "strokeWidth": 2,
-                    "values": [
-                        [
-                            "s1",
-                            0.0
-                        ],
-                        [
-                            "s2",
-                            0.0
-                        ]
-                    ],
+                    "values": [["s1", 0.0], ["s2", 0.03571428571428571]],
                     "key": ""
                 }
             ]

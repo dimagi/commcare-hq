@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 import logging
+import re
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -17,11 +18,12 @@ import sys
 from django.views.generic.base import TemplateView, View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
-    track_confirmed_account_on_hubspot,
-    track_clicked_signup_on_hubspot,
+    track_confirmed_account_on_hubspot_v2,
+    track_clicked_signup_on_hubspot_v2,
     HUBSPOT_COOKIE,
     track_web_user_registration_hubspot,
 )
@@ -46,6 +48,7 @@ from corehq import toggles
 from django.contrib.auth.models import User
 
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from memoized import memoized
 from dimagi.utils.web import get_ip
@@ -160,8 +163,25 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         email = data['email'].strip()
         duplicate = CouchUser.get_by_username(email)
         is_existing = User.objects.filter(username__iexact=email).count() > 0 or duplicate
+
+        message = None
+        restricted_by_domain = None
+        if is_existing:
+            message = _("There is already a user with this email.")
+        else:
+            domain = email[email.find("@") + 1:]
+            for account in BillingAccount.get_enterprise_restricted_signup_accounts():
+                if domain in account.enterprise_restricted_signup_domains:
+                    restricted_by_domain = domain
+                    message = account.restrict_signup_message
+                    regex = r'(\b[a-zA-Z0-9_.+%-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b)'
+                    subject = _("CommCareHQ account request")
+                    message = re.sub(regex, "<a href='mailto:\\1?subject={}'>\\1</a>".format(subject), message)
+                    break
         return {
-            'isValid': not is_existing,
+            'isValid': message is None,
+            'restrictedByDomain': restricted_by_domain,
+            'message': message,
         }
 
 
@@ -182,12 +202,14 @@ class UserRegistrationView(BasePageView):
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
         ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, request).update_response(response)
+        ab_tests.ABTest(ab_tests.DEMO_CTA, request).update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
             meta = get_meta(request)
-            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
+            track_clicked_signup_on_hubspot_v2.delay(
+                self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
     @property
@@ -204,11 +226,14 @@ class UserRegistrationView(BasePageView):
             'email': self.prefilled_email,
             'atypical_user': True if self.atypical_user else False
         }
+        ab_test = ab_tests.ABTest(ab_tests.DEMO_CTA, self.request)
+        demo_test = ab_test.context['version'] == ab_tests.DEMO_CTA_OPTION_ON
         return {
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
+            'demo_test': demo_test,
         }
 
     @property
@@ -357,63 +382,64 @@ def resend_confirmation(request):
 
 
 @transaction.atomic
-def confirm_domain(request, guid=None):
-    error = None
-    # Did we get a guid?
-    if guid is None:
-        error = _('An account activation key was not provided.  If you think this '
-                  'is an error, please contact the system administrator.')
+def confirm_domain(request, guid=''):
+    with CriticalSection(['confirm_domain_' + guid]):
+        error = None
+        # Did we get a guid?
+        if not guid:
+            error = _('An account activation key was not provided.  If you think this '
+                      'is an error, please contact the system administrator.')
 
-    # Does guid exist in the system?
-    else:
-        req = RegistrationRequest.get_by_guid(guid)
-        if not req:
-            error = _('The account activation key "%s" provided is invalid. If you '
-                      'think this is an error, please contact the system '
-                      'administrator.') % guid
-
-    if error is not None:
-        context = {
-            'message_body': error,
-            'current_page': {'page_name': 'Account Not Activated'},
-        }
-        return render(request, 'registration/confirmation_error.html', context)
-
-    requested_domain = Domain.get_by_name(req.domain)
-    view_name = "dashboard_default"
-    view_args = [requested_domain]
-    if not domain_has_apps(req.domain):
-        if ab_tests.appcues_template_app_test(request):
-            view_name = "app_from_template"
-            view_args.append("appcues")
+        # Does guid exist in the system?
         else:
-            view_name = "default_new_app"
+            req = RegistrationRequest.get_by_guid(guid)
+            if not req:
+                error = _('The account activation key "%s" provided is invalid. If you '
+                          'think this is an error, please contact the system '
+                          'administrator.') % guid
 
-    # Has guid already been confirmed?
-    if requested_domain.is_active:
-        assert(req.confirm_time is not None and req.confirm_ip is not None)
-        messages.success(request, 'Your account %s has already been activated. '
-            'No further validation is required.' % req.new_user_username)
+        if error is not None:
+            context = {
+                'message_body': error,
+                'current_page': {'page_name': 'Account Not Activated'},
+            }
+            return render(request, 'registration/confirmation_error.html', context)
+
+        requested_domain = Domain.get_by_name(req.domain)
+        view_name = "dashboard_default"
+        view_args = [requested_domain]
+        if not domain_has_apps(req.domain):
+            if ab_tests.appcues_template_app_test(request):
+                view_name = "app_from_template"
+                view_args.append("appcues")
+            else:
+                view_name = "default_new_app"
+
+        # Has guid already been confirmed?
+        if requested_domain.is_active:
+            assert(req.confirm_time is not None and req.confirm_ip is not None)
+            messages.success(request, 'Your account %s has already been activated. '
+                'No further validation is required.' % req.new_user_username)
+            return HttpResponseRedirect(reverse(view_name, args=view_args))
+
+        # Set confirm time and IP; activate domain and new user who is in the
+        req.confirm_time = datetime.utcnow()
+        req.confirm_ip = get_ip(request)
+        req.save()
+        requested_domain.is_active = True
+        requested_domain.save()
+        requesting_user = WebUser.get_by_username(req.new_user_username)
+
+        send_new_request_update_email(requesting_user, get_ip(request), requested_domain.name, is_confirming=True)
+
+        messages.success(request,
+                'Your account has been successfully activated.  Thank you for taking '
+                'the time to confirm your email address: %s.'
+            % (requesting_user.username))
+        track_workflow(requesting_user.email, "Confirmed new project")
+        track_confirmed_account_on_hubspot_v2.delay(requesting_user)
+        request.session['CONFIRM'] = True
         return HttpResponseRedirect(reverse(view_name, args=view_args))
-
-    # Set confirm time and IP; activate domain and new user who is in the
-    req.confirm_time = datetime.utcnow()
-    req.confirm_ip = get_ip(request)
-    req.save()
-    requested_domain.is_active = True
-    requested_domain.save()
-    requesting_user = WebUser.get_by_username(req.new_user_username)
-
-    send_new_request_update_email(requesting_user, get_ip(request), requested_domain.name, is_confirming=True)
-
-    messages.success(request,
-            'Your account has been successfully activated.  Thank you for taking '
-            'the time to confirm your email address: %s.'
-        % (requesting_user.username))
-    track_workflow(requesting_user.email, "Confirmed new project")
-    track_confirmed_account_on_hubspot.delay(requesting_user)
-    request.session['CONFIRM'] = True
-    return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 
 @retry_resource(3)

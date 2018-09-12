@@ -1,12 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import json
-from collections import namedtuple
 from datetime import datetime
 
 from django.conf import settings
 from django.db import transaction
-from kafka.common import TopicAndPartition
+from kafka.common import TopicPartition
 
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
@@ -180,7 +178,7 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
         if checkpoints:
             timestamp = checkpoints[0].last_modified
             for checkpoint in checkpoints:
-                ret[TopicAndPartition(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
+                ret[TopicPartition(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
                 if checkpoint.last_modified > timestamp:
                     timestamp = checkpoint.last_modified
         else:

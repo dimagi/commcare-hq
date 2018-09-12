@@ -1,12 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import numbers
 import re
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils import html, safestring
 
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq import privileges, toggles
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.util.quickcache import quickcache
@@ -97,7 +99,10 @@ def username_to_user_id(username):
 def user_id_to_username(user_id):
     from corehq.apps.users.models import CouchUser
     if not user_id:
-        return user_id
+        return None
+    if isinstance(user_id, numbers.Number):
+        # couch chokes on numbers so just short-circuit this
+        return None
     elif user_id == DEMO_USER_ID:
         return DEMO_USER_ID
     try:

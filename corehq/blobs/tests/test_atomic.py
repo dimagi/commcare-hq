@@ -1,57 +1,57 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from unittest import TestCase
+from django.test import TestCase
 from io import BytesIO
 
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import InvalidContext, NotFound
-from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, get_id
+from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
 
 
-class TestFilesystemBlobDB(TestCase):
+class TestAtomicBlobs(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestFilesystemBlobDB, cls).setUpClass()
+        super(TestAtomicBlobs, cls).setUpClass()
         cls.db = TemporaryFilesystemBlobDB()
 
     @classmethod
     def tearDownClass(cls):
         cls.db.close()
-        super(TestFilesystemBlobDB, cls).tearDownClass()
+        super(TestAtomicBlobs, cls).tearDownClass()
 
     def test_put(self):
         with AtomicBlobs(self.db) as db:
-            info = db.put(BytesIO(b"content"), get_id())
-        with self.db.get(info.identifier) as fh:
+            meta = db.put(BytesIO(b"content"), meta=new_meta())
+        with self.db.get(key=meta.key) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_failed(self):
         with self.assertRaises(Boom), AtomicBlobs(self.db) as db:
-            info = db.put(BytesIO(b"content"), get_id())
+            meta = db.put(BytesIO(b"content"), meta=new_meta())
             raise Boom()
         with self.assertRaises(NotFound):
-            self.db.get(info.identifier)
+            self.db.get(key=meta.key)
 
     def test_put_outside_context(self):
         with AtomicBlobs(self.db) as db:
             pass
         with self.assertRaises(InvalidContext):
-            db.put(BytesIO(b"content"), get_id())
+            db.put(BytesIO(b"content"), meta=new_meta())
 
     def test_delete(self):
-        info = self.db.put(BytesIO(b"content"), get_id())
+        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
         with AtomicBlobs(self.db) as db:
-            db.delete(info.identifier)
+            db.delete(key=meta.key)
         with self.assertRaises(NotFound):
-            self.db.get(info.identifier)
+            self.db.get(key=meta.key)
 
     def test_delete_failed(self):
-        info = self.db.put(BytesIO(b"content"), get_id())
+        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
         with self.assertRaises(Boom), AtomicBlobs(self.db) as db:
-            db.delete(info.identifier)
+            db.delete(key=meta.key)
             raise Boom()
-        with self.db.get(info.identifier) as fh:
+        with self.db.get(key=meta.key) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_delete_outside_context(self):

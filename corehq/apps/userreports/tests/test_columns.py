@@ -114,7 +114,6 @@ class ChoiceListColumnDbTest(TestCase):
             'doc_type': 'CommCareCase',
             'long_column': 'duplicate_choice_1(s)',
         })
-        adapter.refresh_table()
         # and query it back
         q = adapter.get_query_object()
         self.assertEqual(1, q.count())
@@ -155,8 +154,6 @@ class TestExpandedColumn(TestCase):
 
         if build_data_source:
             tasks.rebuild_indicators(self.data_source_config._id)
-            adapter = get_indicator_adapter(self.data_source_config)
-            adapter.refresh_table()
 
         report_config = ReportConfiguration(
             domain=self.domain,

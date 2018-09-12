@@ -1,4 +1,4 @@
-/* globals hex_parser, zxcvbn */
+/* globals zxcvbn */
 (function (angular) {
     'use strict';
 
@@ -110,7 +110,7 @@
     mobileWorkers.constant('customFieldNames', []);
     mobileWorkers.constant('location_url', '');
 
-    var MobileWorker = function (data) {
+    var mobileWorker = function (data) {
         function generateStrongPassword() {
             function pick(possible, min, max) {
                 var n, chars = '';
@@ -158,14 +158,14 @@
             return shuffle(password);
         }
 
-        var self = this;
+        var self = {};
         self.creationStatus = STATUS.NEW;
 
         self.username = data.username || '';
-        self.first_name = data.first_name || '';
-        self.last_name = data.last_name || '';
+        self.firstName = data.first_name || '';
+        self.lastName = data.last_name || '';
         self.editUrl = data.editUrl || '';
-        self.location_id = data.location_id || '';
+        self.locationId = data.location_id || '';
 
         self.password = data.generateStrongPasswords ? generateStrongPassword() : '';
 
@@ -182,11 +182,13 @@
         } else if (_.isObject(data.customFields)) {
             self.customFields = data.customFields;
         }
+
+        return self;
     };
 
     var mobileWorkerControllers = {};
 
-    mobileWorkerControllers.MobileWorkerCreationController = function (
+    mobileWorkerControllers.mobileWorkerCreationController = function (
         $scope, workerCreationFactory, djangoRMI, customFields,
         customFieldNames, generateStrongPasswords, location_url, $http
     ) {
@@ -218,20 +220,20 @@
             );
         };
 
-        $scope.initializeMobileWorker = function (mobileWorker) {
+        $scope.initializeMobileWorker = function (existingMobileWorker) {
             visualFormCtrl.usernameClear();
             $scope.usernameAvailabilityStatus = null;
             $scope.usernameStatusMessage = null;
 
-            if (!_.isEmpty(mobileWorker)) {
+            if (!_.isEmpty(existingMobileWorker)) {
                 mobileWorker.creationStatus = STATUS.RETRIED;
-                $scope.mobileWorker = new MobileWorker({
-                    customFields: mobileWorker.customFields,
-                    username: mobileWorker.username,
+                $scope.mobileWorker = mobileWorker({
+                    customFields: existingMobileWorker.customFields,
+                    username: existingMobileWorker.username,
                 });
             } else {
                 $(".select2multiplechoicewidget").select2('data', null);
-                $scope.mobileWorker = new MobileWorker({
+                $scope.mobileWorker = mobileWorker({
                     customFields: customFields,
                     generateStrongPasswords: generateStrongPasswords,
                 });
@@ -260,8 +262,8 @@
         self.stageNewMobileWorker = function (newWorker) {
             newWorker.creationStatus = STATUS.PENDING;
             var deferred = $q.defer();
-            if(typeof(hex_parser) !== 'undefined') {
-                newWorker.password = (new hex_parser()).encode(newWorker.password);
+            if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
+                newWorker.password = (hqImport("nic_compliance/js/encoder")()).encode(newWorker.password);
             }
             djangoRMI.create_mobile_worker({
                 mobileWorker: newWorker, 
@@ -412,13 +414,13 @@
 
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
     var mobileWorkerApp = angular.module('mobileWorkerApp', ['hq.pagination', 'hq.mobile_workers', 'ngSanitize', 'ui.select']);
-    mobileWorkerApp.config(['$httpProvider', function($httpProvider) {
+    mobileWorkerApp.config(['$httpProvider', function ($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
         $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
     }]);
-    mobileWorkerApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+    mobileWorkerApp.config(["djangoRMIProvider", function (djangoRMIProvider) {
         djangoRMIProvider.configure(initial_page_data('djng_current_rmi'));
     }]);
     mobileWorkerApp.constant('customFields', initial_page_data('custom_fields'));

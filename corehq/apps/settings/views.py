@@ -11,7 +11,7 @@ from corehq.apps.settings.forms import (
     HQTOTPDeviceForm, HQPhoneNumberForm, HQTwoFactorMethodForm, HQEmptyForm
 )
 from corehq.apps.settings.utils import get_temp_file
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.users.forms import AddPhoneNumberForm
 from django.conf import settings
 from django.contrib import messages
@@ -113,7 +113,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     api_key = None
     template_name = 'settings/edit_my_account.html'
 
-    @use_select2
+    @use_select2_v4
     @two_factor_exempt
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -474,12 +474,12 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
         message_v1 = json.dumps([
             {'username': request.user.username},
             {'flag': MULTIPLE_APPS_UNLIMITED.slug}
-        ]).replace(' ', '')
+        ]).replace(' ', '').encode('utf-8')
 
         message_v2 = json.dumps([
             {'username': request.user.username},
             {'flags': [MULTIPLE_APPS_UNLIMITED.slug, ADVANCED_SETTINGS_ACCESS.slug]}
-        ]).replace(' ', '')
+        ]).replace(' ', '').encode('utf-8')
 
         qrcode_data = json.dumps({
             'username': request.user.username,

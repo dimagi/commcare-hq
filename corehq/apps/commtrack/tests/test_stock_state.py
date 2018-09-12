@@ -45,7 +45,6 @@ class StockStateTest(TestCase):
         cls.domain_obj.delete()
         super(StockStateTest, cls).tearDownClass()
 
-
     def report(self, amount, days_ago):
         return _stock_report(
             self.domain,

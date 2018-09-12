@@ -2,7 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from contextlib import contextmanager
 import json
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 
@@ -112,33 +113,36 @@ class WorksheetWrapper(object):
         else:
             return cls(workbook.worksheets[0])
 
+    @cached_property
+    def _headers_by_index(self):
+        try:
+            header_row = next(self._iter_rows())
+        except StopIteration:
+            header_row = []
+
+        return OrderedDict(
+            (i, header) for i, header in enumerate(header_row)
+            if header  # remove None columns the library sometimes returns
+        )
+
     def get_header_columns(self):
-        if self.max_row > 1:
-            # remove None columns the library sometimes returns
-            return list(filter(None, next(self.iter_rows())))
-
-        # if max_row is 1, there may be either 0 or 1 rows in the sheet
-        rows = list(self.iter_rows())
-        header_row = rows[0] if rows else []
-        return list(filter(None, header_row))
-
-    def _get_column_values(self, column_index):
-        rows = self.iter_rows()
-        # skip first row (header row)
-        next(rows)
-        for row in rows:
-            yield row[column_index]
-
-    def get_unique_column_values(self, column_index):
-        return list(set(self._get_column_values(column_index)))
+        return list(self._headers_by_index.values())
 
     @property
     def max_row(self):
         return self._worksheet.max_row
 
-    def iter_rows(self):
+    def _iter_rows(self):
         for row in self._worksheet.iter_rows():
             yield [cell.value for cell in row]
+
+    def iter_row_dicts(self):
+        for row in self._iter_rows():
+            yield {
+                self._headers_by_index[i]: value
+                for i, value in enumerate(row)
+                if i in self._headers_by_index
+            }
 
 
 def convert_custom_fields_to_struct(config):
@@ -240,14 +244,12 @@ def convert_field_value(value):
         return str(value)
 
 
-def parse_search_id(config, columns, row):
+def parse_search_id(config, row):
     """ Find and convert the search id in an excel row """
 
     # Find index of user specified search column
     search_column = config.search_column
-    search_column_index = columns.index(search_column)
-
-    search_id = row[search_column_index] or ''
+    search_id = row[search_column] or ''
 
     try:
         # if the spreadsheet gives a number, strip any decimals off
@@ -293,7 +295,7 @@ def lookup_case(search_field, search_id, domain, case_type):
         return (None, LookupErrors.NotFound)
 
 
-def populate_updated_fields(config, columns, row):
+def populate_updated_fields(config, row):
     """
     Returns a dict map of fields that were marked to be updated
     due to the import. This can be then used to pass to the CaseBlock
@@ -303,7 +305,7 @@ def populate_updated_fields(config, columns, row):
     fields_to_update = {}
     for key in field_map:
         try:
-            update_value = row[columns.index(key)]
+            update_value = row[key]
         except Exception:
             continue
 

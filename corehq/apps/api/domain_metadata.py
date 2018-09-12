@@ -137,7 +137,7 @@ class GIRResource(ModelResource):
         resource_name = 'gir_tables'
         fields = [
             'id', 'month', 'domain_name', 'country', 'sector', 'subsector', 'bu',
-            'self_service', 'test_domain', 'start_date', 'device_id', 'wam', 'pam',
+            'self_service', 'test_domain', 'start_date', 'device_id', 'pam',
             'wams_current', 'active_users', 'using_and_performing', 'not_performing',
             'inactive_experienced', 'inactive_not_experienced', 'not_experienced',
             'not_performing_not_experienced', 'active_ever', 'possibly_exp', 'ever_exp',

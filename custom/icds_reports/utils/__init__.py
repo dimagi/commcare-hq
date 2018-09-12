@@ -620,28 +620,17 @@ def wfh_recorded_in_month_column(beta):
 
 
 def default_age_interval(beta):
-    return '0 - 5 years' if beta else '6 - 60 months'
+    return '0 - 5 years'
 
 
 def get_age_filters(beta):
-    if beta:
-        return [
-            NOT(EQ('age_tranche', 'age_72'))
-        ]
     return [
-        AND([
-            NOT(EQ('age_tranche', 'age_0')),
-            NOT(EQ('age_tranche', 'age_6')),
-            NOT(EQ('age_tranche', 'age_72'))
-        ])
+        NOT(EQ('age_tranche', 'age_72'))
     ]
 
 
 def get_age_condition(beta):
-    if beta:
-        return "age_tranche != :age_72"
-    else:
-        return "age_tranche != :age_0 AND age_tranche != :age_6 AND age_tranche != :age_72"
+    return "age_tranche != :age_72"
 
 
 def track_time(func):
@@ -668,6 +657,10 @@ def percent_num(x, y):
 
 def percent(x, y):
     return "%.2f %%" % (percent_num(x, y))
+
+
+def percent_or_not_entered(x, y):
+    return percent(x, y) if y else DATA_NOT_ENTERED
 
 
 class ICDSDatabaseColumn(DatabaseColumn):

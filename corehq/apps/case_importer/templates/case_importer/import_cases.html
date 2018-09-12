@@ -1,10 +1,15 @@
-{% extends 'reports/async/basic.html' %}
+{% extends 'hqwebapp/base_section.html' %}
 {% load report_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% requirejs_main "case_importer/js/main" %}
 
 {% block page_content %}
+    {% registerurl 'case_importer_uploads' domain %}
+    {% registerurl 'case_importer_upload_file_download' domain '---' %}
+    {% registerurl 'case_importer_update_upload_comment' domain '---' %}
+
     {% include 'case_importer/partials/help_message.html' %}
 
     <form class="form-horizontal form-report"
@@ -39,5 +44,7 @@
 
 
     <h2>Recent Uploads</h2>
-    {% include 'case_importer/partials/import_history.html' %}
+    <div id="recent-uploads" class="ko-template">
+        {% include 'case_importer/partials/ko_import_history.html' %}
+    </div>
 {% endblock %}

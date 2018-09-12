@@ -22,8 +22,9 @@ from PIL import Image
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.xform import XFormValidationError
+from corehq.apps.domain import SHARED_DOMAIN
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobMixin, CODES
 import six
 from io import open
 
@@ -80,6 +81,7 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     licenses = SchemaListProperty(HQMediaLicense, default=[])
     shared_by = StringListProperty(default=[])  # list of domains that can share this file
     tags = DictProperty(default={})  # dict of string lists
+    _blobdb_type_code = CODES.multimedia
 
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
@@ -139,7 +141,12 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
                 # this should only be files that had attachments deleted while the bug
                 # was in effect, so hopefully we will stop seeing it after a few days
                 logging.error('someone is uploading a file that should have existed for multimedia %s' % self._id)
-            self.put_attachment(data, attachment_id, content_type=self.get_mime_type(data, filename=original_filename))
+            self.put_attachment(
+                data,
+                attachment_id,
+                content_type=self.get_mime_type(data, filename=original_filename),
+                domain=SHARED_DOMAIN,
+            )
         new_media = AuxMedia()
         new_media.uploaded_date = datetime.utcnow()
         new_media.attachment_id = attachment_id
@@ -433,7 +440,7 @@ class HQMediaMapItem(DocumentSchema):
 
     @classmethod
     def gen_unique_id(cls, m_id, path):
-        return hashlib.md5("%s: %s" % (path.encode('utf-8'), str(m_id))).hexdigest()
+        return hashlib.md5(b"%s: %s" % (path.encode('utf-8'), m_id.encode('utf-8'))).hexdigest()
 
 
 class ApplicationMediaReference(object):
@@ -854,7 +861,7 @@ class HQMediaMixin(Document):
         has_archived = False
         if LOGO_ARCHIVE_KEY not in self.archived_media:
             self.archived_media[LOGO_ARCHIVE_KEY] = {}
-        for slug, logo_data in self.logo_refs.items():
+        for slug, logo_data in list(self.logo_refs.items()):
             self.archived_media[LOGO_ARCHIVE_KEY][slug] = logo_data
             has_archived = True
             del self.logo_refs[slug]
@@ -866,7 +873,7 @@ class HQMediaMixin(Document):
         """
         has_restored = False
         if hasattr(self, 'archived_media') and LOGO_ARCHIVE_KEY in self.archived_media:
-            for slug, logo_data in self.archived_media[LOGO_ARCHIVE_KEY].items():
+            for slug, logo_data in list(self.archived_media[LOGO_ARCHIVE_KEY].items()):
                 self.logo_refs[slug] = logo_data
                 has_restored = True
                 del self.archived_media[LOGO_ARCHIVE_KEY][slug]

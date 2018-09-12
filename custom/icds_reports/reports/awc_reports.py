@@ -23,6 +23,8 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
 from custom.icds_reports.const import MapColors
 import six
 
+from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
+
 
 @quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, loc_level, show_test=False):
@@ -534,10 +536,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Newborns with Low Birth Weight'),
                     'help_text': _(
-                        "Of all the children born in the current month, the percentage that had a birth weight "
-                        "less than 2500 grams. Newborns with Low Birth Weight are closely associated wtih foetal "
-                        "and neonatal mortality and morbidity, inhibited growth and cognitive development, "
-                        "and chronic diseases later in life."
+                        get_new_born_with_low_weight_help_text(html=False)
                     ),
                     'percent': percent_diff(
                         'low_birth',
@@ -895,8 +894,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
     }
 
 
-@quickcache(['domain', 'config', 'month', 'show_test'], timeout=30 * 60)
-def get_awc_report_infrastructure(domain, config, month, show_test=False):
+@quickcache(['domain', 'config', 'month', 'show_test', 'beta'], timeout=30 * 60)
+def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=False):
     selected_month = datetime(*month)
 
     def get_data_for_kpi(filters, date):
@@ -909,14 +908,18 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
             functional_toilet=Sum('infra_functional_toilet'),
             medicine_kits=Sum('infra_medicine_kits'),
             infant_weighing_scale=Sum('infra_infant_weighing_scale'),
-            adult_weighing_scale=Sum('infra_adult_weighing_scale')
+            adult_weighing_scale=Sum('infra_adult_weighing_scale'),
+            num_awc_infra_last_update=Sum('num_awc_infra_last_update'),
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
     def get_infa_value(data, prop):
-        value = (data[0][prop] or None) if data else None
+        if beta:
+            value = data[0][prop] if data[0]['num_awc_infra_last_update'] else None
+        else:
+            value = (data[0][prop] or None) if data else None
         if value is not None:
             if value == 1:
                 return _("Available")

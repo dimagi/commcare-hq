@@ -2,8 +2,8 @@
   <fixture id="commcare-reports-filters:c0ffee">
 	  <filters />
   </fixture>
-  <fixture id="commcare-reports:c0ffee" user_id="mock-user-id" report_id="deadbeef" last_sync="2017-09-11T06:35:20" indexed="true">
-    <rows>
+  <fixture id="commcare-reports:c0ffee" user_id="mock-user-id" report_id="deadbeef" indexed="true">
+    <rows last_sync="2017-09-11T06:35:20">
       <row index="0" is_total_row="False">
         <bar>2</bar>
         <baz>3</baz>
