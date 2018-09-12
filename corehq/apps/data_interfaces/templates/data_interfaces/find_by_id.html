@@ -1,37 +1,23 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
-{% load i18n %}
 
 {% requirejs_main "data_interfaces/js/find_by_id" %}
 
 {% block page_content %}
     {% registerurl 'global_quick_find' %}
+    {% registerurl 'list_case_exports' domain %}
+    {% registerurl 'list_form_exports' domain %}
 
     {% if can_view_cases %}
-        {# TODO #}
+        <fieldset id="find-case" class="ko-template">
+            {% include 'data_interfaces/partials/find_by_id_form.html' %}
+        </fieldset>
+        <br><br><br>
     {% endif %}
 
     {% if can_view_forms %}
-        <h2>Find Form Submission</h2>
-        <div class="help-block">
-            {% blocktrans %}
-                Use this to find a specific form submission.
-                IDs can be found in a <a href="{{ form_export_url }}">Form Data Export</a>.
-            {% endblocktrans %}
-        </div>
-        <div class="form-group ko-template" id="find-form"
-             data-bind="css: {'has-error': error, 'has-success': link}">
-            <div class="col-sm-4 col-md-3">
-                <input type="text" class="form-control" data-bind="value: query, attr: {placeholder: placeholder}" />
-                <div class="help-block" data-bind="visible: error, text: error"></div>
-                <div class="help-block" data-bind="visible: link, html: linkMessage"></div>
-            </div>
-            <div class="col-sm-8 col-md-9">
-                <button type="button" class="btn btn-primary" data-bind="click: find">
-                    <i class="fa fa-search"></i>
-                    {% trans "Find" %}
-                </button>
-            </div>
-        </div>
+        <fieldset id="find-form" class="ko-template">
+            {% include 'data_interfaces/partials/find_by_id_form.html' %}
+        </fieldset>
     {% endif %}
 {% endblock page_content %}
