@@ -53,24 +53,9 @@ DEMO_CTA = ABTestConfig(
 )
 
 
-APPCUES_TEMPLATE_APP_OPTION_ON = 'appcues_on'
-APPCUES_TEMPLATE_APP_OPTION_OFF = 'appcues_off'
-
-
-APPCUES_TEMPLATE_APP = ABTestConfig(
-    'Appcues Template App',
-    'appcues_template_app_june2018',
-    (APPCUES_TEMPLATE_APP_OPTION_ON, APPCUES_TEMPLATE_APP_OPTION_OFF)
-)
-
 
 @memoized
 def appcues_template_app_test(request):
-    # See if user is in test
-    test = ABTest(APPCUES_TEMPLATE_APP, request)
-    if test.version(assign_if_blank=False) != APPCUES_TEMPLATE_APP_OPTION_ON:
-        return False
-
     # If the user's trial has run out, they may no longer have access to web apps
     domain = getattr(request, 'domain', None)
     if domain:
