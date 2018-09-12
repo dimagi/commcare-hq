@@ -5,7 +5,7 @@ from django.conf import settings
 from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
-from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter, get_ucr_es_form_pillow
+from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.form import get_domain_form_change_provider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory

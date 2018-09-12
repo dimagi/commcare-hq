@@ -16,7 +16,6 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
 from corehq.apps.case_search.models import case_search_enabled_domains
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
