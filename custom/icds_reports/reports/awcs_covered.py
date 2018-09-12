@@ -113,7 +113,10 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
             "{:s}<br /><br />"
             "Number of AWCs launched: {:s} <br />"
             "Number of {:s} launched: {:s}".format(
-                awcs_launched_help_text(), indian_formatted_number(total_awcs), prop.title(), indian_formatted_number(total)
+                awcs_launched_help_text(),
+                indian_formatted_number(total_awcs),
+                prop.title(),
+                indian_formatted_number(total)
             )
         )
 
