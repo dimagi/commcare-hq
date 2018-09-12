@@ -1,22 +1,29 @@
 hqDefine("data_interfaces/js/find_by_id", [
     'jquery',
     'knockout',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
+    assertProperties,
     initialPageData
 ) {
-    var findModel = function () {
-        var self = {};
-        self.placeholder = gettext('Form Submission ID');
+    var findModel = function (options) {
+        assertProperties.assert(options, ['errorMessage', 'exportUrl', 'header', 'placeholder', 'successMessage']);
+
+        var self = options;
         self.query = ko.observable('');
         self.error = ko.observable('');
         self.link = ko.observable('');
         self.loading = ko.observable(false);
 
         self.linkMessage = ko.computed(function () {
-            return self.link() ? _.template("Form submission found! <a href='<%= link %>'>Click here</a> if you are not redirected.")({link: self.link()}) : "";
+            if (self.link()) {
+                var redirectTemplate = _.template(gettext("<a href='<%= link %>'>Click here</a> if you are not redirected."));
+                return self.successMessage + " " + redirectTemplate({link: self.link()});
+            }
+            return '';
         });
 
         self.allowFind = ko.computed(function () {
@@ -37,11 +44,11 @@ hqDefine("data_interfaces/js/find_by_id", [
                 success: function (data) {
                     self.loading(false);
                     self.link(data.link);
-                    document.location = data.link;
+                    //document.location = data.link;
                 },
                 error: function () {
                     self.loading(false);
-                    self.error(gettext('Could not find form submission'));
+                    self.error(self.errorMessage);
                 },
             });
         };
@@ -50,6 +57,20 @@ hqDefine("data_interfaces/js/find_by_id", [
     };
 
     $(function () {
-        $("#find-form").koApplyBindings(findModel());
+        $("#find-case").koApplyBindings(findModel({
+            exportUrl: initialPageData.reverse('list_case_exports'),
+            header: gettext('Find Case'),
+            placeholder: gettext('Case ID'),
+            successMessage: gettext('Case found!'),
+            errorMessage: gettext('Could not find case'),
+        }));
+
+        $("#find-form").koApplyBindings(findModel({
+            exportUrl: initialPageData.reverse('list_form_exports'),
+            header: gettext('Find Form Submission'),
+            errorMessage: gettext('Could not find form submission'),
+            placeholder: gettext('Form Submission ID'),
+            successMessage: gettext('Form submission found!'),
+        }));
     });
 });

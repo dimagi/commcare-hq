@@ -639,8 +639,6 @@ def find_by_id(request, domain):
         },
         'can_view_cases': can_view_cases,
         'can_view_forms': can_view_forms,
-        'case_export_url': reverse('list_case_exports', args=[domain]),
-        'form_export_url': reverse('list_form_exports', args=[domain]),
     })
 
 
