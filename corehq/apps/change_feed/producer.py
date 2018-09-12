@@ -44,8 +44,8 @@ def send_to_kafka(producer, topic, change_meta):
 
 class ChangeProducer(object):
 
-    def __init__(self, kafka=None):
-        self._kafka = kafka
+    def __init__(self):
+        self._kafka = None
         self._producer = None
         self._has_error = False
 
@@ -62,7 +62,10 @@ class ChangeProducer(object):
 
     @property
     def producer(self):
-        if self._producer is None and not self._has_error:
+        if self._producer is not None:
+            return self._producer
+
+        if not self._has_error:
             if self.kafka is not None:
                 self._producer = SimpleProducer(
                     self._kafka, async_send=False, req_acks=SimpleProducer.ACK_AFTER_LOCAL_WRITE,
