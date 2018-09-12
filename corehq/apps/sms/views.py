@@ -42,7 +42,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
-from corehq.apps.reminders.util import get_two_way_number_for_recipient, requires_old_reminder_framework
+from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.models import (
     SMS, INCOMING, OUTGOING, ForwardingRule,
     MessagingEvent, SelfRegistrationInvitation,
@@ -1922,8 +1922,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     ENABLED if domain_obj.custom_daily_outbound_sms_limit else DISABLED,
                 "custom_daily_outbound_sms_limit":
                     domain_obj.custom_daily_outbound_sms_limit,
-                "uses_new_reminders":
-                    'Y' if domain_obj.uses_new_reminders else 'N',
             }
             form = SettingsForm(
                 initial=initial,
@@ -1974,11 +1972,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                      "custom_chat_template"),
                     ("custom_daily_outbound_sms_limit",
                      "custom_daily_outbound_sms_limit"),
-                ])
-            if self.new_reminders_migrator:
-                field_map.extend([
-                    ("uses_new_reminders",
-                     "uses_new_reminders"),
                 ])
             for (model_field_name, form_field_name) in field_map:
                 setattr(domain_obj, model_field_name,
