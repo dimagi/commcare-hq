@@ -190,7 +190,10 @@ def get_pillow_json(pillow_config, consumer=None):
 
     if _is_kafka(checkpoint):
         # breaking composition boundaries so that we can use one Kafka connection
-        offsets = consumer.end_offsets(checkpoint.wrapped_sequence.keys())
+        offsets = {
+            "{},{}".format(tp.topic, tp.partition): offset
+            for tp, offset in consumer.end_offsets(checkpoint.wrapped_sequence.keys()).items()
+        }
     else:
         offsets = pillow.get_change_feed().get_latest_offsets_json()
 
