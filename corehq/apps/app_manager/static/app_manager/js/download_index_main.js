@@ -8,12 +8,12 @@ hqDefine('app_manager/js/download_index_main',[
     'd3/d3.min'
 ],function ($, _, ace) {
 
-    var requirejsConfig = requirejs.s.contexts._.config;
-
-    if(requirejsConfig.paths["ace-builds/src-min-noconflict/mode-json"])
-        ace.config.setModuleUrl('ace/mode/json',requirejsConfig.paths["ace-builds/src-min-noconflict/mode-json"]);
-    if(requirejsConfig.paths["ace-builds/src-min-noconflict/mode-xml"])
-        ace.config.setModuleUrl('ace/mode/xml',requirejsConfig.paths["ace-builds/src-min-noconflict/mode-xml"]);
+    // var requirejsConfig = requirejs.s.contexts._.config;
+    //
+    // if(requirejsConfig.paths["ace-builds/src-min-noconflict/mode-json"])
+    //     ace.config.setModuleUrl('ace/mode/json',requirejsConfig.paths["ace-builds/src-min-noconflict/mode-json"]);
+    // if(requirejsConfig.paths["ace-builds/src-min-noconflict/mode-xml"])
+    //     ace.config.setModuleUrl('ace/mode/xml',requirejsConfig.paths["ace-builds/src-min-noconflict/mode-xml"]);
 
     $(function () {
         var elements = $('.prettyprint');
@@ -31,7 +31,8 @@ hqDefine('app_manager/js/download_index_main',[
                 }
             );
             var fileName = $(elem).data('filename');
-
+            editor.setOption('useWorker',false);
+            )
             if (fileName.endsWith('json')) {
                 editor.session.setMode('ace/mode/json');
             } else {
