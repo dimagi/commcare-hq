@@ -8,7 +8,7 @@ from django.db import migrations
 from corehq.sql_db.operations import RawSQLMigration
 
 
-raw_migrations = RawSQLMigration(('migrations', 'sql_templates', 'database_views'))
+raw_migrations = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
 
 class Migration(migrations.Migration):
