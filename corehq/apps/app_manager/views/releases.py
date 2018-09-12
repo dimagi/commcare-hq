@@ -103,6 +103,8 @@ def paginate_releases(request, domain, app_id):
     apps = get_docs(Application.get_db(), app_ids)
     for app in apps:
         app.pop('translations')
+        app.pop('multimedia_map')
+        app.pop('media_language_map')
     saved_apps = [SavedAppBuild.wrap(app, scrap_old_conventions=False).to_saved_build_json(timezone)
                   for app in apps]
 
