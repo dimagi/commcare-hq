@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 import json
 import time
-from django.conf import settings
 
 from corehq.util.soft_assert import soft_assert
 from kafka import SimpleProducer
