@@ -35,7 +35,7 @@ class ChunkedPorcessingTest(TestCase):
     @trap_extra_setup(KafkaUnavailableError)
     def test_basic(self):
         # setup
-        feed = KafkaChangeFeed(topics=[topics.CASE], group_id='test-kafka-feed')
+        feed = KafkaChangeFeed(topics=[topics.CASE], client_id='test-kafka-feed')
         pillow_name = 'test-chunked-processing'
         checkpoint = PillowCheckpoint(pillow_name, feed.sequence_format)
         processor = ChunkedCountProcessor()
