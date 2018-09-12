@@ -11,7 +11,6 @@ from pillow_retry.models import PillowError
 from pillowtop import get_all_pillow_configs
 from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.feed.interface import Change
-from pillowtop.pillow.interface import PillowRuntimeContext
 
 
 class ExceptionA(Exception):
@@ -53,7 +52,6 @@ class PillowtopRetryAllPillowsTests(TestCase):
         doc = self._get_random_doc()
         pillow.process_with_error_handling(
             Change(id=doc['id'], sequence_id='3', document=doc),
-            PillowRuntimeContext(changes_seen=0)
         )
 
         errors = PillowError.objects.filter(pillow=pillow.pillow_id).all()
