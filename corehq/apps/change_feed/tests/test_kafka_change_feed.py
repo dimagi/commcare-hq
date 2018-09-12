@@ -4,14 +4,11 @@ from copy import deepcopy
 import uuid
 
 from django.test import SimpleTestCase, TestCase
-from kafka import SimpleProducer
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.connection import get_simple_kafka_client_or_none
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
-from corehq.apps.change_feed.producer import send_to_kafka
+from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_multi_topic_first_available_offsets
-from memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.feed.interface import ChangeMeta
 from pillowtop.pillow.interface import ConstructedPillow
@@ -116,12 +113,7 @@ class KafkaCheckpointTest(TestCase):
         self.assertEqual(feed.get_current_checkpoint_offsets(), current_kafka_offsets)
 
 
-@memoized
-def _get_producer():
-    return SimpleProducer(get_simple_kafka_client_or_none())
-
-
 def publish_stub_change(topic):
     meta = ChangeMeta(document_id=uuid.uuid4().hex, data_source_type='dummy-type', data_source_name='dummy-name')
-    send_to_kafka(_get_producer(), topic, meta)
+    producer.send_change(topic, meta)
     return meta
