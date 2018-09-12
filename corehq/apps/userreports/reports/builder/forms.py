@@ -882,7 +882,18 @@ class ConfigureNewReportBase(forms.Form):
         return data_source_config._id
 
     def update_report(self):
+        self._update_data_source_if_necessary()
+        self.existing_report.aggregation_columns = self._report_aggregation_cols
+        self.existing_report.columns = self._report_columns
+        self.existing_report.filters = self._report_filters
+        self.existing_report.configured_charts = self._report_charts
+        self.existing_report.title = self.cleaned_data['report_title'] or _("Report Builder Report")
+        self.existing_report.description = self.cleaned_data['report_description']
+        self.existing_report.validate()
+        self.existing_report.save()
+        return self.existing_report
 
+    def _update_data_source_if_necessary(self):
         data_source = DataSourceConfiguration.get(self.existing_report.config_id)
         if data_source.get_report_count() > 1:
             # If another report is pointing at this data source, create a new
@@ -901,16 +912,6 @@ class ConfigureNewReportBase(forms.Form):
                     setattr(data_source, property_name, value)
                 data_source.save()
                 tasks.rebuild_indicators.delay(data_source._id)
-
-        self.existing_report.aggregation_columns = self._report_aggregation_cols
-        self.existing_report.columns = self._report_columns
-        self.existing_report.filters = self._report_filters
-        self.existing_report.configured_charts = self._report_charts
-        self.existing_report.title = self.cleaned_data['report_title'] or _("Report Builder Report")
-        self.existing_report.description = self.cleaned_data['report_description']
-        self.existing_report.validate()
-        self.existing_report.save()
-        return self.existing_report
 
     def create_report(self):
         """
