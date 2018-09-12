@@ -29,7 +29,7 @@ def get_view_migrations():
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0060_disha_indicators'),
+        ('icds_reports', '0061_added_phone_number_to_views'),
     ]
 
     operations = get_view_migrations()
