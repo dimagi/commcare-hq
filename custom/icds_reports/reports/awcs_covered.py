@@ -103,7 +103,10 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
 
     info = _(
         "{:s}<br /><br />"
-        "Number of AWCs launched: {:s}".format(awcs_launched_help_text(), indian_formatted_number(total_awcs))
+        "Number of AWCs launched: {:s}".format(
+            awcs_launched_help_text(),
+            indian_formatted_number(total_awcs)
+        )
     )
     if level != 5:
         info = _(
