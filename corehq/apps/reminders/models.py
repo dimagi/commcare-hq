@@ -1535,29 +1535,6 @@ class CaseReminderHandler(Document):
         self.get_handler_ids.clear(CaseReminderHandler, self.domain, reminder_type_filter=reminder_type)
         self.get_handler_ids_for_case_post_save.clear(CaseReminderHandler, self.domain, self.case_type)
 
-    def save(self, **params):
-        from corehq.apps.reminders.tasks import process_reminder_rule
-        self.check_state()
-        schedule_changed = params.pop("schedule_changed", False)
-        prev_definition = params.pop("prev_definition", None)
-        send_immediately = params.pop("send_immediately", False)
-        unlock = params.pop("unlock", False)
-        self.last_modified = datetime.utcnow()
-        if unlock:
-            self.locked = False
-        else:
-            self.locked = True
-        super(CaseReminderHandler, self).save(**params)
-        self.clear_caches()
-        delay = self.start_condition_type == CASE_CRITERIA
-        if not unlock:
-            if delay:
-                process_reminder_rule.delay(self, schedule_changed,
-                    prev_definition, send_immediately)
-            else:
-                process_reminder_rule(self, schedule_changed,
-                    prev_definition, send_immediately)
-
     def reset_rule_progress(self, total):
         try:
             client = get_redis_client()
