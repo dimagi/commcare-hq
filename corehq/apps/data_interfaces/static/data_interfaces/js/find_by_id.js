@@ -10,7 +10,7 @@ hqDefine("data_interfaces/js/find_by_id", [
     initialPageData
 ) {
     var findModel = function (options) {
-        assertProperties.assert(options, ['errorMessage', 'exportUrl', 'header', 'placeholder', 'successMessage']);
+        assertProperties.assert(options, ['errorMessage', 'header', 'help', 'placeholder', 'successMessage']);
 
         var self = options;
         self.query = ko.observable('');
@@ -60,16 +60,20 @@ hqDefine("data_interfaces/js/find_by_id", [
 
     $(function () {
         $("#find-case").koApplyBindings(findModel({
-            exportUrl: initialPageData.reverse('list_case_exports'),
             header: gettext('Find Case'),
+            help: _.template(gettext('IDs can be found in a <a href="<%= url %>">case data export</a>'))({
+                url: initialPageData.reverse('list_case_exports'),
+            }),
             placeholder: gettext('Case ID'),
             successMessage: gettext('Case found!'),
             errorMessage: gettext('Could not find case'),
         }));
 
         $("#find-form").koApplyBindings(findModel({
-            exportUrl: initialPageData.reverse('list_form_exports'),
             header: gettext('Find Form Submission'),
+            help: _.template(gettext('IDs can be found in a <a href="<%= url %>">form data export</a>'))({
+                url: initialPageData.reverse('list_form_exports'),
+            }),
             errorMessage: gettext('Could not find form submission'),
             placeholder: gettext('Form Submission ID'),
             successMessage: gettext('Form submission found!'),

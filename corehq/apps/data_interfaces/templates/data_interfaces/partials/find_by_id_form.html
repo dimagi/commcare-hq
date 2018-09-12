@@ -2,11 +2,7 @@
 {% load i18n %}
 
 <legend data-bind="text: header"></legend>
-<div class="help-block">
-    {% blocktrans %}
-        IDs can be found in a <a data-bind="attr: {href: exportUrl}">data export</a>.
-    {% endblocktrans %}
-</div>
+<div class="help-block" data-bind="html: help"></div>
 <div class="form-group" data-bind="css: {'has-error': error, 'has-success': link}">
     <div class="col-sm-4 col-md-3">
         <input type="text" class="form-control" data-bind="value: query, valueUpdate: 'keyup', attr: {placeholder: placeholder}" />
