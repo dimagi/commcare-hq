@@ -641,7 +641,7 @@ def track_time(func):
 
     def get_async_indicator_time():
         return AsyncIndicator.objects.exclude(date_queued__isnull=True)\
-            .aggregate(Max('date_created'))['date_created__max'] or datetime.now().date()
+            .aggregate(Max('date_created'))['date_created__max'] or datetime.now()
 
     def get_sync_datasource_time():
         return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
