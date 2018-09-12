@@ -296,7 +296,7 @@ def expected_bulk_app_sheet_rows(app):
     """
 
     # keys are the names of sheets, values are lists of tuples representing rows
-    rows = {MODULES_AND_FORMS_SHEET_NAME: []}
+    rows = OrderedDict({MODULES_AND_FORMS_SHEET_NAME: []})
 
     for mod_index, module in enumerate(app.get_modules()):
         # This is duplicated logic from expected_bulk_app_sheet_headers,

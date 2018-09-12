@@ -187,12 +187,7 @@ class WorksheetJSONReader(IteratorJSONReader):
 
 class WorkbookJSONReader(object):
 
-    def __init__(self, f):
-        if isinstance(f, six.string_types):
-            file_or_filename = f
-        else:
-            file_or_filename = f
-
+    def __init__(self, file_or_filename):
         try:
             self.wb = openpyxl.load_workbook(file_or_filename, read_only=True, data_only=True)
         except (BadZipfile, InvalidFileException, KeyError) as e:

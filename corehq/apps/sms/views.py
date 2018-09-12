@@ -2211,7 +2211,7 @@ class InvitationAppInfoView(View, DomainViewMixin):
         raise Http404()
 
     def get(self, *args, **kwargs):
-        url = six.binary_type(self.odk_url).strip()
+        url = bytes(self.odk_url).strip()
         response = b'ccapp: %s signature: %s' % (url, sign(url))
         response = base64.b64encode(response)
         return HttpResponse(response)

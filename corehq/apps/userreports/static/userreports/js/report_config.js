@@ -331,6 +331,7 @@ hqDefine('userreports/js/report_config', function () {
                     self.saveButton.fire("change");
                 });
                 self.previewError = ko.observable(false);
+                self.previewErrorMessage = ko.observable(null);
                 self._suspendPreviewRefresh = false;
                 self._pendingUpdate = false;
                 self.refreshPreview = function (serializedColumns) {
@@ -368,11 +369,15 @@ hqDefine('userreports/js/report_config', function () {
                                     self.renderReportPreview(data);
                                 }
                             },
-                            error: function () {
+                            error: function (response) {
                                 self._suspendPreviewRefresh = false;
                                 if (self._pendingUpdate) {
                                     self.refreshPreview();
                                 } else {
+                                    if (response.status === 400) {
+                                        var errorMessage = response.responseJSON;
+                                        self.previewErrorMessage(errorMessage.message);
+                                    }
                                     self.previewError(true);
                                 }
                             },
@@ -386,6 +391,7 @@ hqDefine('userreports/js/report_config', function () {
 
                 self.renderReportPreview = function (data) {
                     self.previewError(false);
+                    self.previewErrorMessage(null);
                     self.noChartForConfigWarning(false);
                     self.tooManyChartCategoriesWarning(false);
                     self._renderTablePreview(data['table']);

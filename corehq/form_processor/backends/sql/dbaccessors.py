@@ -392,13 +392,13 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         :returns: An iterator of XFormInstanceSQL objects
         '''
-        from corehq.sql_db.util import run_query_across_partitioned_databases
+        from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
         annotate = {
             'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
         }
 
-        return run_query_across_partitioned_databases(
+        return paginate_query_across_partitioned_databases(
             XFormInstanceSQL,
             Q(last_modified__gt=start_datetime),
             annotate=annotate,

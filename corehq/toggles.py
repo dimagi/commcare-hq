@@ -483,7 +483,8 @@ DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
     'Offer hosting and sharing data files for downloading from a secure dropzone',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -1602,6 +1603,14 @@ RELATED_LOCATIONS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['jemord'],
     help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
+)
+
+ICDS_DISHA_API = StaticToggle(
+    'icds_disha_access',
+    'ICDS: Access DISHA API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'icds-new', 'softlayer'},
 )
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
