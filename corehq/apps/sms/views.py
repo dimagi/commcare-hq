@@ -18,7 +18,6 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
-from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS, ApiUser
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.sms.api import (
     send_sms,
@@ -184,26 +183,6 @@ class ComposeMessageView(BaseMessagingSectionView):
     @use_typeahead
     def dispatch(self, *args, **kwargs):
         return super(ComposeMessageView, self).dispatch(*args, **kwargs)
-
-
-@require_api_user_permission(PERMISSION_POST_SMS)
-def sms_in(request):
-    """
-    CommCareHQ's generic inbound sms post api, requiring an ApiUser with permission to post sms.
-    The request must be a post, and must have the following post parameters:
-        username - ApiUser username
-        password - ApiUser password
-        phone_number - phone number message was sent from
-        message - text of message
-    """
-    backend_api = "HQ_HTTP_INBOUND"
-    phone_number = request.POST.get("phone_number", None)
-    message = request.POST.get("message", None)
-    if phone_number is None or message is None:
-        return HttpResponse("Please specify 'phone_number' and 'message' parameters.", status=400)
-    else:
-        incoming(phone_number, message, backend_api)
-        return HttpResponse("OK")
 
 
 def get_sms_autocomplete_context(request, domain):
