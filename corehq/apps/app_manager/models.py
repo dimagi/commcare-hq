@@ -5525,11 +5525,18 @@ def validate_detail_screen_field(field):
 
 
 class SavedAppBuild(ApplicationBase):
-    def to_saved_build_json(self, timezone):
+    def releases_list_json(self, timezone):
+        """
+        returns minimum possible data that could be used to list a Build on releases page on HQ
+
+        :param timezone: timezone expected for timestamps in result
+        :return: data dict
+        """
         data = super(SavedAppBuild, self).to_json().copy()
+        # ignore details that are not used
         for key in ('modules', 'user_registration', 'external_blobs',
                     '_attachments', 'profile', 'translations',
-                    'description', 'short_description'):
+                    'description', 'short_description', 'multimedia_map', 'media_language_map'):
             data.pop(key, None)
         built_on_user_time = ServerTime(self.built_on).user_time(timezone)
         data.update({
