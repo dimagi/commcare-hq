@@ -8,7 +8,7 @@ hqDefine('app_manager/js/download_index_main',[
     'd3/d3.min'
 ],function () {
 
-    hqRequire(["nvd3/nv.d3.min"],function () {
+    hqRequire(['ace-builds/src-min-noconflict/mode-json'],function () {
         alert("heheheheeheh");
     }) ;
     // ace.config.set('basePath', '/ace-builds/src-noconflict');
