@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from uuid import UUID
-
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -12,7 +10,6 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from corehq import toggles
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
-from corehq.apps.userreports.const import DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE
 from corehq.apps.userreports.models import guess_data_source_type
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
