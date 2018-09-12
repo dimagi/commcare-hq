@@ -649,6 +649,13 @@ class ProjectDataTab(UITab):
                         'subpages': []
                     })
 
+            if self.can_view_form_exports or self.can_view_case_exports:
+                export_data_views.append({
+                    'title': _('Find Data by ID'),
+                    'url': reverse('data_find_by_id', args=[self.domain]),
+                    'icon': 'fa fa-search',
+                })
+
             if self.should_see_daily_saved_export_list_view:
                 export_data_views.append({
                     "title": _(DailySavedExportListView.page_title),
