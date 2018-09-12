@@ -5,8 +5,8 @@ hqDefine('app_manager/js/download_index_main',[
     'ace-builds/src-min-noconflict/ace',
     'app_manager/js/download_async_modal',
     'app_manager/js/source_files',
-
 ],function ($, _, ace) {
+    ace.config.set('basePath', '/ace-builds/src-noconflict');
     $(function () {
         var elements = $('.prettyprint');
 
