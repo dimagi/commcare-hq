@@ -62,6 +62,7 @@ branches:
   - rn_fix_role_delete # Rohit sept 11
   - migratin_user_pages # Rohit sept 11
   - rn_pre_migration_work_for_hqmedia # Rohit Sept 11
+  - jls/find-data-by-id  # Jenny Sept 11
 submodules:
   submodules/django-digest-src:
     branches: []
