@@ -1189,7 +1189,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             LEFT OUTER JOIN "{agg_gm_table}" gm ON child_health.doc_id = gm.case_id AND gm.month = %(start_date)s
             LEFT OUTER JOIN "{agg_pnc_table}" pnc ON child_health.doc_id = pnc.case_id AND pnc.month = %(start_date)s
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id AND df.month = %(start_date)s
-            WHERE child_health.doc_id IS NOT NULL AND (child_health.closed_on IS NULL OR child_health.closed_on > %(next_month)s) AND child_health.opened_on < %(next_month)s
+            WHERE child_health.doc_id IS NOT NULL
             ORDER BY child_health.awc_id, child_health.case_id
         )
         """.format(
