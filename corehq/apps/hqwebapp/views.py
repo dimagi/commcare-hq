@@ -107,7 +107,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
         exc_message = six.text_type(exc)
     else:
         exc_message = exc.message
-        if isinstance(exc_message, six.binary_type):
+        if isinstance(exc_message, bytes):
             exc_message = exc_message.decode('utf-8')
 
     return 'Traceback (most recent call last):\n{}{}: {}'.format(
@@ -272,13 +272,12 @@ def server_up(req):
     statuses = run_checks(checks_to_do)
     failed_checks = [(check, status) for check, status in statuses if not status.success]
 
-    tags = [
-        'status:{}'.format('failed' if failed_checks else 'ok'),
-    ]
     for check_name, status in statuses:
-        datadog_gauge('commcare.serverup.check', status.duration, tags=tags + [
+        tags = [
+            'status:{}'.format('failed' if not status.success else 'ok'),
             'check:{}'.format(check_name)
-        ])
+        ]
+        datadog_gauge('commcare.serverup.check', status.duration, tags=tags)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [

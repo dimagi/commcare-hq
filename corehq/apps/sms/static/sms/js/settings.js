@@ -7,7 +7,7 @@ hqDefine("sms/js/settings", [
     $,
     ko,
     initialPageData,
-    select2Handler,
+    select2Handler
 ) {
 
     function DayTimeWindow(day, start_time, end_time, time_input_relationship) {

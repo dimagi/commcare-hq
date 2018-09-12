@@ -50,7 +50,7 @@ class OtaV3RestoreTest(TestCase):
 class TestRestoreContent(SimpleTestCase):
 
     def _expected(self, username, body, items=None):
-        items_text = (b' items="%s"' % six.binary_type(items)) if items is not None else b''
+        items_text = (b' items="%s"' % bytes(items)) if items is not None else b''
         return (
             b'<OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items)s>'
             b'<message nature="ota_restore_success">Successfully restored account %(username)s!</message>'

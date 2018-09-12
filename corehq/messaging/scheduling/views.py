@@ -888,7 +888,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                     rule = AutomaticUpdateRule(
                         domain=self.domain,
                         active=True,
-                        migrated=True,
                         workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
                     )
 

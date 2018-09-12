@@ -166,7 +166,7 @@ class WrappedAttribs(object):
 class WrappedNode(object):
 
     def __init__(self, xml, namespaces=namespaces):
-        if isinstance(xml, six.binary_type):
+        if isinstance(xml, bytes):
             xml = xml.decode('utf-8')
         if isinstance(xml, six.string_types):
             self.xml = parse_xml(xml) if xml else None
@@ -965,8 +965,12 @@ class XForm(WrappedNode):
         questions = []
         repeat_contexts = set()
         group_contexts = set()
-        excluded_paths = set()
+        excluded_paths = set()  # prevent adding the same question twice
 
+        # control_nodes will contain all nodes in question tree (the <h:body> of an xform)
+        # The question tree doesn't contain every question - notably, it's missing hidden values - so
+        # we also need to look at the data tree (the <model> in the xform's <head>). Getting the leaves
+        # of the data tree should be sufficient to fill in what's not available from the question tree.
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
 
@@ -1006,6 +1010,7 @@ class XForm(WrappedNode):
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
 
+            # single select and multi-select questions: add choices
             if cnode.items is not None:
                 options = []
                 for item in cnode.items:

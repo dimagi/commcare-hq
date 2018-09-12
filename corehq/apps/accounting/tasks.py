@@ -860,7 +860,7 @@ def send_prepaid_credits_export():
     writer.writerow(headers)
     for row in body:
         writer.writerow([
-            val if isinstance(val, six.text_type) else six.binary_type(val)
+            val if isinstance(val, six.text_type) else bytes(val)
             for val in row
         ])
 

@@ -10,7 +10,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.filters.api import MobileWorkersOptionsView
 from corehq.apps.hqwebapp.decorators import (
     use_multiselect,
-    use_select2,
+    use_select2_v4,
 )
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -126,7 +126,7 @@ class BaseGroupsView(BaseUserSettingsView):
 
     @method_decorator(require_can_edit_commcare_users)
     @use_multiselect
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(BaseGroupsView, self).dispatch(request, *args, **kwargs)
 

@@ -1,9 +1,9 @@
-hqDefine("hqwebapp/js/select_2_ajax_widget", [
+hqDefine("hqwebapp/js/select_2_ajax_widget_v3", [
     'jquery',
-    'select2/dist/js/select2.full.min',
+    'select2-3.5.2-legacy/select2',
 ], function ($) {
     $(function () {
-        $(".hqwebapp-select2-ajax").each(function () {
+        $(".hqwebapp-select2-ajax-v3").each(function () {
             var $select = $(this),
                 data = $select.data();
             $select.select2({

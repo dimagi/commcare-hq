@@ -630,10 +630,7 @@ def get_age_filters(beta):
 
 
 def get_age_condition(beta):
-    if beta:
-        return "age_tranche != :age_72"
-    else:
-        return "age_tranche != :age_0 AND age_tranche != :age_6 AND age_tranche != :age_72"
+    return "age_tranche != :age_72"
 
 
 def track_time(func):
