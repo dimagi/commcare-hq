@@ -972,25 +972,28 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
             'The data source referenced by this report could not be found.'
         ))
 
-    is_static = id_is_static(config_id)
-    if is_static:
-        config = StaticDataSourceConfiguration.by_id(config_id)
-        if config.domain != domain:
-            _raise_not_found()
-    elif data_source_type == DATA_SOURCE_TYPE_STANDARD:
-        try:
-            config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
-        except DocumentNotFound:
-            _raise_not_found()
+    if data_source_type == DATA_SOURCE_TYPE_STANDARD:
+        is_static = id_is_static(config_id)
+        if is_static:
+            config = StaticDataSourceConfiguration.by_id(config_id)
+            if config.domain != domain:
+                _raise_not_found()
+        else:
+            try:
+                config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
+            except DocumentNotFound:
+                _raise_not_found()
+        return config, is_static
     elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
         from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
         try:
             config = AggregateTableDefinition.objects.get(id=int(config_id), domain=domain)
+            return config, False
         except AggregateTableDefinition.DoesNotExist:
             _raise_not_found()
     else:
         raise InvalidDataSourceType('{} is not a valid data source type!'.format(data_source_type))
-    return config, is_static
+
 
 
 def id_is_static(data_source_id):
