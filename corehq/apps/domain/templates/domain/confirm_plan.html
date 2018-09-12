@@ -120,14 +120,56 @@
             </div>
             <div class="modal-body">
                 {% blocktrans %}
-                    We'd love to make CommCare work better for you.
-                    Let us know what we can do to improve, or why you're downgrading.
+                    We’d love to make CommCare work better for you.
+                    Please help us, by answering these simple questions.
                 {% endblocktrans %}
+
                 <br><br>
+                {% blocktrans %}
+                    Why are you downgrading your subscription today?
+                {% endblocktrans %}
+                <select multiple="multiple" class="form-control" id="select_downgrade_reason" data-bind="value: downgradeReason, options: downgradeReasonList"></select>
+                <br><br>
+
+                <div data-bind="visible: projectEnded">
+                    {% blocktrans %}
+                        Is there a chance your project may start again?
+                    {% endblocktrans %}
+                    <select class="form-control" id="project-restart">
+                        <option value='true'>{% trans "Yes" %}</option>
+                        <option value='false'>{% trans "No" %}</option>
+                    </select>
+                    <br><br>
+                </div>
+
+                <div data-bind="visible: newToolNeeded">
+                    {% blocktrans %}
+                        Could you indicate which new tool you’re using?
+                    {% endblocktrans %}
+                    <textarea class="form-control" id="text-new-tool"></textarea>
+                    <br><br>
+                    {% blocktrans %}
+                        Why are you switching to a new tool?
+                    {% endblocktrans %}
+                    <select multiple="multiple" class="form-control" data-bind="options: newToolReasonList, value: newToolReason"></select>
+                    <br><br>
+                </div>
+
+                <div data-bind="visible: otherSelected">
+                    {% blocktrans %}
+                        Please specify
+                    {% endblocktrans %}
+                    <textarea class="form-control"></textarea>
+                    <br><br>
+                </div>
+
+                {% blocktrans %}
+                    Please let us know any other feedback you have
+                {% endblocktrans %}
                 <textarea class="form-control"></textarea>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade">{% trans "OK" %}</button>
+                <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade">{% trans "Continue" %}</button>
             </div>
         </div>
     </div>

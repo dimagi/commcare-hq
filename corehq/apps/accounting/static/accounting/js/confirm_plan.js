@@ -17,8 +17,34 @@ hqDefine('accounting/js/confirm_plan', [
         self.currentPlan = currentPlan;
         self.newPlan = newPlan;
 
-        // If the user is upgrading, don't let them continue until they have agreed to the therms
+        // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
         self.userAgreementSigned = ko.observable(!isUpgrade);
+
+
+
+        self.downgradeReasonList = ko.observableArray([
+            "My project ended",
+            "The funding for my project ended",
+            "I don’t need the features of my paid plan anymore but I plan on continuing using CommCare",
+            "We are switching to a different mobile data collection tool",
+        ]);
+        self.newToolReasonList = ko.observableArray([
+            "For budget reason",
+            "I need more limited features",
+            "I need additional/custom features",
+            "Other",
+        ]);
+        self.downgradeReason = ko.observable("");
+        self.newToolReason = ko.observable("");
+        self.projectEnded = ko.computed(function () {
+            return self.downgradeReason() === "My project ended";
+        });
+        self.newToolNeeded = ko.computed(function () {
+            return self.downgradeReason() === "We are switching to a different mobile data collection tool";
+        });
+        self.otherSelected = ko.computed(function () {
+            return self.newToolReason() === "Other";
+        });
 
         self.form = undefined;
         self.openDowngradeModal = function (confirmPlanModel, e) {
