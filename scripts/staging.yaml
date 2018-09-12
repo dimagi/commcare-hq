@@ -53,16 +53,14 @@ branches:
   - rn_sending_report_to_celery_task # Rohit Aug 8
 #  - np/celery-4.x-monkeypatch  # Nick P Sept 4
 #  - np/celery-4.x-2  # Nick P Aug 22
-  - nh/omrs/atom+create  # Norman Aug 23
   - pv/deactivated-users # Preethi Aug 23
   - rn_migrating_sms_pages # Rohit Aug 29
   - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
   - sr-batch-ucrpillow # Sravan Sept 4
   - rn_migratin_download_index # Rohit Sept 10
-  - rn_fix_role_delete # Rohit sept 11
-  - migratin_user_pages # Rohit sept 11
   - rn_pre_migration_work_for_hqmedia # Rohit Sept 11
   - jls/find-data-by-id  # Jenny Sept 11
+  - nh/omrs/atom  # Norman Sept 12
 submodules:
   submodules/django-digest-src:
     branches: []
