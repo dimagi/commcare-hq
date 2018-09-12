@@ -1058,9 +1058,10 @@ class ConfigureNewReportBase(forms.Form):
             return [self._get_view_model(f) for f in self.existing_report.filters_without_prefilters]
         if self.source_type == 'case':
             return self._default_case_report_filters
-        else:
-            # self.source_type == 'form'
+        elif self.source_type == 'form':
             return self._default_form_report_filters
+        else:
+            return []
 
     @property
     @memoized
