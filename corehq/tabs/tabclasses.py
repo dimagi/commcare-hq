@@ -24,14 +24,6 @@ from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reminders.views import (
-    BroadcastListView as OldBroadcastListView,
-    CreateBroadcastView,
-    EditBroadcastView,
-    CopyBroadcastView,
-    EditScheduledReminderView,
-    CreateScheduledReminderView,
-    CreateComplexScheduledReminderView,
-    RemindersListView,
     KeywordsListView,
     AddNormalKeywordView,
     AddStructuredKeywordView,
@@ -59,7 +51,7 @@ from corehq.messaging.scheduling.views import (
     CreateConditionalAlertView,
     EditConditionalAlertView,
 )
-from corehq.messaging.util import show_messaging_dashboard, project_is_on_new_reminders
+from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
 from corehq.motech.views import MotechLogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
@@ -923,32 +915,6 @@ class MessagingTab(UITab):
     def reminders_urls(self):
         reminders_urls = []
 
-        if self.can_access_reminders and self.show_old_reminders_pages:
-            reminders_urls.extend([
-                {
-                    'title': _("Reminders"),
-                    'url': reverse(RemindersListView.urlname, args=[self.domain]),
-                    'subpages': [
-                        {
-                            'title': _("Edit Reminder"),
-                            'urlname': EditScheduledReminderView.urlname,
-                        },
-                        {
-                            'title': _("Schedule Reminder"),
-                            'urlname': CreateScheduledReminderView.urlname,
-                        },
-                        {
-                            'title': _("Schedule Multi Event Reminder"),
-                            'urlname': CreateComplexScheduledReminderView.urlname,
-                        },
-                    ],
-                },
-                {
-                    'title': _("Reminder Calendar"),
-                    'url': reverse('scheduled_reminders', args=[self.domain]),
-                },
-            ])
-
         if self.can_use_inbound_sms:
             reminders_urls.append({
                 'title': _("Keywords"),
@@ -977,22 +943,6 @@ class MessagingTab(UITab):
 
     @property
     @memoized
-    def show_new_reminders_pages(self):
-        return (
-            project_is_on_new_reminders(self.project) or
-            toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
-        )
-
-    @property
-    @memoized
-    def show_old_reminders_pages(self):
-        return (
-            not project_is_on_new_reminders(self.project) or
-            toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
-        )
-
-    @property
-    @memoized
     def show_dashboard(self):
         return show_messaging_dashboard(self.domain, self.couch_user)
 
@@ -1010,58 +960,36 @@ class MessagingTab(UITab):
             ])
 
         if self.can_access_reminders:
-            if self.show_new_reminders_pages:
-                messages_urls.extend([
-                    {
-                        'title': _("Broadcasts"),
-                        'url': reverse(NewBroadcastListView.urlname, args=[self.domain]),
-                        'subpages': [
-                            {
-                                'title': _("New"),
-                                'urlname': CreateScheduleView.urlname,
-                            },
-                            {
-                                'title': _("Edit"),
-                                'urlname': EditScheduleView.urlname,
-                            },
-                        ],
-                    },
-                    {
-                        'title': _("Conditional Alerts"),
-                        'url': reverse(ConditionalAlertListView.urlname, args=[self.domain]),
-                        'subpages': [
-                            {
-                                'title': _("New"),
-                                'urlname': CreateConditionalAlertView.urlname,
-                            },
-                            {
-                                'title': _("Edit"),
-                                'urlname': EditConditionalAlertView.urlname,
-                            },
-                        ],
-                    },
-                ])
-            if self.show_old_reminders_pages:
-                messages_urls.extend([
-                    {
-                        'title': _("Broadcast Messages"),
-                        'url': reverse(OldBroadcastListView.urlname, args=[self.domain]),
-                        'subpages': [
-                            {
-                                'title': _("Edit Broadcast"),
-                                'urlname': EditBroadcastView.urlname,
-                            },
-                            {
-                                'title': _("New Broadcast"),
-                                'urlname': CreateBroadcastView.urlname,
-                            },
-                            {
-                                'title': _("Copy Broadcast"),
-                                'urlname': CopyBroadcastView.urlname,
-                            },
-                        ],
-                    },
-                ])
+            messages_urls.extend([
+                {
+                    'title': _("Broadcasts"),
+                    'url': reverse(NewBroadcastListView.urlname, args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': _("New"),
+                            'urlname': CreateScheduleView.urlname,
+                        },
+                        {
+                            'title': _("Edit"),
+                            'urlname': EditScheduleView.urlname,
+                        },
+                    ],
+                },
+                {
+                    'title': _("Conditional Alerts"),
+                    'url': reverse(ConditionalAlertListView.urlname, args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': _("New"),
+                            'urlname': CreateConditionalAlertView.urlname,
+                        },
+                        {
+                            'title': _("Edit"),
+                            'urlname': EditConditionalAlertView.urlname,
+                        },
+                    ],
+                },
+            ])
 
         return messages_urls
 
@@ -1158,33 +1086,18 @@ class MessagingTab(UITab):
                 url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
             ))
 
-        if self.show_old_reminders_pages:
-            if result:
-                result.append(dropdown_dict(None, is_divider=True))
+        if result:
+            result.append(dropdown_dict(None, is_divider=True))
 
-            result.append(dropdown_dict(_("Messages"), is_header=True))
-            result.append(dropdown_dict(
-                _("Broadcast Messages"),
-                url=reverse(OldBroadcastListView.urlname, args=[self.domain]),
-            ))
-            result.append(dropdown_dict(
-                _("Reminders"),
-                url=reverse(RemindersListView.urlname, args=[self.domain]),
-            ))
-
-        if self.show_new_reminders_pages:
-            if result:
-                result.append(dropdown_dict(None, is_divider=True))
-
-            result.append(dropdown_dict(_("Messages"), is_header=True))
-            result.append(dropdown_dict(
-                _("Broadcasts"),
-                url=reverse(NewBroadcastListView.urlname, args=[self.domain]),
-            ))
-            result.append(dropdown_dict(
-                _("Conditional Alerts"),
-                url=reverse(ConditionalAlertListView.urlname, args=[self.domain]),
-            ))
+        result.append(dropdown_dict(_("Messages"), is_header=True))
+        result.append(dropdown_dict(
+            _("Broadcasts"),
+            url=reverse(NewBroadcastListView.urlname, args=[self.domain]),
+        ))
+        result.append(dropdown_dict(
+            _("Conditional Alerts"),
+            url=reverse(ConditionalAlertListView.urlname, args=[self.domain]),
+        ))
 
         if not self.show_dashboard:
             if result:

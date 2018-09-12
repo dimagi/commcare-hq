@@ -22,7 +22,6 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
-from corehq.apps.reminders.views import ScheduledRemindersCalendarView
 from corehq.apps.sms.filters import EventTypeFilter, EventStatusFilter
 from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, MessagingEvent
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
@@ -119,11 +118,8 @@ class MessagingDashboardView(BaseMessagingSectionView):
             MessagingEventsReport,
         )
 
-        if project_is_on_new_reminders(self.domain_object):
-            scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
-                kwargs={'domain': self.domain, 'report_slug': ScheduleInstanceReport.slug})
-        else:
-            scheduled_events_url = reverse(ScheduledRemindersCalendarView.urlname, args=[self.domain])
+        scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
+            kwargs={'domain': self.domain, 'report_slug': ScheduleInstanceReport.slug})
 
         context = {
             'scheduled_events_url': scheduled_events_url,
@@ -176,15 +172,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         })
 
     def add_reminder_status_info(self, result):
-        if project_is_on_new_reminders(self.domain_object):
-            events_pending = get_count_of_active_schedule_instances_due(self.domain, datetime.utcnow())
-        else:
-            events_pending = len(CaseReminderHandler.get_all_reminders(
-                domain=self.domain,
-                due_before=datetime.utcnow(),
-                ids_only=True
-            ))
-
+        events_pending = get_count_of_active_schedule_instances_due(self.domain, datetime.utcnow())
         result['events_pending'] = events_pending
 
     def add_sms_count_info(self, result, days):

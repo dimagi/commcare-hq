@@ -116,9 +116,7 @@ def get_recipient_name(recipient, include_desc=True):
 
 
 def enqueue_reminder_directly(reminder):
-    from corehq.apps.reminders.management.commands.run_reminder_queue import (
-        ReminderEnqueuingOperation)
-    ReminderEnqueuingOperation().enqueue_directly(reminder)
+    return
 
 
 def create_immediate_reminder(contact, content_type, reminder_type=None,
