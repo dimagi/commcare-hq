@@ -1135,66 +1135,6 @@ class CaseReminderHandler(Document):
         reminder - The CaseReminder which to fire.
         return - True to move to the next event, False to not move to the next event.
         """
-        from .event_handlers import EVENT_HANDLER_MAP
-
-        if self.deleted():
-            reminder.retire()
-            return False
-
-        recipient = reminder.recipient
-        if self.recipient_is_list_of_locations(recipient):
-            # Use a better name here since recipient is a list of locations
-            locations = recipient
-
-            location_ids = self.get_recipient_location_ids(locations)
-            recipients = set()
-            for location_id in location_ids:
-                recipients.update([
-                    u for u in get_all_users_by_location(self.domain, location_id) if u.is_active
-                ])
-            recipients = list(recipients)
-        elif isinstance(recipient, list) and len(recipient) > 0:
-            recipients = recipient
-        elif isinstance(recipient, CouchUser) or is_commcarecase(recipient):
-            recipients = [recipient]
-        elif isinstance(recipient, Group):
-            recipients = recipient.get_users(is_active=True, only_commcare=False)
-        elif isinstance(recipient, CommCareCaseGroup):
-            recipients = list(recipient.get_cases())
-        else:
-            recipients = []
-            recipient = None
-
-        recipients = self.apply_user_data_filter(recipients)
-
-        if reminder.last_messaging_event_id and reminder.callback_try_count > 0:
-            # If we are on one of the timeout intervals, then do not create
-            # a new MessagingEvent. Instead, just resuse the one that was
-            # created last time.
-            logged_event = MessagingEvent.objects.get(pk=reminder.last_messaging_event_id)
-        else:
-            logged_event = MessagingEvent.create_from_reminder(self, reminder, recipient)
-        reminder.last_messaging_event_id = logged_event.pk
-
-        if recipient is None or len(recipients) == 0:
-            logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
-            return True
-
-        # Retrieve the corresponding verified number entries for all individual recipients
-        verified_numbers = {}
-        for r in recipients:
-            verified_numbers[r.get_id] = get_two_way_number_for_recipient(r)
-        
-        # Set the event initiation timestamp if we're not on any timeouts
-        if reminder.callback_try_count == 0:
-            reminder.event_initiation_timestamp = self.get_now()
-        
-        # Call the appropriate event handler
-        event_handler = EVENT_HANDLER_MAP.get(self.method)
-        last_fired = self.get_now() # Store the timestamp right before firing to ensure continuity in the callback lookups
-        event_handler(reminder, self, recipients, verified_numbers, logged_event)
-        reminder.last_fired = last_fired
-        logged_event.completed()
         return True
 
     @classmethod
