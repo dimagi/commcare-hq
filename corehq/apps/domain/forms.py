@@ -13,7 +13,6 @@ from captcha.fields import CaptchaField
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.users.models import CouchUser
-from corehq.messaging.util import project_is_on_new_reminders
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -398,11 +397,8 @@ class SnapshotSettingsForm(forms.Form):
 
         sr = cleaned_data["share_reminders"]
         if sr:  # check that the forms referenced by the events in each reminders exist in the project
-            if project_is_on_new_reminders(self.dom):
-                referenced_forms = AutomaticUpdateRule.get_referenced_form_unique_ids_from_sms_surveys(
-                    self.dom.name)
-            else:
-                referenced_forms = CaseReminderHandler.get_referenced_forms(domain=self.dom.name)
+            referenced_forms = AutomaticUpdateRule.get_referenced_form_unique_ids_from_sms_surveys(
+                self.dom.name)
             if referenced_forms:
                 apps = [Application.get(app_id) for app_id in app_ids]
                 app_forms = [f.unique_id for forms in [app.get_forms() for app in apps] for f in forms]

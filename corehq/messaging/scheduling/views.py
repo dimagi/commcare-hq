@@ -50,7 +50,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
 from corehq.messaging.tasks import initiate_messaging_rule_run
-from corehq.messaging.util import MessagingRuleProgressHelper, project_is_on_new_reminders
+from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -66,24 +66,6 @@ def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
 
 def get_conditional_alert_edit_critical_section(rule_id):
     return CriticalSection(['edit-conditional-alert-%s' % rule_id], timeout=5 * 60)
-
-
-def _requires_new_reminder_framework():
-    def decorate(fn):
-        @wraps(fn)
-        def wrapped(request, *args, **kwargs):
-            if (
-                hasattr(request, 'couch_user') and
-                toggles.NEW_REMINDERS_MIGRATOR.enabled(request.couch_user.username)
-            ):
-                return fn(request, *args, **kwargs)
-            if not hasattr(request, 'project'):
-                request.project = Domain.get_by_name(request.domain)
-            if project_is_on_new_reminders(request.project):
-                return fn(request, *args, **kwargs)
-            raise Http404()
-        return wrapped
-    return decorate
 
 
 class MessagingDashboardView(BaseMessagingSectionView):
@@ -298,7 +280,6 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     ACTION_DEACTIVATE_SCHEDULED_BROADCAST = 'deactivate_scheduled_broadcast'
     ACTION_DELETE_SCHEDULED_BROADCAST = 'delete_scheduled_broadcast'
 
-    @method_decorator(_requires_new_reminder_framework())
     @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
@@ -413,7 +394,6 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     async_handlers = [MessagingRecipientHandler]
     read_only_mode = False
 
-    @method_decorator(_requires_new_reminder_framework())
     @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
@@ -565,7 +545,6 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
     ACTION_RESTART = 'restart'
     ACTION_COPY = 'copy'
 
-    @method_decorator(_requires_new_reminder_framework())
     @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
@@ -754,7 +733,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     async_handlers = [ConditionalAlertAsyncHandler]
     read_only_mode = False
 
-    @method_decorator(_requires_new_reminder_framework())
     @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker

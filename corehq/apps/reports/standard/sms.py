@@ -69,7 +69,6 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
 )
-from corehq.messaging.util import project_is_on_new_reminders
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from django.core.exceptions import ObjectDoesNotExist
 import six
@@ -1639,16 +1638,6 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
             self.get_schedule_instance_display(schedule_instance)
             for schedule_instance in self.get_current_page_records()
         ]
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-            return False
-
-        return (
-            (user and toggles.NEW_REMINDERS_MIGRATOR.enabled(user.username)) or
-            (project and project_is_on_new_reminders(project))
-        )
 
     @property
     def shared_pagination_GET_params(self):

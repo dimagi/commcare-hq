@@ -18,7 +18,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, InvalidFormatException
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.util import project_is_on_new_reminders
 from corehq.util.quickcache import quickcache
 from django_prbac.utils import has_privilege
 
@@ -242,21 +241,3 @@ def get_reminder_domain(reminder_id):
     """
     from corehq.apps.reminders.models import CaseReminder
     return CaseReminder.get(reminder_id).domain
-
-
-def requires_old_reminder_framework():
-    def decorate(fn):
-        @wraps(fn)
-        def wrapped(request, *args, **kwargs):
-            if (
-                hasattr(request, 'couch_user') and
-                toggles.NEW_REMINDERS_MIGRATOR.enabled(request.couch_user.username)
-            ):
-                return fn(request, *args, **kwargs)
-            if not hasattr(request, 'project'):
-                request.project = Domain.get_by_name(request.domain)
-            if not project_is_on_new_reminders(request.project):
-                return fn(request, *args, **kwargs)
-            raise Http404()
-        return wrapped
-    return decorate
