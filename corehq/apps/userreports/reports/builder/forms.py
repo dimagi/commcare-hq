@@ -894,24 +894,25 @@ class ConfigureNewReportBase(forms.Form):
         return self.existing_report
 
     def _update_data_source_if_necessary(self):
-        data_source = DataSourceConfiguration.get(self.existing_report.config_id)
-        if data_source.get_report_count() > 1:
-            # If another report is pointing at this data source, create a new
-            # data source for this report so that we can change the indicators
-            # without worrying about breaking another report.
-            data_source_config_id = self._build_data_source()
-            self.existing_report.config_id = data_source_config_id
-        else:
-            indicators = self.ds_builder.indicators(
-                self._configured_columns,
-                self.cleaned_data['user_filters'] + self.cleaned_data['default_filters'],
-                self._is_multiselect_chart_report,
-            )
-            if data_source.configured_indicators != indicators:
-                for property_name, value in six.iteritems(self._get_data_source_configuration_kwargs()):
-                    setattr(data_source, property_name, value)
-                data_source.save()
-                tasks.rebuild_indicators.delay(data_source._id)
+        if self.ds_builder.uses_managed_data_source:
+            data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+            if data_source.get_report_count() > 1:
+                # If another report is pointing at this data source, create a new
+                # data source for this report so that we can change the indicators
+                # without worrying about breaking another report.
+                data_source_config_id = self._build_data_source()
+                self.existing_report.config_id = data_source_config_id
+            else:
+                indicators = self.ds_builder.indicators(
+                    self._configured_columns,
+                    self.cleaned_data['user_filters'] + self.cleaned_data['default_filters'],
+                    self._is_multiselect_chart_report,
+                )
+                if data_source.configured_indicators != indicators:
+                    for property_name, value in six.iteritems(self._get_data_source_configuration_kwargs()):
+                        setattr(data_source, property_name, value)
+                    data_source.save()
+                    tasks.rebuild_indicators.delay(data_source._id)
 
     def create_report(self):
         """
