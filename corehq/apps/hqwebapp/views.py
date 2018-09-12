@@ -371,8 +371,10 @@ def _login(req, domain_name, template_name):
         context.update({
             'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
         })
-
-    auth_view = HQLoginView if not domain_name else CloudCareLoginView
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        auth_view = CloudCareLoginView
+    else:
+        auth_view = HQLoginView if not domain_name else CloudCareLoginView
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
