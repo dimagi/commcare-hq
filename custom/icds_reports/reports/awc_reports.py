@@ -1114,7 +1114,7 @@ def get_awc_report_pregnant(order, reversed_order, awc_id):
         'case_id', 'person_name', 'age_in_months', 'opened_on', 'edd', 'trimester', 'anemic_severe',
         'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant',
         'num_rations_distributed', 'last_date_thr'
-    )
+    )[:10]
     data_count = data.count()
     config = {
         'data': [],
@@ -1157,7 +1157,7 @@ def get_pregnant_details(case_id, awc_id):
         'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation', 'counsel_fp_vid',
         'counsel_immediate_conception', 'counsel_accessible_postpartum_fp', 'counsel_fp_methods', 'using_ifa',
         'ifa_consumed_last_seven_days', 'tt_1', 'tt_2'
-    )
+    )[:10]
 
     config = {
         'data': [
@@ -1212,7 +1212,7 @@ def get_awc_report_lactating(order, reversed_order, awc_id):
     ).order_by('case_id', '-age_in_months').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery_in_month',
         'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed'
-    )
+    )[:10]
     data_count = data.count()
     config = {
         'data': [],
