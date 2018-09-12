@@ -7,7 +7,7 @@ from django.conf import settings
 from corehq.util.soft_assert import soft_assert
 from kafka import SimpleProducer
 from kafka.common import LeaderNotAvailableError, FailedPayloadsError, KafkaUnavailableError
-from corehq.apps.change_feed.connection import get_simple_kafka_client_or_none
+from corehq.apps.change_feed.connection import get_simple_kafka_client
 from six.moves import range
 
 
@@ -51,13 +51,8 @@ class ChangeProducer(object):
 
     @property
     def kafka(self):
-        # load everything lazily to avoid doing this work if not needed
-        if self._kafka is None and not self._has_error:
-            self._kafka = get_simple_kafka_client_or_none(client_id='cchq-producer')
-            if self._kafka is None:
-                _assert = soft_assert(notify_admins=True)
-                _assert(settings.DEBUG, 'Kafka is not available! Change producer is doing nothing.')
-                self._has_error = True
+        if self._kafka is None:
+            self._kafka = get_simple_kafka_client(client_id='cchq-producer')
         return self._kafka
 
     @property
@@ -65,15 +60,10 @@ class ChangeProducer(object):
         if self._producer is not None:
             return self._producer
 
-        if not self._has_error:
-            if self.kafka is not None:
-                self._producer = SimpleProducer(
-                    self._kafka, async_send=False, req_acks=SimpleProducer.ACK_AFTER_LOCAL_WRITE,
-                    sync_fail_on_error=True
-                )
-            else:
-                # if self.kafka is None then we should be in an error state
-                assert self._has_error
+        self._producer = SimpleProducer(
+            self.kafka, async_send=False, req_acks=SimpleProducer.ACK_AFTER_LOCAL_WRITE,
+            sync_fail_on_error=True
+        )
         return self._producer
 
     def send_change(self, topic, change_meta):
