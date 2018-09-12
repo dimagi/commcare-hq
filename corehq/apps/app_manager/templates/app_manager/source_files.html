@@ -26,27 +26,33 @@
     <h2>Resource Files</h2>
 
     <table class="table table-condensed">
-        {% for file in files %}
-            <tr>
-                <td class="col-sm-3">
-                    {% if file.source %}
-                        <a class="toggle-next" href="#">{{ file.name }}</a>
-                    {% else %}
-                        {{ file.name }}
-                    {% endif %}
-                </td>
-                <td class="col-sm-9">
-                    {% block file_description %}{% endblock %}
-                </td>
-            </tr>
-
-            {% if file.source %}
-                <tr class="hide">
-                    <td colspan="2">
-                    {% block file_source %}{% endblock %}
+        {% for section, files in files.items %}
+            {% if section %}<tr><th>{{ section }}</th></tr>{% endif %}
+            {% for file in files %}
+                <tr>
+                    <td class="col-sm-3">
+                        {% if file.source %}
+                            <a class="toggle-next" href="#">{{ file.name }}</a>
+                        {% else %}
+                            {{ file.name }}
+                        {% endif %}
+                        {% if file.readable_name != file.name and file.readable_name%}
+                            {{ file.readable_name }}
+                        {% endif %}
+                    </td>
+                    <td class="col-sm-9">
+                        {% block file_description %}{% endblock %}
                     </td>
                 </tr>
-            {% endif %}
+
+                {% if file.source %}
+                    <tr class="hide">
+                        <td colspan="2">
+                            {% block file_source %}{% endblock %}
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
         {% empty %}
             <tr><th>No Files</th></tr>
         {% endfor %}

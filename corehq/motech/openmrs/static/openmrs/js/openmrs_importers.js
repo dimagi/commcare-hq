@@ -85,8 +85,8 @@ hqDefine('openmrs/js/openmrs_importers', [
             self.openmrsImporters.push(openmrsImporter({}));
         };
 
-        self.initOpenmrsImporterTemplate = function(elements) {
-            _.each(elements, function(element) {
+        self.initOpenmrsImporterTemplate = function (elements) {
+            _.each(elements, function (element) {
                 _.each($(element).find('.jsonwidget'), ucrBase.initJsonWidget);
             });
         };
@@ -119,7 +119,7 @@ hqDefine('openmrs/js/openmrs_importers', [
         return self;
     };
 
-    $(function() {
+    $(function () {
         var viewModel = openmrsImporters(
             initialPageData.get('openmrs_importers'),
             initialPageData.reverse('openmrs_import_now')

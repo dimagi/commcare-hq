@@ -65,6 +65,18 @@ class PatientFinderTests(SimpleTestCase):
         })
         self.assertIsInstance(finder, WeightedPropertyPatientFinder)
 
+    def test_create_missing_default(self):
+        """
+        PatientFinder.create_missing should default to false
+        """
+        finder = PatientFinder.wrap({
+            'doc_type': 'WeightedPropertyPatientFinder',
+            'searchable_properties': [],
+            'property_weights': [],
+        })
+        self.assertFalse(finder.create_missing)
+
+
 
 class WeightedPropertyPatientFinderTests(SimpleTestCase):
     """

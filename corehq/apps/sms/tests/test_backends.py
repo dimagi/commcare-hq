@@ -23,6 +23,7 @@ from corehq.messaging.smsbackends.http.models import SQLHttpBackend
 from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
 from corehq.messaging.smsbackends.ivory_coast_mtn.models import IvoryCoastMTNBackend
 from corehq.messaging.smsbackends.karix.models import KarixBackend
+from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from corehq.messaging.smsbackends.push.models import PushBackend
@@ -55,6 +56,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.domain_obj = Domain(name='all-backend-test')
         cls.domain_obj.save()
         cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ADVANCED)
+
         cls.domain_obj = Domain.get(cls.domain_obj.get_id)
 
         cls.test_phone_number = '99912345'
@@ -193,9 +195,17 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.karix_backend.save()
 
+        cls.airtel_tcl_backend = AirtelTCLBackend(
+            name='AIRTEL_TCL',
+            is_global=True,
+            hq_api_id=AirtelTCLBackend.get_api_id()
+        )
+        cls.airtel_tcl_backend.save()
+
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscription()
+
         cls.domain_obj.delete()
         cls.unicel_backend.delete()
         cls.mach_backend.delete()
@@ -216,6 +226,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.start_enterprise_backend.delete()
         cls.ivory_coast_mtn_backend.delete()
         cls.karix_backend.delete()
+        cls.airtel_tcl_backend.delete()
         super(AllBackendTest, cls).tearDownClass()
 
     def tearDown(self):
@@ -308,8 +319,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend.send')
     @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
     @patch('corehq.messaging.smsbackends.karix.models.KarixBackend.send')
+    @patch('corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend.send')
     def test_outbound_sms(
             self,
+            airtel_tcl_send,
             karix_send,
             ivory_coast_mtn_send,
             start_ent_send,
@@ -348,18 +361,23 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.start_enterprise_backend, 'start_ent_test', start_ent_send)
         self._test_outbound_backend(self.ivory_coast_mtn_backend, 'ivory_coast_mtn_test', ivory_coast_mtn_send)
         self._test_outbound_backend(self.karix_backend, 'karix test', karix_send)
+        self._test_outbound_backend(self.airtel_tcl_backend, 'airtel tcl test', airtel_tcl_send)
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
-        self._simulate_inbound_request('/unicel/in/', phone_param=InboundParams.SENDER,
-            msg_param=InboundParams.MESSAGE, msg_text='unicel test')
+        self._simulate_inbound_request(
+            '/unicel/in/%s/' % self.unicel_backend.inbound_api_key,
+            phone_param=InboundParams.SENDER,
+            msg_param=InboundParams.MESSAGE,
+            msg_text='unicel test'
+        )
 
         self._verify_inbound_request(self.unicel_backend.get_api_id(), 'unicel test')
 
     @run_with_all_backends
     def test_tropo_inbound_sms(self):
         tropo_data = {'session': {'from': {'id': self.test_phone_number}, 'initialText': 'tropo test'}}
-        self._simulate_inbound_request_with_payload('/tropo/sms/',
+        self._simulate_inbound_request_with_payload('/tropo/sms/%s/' % self.tropo_backend.inbound_api_key,
             content_type='text/json', payload=json.dumps(tropo_data))
 
         self._verify_inbound_request(self.tropo_backend.get_api_id(), 'tropo test')
@@ -416,23 +434,24 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self.assertEqual(start_count, end_count)
 
     @run_with_all_backends
-    def test_megamobile_inbound_sms(self):
-        self._simulate_inbound_request('/megamobile/sms/', phone_param='cel',
-            msg_param='msg', msg_text='megamobile test', is_megamobile=True)
-
-        self._verify_inbound_request(self.megamobile_backend.get_api_id(), 'megamobile test')
-
-    @run_with_all_backends
     def test_sislog_inbound_sms(self):
-        self._simulate_inbound_request('/sislog/in/', phone_param='sender',
-            msg_param='msgdata', msg_text='sislog test')
+        self._simulate_inbound_request(
+            '/sislog/in/%s/' % self.sislog_backend.inbound_api_key,
+            phone_param='sender',
+            msg_param='msgdata',
+            msg_text='sislog test'
+        )
 
         self._verify_inbound_request(self.sislog_backend.get_api_id(), 'sislog test')
 
     @run_with_all_backends
     def test_yo_inbound_sms(self):
-        self._simulate_inbound_request('/yo/sms/', phone_param='sender',
-            msg_param='message', msg_text='yo test')
+        self._simulate_inbound_request(
+            '/yo/sms/%s/' % self.yo_backend.inbound_api_key,
+            phone_param='sender',
+            msg_param='message',
+            msg_text='yo test'
+        )
 
         self._verify_inbound_request(self.yo_backend.get_api_id(), 'yo test')
 
@@ -488,6 +507,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.domain_obj.save()
 
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.ADVANCED)
+
         cls.domain_obj = Domain.get(cls.domain_obj._id)
 
         cls.backend1 = SQLTestSMSBackend.objects.create(
@@ -620,7 +640,9 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.backend8.delete()
         cls.backend9.delete()
         cls.backend10.delete()
+
         cls.teardown_subscription()
+
         cls.domain_obj.delete()
         super(OutgoingFrameworkTestCase, cls).tearDownClass()
 

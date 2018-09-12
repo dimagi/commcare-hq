@@ -1,12 +1,12 @@
 /* eslint-env mocha */
 /* globals Question, DropdownEntry, ComboboxEntry, Formplayer */
 
-describe('Entries', function() {
+describe('Entries', function () {
     var questionJSON,
         spy;
 
 
-    beforeEach(function() {
+    beforeEach(function () {
         window.GMAPS_API_KEY = 'xxx';
         questionJSON = {
             "caption_audio": null,
@@ -29,12 +29,12 @@ describe('Entries', function() {
         this.clock = sinon.useFakeTimers();
     });
 
-    afterEach(function() {
+    afterEach(function () {
         $.unsubscribe();
         this.clock.restore();
     });
 
-    it('Should return the IntEntry', function() {
+    it('Should return the IntEntry', function () {
         entry = (new Question(questionJSON)).entry;
         assert.isTrue(entry instanceof IntEntry);
         assert.equal(entry.templateType, 'str');
@@ -50,7 +50,7 @@ describe('Entries', function() {
         assert.isFalse(valid);
     });
 
-    it('Should return DropdownEntry', function() {
+    it('Should return DropdownEntry', function () {
         var entry;
 
         questionJSON.datatype = Formplayer.Const.SELECT;
@@ -78,7 +78,7 @@ describe('Entries', function() {
         assert.isTrue(spy.calledTwice);
     });
 
-    it('Should return FloatEntry', function() {
+    it('Should return FloatEntry', function () {
         questionJSON.datatype = Formplayer.Const.FLOAT;
         entry = (new Question(questionJSON)).entry;
         assert.isTrue(entry instanceof FloatEntry);
@@ -99,7 +99,7 @@ describe('Entries', function() {
         assert.isFalse(valid);
     });
 
-    it('Should return ComboboxEntry', function() {
+    it('Should return ComboboxEntry', function () {
         var entry;
         questionJSON.datatype = Formplayer.Const.SELECT;
         questionJSON.style = { raw: Formplayer.Const.COMBOBOX };
@@ -120,7 +120,7 @@ describe('Entries', function() {
         assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
     });
 
-    it('Should validate Combobox properly', function() {
+    it('Should validate Combobox properly', function () {
         var entry,
             question;
         questionJSON.datatype = Formplayer.Const.SELECT;
@@ -139,7 +139,7 @@ describe('Entries', function() {
         assert.isTrue(!!question.error());
     });
 
-    it('Should properly filter combobox', function() {
+    it('Should properly filter combobox', function () {
         // Standard filter
         assert.isTrue(ComboboxEntry.filter('o', { name: 'one two', id: 1 }, null));
         assert.isFalse(ComboboxEntry.filter('t', { name: 'one two', id: 1 }, null));
@@ -170,7 +170,7 @@ describe('Entries', function() {
         );
     });
 
-    it('Should return FreeTextEntry', function() {
+    it('Should return FreeTextEntry', function () {
         questionJSON.datatype = Formplayer.Const.STRING;
         entry = (new Question(questionJSON)).entry;
         assert.isTrue(entry instanceof FreeTextEntry);
@@ -184,7 +184,7 @@ describe('Entries', function() {
         assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
     });
 
-    it('Should return MultiSelectEntry', function() {
+    it('Should return MultiSelectEntry', function () {
         questionJSON.datatype = Formplayer.Const.MULTI_SELECT;
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = [1]; // answer is based on a 1 indexed index of the choices
@@ -206,7 +206,7 @@ describe('Entries', function() {
         assert.sameMembers(entry.answer(), [2]);
     });
 
-    it('Should return SingleSelectEntry', function() {
+    it('Should return SingleSelectEntry', function () {
         questionJSON.datatype = Formplayer.Const.SELECT;
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = 1;
@@ -222,7 +222,7 @@ describe('Entries', function() {
         assert.equal(entry.answer(), 2);
     });
 
-    it('Should return DateEntry', function() {
+    it('Should return DateEntry', function () {
         questionJSON.datatype = Formplayer.Const.DATE;
         questionJSON.answer = '1990-09-26';
 
@@ -235,7 +235,7 @@ describe('Entries', function() {
         assert.isTrue(spy.calledOnce);
     });
 
-    it('Should return TimeEntry', function() {
+    it('Should return TimeEntry', function () {
         questionJSON.datatype = Formplayer.Const.TIME;
         questionJSON.answer = '12:30';
 
@@ -248,14 +248,14 @@ describe('Entries', function() {
         assert.isTrue(spy.calledOnce);
     });
 
-    it('Should return InfoEntry', function() {
+    it('Should return InfoEntry', function () {
         questionJSON.datatype = Formplayer.Const.INFO;
         entry = (new Question(questionJSON)).entry;
 
         assert.isTrue(entry instanceof InfoEntry);
     });
 
-    it('Should return a GeoPointEntry', function() {
+    it('Should return a GeoPointEntry', function () {
         questionJSON.datatype = Formplayer.Const.GEO;
         questionJSON.answer = [1.2, 3.4];
 
@@ -271,7 +271,7 @@ describe('Entries', function() {
         assert.isTrue(spy.calledOnce);
     });
 
-    it('Should return a PhoneEntry', function() {
+    it('Should return a PhoneEntry', function () {
         questionJSON.datatype = Formplayer.Const.STRING;
         questionJSON.style = { raw: 'numeric' };
 
@@ -293,7 +293,7 @@ describe('Entries', function() {
         assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
     });
 
-    it('Should allow decimals in a PhoneEntry', function() {
+    it('Should allow decimals in a PhoneEntry', function () {
         questionJSON.datatype = Formplayer.Const.STRING;
         questionJSON.style = { raw: 'numeric' };
 

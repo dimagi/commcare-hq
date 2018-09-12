@@ -303,7 +303,7 @@ class IndexedSchema(DocumentSchema):
         def __get__(self, instance, owner):
             # thanks, http://metapython.blogspot.com/2010/11/python-instance-methods-how-are-they.html
             # this makes Getter('foo') act like a bound method
-            return types.MethodType(self, instance, owner)
+            return types.MethodType(self, instance)
 
 
 class FormActionCondition(DocumentSchema):
@@ -978,7 +978,6 @@ class FormBase(DocumentSchema):
     @property
     def case_references(self):
         return self.case_references_data or CaseReferences()
-
 
     def requires_case(self):
         return False
@@ -2522,6 +2521,14 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
             return self.forms[i].with_id(i % len(self.forms), self)
         except IndexError:
             raise FormNotFoundException()
+
+    def get_form_index(self, unique_id):
+        for index, form in enumerate(self.get_forms()):
+            if form.unique_id == unique_id:
+                return index
+        error = _("Could not find form with ID='{unique_id}' in module '{module_name}'.").format(
+            module_name=self.name, unique_id=unique_id)
+        raise FormNotFoundException(error)
 
     def get_child_modules(self):
         return [
@@ -4927,9 +4934,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     mobile_ucr_restore_version = StringProperty(
         default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSIONS, required=False
     )
+    location_fixture_restore = StringProperty(
+        default=DEFAULT_LOCATION_FIXTURE_OPTION, choices=LOCATION_FIXTURE_OPTIONS,
+        required=False
+    )
 
-    @classmethod
-    def wrap(cls, data):
+    @staticmethod
+    def _scrap_old_conventions(data):
         should_save = False
         # scrape for old conventions and get rid of them
         if 'commcare_build' in data:
@@ -4962,14 +4973,19 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if 'original_doc' in data:
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
+        return should_save
 
+    @classmethod
+    def wrap(cls, data, scrap_old_conventions=True):
+        if scrap_old_conventions:
+            should_save = cls._scrap_old_conventions(data)
         data["description"] = data.get('description') or data.get('short_description')
 
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
             self.build_spec = get_default_build_spec()
 
-        if should_save:
+        if scrap_old_conventions and should_save:
             self.save()
 
         return self
@@ -5480,7 +5496,7 @@ def validate_lang(lang):
         raise ValueError("Invalid Language")
 
 
-def validate_property(property):
+def validate_property(property, allow_parents=True):
     """
     Validate a case property name
 
@@ -5491,8 +5507,12 @@ def validate_property(property):
     ValueError: Invalid Property
 
     """
-    # this regex is also copied in propertyList.ejs
-    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
+    if allow_parents:
+        # this regex is also copied in propertyList.ejs
+        regex = r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$'
+    else:
+        regex = r'^[a-zA-Z][\w_-]*$'
+    if not re.match(regex, property):
         raise ValueError("Invalid Property")
 
 
@@ -5979,6 +5999,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not error:
             error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
                 app_name=self.name, unique_id=unique_id)
+        raise ModuleNotFoundException(error)
+
+    def get_module_index(self, unique_id):
+        for index, module in enumerate(self.get_modules()):
+            if module.unique_id == unique_id:
+                return index
+        error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+            app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
     def get_forms(self, bare=True):

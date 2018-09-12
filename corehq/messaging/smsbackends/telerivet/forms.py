@@ -29,6 +29,14 @@ class TelerivetBackendForm(BackendForm):
         label=ugettext_lazy("Webhook Secret"),
     )
 
+    def __init__(self, *args, **kwargs):
+        super(TelerivetBackendForm, self).__init__(*args, **kwargs)
+
+        if self._cchq_backend_id:
+            # Don't allow editing the webhook secret.
+            # Django ensures that posted values don't change the value here.
+            self.fields['webhook_secret'].disabled = True
+
     @property
     def gateway_specific_fields(self):
         return crispy.Fieldset(

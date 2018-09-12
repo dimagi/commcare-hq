@@ -6,6 +6,7 @@ from functools import partial
 from itertools import groupby
 
 import six
+from couchdbkit import ResourceNotFound
 from django.db import connections
 
 from corehq.apps.domain import SHARED_DOMAIN, UNKNOWN_DOMAIN
@@ -92,13 +93,27 @@ def make_migrators(mod):
             type_code = self.get_type_code(doc)
             obj = self.blob_helper(doc, self.couchdb, type_code)
             db = get_db_alias_for_partitioned_doc(doc["_id"])
+            domain = obj.domain
+            if domain is None:
+                self.error(obj, {
+                    "error": "unknown-domain",
+                    "doc_type": obj.doc_type,
+                    "doc_id": obj._id,
+                })
+                domain = UNKNOWN_DOMAIN
+            if getattr(obj, "_attachments", None):
+                self.error(obj, {
+                    "error": "ignored-couch-attachments",
+                    "doc_type": obj.doc_type,
+                    "doc_id": obj._id,
+                    "domain": obj.domain,
+                    "attachments": obj._attachments,
+                })
             with connections[db].cursor() as cursor:
-                for name, meta in six.iteritems(obj.blobs):
+                for name, meta in six.iteritems(obj.external_blobs):
                     if meta.blobmeta_id is not None:
                         # blobmeta already saved
                         continue
-                    if obj.domain is None:
-                        print("Unknown domain: {!r}".format(obj))
                     cursor.execute("""
                         INSERT INTO blobs_blobmeta (
                             domain,
@@ -112,7 +127,7 @@ def make_migrators(mod):
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, CLOCK_TIMESTAMP())
                         ON CONFLICT (key) DO NOTHING
                     """, params=[
-                        (UNKNOWN_DOMAIN if obj.domain is None else obj.domain),
+                        domain,
                         type_code,
                         doc["_id"],
                         name,
@@ -122,6 +137,10 @@ def make_migrators(mod):
                     ])
                     self.total_blobs += 1
             return True
+
+        def error(self, obj, doc):
+            print("Error: %s %r" % (doc["error"], obj))
+            super(BlobMetaMigrator, self)._backup_doc(doc)
 
         def processing_complete(self, skipped):
             # fake skipped to prevent writing BlobMigrationState
@@ -159,8 +178,19 @@ class SqlBlobHelper(object):
         self.blobs = {"": BlobMetaRef(key=key, **reindexer.blob_kwargs(obj))}
         self.external_blobs = self.blobs
 
+    def __repr__(self):
+        return "<%s %s domain=%s id=%s>" % (
+            type(self).__name__,
+            self.doc_type,
+            self.domain,
+            self._id,
+        )
+
     @property
     def _id(self):
+        # NOTE unlike couch documents, this is different from `doc["_id"]`,
+        # the value used to set `BlobMeta.parent_id`. This value should
+        # only be used to identify the record in in case of error.
         return self.obj.id
 
     @property
@@ -177,7 +207,7 @@ def sql_blob_helper(key_attr):
         for blob migrations (currently only used by BlobMetaMigrator).
         """
         obj = doc["_obj_not_json"]
-        domain = self.get_domain(obj) or UNKNOWN_DOMAIN
+        domain = self.get_domain(obj)
         return SqlBlobHelper(obj, getattr(obj, key_attr), domain, self)
 
     return blob_helper
@@ -193,7 +223,7 @@ class PkReindexAccessor(ReindexAccessor):
         raise NotImplementedError
 
     def doc_to_json(self, obj, id):
-        return {"_id": id, "_obj_not_json": obj, "external_blobs": True}
+        return {"_id": str(id), "_obj_not_json": obj, "external_blobs": True}
 
 
 class CaseUploadFileMetaReindexAccessor(PkReindexAccessor):
@@ -208,7 +238,10 @@ class CaseUploadFileMetaReindexAccessor(PkReindexAccessor):
         return CODES.data_import
 
     def get_domain(self, obj):
-        return CaseUploadRecord.objects.get(upload_file_meta_id=obj.id).domain
+        try:
+            return CaseUploadRecord.objects.get(upload_file_meta_id=obj.id).domain
+        except CaseUploadRecord.DoesNotExist:
+            return None
 
     def blob_kwargs(self, obj):
         return {"content_length": obj.length}
@@ -227,7 +260,10 @@ class DemoUserRestoreReindexAccessor(PkReindexAccessor):
         return CODES.demo_user_restore
 
     def get_domain(self, obj):
-        return CommCareUser.get(obj.demo_user_id).domain
+        try:
+            return CommCareUser.get(obj.demo_user_id).domain
+        except ResourceNotFound:
+            return None
 
     def blob_kwargs(self, obj):
         return {"content_length": obj.content_length, "content_type": "text/xml"}
@@ -257,7 +293,8 @@ def couch_blob_helper(doc, *args, **kw):
     if get_domain is not None:
         assert not hasattr(obj, "domain"), obj
         obj.domain = get_domain(doc)
-    assert hasattr(obj, "domain"), obj.doc_type
+    elif not hasattr(obj, "domain"):
+        obj.domain = None  # will trigger "unknown-domain" error
     return obj
 
 
@@ -267,7 +304,7 @@ def get_shared_domain(doc):
 
 def get_invoice_domain(doc):
     if doc.get("is_wire"):
-        return acct.WireInvoice.objects.get(int(doc["invoice_id"])).domain
+        return acct.WireInvoice.objects.get(id=int(doc["invoice_id"])).domain
     # customer invoice has no domain
     return UNKNOWN_DOMAIN
 

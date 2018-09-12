@@ -37,7 +37,7 @@ hqDefine('domain/js/case_search', [
         return self;
     };
 
-    var IgnorePatterns = function(caseType, caseProperty, regex){
+    var IgnorePatterns = function (caseType, caseProperty, regex) {
         var self = {};
 
         self.caseType = ko.observable(caseType);
@@ -57,21 +57,21 @@ hqDefine('domain/js/case_search', [
         self.caseTypes = options.caseTypes;
         self.toggleEnabled = ko.observable(initialValues.enabled);
         self.fuzzyProperties = ko.observableArray();
-        for (var caseType in initialValues.fuzzy_properties){
+        for (var caseType in initialValues.fuzzy_properties) {
             self.fuzzyProperties.push(new CaseTypeProps(
                 caseType,
                 initialValues.fuzzy_properties[caseType]
             ));
         }
         self.ignorePatterns = ko.observableArray();
-        for (var i = 0; i < initialValues.ignore_patterns.length; i++){
+        for (var i = 0; i < initialValues.ignore_patterns.length; i++) {
             self.ignorePatterns.push(new IgnorePatterns(
                 initialValues.ignore_patterns[i].case_type,
                 initialValues.ignore_patterns[i].case_property,
                 initialValues.ignore_patterns[i].regex
             ));
         }
-        self.change = function(){
+        self.change = function () {
             self.saveButton.fire('change');
         };
         self.fuzzyProperties.subscribe(self.change);
@@ -85,18 +85,18 @@ hqDefine('domain/js/case_search', [
             self.change();
         };
 
-        self.addIgnorePatterns = function(){
+        self.addIgnorePatterns = function () {
             self.ignorePatterns.push(new IgnorePatterns('', '', ''));
             self.change();
         };
-        self.removeIgnorePatterns = function(r){
+        self.removeIgnorePatterns = function (r) {
             self.ignorePatterns.remove(r);
             self.change();
         };
 
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: "You have unchanged settings",
-            save: function() {
+            save: function () {
                 self.saveButton.ajax({
                     type: 'post',
                     url: initialPageData.reverse("case_search_config"),
@@ -107,7 +107,7 @@ hqDefine('domain/js/case_search', [
             },
         });
 
-        self.serialize = function(){
+        self.serialize = function () {
             var fuzzyProperties = {};
             for (var i = 0; i < self.fuzzyProperties().length; i++) {
                 var caseType = self.fuzzyProperties()[i].caseType(),
@@ -121,7 +121,7 @@ hqDefine('domain/js/case_search', [
             return {
                 'enable': self.toggleEnabled(),
                 'fuzzy_properties': fuzzyProperties,
-                'ignore_patterns': _.map(self.ignorePatterns(), function(rc){
+                'ignore_patterns': _.map(self.ignorePatterns(), function (rc) {
                     return {
                         'case_type': rc.caseType(),
                         'case_property': rc.caseProperty(),

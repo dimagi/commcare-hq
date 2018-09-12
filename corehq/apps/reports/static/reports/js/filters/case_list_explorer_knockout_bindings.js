@@ -1,7 +1,7 @@
-hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', 'knockout', 'hqwebapp/js/atwho', 'ace-builds/src-min-noconflict/ace'], function($, ko, atwho, ace) {
+hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', 'knockout', 'hqwebapp/js/atwho', 'ace-builds/src-min-noconflict/ace'], function ($, ko, atwho, ace) {
 
     ko.bindingHandlers.xPathAutocomplete = {
-        init: function(element, valueAccessor, allBindings, viewModel) {
+        init: function (element, valueAccessor, allBindings, viewModel) {
             var $element = $(element),
                 editor = ace.edit(
                     element,
@@ -22,11 +22,11 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                 );
             editor.session.setMode('ace/mode/xquery'); // does reasonable syntax highlighting for XPath
 
-            var updateKOModel = function(){
+            var updateKOModel = function () {
                 viewModel.query(editor.getValue());
                 $element.parent().trigger('change');
             };
-            editor.on('change', function(){
+            editor.on('change', function () {
                 updateKOModel();
             });
             updateKOModel();
@@ -50,19 +50,19 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
             editor.on("input", update);
             setTimeout(update, 100);
         },
-        update: function(element, valueAccessor){
+        update: function (element, valueAccessor) {
             var caseProperties = ko.utils.unwrapObservable(valueAccessor());
             var casePropertyAutocomplete = {
-                getCompletions: function(editor, session, pos, prefix, callback){
+                getCompletions: function (editor, session, pos, prefix, callback) {
                     var currentValue = editor.getValue(),
                         leftQuotesSingle = (currentValue.substr(0, pos.column).match(/'/g) || []).length,
                         leftQuotesDouble = (currentValue.substr(0, pos.column).match(/"/g) || []).length,
                         insideQuote = leftQuotesSingle && (leftQuotesSingle % 2 !== 0) || leftQuotesDouble && (leftQuotesDouble % 2 !== 0);
-                    if (insideQuote){
+                    if (insideQuote) {
                         // don't autocomplete case properties when inside a quote
                         return;
                     }
-                    callback(null, _.map(caseProperties, function(suggestion){
+                    callback(null, _.map(caseProperties, function (suggestion) {
                         return {
                             name: suggestion.name,
                             value: suggestion.name,
@@ -76,7 +76,7 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
     };
 
     ko.bindingHandlers.explorerColumnsAutocomplete = {
-        init: function(element) {
+        init: function (element) {
             var $element = $(element);
             if (!$element.atwho) {
                 throw new Error("The typeahead binding requires Atwho.js and Caret.js");
@@ -84,26 +84,26 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
 
             atwho.init($element, {
                 atwhoOptions: {
-                    displayTpl: function(item){
-                        if (item.case_type){
+                    displayTpl: function (item) {
+                        if (item.case_type) {
                             return '<li><span class="label label-default">${case_type}</span> ${name}</li>';
                         }
                         return '<li><span class="label label-primary">${meta_type}</span> ${name}</li>';
                     },
                 },
-                afterInsert: function() {
+                afterInsert: function () {
                     $element.trigger('textchange');
                 },
             });
 
-            $element.on("textchange", function() {
+            $element.on("textchange", function () {
                 if ($element.val()) {
                     $element.change();
                 }
             });
         },
 
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
         },
     };

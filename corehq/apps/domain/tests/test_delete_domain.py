@@ -40,9 +40,7 @@ from corehq.apps.case_search.models import (
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateAction,
     AutomaticUpdateRule,
-    AutomaticUpdateRuleCriteria,
     CaseRuleAction,
     CaseRuleCriteria,
     CaseRuleSubmission,
@@ -471,9 +469,7 @@ class TestDeleteDomain(TestCase):
 
     def _assert_data_interfaces(self, domain_name, count):
         self._assert_queryset_count([
-            AutomaticUpdateAction.objects.filter(rule__domain=domain_name),
             AutomaticUpdateRule.objects.filter(domain=domain_name),
-            AutomaticUpdateRuleCriteria.objects.filter(rule__domain=domain_name),
             CaseRuleAction.objects.filter(rule__domain=domain_name),
             CaseRuleCriteria.objects.filter(rule__domain=domain_name),
             CaseRuleSubmission.objects.filter(domain=domain_name),
@@ -483,8 +479,6 @@ class TestDeleteDomain(TestCase):
     def test_data_interfaces(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             automatic_update_rule = AutomaticUpdateRule.objects.create(domain=domain_name)
-            AutomaticUpdateAction.objects.create(rule=automatic_update_rule)
-            AutomaticUpdateRuleCriteria.objects.create(rule=automatic_update_rule)
             CaseRuleAction.objects.create(rule=automatic_update_rule)
             CaseRuleCriteria.objects.create(rule=automatic_update_rule)
             CaseRuleSubmission.objects.create(
@@ -501,10 +495,6 @@ class TestDeleteDomain(TestCase):
         self._assert_data_interfaces(self.domain.name, 0)
         self._assert_data_interfaces(self.domain2.name, 1)
 
-        self.assertEqual(AutomaticUpdateAction.objects.count(), 1)
-        self.assertEqual(AutomaticUpdateAction.objects.filter(rule__domain=self.domain2.name).count(), 1)
-        self.assertEqual(AutomaticUpdateRuleCriteria.objects.count(), 1)
-        self.assertEqual(AutomaticUpdateRuleCriteria.objects.filter(rule__domain=self.domain2.name).count(), 1)
         self.assertEqual(CaseRuleAction.objects.count(), 1)
         self.assertEqual(CaseRuleAction.objects.filter(rule__domain=self.domain2.name).count(), 1)
         self.assertEqual(CaseRuleCriteria.objects.count(), 1)

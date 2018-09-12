@@ -126,7 +126,7 @@ class WorksheetWrapper(object):
         )
 
     def get_header_columns(self):
-        return self._headers_by_index.values()
+        return list(self._headers_by_index.values())
 
     @property
     def max_row(self):

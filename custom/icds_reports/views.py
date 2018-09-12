@@ -20,7 +20,6 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
 from django.utils.translation import ugettext as _, ugettext_lazy
-from django.conf import settings
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
@@ -32,7 +31,7 @@ from corehq.apps.locations.permissions import location_safe, user_can_access_loc
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
-    use_select2,
+    use_select2_v4,
 )
 from corehq.apps.translations.views import ConvertTranslations, BaseTranslationsView
 from corehq.apps.users.decorators import require_permission
@@ -41,6 +40,7 @@ from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
+from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds.tasks import (
     push_translation_files_to_transifex,
@@ -54,6 +54,7 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
 from custom.icds_reports.forms import AppTranslationsForm
 from custom.icds_reports.models.helper import IcdsFile
+from custom.icds_reports.models.views import AwcLocationMonths
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -74,6 +75,7 @@ from custom.icds_reports.reports.children_initiated_data import get_children_ini
 from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
     get_clean_water_sector_data
 from custom.icds_reports.reports.demographics_data import get_demographics_data
+from custom.icds_reports.reports.disha import DishaDump
 from custom.icds_reports.reports.early_initiation_breastfeeding import get_early_initiation_breastfeeding_chart,\
     get_early_initiation_breastfeeding_data, get_early_initiation_breastfeeding_map
 from custom.icds_reports.reports.enrolled_children import get_enrolled_children_data_chart,\
@@ -1496,6 +1498,9 @@ class AggregationScriptPage(BaseDomainView):
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+            return HttpResponse("This page is only available for QA and not available for production instances.")
+
         couch_user = self.request.couch_user
         domain = self.domain
         domain_membership = couch_user.get_domain_membership(domain)
@@ -1605,7 +1610,7 @@ class AppTranslations(BaseTranslationsView):
     template_name = 'icds_reports/icds_app/app_translations.html'
     section_name = ugettext_lazy("Translations")
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(AppTranslations, self).dispatch(request, *args, **kwargs)
 
@@ -1726,3 +1731,45 @@ class InactiveAWW(View):
             return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
         except NotFound:
             raise Http404
+
+
+class DishaAPIView(View):
+
+    def message(self, message_name):
+        state_names = ", ".join(self.valid_state_names)
+        error_messages = {
+            "missing_date": "Please specify valid month and year",
+            "invalid_month": "Please specify a month that's older than a month and 5 days",
+            "invalid_state": "Please specify one of {} as state_name".format(state_names),
+        }
+        return {"message": error_messages[message_name]}
+
+    @method_decorator([api_auth, toggles.ICDS_DISHA_API.required_decorator()])
+    def get(self, request, *args, **kwargs):
+        try:
+            month = int(request.GET.get('month'))
+            year = int(request.GET.get('year'))
+        except (ValueError, TypeError):
+            return JsonResponse(self.message('missing_date'), status=400)
+
+        # Can return only one month old data if today is after 5th, otherwise
+        #   can return two month's old data
+        query_month = date(year, month, 1)
+        today = date.today()
+        current_month = today - relativedelta(months=1) if today.day <= 5 else today
+        if query_month > current_month:
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        state_name = self.request.GET.get('state_name')
+        if state_name not in self.valid_state_names:
+            return JsonResponse(self.message('invalid_state'), status=400)
+
+        data = DishaDump(state_name, query_month).get_data()
+        if not data:
+            return JsonResponse({"message": "Data is not updated for this month"})
+        return HttpResponse(data, content_type='application/json')
+
+    @property
+    @quickcache([])
+    def valid_state_names(self):
+        return list(AwcLocationMonths.objects.values_list('state_name', flat=True).distinct())

@@ -4,7 +4,7 @@ hqDefine('hqadmin/js/admin_restore',[
     "ace-builds/src-min-noconflict/ace",
     "jquery-treetable/jquery.treetable",
 ],function ($,ace) {
-    $(function() {
+    $(function () {
         $("#timingTable").treetable();
         var element = document.getElementById("payload");
         var editor = ace.edit(

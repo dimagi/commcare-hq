@@ -166,7 +166,7 @@ class WrappedAttribs(object):
 class WrappedNode(object):
 
     def __init__(self, xml, namespaces=namespaces):
-        if isinstance(xml, six.binary_type):
+        if isinstance(xml, bytes):
             xml = xml.decode('utf-8')
         if isinstance(xml, six.string_types):
             self.xml = parse_xml(xml) if xml else None
@@ -965,8 +965,12 @@ class XForm(WrappedNode):
         questions = []
         repeat_contexts = set()
         group_contexts = set()
-        excluded_paths = set()
+        excluded_paths = set()  # prevent adding the same question twice
 
+        # control_nodes will contain all nodes in question tree (the <h:body> of an xform)
+        # The question tree doesn't contain every question - notably, it's missing hidden values - so
+        # we also need to look at the data tree (the <model> in the xform's <head>). Getting the leaves
+        # of the data tree should be sufficient to fill in what's not available from the question tree.
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
 
@@ -999,13 +1003,14 @@ class XForm(WrappedNode):
                 "relevant": cnode.relevant,
                 "required": cnode.required == "true()",
                 "constraint": cnode.constraint,
-                "comment": self._get_comment(leaf_data_nodes, path),
+                "comment": self.get_comment(path),
                 "hashtagValue": self.hashtag_path(path),
                 "setvalue": self.get_setvalue(path),
             }
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
 
+            # single select and multi-select questions: add choices
             if cnode.items is not None:
                 options = []
                 for item in cnode.items:
@@ -1046,7 +1051,7 @@ class XForm(WrappedNode):
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                     "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
                     "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
-                    "comment": self._get_comment(leaf_data_nodes, path),
+                    "comment": self.get_comment(path),
                     "setvalue": self.get_setvalue(path)
                 }
 
@@ -1201,9 +1206,9 @@ class XForm(WrappedNode):
         for_each_control_node(self.find('{h}body'))
         return control_nodes
 
-    def _get_comment(self, leaf_data_nodes, path):
+    def get_comment(self, path):
         try:
-            return leaf_data_nodes[path].attrib.get('{v}comment')
+            return self.get_flattened_data_nodes()[path].attrib.get('{v}comment')
         except KeyError:
             return None
 
@@ -1234,8 +1239,11 @@ class XForm(WrappedNode):
         return path
 
     def get_leaf_data_nodes(self):
+        return self.get_flattened_data_nodes(leaves_only=True)
+
+    def get_flattened_data_nodes(self, leaves_only=False):
         if not self.exists():
-            return []
+            return {}
 
         data_nodes = {}
 
@@ -1244,7 +1252,7 @@ class XForm(WrappedNode):
             for child in children:
                 path = self.resolve_path(child.tag_name, path_context)
                 for_each_data_node(child, path_context=path)
-            if not children and path_context:
+            if (not leaves_only or not children) and path_context:
                 data_nodes[path_context] = parent
 
         for_each_data_node(self.data_node)

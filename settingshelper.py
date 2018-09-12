@@ -108,7 +108,7 @@ def get_db_name(dbname, is_test):
 
     :param is_test: Add test prefix if true.
     """
-    if isinstance(dbname, six.binary_type):
+    if isinstance(dbname, bytes):
         dbname = dbname.decode('utf-8')
 
     return (TEST_DATABASE_PREFIX + dbname) if is_test else dbname

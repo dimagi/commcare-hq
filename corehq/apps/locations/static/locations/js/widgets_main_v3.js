@@ -1,8 +1,8 @@
-hqDefine("locations/js/widgets_main", [
+hqDefine("locations/js/widgets_main_v3", [
     'jquery',
     'underscore',
     'select2-3.5.2-legacy/select2',
-], function(
+], function (
     $,
     _
 ) {
@@ -10,11 +10,11 @@ hqDefine("locations/js/widgets_main", [
     // the selected values from another (multiselect) select2
     function updateSelect2($source, $select) {
         var options = {
-            formatResult: function(e) { return e.name; },
-            formatSelection: function(e) { return e.name; },
+            formatResult: function (e) { return e.name; },
+            formatSelection: function (e) { return e.name; },
             allowClear: true,
             placeholder: gettext("Choose a primary location"),
-            formatNoMatches: function() {
+            formatNoMatches: function () {
                 return gettext("No locations set for this user");
             },
             data: {'results': $source.select2('data')},
@@ -22,8 +22,8 @@ hqDefine("locations/js/widgets_main", [
         $select.select2(options);
     }
 
-    $(function() {
-        $(".locations-widget-autocomplete").each(function() {
+    $(function () {
+        $(".locations-widget-autocomplete-v3").each(function () {
             var $select = $(this),
                 options = $select.data();
             $select.select2({
@@ -46,36 +46,36 @@ hqDefine("locations/js/widgets_main", [
                         return {results: data.results, more: more};
                     },
                 },
-                initSelection: function(element, callback) {
+                initSelection: function (element, callback) {
                     callback(options.initialData);
                     $(element).trigger('select-ready');
                 },
-                formatResult: function(e) { return e.name; },
-                formatSelection: function(e) { return e.name; },
+                formatResult: function (e) { return e.name; },
+                formatSelection: function (e) { return e.name; },
             });
         });
 
-        $(".locations-widget-primary").each(function() {
+        $(".locations-widget-primary-v3").each(function () {
             var $select = $(this),
                 $source = $('#' + $select.data("sourceCssId")),
                 value = $select.val();
 
             // This custom event is fired in autocomplete_select_widget.html
-            $source.on('select-ready', function() {
+            $source.on('select-ready', function () {
                 updateSelect2($source, $select);
                 // set initial value
                 $select.select2("val", value);
             });
 
             // Change options/value for css_id based on what's chosen for source_css_id
-            $source.on('change', function() {
+            $source.on('change', function () {
                 updateSelect2($source, $select);
                 if (!$(this).select2('data').length) {
                     // if no options available, set to null
                     $select.val(null);
                 } else {
                     var currentValue = $select.val();
-                    var availableValues = _.map($source.select2('data'), function(item){ return item.id; });
+                    var availableValues = _.map($source.select2('data'), function (item) { return item.id; });
                     // set as first value of option
                     if (!currentValue || !availableValues.includes(currentValue)) {
                         $select.select2("val", $source.select2('data')[0].id);

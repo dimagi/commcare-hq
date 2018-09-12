@@ -1,9 +1,9 @@
-hqDefine("hqwebapp/js/select_2_ajax_widget", [
+hqDefine("hqwebapp/js/select_2_ajax_widget_v3", [
     'jquery',
-    'select2/dist/js/select2.full.min',
-], function($) {
-    $(function(){
-        $(".hqwebapp-select2-ajax").each(function() {
+    'select2-3.5.2-legacy/select2',
+], function ($) {
+    $(function () {
+        $(".hqwebapp-select2-ajax-v3").each(function () {
             var $select = $(this),
                 data = $select.data();
             $select.select2({
@@ -16,12 +16,12 @@ hqDefine("hqwebapp/js/select_2_ajax_widget", [
                             q: term,
                             page_limit: data.pageSize,
                             page: page,
-                         };
+                        };
                     },
                     results: function (data, page) {
                         var more = (page * data.pageSize) < data.total;
                         return {results: data.results, more: more};
-                    }
+                    },
                 },
                 initSelection: function (element, callback) {
                     /*

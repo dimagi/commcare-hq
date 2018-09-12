@@ -105,7 +105,6 @@ class AutomaticUpdateRule(models.Model):
     # number of days old that a case's server_modified_on date must be
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField(null=True)
-    migrated = models.BooleanField(default=False)
 
     # One of the WORKFLOW_* constants on this class describing the workflow
     # that this rule belongs to.
@@ -124,62 +123,6 @@ class AutomaticUpdateRule(models.Model):
 
     def __unicode__(self):
         return six.text_type("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
-
-    def migrate(self):
-        if not self.pk:
-            raise ValueError("Expected model to be saved first")
-
-        with CriticalSection(['migrate-rule-%s' % self.pk]):
-            rule = AutomaticUpdateRule.objects.get(pk=self.pk)
-            if not rule.migrated:
-                with transaction.atomic():
-                    # Migrate Criteria
-                    for old_criteria in rule.automaticupdaterulecriteria_set.all():
-                        property_value = old_criteria.property_value
-                        if old_criteria.match_type == AutomaticUpdateRuleCriteria.MATCH_DAYS_BEFORE:
-                            property_value = int(property_value) * -1
-                            property_value = str(property_value)
-
-                        new_criteria_definition = MatchPropertyDefinition(
-                            property_name=old_criteria.property_name,
-                            property_value=property_value,
-                            match_type=old_criteria.match_type,
-                        )
-                        new_criteria_definition.save()
-
-                        new_criteria = CaseRuleCriteria(rule=rule)
-                        new_criteria.definition = new_criteria_definition
-                        new_criteria.save()
-
-                    # Migrate Actions
-                    properties_to_update = []
-                    close_case = False
-                    for old_action in rule.automaticupdateaction_set.all():
-                        if old_action.action == AutomaticUpdateAction.ACTION_UPDATE:
-                            properties_to_update.append(
-                                UpdateCaseDefinition.PropertyDefinition(
-                                    name=old_action.property_name,
-                                    value_type=old_action.property_value_type,
-                                    value=old_action.property_value,
-                                )
-                            )
-                        elif old_action.action == AutomaticUpdateAction.ACTION_CLOSE:
-                            close_case = True
-                        else:
-                            raise ValueError("Unexpected action found: %s" % old_action.action)
-
-                    new_action_definition = UpdateCaseDefinition(close_case=close_case)
-                    new_action_definition.set_properties_to_update(properties_to_update)
-                    new_action_definition.save()
-
-                    new_action = CaseRuleAction(rule=rule)
-                    new_action.definition = new_action_definition
-                    new_action.save()
-
-                    rule.migrated = True
-                    rule.save()
-
-            return rule
 
     @property
     def references_parent_case(self):
@@ -625,9 +568,6 @@ class AutomaticUpdateRule(models.Model):
         """
         :return: CaseRuleActionResult object aggregating the results from all actions.
         """
-        if not self.migrated:
-            raise self.MigrationError("Attempted to call new method on non-migrated model.")
-
         if self.deleted:
             raise self.RuleError("Attempted to call run_rule on a deleted rule")
 
@@ -643,9 +583,6 @@ class AutomaticUpdateRule(models.Model):
             return self.run_actions_when_case_does_not_match(case)
 
     def criteria_match(self, case, now):
-        if not self.migrated:
-            raise self.MigrationError("Attempted to call new method on non-migrated model.")
-
         if case.is_deleted or case.closed:
             return False
 
@@ -670,9 +607,6 @@ class AutomaticUpdateRule(models.Model):
         return True
 
     def _run_method_on_action_definitions(self, case, method):
-        if not self.migrated:
-            raise self.MigrationError("Attempted to call new method on non-migrated model.")
-
         aggregated_result = CaseRuleActionResult()
 
         for action in self.memoized_actions:
@@ -965,108 +899,6 @@ class ClosedParentDefinition(CaseRuleCriteriaDefinition):
                 return True
 
         return False
-
-
-class AutomaticUpdateRuleCriteria(models.Model):
-    # True when today < (the date in property_name - property_value days)
-    MATCH_DAYS_BEFORE = 'DAYS_BEFORE'
-    # True when today >= (the date in property_name + property_value days)
-    MATCH_DAYS_AFTER = 'DAYS'
-    MATCH_EQUAL = 'EQUAL'
-    MATCH_NOT_EQUAL = 'NOT_EQUAL'
-    MATCH_HAS_VALUE = 'HAS_VALUE'
-
-    MATCH_TYPE_CHOICES = (
-        (MATCH_DAYS_BEFORE, MATCH_DAYS_BEFORE),
-        (MATCH_DAYS_AFTER, MATCH_DAYS_AFTER),
-        (MATCH_EQUAL, MATCH_EQUAL),
-        (MATCH_NOT_EQUAL, MATCH_NOT_EQUAL),
-        (MATCH_HAS_VALUE, MATCH_HAS_VALUE),
-    )
-
-    rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
-    property_name = models.CharField(max_length=126)
-    property_value = models.CharField(max_length=126, null=True)
-    match_type = models.CharField(max_length=15)
-
-    class Meta(object):
-        app_label = "data_interfaces"
-
-    def get_case_values(self, case):
-        values = case.resolve_case_property(self.property_name)
-        return [element.value for element in values]
-
-    def clean_datetime(self, timestamp):
-        if not isinstance(timestamp, datetime):
-            timestamp = datetime.combine(timestamp, time(0, 0))
-
-        if timestamp.tzinfo:
-            # Convert to UTC and make it a naive datetime for comparison to datetime.utcnow()
-            timestamp = timestamp.astimezone(pytz.utc).replace(tzinfo=None)
-
-        return timestamp
-
-    def check_days_before(self, case, now):
-        values = self.get_case_values(case)
-        for date_to_check in values:
-            date_to_check = _try_date_conversion(date_to_check)
-
-            if not isinstance(date_to_check, date):
-                continue
-
-            date_to_check = self.clean_datetime(date_to_check)
-
-            days = int(self.property_value)
-            if now < (date_to_check - timedelta(days=days)):
-                return True
-
-        return False
-
-    def check_days_after(self, case, now):
-        values = self.get_case_values(case)
-        for date_to_check in values:
-            date_to_check = _try_date_conversion(date_to_check)
-
-            if not isinstance(date_to_check, date):
-                continue
-
-            date_to_check = self.clean_datetime(date_to_check)
-
-            days = int(self.property_value)
-            if now >= (date_to_check + timedelta(days=days)):
-                return True
-
-        return False
-
-    def check_equal(self, case, now):
-        return any([
-            value == self.property_value for value in self.get_case_values(case)
-        ])
-
-    def check_not_equal(self, case, now):
-        return any([
-            value != self.property_value for value in self.get_case_values(case)
-        ])
-
-    def check_has_value(self, case, now):
-        values = self.get_case_values(case)
-        for value in values:
-            if value is None:
-                continue
-            if isinstance(value, six.string_types) and not value.strip():
-                continue
-            return True
-
-        return False
-
-    def matches(self, case, now):
-        return {
-            self.MATCH_DAYS_BEFORE: self.check_days_before,
-            self.MATCH_DAYS_AFTER: self.check_days_after,
-            self.MATCH_EQUAL: self.check_equal,
-            self.MATCH_NOT_EQUAL: self.check_not_equal,
-            self.MATCH_HAS_VALUE: self.check_has_value,
-        }.get(self.match_type)(case, now)
 
 
 class CaseRuleAction(models.Model):
@@ -1567,38 +1399,6 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
             raise ValueError("Expected CreateScheduleInstanceActionDefinition.SchedulerModuleInfo")
 
         self.scheduler_module_info = info.to_json()
-
-
-class AutomaticUpdateAction(models.Model):
-    ACTION_UPDATE = 'UPDATE'
-    ACTION_CLOSE = 'CLOSE'
-
-    ACTION_CHOICES = (
-        (ACTION_UPDATE, ACTION_UPDATE),
-        (ACTION_CLOSE, ACTION_CLOSE),
-    )
-
-    EXACT = "EXACT"
-    CASE_PROPERTY = "CASE_PROPERTY"
-
-    PROPERTY_TYPE_CHOICES = (
-        (EXACT, ugettext_lazy("Exact value")),
-        (CASE_PROPERTY, ugettext_lazy("Case property")),
-    )
-
-
-    rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
-    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
-
-    # property_name and property_value are ignored unless action is UPDATE
-    property_name = models.CharField(max_length=126, null=True)
-    property_value = models.CharField(max_length=126, null=True)
-
-    property_value_type = models.CharField(max_length=15,
-                                           default=EXACT)
-
-    class Meta(object):
-        app_label = "data_interfaces"
 
 
 class CaseRuleSubmission(models.Model):

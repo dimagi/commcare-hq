@@ -537,7 +537,6 @@ def migrate_rule(handler, schedule, until_references_timestamp):
         deleted=False,
         filter_on_server_modified=False,
         server_modified_boundary=None,
-        migrated=True,
         workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
     )
     if not handler.start_property:

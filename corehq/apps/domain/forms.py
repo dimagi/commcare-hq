@@ -71,6 +71,7 @@ from corehq.apps.accounting.utils import (
     get_account_name_from_default_name,
     get_privileges,
     log_accounting_error,
+    is_downgrade
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
@@ -82,7 +83,7 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV3
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
@@ -511,7 +512,7 @@ USE_LOCATION_CHOICE = "user_location"
 USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
 
 
-class CallCenterOwnerWidget(Select2Ajax):
+class CallCenterOwnerWidget(Select2AjaxV3):
 
     def set_domain(self, domain):
         self.domain = domain
@@ -598,7 +599,7 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=ugettext_lazy(
             """
             Default time to wait between sending updated mobile report data to users.
-            Can be overrided on a per user bases.
+            Can be overridden on a per user basis.
             """
         )
     )
@@ -1650,15 +1651,32 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
                 if self.current_subscription is not None:
-                    self.current_subscription.change_plan(
-                        self.plan_version,
-                        web_user=self.creating_user,
-                        adjustment_method=SubscriptionAdjustmentMethod.USER,
-                        service_type=SubscriptionType.PRODUCT,
-                        pro_bono_status=ProBonoStatus.NO,
-                        do_not_invoice=False,
-                        no_invoice_reason='',
-                    )
+                    if self.is_downgrade() and self.current_subscription.is_below_minimum_subscription:
+                        self.current_subscription.update_subscription(
+                            date_start=self.current_subscription.date_start,
+                            date_end=self.current_subscription.date_start + datetime.timedelta(days=30)
+                        )
+                        Subscription.new_domain_subscription(
+                            account=self.account,
+                            domain=self.domain,
+                            plan_version=self.plan_version,
+                            date_start=self.current_subscription.date_start + datetime.timedelta(days=30),
+                            web_user=self.creating_user,
+                            adjustment_method=SubscriptionAdjustmentMethod.USER,
+                            service_type=SubscriptionType.PRODUCT,
+                            pro_bono_status=ProBonoStatus.NO,
+                            funding_source=FundingSource.CLIENT,
+                        )
+                    else:
+                        self.current_subscription.change_plan(
+                            self.plan_version,
+                            web_user=self.creating_user,
+                            adjustment_method=SubscriptionAdjustmentMethod.USER,
+                            service_type=SubscriptionType.PRODUCT,
+                            pro_bono_status=ProBonoStatus.NO,
+                            do_not_invoice=False,
+                            no_invoice_reason='',
+                        )
                 else:
                     Subscription.new_domain_subscription(
                         self.account, self.domain, self.plan_version,
@@ -1676,6 +1694,15 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 show_stack_trace=True,
             )
             return False
+
+    def is_downgrade(self):
+        if self.current_subscription is None:
+            return False
+        else:
+            return is_downgrade(
+                current_edition=self.current_subscription.plan_version.plan.edition,
+                next_edition=self.plan_version.plan.edition
+            )
 
 
 class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):

@@ -48,7 +48,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
             };
         };
 
-        var reloadList = function(data) {
+        var reloadList = function (data) {
             self.currentlySearching(false);
             if (data.success) {
                 if (!self.initialLoad()) {
@@ -60,11 +60,11 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
                 self.archiveActionItems([]);
             }
         };
-        var formatURL = function(page) {
+        var formatURL = function (page) {
             if (!page) {
                 return "#";
             }
-            return self.listURL +'?page=' + page +
+            return self.listURL + '?page=' + page +
                 "&limit=" + self.pageLimit() +
                 "&show_inactive=" + self.showInactive;
         };
@@ -73,7 +73,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
     };
 
     ko.bindingHandlers.isPrevNextDisabled = {
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var value = valueAccessor()();
             if (value === undefined) {
                 $(element).parent().addClass('disabled');
@@ -84,7 +84,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
     };
 
     ko.bindingHandlers.isPaginationActive = {
-        update: function(element, valueAccessor, allBindingsAccessor) {
+        update: function (element, valueAccessor, allBindingsAccessor) {
             var current_page = parseInt(valueAccessor()());
             var current_item = parseInt(allBindingsAccessor()['text']);
             if (current_page === current_item) {
@@ -95,9 +95,9 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
         },
     };
 
-    $(function(){
+    $(function () {
         var options = hqImport('hqwebapp/js/initial_page_data').get('program_product_options');
-        _.each($('.ko-program-product-list'), function(list) {
+        _.each($('.ko-program-product-list'), function (list) {
             var viewModel = commtrackProductsProgramsViewModel(options);
             $(list).koApplyBindings(viewModel);
             viewModel.init();

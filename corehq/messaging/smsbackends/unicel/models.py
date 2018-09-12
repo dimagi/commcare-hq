@@ -91,7 +91,7 @@ class SQLUnicelBackend(SQLSMSBackend):
         return data
 
 
-def create_from_request(request):
+def create_from_request(request, backend_id=None):
     """
     From an inbound request (representing an incoming message),
     create a message (log) object with the right fields populated.
@@ -109,6 +109,7 @@ def create_from_request(request):
 
     backend_message_id = request.GET.get(InboundParams.MID, None)
 
-    log = incoming(sender, message, SQLUnicelBackend.get_api_id(), backend_message_id=backend_message_id)
+    log = incoming(sender, message, SQLUnicelBackend.get_api_id(), backend_message_id=backend_message_id,
+        backend_id=backend_id)
 
     return log
