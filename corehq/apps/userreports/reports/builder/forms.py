@@ -1310,7 +1310,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         elif self.source_type == "form":
             return self._get_default_form_report_columns()
         else:
-            return []
+            return self._get_default_raw_report_columns()
 
     def _get_default_case_report_columns(self):
         cols = []
@@ -1375,6 +1375,26 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 exists_in_current_version=True,
                 property=q.get_id(),
                 data_source_field=q.get_id(),
+                calculation=UI_AGG_COUNT_PER_CHOICE,
+            ))
+        return cols
+
+    def _get_default_raw_report_columns(self):
+        cols = []
+        # just grab the first five columns that aren't system fields
+        # eventually this should be reconciled with data dictionary / system_properties.py
+        props_to_use = [
+            p for p in self.data_source_properties.values()
+            if p.get_id() not in ('doc_id', 'inserted_at')
+        ]
+        for prop in props_to_use[:5]:
+            cols.append(ColumnViewModel(
+                display_text=prop.get_text(),
+                exists_in_current_version=True,
+                property=prop.get_id(),
+                data_source_field=(
+                    prop.to_report_column_option()
+                        .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
                 calculation=UI_AGG_COUNT_PER_CHOICE,
             ))
         return cols
