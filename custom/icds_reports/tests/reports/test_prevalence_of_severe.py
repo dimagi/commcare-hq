@@ -690,20 +690,20 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             {
                 "st1": {
                     "severe": 0,
-                    "moderate": 0,
-                    "normal": 0,
+                    "moderate": 4,
+                    "normal": 3,
                     'total_height_eligible': 454,
-                    "total_measured": 0,
+                    "total_measured": 7,
                     "total_weighed": 317,
                     'original_name': ["st1"],
-                    "fillKey": "0%-5%"
+                    "fillKey": "7%-100%"
                 },
                 "st2": {
                     "severe": 0,
-                    "moderate": 1,
-                    "normal": 0,
+                    "moderate": 5,
+                    "normal": 16,
                     'total_height_eligible': 497,
-                    "total_measured": 0,
+                    "total_measured": 20,
                     "total_weighed": 379,
                     'original_name': ["st2"],
                     "fillKey": "7%-100%"
@@ -736,7 +736,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             show_test=False,
             icds_feature_flag=True
         )
-        self.assertEquals(data['rightLegend']['average'], "0.13")
+        self.assertEquals(data['rightLegend']['average'], "1.29")
 
     def test_map_data_right_legend_extended_info_icds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_data_map(
@@ -754,11 +754,11 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             [
                 {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '696'},
                 {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
-                 'value': '0'},
+                 'value': '27'},
                 {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '255'},
                 {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
-                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '100.00%'},
-                {'indicator': '% Normal (0 - 5 years):', 'value': '0.00%'}
+                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '33.33%'},
+                {'indicator': '% Normal (0 - 5 years):', 'value': '70.37%'}
             ]
         )
 
@@ -792,14 +792,14 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'moderate': 0,
-                    'total_measured': 0,
-                    'normal': 0,
+                    'moderate': 4,
+                    'total_measured': 7,
+                    'normal': 3,
                     'original_name': ['b1', 'b2'],
                     'severe': 0,
                     'total_height_eligible': 454,
                     'total_weighed': 317,
-                    'fillKey': '0%-5%'
+                    'fillKey': '7%-100%'
                 }
             }
         )
@@ -817,7 +817,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             show_test=False,
             icds_feature_flag=True
         )
-        self.assertEquals(data['rightLegend']['average'], "0.00")
+        self.assertEquals(data['rightLegend']['average'], "1.26")
 
     def test_chart_data_bottom_fiveicds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_data_chart(
@@ -834,13 +834,13 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             data['bottom_five'],
             [
                 {
-                    "loc_name": "st1",
-                    "percent": 0.0
+                    'loc_name': 'st2',
+                    'percent': 25.0
                 },
                 {
-                    "loc_name": "st2",
-                    "percent": 100.0,
-                },
+                    'loc_name': 'st1',
+                    'percent': 57.142857142857146
+                }
             ]
         )
 
@@ -859,13 +859,13 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             data['top_five'],
             [
                 {
-                    "loc_name": "st1",
-                    "percent": 0.0
+                    'loc_name': 'st2',
+                    'percent': 25.0
                 },
                 {
-                    "loc_name": "st2",
-                    "percent": 100.0,
-                },
+                    'loc_name': 'st1',
+                    'percent': 57.142857142857146
+                }
             ]
         )
 
@@ -902,17 +902,17 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         'total_height_eligible': 0
                     },
                     {
-                        "y": 0.0,
+                        "y": 0.6666666666666666,
                         "x": 1491004800000,
                         "total_weighed": 691,
-                        'total_measured': 1,
+                        'total_measured': 9,
                         'total_height_eligible': 981,
                     },
                     {
-                        "y": 0.0,
+                        "y": 0.7037037037037037,
                         "x": 1493596800000,
                         "total_weighed": 696,
-                        'total_measured': 0,
+                        'total_measured': 27,
                         'total_height_eligible': 951,
                     }
                 ],
@@ -953,17 +953,17 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         'total_height_eligible': 0,
                     },
                     {
-                        "y": 0.00,
+                        "y": 0.1111111111111111,
                         "x": 1491004800000,
                         "total_weighed": 691,
-                        'total_measured': 1,
+                        'total_measured': 9,
                         'total_height_eligible': 981,
                     },
                     {
-                        "y": 1.0,
+                        "y": 0.3333333333333333,
                         "x": 1493596800000,
                         "total_weighed": 696,
-                        'total_measured': 00,
+                        'total_measured': 27,
                         'total_height_eligible': 951,
                     }
                 ],
@@ -1004,17 +1004,17 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         'total_height_eligible': 0
                     },
                     {
-                        "y": 1.0,
+                        "y": 0.2222222222222222,
                         "x": 1491004800000,
                         "total_weighed": 691,
-                        'total_measured': 1,
+                        'total_measured': 9,
                         'total_height_eligible': 981,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "total_weighed": 696,
-                        'total_measured': 0,
+                        'total_measured': 27,
                         'total_height_eligible': 951,
                     }
                 ],
@@ -1037,13 +1037,13 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             data['all_locations'],
             [
                 {
-                    "loc_name": "st1",
-                    "percent": 0.0
+                    'loc_name': 'st2',
+                    'percent': 25.0
                 },
                 {
-                    "loc_name": "st2",
-                    "percent": 100.0,
-                },
+                    'loc_name': 'st1',
+                    'percent': 57.142857142857146
+                }
             ]
         )
 
@@ -1076,9 +1076,9 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                 "s2": {
                     "total_weighed": 91,
                     "severe": 0,
-                    "moderate": 0,
-                    "total_measured": 0,
-                    "normal": 0,
+                    "moderate": 3,
+                    "total_measured": 4,
+                    "normal": 1,
                     "total_height_eligible": 153,
                 },
             }
@@ -1113,7 +1113,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         ],
                         [
                             "s2",
-                            0.0
+                            0.03296703296703297
                         ]
                     ],
                     "key": ""
