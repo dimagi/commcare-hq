@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.urls import reverse
-from corehq.apps.reminders.models import (RECIPIENT_USER_GROUP, RECIPIENT_LOCATION)
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.messaging.scheduling.forms import BroadcastForm as NewRemindersBroadcastForm
 from crispy_forms import layout as crispy

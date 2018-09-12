@@ -678,7 +678,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                   share_user_roles=True):
         from corehq.apps.app_manager.dbaccessors import get_app
         from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-        from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
         from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
         from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
@@ -790,20 +789,13 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
         return new_domain
 
-    def reminder_should_be_copied(self, handler):
-        from corehq.apps.reminders.models import ON_DATETIME
-        return (handler.start_condition_type != ON_DATETIME and
-                handler.user_group_id is None)
-
     def copy_component(self, doc_type, id, new_domain_name, user=None):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
-        from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 
         str_to_cls = {
             'UserRole': UserRole,
-            'CaseReminderHandler': CaseReminderHandler,
             'FixtureDataType': FixtureDataType,
             'FixtureDataItem': FixtureDataItem,
         }
@@ -817,10 +809,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         else:
             cls = str_to_cls[doc_type]
             db = cls.get_db()
-            if doc_type == 'CaseReminderHandler':
-                cur_doc = cls.get(id)
-                if not self.reminder_should_be_copied(cur_doc):
-                    return None
 
             new_id = db.copy_doc(id)['id']
 
