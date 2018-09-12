@@ -6473,7 +6473,7 @@ class RemoteApp(ApplicationBase):
     def SUITE_XPATH(self):
         return 'suite/resource/location[@authority="local"]'
 
-    def create_all_files(self, build_profile_id=None):
+    def create_all_files(self, build_profile_id=None, previous_version=None):
         langs_for_build = self.get_build_langs()
         files = {
             'profile.xml': self.create_profile(langs=langs_for_build),
