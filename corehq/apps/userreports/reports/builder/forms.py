@@ -1011,10 +1011,17 @@ class ConfigureNewReportBase(forms.Form):
                 'date': 'Date',
                 'numeric': 'Numeric'
             }
+            try:
+                format_ = filter_type_map[filter['type']]
+            except KeyError:
+                raise BadBuilderConfigError(_(
+                    "This report references the '{}' filter, which is not compatible with "
+                    "the Report Builder. It is only editable in the advanced interface."
+                ).format(filter['type']))
             return UserFilterViewModel(
                 exists_in_current_version=exists,
                 display_text=filter['display'],
-                format=filter_type_map[filter['type']],
+                format=format_,
                 property=self._get_property_id_by_indicator_id(field) if exists else None,
                 data_source_field=field if not exists else None
             )
@@ -1284,27 +1291,28 @@ class ConfigureTableReportForm(ConfigureListReportForm):
     @property
     def _report_charts(self):
 
-        def get_non_agged_columns():
-            return [c for c in self._report_columns if c['aggregation'] != UCR_AGG_SIMPLE]
+        non_agged_columns = [c for c in self._report_columns if c['aggregation'] != UCR_AGG_SIMPLE]
+        agged_columns = [c for c in self._report_columns if c['aggregation'] == UCR_AGG_SIMPLE]
 
-        def get_agged_columns():
-            return [c for c in self._report_columns if c['aggregation'] == UCR_AGG_SIMPLE]
-
-        if get_non_agged_columns():
+        if non_agged_columns:
             if self.cleaned_data['chart'] == "bar":
                 return [{
                     "type": "multibar",
-                    "x_axis_column": get_agged_columns()[0]['column_id'] if get_agged_columns() else '',
+                    "x_axis_column": agged_columns[0]['column_id'] if agged_columns else '',
                     # TODO: Possibly use more columns?
                     "y_axis_columns": [
-                        {"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()
+                        {"column_id": c["column_id"], "display": c["display"]} for c in non_agged_columns
                     ],
                 }]
             elif self.cleaned_data['chart'] == "pie":
+                if not agged_columns:
+                    raise BadBuilderConfigError(_(
+                        'You must have at least one group by column to use pie charts!'
+                    ))
                 return [{
                     "type": "pie",
-                    "aggregation_column": get_agged_columns()[0]['column_id'],
-                    "value_column": get_non_agged_columns()[0]['column_id'],
+                    "aggregation_column": agged_columns[0]['column_id'],
+                    "value_column": non_agged_columns[0]['column_id'],
                 }]
         return []
 

@@ -23,13 +23,14 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.cache import cache_control
 
 import ghdiff
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from dimagi.utils.web import json_response
+from dimagi.utils.couch.bulk import get_docs
 from phonelog.models import UserErrorEntry
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_built_app_on_hubspot
+from corehq.apps.analytics.tasks import track_built_app_on_hubspot_v2
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_or_api_key
@@ -74,6 +75,7 @@ def _get_error_counts(domain, app_id, version_numbers):
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
+    build_comment = request.GET.get('build_comment')
     page = int(request.GET.get('page', 1))
     page = max(page, 1)
     try:
@@ -94,8 +96,15 @@ def paginate_releases(request, domain, app_id):
     )
     if only_show_released:
         app_es = app_es.is_released()
-    apps = app_es.run()
-    saved_apps = [SavedAppBuild.wrap(app).to_saved_build_json(timezone) for app in apps.hits]
+    if build_comment:
+        app_es = app_es.build_comment(build_comment)
+    results = app_es.exclude_source().run()
+    app_ids = results.doc_ids
+    apps = get_docs(Application.get_db(), app_ids)
+    for app in apps:
+        app.pop('translations')
+    saved_apps = [SavedAppBuild.wrap(app, scrap_old_conventions=False).to_saved_build_json(timezone)
+                  for app in apps]
 
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
@@ -113,12 +122,13 @@ def paginate_releases(request, domain, app_id):
         for app in saved_apps:
             app['num_errors'] = num_errors_dict.get(app['version'], 0)
 
-    num_pages = int(ceil(apps.total / limit))
+    total_apps = results.total
+    num_pages = int(ceil(total_apps / limit))
 
     return json_response({
         'apps': saved_apps,
         'pagination': {
-            'total': apps.total,
+            'total': total_apps,
             'num_pages': num_pages,
             'current_page': page,
         }
@@ -219,7 +229,7 @@ def save_copy(request, domain, app_id):
     See VersionedDoc.save_copy
 
     """
-    track_built_app_on_hubspot.delay(request.couch_user)
+    track_built_app_on_hubspot_v2.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:
@@ -479,7 +489,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
         return {
             "app": self.first_app,
             "other_app": self.second_app,
-            "files": self.app_diffs
+            "files": {None: self.app_diffs},
         }
 
     @property

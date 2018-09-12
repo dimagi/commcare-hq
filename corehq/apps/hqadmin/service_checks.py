@@ -22,10 +22,9 @@ from soil import heartbeat
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.app_manager.models import Application
-from corehq.apps.change_feed.connection import get_kafka_client_or_none
+from corehq.apps.change_feed.connection import get_simple_kafka_client_or_none
 from corehq.apps.es import GroupES
-from corehq.blobs import get_blob_db
-from corehq.blobs.util import random_url_id
+from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
 from corehq.util.decorators import change_log_level
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
@@ -74,7 +73,7 @@ def check_rabbitmq():
 
 @change_log_level('kafka.client', logging.WARNING)
 def check_kafka():
-    client = get_kafka_client_or_none()
+    client = get_simple_kafka_client_or_none()
     if not client:
         return ServiceStatus(False, "Could not connect to Kafka")
     elif len(client.brokers) == 0:
@@ -106,10 +105,15 @@ def check_blobdb():
     """Save something to the blobdb and try reading it back."""
     db = get_blob_db()
     contents = b"It takes Pluto 248 Earth years to complete one orbit!"
-    info = db.put(BytesIO(contents), random_url_id(16))
-    with db.get(info.identifier) as fh:
+    meta = db.put(
+        BytesIO(contents),
+        domain="<unknown>",
+        parent_id="check_blobdb",
+        type_code=CODES.tempfile,
+    )
+    with db.get(key=meta.key) as fh:
         res = fh.read()
-    db.delete(info.identifier)
+    db.delete(key=meta.key)
     if res == contents:
         return ServiceStatus(True, "Successfully saved a file to the blobdb")
     return ServiceStatus(False, "Failed to save a file to the blobdb")

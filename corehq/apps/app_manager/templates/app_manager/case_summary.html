@@ -4,9 +4,7 @@
 
 {% block title %}{% trans "Case Summary" %}{% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "app_manager/js/summary/case_summary.js" %}"></script>
-{% endblock js %}
+{% requirejs_main 'app_manager/js/summary/case_summary' %}
 
 {% block content_extra %}
     {% initial_page_data 'case_metadata' case_metadata %}
@@ -43,7 +41,7 @@
     <div class="row">
         <div class="col-sm-12">
             <!-- ko foreach: caseTypes -->
-                <div class="panel panel-appmanager" data-bind="visible: isVisible">
+                <div class="panel panel-appmanager" data-bind="slideVisible: isVisible">
                     <div class="panel-heading">
                         <h4 class="panel-title panel-title-nolink">
                             <i class="fcc fcc-fd-external-case"></i>
@@ -89,18 +87,23 @@
                             <thead>
                                 <tr>
                                     <th>{% trans "Case Property" %}</th>
-                                    <th>{% trans "Description" %}</th>
                                     <th>{% trans "Form" %}</th>
                                     <th>{% trans "Load questions" %}</th>
                                     <th>{% trans "Save questions" %}</th>
+                                    <th>{% trans "Case Lists" %}</th>
+                                    <th>{% trans "Case Details" %}</th>
                                 </tr>
                             </thead>
                             <tbody data-bind="foreach: properties">
                                 <!-- ko foreach: forms -->
-                                    <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}, visible: $parent.isVisible">
+                                    <tr data-bind="attr: {id: $parents[1].name + ':' + $parent.name}, css: {'danger': $parent.has_errors}, slideVisible: $parent.isVisible">
                                         <!-- ko if: !$index() -->
-                                        <td data-bind="attr: {rowspan: $parent.forms.length}, text: $parent.name"></td>
-                                        <td data-bind="attr: {rowspan: $parent.forms.length}, text: $parent.description"></td>
+                                        <td data-bind="attr: {rowspan: $parent.forms.length}">
+                                            <dl>
+                                                <dt data-bind="text: $parent.name"></dt>
+                                                <dd data-bind="text: $parent.description"></dd>
+                                            </dl>
+                                        </td>
                                         <!-- /ko -->
                                         <td>
                                             <span data-bind="html: $root.moduleFormReference(form_id)"></span>
@@ -115,6 +118,14 @@
                                         <td>
                                             <div data-bind="template: {name: 'load-save-questions', data: {questions: save_questions, getIcon: $root.questionIcon}}"></div>
                                         </td>
+                                        <!-- ko if: !$index() -->
+                                        <td>
+                                            <div data-bind="template: {name: 'case-details', data: {details: $parent.short_details}}"></div>
+                                        </td>
+                                        <td>
+                                            <div data-bind="template: {name: 'case-details', data: {details: $parent.long_details}}"></div>
+                                        </td>
+                                        <!-- /ko -->
                                     </tr>
                                 <!-- /ko -->
                             </tbody>
@@ -131,7 +142,7 @@
             <li>
                 <span data-bind="html: $root.moduleFormReference(formId)"></span>
                 <!-- ko: if: conditions -->
-                    <ul class="fa-ul" data-bind="visible: $root.showConditions, foreach: conditions">
+                    <ul class="fa-ul" data-bind="slideVisible: $root.showConditions, foreach: conditions">
                         <li>
                             <i class="fa fa-sitemap"></i>
                             <span data-bind="text: question"></span>
@@ -155,7 +166,7 @@
                     <li data-bind="visible: $root.showIds, text: value"></li>
                     <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
                 </ul>
-                <ul class="fa-ul" data-bind="if: condition, visible: $root.showConditions">
+                <ul class="fa-ul" data-bind="if: condition, slideVisible: $root.showConditions">
                     <li>
                         <i class="fa-li fa fa-sitemap text-muted"></i>
                         <span data-bind="text: condition.question"></span>
@@ -163,13 +174,20 @@
                         <span data-bind="text: condition.answer"></span>
                     </li>
                 </ul>
-                <ul class="fa-ul" data-bind="if: question.calculate, visible: $root.showCalculations">
+                <ul class="fa-ul" data-bind="if: question.calculate, slideVisible: $root.showCalculations">
                     <li>
                         <i class="fa-li fa fa-calculator text-muted"></i>
                         <span data-bind="text: question.calculate"></span>
                     </li>
                 </ul>
             </li>
+        </ul>
+    </script>
+
+    {# Case details #}
+    <script type="text/html" id="case-details">
+        <ul class="list-unstyled" data-bind="foreach: details">
+            <li><span data-bind="html: $root.moduleReference($data.module_id)"></span> "<span data-bind="text: $root.translate($data.header)"></span>"</li>
         </ul>
     </script>
 {% endblock content_extra %}

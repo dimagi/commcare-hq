@@ -1,6 +1,6 @@
 /* globals MultimediaReferenceController */
-hqDefine("hqmedia/js/references_main", function() {
-    $(function() {
+hqDefine("hqmedia/js/references_main", function () {
+    $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
             referenceController = new MultimediaReferenceController(
                 initialPageData("references"),

@@ -1,4 +1,4 @@
-hqDefine('reports/js/charts/main', function() {
+hqDefine('reports/js/charts/main', function () {
     var init = function () {
         var pieCharts = hqImport('reports/js/charts/pie_chart');
         $('.charts-pie-chart').each(function (i, el) {

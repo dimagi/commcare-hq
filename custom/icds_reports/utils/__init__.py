@@ -630,10 +630,7 @@ def get_age_filters(beta):
 
 
 def get_age_condition(beta):
-    if beta:
-        return "age_tranche != :age_72"
-    else:
-        return "age_tranche != :age_0 AND age_tranche != :age_6 AND age_tranche != :age_72"
+    return "age_tranche != :age_72"
 
 
 def track_time(func):
@@ -660,6 +657,10 @@ def percent_num(x, y):
 
 def percent(x, y):
     return "%.2f %%" % (percent_num(x, y))
+
+
+def percent_or_not_entered(x, y):
+    return percent(x, y) if y else DATA_NOT_ENTERED
 
 
 class ICDSDatabaseColumn(DatabaseColumn):

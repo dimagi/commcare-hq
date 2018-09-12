@@ -2,13 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/payment_method_handler.js' %}"></script>
-    <script src="{% static 'accounting/js/credits.js' %}"></script>
-    <script src="https://js.stripe.com/v2/"></script>
-    {% include 'domain/partials/schedule_once.html' %}
-    <script src="{% static 'domain/js/current_subscription.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'domain/js/current_subscription' %}
 
 {% block page_content %}
     {% initial_page_data "stripe_public_key" stripe_public_key %}
@@ -43,11 +37,23 @@
                             {% endblocktrans %}
                             </div>
                         {% endif %}
-                        <p>
-                            <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
-                                {% trans "Change Plan" %}
-                            </a>
-                        </p>
+                        {% if plan.is_annual_plan %}
+                        <form action="{% url 'annual_plan_request_quote' domain %}">
+                            <div style="margin-top:10px;">
+                                <label class="control-label">{% trans "Got questions about your plan?" %}</label>
+                                <button class="btn btn-primary btn-lg">
+                                    {% trans 'Talk to Sales' %}
+                                </button>
+                            </div>
+                        </form>
+                        {% else %}
+                            <p>
+                                <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
+                                    {% trans "Change Plan" %}
+                                </a>
+                            </p>
+                        {% endif %}
+
                         {% if plan.is_trial %}
                             <div class="alert alert-info">
                                 <i class="fa fa-info-circle"></i>
@@ -350,6 +356,8 @@
             {% endblocktrans %}
         <!-- /ko -->
     </script>
+
+    {% include 'domain/partials/schedule_once.html' %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}

@@ -29,8 +29,13 @@ def get_extra_permissions():
         SMS_EXPORT_PERMISSION, DownloadNewSmsExportView.page_title, lambda domain: True)
 
 
-def can_download_data_files(domain):
-    return toggles.DATA_FILE_DOWNLOAD.enabled(domain)
+def can_download_data_files(domain, couch_user):
+    from corehq.apps.users.models import DomainMembershipError
+    try:
+        role = couch_user.get_role(domain)
+    except DomainMembershipError:
+        return False
+    return toggles.DATA_FILE_DOWNLOAD.enabled(domain) and role.permissions.view_file_dropzone
 
 
 def can_view_form_exports(couch_user, domain):

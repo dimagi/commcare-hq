@@ -24,7 +24,7 @@ class TestRequireJS(SimpleTestCase):
 
         proc = subprocess.Popen(["find", prefix, "-name", "*.js"], stdout=subprocess.PIPE)
         (out, err) = proc.communicate()
-        cls.js_files = [f for f in out.split("\n") if f
+        cls.js_files = [f for f in [b.decode('utf-8') for b in out.split(b"\n")] if f
                     and not re.search(r'/_design/', f)
                     and not re.search(r'couchapps', f)
                     and not re.search(r'/vellum/', f)]
@@ -50,7 +50,7 @@ class TestRequireJS(SimpleTestCase):
         def _test_file(filename):
             proc = subprocess.Popen(["grep", "hqDefine", filename], stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
-            for line in out.split("\n"):
+            for line in [b.decode('utf-8') for b in out.split(b"\n")]:
                 match = re.search(r'^\s*hqDefine\([\'"]([^\'"]*)[\'"]', line)
                 if match:
                     module = match.group(1)
@@ -75,7 +75,7 @@ class TestRequireJS(SimpleTestCase):
         def _test_file(filename):
             proc = subprocess.Popen(["grep", "hqImport", filename], stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
-            for line in out.split("\n"):
+            for line in [b.decode('utf-8') for b in out.split(b"\n")]:
                 if line:
                     match = re.search(r'hqImport\([\'"]([^\'"]*)[\'"]', line)
                     if match:

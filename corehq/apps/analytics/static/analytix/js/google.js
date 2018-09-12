@@ -32,7 +32,7 @@ hqDefine('analytix/js/google', [
             scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + apiId;
 
         _logger = logging.getLoggerForApi('Google Analytics');
-        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function() {
+        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function () {
             window.dataLayer = window.dataLayer || [];
             _gtag = function () {
                 window.dataLayer.push(arguments);
@@ -80,7 +80,7 @@ hqDefine('analytix/js/google', [
      */
     var trackEvent = function (eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
         var originalArgs = arguments;
-        _ready.done(function() {
+        _ready.done(function () {
             var params = {
                 event_category: eventCategory,
                 event_label: eventLabel,
@@ -93,7 +93,7 @@ hqDefine('analytix/js/google', [
             }
             _logger.debug.log(_logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], originalArgs), "Event Recorded");
             _gtag('event', eventAction, params);
-        }).fail(function() {
+        }).fail(function () {
             if (_.isFunction(eventCallback)) {
                 eventCallback();
             }
@@ -114,7 +114,7 @@ hqDefine('analytix/js/google', [
      */
     var trackClick = function (element, eventCategory, eventAction, eventLabel, eventValue, eventParameters) {
         var originalArgs = arguments;
-        _ready.done(function() {
+        _ready.done(function () {
             utils.trackClickHelper(
                 element,
                 function (callbackFn) {

@@ -206,7 +206,6 @@ class IndicatorPillowTest(TestCase):
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def _check_sample_doc_state(self, expected_indicators, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
-        self.adapter.refresh_table()
         self.assertEqual(1, self.adapter.get_query_object().count())
         row = self.adapter.get_query_object()[0]
         for k in row.keys():
@@ -255,7 +254,6 @@ class IndicatorPillowTest(TestCase):
                 'type': 'ticket',
                 'priority': bad_value
             }))
-        self.adapter.refresh_table()
         # make sure we saved rows to the table for everything
         self.assertEqual(len(bad_ints), self.adapter.get_query_object().count())
 
@@ -272,7 +270,6 @@ class IndicatorPillowTest(TestCase):
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
         sample_doc['domain'] = 'not-this-domain'
         self.pillow.process_change(doc_to_change(sample_doc))
-        self.adapter.refresh_table()
         self.assertEqual(0, self.adapter.get_query_object().count())
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
@@ -355,7 +352,6 @@ class IndicatorPillowTest(TestCase):
         since = self.pillow.get_change_feed().get_latest_offsets()
         CaseAccessorSQL.soft_delete_cases(case.domain, [case.case_id])
         self.pillow.process_changes(since=since, forever=False)
-        self.adapter.refresh_table()
         self.assertEqual(0, self.adapter.get_query_object().count())
 
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
@@ -372,7 +368,6 @@ class IndicatorPillowTest(TestCase):
         sample_doc['type'] = 'wrong_type'
 
         self.pillow.process_change(doc_to_change(sample_doc))
-        self.adapter.refresh_table()
 
         self.assertEqual(0, self.adapter.get_query_object().count())
 

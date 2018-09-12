@@ -228,12 +228,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             post_json = serializers.serialize('python', [post])[0]
             self.assertDictEqual(pre_json, post_json)
 
-    def tearDown(self):
-        from corehq.apps.data_interfaces.models import AutomaticUpdateAction, AutomaticUpdateRuleCriteria
-        AutomaticUpdateAction.objects.all().delete()
-        AutomaticUpdateRuleCriteria.objects.all().delete()
-        super(TestSQLDumpLoad, self).tearDown()
-
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
         expected_object_counts = Counter({

@@ -29,6 +29,5 @@ def create_empty_rule(domain, workflow):
         deleted=False,
         filter_on_server_modified=False,
         server_modified_boundary=None,
-        migrated=True,
         workflow=workflow,
     )

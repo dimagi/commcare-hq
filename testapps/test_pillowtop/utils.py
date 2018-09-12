@@ -50,7 +50,7 @@ class capture_kafka_changes_context(object):
         self.topics = topics
         self.change_feed = KafkaChangeFeed(
             topics=topics,
-            group_id='test-{}'.format(uuid.uuid4().hex),
+            client_id='test-{}'.format(uuid.uuid4().hex),
         )
         self.changes = None
 

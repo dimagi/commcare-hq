@@ -131,6 +131,7 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(BulkAsyncIndicatorProcessingTest, cls).setUpClass()
         domain_name = "bulk_async_indicator_processing"
         cls.domain = Domain.get_or_create_with_name(domain_name, is_active=True)
 
@@ -179,6 +180,7 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+        super(BulkAsyncIndicatorProcessingTest, cls).tearDownClass()
 
     def _setup_docs_and_indicators(self):
         self.docs = [

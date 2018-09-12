@@ -16,7 +16,7 @@ from six.moves import map
 
 
 class OpenmrsConfigForm(forms.Form):
-    openmrs_provider = forms.CharField(label=_('Provider UUID'), required=False)
+    openmrs_provider = forms.CharField(label=_("Provider's Person UUID"), required=False)
     case_config = JsonField(expected_type=dict)
     form_configs = JsonField(expected_type=list)
 

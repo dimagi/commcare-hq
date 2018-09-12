@@ -1,8 +1,14 @@
 /* global DOMPurify */
-hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/ui/sortable'], function($, ko) {
-
+hqDefine("hqwebapp/js/knockout_bindings.ko", [
+    'jquery',
+    'knockout',
+    'jquery-ui/ui/sortable',
+], function (
+    $,
+    ko
+) {
     ko.bindingHandlers.hqbSubmitReady = {
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var value = (valueAccessor()) ? valueAccessor()() : null;
             if (value)
                 $(element).addClass("btn-primary").removeClass("disabled");
@@ -13,11 +19,11 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
     ko.bindingHandlers.fadeVisible = {
         // from knockout.js examples
-        init: function(element, valueAccessor) {
+        init: function (element, valueAccessor) {
             var value = valueAccessor();
             $(element).toggle(ko.utils.unwrapObservable(value));
         },
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var value = valueAccessor();
             ko.utils.unwrapObservable(value) ? $(element).fadeIn() : $(element).fadeOut();
         },
@@ -25,21 +31,21 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
     ko.bindingHandlers.fadeVisibleInOnly = {
         // from knockout.js examples
-        init: function(element, valueAccessor) {
+        init: function (element, valueAccessor) {
             var value = valueAccessor();
             $(element).toggle(ko.utils.unwrapObservable(value));
         },
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var value = valueAccessor();
             ko.utils.unwrapObservable(value) ? $(element).fadeIn() : $(element).hide();
         },
     };
 
     ko.bindingHandlers.staticChecked = {
-        init: function(element) {
+        init: function (element) {
             $('<span class="icon"></span>').appendTo(element);
         },
-        update: function(element, valueAccessor, allBindingsAccessor) {
+        update: function (element, valueAccessor, allBindingsAccessor) {
             var value = ko.utils.unwrapObservable(valueAccessor());
             var span = $('span', element);
             var allBindings = allBindingsAccessor();
@@ -56,8 +62,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     };
 
     ko.bindingHandlers.langcode = {
-        init: function(element, valueAccessor, allBindings) {
-            ko.bindingHandlers.value.init(element, valueAccessor, (function() {
+        init: function (element, valueAccessor, allBindings) {
+            ko.bindingHandlers.value.init(element, valueAccessor, (function () {
                 var valueUpdate = allBindings.get('valueUpdate') || [];
                 if (typeof valueUpdate === 'string') {
                     valueUpdate = [valueUpdate];
@@ -65,14 +71,14 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 valueUpdate.push('autocompletechange');
                 valueUpdate.push('autocompleteclose');
                 return {
-                    get: function(key) {
+                    get: function (key) {
                         if (key === 'valueUpdate') {
                             return valueUpdate;
                         } else {
                             return allBindings.get(key);
                         }
                     },
-                    has: function(key) {
+                    has: function (key) {
                         if (key === 'valueUpdate') {
                             return true;
                         } else {
@@ -87,8 +93,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     };
 
     ko.bindingHandlers.sortable = {
-        updateSortableList: function(itemList) {
-            _(itemList()).each(function(item, index) {
+        updateSortableList: function (itemList) {
+            _(itemList()).each(function (item, index) {
                 if (item._sortableOrder === undefined) {
                     item._sortableOrder = ko.observable(index);
                 } else {
@@ -96,7 +102,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 }
             });
         },
-        getList: function(valueAccessor) {
+        getList: function (valueAccessor) {
             /* this function's logic follows that of ko.bindingHandlers.foreach.makeTemplateValueAccessor */
             var modelValue = valueAccessor(),
                 unwrappedValue = ko.utils.peekObservable(modelValue);
@@ -106,22 +112,22 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 return unwrappedValue['data'];
             }
         },
-        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             // based on http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
             // note: although by this point we've deviated from that solution quite a bit
             var list = ko.bindingHandlers.sortable.getList(valueAccessor);
-            var forceUpdate = function() {
+            var forceUpdate = function () {
                 ko.bindingHandlers.sortable.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
             };
             list.subscribe(forceUpdate);
             $(element).sortable({
                 handle: '.sortable-handle',
-                helper: function(event, element) {
+                helper: function (event, element) {
                     // Use a helper element attached directly to body to get
                     // around any overflow styling in the list's ancestors
                     return element.clone().appendTo("body");
                 },
-                update: function(event, ui) {
+                update: function (event, ui) {
                     var parent = ui.item.parent(),
                         oldPosition = ui.item.data('order');
                     if (oldPosition === undefined) {
@@ -155,7 +161,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                             // Knockout 2.3 fix: refresh all of the `data-order`s
                             // this is an O(n) operation, so if experiencing slowness
                             // start here
-                            parent.children().each(function(i) {
+                            parent.children().each(function (i) {
                                 $(this).data('order', i);
                             });
                         }
@@ -164,7 +170,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             });
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
-        update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var list = ko.bindingHandlers.sortable.getList(valueAccessor);
             ko.bindingHandlers.sortable.updateSortableList(list);
             return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
@@ -173,8 +179,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
     // Loosely based on https://jsfiddle.net/hQnWG/614/
     ko.bindingHandlers.multirow_sortable = {
-        updateSortableList: function(itemList) {
-            _(itemList()).each(function(item, index) {
+        updateSortableList: function (itemList) {
+            _(itemList()).each(function (item, index) {
                 if (item._sortableOrder === undefined) {
                     item._sortableOrder = ko.observable(index);
                 } else {
@@ -182,7 +188,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 }
             });
         },
-        getList: function(valueAccessor) {
+        getList: function (valueAccessor) {
             /* this function's logic follows that of ko.bindingHandlers.foreach.makeTemplateValueAccessor */
             var modelValue = valueAccessor(),
                 unwrappedValue = ko.utils.peekObservable(modelValue);  // Unwrap without setting a dependency here
@@ -194,9 +200,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 return unwrappedValue['data'];
             }
         },
-        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var list = ko.bindingHandlers.multirow_sortable.getList(valueAccessor);
-            var forceUpdate = function() {
+            var forceUpdate = function () {
                 ko.bindingHandlers.multirow_sortable.update(
                     element, valueAccessor, allBindingsAccessor, viewModel, bindingContext
                 );
@@ -281,7 +287,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     var previousRow = ui.item.prev()[0],
                         previousIndex = null;
-                    if(previousRow) {
+                    if (previousRow) {
                         previousIndex = parseInt(previousRow.attributes['data-order'].value);
                     }
 
@@ -293,7 +299,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     var originalList = list.splice(0, list().length);
 
-                    var insertDraggedElements = function() {
+                    var insertDraggedElements = function () {
                         movedIndices.forEach(function (movedIndex) {
                             list.push(originalList[movedIndex]);
                         });
@@ -303,7 +309,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     if (previousIndex === null) {
                         insertDraggedElements();
                     }
-                    originalList.forEach(function(originalListElement, originalListIndex) {
+                    originalList.forEach(function (originalListElement, originalListIndex) {
                         // Other rows stay in their original order.
                         if (!movedIndices.includes(originalListIndex)) {
                             list.push(originalListElement);
@@ -322,15 +328,15 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 return parseInt(row[0].attributes['data-order'].value);
             };
 
-            var getExportColumnByRow = function(row) {
+            var getExportColumnByRow = function (row) {
                 return list()[getIndexFromRow(row)];
             };
 
-            var setIgnoreClick = function(row) {
+            var setIgnoreClick = function (row) {
                 row.addClass('ignore-click').siblings().removeClass('ignore-click');
             };
 
-            var getRowFromClickedElement = function(element) {
+            var getRowFromClickedElement = function (element) {
                 return element.closest('tr');
             };
 
@@ -343,77 +349,22 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
-        update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var list = ko.bindingHandlers.multirow_sortable.getList(valueAccessor);
             ko.bindingHandlers.multirow_sortable.updateSortableList(list);
             return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
     };
 
-    ko.bindingHandlers.saveButton = {
-        init: function(element, getSaveButton) {
-            getSaveButton().ui.appendTo(element);
-        },
-    };
-
-    ko.bindingHandlers.saveButton2 = {
-        init: function(element, valueAccessor, allBindingsAccessor) {
-            var saveOptions = allBindingsAccessor().saveOptions,
-                state = valueAccessor(),
-                saveButton;
-
-            saveButton = hqImport("hqwebapp/js/main").initSaveButton({
-                save: function() {
-                    saveButton.ajax(saveOptions());
-                },
-            });
-            $(element).css('vertical-align', 'top').css('display', 'inline-block');
-
-            saveButton.ui.appendTo(element);
-            element.saveButton = saveButton;
-            saveButton.on('state:change', function() {
-                state(saveButton.state);
-            });
-        },
-        update: function(element, valueAccessor) {
-            var state = ko.utils.unwrapObservable(valueAccessor());
-            element.saveButton.setStateWhenReady(state);
-        },
-    };
-
-    ko.bindingHandlers.deleteButton = {
-        init: function(element, valueAccessor, allBindingsAccessor) {
-            var saveOptions = allBindingsAccessor().saveOptions,
-                state = valueAccessor(),
-                deleteButton;
-
-            deleteButton = hqImport("hqwebapp/js/main").initDeleteButton({
-                save: function() {
-                    deleteButton.ajax(saveOptions());
-                },
-            });
-            $(element).css('vertical-align', 'top').css('display', 'inline-block');
-            deleteButton.ui.appendTo(element);
-            element.deleteButton = deleteButton;
-            deleteButton.on('state:change', function() {
-                state(deleteButton.state);
-            });
-        },
-        update: function(element, valueAccessor) {
-            var state = ko.utils.unwrapObservable(valueAccessor());
-            element.deleteButton.setStateWhenReady(state);
-        },
-    };
-
     ko.bindingHandlers.modal = {
-        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             $(element).addClass('modal fade').modal({
                 show: false,
                 backdrop: false,
             });
             //        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
-        update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             ko.bindingHandlers.visible.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
             var value = ko.utils.unwrapObservable(valueAccessor());
             //        ko.bindingHandlers['if'].update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
@@ -426,15 +377,15 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     };
 
     ko.bindingHandlers.openModal = {
-        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var templateID = valueAccessor(),
                 modal = $('<div></div>').addClass('modal fade').appendTo('body'),
-                newValueAccessor = function() {
-                    var clickAction = function() {
-                        ko.bindingHandlers.template.init(modal.get(0), function() {
+                newValueAccessor = function () {
+                    var clickAction = function () {
+                        ko.bindingHandlers.template.init(modal.get(0), function () {
                             return templateID;
                         }, allBindingsAccessor, viewModel, bindingContext);
-                        ko.bindingHandlers.template.update(modal.get(0), function() {
+                        ko.bindingHandlers.template.update(modal.get(0), function () {
                             return templateID;
                         }, allBindingsAccessor, viewModel, bindingContext);
                         modal.modal('show');
@@ -446,10 +397,10 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     };
 
     ko.bindingHandlers.openRemoteModal = {
-        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var modal = $('<div></div>').addClass('modal fade').appendTo('body'),
-                newValueAccessor = function() {
-                    var clickAction = function() {
+                newValueAccessor = function () {
+                    var clickAction = function () {
                         modal.load($(element).data('ajaxSource'));
                         modal.modal('show');
                     };
@@ -457,13 +408,13 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 };
             ko.bindingHandlers.click.init(element, newValueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
-        update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             $(element).data('ajaxSource', ko.utils.unwrapObservable(valueAccessor()));
         },
     };
 
-    ko.bindingHandlers.visibleFade = {
-        'update': function(element, valueAccessor) {
+    ko.bindingHandlers.slideVisible = {
+        'update': function (element, valueAccessor) {
             var value = ko.utils.unwrapObservable(valueAccessor());
             if (value) {
                 $(element).hide().slideDown();
@@ -473,42 +424,10 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
-    ko.bindingHandlers.starred = {
-        init: function(element) {
-            $(element).addClass('icon fa');
-        },
-        update: function(element, valueAccessor) {
-            var value = ko.utils.unwrapObservable(valueAccessor()),
-                $element = $(element);
-            value = value + '';
-            $element.addClass('icon pointer');
-
-            var unselected = 'icon-star-empty fa-star-o';
-            var selected = 'icon-star icon-large fa-star released';
-            var pending = 'icon-refresh icon-spin fa-spin fa-spinner';
-            var error = 'icon-ban-circle';
-
-            var suffix = error;
-            if (value === 'false') {
-                suffix = unselected;
-            } else if (value === 'true') {
-                suffix = selected;
-            } else if (value === 'pending') {
-                suffix = pending;
-            }
-
-            $element.removeClass(unselected);
-            $element.removeClass(selected);
-            $element.removeClass(pending);
-            $element.removeClass(error);
-            $element.addClass(suffix);
-        },
-    };
-
     ko.bindingHandlers.bootstrapTabs = {
-        init: function(element) {
+        init: function (element) {
             var tabLinkSelector = 'ul.nav > li > a';
-            var activate = function() {
+            var activate = function () {
                 var n = $(tabLinkSelector, element).index(this);
                 $(tabLinkSelector, element).parents().removeClass('active');
                 $(this).parent().addClass('active');
@@ -518,26 +437,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             $(element).on('click', tabLinkSelector, activate);
             // Wait for the rest of the element to be rendered before init'ing
             // (bit of a race condition)
-            setTimeout(function() {
+            setTimeout(function () {
                 $('ul.nav > li.active > a', element).each(activate);
             }, 0);
-        },
-    };
-
-    ko.bindingHandlers.makeHqHelp = {
-        update: function(element, valueAccessor) {
-            var opts = valueAccessor(),
-                name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
-                description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
-                placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
-                format = ko.utils.unwrapObservable(opts.format);
-            $(element).find('.hq-help').remove();
-            hqImport("hqwebapp/js/main").makeHqHelp({
-                title: name,
-                content: description,
-                html: format === 'html',
-                placement: placement || 'right',
-            }).appendTo(element);
         },
     };
 
@@ -549,14 +451,14 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             optstrText: 'label' (default)
             value: (ko.observable)
          */
-        update: function(element, valueAccessor, allBindings) {
+        update: function (element, valueAccessor, allBindings) {
             var optionObjects = ko.utils.unwrapObservable(valueAccessor());
             var optstrValue = allBindings.get('optstrValue') || 'value';
             var optstrText = allBindings.get('optstrText') || 'label';
-            var optionStrings = ko.utils.arrayMap(optionObjects, function(o) {
+            var optionStrings = ko.utils.arrayMap(optionObjects, function (o) {
                 return o[optstrValue];
             });
-            var optionsText = function(optionString) {
+            var optionsText = function (optionString) {
                 for (var i = 0; i < optionObjects.length; i++) {
                     if (optionObjects[i][optstrValue] === optionString) {
                         if (typeof optstrText === 'string') {
@@ -568,17 +470,17 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 }
             };
 
-            return ko.bindingHandlers.options.update(element, function() {
+            return ko.bindingHandlers.options.update(element, function () {
                 return optionStrings;
             }, {
-                get: function(key) {
+                get: function (key) {
                     if (key === 'optionsText') {
                         return optionsText;
                     } else {
                         return allBindings.get(key);
                     }
                 },
-                has: function(key) {
+                has: function (key) {
                     if (key === 'optionsText') {
                         return true;
                     } else {
@@ -591,7 +493,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
     ko.bindingHandlers.valueDefault = {
         init: ko.bindingHandlers.value.init,
-        update: function(element, valueAccessor, allBindingsAccessor) {
+        update: function (element, valueAccessor, allBindingsAccessor) {
             var value = valueAccessor();
             if (!value()) {
                 value(ko.utils.unwrapObservable(allBindingsAccessor()['default']));
@@ -600,46 +502,17 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
-    ko.bindingHandlers.edit = {
-        update: function(element, valueAccessor) {
-            var editable = ko.utils.unwrapObservable(valueAccessor());
-
-            function getValue(e) {
-                if ($(e).is('select')) {
-                    return $('option[value="' + $(e).val() + '"]', e).text() || $(e).val();
-                }
-                return $(e).val();
-            }
-            if (editable) {
-                $(element).show();
-                $(element).next('.ko-no-edit').hide();
-            } else {
-                $(element).hide();
-                var no_edit = $(element).next('.ko-no-edit');
-                if (!no_edit.length) {
-                    if ($(element).hasClass('code')) {
-                        no_edit = $('<code></code>');
-                    } else {
-                        no_edit = $('<span></span>');
-                    }
-                    no_edit.addClass('ko-no-edit').insertAfter(element);
-                }
-                no_edit.text(getValue(element)).removeClass().addClass($(element).attr('class')).addClass('ko-no-edit').addClass('ko-no-edit-' + element.tagName.toLowerCase());
-            }
-        },
-    };
-
     /**
      * Converts the bound element to a select2 widget. The value of the binding is
      * a list of strings, or a list of objects with the keys 'id' and 'text' used
      * for the select2's options.
      */
-    ko.bindingHandlers.select2 = new function() {
+    ko.bindingHandlers.select2 = new function () {
         var that = this;
 
         this.SOURCE_KEY = "select2-source";
 
-        this.updateSelect2Source = function(element, valueAccessor) {
+        this.updateSelect2Source = function (element, valueAccessor) {
             var source = $(element).data(that.SOURCE_KEY);
             // We clear the array and repopulate it, instead of simply replacing
             // it, because the select2 options are tied to this specific instance.
@@ -658,7 +531,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             return source;
         };
 
-        this.init = function(element, valueAccessor) {
+        this.init = function (element, valueAccessor) {
             var $el = $(element);
 
             // The select2 jquery element uses the array stored at
@@ -674,7 +547,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             });
         };
 
-        this.update = function(element, valueAccessor, allBindings) {
+        this.update = function (element, valueAccessor, allBindings) {
             that.updateSelect2Source(element, valueAccessor);
 
             // Update the selected item
@@ -685,23 +558,23 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     /**
      * Autocomplete widget based on a select2. Allows free text entry.
      */
-    ko.bindingHandlers.autocompleteSelect2 = new function() {
+    ko.bindingHandlers.autocompleteSelect2 = new function () {
         var that = this;
 
         this.SOURCE_KEY = "select2-source";
 
-        this.select2Options = function(element) {
+        this.select2Options = function (element) {
             var $el = $(element);
             $el.data(that.SOURCE_KEY, []);
             return {
                 multiple: false,
                 width: "off",
                 data: $el.data(that.SOURCE_KEY),
-                escapeMarkup: function(text) {
+                escapeMarkup: function (text) {
                     return DOMPurify.sanitize(text);
                 },
-                createSearchChoice: function(term, data) {
-                    if (term !== "" && !_.find(data, function(d) { return d.text === term; })) {
+                createSearchChoice: function (term, data) {
+                    if (term !== "" && !_.find(data, function (d) { return d.text === term; })) {
                         return {
                             id: term,
                             text: term,
@@ -711,23 +584,23 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             };
         };
 
-        this.init = function(element, valueAccessor) {
+        this.init = function (element, valueAccessor) {
             that._init(element, that.select2Options(element));
         };
 
-        this._init = function(element, select2Options) {
-            $(element).select2(select2Options).on('change', function() {
+        this._init = function (element, select2Options) {
+            $(element).select2(select2Options).on('change', function () {
                 $(element).trigger('textchange');
             });
         };
 
-        this.update = function(element, valueAccessor, allBindings) {
+        this.update = function (element, valueAccessor, allBindings) {
             var $el = $(element),
                 newValue = ko.unwrap(allBindings().value) || $el.val(),
                 source = ko.bindingHandlers.select2.updateSelect2Source(element, valueAccessor);
 
             // Add free text item to source
-            if (newValue && !_.find(source, function(item) { return item.id === newValue; })) {
+            if (newValue && !_.find(source, function (item) { return item.id === newValue; })) {
                 source.unshift({
                     id: newValue,
                     text: newValue,
@@ -740,36 +613,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         };
     }();
 
-    /**
-     * Autocomplete widget based on atwho.
-     */
-    ko.bindingHandlers.autocompleteAtwho = {
-        init: function(element, valueAccessor) {
-            var $element = $(element);
-            if (!$element.atwho) {
-                throw new Error("The typeahead binding requires Atwho.js and Caret.js");
-            }
-
-            hqImport('hqwebapp/js/atwho').init($element, {
-                afterInsert: function() {
-                    $element.trigger('textchange');
-                },
-            });
-
-            $element.on("textchange", function() {
-                if ($element.val()) {
-                    $element.change();
-                }
-            });
-        },
-
-        update: function(element, valueAccessor, allBindings) {
-            $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
-        },
-    };
-
     ko.bindingHandlers.multiTypeahead = {
-        init: function(element, valueAccessor) {
+        init: function (element, valueAccessor) {
             var contacts = valueAccessor();
             $(element).multiTypeahead({
                 source: contacts,
@@ -783,7 +628,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
      * @type {{update: update}}
      */
     ko.bindingHandlers.jqueryElement = {
-        init: function() {
+        init: function () {
             // This excludes this element from ko.applyBindings
             // which means that whatever controls that element
             // is free to use its own knockout without conflicting
@@ -791,13 +636,13 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 controlsDescendantBindings: true,
             };
         },
-        update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
             $(element).empty();
             $(element).append(ko.unwrap(valueAccessor()));
         },
     };
 
-    ko.bindingHandlers.__copyPasteSharedInit = function() {
+    ko.bindingHandlers.__copyPasteSharedInit = function () {
         var offScreen = {
             top: -10000,
             left: -10000,
@@ -807,7 +652,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             width: 0,
             height: 0,
         }).css(offScreen).appendTo('body');
-        var focusTextarea = function($element, value) {
+        var focusTextarea = function ($element, value) {
             hiddenTextarea.css({
                 top: $element.offset().top,
             });
@@ -815,21 +660,21 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             hiddenTextarea.focus();
             hiddenTextarea.select();
         };
-        var unfocusTextarea = function($element) {
+        var unfocusTextarea = function ($element) {
             $element.focus();
             return hiddenTextarea.val();
         };
         // Firefox only fires copy/paste when it thinks it's appropriate
         // Chrome doesn't fire copy/paste after key down has changed the focus
         // So we need implement both copy/paste as catching keystrokes Ctrl+C/V
-        $(document).on('copy paste keydown', function(e) {
+        $(document).on('copy paste keydown', function (e) {
             var $element, callback;
             if (e.type === 'copy' || e.metaKey && String.fromCharCode(e.keyCode) === 'C') {
                 $element = $(':focus');
                 callback = $element.data('copyCallback');
                 if (callback) {
                     focusTextarea($element, callback());
-                    setTimeout(function() {
+                    setTimeout(function () {
                         unfocusTextarea($element);
                     }, 0);
                 }
@@ -838,7 +683,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 callback = $element.data('pasteCallback');
                 if (callback) {
                     focusTextarea($element);
-                    setTimeout(function() {
+                    setTimeout(function () {
                         var pasteValue = unfocusTextarea($element);
                         // part of the above hack
                         // on chrome this gets called twice,
@@ -852,18 +697,18 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         });
 
         // only ever call this function once
-        ko.bindingHandlers.__copyPasteSharedInit = function() {};
+        ko.bindingHandlers.__copyPasteSharedInit = function () {};
     };
 
     ko.bindingHandlers.copy = {
-        init: function(element, valueAccessor) {
+        init: function (element, valueAccessor) {
             ko.bindingHandlers.__copyPasteSharedInit();
             $(element).data('copyCallback', valueAccessor());
         },
     };
 
     ko.bindingHandlers.paste = {
-        init: function(element, valueAccessor) {
+        init: function (element, valueAccessor) {
             ko.bindingHandlers.__copyPasteSharedInit();
             var callback = valueAccessor();
             $(element).data('pasteCallback', valueAccessor());
@@ -889,7 +734,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
      * http://www.knockmeout.net/2012/05/quick-tip-skip-binding.html
      */
     ko.bindingHandlers.stopBinding = {
-        init: function() {
+        init: function () {
             return {
                 controlsDescendantBindings: true,
             };
@@ -898,7 +743,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     ko.virtualElements.allowedBindings.stopBinding = true;
 
     ko.bindingHandlers.popover = {
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var options = ko.utils.unwrapObservable(valueAccessor());
             if (options.title || options.content) { // don't show empty popovers
                 $(element).popover(options);
@@ -907,17 +752,17 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     };
 
     ko.bindingHandlers.initializeValue = {
-        init: function(element, valueAccessor) {
+        init: function (element, valueAccessor) {
             valueAccessor()(element.getAttribute('value'));
         },
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var value = valueAccessor();
             element.setAttribute('value', ko.utils.unwrapObservable(value));
         },
     };
 
     ko.bindingHandlers.bind_element = {
-        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var field = valueAccessor() || '$e';
             if (viewModel[field]) {
                 console.log('warning: element already bound');
@@ -931,10 +776,10 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     };
 
     ko.bindingHandlers.sortableList = {
-        init: function(element, valueAccessor) {
+        init: function (element, valueAccessor) {
             var list = valueAccessor();
             $(element).sortable({
-                update: function(event, ui) {
+                update: function (event, ui) {
                     //retrieve our actual data item
                     var item = ko.dataFor(ui.item.get(0));
                     //figure out its new position
@@ -949,4 +794,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             });
         },
     };
+
+    return 1;
 });

@@ -12,7 +12,7 @@ from django.http import HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render_to_response as django_r_to_r
 import json
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 from django.utils.functional import Promise
 from dimagi.utils.parsing import json_format_datetime
 from datetime import date, datetime, time
@@ -116,7 +116,7 @@ def json_handler(obj):
     elif isinstance(obj, Decimal):
         return float(obj) # warning, potential loss of precision
     elif isinstance(obj, Promise):
-        return force_unicode(obj)  # to support ugettext_lazy
+        return force_text(obj)  # to support ugettext_lazy
     else:
         return json.JSONEncoder().default(obj)
 

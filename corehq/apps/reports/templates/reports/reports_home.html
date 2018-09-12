@@ -5,9 +5,7 @@
 {% load report_tags %}
 {% load compress %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'reports/js/saved_reports.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'reports/js/saved_reports_main' %}
 
 {% block page_content %}
 {% initial_page_data 'configs' configs %}

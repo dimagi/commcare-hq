@@ -6,36 +6,46 @@
 // See releases_table.html for an example.
 // This component must be nested within another element that has had knockout bindings applied to it.
 
-hqDefine('hqwebapp/js/components/pagination', function() {
+hqDefine('hqwebapp/js/components/pagination', [
+    'knockout',
+    'underscore',
+], function (
+    ko,
+    _
+) {
     return {
-        viewModel: function(params){
+        viewModel: function (params) {
             var self = {};
 
             self.currentPage = ko.observable(params.currentPage || 1);
             self.totalItems = params.totalItems;
-            self.perPage = params.perPage;
-            self.numPages = ko.computed(function(){
-                return Math.ceil(self.totalItems() / self.perPage());
-            });
-            self.perPage.subscribe(function(){
+            self.totalItems.subscribe(function (newValue) {
                 self.goToPage(1);
             });
+            self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);
+            self.numPages = ko.computed(function () {
+                return Math.ceil(self.totalItems() / self.perPage());
+            });
+            self.perPage.subscribe(function () {
+                self.goToPage(1);
+            });
+            self.inlinePageListOnly = !!params.inlinePageListOnly;
             self.maxPagesShown = params.maxPagesShown || 9;
 
-            self.nextPage = function(){
+            self.nextPage = function () {
                 self.goToPage(Math.min(self.currentPage() + 1, self.numPages()));
             };
-            self.previousPage = function(){
+            self.previousPage = function () {
                 self.goToPage(Math.max(self.currentPage() - 1, 1));
             };
-            self.goToPage = function(page){
+            self.goToPage = function (page) {
                 self.currentPage(page);
                 params.goToPage(self.currentPage());
             };
-            self.itemsShowing = ko.computed(function(){
+            self.itemsShowing = ko.computed(function () {
                 return self.currentPage() * self.perPage();
             });
-            self.itemsText = ko.computed(function(){
+            self.itemsText = ko.computed(function () {
                 var lastItem = Math.min(self.currentPage() * self.perPage(), self.totalItems());
                 return _.template(
                     gettext('Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries')
@@ -45,14 +55,14 @@ hqDefine('hqwebapp/js/components/pagination', function() {
                     maxItems: self.totalItems(),
                 });
             });
-            self.pagesShown = ko.computed(function(){
+            self.pagesShown = ko.computed(function () {
                 var pages = [];
-                for (var pageNum = 1; pageNum <= self.numPages(); pageNum++){
+                for (var pageNum = 1; pageNum <= self.numPages(); pageNum++) {
                     var midPoint = Math.floor(self.maxPagesShown / 2),
                         leftHalf = pageNum >= self.currentPage() - midPoint,
                         rightHalf = pageNum <= self.currentPage() + midPoint,
                         pageVisible = (leftHalf && rightHalf) || pages.length < self.maxPagesShown && pages[pages.length - 1] > self.currentPage();
-                    if (pageVisible){
+                    if (pageVisible) {
                         pages.push(pageNum);
                     }
                 }

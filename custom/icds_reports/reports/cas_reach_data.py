@@ -81,14 +81,14 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
     else:
         monthly_attendance_percent = percent_increase('awc_num_open', awc_this_month_data, awc_prev_month_data)
         number_of_awc_open_yesterday = {
-            'help_text': _(("Total Number of AWCs open for at least one day in month")),
+            'help_text': _("Total Number of AWCs open for at least one day in month"),
             'label': _('Number of AWCs open for at least one day in month'),
             'color': 'green' if monthly_attendance_percent > 0 else 'red',
             'percent': monthly_attendance_percent,
             'value': get_value(awc_this_month_data, 'awc_num_open'),
             'all': get_value(awc_this_month_data, 'all_awcs'),
             'format': 'div',
-            'frequency': 'day',
+            'frequency': 'month',
         }
 
     return {

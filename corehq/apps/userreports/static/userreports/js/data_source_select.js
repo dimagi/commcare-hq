@@ -1,5 +1,5 @@
 
-hqDefine("userreports/js/data_source_select", function() {
+hqDefine("userreports/js/data_source_select", function () {
     $(function () {
         var dataSourceSelector = {
             application: ko.observable(""),

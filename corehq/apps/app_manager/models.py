@@ -30,7 +30,11 @@ from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 
-from corehq.apps.app_manager.app_schemas.case_properties import get_parent_type_map
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    get_all_case_properties,
+    get_parent_type_map,
+    get_usercase_properties,
+)
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -61,9 +65,9 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 from django.template.loader import render_to_string
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq import toggles, privileges
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
@@ -299,7 +303,7 @@ class IndexedSchema(DocumentSchema):
         def __get__(self, instance, owner):
             # thanks, http://metapython.blogspot.com/2010/11/python-instance-methods-how-are-they.html
             # this makes Getter('foo') act like a bound method
-            return types.MethodType(self, instance, owner)
+            return types.MethodType(self, instance)
 
 
 class FormActionCondition(DocumentSchema):
@@ -974,7 +978,6 @@ class FormBase(DocumentSchema):
     @property
     def case_references(self):
         return self.case_references_data or CaseReferences()
-
 
     def requires_case(self):
         return False
@@ -2218,8 +2221,10 @@ class DetailColumn(IndexedSchema):
 
         # Lazy migration: enum used to be a dict, now is a list
         if isinstance(data.get('enum'), dict):
-            data['enum'] = sorted({'key': key, 'value': value}
-                                  for key, value in data['enum'].items())
+            data['enum'] = sorted(
+                [{'key': key, 'value': value} for key, value in data['enum'].items()],
+                key=lambda d: d['key'],
+            )
 
         # Lazy migration: xpath expressions from format to first-class property
         if data.get('format') == 'calculate':
@@ -2517,6 +2522,14 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         except IndexError:
             raise FormNotFoundException()
 
+    def get_form_index(self, unique_id):
+        for index, form in enumerate(self.get_forms()):
+            if form.unique_id == unique_id:
+                return index
+        error = _("Could not find form with ID='{unique_id}' in module '{module_name}'.").format(
+            module_name=self.name, unique_id=unique_id)
+        raise FormNotFoundException(error)
+
     def get_child_modules(self):
         return [
             module for module in self.get_app().get_modules()
@@ -2666,6 +2679,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         raise IncompatibleFormTypeException()
+
+    def update_app_case_meta(self, app_case_meta):
+        pass
 
 
 class ModuleDetailsMixin(object):
@@ -2951,6 +2967,20 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     def grid_display_style(self):
         return self.display_style == 'grid'
+
+    def update_app_case_meta(self, meta):
+        from corehq.apps.reports.formdetails.readable import CaseMetaException
+
+        for column in self.case_details.long.columns:
+            try:
+                meta.add_property_detail('long', self.case_type, self.unique_id, column)
+            except CaseMetaException:
+                pass
+        for column in self.case_details.short.columns:
+            try:
+                meta.add_property_detail('short', self.case_type, self.unique_id, column)
+            except CaseMetaException:
+                pass
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -3875,6 +3905,12 @@ class AdvancedModule(ModuleBase):
             except IndexError:
                 pass  # That phase wasn't found, so we can't change it's anchor. Ignore it
 
+    def update_app_case_meta(self, meta):
+        for column in self.case_details.long.columns:
+            meta.add_property_detail('long', self.case_type, self.unique_id, column)
+        for column in self.case_details.short.columns:
+            meta.add_property_detail('short', self.case_type, self.unique_id, column)
+
 
 class ReportAppFilter(DocumentSchema):
 
@@ -4796,6 +4832,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     See note at top of file for high-level overview.
     """
 
+    _blobdb_type_code = CODES.application
     recipients = StringProperty(default="")
 
     # this is the supported way of specifying which commcare build to use
@@ -4897,9 +4934,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     mobile_ucr_restore_version = StringProperty(
         default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSIONS, required=False
     )
+    location_fixture_restore = StringProperty(
+        default=DEFAULT_LOCATION_FIXTURE_OPTION, choices=LOCATION_FIXTURE_OPTIONS,
+        required=False
+    )
 
-    @classmethod
-    def wrap(cls, data):
+    @staticmethod
+    def _scrap_old_conventions(data):
         should_save = False
         # scrape for old conventions and get rid of them
         if 'commcare_build' in data:
@@ -4932,14 +4973,19 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if 'original_doc' in data:
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
+        return should_save
 
+    @classmethod
+    def wrap(cls, data, scrap_old_conventions=True):
+        if scrap_old_conventions:
+            should_save = cls._scrap_old_conventions(data)
         data["description"] = data.get('description') or data.get('short_description')
 
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
             self.build_spec = get_default_build_spec()
 
-        if should_save:
+        if scrap_old_conventions and should_save:
             self.save()
 
         return self
@@ -5393,6 +5439,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         LatestAppInfo(self.master_id, self.domain).clear_caches()
 
+        get_all_case_properties.clear(self)
+        get_usercase_properties.clear(self)
+
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
         if user and user.days_since_created == 0:
@@ -5447,7 +5496,7 @@ def validate_lang(lang):
         raise ValueError("Invalid Language")
 
 
-def validate_property(property):
+def validate_property(property, allow_parents=True):
     """
     Validate a case property name
 
@@ -5458,8 +5507,12 @@ def validate_property(property):
     ValueError: Invalid Property
 
     """
-    # this regex is also copied in propertyList.ejs
-    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
+    if allow_parents:
+        # this regex is also copied in propertyList.ejs
+        regex = r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$'
+    else:
+        regex = r'^[a-zA-Z][\w_-]*$'
+    if not re.match(regex, property):
         raise ValueError("Invalid Property")
 
 
@@ -5948,6 +6001,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
+    def get_module_index(self, unique_id):
+        for index, module in enumerate(self.get_modules()):
+            if module.unique_id == unique_id:
+                return index
+        error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+            app_name=self.name, unique_id=unique_id)
+        raise ModuleNotFoundException(error)
+
     def get_forms(self, bare=True):
         for module in self.get_modules():
             for form in module.get_forms():
@@ -6315,6 +6376,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             type_meta.relationships = relationships
 
         for module in self.get_modules():
+            module.update_app_case_meta(meta)
             for form in module.get_forms():
                 form.update_app_case_meta(meta)
 

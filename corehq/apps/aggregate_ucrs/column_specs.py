@@ -11,8 +11,11 @@ from jsonobject.base_properties import DefaultProperty
 from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM
 from corehq.apps.aggregate_ucrs.query_column_providers import StandardQueryColumnProvider, \
     AggregationParamQueryColumnProvider
-from corehq.apps.userreports.datatypes import DATA_TYPE_INTEGER, DataTypeProperty, DATA_TYPE_STRING, DATA_TYPE_DATE
+from corehq.apps.userreports import const
+from corehq.apps.userreports.datatypes import DATA_TYPE_INTEGER, DataTypeProperty, DATA_TYPE_STRING, \
+    DATA_TYPE_DATE, DATA_TYPE_SMALL_INTEGER, DATA_TYPE_DECIMAL
 from corehq.apps.userreports.indicators import Column
+from corehq.apps.userreports.reports.specs import SQLAGG_COLUMN_MAP
 from dimagi.ext import jsonobject
 
 
@@ -255,12 +258,14 @@ class SqlColumnAdapter(PrimaryColumnAdapter):
         )
 
 
-SECONDARY_COLUMN_TYPE_SUM = 'sum'
-SECONDARY_COLUMN_TYPE_MIN = 'min'
 SECONDARY_COLUMN_TYPE_CHOICES = (
-    (SECONDARY_COLUMN_TYPE_SUM, _('Sum')),
-    (SECONDARY_COLUMN_TYPE_MIN, _('Min')),
-    # todo: add other aggregations, count, min, max, (first? last?)
+    (const.AGGGREGATION_TYPE_SUM, _('Sum')),
+    (const.AGGGREGATION_TYPE_MIN, _('Min')),
+    (const.AGGGREGATION_TYPE_MAX, _('Max')),
+    (const.AGGGREGATION_TYPE_AVG, _('Average')),
+    (const.AGGGREGATION_TYPE_COUNT, _('Count')),
+    (const.AGGGREGATION_TYPE_COUNT_UNIQUE, _('Count Unique Values')),
+    (const.AGGGREGATION_TYPE_NONZERO_SUM, _('Has a nonzero sum (1 if sum is nonzero else 0).')),
 )
 
 
@@ -280,11 +285,8 @@ class SecondaryColumnAdapter(ColumnAdapater):
 
     @staticmethod
     def from_db_column(db_column):
-        type_to_class_mapping = {
-            SECONDARY_COLUMN_TYPE_SUM: SumColumnAdapter,
-            SECONDARY_COLUMN_TYPE_MIN: MinColumnAdapter,
-        }
-        return type_to_class_mapping[db_column.aggregation_type](db_column)
+        assert db_column.aggregation_type in SQLAGG_COLUMN_MAP
+        return SqlaggColumnAdapter(db_column)
 
     def is_groupable(self):
         return False
@@ -308,28 +310,33 @@ class SimpleAggregationAdapater(six.with_metaclass(ABCMeta, SecondaryColumnAdapt
         return self.sqlalchemy_fn(sqlalchemy_table.c[self.properties.referenced_column])
 
 
-class SumColumnAdapter(SimpleAggregationAdapater):
-    """
-    A SimpleAggregationAdapater that sums the values of a given column in the secondary table.
-    """
+class SqlaggColumnAdapter(SimpleAggregationAdapater):
+
+    def _get_sqlagg_column(self):
+        return SQLAGG_COLUMN_MAP[self._db_column.aggregation_type](self._db_column.column_id)
+
     @property
     def sqlalchemy_fn(self):
-        return sqlalchemy.func.sum
+        return self._get_sqlagg_column().aggregate_fn
 
     def get_datatype(self):
-        return DATA_TYPE_INTEGER
-
-
-class MinColumnAdapter(SimpleAggregationAdapater):
-    """
-    A SimpleAggregationAdapater that returns the min value of a given column in the secondary table.
-    """
-    @property
-    def sqlalchemy_fn(self):
-        return sqlalchemy.func.min
-
-    def get_datatype(self):
-        return _get_datatype_from_referenced_column(self._db_column, self.properties.referenced_column)
+        # special case some columns to allow to e.g. count unique values from a string column
+        if self._db_column.aggregation_type in (
+                const.AGGGREGATION_TYPE_COUNT,
+                const.AGGGREGATION_TYPE_COUNT_UNIQUE
+        ):
+            return DATA_TYPE_INTEGER
+        elif self._db_column.aggregation_type in (
+                const.AGGGREGATION_TYPE_NONZERO_SUM
+        ):
+            return DATA_TYPE_SMALL_INTEGER
+        elif self._db_column.aggregation_type in (
+                const.AGGGREGATION_TYPE_AVG
+        ):
+            return DATA_TYPE_DECIMAL
+        else:
+            # default to using the same column type as the source
+            return _get_datatype_from_referenced_column(self._db_column, self.properties.referenced_column)
 
 
 def _get_datatype_from_referenced_column(db_column, referenced_column):

@@ -70,14 +70,14 @@ class SharedDriveConfiguration(object):
 
 def get_server_url(http_method, server_root, username, password):
     if username and password:
-        return b'%(http_method)s://%(user)s:%(pass)s@%(server)s' % {
+        return '%(http_method)s://%(user)s:%(pass)s@%(server)s' % {
             'http_method': http_method,
             'user': username,
             'pass': password,
             'server': server_root,
         }
     else:
-        return b'%(http_method)s://%(server)s' % {
+        return '%(http_method)s://%(server)s' % {
             'http_method': http_method,
             'server': server_root,
         }
@@ -91,9 +91,9 @@ def get_dynamic_db_settings(server_root, username, password, dbname,
 
     """
 
-    http_method = b'https' if use_https else b'http'
+    http_method = 'https' if use_https else 'http'
     server_url = get_server_url(http_method, server_root, username, password)
-    database = b'%(server)s/%(database)s' % {
+    database = '%(server)s/%(database)s' % {
         'server': server_url,
         'database': dbname,
     }
@@ -108,6 +108,9 @@ def get_db_name(dbname, is_test):
 
     :param is_test: Add test prefix if true.
     """
+    if isinstance(dbname, bytes):
+        dbname = dbname.decode('utf-8')
+
     return (TEST_DATABASE_PREFIX + dbname) if is_test else dbname
 
 
@@ -142,7 +145,7 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
             if postfix in self.db_urls_by_prefix:
                 url = self.db_urls_by_prefix[postfix]
             else:
-                url = b'%s__%s' % (self.main_db_url, postfix)
+                url = '%s__%s' % (self.main_db_url, postfix)
             return app_label, url
         else:
             return app_label, self.main_db_url
@@ -165,7 +168,7 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
             if postfix in self.db_urls_by_prefix:
                 url = self.db_urls_by_prefix[postfix]
             else:
-                url = b'%s__%s' % (self.main_db_url, postfix)
+                url = '%s__%s' % (self.main_db_url, postfix)
             extra_dbs[postfix] = url
 
         return extra_dbs

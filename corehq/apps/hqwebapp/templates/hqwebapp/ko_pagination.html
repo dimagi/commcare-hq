@@ -1,8 +1,8 @@
 {% load i18n %}
 <!-- used by corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js -->
 <script type="text/html" id="ko-pagination-template">
-    <div class="row">
-        <div class="col-sm-5">
+    <div data-bind="css: {row: !inlinePageListOnly}">
+        <div class="col-sm-5" data-bind="visible: !inlinePageListOnly">
             <div class="form-inline pagination-text">
                 <span data-bind="text: itemsText"></span>
                 <span>
@@ -13,7 +13,7 @@
                 </span>
             </div>
         </div>
-        <div class="col-sm-7 text-right">
+        <div data-bind="css: {'col-sm-7 text-right': !inlinePageListOnly}">
             <ul class="pagination">
                 <li>
                     <a href="#" data-bind="click: previousPage">
