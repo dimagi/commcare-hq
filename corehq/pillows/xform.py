@@ -19,6 +19,7 @@ from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.user import UnknownUsersProcessor
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -192,6 +193,7 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         doc_prep_fn=transform_xform_for_report_forms_index,
         doc_filter_fn=report_xform_filter
     )
+    unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
@@ -204,7 +206,7 @@ def get_ucr_es_form_pillow(pillow_id='kafka-xform-ucr-es', ucr_division=None,
         checkpoint=checkpoint,
         change_processed_event_handler=event_handler,
         processor=[ucr_processor, xform_to_es_processor, xform_to_report_es_processor,
-                   form_meta_processor]
+                   form_meta_processor, unknown_user_form_processor]
     )
 
 

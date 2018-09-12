@@ -17,7 +17,8 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.pillows.user import get_user_pillow, get_unknown_users_pillow
+from corehq.pillows.user import get_user_pillow
+from corehq.pillows.xform import get_ucr_es_form_pillow
 from corehq.util.elastic import ensure_index_deleted
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -106,7 +107,7 @@ class UnknownUserPillowTest(UserPillowTestBase):
         producer.send_change(topic, _form_to_change_meta(form))
 
         # send to elasticsearch
-        pillow = get_unknown_users_pillow()
+        pillow = get_ucr_es_form_pillow()
         pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
 

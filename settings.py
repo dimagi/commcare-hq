@@ -1720,11 +1720,6 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
         },
-        {
-            'name': 'UnknownUsersPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.user.get_unknown_users_pillow',
-        },
     ],
     'cache': [
         {
