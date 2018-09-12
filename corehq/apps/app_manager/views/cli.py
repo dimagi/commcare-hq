@@ -45,6 +45,17 @@ def list_apps(request, domain):
 
 @json_error
 def direct_ccz(request, domain):
+    app_id = request.GET.get('app_id', None)
+    version = request.GET.get('version', None)
+    latest = request.GET.get('latest', None)
+    include_multimedia = request.GET.get('include_multimedia', 'false').lower() == 'true'
+    visit_scheduler = False
+    request_lang = None
+
+    return get_direct_ccz(domain, app_id, version, latest, include_multimedia, visit_scheduler, request_lang)
+
+
+def get_direct_ccz(domain, app_id, version, latest, include_multimedia, visit_scheduler, request_lang):
     """
     You must specify an app_id, and you may specify either 'version' or 'latest'
     latest can be one of:
@@ -67,11 +78,6 @@ def direct_ccz(request, domain):
         else:
             # either latest=='save' or they didn't specify
             return get_current_app(domain, app_id)
-
-    app_id = request.GET.get('app_id', None)
-    version = request.GET.get('version', None)
-    latest = request.GET.get('latest', None)
-    include_multimedia = request.GET.get('include_multimedia', 'false').lower() == 'true'
 
     # Make sure URL params make sense
     if not app_id:
@@ -100,9 +106,9 @@ def direct_ccz(request, domain):
         errors = None
 
     if errors:
-        lang, langs = get_langs(request, app)
+        lang, langs = get_langs(request_lang, app)
         error_html = render_to_string("app_manager/partials/build_errors.html", {
-            'request': request,
+            'visit_scheduler': visit_scheduler,
             'app': app,
             'build_errors': errors,
             'domain': domain,
