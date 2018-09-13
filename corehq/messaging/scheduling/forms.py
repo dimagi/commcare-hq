@@ -444,6 +444,9 @@ class ContentForm(Form):
         elif isinstance(content, SMSSurveyContent):
             result['form_unique_id'] = content.form_unique_id
             result['survey_expiration_in_hours'] = content.expire_after // 60
+            if (content.expire_after % 60) != 0:
+                # The old framework let you enter minutes. If it's not an even number of hours, round up.
+                result['survey_expiration_in_hours'] += 1
 
             if content.reminder_intervals:
                 result['survey_reminder_intervals_enabled'] = 'Y'
