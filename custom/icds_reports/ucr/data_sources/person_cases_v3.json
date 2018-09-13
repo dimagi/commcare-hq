@@ -1,0 +1,485 @@
+{
+  "domains": [
+    "reach-test",
+    "icds-dashboard-qa",
+    "icds-cas"
+  ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
+  "config": {
+    "table_id": "static-person_cases_v3",
+    "display_name": "Cases - Person v3 (Static)",
+    "referenced_doc_type": "CommCareCase",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "type"
+      },
+      "property_value": "person"
+    },
+    "configured_indicators": [
+      {
+        "column_id": "awc_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "owner_id"
+        },
+        "create_index": true
+      },
+      {
+        "column_id": "supervisor_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "property_name",
+            "property_name": "owner_id"
+          },
+          "location_type": "supervisor",
+          "location_property": "_id"
+        },
+        "create_index": true
+      },
+      {
+        "column_id": "block_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "property_name",
+            "property_name": "owner_id"
+          },
+          "location_type": "block",
+          "location_property": "_id"
+        },
+        "create_index": true
+      },
+      {
+        "column_id": "district_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "property_name",
+            "property_name": "owner_id"
+          },
+          "location_type": "district",
+          "location_property": "_id"
+        }
+      },
+      {
+        "column_id": "state_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "property_name",
+            "property_name": "owner_id"
+          },
+          "location_type": "state",
+          "location_property": "_id"
+        }
+      },
+      {
+        "column_id": "opened_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "opened_on"
+      },
+      {
+        "column_id": "closed_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "closed_on"
+      },
+      {
+        "column_id": "name",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "name"
+      },
+      {
+        "column_id": "sex",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "sex"
+      },
+      {
+        "column_id": "dob",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "dob"
+      },
+      {
+        "comment": "This is the age at registration in years",
+        "column_id": "age_at_reg",
+        "datatype": "small_integer",
+        "type": "raw",
+        "property_name": "age_at_reg"
+      },
+      {
+        "column_id": "date_death",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "date_death"
+      },
+      {
+        "column_id": "resident",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "resident"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
+        "column_id": "age_at_death_yrs",
+        "datatype": "small_integer",
+        "type": "raw",
+        "property_name": "age_at_death_yrs"
+      },
+      {
+        "column_id": "female_death_type",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "female_death_type"
+      },
+      {
+        "column_id": "referral_health_problem",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "referral_health_problem"
+      },
+      {
+        "column_id": "last_referral_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "last_referral_date"
+      },
+      {
+        "column_id": "referral_reached_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "referral_reached_date"
+      },
+      {
+        "column_id": "hh_caste",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "icds_parent_id"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "hh_caste"
+          }
+        }
+      },
+      {
+        "column_id": "hh_minority",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "related_doc",
+            "related_doc_type": "CommCareCase",
+            "doc_id_expression": {
+              "type": "icds_parent_id"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "hh_minority"
+            }
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
+        "column_id": "disabled",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "disabled"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
+        "column_id": "disability_type",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "disability_type"
+      },
+      {
+        "column_id": "registered_status",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "registered_status"
+          },
+          "cases": {
+            "not_registered": {
+              "type": "constant",
+              "constant": 0
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
+        "column_id": "migration_status",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "migration_status"
+          },
+          "cases": {
+            "migrated": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
+        "column_id": "aadhar_date",
+        "type": "expression",
+        "datatype": "date",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_name",
+                "property_name": "aadhar_number"
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          "expression_if_true": {
+            "type": "coalesce",
+            "expression": {
+              "type": "property_name",
+              "property_name": "aadhar_date"
+            },
+            "default_expression": {
+              "type": "nested",
+              "argument_expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "first_item",
+                "items_expression": {
+                  "type": "filter_items",
+                  "items_expression": {
+                    "type": "icds_get_case_history_by_date",
+                    "xmlns": [
+                      "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
+                      "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
+                      "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
+                    ]
+                  },
+                  "filter_expression": {
+                    "type": "not",
+                    "filter": {
+                      "operator": "in",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "property_path",
+                        "property_path": [
+                          "update",
+                          "aadhar_number"
+                        ]
+                      },
+                      "property_value": [
+                        "",
+                        null
+                      ]
+                    }
+                  }
+                }
+              },
+              "value_expression": {
+                "type": "property_name",
+                "property_name": "@date_modified"
+              }
+            }
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "age_marriage",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "age_marriage"
+        }
+      },
+      {
+        "column_id": "is_pregnant",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "is_pregnant"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
+        "column_id": "marital_status",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "marital_status"
+          },
+          "cases": {
+            "married": {
+              "type": "constant",
+              "constant": 1
+            },
+            "other": {
+              "type": "constant",
+              "constant": 0
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
+        "column_id": "phone_number",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "phone_number"
+        }
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {},
+    "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "state_id",
+          "subtype": "string_lastchars",
+          "constraint": "3"
+        }
+      ]
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "opened_on",
+          "closed_on"
+        ]
+      }
+    ],
+    "disable_destructive_rebuild": true
+  }
+}
