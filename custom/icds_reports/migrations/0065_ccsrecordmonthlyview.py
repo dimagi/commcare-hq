@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from django.db import migrations, models
 
 from corehq.sql_db.operations import RawSQLMigration
+from custom.icds_reports.utils.migrations import get_view_migrations
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
@@ -13,7 +14,7 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0063_aggregateccsrecordmontly_home_visit_date'),
+        ('icds_reports', '0064_aggregateccsrecordmontly_home_visit_date'),
     ]
 
     operations = [
@@ -88,7 +89,6 @@ class Migration(migrations.Migration):
                 'db_table': 'ccs_record_monthly_view',
                 'managed': False,
             },
-        ),
-        migrator.get_migration('awc_location_months.sql'),
-        migrator.get_migration('ccs_record_monthly_view.sql'),
+        )
     ]
+    operations.extend(get_view_migrations())
