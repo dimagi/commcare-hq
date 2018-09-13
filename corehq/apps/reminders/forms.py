@@ -279,7 +279,7 @@ class KeywordForm(Form):
                                     data_bind="value: delimiter, "
                                               "valueUpdate: 'afterkeydown', "
                                               "event: {keyup: updateExampleStructuredSMS},"
-                                              "visible: use_custom_delimiter",
+                                              "visible: useCustomDelimiter",
                                     block_css_class="span4",
                                 ),
                                 css_class='col-md-4 col-lg-4'
@@ -305,7 +305,7 @@ class KeywordForm(Form):
                                       " name: 'ko-template-named-args', "
                                       " data: $data"
                                       "}, "
-                                      "visible: use_named_args",
+                                      "visible: useNamedArgs",
                         ),
                     ),
                     hqcrispy.B3MultiField(
