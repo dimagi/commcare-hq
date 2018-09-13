@@ -258,11 +258,15 @@ class CaseTimedScheduleInstanceRefresher(ScheduleInstanceRefresher):
         self.schedule_revision = schedule.get_schedule_revision(case=case)
 
     def create_new_instance_for_recipient(self, recipient_type, recipient_id):
+        start_date = self.start_date
+        if not start_date and self.model_instance:
+            start_date = self.model_instance.start_date
+
         return CaseTimedScheduleInstance.create_for_recipient(
             self.schedule,
             recipient_type,
             recipient_id,
-            start_date=self.start_date,
+            start_date=start_date,
             move_to_next_event_not_in_the_past=True,
             case_id=self.case.case_id,
             rule_id=self.rule.pk,
