@@ -4,6 +4,7 @@ import jsonfield
 import uuid
 from memoized import memoized
 from django.db import models, transaction
+from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
 from corehq.apps.sms.api import MessageMetadata, send_sms, send_sms_to_verified_number
 from corehq.apps.sms.models import (
@@ -191,6 +192,9 @@ class Schedule(models.Model):
 
     @property
     def references_parent_case(self):
+        if self.stop_date_case_property_name and property_references_parent(self.stop_date_case_property_name):
+            return True
+
         return False
 
     def delete_related_events(self):
