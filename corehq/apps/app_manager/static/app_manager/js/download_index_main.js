@@ -32,7 +32,7 @@ hqDefine('app_manager/js/download_index_main',[
             );
             var fileName = $(elem).data('filename');
             editor.setOption('useWorker',false);
-            )
+            
             if (fileName.endsWith('json')) {
                 editor.session.setMode('ace/mode/json');
             } else {
