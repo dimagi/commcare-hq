@@ -263,10 +263,10 @@ class DeactivateScheduleTest(TransactionTestCase):
     def setUp(self):
         super(DeactivateScheduleTest, self).setUp()
         self.domain_1 = 'deactivate-schedules-1'
-        self.domain_obj_1 = Domain(name=self.domain_1, uses_new_reminders=True)
+        self.domain_obj_1 = Domain(name=self.domain_1)
         self.domain_obj_1.save()
         self.domain_2 = 'deactivate-schedules-2'
-        self.domain_obj_2 = Domain(name=self.domain_2, uses_new_reminders=True)
+        self.domain_obj_2 = Domain(name=self.domain_2)
         self.domain_obj_2.save()
 
         self.domain_1_sms_schedules = [

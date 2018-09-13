@@ -18,7 +18,6 @@ from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
-from corehq.messaging.util import project_is_on_new_reminders
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.ext.couchdbkit import (
@@ -391,8 +390,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
 
-    uses_new_reminders = BooleanProperty(default=False)
-
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc
@@ -681,7 +678,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                   share_user_roles=True):
         from corehq.apps.app_manager.dbaccessors import get_app
         from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-        from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
         from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
         from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
@@ -692,8 +688,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         new_id = db.copy_doc(self.get_id)['id']
         if new_domain_name is None:
             new_domain_name = new_id
-
-        uses_new_reminders = project_is_on_new_reminders(self)
 
         with CriticalSection(['request_domain_name_{}'.format(new_domain_name)]):
             new_domain_name = Domain.generate_name(new_domain_name)
@@ -775,20 +769,15 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 return form_copy.unique_id
 
             if share_reminders:
-                if uses_new_reminders:
-                    for rule in AutomaticUpdateRule.by_domain(
-                        self.name,
-                        AutomaticUpdateRule.WORKFLOW_SCHEDULING,
-                        active_only=False,
-                    ):
-                        rule.copy_conditional_alert(
-                            new_domain_name,
-                            convert_form_unique_id_function=convert_form_unique_id_function,
-                        )
-                else:
-                    for doc_id in get_doc_ids_in_domain_by_class(self.name, CaseReminderHandler):
-                        self.copy_component(
-                            'CaseReminderHandler', doc_id, new_domain_name, user=user)
+                for rule in AutomaticUpdateRule.by_domain(
+                    self.name,
+                    AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                    active_only=False,
+                ):
+                    rule.copy_conditional_alert(
+                        new_domain_name,
+                        convert_form_unique_id_function=convert_form_unique_id_function,
+                    )
             if share_user_roles:
                 for doc_id in get_doc_ids_in_domain_by_class(self.name, UserRole):
                     self.copy_component('UserRole', doc_id, new_domain_name, user=user)
@@ -798,42 +787,15 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 user.add_domain_membership(new_domain_name, is_admin=True)
             apply_update(user, add_dom_to_user)
 
-        if not uses_new_reminders:
-            # When uses_new_reminders is True, all of this is already taken care of
-            # in the copy process
-            def update_events(handler):
-                """
-                Change the form_unique_id to the proper form for each event in a newly copied CaseReminderHandler
-                """
-                for event in handler.events:
-                    if not event.form_unique_id:
-                        continue
-                    event.form_unique_id = convert_form_unique_id_function(event.form_unique_id)
-
-            def update_for_copy(handler):
-                handler.active = False
-                update_events(handler)
-
-            if share_reminders:
-                for handler in CaseReminderHandler.get_handlers(new_domain_name):
-                    apply_update(handler, update_for_copy)
-
         return new_domain
-
-    def reminder_should_be_copied(self, handler):
-        from corehq.apps.reminders.models import ON_DATETIME
-        return (handler.start_condition_type != ON_DATETIME and
-                handler.user_group_id is None)
 
     def copy_component(self, doc_type, id, new_domain_name, user=None):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
-        from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 
         str_to_cls = {
             'UserRole': UserRole,
-            'CaseReminderHandler': CaseReminderHandler,
             'FixtureDataType': FixtureDataType,
             'FixtureDataItem': FixtureDataItem,
         }
@@ -847,10 +809,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         else:
             cls = str_to_cls[doc_type]
             db = cls.get_db()
-            if doc_type == 'CaseReminderHandler':
-                cur_doc = cls.get(id)
-                if not self.reminder_should_be_copied(cur_doc):
-                    return None
 
             new_id = db.copy_doc(id)['id']
 

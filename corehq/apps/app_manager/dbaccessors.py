@@ -453,6 +453,14 @@ def get_available_versions_for_app(domain, app_id):
     return [doc['value']['version'] for doc in result]
 
 
+def get_version_build_id(domain, app_id, version):
+    built_app_ids = get_all_built_app_ids_and_versions(domain, app_id)
+    for app_built_version in built_app_ids:
+        if app_built_version.version == version:
+            return app_built_version.build_id
+    raise Exception("Build for version requested not found")
+
+
 def get_case_types_from_apps(domain):
     """
     Get the case types of modules in applications in the domain.
