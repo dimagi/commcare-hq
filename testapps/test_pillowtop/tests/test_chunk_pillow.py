@@ -4,13 +4,10 @@ from __future__ import unicode_literals
 import uuid
 
 from django.test import TestCase
-from kafka import SimpleProducer
 from kafka.common import KafkaUnavailableError
-from memoized import memoized
 from mock import MagicMock
 
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.connection import get_simple_kafka_client_or_none
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.producer import producer
 from corehq.util.test_utils import trap_extra_setup
