@@ -31,6 +31,7 @@ class ChangeProducer(object):
         message = change_meta.to_json()
         try:
             self.producer.send(topic, bytes(json.dumps(message)))
+            self.producer.flush()
         except Exception as e:
             _assert = soft_assert(notify_admins=True)
             _assert(False, 'Problem sending change to kafka {}: {} ({})'.format(
