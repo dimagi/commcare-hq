@@ -91,35 +91,28 @@
         }
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "datetime",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "opened_on",
-        "create_index": true,
+        "datatype": "datetime",
         "type": "raw",
-        "property_name": "opened_on"
+        "property_name": "opened_on",
+        "create_index": true
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "datetime",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "closed_on",
+        "datatype": "datetime",
         "create_index": false,
         "type": "raw",
         "property_name": "closed_on"
       },
       {
-        "display_name": null,
-        "property_path": [],
+        "column_id": "name",
         "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
-        "create_index": false,
+        "type": "raw",
+        "property_name": "name"
+      },
+      {
         "column_id": "sex",
+        "datatype": "string",
         "type": "raw",
         "property_name": "sex"
       },
@@ -165,16 +158,6 @@
         "is_nullable": true,
         "type": "raw",
         "property_name": "resident"
-      },
-      {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "string",
-        "is_primary_key": false,
-        "column_id": "name",
-        "is_nullable": true,
-        "type": "raw",
-        "property_name": "name"
       },
       {
         "display_name": null,
