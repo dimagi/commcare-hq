@@ -111,61 +111,42 @@
         "property_name": "name"
       },
       {
+        "comment": "make boolean",
         "column_id": "sex",
         "datatype": "string",
         "type": "raw",
         "property_name": "sex"
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "date",
-        "is_primary_key": false,
         "column_id": "dob",
-        "create_index": false,
-        "is_nullable": true,
+        "datatype": "date",
         "type": "raw",
         "property_name": "dob"
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "integer",
-        "is_primary_key": false,
+        "comment": "investigate making small_integer. Is it years?",
         "column_id": "age_at_reg",
-        "create_index": false,
-        "is_nullable": true,
+        "datatype": "integer",
         "type": "raw",
         "property_name": "age_at_reg"
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "date",
-        "is_primary_key": false,
         "column_id": "date_death",
-        "create_index": true,
-        "is_nullable": true,
+        "datatype": "date",
         "type": "raw",
-        "property_name": "date_death"
+        "property_name": "date_death",
+        "create_index": true
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "string",
-        "is_primary_key": false,
+        "comment": "make this a boolean?",
         "column_id": "resident",
-        "is_nullable": true,
+        "datatype": "string",
         "type": "raw",
         "property_name": "resident"
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "integer",
-        "is_primary_key": false,
         "column_id": "age_at_death_yrs",
-        "is_nullable": true,
+        "datatype": "small_integer",
         "type": "raw",
         "property_name": "age_at_death_yrs"
       },
