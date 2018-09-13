@@ -3,7 +3,7 @@ hqDefine("scheduling/js/dashboard",[
     'knockout',
     'hqwebapp/js/initial_page_data',
     'nvd3/nv.d3.min',
-], function($, ko, initialPageData) {
+], function ($, ko, initialPageData) {
     var dashboardUrl = initialPageData.reverse("messaging_dashboard");
 
     var DashboardViewModel = function () {

@@ -23,13 +23,13 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong  data-bind="text: gettext('SMS Status:')"></strong>
-                        <strong class="text-success" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() === 0, text: gettext('Processing Complete')"></strong>
-                        <strong class="text-warning" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() > 0, text: gettext('Processing In Progress')"></strong>
-                        <strong class="text-danger" data-bind="visible: !is_sms_currently_allowed(), text: gettext('Processing Paused')"></strong>
+                        <strong>{% trans "SMS Status:" %}</strong>
+                        <strong class="text-success" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() === 0">{% trans "Processing Complete" %}</strong>
+                        <strong class="text-warning" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() > 0">{% trans "Processing In Progress" %}</strong>
+                        <strong class="text-danger" data-bind="visible: !is_sms_currently_allowed()">{% trans "Processing Paused" %}</strong>
                         <span data-bind="visible: queued_sms_count() > 0 || !is_sms_currently_allowed()">
                             (<span data-bind="text: queued_sms_count"></span>
-                            <span data-bind="text: gettext('SMS queued')"></span>)
+                            {% trans "SMS queued" %})
                         </span>
                         <span class="hq-help-template"
                               data-title="{% trans 'SMS Status' %}"
@@ -50,7 +50,7 @@
                            <span class="text-danger" aria-hidden="true" data-bind="visible: !is_daily_usage_ok()"><i class="fa fa-times"></i></span>
                         </div>
                         <div class="col-xs-3 col-lg-2">
-                            <span data-bind="text: gettext('Daily Usage')"></span>
+                            <span>{% trans "Daily Usage" %}</span>
                         </div>
                         <div class="col-xs-4">
                             <div class="progress">
@@ -84,7 +84,7 @@
                            <span class="text-danger" aria-hidden="true" data-bind="visible: !within_allowed_sms_times()"><i class="fa fa-times"></i></span>
                         </div>
                         <div class="col-xs-3 col-lg-2">
-                            <span data-bind="text: gettext('Restricted Times')"></span>
+                            <span>{% trans "Restricted Times" %}</span>
                         </div>
                         <div class="col-xs-8">
                             <span data-bind="visible: !uses_restricted_time_windows()">
@@ -104,7 +104,7 @@
                                 {% endblocktrans %}
                             </span>
                             {% if request.couch_user.is_domain_admin %}
-                                <a target="_blank" href="{% url 'sms_settings' domain %}" data-bind="text: gettext('Update')"></a>
+                                <a target="_blank" href="{% url 'sms_settings' domain %}">{% trans "Update" %}</a>
                             {% endif %}
                         </div>
                     </div>
@@ -113,13 +113,12 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong data-bind="text: gettext('All Messaging Events Status:')"></strong>
-                        <strong class="text-success" data-bind="visible: events_pending() === 0,text: gettext('Processing Complete')"></strong>
-                        <strong class="text-warning" data-bind="visible: events_pending() > 0,text: gettext('Processing In Progress')"></strong>
+                        <strong>{% trans "All Messaging Events Status:" %}</strong>
+                        <strong class="text-success" data-bind="visible: events_pending() === 0">{% trans "Processing Complete" %}</strong>
+                        <strong class="text-warning" data-bind="visible: events_pending() > 0">{% trans "Processing In Progress" %},</strong>
                         <span data-bind="visible: events_pending() > 0">
                             <span data-bind="text: events_pending"></span>
-                            <span data-bind="text: gettext('event(s) queued')"></span>
-
+                            {% trans "event(s) queued" %}
                         </span>
                         <span class="hq-help-template"
                               data-title="{% trans 'All Messaging Events Status' %}"
@@ -143,7 +142,7 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong data-bind="text: gettext('Incoming / Outgoing SMS')"></strong>
+                        <strong>{% trans "Incoming / Outgoing SMS" %}</strong>
                         <span class="hq-help-template"
                               data-title="{% trans 'Incoming / Outgoing SMS' %}"
                               data-container="body"
@@ -163,7 +162,7 @@
                     </div>
                     <div class="pull-right">
                         <p class="help-block">
-                            <i class="fa fa-info-circle"></i> <span data-bind="text:gettext('Dates are presented in YYYY-MM-DD format')"></span>
+                            <i class="fa fa-info-circle"></i> {% trans "Dates are presented in YYYY-MM-DD format" %}
                         </p>
                     </div>
                 </div>
@@ -171,7 +170,7 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong data-bind="text: gettext('Messaging Events (Success / Error)')"></strong>
+                        <strong>{% trans "Messaging Events (Success / Error)" %}</strong>
                         <span class="hq-help-template"
                               data-title="{% trans 'Messaging Events (Success / Error)' %}"
                               data-container="body"
@@ -191,7 +190,7 @@
                     </div>
                     <div class="pull-right">
                         <p class="help-block">
-                            <i class="fa fa-info-circle"></i> <span data-bind="text:gettext('Dates are presented in YYYY-MM-DD format')"></span>
+                            <i class="fa fa-info-circle"></i> {% trans "Dates are presented in YYYY-MM-DD format" %}
                         </p>
                     </div>
                 </div>
@@ -199,7 +198,7 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong data-bind="text:gettext('Messaging Event Error Summary')"></strong>
+                        <strong>{% trans "Messaging Event Error Summary" %}</strong>
                         <span class="hq-help-template"
                               data-title="{% trans 'Messaging Event Error Summary' %}"
                               data-container="body"
@@ -221,7 +220,7 @@
             </div>
             <div>
                 <p>
-                    <span data-bind="text:gettext('Last updated:')"></span>
+                    <span>{% trans "Last updated:" %}</span>
                     <span data-bind="text: last_refresh_time"></span>
                     <span>
                         (<span data-bind="text: project_timezone"></span>)
