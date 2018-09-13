@@ -223,6 +223,7 @@
         "property_name": "referral_health_problem"
       },
       {
+        "comment": "to be removed when caste is added",
         "filter": {
           "type": "and",
           "filters": [
@@ -245,6 +246,7 @@
         "column_id": "F_sc_count"
       },
       {
+        "comment": "to be removed when caste is added",
         "filter": {
           "type": "and",
           "filters": [
@@ -267,6 +269,7 @@
         "column_id": "F_st_count"
       },
       {
+        "comment": "to be removed when caste is added",
         "filter": {
           "type": "and",
           "filters": [
@@ -289,6 +292,7 @@
         "column_id": "F_other_count"
       },
       {
+        "comment": "to be removed when caste is added",
         "filter": {
           "type": "and",
           "filters": [
@@ -311,6 +315,7 @@
         "column_id": "M_sc_count"
       },
       {
+        "comment": "to be removed when caste is added",
         "filter": {
           "type": "and",
           "filters": [
@@ -333,6 +338,7 @@
         "column_id": "M_st_count"
       },
       {
+        "comment": "to be removed when caste is added",
         "filter": {
           "type": "and",
           "filters": [
@@ -355,6 +361,7 @@
         "column_id": "M_other_count"
       },
       {
+        "comment": "to be removed when minority is added",
         "filter": {
           "type": "and",
           "filters": [
@@ -377,6 +384,7 @@
         "column_id": "F_minority_count"
       },
       {
+        "comment": "to be removed when disabled is added",
         "filter": {
           "type": "and",
           "filters": [
@@ -399,6 +407,7 @@
         "column_id": "F_disabled_count"
       },
       {
+        "comment": "to be removed when minority is added",
         "filter": {
           "type": "and",
           "filters": [
@@ -421,6 +430,7 @@
         "column_id": "M_minority_count"
       },
       {
+        "comment": "to be removed when disabled is added",
         "filter": {
           "type": "and",
           "filters": [
