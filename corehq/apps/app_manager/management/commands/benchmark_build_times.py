@@ -16,6 +16,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'domain_app_id_pairs',
+            help='A JSON list where each element has the format [<domain>, <app_id>]',
             type=json.loads,
         )
         parser.add_argument('username')
@@ -28,7 +29,7 @@ class Command(BaseCommand):
             with Timer():
                 app = get_app(domain, app_id)
                 errors = app.validate_app()
-                assert not errors
+                assert not errors, errors
                 copy = app.make_build(
                     comment=comment,
                     user_id=user_id,
