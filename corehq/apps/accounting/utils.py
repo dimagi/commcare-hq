@@ -143,7 +143,7 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
 def domain_is_on_trial(domain_name):
     from corehq.apps.accounting.models import Subscription
     subscription = Subscription.get_active_subscription_by_domain(domain_name)
-    return subscription.is_trial
+    return subscription and subscription.is_trial
 
 
 def is_active_subscription(date_start, date_end, today=None):

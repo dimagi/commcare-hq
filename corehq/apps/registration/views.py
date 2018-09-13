@@ -19,6 +19,7 @@ from django.views.generic.base import TemplateView, View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
@@ -124,11 +125,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
     def register_new_user(self, data):
         reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
-            ab_test = ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, self.request)
-            appcues_ab_test = ab_test.context['version'] == ab_tests.APPCUES_TEMPLATE_APP_OPTION_ON
-            self._create_new_account(reg_form, additional_hubspot_data={
-                "appcues_test": "On" if appcues_ab_test else "Off",
-            })
+            self._create_new_account(reg_form)
             try:
                 request_new_domain(
                     self.request, reg_form, is_new_user=True
@@ -148,7 +145,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
             return {
                 'success': True,
-                'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -201,7 +197,6 @@ class UserRegistrationView(BasePageView):
             else:
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
-        ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, request).update_response(response)
         ab_tests.ABTest(ab_tests.DEMO_CTA, request).update_response(response)
         return response
 
@@ -409,7 +404,7 @@ def confirm_domain(request, guid=''):
         view_name = "dashboard_default"
         view_args = [requested_domain]
         if not domain_has_apps(req.domain):
-            if ab_tests.appcues_template_app_test(request):
+            if domain_is_on_trial(req.domain):
                 view_name = "app_from_template"
                 view_args.append("appcues")
             else:
