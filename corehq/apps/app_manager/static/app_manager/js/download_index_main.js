@@ -5,8 +5,8 @@ hqDefine('app_manager/js/download_index_main',[
     'app_manager/js/download_async_modal',
     'app_manager/js/source_files',
 ],function ($, _, ace) {
-    ace.require("ace/config").set("packaged", false);
-
+    // work around with ace issue https://github.com/ajaxorg/ace/issues/732 also see the linked open issue.
+    ace.require("ace/edit_session").EditSession.prototype.$startWorker = function () {};
     $(function () {
         var elements = $('.prettyprint');
         _.each(elements, function (elem) {
