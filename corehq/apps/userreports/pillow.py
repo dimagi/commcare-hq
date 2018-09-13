@@ -198,9 +198,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
     domain_timing_context = Counter()
 
-    def __init__(self, *args, **kwargs):
-        super(ConfigurableReportPillowProcessor, self).__init__(*args, **kwargs)
-
     @time_ucr_process_change
     def _save_doc_to_table(self, domain, table, doc, eval_context):
         # best effort will swallow errors in the table

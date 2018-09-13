@@ -12,7 +12,7 @@ from mock import MagicMock
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_simple_kafka_client_or_none
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.change_feed.producer import send_to_kafka
+from corehq.apps.change_feed.producer import producer
 from corehq.util.test_utils import trap_extra_setup
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.feed.interface import ChangeMeta
@@ -22,15 +22,11 @@ from pillowtop.processors.sample import ChunkedCountProcessor
 
 class ChunkedPorcessingTest(TestCase):
 
-    @memoized
-    def _get_producer(self):
-        return SimpleProducer(get_simple_kafka_client_or_none())
-
     def _produce_changes(self, count):
         for i in range(count):
             meta = ChangeMeta(document_id=uuid.uuid4().hex,
                 data_source_type='dummy-type', data_source_name='dummy-name')
-            send_to_kafka(self._get_producer(), topics.CASE, meta)
+            producer.send_change(topics.CASE, meta)
 
     @trap_extra_setup(KafkaUnavailableError)
     def test_basic(self):
