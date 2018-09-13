@@ -12,6 +12,8 @@ from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
+from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_RAW, \
+    DATA_SOURCE_TYPE_FORM
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
 from couchforms.analytics import get_exports_by_form
@@ -69,11 +71,11 @@ class ApplicationDataSourceUIHelper(object):
         self.enable_raw = enable_raw
         source_choices = []
         if enable_cases:
-            source_choices.append(("case", _("Case")))
+            source_choices.append((DATA_SOURCE_TYPE_CASE, _("Case")))
         if enable_forms:
-            source_choices.append(("form", _("Form")))
+            source_choices.append((DATA_SOURCE_TYPE_FORM, _("Form")))
         if enable_raw:
-            source_choices.append(("data_source", _("Data Source")))
+            source_choices.append((DATA_SOURCE_TYPE_RAW, _("Data Source")))
 
         self.application_field = forms.ChoiceField(label=_('Application'), widget=forms.Select())
         if len(source_choices) > 1:
