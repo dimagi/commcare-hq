@@ -4,11 +4,13 @@ from copy import deepcopy
 import uuid
 
 from django.test import SimpleTestCase, TestCase
+from kafka import SimpleProducer
 from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.connection import get_simple_kafka_client_or_none
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
-from corehq.apps.change_feed.producer import ChangeProducer
+from corehq.apps.change_feed.producer import send_to_kafka
 from corehq.apps.change_feed.topics import get_multi_topic_first_available_offsets
 from corehq.util.test_utils import trap_extra_setup
 from memoized import memoized
@@ -123,10 +125,10 @@ class KafkaCheckpointTest(TestCase):
 
 @memoized
 def _get_producer():
-    return ChangeProducer()
+    return SimpleProducer(get_simple_kafka_client_or_none())
 
 
 def publish_stub_change(topic):
     meta = ChangeMeta(document_id=uuid.uuid4().hex, data_source_type='dummy-type', data_source_name='dummy-name')
-    _get_producer().send_change(topic, meta)
+    send_to_kafka(_get_producer(), topic, meta)
     return meta

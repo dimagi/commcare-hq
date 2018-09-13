@@ -1,11 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-
+import uuid
 from django.conf import settings
 from kafka import KafkaConsumer
 from kafka.common import KafkaUnavailableError
 from nose.tools import nottest
-
 from corehq.util.test_utils import trap_extra_setup
 
 
@@ -19,7 +18,6 @@ def get_test_kafka_consumer(*topics):
         configs = {
             'bootstrap_servers': settings.KAFKA_BROKERS,
             'consumer_timeout_ms': 100,
-            'api_version': settings.KAFKA_API_VERSION,
             'enable_auto_commit': False,
         }
         consumer = KafkaConsumer(*topics, **configs)

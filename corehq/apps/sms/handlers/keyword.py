@@ -15,11 +15,6 @@ from corehq.apps.sms.handlers.form_session import validate_answer
 from corehq.apps.sms.util import touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
-from corehq.apps.reminders.models import (
-    METHOD_SMS,
-    METHOD_SMS_SURVEY,
-    REMINDER_TYPE_KEYWORD_INITIATED,
-)
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
