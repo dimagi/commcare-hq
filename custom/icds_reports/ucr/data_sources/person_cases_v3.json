@@ -671,16 +671,6 @@
     ],
     "named_expressions": {},
     "named_filters": {
-      "referral_reached": {
-        "operator": "eq",
-        "type": "boolean_expression",
-        "expression": {
-          "datatype": "string",
-          "type": "property_name",
-          "property_name": "referral_reached_facility"
-        },
-        "property_value": "yes"
-      },
       "minority": {
         "operator": "eq",
         "expression": {
@@ -731,17 +721,8 @@
         "type": "boolean_expression",
         "property_value": "yes"
       },
-      "closed_cases": {
-        "operator": "eq",
-        "expression": {
-          "datatype": null,
-          "type": "property_name",
-          "property_name": "closed"
-        },
-        "type": "boolean_expression",
-        "property_value": true
-      },
       "pregnant": {
+        "comment": "needed to add pregnant back",
         "operator": "eq",
         "expression": {
           "datatype": "string",
@@ -916,16 +897,6 @@
           }
         ]
       },
-      "migrant": {
-        "operator": "not_eq",
-        "expression": {
-          "datatype": "string",
-          "type": "property_name",
-          "property_name": "resident"
-        },
-        "type": "boolean_expression",
-        "property_value": "yes"
-      },
       "disabled": {
         "operator": "eq",
         "type": "boolean_expression",
@@ -934,16 +905,6 @@
           "type": "property_name",
           "property_name": "disabled"
         },
-        "property_value": "yes"
-      },
-      "resident": {
-        "operator": "eq",
-        "expression": {
-          "datatype": "string",
-          "type": "property_name",
-          "property_name": "resident"
-        },
-        "type": "boolean_expression",
         "property_value": "yes"
       },
       "female": {
@@ -1030,16 +991,6 @@
         },
         "type": "boolean_expression",
         "property_value": "st"
-      },
-      "has_date_death": {
-        "operator": "not_eq",
-        "expression": {
-          "datatype": "date",
-          "type": "property_name",
-          "property_name": "date_death"
-        },
-        "type": "boolean_expression",
-        "property_value": null
       }
     },
     "engine_id": "icds-ucr",
