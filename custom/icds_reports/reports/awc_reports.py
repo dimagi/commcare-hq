@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule, DAILY, WEEKLY, MO
@@ -1107,14 +1107,16 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
     'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_pregnant(order, reversed_order, awc_id):
+    ten_months_ago = datetime.utcnow() - relativedelta(months=10)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         pregnant=1,
+        month__gte=ten_months_ago,
     ).order_by('case_id', '-age_in_months').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'opened_on', 'edd', 'trimester', 'anemic_severe',
         'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant',
         'num_rations_distributed', 'last_date_thr'
-    )[:10]
+    )
     data_count = data.count()
     config = {
         'data': [],
@@ -1147,9 +1149,11 @@ def get_awc_report_pregnant(order, reversed_order, awc_id):
 
 @quickcache(['case_id', 'awc_id'], timeout=30 * 60)
 def get_pregnant_details(case_id, awc_id):
+    ten_months_ago = datetime.utcnow() - relativedelta(months=10)
     data = CcsRecordMonthlyView.objects.filter(
         case_id=case_id,
         awc_id=awc_id,
+        month__gte=ten_months_ago,
     ).order_by('home_visit_date', '-age_in_months').distinct('home_visit_date').values(
         'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on', 'preg_order',
         'home_visit_date', 'bp_sys', 'bp_dia', 'anc_weight', 'anc_hemoglobin', 'anemic_severe', 'anemic_moderate',
@@ -1157,7 +1161,7 @@ def get_pregnant_details(case_id, awc_id):
         'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation', 'counsel_fp_vid',
         'counsel_immediate_conception', 'counsel_accessible_postpartum_fp', 'counsel_fp_methods', 'using_ifa',
         'ifa_consumed_last_seven_days', 'tt_1', 'tt_2'
-    )[:10]
+    )
 
     config = {
         'data': [
@@ -1212,7 +1216,7 @@ def get_awc_report_lactating(order, reversed_order, awc_id):
     ).order_by('case_id', '-age_in_months').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery_in_month',
         'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed'
-    )[:10]
+    )
     data_count = data.count()
     config = {
         'data': [],

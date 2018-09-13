@@ -3,14 +3,22 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import json
+import datetime
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import TestCase
+from mock import mock
 
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
     get_awc_report_beneficiary, get_awc_report_pregnant, get_pregnant_details
 from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
+
+
+class FirstDayOfAugust(datetime.datetime):
+    @classmethod
+    def utcnow(cls):
+        return datetime.datetime(2017, 5, 1)
 
 
 class TestAWCReport(TestCase):
@@ -2514,100 +2522,105 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_pregnant_first_record(self):
-        data = get_awc_report_pregnant(
-            order='age',
-            reversed_order=False,
-            awc_id='a15'
-        )
-        self.assertEqual(
-            data['data'][0],
-            {
-                'age': 23,
-                'anemic': 'Unknown',
-                'beneficiary': 'Yes',
-                'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
-                'edd': None,
-                'last_date_thr': None,
-                'num_anc_complete': None,
-                'number_of_thrs_given': 0,
-                'opened_on': None,
-                'person_name': None,
-                'trimester': 2,
-            }
-        )
-
-    def test_awc_report_pregnant_second_record(self):
-        data = get_awc_report_pregnant(
-            order='age',
-            reversed_order=False,
-            awc_id='a15'
-        )
-        self.assertEqual(
-            data['data'][1],
-            {
-                'age': 28,
-                'anemic': 'Unknown',
-                'beneficiary': 'Yes',
-                'case_id': '3d1bdefc-a217-455d-af18-260f39f698f0',
-                'edd': None,
-                'last_date_thr': None,
-                'num_anc_complete': None,
-                'number_of_thrs_given': 21,
-                'opened_on': None,
-                'person_name': None,
-                'trimester': 3,
-            }
-        )
-
-    def test_pregnant_details_first_record_first_trimester(self):
-        data = get_pregnant_details(
-            case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
-            awc_id='a15'
-        )
-        self.assertEqual(
-            data['data'][0],
-            []
-        )
-
-    def test_pregnant_details_first_record_second_trimester(self):
-        data = get_pregnant_details(
-            case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
-            awc_id='a15'
-        )
-        self.assertEqual(
-            data['data'][1],
-            [
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_pregnant(
+                order='age',
+                reversed_order=False,
+                awc_id='a15'
+            )
+            self.assertEqual(
+                data['data'][0],
                 {
                     'age': 23,
-                    'anc_abnormalities': None,
-                    'anc_hemoglobin': '--',
-                    'anc_weight': '--',
                     'anemic': 'Unknown',
-                    'bp': '-- / --',
+                    'beneficiary': 'Yes',
                     'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
-                    'counseling': '--',
                     'edd': None,
-                    'home_visit_date': None,
-                    'ifa_consumed_last_seven_days': 'Y',
-                    'mobile_number': None,
+                    'last_date_thr': None,
+                    'num_anc_complete': None,
+                    'number_of_thrs_given': 0,
                     'opened_on': None,
                     'person_name': None,
-                    'preg_order': None,
-                    'symptoms': 'None',
                     'trimester': 2,
-                    'tt_date': '--',
-                    'tt_taken': 'N',
-                    'using_ifa': 'Y'
                 }
-            ]
-        )
+            )
+
+    def test_awc_report_pregnant_second_record(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_awc_report_pregnant(
+                order='age',
+                reversed_order=False,
+                awc_id='a15'
+            )
+            self.assertEqual(
+                data['data'][1],
+                {
+                    'age': 28,
+                    'anemic': 'Unknown',
+                    'beneficiary': 'Yes',
+                    'case_id': '3d1bdefc-a217-455d-af18-260f39f698f0',
+                    'edd': None,
+                    'last_date_thr': None,
+                    'num_anc_complete': None,
+                    'number_of_thrs_given': 21,
+                    'opened_on': None,
+                    'person_name': None,
+                    'trimester': 3,
+                }
+            )
+
+    def test_pregnant_details_first_record_first_trimester(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_pregnant_details(
+                case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
+                awc_id='a15'
+            )
+            self.assertEqual(
+                data['data'][0],
+                []
+            )
+
+    def test_pregnant_details_first_record_second_trimester(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_pregnant_details(
+                case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
+                awc_id='a15'
+            )
+            self.assertEqual(
+                data['data'][1],
+                [
+                    {
+                        'age': 23,
+                        'anc_abnormalities': None,
+                        'anc_hemoglobin': '--',
+                        'anc_weight': '--',
+                        'anemic': 'Unknown',
+                        'bp': '-- / --',
+                        'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
+                        'counseling': '--',
+                        'edd': None,
+                        'home_visit_date': None,
+                        'ifa_consumed_last_seven_days': 'Y',
+                        'mobile_number': None,
+                        'opened_on': None,
+                        'person_name': None,
+                        'preg_order': None,
+                        'symptoms': 'None',
+                        'trimester': 2,
+                        'tt_date': '--',
+                        'tt_taken': 'N',
+                        'using_ifa': 'Y'
+                    }
+                ]
+            )
 
     def test_pregnant_details_first_record_third_trimester(self):
-        data = get_pregnant_details(
-            case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
-            awc_id='a15'
-        )
-        self.assertEqual(
-            data['data'][2],
-            []
-        )
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+            data = get_pregnant_details(
+                case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
+                awc_id='a15'
+            )
+            self.assertEqual(
+                data['data'][2],
+                []
+            )
