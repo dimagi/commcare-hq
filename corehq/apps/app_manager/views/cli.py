@@ -99,10 +99,10 @@ def direct_ccz(request, domain):
 
     lang, langs = get_langs(request, app)
 
-    return get_direct_ccz(domain, app, lang, langs, version, latest, include_multimedia, visit_scheduler_enabled)
+    return get_direct_ccz(domain, app, lang, langs, version, include_multimedia, visit_scheduler_enabled)
 
 
-def get_direct_ccz(domain, app, lang, langs, version=None, latest=None, include_multimedia=False, visit_scheduler_enabled=False):
+def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=False, visit_scheduler_enabled=False):
     if not app.copy_of:
         errors = app.validate_app()
     else:
