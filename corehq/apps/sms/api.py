@@ -24,6 +24,7 @@ from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.utils import is_commcarecase
 from datetime import datetime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.sms.util import register_sms_contact, strip_plus
@@ -103,7 +104,7 @@ def get_sms_class():
     return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
 
 
-def send_sms(domain, contact, phone_number, text, metadata=None):
+def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent=None):
     """
     Sends an outbound SMS. Returns false if it fails.
     """
@@ -125,6 +126,20 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
     if contact:
         msg.couch_recipient = contact.get_id
         msg.couch_recipient_doc_type = contact.doc_type
+
+    if domain and contact and is_commcarecase(contact):
+        backend_name = contact.get_case_property('contact_backend_id')
+        backend_name = backend_name.strip() if isinstance(backend_name, six.string_types) else ''
+        if backend_name:
+            try:
+                backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
+            except BadSMSConfigException as e:
+                if logged_subevent:
+                    logged_subevent.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND, additional_error_text=e.message)
+                return False
+
+            msg.backend_id = backend.couch_id
+
     add_msg_tags(msg, metadata)
 
     return queue_outgoing_sms(msg)

@@ -453,7 +453,8 @@ class Content(models.Model):
             send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata,
                 logged_subevent=logged_subevent)
         else:
-            send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata)
+            send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata,
+                logged_subevent=logged_subevent)
 
 
 class Broadcast(models.Model):
