@@ -1302,6 +1302,7 @@ ICDS = StaticToggle(
     relevant_environments={'icds', 'icds-new', 'softlayer'},
     always_enabled={
         "icds-dashboard-qa",
+        "reach-test",
         "icds-sql",
         "icds-test",
         "icds-cas",

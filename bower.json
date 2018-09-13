@@ -47,7 +47,6 @@
     "knockout-validation": "2.0.3",
     "underscore": "1.8.3",
     "leaflet": "0.7.7",
-    "select2-3.4.5-legacy": "select2#3.4.5",
     "select2-3.5.2-legacy": "select2#3.5.2",
     "select2": "4.0.0",
     "less": "1.7.3",
