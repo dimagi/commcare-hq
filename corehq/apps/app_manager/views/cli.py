@@ -97,22 +97,18 @@ def direct_ccz(request, domain):
     except (ResourceNotFound, DocTypeError):
         return error("Application not found", code=404)
 
-    request_lang = request.GET.get(
-        'lang',
-        request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
-    )
+    lang, langs = get_langs(request, app)
 
-    return get_direct_ccz(domain, app, version, latest, include_multimedia, visit_scheduler_enabled, request_lang)
+    return get_direct_ccz(domain, app, lang, langs, version, latest, include_multimedia, visit_scheduler_enabled)
 
 
-def get_direct_ccz(domain, app, version=None, latest=None, include_multimedia=False, visit_scheduler_enabled=False, request_lang=''):
+def get_direct_ccz(domain, app, lang, langs, version=None, latest=None, include_multimedia=False, visit_scheduler_enabled=False):
     if not app.copy_of:
         errors = app.validate_app()
     else:
         errors = None
 
     if errors:
-        lang, langs = get_langs(request_lang, app)
         error_html = render_to_string("app_manager/partials/build_errors.html", {
             'app': app,
             'build_errors': errors,
