@@ -57,25 +57,30 @@ hqDefine('accounting/js/confirm_plan', [
             }
         };
         self.submitDowngrade = function (pricingTable, e) {
-            var finish = function () {
-                if (self.form) {
-                    self.form.submit();
-                }
-            };
-
             var $button = $(e.currentTarget);
             $button.disableButton();
-            $.ajax({
-                method: "POST",
-                url: initialPageData.reverse('email_on_downgrade'),
-                data: {
-                    old_plan: self.currentPlan.name,
-                    new_plan: self.newPlan.name,
-                    note: $button.closest(".modal").find("textarea").val(),
-                },
-                success: finish,
-                error: finish,
-            });
+            if (self.form) {
+                var downgradeReason = "";
+                var selectedDowngradeOptions = document.getElementById("select-downgrade-reason").selectedOptions;
+                for (var i = 0; i < selectedDowngradeOptions.length; i++) {
+                    downgradeReason += selectedDowngradeOptions[i].value + ", ";
+                }
+                document.getElementById("downgrade-reason").value = downgradeReason;
+
+                var newToolReason = "";
+                var selectedNewToolOptions = document.getElementById("select-tool-reason").selectedOptions;
+                for (i = 0; i < selectedNewToolOptions.length; i++) {
+                    newToolReason += selectedNewToolOptions[i].value + "\n";
+                }
+                newToolReason += document.getElementById("text-tool-reason").value;
+                document.getElementById("new-tool-reason").value = newToolReason;
+
+                document.getElementById("will-project-restart").value = document.getElementById("select-project-restart").value;
+                document.getElementById("new-tool").value = document.getElementById("text-new-tool").value;
+                document.getElementById("feedback").value = document.getElementById("text-feedback").value;
+
+                self.form.submit();
+            }
         };
 
         return self;
