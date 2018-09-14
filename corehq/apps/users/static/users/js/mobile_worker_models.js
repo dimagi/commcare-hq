@@ -23,7 +23,7 @@ hqDefine("users/js/mobile_worker_models", function() {
         self.password = ko.observable(options.password);
         self.customFields = options.customFields;
         self.first_name = ko.observable(options.first_name);
-        self.last_name = ko.observable(options.first_name);
+        self.last_name = ko.observable(options.last_name);
         self.phoneNumbers = ko.observableArray(options.phoneNumbers);
         self.user_id = ko.observable(options.user_id);
         self.location_id = ko.observable(options.location_id);
