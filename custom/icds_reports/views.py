@@ -6,6 +6,7 @@ from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 import requests
+from django.conf import settings
 
 from datetime import datetime, date
 from memoized import memoized
@@ -113,7 +114,6 @@ from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
