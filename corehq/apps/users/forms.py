@@ -574,7 +574,7 @@ class NewMobileWorkerForm(forms.Form):
             self.fields['location_id'].widget = LocationSelectWidget(
                 self.domain, multiselect=False,
                 # TODO: require=not self.can_access_all_locations
-                select2_version='v3',
+                select2_version='v4',
             )
             location_field = crispy.Field(
                 'location_id',

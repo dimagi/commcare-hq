@@ -58,6 +58,7 @@ from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
+    use_select2_v4,
     use_multiselect,
     use_ko_validation,
 )
@@ -545,7 +546,7 @@ class MobileWorkerListView(BaseUserSettingsView):
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
-    @use_select2
+    @use_select2_v4
     @use_ko_validation
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
