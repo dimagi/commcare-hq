@@ -9,6 +9,15 @@ hqDefine('accounting/js/confirm_plan', [
     _,
     initialPageData
 ) {
+    var PROJECT_ENDED = "My project ended";
+    var FUNDING_ENDED = "The funding for my project ended";
+    var CONTINUE_COMMCARE = "I don’t need the features of my paid plan anymore but I plan on continuing using CommCare";
+    var SWITCH_TOOLS = "We are switching to a different mobile data collection tool";
+    var BUDGET_REASONS = "For budget reasons";
+    var LIMITED_FEATURES = "I need more limited features";
+    var MORE_FEATURES = "I need additional/custom features";
+    var OTHER = "Other";
+
     var confirmPlanModel = function (isUpgrade, currentPlan, newPlan) {
         'use strict';
         var self = {};
@@ -21,16 +30,16 @@ hqDefine('accounting/js/confirm_plan', [
         self.userAgreementSigned = ko.observable(!isUpgrade);
 
         self.downgradeReasonList = ko.observableArray([
-            "My project ended",
-            "The funding for my project ended",
-            "I don’t need the features of my paid plan anymore but I plan on continuing using CommCare",
-            "We are switching to a different mobile data collection tool",
+            PROJECT_ENDED,
+            FUNDING_ENDED,
+            CONTINUE_COMMCARE,
+            SWITCH_TOOLS,
         ]);
         self.newToolReasonList = ko.observableArray([
-            "For budget reason",
-            "I need more limited features",
-            "I need additional/custom features",
-            "Other",
+            BUDGET_REASONS,
+            LIMITED_FEATURES,
+            MORE_FEATURES,
+            OTHER,
         ]);
 
         self.downgradeReason = ko.observable("");
@@ -40,23 +49,23 @@ hqDefine('accounting/js/confirm_plan', [
         self.requiredQuestionsAnswered = ko.observable(false);
 
         self.projectEnded = ko.computed(function () {
-            return self.downgradeReason() === "My project ended";
+            return self.downgradeReason() === PROJECT_ENDED;
         });
         self.newToolNeeded = ko.computed(function () {
-            return self.downgradeReason() === "We are switching to a different mobile data collection tool";
+            return self.downgradeReason() === SWITCH_TOOLS;
         });
         self.otherSelected = ko.computed(function () {
-            return self.newToolReason() === "Other";
+            return self.newToolReason() === OTHER;
         });
         self.requiredQuestionsAnswered = ko.computed(function () {
             if (self.downgradeReason() == null) {
                 return false;
             }
             var newToolNeeded =
-                self.downgradeReason() === "We are switching to a different mobile data collection tool";
+                self.downgradeReason() === SWITCH_TOOLS;
             var newToolAnswered = self.newTool() !== "";
-            var newToolReasonAnswered = (self.newToolReason() !== "" && self.newToolReason() !== "Other") ||
-                (self.newToolReason() === "Other" && self.otherNewToolReason() !== "");
+            var newToolReasonAnswered = (self.newToolReason() !== "" && self.newToolReason() !== OTHER) ||
+                (self.newToolReason() === OTHER && self.otherNewToolReason() !== "");
 
             return (self.downgradeReason() !== "" && !newToolNeeded) ||
                 (newToolNeeded && newToolAnswered && newToolReasonAnswered);
