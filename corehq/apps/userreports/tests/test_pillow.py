@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import decimal
 import uuid
 from django.test import TestCase, SimpleTestCase, override_settings
-from kafka.common import KafkaUnavailableError
 from mock import patch, MagicMock
 from datetime import datetime, timedelta
 from six.moves import range
@@ -27,7 +26,7 @@ from corehq.apps.userreports.tests.utils import get_sample_data_source, get_samp
     doc_to_change, get_data_source_with_related_doc_type
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.util.test_utils import softer_assert, trap_extra_setup
+from corehq.util.test_utils import softer_assert
 from corehq.util.context_managers import drop_connected_signals
 from pillow_retry.models import PillowError
 
@@ -247,8 +246,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         self.adapter = get_indicator_adapter(self.config)
 
         self.pillow.bootstrap(configs=[self.config])
-        with trap_extra_setup(KafkaUnavailableError):
-            self.pillow.get_change_feed().get_latest_offsets()
+        self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
         self.config.delete()
@@ -317,8 +315,7 @@ class ReuseEvaluationContextTest(TestCase):
         self.pillow2 = get_kafka_ucr_pillow(topics=['case-sql'])
         self.pillow1.bootstrap(configs=[config1])
         self.pillow2.bootstrap(configs=self.configs)
-        with trap_extra_setup(KafkaUnavailableError):
-            self.pillow1.get_change_feed().get_latest_offsets()
+        self.pillow1.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
         for adapter in self.adapters:
@@ -383,8 +380,7 @@ class AsyncIndicatorTest(TestCase):
         cls.adapter = get_indicator_adapter(cls.config)
 
         cls.pillow.bootstrap(configs=[cls.config])
-        with trap_extra_setup(KafkaUnavailableError):
-            cls.pillow.get_change_feed().get_latest_offsets()
+        cls.pillow.get_change_feed().get_latest_offsets()
 
     @classmethod
     def tearDownClass(cls):
