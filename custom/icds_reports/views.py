@@ -11,6 +11,7 @@ from datetime import datetime, date
 from memoized import memoized
 from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
