@@ -130,7 +130,7 @@ hqDefine("users/js/mobile_worker_creation_models", function() {
                     password: newWorker.password(),
                     customFields: JSON.stringify(newWorker.customFields),
                     first_name: newWorker.first_name(),
-                    last_name: newWorker.first_name(),
+                    last_name: newWorker.last_name(),
                     location_id: newWorker.location_id(),
                 },
                 success: function(data) {
