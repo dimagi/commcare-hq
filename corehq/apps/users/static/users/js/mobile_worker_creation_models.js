@@ -131,7 +131,7 @@ hqDefine("users/js/mobile_worker_creation_models", function() {
                     customFields: JSON.stringify(newWorker.customFields),
                     first_name: newWorker.first_name(),
                     last_name: newWorker.first_name(),
-                    location: newWorker.location(),
+                    location_id: newWorker.location_id(),
                 },
                 success: function(data) {
                     if (data.success) {

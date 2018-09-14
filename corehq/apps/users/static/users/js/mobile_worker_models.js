@@ -9,7 +9,7 @@ hqDefine("users/js/mobile_worker_models", function() {
                 last_name: '',
                 phoneNumbers: [],
                 user_id: '',
-                location: null,
+                location_id: null,
                 dateRegistered: '',
                 editUrl: '#',
                 action: 'deactivate',
@@ -26,7 +26,7 @@ hqDefine("users/js/mobile_worker_models", function() {
         self.last_name = ko.observable(options.first_name);
         self.phoneNumbers = ko.observableArray(options.phoneNumbers);
         self.user_id = ko.observable(options.user_id);
-        self.location = ko.observable(options.location);
+        self.location_id = ko.observable(options.location_id);
         self.dateRegistered = ko.observable(options.dateRegistered);
         self.editUrl = ko.observable(options.editUrl);
         self.action = ko.observable(options.action);
@@ -43,7 +43,7 @@ hqDefine("users/js/mobile_worker_models", function() {
             self.last_name(defaults.last_name);
             self.phoneNumbers.removeAll();
             self.user_id(defaults.user_id);
-            self.location(defaults.location);
+            self.location_id(defaults.location_id);
             self.dateRegistered(defaults.dateRegistered);
             self.editUrl(defaults.editUrl);
             self.action(defaults.action);
