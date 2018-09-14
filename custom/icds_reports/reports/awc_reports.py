@@ -1107,7 +1107,7 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
     'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_pregnant(order, reversed_order, awc_id):
-    ten_months_ago = datetime.utcnow() - relativedelta(months=10)
+    ten_months_ago = datetime.utcnow() - relativedelta(months=10, day=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         pregnant=1,
@@ -1149,7 +1149,7 @@ def get_awc_report_pregnant(order, reversed_order, awc_id):
 
 @quickcache(['case_id', 'awc_id'], timeout=30 * 60)
 def get_pregnant_details(case_id, awc_id):
-    ten_months_ago = datetime.utcnow() - relativedelta(months=10)
+    ten_months_ago = datetime.utcnow() - relativedelta(months=10, day=1)
     data = CcsRecordMonthlyView.objects.filter(
         case_id=case_id,
         awc_id=awc_id,
@@ -1210,9 +1210,11 @@ def get_pregnant_details(case_id, awc_id):
     'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_lactating(order, reversed_order, awc_id):
+    six_months_ago = datetime.utcnow() - relativedelta(months=6, day=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         lactating=1,
+        month__gte=six_months_ago,
     ).order_by('case_id', '-age_in_months').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery_in_month',
         'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed'
