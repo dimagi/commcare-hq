@@ -26,6 +26,9 @@ from six.moves import zip
 from six.moves import map
 
 
+class XlsLengthException(Exception):
+    pass
+
 class UniqueHeaderGenerator(object):
 
     def __init__(self, max_column_size=None):
@@ -430,6 +433,8 @@ class Excel2003ExportWriter(ExportWriter):
         sheet = self.tables[sheet_index]
         # have to deal with primary ids
         for i, val in enumerate(row):
+            if len(row) >= 256:
+                raise XlsLengthException
             sheet.write(row_index, i, six.text_type(val))
         self.table_indices[sheet_index] = row_index + 1
 
