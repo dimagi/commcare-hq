@@ -25,6 +25,9 @@ SKIP_TESTS_REQUIRING_EXTRA_SETUP = True
 # see also corehq.apps.sms.tests.util.TouchformsTestCase
 SKIP_TOUCHFORMS_TESTS = True
 
+# See comment under settings.SMS_QUEUE_ENABLED
+SMS_QUEUE_ENABLED = False
+
 # https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-TEST_NON_SERIALIZED_APPS
 # https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
 TEST_NON_SERIALIZED_APPS = ['corehq.form_processor']

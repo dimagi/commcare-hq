@@ -596,7 +596,7 @@ CUSTOM_PROJECT_SMS_QUEUES = {
 # This should always be set to True in production environments, and the sms_queue
 # celery worker(s) should be deployed. We set this to False for tests and (optionally)
 # for local testing.
-SMS_QUEUE_ENABLED = False
+SMS_QUEUE_ENABLED = True
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
