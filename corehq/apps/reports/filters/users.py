@@ -15,7 +15,7 @@ from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.commtrack.models import SQLLocation
-from corehq.toggles import SEARCH_DEACTIVATED_USERS
+from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS, SEARCH_DEACTIVATED_USERS
 
 from .. import util
 from ..models import HQUserType
@@ -378,18 +378,40 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             location_ids = list(SQLLocation.active_objects
                                 .get_locations_and_children(location_ids)
                                 .location_ids())
-            id_filter = filters.OR(
-                filters.term("_id", user_ids),
-                filters.term("__group_ids", group_ids),
-                user_es.location(location_ids),
-            )
-            if user_type_filters:
+
+            id_filter = filters.term("_id", user_ids)
+            group_id_filter = filters.term("__group_ids", group_ids)
+
+            group_and_location_filter = []
+            if group_ids and location_ids:
+                if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain):
+                    group_and_location_filter = filters.AND(
+                        group_id_filter,
+                        user_es.location(location_ids),
+                    )
+                else:
+                    group_and_location_filter = filters.OR(
+                        group_id_filter,
+                        user_es.location(location_ids),
+                    )
+            if user_type_filters and group_and_location_filter:
                 return q.OR(
                     id_filter,
+                    group_and_location_filter,
                     filters.OR(*user_type_filters),
                 )
+            elif group_and_location_filter:
+                return q.OR(id_filter,
+                            group_and_location_filter,)
+
+            # Filter everything separately (enters this when a location and group are not both selected)
             else:
-                return q.filter(id_filter)
+                return q.filter(filters.OR(
+                    id_filter,
+                    group_id_filter,
+                    user_es.location(location_ids),
+                ))
+
 
     @staticmethod
     def _verify_users_are_accessible(domain, request_user, user_ids):
