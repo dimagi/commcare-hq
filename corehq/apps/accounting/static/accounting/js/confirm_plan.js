@@ -58,17 +58,15 @@ hqDefine('accounting/js/confirm_plan', [
             return self.newToolReason() === OTHER;
         });
         self.requiredQuestionsAnswered = ko.computed(function () {
-            if (self.downgradeReason() == null) {
+            if (!self.downgradeReason()) {
                 return false;
             }
-            var newToolNeeded =
-                self.downgradeReason() === SWITCH_TOOLS;
+            var newToolNeeded = self.downgradeReason() === SWITCH_TOOLS;
             var newToolAnswered = self.newTool() !== "";
-            var newToolReasonAnswered = (self.newToolReason() !== "" && self.newToolReason() !== OTHER) ||
-                (self.newToolReason() === OTHER && self.otherNewToolReason() !== "");
+            var newToolReasonAnswered = (self.newToolReason() && self.newToolReason() !== OTHER) ||
+                (self.otherNewToolReason() && self.newToolReason() === OTHER);
 
-            return (self.downgradeReason() !== "" && !newToolNeeded) ||
-                (newToolNeeded && newToolAnswered && newToolReasonAnswered);
+            return (self.downgradeReason() && !newToolNeeded) || (newToolNeeded && newToolAnswered && newToolReasonAnswered);
         });
 
         self.form = undefined;
