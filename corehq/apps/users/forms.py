@@ -631,7 +631,7 @@ class NewMobileWorkerForm(forms.Form):
                     data_bind='value: mobileWorker.password, '
                               'valueUpdate: \'input\', '
                               'koValidationStateFeedback: { '
-                              '   validator: mobileWorker.first_name '
+                              '   validator: mobileWorker.password '
                               '}',
                 ),
             )
