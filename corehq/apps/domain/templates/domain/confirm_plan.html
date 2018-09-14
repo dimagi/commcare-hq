@@ -151,7 +151,7 @@
                     {% blocktrans %}
                         Could you indicate which new tool you’re using?
                     {% endblocktrans %}
-                    <textarea class="form-control" id="text-new-tool"></textarea>
+                    <textarea class="form-control" id="text-new-tool" data-bind="textInput: newTool"></textarea>
                     <br><br>
                     {% blocktrans %}
                         Why are you switching to a new tool?
@@ -163,7 +163,7 @@
                         {% blocktrans %}
                             Please specify
                         {% endblocktrans %}
-                        <textarea class="form-control" id="text-tool-reason"></textarea>
+                        <textarea class="form-control" id="text-tool-reason" data-bind="textInput: otherNewToolReason"></textarea>
                         <br><br>
                     </div>
                 </div>
@@ -174,7 +174,7 @@
                 <textarea class="form-control" id="text-feedback"></textarea>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade">{% trans "Continue" %}</button>
+                <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade, enable: requiredQuestionsAnswered">{% trans "Continue" %}</button>
             </div>
         </div>
     </div>
