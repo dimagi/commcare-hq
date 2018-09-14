@@ -152,7 +152,7 @@ def get_language_code_for_user(user):
     return get_language_code_for_state(state_code)
 
 
-def render_content_for_user(user, template, context):    
+def render_content_for_user(user, template, context):
     if user.memoized_usercase:
         language_code = user.memoized_usercase.get_language_code() or DEFAULT_LANGUAGE
     else:
