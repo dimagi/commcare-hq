@@ -12,6 +12,10 @@ hqDefine("domain/js/confirm_billing_info", function () {
         $navigateForm.submit();
     });
 
+    document.getElementById('btn-subscribe-to-plan').onclick = function (e) {
+        document.getElementById('downgrade-email-note').value = initialPageData.get("downgrade_email_note");
+    };
+
     Stripe.setPublishableKey(initialPageData.get("stripe_public_key"));
     var cardManager = stripeCardManager.stripeCardManager({
         cards: initialPageData.get("cards"),

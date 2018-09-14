@@ -1632,9 +1632,13 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                                     css_class="btn btn-default"),
                 StrictButton(_("Subscribe to Plan"),
                              type="submit",
+                             id='btn-subscribe-to-plan',
                              css_class='btn btn-success disable-on-submit-no-spinner '
                                        'add-spinner-on-click'),
             ),
+            crispy.Hidden(name="downgrade_email_note", value="", id="downgrade-email-note"),
+            crispy.Hidden(name="old_plan", value=current_subscription.plan_version.plan.edition),
+            crispy.Hidden(name="new_plan", value=plan_version.plan.edition)
         )
 
     def save(self, commit=True):

@@ -17,8 +17,50 @@ hqDefine('accounting/js/confirm_plan', [
         self.currentPlan = currentPlan;
         self.newPlan = newPlan;
 
-        // If the user is upgrading, don't let them continue until they have agreed to the therms
+        // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
         self.userAgreementSigned = ko.observable(!isUpgrade);
+
+        self.downgradeReasonList = ko.observableArray([
+            "My project ended",
+            "The funding for my project ended",
+            "I don’t need the features of my paid plan anymore but I plan on continuing using CommCare",
+            "We are switching to a different mobile data collection tool",
+        ]);
+        self.newToolReasonList = ko.observableArray([
+            "For budget reason",
+            "I need more limited features",
+            "I need additional/custom features",
+            "Other",
+        ]);
+
+        self.downgradeReason = ko.observable("");
+        self.newTool = ko.observable("");
+        self.newToolReason = ko.observable("");
+        self.otherNewToolReason = ko.observable("");
+        self.requiredQuestionsAnswered = ko.observable(false);
+
+        self.projectEnded = ko.computed(function () {
+            return self.downgradeReason() === "My project ended";
+        });
+        self.newToolNeeded = ko.computed(function () {
+            return self.downgradeReason() === "We are switching to a different mobile data collection tool";
+        });
+        self.otherSelected = ko.computed(function () {
+            return self.newToolReason() === "Other";
+        });
+        self.requiredQuestionsAnswered = ko.computed(function () {
+            if (self.downgradeReason() == null) {
+                return false;
+            }
+            var newToolNeeded =
+                self.downgradeReason() === "We are switching to a different mobile data collection tool";
+            var newToolAnswered = self.newTool() !== "";
+            var newToolReasonAnswered = (self.newToolReason() !== "" && self.newToolReason() !== "Other") ||
+                (self.newToolReason() === "Other" && self.otherNewToolReason() !== "");
+
+            return (self.downgradeReason() !== "" && !newToolNeeded) ||
+                (newToolNeeded && newToolAnswered && newToolReasonAnswered);
+        });
 
         self.form = undefined;
         self.openDowngradeModal = function (confirmPlanModel, e) {
@@ -31,25 +73,30 @@ hqDefine('accounting/js/confirm_plan', [
             }
         };
         self.submitDowngrade = function (pricingTable, e) {
-            var finish = function () {
-                if (self.form) {
-                    self.form.submit();
-                }
-            };
-
             var $button = $(e.currentTarget);
             $button.disableButton();
-            $.ajax({
-                method: "POST",
-                url: initialPageData.reverse('email_on_downgrade'),
-                data: {
-                    old_plan: self.currentPlan.name,
-                    new_plan: self.newPlan.name,
-                    note: $button.closest(".modal").find("textarea").val(),
-                },
-                success: finish,
-                error: finish,
-            });
+            if (self.form) {
+                var downgradeReason = "";
+                var selectedDowngradeOptions = document.getElementById("select-downgrade-reason").selectedOptions;
+                for (var i = 0; i < selectedDowngradeOptions.length; i++) {
+                    downgradeReason += selectedDowngradeOptions[i].value + ", ";
+                }
+                document.getElementById("downgrade-reason").value = downgradeReason;
+
+                var newToolReason = "";
+                var selectedNewToolOptions = document.getElementById("select-tool-reason").selectedOptions;
+                for (i = 0; i < selectedNewToolOptions.length; i++) {
+                    newToolReason += selectedNewToolOptions[i].value + "\n";
+                }
+                newToolReason += document.getElementById("text-tool-reason").value;
+                document.getElementById("new-tool-reason").value = newToolReason;
+
+                document.getElementById("will-project-restart").value = document.getElementById("select-project-restart").value;
+                document.getElementById("new-tool").value = document.getElementById("text-new-tool").value;
+                document.getElementById("feedback").value = document.getElementById("text-feedback").value;
+
+                self.form.submit();
+            }
         };
 
         return self;
