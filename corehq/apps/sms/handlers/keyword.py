@@ -23,6 +23,7 @@ from corehq.apps.app_manager.models import Form
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models import SMSContent, SMSSurveyContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
+from corehq import toggles
 from six.moves import filter
 
 
@@ -66,6 +67,10 @@ def handle_global_keywords(v, text, msg, text_words, open_sessions):
     return fcn(v, text, msg, text_words, open_sessions)
 
 
+def can_update_location_via_sms(domain):
+    return toggles.ALLOW_LOCATION_UPDATE_OVER_SMS.enabled(domain)
+
+
 def global_keyword_update(v, text, msg, text_words, open_sessions):
 
     outbound_metadata = MessageMetadata(
@@ -78,7 +83,7 @@ def global_keyword_update(v, text, msg, text_words, open_sessions):
 
     if len(text_words) > 1:
         keyword = text_words[1]
-        if keyword.upper() == LOCATION_KEYWORD:
+        if keyword.upper() == LOCATION_KEYWORD and can_update_location_via_sms(v.domain):
             site_code = text_words[2:]
             if not site_code:
                 send_sms_to_verified_number(v, get_message(MSG_UPDATE_LOCATION_SYNTAX, v),
