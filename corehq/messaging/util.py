@@ -88,10 +88,6 @@ def use_phone_entries():
     return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
 
 
-def project_is_on_new_reminders(domain_obj):
-    return True
-
-
 def show_messaging_dashboard(domain, couch_user):
     return (
         not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(domain) or

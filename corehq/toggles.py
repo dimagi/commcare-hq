@@ -559,6 +559,13 @@ EXPORT_NO_SORT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+DATA_FIND_BY_ID = StaticToggle(
+    'data_find_by_id',
+    "Enable the Data > Find Data by ID page",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 LOCATIONS_IN_UCR = StaticToggle(
     'locations_in_ucr',
     'ICDS: Add Locations as one of the Source Types for User Configurable Reports',
@@ -1085,20 +1092,6 @@ COPY_CONDITIONAL_ALERTS = StaticToggle(
     [NAMESPACE_USER],
 )
 
-ABT_REMINDER_RECIPIENT = StaticToggle(
-    'abt_reminder_recipient',
-    "ABT: Custom reminder recipients",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-AUTO_CASE_UPDATE_ENHANCEMENTS = StaticToggle(
-    'auto_case_updates',
-    'Enable enhancements to the Auto Case Update feature.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
@@ -1230,6 +1223,13 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ALLOW_LOCATION_UPDATE_OVER_SMS = StaticToggle(
+    'allow_location_update_over_sms',
+    'Allow users to update their location over SMS.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
@@ -1302,6 +1302,7 @@ ICDS = StaticToggle(
     relevant_environments={'icds', 'icds-new', 'softlayer'},
     always_enabled={
         "icds-dashboard-qa",
+        "reach-test",
         "icds-sql",
         "icds-test",
         "icds-cas",
@@ -1593,6 +1594,14 @@ AGGREGATE_UCRS = StaticToggle(
     TAG_INTERNAL,  # this might change in the future
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['czue'],
+)
+
+
+SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
+    'show_raw_data_sources_in_report_builder',
+    'Allow building report builder reports directly from raw UCR Data Sources',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 

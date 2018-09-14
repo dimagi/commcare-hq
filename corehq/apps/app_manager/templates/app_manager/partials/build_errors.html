@@ -249,7 +249,7 @@
                         {% case "path error" %}
                             {% if error.path %}
                                 The case management
-                                {% if request|toggle_enabled:"VISIT_SCHEDULER" %} or visit scheduler {% endif %}
+                                {% if visit_scheduler_enabled %} or visit scheduler {% endif %}
                                 in form {% include "app_manager/partials/form_error_message.html" %}
                                 references a question that no longer exists: "{{ error.path }}". It is likely that
                                 this question has been renamed or deleted. Please update or delete this question

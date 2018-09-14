@@ -10,7 +10,6 @@ from django.utils.translation import ugettext_lazy as _, ungettext
 
 from corehq import privileges
 from corehq.apps.accounting.utils import (
-    get_active_reminders_by_domain_name,
     log_accounting_error,
     get_privileges,
 )
@@ -18,7 +17,6 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
 from corehq.const import USER_DATE_FORMAT
@@ -29,7 +27,6 @@ from corehq.messaging.scheduling.models import (
     TimedSchedule,
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
-from corehq.messaging.util import project_is_on_new_reminders
 from django.db import transaction
 
 
@@ -73,10 +70,6 @@ class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
     def get_response(self):
         response = super(BaseModifySubscriptionActionHandler, self).get_response()
         return all(response)
-
-
-def _active_reminders(domain):
-    return get_active_reminders_by_domain_name(domain.name)
 
 
 def _get_active_immediate_broadcasts(domain, survey_only=False):
@@ -203,12 +196,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         Reminder rules will be deactivated.
         """
         try:
-            if project_is_on_new_reminders(domain):
-                _deactivate_schedules(domain)
-            else:
-                for reminder in _active_reminders(domain):
-                    reminder.active = False
-                    reminder.save()
+            _deactivate_schedules(domain)
         except Exception:
             log_accounting_error(
                 "Failed to downgrade outbound sms for domain %s."
@@ -223,14 +211,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         All Reminder rules utilizing "survey" will be deactivated.
         """
         try:
-            if project_is_on_new_reminders(domain):
-                _deactivate_schedules(domain, survey_only=True)
-            else:
-                surveys = [x for x in _active_reminders(domain)
-                           if x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
-                for survey in surveys:
-                    survey.active = False
-                    survey.save()
+            _deactivate_schedules(domain, survey_only=True)
         except Exception:
             log_accounting_error(
                 "Failed to downgrade inbound sms for domain %s."
@@ -409,11 +390,6 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
 
-def _active_reminder_methods(domain):
-    reminder_rules = get_active_reminders_by_domain_name(domain.name)
-    return [reminder.method for reminder in reminder_rules]
-
-
 def _fmt_alert(message, details=None):
     if details is not None and not isinstance(details, list):
         raise ValueError("details should be a list.")
@@ -532,14 +508,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Reminder rules will be deactivated.
         """
-        if project_is_on_new_reminders(domain):
-            num_active = (
-                len(_get_active_immediate_broadcasts(domain)) +
-                len(_get_active_scheduled_broadcasts(domain)) +
-                len(_get_active_scheduling_rules(domain))
-            )
-        else:
-            num_active = len(_active_reminder_methods(domain))
+        num_active = (
+            len(_get_active_immediate_broadcasts(domain)) +
+            len(_get_active_scheduled_broadcasts(domain)) +
+            len(_get_active_scheduling_rules(domain))
+        )
         if num_active > 0:
             return _fmt_alert(
                 ungettext(
@@ -558,15 +531,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
-        if project_is_on_new_reminders(domain):
-            num_survey = (
-                len(_get_active_immediate_broadcasts(domain, survey_only=True)) +
-                len(_get_active_scheduled_broadcasts(domain, survey_only=True)) +
-                len(_get_active_scheduling_rules(domain, survey_only=True))
-            )
-        else:
-            surveys = [x for x in _active_reminder_methods(domain) if x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
-            num_survey = len(surveys)
+        num_survey = (
+            len(_get_active_immediate_broadcasts(domain, survey_only=True)) +
+            len(_get_active_scheduled_broadcasts(domain, survey_only=True)) +
+            len(_get_active_scheduling_rules(domain, survey_only=True))
+        )
         if num_survey > 0:
             return _fmt_alert(
                 ungettext(

@@ -5,6 +5,45 @@
 
 {% requirejs_main "hqwebapp/js/crud_paginated_list_init" %}
 
+{% block pagination_header %}
+
+{% if extra_backend_mappings %}
+    <p>
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+        You are seeing this notice because your project defines some custom behavior for outbound SMS
+        when choosing a gateway for a destination mobile number. The following mobile prefixes
+        are mapped to their corresponding gateway backends for routing outbound SMS traffic:
+        {% endblocktrans %}
+    </p>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>{% trans "Phone Prefix" %}</th>
+                <th>{% trans "Gateway Backend Name" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for prefix, backend_name in extra_backend_mappings.items %}
+            <tr>
+                <td>{{ prefix }}</td>
+                <td>{{ backend_name }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% if request.couch_user.is_superuser %}
+        <p class="text-danger">
+            <i class="fa fa-info-circle"></i>
+            {% blocktrans %}
+            See comments under SQLMobileBackendMapping in the code for how to administer this.
+            {% endblocktrans %}
+        </p>
+    {% endif %}
+{% endif %}
+
+{% endblock %}
+
 {% block pagination_footer %}
     <div>
         {% blocktrans %}

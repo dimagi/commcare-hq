@@ -371,8 +371,10 @@ def _login(req, domain_name, template_name):
         context.update({
             'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
         })
-
-    auth_view = HQLoginView if not domain_name else CloudCareLoginView
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        auth_view = CloudCareLoginView
+    else:
+        auth_view = HQLoginView if not domain_name else CloudCareLoginView
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
@@ -1066,7 +1068,7 @@ def quick_find(request):
         if redirect and doc_info.link:
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
-        elif request.couch_user.is_superuser:
+        elif redirect and request.couch_user.is_superuser:
             return HttpResponseRedirect('{}?id={}'.format(reverse('raw_couch'), doc.get('_id')))
         else:
             return json_response(doc_info)

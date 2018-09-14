@@ -7,6 +7,7 @@ import glob
 import json
 import os
 import re
+from uuid import UUID
 
 from bulk_update.helper import bulk_update as bulk_update_helper
 from couchdbkit.exceptions import BadValueError
@@ -16,6 +17,7 @@ from django.db import models
 from django.utils.translation import ugettext as _
 import yaml
 
+from corehq.apps.userreports.app_manager.data_source_meta import REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
@@ -474,6 +476,7 @@ class ReportMeta(DocumentSchema):
     edited_manually = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
+    builder_source_type = StringProperty(choices=REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES)
 
 
 class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
@@ -968,31 +971,62 @@ class AsyncIndicator(models.Model):
         ])
 
 
+def get_datasource_config_infer_type(config_id, domain):
+    return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
+
+
+def guess_data_source_type(data_source_id):
+    """
+    Given a data source ID, try to guess its type (standard or aggregate).
+    """
+    # ints are definitely aggregate
+    if isinstance(data_source_id, int):
+        return DATA_SOURCE_TYPE_AGGREGATE
+    # static ids are standard
+    if id_is_static(data_source_id):
+        return DATA_SOURCE_TYPE_STANDARD
+    try:
+        # uuids are standard
+        UUID(data_source_id)
+        return DATA_SOURCE_TYPE_STANDARD
+    except ValueError:
+        try:
+            # int-like-things are aggregate
+            int(data_source_id)
+            return DATA_SOURCE_TYPE_AGGREGATE
+        except ValueError:
+            # default should be standard
+            return DATA_SOURCE_TYPE_STANDARD
+
+
 def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_STANDARD):
     def _raise_not_found():
         raise DataSourceConfigurationNotFoundError(_(
             'The data source referenced by this report could not be found.'
         ))
 
-    is_static = id_is_static(config_id)
-    if is_static:
-        config = StaticDataSourceConfiguration.by_id(config_id)
-        if config.domain != domain:
-            _raise_not_found()
-    elif data_source_type == DATA_SOURCE_TYPE_STANDARD:
-        try:
-            config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
-        except DocumentNotFound:
-            _raise_not_found()
+    if data_source_type == DATA_SOURCE_TYPE_STANDARD:
+        is_static = id_is_static(config_id)
+        if is_static:
+            config = StaticDataSourceConfiguration.by_id(config_id)
+            if config.domain != domain:
+                _raise_not_found()
+        else:
+            try:
+                config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
+            except DocumentNotFound:
+                _raise_not_found()
+        return config, is_static
     elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
         from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
         try:
             config = AggregateTableDefinition.objects.get(id=int(config_id), domain=domain)
+            return config, False
         except AggregateTableDefinition.DoesNotExist:
             _raise_not_found()
     else:
         raise InvalidDataSourceType('{} is not a valid data source type!'.format(data_source_type))
-    return config, is_static
+
 
 
 def id_is_static(data_source_id):

@@ -101,9 +101,7 @@ def paginate_releases(request, domain, app_id):
     results = app_es.exclude_source().run()
     app_ids = results.doc_ids
     apps = get_docs(Application.get_db(), app_ids)
-    for app in apps:
-        app.pop('translations')
-    saved_apps = [SavedAppBuild.wrap(app, scrap_old_conventions=False).to_saved_build_json(timezone)
+    saved_apps = [SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
                   for app in apps]
 
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
@@ -258,7 +256,7 @@ def save_copy(request, domain, app_id):
 
     else:
         copy = None
-    copy = copy and SavedAppBuild.wrap(copy.to_json()).to_saved_build_json(
+    copy = copy and SavedAppBuild.wrap(copy.to_json()).releases_list_json(
         get_timezone_for_user(request.couch_user, domain)
     )
     lang, langs = get_langs(request, app)
