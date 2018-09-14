@@ -85,21 +85,13 @@ hqDefine('accounting/js/confirm_plan', [
             var $button = $(e.currentTarget);
             $button.disableButton();
             if (self.form) {
-                var downgradeReason = "";
-                var selectedDowngradeOptions = document.getElementById("select-downgrade-reason").selectedOptions;
-                for (var i = 0; i < selectedDowngradeOptions.length; i++) {
-                    downgradeReason += selectedDowngradeOptions[i].value + ", ";
+                if (self.otherSelected()) {
+                    document.getElementById("new-tool-reason").value = document.getElementById("text-tool-reason").value;
+                } else {
+                    document.getElementById("new-tool-reason").value = $("#select-tool-reason").val().join(", ");
                 }
-                document.getElementById("downgrade-reason").value = downgradeReason;
 
-                var newToolReason = "";
-                var selectedNewToolOptions = document.getElementById("select-tool-reason").selectedOptions;
-                for (i = 0; i < selectedNewToolOptions.length; i++) {
-                    newToolReason += selectedNewToolOptions[i].value + "\n";
-                }
-                newToolReason += document.getElementById("text-tool-reason").value;
-                document.getElementById("new-tool-reason").value = newToolReason;
-
+                document.getElementById("downgrade-reason").value = $("#select-downgrade-reason").val().join(", ");
                 document.getElementById("will-project-restart").value = document.getElementById("select-project-restart").value;
                 document.getElementById("new-tool").value = document.getElementById("text-new-tool").value;
                 document.getElementById("feedback").value = document.getElementById("text-feedback").value;
