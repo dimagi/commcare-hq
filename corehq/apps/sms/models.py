@@ -1935,6 +1935,12 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     class ExpectedDomainLevelBackend(Exception):
         pass
 
+    def __unicode__(self):
+        if self.is_global:
+            return "Global Backend '%s'" % self.name
+        else:
+            return "Domain '%s' Backend '%s'" % (self.domain, self.name)
+
     @quickcache(['self.pk', 'domain'], timeout=5 * 60)
     def domain_is_shared(self, domain):
         """
@@ -2488,13 +2494,28 @@ class SQLMobileBackendMapping(models.Model):
     """
     A SQLMobileBackendMapping instance is used to map SMS or IVR traffic
     to a given backend based on phone prefix.
+
+    The SQLMobileBackendMappings that have is_global set to True are managed
+    in CommCareHQ's Admin section for SMS Connectivity and Billing.
+
+    It also possible to create SQLMobileBackendMappings that have is_global_set to False
+    in order to define custom rules for how to route outbound SMS traffic for a specific project.
+    This is used so infrequently that no CommCareHQ UI exists to manage it, but if
+    you need to enable this you can do so using the Django admin. Just create a
+    SQLMobileBackendMapping entry with couch_id blank, is_global False, domain equal
+    to the domain you wish to apply this for, backend_type SMS, prefix equal to the
+    mobile prefix that you want to route outbound SMS traffic for, and then for
+    backend choose a backend either in the same project as domain, one that is
+    shared with domain, or one that is global.
     """
     class Meta(object):
         db_table = 'messaging_mobilebackendmapping'
         app_label = 'sms'
         unique_together = ('domain', 'backend_type', 'prefix')
 
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    # This column can be left null for new entries. If there aren't any references to it anywhere, it
+    # can probably be dropped.
+    couch_id = models.CharField(max_length=126, null=True, db_index=True, blank=True)
 
     # True if this mapping applies globally (system-wide). False if it only applies
     # to a domain
