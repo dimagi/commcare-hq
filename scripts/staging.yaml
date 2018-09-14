@@ -62,6 +62,7 @@ branches:
   - nh/omrs/atom  # Norman Sept 12
 #  - rn_testing_module_loading # Rohit Sept 12
   - lwyszomi:lw/report_export_v3  # Jenny Sept 12
+  - downgrade-modal-required-questions # Gabriella Sept 14
 submodules:
   submodules/django-digest-src:
     branches: []
