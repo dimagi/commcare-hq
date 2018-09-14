@@ -29,18 +29,18 @@ hqDefine('accounting/js/confirm_plan', [
         // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
         self.userAgreementSigned = ko.observable(!isUpgrade);
 
-        self.downgradeReasonList = ko.observableArray([
+        self.downgradeReasonList = [
             PROJECT_ENDED,
             FUNDING_ENDED,
             CONTINUE_COMMCARE,
             SWITCH_TOOLS,
-        ]);
-        self.newToolReasonList = ko.observableArray([
+        ];
+        self.newToolReasonList = [
             BUDGET_REASONS,
             LIMITED_FEATURES,
             MORE_FEATURES,
             OTHER,
-        ]);
+        ];
 
         self.downgradeReason = ko.observable("");
         self.newTool = ko.observable("");
