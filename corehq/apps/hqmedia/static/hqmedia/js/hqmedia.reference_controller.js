@@ -109,7 +109,7 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
             }
             return missing;
         };
-        return self
+        return self;
     }
 
     function ModuleReferences(name, objMap, groupId) {
@@ -243,18 +243,6 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
 
         self.search = function () {
             throw new Error("This functionality is currently broken");
-            // leftovers from Tim. todo: fix
-            //        if (self.query()) {
-            //            self.searched(true);
-            //            self.searching(self.searching() + 1);
-            //            $.getJSON(searchUrl, {q: self.query(), t: self.type()}, function (res) {
-            //                self.searching(self.searching() - 1);
-            //                self.searchOptions([]);
-            //                for (var i = 0; i < res.length; i++) {
-            //                    self.searchOptions.push(new MediaOption(self, res[i]))
-            //                }
-            //            });
-            //        }
         };
 
         self.triggerUpload = function () {
@@ -334,33 +322,6 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
 
     VideoReference.prototype = Object.create(BaseMediaReference.prototype);
     VideoReference.prototype.constructor = VideoReference;
-
-
-    // Kept from Tim, you might want to fix it up a bit
-    function MediaOption(mediaRef, data) {
-        var self = this;
-        self.mediaRef = mediaRef;
-        self.title = data.title;
-        self.license = data.licenses.join(", ");
-        self.licenses = data.licenses;
-        self.url = ko.observable(data.url); // so we can preview it; we never change .url
-        self.m_id = data.m_id;
-        self.uid = '';
-        self.tags = data.tags;
-
-        self.choose = function () {
-            $.post(chooseImageUrl, {
-                media_type: self.mediaRef.type(),
-                path: self.mediaRef.path(),
-                id: self.m_id,
-            }, function (res) {
-                if (self.mediaRef.type() === "Image")
-                    self.mediaRef.foundNewImage(null, res);
-                else if (self.mediaRef.type() === "Audio")
-                    self.mediaRef.foundNewAudio(null, res);
-            }, 'json');
-        };
-    }
 
 
     return {
