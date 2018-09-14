@@ -1223,6 +1223,13 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ALLOW_LOCATION_UPDATE_OVER_SMS = StaticToggle(
+    'allow_location_update_over_sms',
+    'Allow users to update their location over SMS.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
