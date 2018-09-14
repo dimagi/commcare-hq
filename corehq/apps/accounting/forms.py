@@ -1748,7 +1748,7 @@ class EnterprisePlanContactForm(forms.Form):
             'domain': self.domain,
             'email': self.web_user.email
         }
-        html_content = render_to_string('accounting/email/enterprise_request.html', context)
+        html_content = render_to_string('accounting/email/sales_request.html', context)
         text_content = """
         Email: %(email)s
         Name: %(name)s
@@ -1818,7 +1818,7 @@ class AnnualPlanContactForm(forms.Form):
             'domain': self.domain,
             'email': self.web_user.email
         }
-        html_content = render_to_string('accounting/email/annual_request.html', context)
+        html_content = render_to_string('accounting/email/sales_request.html', context)
         text_content = """
         Email: %(email)s
         Name: %(name)s

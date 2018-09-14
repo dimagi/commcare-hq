@@ -21,7 +21,7 @@ hqDefine('accounting/js/confirm_plan', [
         self.userAgreementSigned = ko.observable(!isUpgrade);
 
         self.form = undefined;
-        self.openDowngradeModal = function(confirmPlanModel, e) {
+        self.openDowngradeModal = function (confirmPlanModel, e) {
             self.form = $(e.currentTarget).closest("form");
             if (confirmPlanModel.isUpgrade) {
                 self.form.submit();
@@ -30,8 +30,8 @@ hqDefine('accounting/js/confirm_plan', [
                 $modal.modal('show');
             }
         };
-        self.submitDowngrade = function(pricingTable, e) {
-            var finish = function() {
+        self.submitDowngrade = function (pricingTable, e) {
+            var finish = function () {
                 if (self.form) {
                     self.form.submit();
                 }

@@ -245,7 +245,8 @@ def import_patients_to_domain(domain_name, force=False):
             continue
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
+    serializer='pickle',
     run_every=crontab(minute=4, hour=4),
     queue='background_queue'
 )

@@ -1,4 +1,4 @@
-hqDefine("data_interfaces/js/archive_forms", function() {
+hqDefine("data_interfaces/js/archive_forms", function () {
     var managementSelector = '#data-interfaces-archive-forms',
         allFormsButtonSelector = managementSelector + ' input[name="select_all"]',
         checkboxesSelector = managementSelector + ' input.xform-checkbox',
@@ -10,7 +10,7 @@ hqDefine("data_interfaces/js/archive_forms", function() {
         toggleButton(selectedCount);
     }
 
-    function toggleButton(count){
+    function toggleButton(count) {
         if (count) {
             $("#submitForms").prop('disabled', false);
         }
@@ -25,32 +25,32 @@ hqDefine("data_interfaces/js/archive_forms", function() {
     }
 
     // Similar to case_management.js, would be good to combine the two
-    $(function() {
+    $(function () {
         // bindings for 'all' button
-        $(document).on('click', managementSelector + ' a.select-visible', function() {
+        $(document).on('click', managementSelector + ' a.select-visible', function () {
             $(allFormsButtonSelector).prop('checked', false);
             $(checkboxesSelector).prop('checked', true).change();
             return false;
         });
 
         // bindings for 'none' button
-        $(document).on('click', managementSelector + ' a.select-none', function() {
+        $(document).on('click', managementSelector + ' a.select-none', function () {
             selectNone();
             return false;
         });
 
         // bindings for form checkboxes
-        $(document).on('change', checkboxesSelector, function() {
+        $(document).on('change', checkboxesSelector, function () {
             // updates text like '3 of 5 selected'
             updateFormCounts();
             $(indicatorSelector).show();
         });
-        $(document).on('click', checkboxesSelector, function() {
+        $(document).on('click', checkboxesSelector, function () {
             $(allFormsButtonSelector).prop('checked', false);
         });
 
         // bindings for 'Select all' checkboxes
-        $(document).on('click', allFormsButtonSelector, function() {
+        $(document).on('click', allFormsButtonSelector, function () {
             if (this.checked) {
                 $(checkboxesSelector).prop('checked', true).change();
                 $(indicatorSelector).hide();
@@ -68,7 +68,7 @@ hqDefine("data_interfaces/js/archive_forms", function() {
         $(document).on('mouseup', managementSelector + ' .dataTables_paginate a', selectNone);
         $(document).on('change', managementSelector + ' .dataTables_length select', selectNone);
 
-        $(document).on('click', '#submitForms', function() {
+        $(document).on('click', '#submitForms', function () {
             if ($(allFormsButtonSelector)[0].checked) {
                 hqImport('analytix/js/google').track.event('Bulk Archive', 'All', 'Checkbox');
             } else {

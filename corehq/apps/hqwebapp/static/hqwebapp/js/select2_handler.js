@@ -3,7 +3,7 @@ hqDefine("hqwebapp/js/select2_handler", [
     "knockout",
     "select2-3.5.2-legacy/select2",
     "bootstrap-timepicker/js/bootstrap-timepicker",
-], function(
+], function (
     $,
     ko
 ) {
@@ -86,7 +86,7 @@ hqDefine("hqwebapp/js/select2_handler", [
                 createSearchChoice: self.createNewChoice,
                 formatResult: self.formatResult,
                 formatSelection: self.formatSelection,
-                initSelection : function (element, callback) {
+                initSelection: function (element, callback) {
                     if (element.val()) {
                         var data = self.getInitialData(element);
                         if (data) callback(data);

@@ -6,7 +6,8 @@ hqDefine('hqwebapp/js/main', [
     "hqwebapp/js/alert_user",
     "analytix/js/google",
     "hqwebapp/js/hq_extensions.jquery",
-], function(
+    "jquery.cookie/jquery.cookie",
+], function (
     $,
     ko,
     _,
@@ -44,7 +45,7 @@ hqDefine('hqwebapp/js/main', [
                 '<a href="#" tabindex="-1">' +
                     '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
         );
-        _.each(['content', 'title', 'html', 'placement', 'container'], function(attr) {
+        _.each(['content', 'title', 'html', 'placement', 'container'], function (attr) {
             $('a', el).data(attr, opts[attr]);
         });
         if (wrap) {
@@ -63,7 +64,7 @@ hqDefine('hqwebapp/js/main', [
     };
 
     ko.bindingHandlers.makeHqHelp = {
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var opts = valueAccessor(),
                 name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
                 description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
@@ -112,7 +113,7 @@ hqDefine('hqwebapp/js/main', [
         }
     };
 
-    var makeSaveButton = function(messageStrings, cssClass, barClass) {
+    var makeSaveButton = function (messageStrings, cssClass, barClass) {
         'use strict';
         var BAR_STATE = {
             SAVE: 'savebtn-bar-save',
@@ -272,19 +273,19 @@ hqDefine('hqwebapp/js/main', [
     }, 'btn btn-danger', 'savebtn-bar-danger');
 
     ko.bindingHandlers.saveButton = {
-        init: function(element, getSaveButton) {
+        init: function (element, getSaveButton) {
             getSaveButton().ui.appendTo(element);
         },
     };
 
     ko.bindingHandlers.saveButton2 = {
-        init: function(element, valueAccessor, allBindingsAccessor) {
+        init: function (element, valueAccessor, allBindingsAccessor) {
             var saveOptions = allBindingsAccessor().saveOptions,
                 state = valueAccessor(),
                 saveButton;
 
             saveButton = SaveButton.init({
-                save: function() {
+                save: function () {
                     saveButton.ajax(saveOptions());
                 },
             });
@@ -292,35 +293,35 @@ hqDefine('hqwebapp/js/main', [
 
             saveButton.ui.appendTo(element);
             element.saveButton = saveButton;
-            saveButton.on('state:change', function() {
+            saveButton.on('state:change', function () {
                 state(saveButton.state);
             });
         },
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var state = ko.utils.unwrapObservable(valueAccessor());
             element.saveButton.setStateWhenReady(state);
         },
     };
 
     ko.bindingHandlers.deleteButton = {
-        init: function(element, valueAccessor, allBindingsAccessor) {
+        init: function (element, valueAccessor, allBindingsAccessor) {
             var saveOptions = allBindingsAccessor().saveOptions,
                 state = valueAccessor(),
                 deleteButton;
 
-            deleteButton = initDeleteButton({
-                save: function() {
+            deleteButton = DeleteButton.init({
+                save: function () {
                     deleteButton.ajax(saveOptions());
                 },
             });
             $(element).css('vertical-align', 'top').css('display', 'inline-block');
             deleteButton.ui.appendTo(element);
             element.deleteButton = deleteButton;
-            deleteButton.on('state:change', function() {
+            deleteButton.on('state:change', function () {
                 state(deleteButton.state);
             });
         },
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var state = ko.utils.unwrapObservable(valueAccessor());
             element.deleteButton.setStateWhenReady(state);
         },
@@ -346,20 +347,20 @@ hqDefine('hqwebapp/js/main', [
 
         $('#modalTrial30Day').modal('show');
 
-        $(document).on('click', '.track-usage-link', function(e) {
+        $(document).on('click', '.track-usage-link', function (e) {
             var $link = $(e.currentTarget),
                 data = $link.data();
             googleAnalytics.track.click($link, data.category, data.action, data.label, data.value);
         });
 
-        $(document).on('click', '.mainmenu-tab a', function(e) {
+        $(document).on('click', '.mainmenu-tab a', function (e) {
             var data = $(e.currentTarget).closest(".mainmenu-tab").data();
             if (data.category && data.action) {
                 googleAnalytics.track.event(data.category, data.action, data.label);
             }
         });
 
-        $(document).on('click', '.post-link', function(e) {
+        $(document).on('click', '.post-link', function (e) {
             e.preventDefault();
             $.postGo($(this).attr('href'), {});
         });
@@ -372,7 +373,7 @@ hqDefine('hqwebapp/js/main', [
             if ($.cookie(alertCookie) == id) {  // eslint-disable-line eqeqeq
                 $maintenance.addClass('hide');
             } else {
-                $maintenance.on('click', '.close', function() {
+                $maintenance.on('click', '.close', function () {
                     $.cookie(alertCookie, id, { expires: 7, path: '/' });
                 });
             }
@@ -384,16 +385,16 @@ hqDefine('hqwebapp/js/main', [
             var $modal = $("#eulaModal");
             if ($modal.length) {
                 $("body").addClass("has-eula");
-                $("#eula-agree").click(function() {
+                $("#eula-agree").click(function () {
                     $(this).disableButton();
                     $.ajax({
                         url: initialPageData.reverse("agree_to_eula"),
                         method: "POST",
-                        success: function() {
+                        success: function () {
                             $("#eulaModal").modal('hide');
                             $("body").removeClass("has-eula");
                         },
-                        error: function() {
+                        error: function () {
                             // do nothing, user will get the popup again on next page load
                             $("body").removeClass("has-eula");
                         },
@@ -407,9 +408,9 @@ hqDefine('hqwebapp/js/main', [
         }
 
         // CDA modal
-        _.each($(".remote-modal"), function(modal) {
+        _.each($(".remote-modal"), function (modal) {
             var $modal = $(modal);
-            $modal.on("show show.bs.modal", function() {
+            $modal.on("show show.bs.modal", function () {
                 $(this).find(".fetched-data").load($(this).data("url"));
             });
             if ($modal.data("showOnPageLoad")) {
@@ -418,7 +419,7 @@ hqDefine('hqwebapp/js/main', [
         });
     });
 
-    var capitalize = function(string) {
+    var capitalize = function (string) {
         return string.charAt(0).toUpperCase() + string.substring(1).toLowerCase();
     };
 

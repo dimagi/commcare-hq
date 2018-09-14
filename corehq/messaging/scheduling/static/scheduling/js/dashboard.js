@@ -1,8 +1,8 @@
 /* globals d3, nv, ko */
-hqDefine("scheduling/js/dashboard", function() {
+hqDefine("scheduling/js/dashboard", function () {
     var dashboardUrl = hqImport("hqwebapp/js/initial_page_data").reverse("messaging_dashboard");
 
-    var DashboardViewModel = function() {
+    var DashboardViewModel = function () {
         var self = this;
         self.bindingApplied = ko.observable(false);
         self.last_refresh_time = ko.observable();
@@ -15,19 +15,19 @@ hqDefine("scheduling/js/dashboard", function() {
         self.daily_outbound_sms_limit = ko.observable();
         self.events_pending = ko.observable();
 
-        self.percentage_daily_outbound_sms_used = ko.computed(function() {
+        self.percentage_daily_outbound_sms_used = ko.computed(function () {
             return Math.round(100.0 * self.outbound_sms_sent_today() / self.daily_outbound_sms_limit());
         });
 
-        self.is_daily_usage_ok = ko.computed(function() {
+        self.is_daily_usage_ok = ko.computed(function () {
             return self.outbound_sms_sent_today() < self.daily_outbound_sms_limit();
         });
 
-        self.is_sms_currently_allowed = ko.computed(function() {
+        self.is_sms_currently_allowed = ko.computed(function () {
             return self.is_daily_usage_ok() && self.within_allowed_sms_times();
         });
 
-        self.init = function() {
+        self.init = function () {
             self.sms_count_chart = nv.models.multiBarChart()
                 .color(['#ff7f27', '#0080c0'])
                 .transitionDuration(500)
@@ -49,8 +49,8 @@ hqDefine("scheduling/js/dashboard", function() {
             self.event_count_chart.yAxis.tickFormat(d3.format(',f'));
 
             self.error_count_chart = nv.models.discreteBarChart()
-                .x(function(d) { return d.label; })
-                .y(function(d) { return d.value; })
+                .x(function (d) { return d.label; })
+                .y(function (d) { return d.value; })
                 .tooltips(true)
                 .showValues(true)
                 .color(['#ed1c24'])
@@ -62,7 +62,7 @@ hqDefine("scheduling/js/dashboard", function() {
             self.error_count_chart.yAxis.tickFormat(d3.format(',f'));
         };
 
-        self.update = function(values) {
+        self.update = function (values) {
             self.last_refresh_time(values.last_refresh_time);
             self.queued_sms_count(values.queued_sms_count);
             self.uses_restricted_time_windows(values.uses_restricted_time_windows);
@@ -74,7 +74,7 @@ hqDefine("scheduling/js/dashboard", function() {
             self.events_pending(values.events_pending);
         };
 
-        self.update_charts = function(values) {
+        self.update_charts = function (values) {
             d3.select('#sms_count_chart svg')
                 .datum(values.sms_count_data)
                 .transition()
@@ -101,11 +101,11 @@ hqDefine("scheduling/js/dashboard", function() {
     var dashboardViewModel = new DashboardViewModel();
     dashboardViewModel.init();
 
-    var updateDashboard = function() {
+    var updateDashboard = function () {
         $.getJSON(dashboardUrl, {action: 'raw'})
-            .done(function(json) {
+            .done(function (json) {
                 dashboardViewModel.update(json);
-                if(!dashboardViewModel.bindingApplied()) {
+                if (!dashboardViewModel.bindingApplied()) {
                     // We have to do this on the async ajax thread otherwise there
                     // still might be a flicker on the page.
                     $('#messaging_dashboard').koApplyBindings(dashboardViewModel);
@@ -114,12 +114,12 @@ hqDefine("scheduling/js/dashboard", function() {
                 // updating charts must be done when everything is visible
                 dashboardViewModel.update_charts(json);
             })
-            .always(function() {
+            .always(function () {
                 setTimeout(updateDashboard, 30000);
             });
     };
 
-    $(function() {
+    $(function () {
         updateDashboard();
     });
 });

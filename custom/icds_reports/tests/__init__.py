@@ -19,9 +19,9 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
-    create_views,
     move_ucr_data_into_aggregation_tables,
-    _aggregate_child_health_pnc_forms)
+    _aggregate_child_health_pnc_forms,
+    _aggregate_gm_forms)
 from io import open
 
 FILE_NAME_TO_TABLE_MAPPING = {
@@ -121,6 +121,7 @@ def setUpModule():
                     postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
 
         _aggregate_child_health_pnc_forms('st1', datetime(2017, 3, 31))
+        _aggregate_gm_forms('st1', datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
@@ -136,9 +137,6 @@ def setUpModule():
             raise
         finally:
             _call_center_domain_mock.stop()
-
-        with connections['icds-ucr'].cursor() as cursor:
-            create_views(cursor)
 
 
 def tearDownModule():

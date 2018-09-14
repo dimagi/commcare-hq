@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.urls import reverse
-from corehq.apps.reminders.forms import BroadcastForm
-from corehq.apps.reminders.models import (RECIPIENT_USER_GROUP, RECIPIENT_LOCATION)
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.messaging.scheduling.forms import BroadcastForm as NewRemindersBroadcastForm
 from crispy_forms import layout as crispy
@@ -38,45 +36,6 @@ class InputStockForm(forms.Form):
     units = forms.CharField(required=False)
     monthly_consumption = forms.DecimalField(required=False, widget=forms.HiddenInput())
     default_consumption = forms.DecimalField(min_value=0, required=False)
-
-
-class EWSBroadcastForm(BroadcastForm):
-    role = forms.ChoiceField(
-        required=False,
-        label=ugettext_lazy('Send to users with role'),
-        choices=((role, ugettext_lazy(role)) for role in EWS_USER_ROLES),
-    )
-
-    @property
-    def crispy_recipient_fields(self):
-        fields = super(EWSBroadcastForm, self).crispy_recipient_fields
-        fields.append(
-            crispy.Div(
-                crispy.Field(
-                    'role',
-                    data_bind='value: role',
-                ),
-                data_bind='visible: showUserGroupSelect() || showLocationSelect()',
-            )
-        )
-        return fields
-
-    def clean_role(self):
-        if self.cleaned_data.get('recipient_type') not in (RECIPIENT_USER_GROUP,
-                RECIPIENT_LOCATION):
-            return None
-
-        value = self.cleaned_data.get('role')
-        if value not in EWS_USER_ROLES:
-            raise ValidationError(_('Invalid choice selected.'))
-        return value
-
-    def get_user_data_filter(self):
-        role = self.cleaned_data.get('role')
-        if role is None or role == ROLE_ALL:
-            return {}
-        else:
-            return {'role': [role]}
 
 
 class NewRemindersEWSBroadcastForm(NewRemindersBroadcastForm):
@@ -137,7 +96,8 @@ class EWSUserSettings(forms.Form):
             del kwargs['domain']
         super(EWSUserSettings, self).__init__(*args, **kwargs)
         query_url = reverse('non_administrative_locations_for_select2', args=[domain])
-        self.fields['facility'].widget = LocationSelectWidget(domain=domain, id='facility', query_url=query_url)
+        self.fields['facility'].widget = LocationSelectWidget(domain=domain, id='facility', query_url=query_url,
+                                                              select2_version='v3')
 
     def save(self, user, domain):
         ews_extension = EWSExtension.objects.get_or_create(user_id=user.get_id, domain=domain)[0]

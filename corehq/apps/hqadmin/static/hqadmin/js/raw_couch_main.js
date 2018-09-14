@@ -3,11 +3,11 @@ hqDefine('hqadmin/js/raw_couch_main', [
     'hqwebapp/js/initial_page_data',
     "ace-builds/src-min-noconflict/ace",
 ], function ($, intialPageData, ace) {
-    $(function() {
-        var allDatabase = intialPageData.get('all_databases').map(function(database){
-            return {'dbName':database,'dbValue':database};
+    $(function () {
+        var allDatabase = intialPageData.get('all_databases').map(function (database) {
+            return {'dbName': database,'dbValue': database};
         });
-        allDatabase = [{'dbName':'All Databases','dbValue':''}].concat(allDatabase);
+        allDatabase = [{'dbName': 'All Databases','dbValue': ''}].concat(allDatabase);
 
         var viewModel = {'allDatabases': allDatabase};
         $("#doc-form").koApplyBindings(viewModel);
@@ -23,7 +23,7 @@ hqDefine('hqadmin/js/raw_couch_main', [
         editor.session.setMode('ace/mode/json');
         editor.setReadOnly(true);
 
-        if($element.length){
+        if ($element.length) {
             editor.session.setValue(JSON.stringify($element.data('doc'), null, 4));
         }
 

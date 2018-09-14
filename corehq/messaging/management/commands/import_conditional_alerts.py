@@ -22,7 +22,6 @@ from corehq.messaging.scheduling.models import (
     SMSContent,
 )
 from corehq.messaging.tasks import initiate_messaging_rule_run
-from corehq.messaging.util import project_is_on_new_reminders
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from io import open
@@ -56,9 +55,6 @@ class Command(BaseCommand):
         domain_obj = Domain.get_by_name(domain)
         if domain_obj is None:
             raise CommandError("Project space '%s' not found" % domain)
-
-        if not project_is_on_new_reminders(domain_obj):
-            raise CommandError("Project space '%s' does not have new reminders enabled" % domain)
 
         json_rules = []
         with open_for_json_read(filename) as f:
@@ -101,7 +97,6 @@ class Command(BaseCommand):
                     case_type=json_rule.case_type,
                     active=True,
                     filter_on_server_modified=False,
-                    migrated=True,
                     workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
                 )
 

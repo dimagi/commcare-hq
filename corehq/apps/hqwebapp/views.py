@@ -107,7 +107,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
         exc_message = six.text_type(exc)
     else:
         exc_message = exc.message
-        if isinstance(exc_message, six.binary_type):
+        if isinstance(exc_message, bytes):
             exc_message = exc_message.decode('utf-8')
 
     return 'Traceback (most recent call last):\n{}{}: {}'.format(
@@ -272,13 +272,12 @@ def server_up(req):
     statuses = run_checks(checks_to_do)
     failed_checks = [(check, status) for check, status in statuses if not status.success]
 
-    tags = [
-        'status:{}'.format('failed' if failed_checks else 'ok'),
-    ]
     for check_name, status in statuses:
-        datadog_gauge('commcare.serverup.check', status.duration, tags=tags + [
+        tags = [
+            'status:{}'.format('failed' if not status.success else 'ok'),
             'check:{}'.format(check_name)
-        ])
+        ]
+        datadog_gauge('commcare.serverup.check', status.duration, tags=tags)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
@@ -372,8 +371,10 @@ def _login(req, domain_name, template_name):
         context.update({
             'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
         })
-
-    auth_view = HQLoginView if not domain_name else CloudCareLoginView
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        auth_view = CloudCareLoginView
+    else:
+        auth_view = HQLoginView if not domain_name else CloudCareLoginView
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
@@ -1067,7 +1068,7 @@ def quick_find(request):
         if redirect and doc_info.link:
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
-        elif request.couch_user.is_superuser:
+        elif redirect and request.couch_user.is_superuser:
             return HttpResponseRedirect('{}?id={}'.format(reverse('raw_couch'), doc.get('_id')))
         else:
             return json_response(doc_info)

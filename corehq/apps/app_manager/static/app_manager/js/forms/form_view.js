@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/forms/form_view", function() {
+hqDefine("app_manager/js/forms/form_view", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
         appManagerUtils = hqImport('app_manager/js/app_manager');
     appManagerUtils.setPrependedPageTitle("\u2699 ", true);
@@ -11,7 +11,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
         }
 
         var result = false;
-        $.each(substringMatches, function(index, sub) {
+        $.each(substringMatches, function (index, sub) {
             result = result || filter.indexOf(sub) !== -1;
         });
 
@@ -24,7 +24,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
 
         self.formFilter = ko.observable(initialPageData('form_filter'));
 
-        self.caseReferenceNotAllowed = ko.computed(function() {
+        self.caseReferenceNotAllowed = ko.computed(function () {
             var moduleUsesCase = initialPageData('all_other_forms_require_a_case') && initialPageData('form_requires') === 'case';
             if (!moduleUsesCase || (initialPageData('put_in_root') && !initialPageData('root_requires_same_case'))) {
                 // We want to determine here if the filter expression references
@@ -34,7 +34,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
                     return true;
                 }
 
-                $.each(patterns.usercase_substring, function(index, sub) {
+                $.each(patterns.usercase_substring, function (index, sub) {
                     filter = filter.replace(sub, '');
                 });
 
@@ -45,7 +45,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
             return false;
         });
 
-        self.userCaseReferenceNotAllowed = ko.computed(function() {
+        self.userCaseReferenceNotAllowed = ko.computed(function () {
             return !initialPageData('is_usercase_in_use') && formFilterMatches(
                 self.formFilter(), patterns.usercase_substring
             );
@@ -58,13 +58,13 @@ hqDefine("app_manager/js/forms/form_view", function() {
         return self;
     }
 
-    $(function (){
+    $(function () {
         // Validation for build
         var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
         setupValidation(hqImport("hqwebapp/js/initial_page_data").reverse("validate_form_for_build"));
 
         // Analytics for renaming form
-        $(".appmanager-edit-title").on('click', '.btn-success', function() {
+        $(".appmanager-edit-title").on('click', '.btn-success', function () {
             hqImport('analytix/js/kissmetrix').track.event("Renamed form from form settings page");
         });
 
@@ -111,9 +111,9 @@ hqDefine("app_manager/js/forms/form_view", function() {
                 is_release_notes_form: ko.observable(initialPageData('is_release_notes_form')),
                 enable_release_notes: ko.observable(initialPageData('enable_release_notes')),
                 is_allowed_to_be_release_notes_form: ko.observable(initialPageData('is_allowed_to_be_release_notes_form')),
-                toggle_enable: function() {
+                toggle_enable: function () {
                     var allowed = this.is_release_notes_form();
-                    if (!allowed){
+                    if (!allowed) {
                         this.enable_release_notes(false);
                     }
                     return true;
@@ -143,7 +143,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
         $('.property-description').popover();
 
         // Advanced > XForm > Upload
-        $("#xform_file_input").change(function(){
+        $("#xform_file_input").change(function () {
             if ($(this).val()) {
                 $("#xform_file_submit").show();
             } else {

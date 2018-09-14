@@ -301,6 +301,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
     'corehq.messaging.smsbackends.karix',
+    'corehq.messaging.smsbackends.airtel_tcl',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -592,7 +593,10 @@ CUSTOM_PROJECT_SMS_QUEUES = {
 
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
-SMS_QUEUE_ENABLED = False
+# This should always be set to True in production environments, and the sms_queue
+# celery worker(s) should be deployed. We set this to False for tests and (optionally)
+# for local testing.
+SMS_QUEUE_ENABLED = True
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -856,6 +860,7 @@ ZIPLINE_API_PASSWORD = ''
 ICDS_SMS_INDICATOR_DOMAINS = []
 
 KAFKA_BROKERS = ['localhost:9092']
+KAFKA_API_VERSION = None
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
@@ -954,7 +959,7 @@ for database in DATABASES.values():
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
-IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT == 'production'
+IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -1265,6 +1270,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'kafka': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propogate': False,
+        },
     }
 }
 
@@ -1516,6 +1526,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
     'corehq.messaging.smsbackends.karix.models.KarixBackend',
+    'corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend',
 ]
 
 # The number of seconds to use as a timeout when making gateway requests
@@ -2061,6 +2072,7 @@ DOMAIN_MODULE_MAP = {
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
+    'reach-test': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 

@@ -5,7 +5,7 @@ hqDefine("reports/js/report_config_models", [
     'analytix/js/google',
     'reports/js/standard_hq_report',
     'jquery-ui/ui/datepicker',
-], function(
+], function (
     $,
     ko,
     _,
@@ -28,13 +28,13 @@ hqDefine("reports/js/report_config_models", [
                 (self.name() ? ': ' + self.name() : '');
         });
 
-        self.validate = function() {
+        self.validate = function () {
             var date_range = self.date_range(),
                 error = false;
 
             if (_.isEmpty(self.name())) {
                 error = true;
-            }else if (date_range === 'lastn') {
+            } else if (date_range === 'lastn') {
                 var days = parseInt(self.days());
                 if (!_.isNumber(days) || _.isNaN(days)) {
                     error = true;
@@ -63,7 +63,7 @@ hqDefine("reports/js/report_config_models", [
             return data;
         };
 
-        self.dateRangeSubs = self.date_range.subscribe(function(newValue) {
+        self.dateRangeSubs = self.date_range.subscribe(function (newValue) {
             if (newValue === 'since' || newValue === 'range') {
                 $('.date-picker').datepicker({
                     changeMonth: true,
@@ -138,7 +138,7 @@ hqDefine("reports/js/report_config_models", [
             self.configBeingViewed(config);
 
             var filters = config.filters;
-            update_filters = function() {
+            update_filters = function () {
                 for (var filter_name in filters) {
                     var val = filters[filter_name];
                     $('[name="' + filter_name + '"]').val(val);
@@ -223,7 +223,7 @@ hqDefine("reports/js/report_config_models", [
             });
         };
 
-        self.trackConfigBeingEdited = function(builderReportType) {
+        self.trackConfigBeingEdited = function (builderReportType) {
             googleAnalytics.track.event('Scheduled Reports', 'Create a saved report', '-');
             if (builderReportType) {
                 googleAnalytics.track.event('Report Viewer', 'Save Report', builderReportType);
@@ -234,7 +234,7 @@ hqDefine("reports/js/report_config_models", [
             self.configBeingEdited(undefined);
         };
 
-        self.validate = function() {
+        self.validate = function () {
             return self.configBeingEdited().validate();
         };
 
@@ -242,7 +242,7 @@ hqDefine("reports/js/report_config_models", [
             state: ko.observable(),
             saveOptions: function () {
                 var config_data = self.configBeingEdited().unwrap();
-                var select2 = $("[data-ajax-select2]").map(function() {
+                var select2 = $("[data-ajax-select2]").map(function () {
                     return $(this).attr('name');
                 }).toArray();
                 for (var key in config_data["filters"]) {
@@ -272,7 +272,7 @@ hqDefine("reports/js/report_config_models", [
                             self.setConfigBeingViewed(newConfig);
                         }
                     },
-                    beforeSend: function(jqXHR) {
+                    beforeSend: function (jqXHR) {
                         var valid = self.validate();
                         if (!valid) {
                             jqXHR.abort();

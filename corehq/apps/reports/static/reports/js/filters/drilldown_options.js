@@ -2,7 +2,7 @@ hqDefine('reports/js/filters/drilldown_options', [
     'jquery',
     'knockout',
     'underscore',
-], function(
+], function (
     $,
     ko,
     _

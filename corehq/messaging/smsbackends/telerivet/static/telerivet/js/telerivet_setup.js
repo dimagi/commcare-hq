@@ -1,21 +1,21 @@
 hqDefine("telerivet/js/telerivet_setup", [
     'knockout',
     'hqwebapp/js/initial_page_data',
-], function(
+], function (
     ko,
     initialPageData
 ) {
-    var telerivetSetupModel = function() {
+    var telerivetSetupModel = function () {
         var self = {};
 
         // Step handling
         self.step = ko.observable(0);
-        self.start = ko.computed(function() { return self.step() === 0; });
-        self.step1 = ko.computed(function() { return self.step() === 1; });
-        self.step2 = ko.computed(function() { return self.step() === 2; });
-        self.step3 = ko.computed(function() { return self.step() === 3; });
-        self.finish = ko.computed(function() { return self.step() === 4; });
-        self.nextStep = function() {
+        self.start = ko.computed(function () { return self.step() === 0; });
+        self.step1 = ko.computed(function () { return self.step() === 1; });
+        self.step2 = ko.computed(function () { return self.step() === 2; });
+        self.step3 = ko.computed(function () { return self.step() === 3; });
+        self.finish = ko.computed(function () { return self.step() === 4; });
+        self.nextStep = function () {
             self.step(self.step() + 1);
         };
 
@@ -37,11 +37,11 @@ hqDefine("telerivet/js/telerivet_setup", [
         self.testPhoneNumber = ko.observable('');
         self.testPhoneNumberError = ko.observable('');
         self.sendSmsButtonError = ko.observable(false);
-        self.sendSmsButtonText = ko.computed(function() {
+        self.sendSmsButtonText = ko.computed(function () {
             return self.sendSmsButtonError() ? gettext('Server error. Try again...') : gettext('Send');
         });
 
-        self.sendTestSMS = function() {
+        self.sendTestSMS = function () {
             $.ajax({
                 method: 'POST',
                 url: initialPageData.reverse('send_sample_sms'),
@@ -52,7 +52,7 @@ hqDefine("telerivet/js/telerivet_setup", [
                     test_phone_number: self.testPhoneNumber(),
                     request_token: initialPageData.get('request_token'),
                 },
-                success: function(data) {
+                success: function (data) {
                     self.sendSmsButtonError(false);
                     self.apiKeyError(data.api_key_error);
                     self.projectIdError(data.project_id_error);
@@ -60,7 +60,7 @@ hqDefine("telerivet/js/telerivet_setup", [
                     self.testPhoneNumberError(data.unexpected_error || data.test_phone_number_error);
                     self.testSMSSent(data.success);
                 },
-                error: function() {
+                error: function () {
                     self.sendSmsButtonError(true);
                 },
             });
@@ -74,33 +74,33 @@ hqDefine("telerivet/js/telerivet_setup", [
         self.inboundWaitTimedOut = ko.observable(false);
         self.pollingErrorOccurred = ko.observable(false);
         self.showInboundTroubleshoot = ko.observable(false);
-        self.waiting = ko.computed(function() {
+        self.waiting = ko.computed(function () {
             return !self.inboundSMSReceived() && !self.inboundWaitTimedOut() && !self.pollingErrorOccurred();
         });
-        self.messageReceived = ko.computed(function() {
+        self.messageReceived = ko.computed(function () {
             return self.inboundSMSReceived() && !self.pollingErrorOccurred();
         });
-        self.messageNotReceived = ko.computed(function() {
+        self.messageNotReceived = ko.computed(function () {
             return self.inboundWaitTimedOut() && !self.inboundSMSReceived() && !self.pollingErrorOccurred();
         });
 
-        self.startInboundPolling = function() {
+        self.startInboundPolling = function () {
             self.pollForInboundSMS(true);
             self.inboundWaitTimedOut(false);
-            setTimeout(function() {
+            setTimeout(function () {
                 self.inboundWaitTimedOut(true);
             }, 30000);
             self.getLastInboundSMS();
         };
 
-        self.getLastInboundSMS = function() {
+        self.getLastInboundSMS = function () {
             $.ajax({
                 method: 'GET',
                 url: initialPageData.reverse('get_last_inbound_sms'),
                 data: {
                     request_token: initialPageData.get('request_token'),
                 },
-                success: function(data) {
+                success: function (data) {
                     if (data.success) {
                         if (data.found) {
                             self.inboundSMSReceived(true);
@@ -111,7 +111,7 @@ hqDefine("telerivet/js/telerivet_setup", [
                         self.pollingErrorOccurred(true);
                     }
                 },
-                error: function() {
+                error: function () {
                     // This is just an http error, for example, rather than
                     // something like a missing request token, so just retry it.
                     setTimeout(self.getLastInboundSMS, 10000);
@@ -123,7 +123,7 @@ hqDefine("telerivet/js/telerivet_setup", [
         self.setupComplete = ko.observable(false);
         self.creatingBackend = ko.observable(false);
         self.backendButtonError = ko.observable(false);
-        self.backendButtonText = ko.computed(function() {
+        self.backendButtonText = ko.computed(function () {
             return self.backendButtonError() ? gettext("Server error. Try again...") : gettext("Complete");
         });
         self.name = ko.observable(initialPageData.get('form_name'));
@@ -131,7 +131,7 @@ hqDefine("telerivet/js/telerivet_setup", [
         self.setAsDefault = ko.observable(initialPageData.get('form_set_as_default'));
         self.setAsDefaultError = ko.observable('');
 
-        self.createBackend = function() {
+        self.createBackend = function () {
             self.creatingBackend(true);
             $.ajax({
                 method: 'POST',
@@ -144,10 +144,10 @@ hqDefine("telerivet/js/telerivet_setup", [
                     request_token: initialPageData.get('request_token'),
                     set_as_default: self.setAsDefault(),
                 },
-                success: function(data) {
+                success: function (data) {
                     if (data.success) {
                         self.setupComplete(true);
-                        setTimeout(function() {
+                        setTimeout(function () {
                             window.location.href = initialPageData.get('gateway_list_url');
                         }, 2000);
                     } else {
@@ -158,7 +158,7 @@ hqDefine("telerivet/js/telerivet_setup", [
                         }
                     }
                 },
-                error: function() {
+                error: function () {
                     self.creatingBackend(false);
                     self.backendButtonError(true);
                 },
@@ -168,7 +168,7 @@ hqDefine("telerivet/js/telerivet_setup", [
         return self;
     };
 
-    $(function() {
+    $(function () {
         $("#telerivet-setup").koApplyBindings(telerivetSetupModel());
     });
 });

@@ -105,6 +105,11 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug='block_name'
             ),
             DatabaseColumn(
+                'AWW Phone Number',
+                SimpleColumn('contact_phone_number'),
+                slug='contact_phone_number'
+            ),
+            DatabaseColumn(
                 'Child Name',
                 SimpleColumn('person_name'),
                 slug='person_name'

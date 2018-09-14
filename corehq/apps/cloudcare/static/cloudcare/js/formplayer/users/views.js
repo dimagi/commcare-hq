@@ -1,6 +1,6 @@
 /*global FormplayerFrontend, Util */
 
-FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Backbone, Marionette, $){
+FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Backbone, Marionette, $) {
     /**
      * RestoreAsBanner
      *
@@ -16,13 +16,13 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
         events: {
             'click @ui.clear': 'onClickClearUser',
         },
-        templateHelpers: function() {
+        templateHelpers: function () {
             return {
                 restoreAs: this.model.restoreAs,
                 username: this.model.getDisplayUsername(),
             };
         },
-        onClickClearUser: function() {
+        onClickClearUser: function () {
             FormplayerFrontend.trigger('clearRestoreAsUser');
         },
     });
@@ -39,14 +39,14 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
         events: {
             'click': 'onClickUser',
         },
-        onClickUser: function(e) {
+        onClickUser: function (e) {
             Util.confirmationModal({
                 title: gettext('Log in as ' + this.model.get('username') + '?'),
                 message: _.template($('#user-data-template').html())(
                     { user: this.model.toJSON() }
                 ),
                 confirmText: gettext('Yes, log in as this user'),
-                onConfirm: function() {
+                onConfirm: function () {
                     FormplayerFrontend.Utils.Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.trigger('navigateHome');
                     FormplayerFrontend.regions.restoreAsBanner.show(
@@ -71,12 +71,12 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
         template: '#restore-as-view-template',
         limit: 10,
         maxPagesShown: 10,
-        initialize: function(options) {
+        initialize: function (options) {
             this.model = new Backbone.Model({
                 page: options.page || 1,
                 query: options.query || '',
             });
-            this.model.on('change', function() {
+            this.model.on('change', function () {
                 this.fetchUsers();
                 this.navigate();
             }.bind(this));
@@ -95,7 +95,7 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
         },
-        templateHelpers: function() {
+        templateHelpers: function () {
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
@@ -103,17 +103,17 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
                 pagesToShow: Util.pagesToShow(this.model.get('page') - 1, this.totalPages(), this.maxPagesShown),
             };
         },
-        navigate: function() {
+        navigate: function () {
             FormplayerFrontend.navigate(
                 '/restore_as/' +
                 this.model.get('page') + '/' +
                 this.model.get('query')
             );
         },
-        totalPages: function() {
+        totalPages: function () {
             return Math.ceil(this.collection.total / this.limit);
         },
-        fetchUsers: function() {
+        fetchUsers: function () {
             this.collection.fetch({
                 reset: true,
                 data: {
@@ -123,11 +123,11 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
                 },
             })
                 .done(this.render.bind(this))
-                .fail(function(xhr){
+                .fail(function (xhr) {
                     FormplayerFrontend.trigger('showError', xhr.responseText);
                 });
         },
-        onClickNext: function(e) {
+        onClickNext: function (e) {
             e.preventDefault();
             if (this.model.get('page') === this.totalPages()) {
                 window.console.warn('Attempted to non existant page');
@@ -135,7 +135,7 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
             }
             this.model.set('page', this.model.get('page') + 1);
         },
-        onClickPrev: function(e) {
+        onClickPrev: function (e) {
             e.preventDefault();
             if (this.model.get('page') === 1) {
                 window.console.warn('Attempted to non existant page');
@@ -143,12 +143,12 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
             }
             this.model.set('page', this.model.get('page') - 1);
         },
-        onClickPage: function(e) {
+        onClickPage: function (e) {
             e.preventDefault();
             var page = $(e.currentTarget).data().page;
             this.model.set('page', page);
         },
-        onSubmitUserSearch: function(e) {
+        onSubmitUserSearch: function (e) {
             e.preventDefault();
             this.model.set({
                 'query': this.ui.query.val(),

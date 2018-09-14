@@ -1,13 +1,13 @@
-hqDefine("export/js/export_list", function() {
+hqDefine("export/js/export_list", function () {
     'use strict';
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
         listExportsApp = window.angular.module('listExportsApp', ['hq.list_exports', 'hq.app_data_drilldown']);
-    listExportsApp.config(["$httpProvider", function($httpProvider) {
+    listExportsApp.config(["$httpProvider", function ($httpProvider) {
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
         $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
     }]);
-    listExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+    listExportsApp.config(["djangoRMIProvider", function (djangoRMIProvider) {
         djangoRMIProvider.configure(initial_page_data("djng_current_rmi"));
     }]);
     listExportsApp.constant('formModalSelector', '#createExportOptionsModal');

@@ -1,5 +1,5 @@
 /* globals _, ko, casexml, $ */
-hqDefine("data_interfaces/js/case_management", function() {
+hqDefine("data_interfaces/js/case_management", function () {
     var CaseManagement = function (o) {
         'use strict';
         var self = {};
@@ -37,7 +37,7 @@ hqDefine("data_interfaces/js/case_management", function() {
         };
 
         var updateCaseRow = function (caseId, ownerId, ownerType) {
-            return function() {
+            return function () {
                 var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case'),
                     username = $('#reassign_owner_select').data().select2.data().text,
                     dateMessage = (self.on_today) ? '<span title="0"></span>' :
@@ -50,10 +50,10 @@ hqDefine("data_interfaces/js/case_management", function() {
                     groupLabel = '';
 
                 if (ownerType === 'group') {
-                    groupLabel = ' <span class="label label-inverse" title="'+username+'">group</span>';
+                    groupLabel = ' <span class="label label-inverse" title="' + username + '">group</span>';
                 }
 
-                $row.find('td:nth-child(4)').html(username + groupLabel +' <span class="label label-info" title="' + username +
+                $row.find('td:nth-child(4)').html(username + groupLabel + ' <span class="label label-info" title="' + username +
                                                 '">updated</span>');
                 $row.find('td:nth-child(5)').html('Today ' + dateMessage);
                 $checkbox.prop("checked", false).change();
@@ -137,7 +137,7 @@ hqDefine("data_interfaces/js/case_management", function() {
     };
 
     ko.bindingHandlers.caseReassignmentForm = {
-        update: function(element, valueAccessor) {
+        update: function (element, valueAccessor) {
             var value = valueAccessor()();
             var $element = $(element);
             if (value.length > 0) {
@@ -149,12 +149,12 @@ hqDefine("data_interfaces/js/case_management", function() {
         },
     };
 
-    $(function() {
+    $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
             interfaceSelector = '#data-interfaces-reassign-cases',
             caseManagementModel;
 
-        var applyBindings = function() {
+        var applyBindings = function () {
             if ($(interfaceSelector).length) {
                 caseManagementModel = CaseManagement({
                     receiverUrl: initialPageData.reverse("receiver_secure_post"),
@@ -189,11 +189,11 @@ hqDefine("data_interfaces/js/case_management", function() {
                     },
                 });
             }
-        }
+        };
 
         // Apply bindings whenever report content is refreshed
         applyBindings();
-        $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions) {
+        $(document).on('ajaxSuccess', function (e, xhr, ajaxOptions) {
             var jsOptions = initialPageData.get("js_options");
             if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
                 return;
@@ -212,7 +212,7 @@ hqDefine("data_interfaces/js/case_management", function() {
             $(interfaceSelector).find('input.selected-commcare-case:checked').prop('checked', false).change();
         }
 
-        $(document).on("click", interfaceSelector + " a.select-none", function() {
+        $(document).on("click", interfaceSelector + " a.select-none", function () {
             selectNone();
             return false;
         });
@@ -220,7 +220,7 @@ hqDefine("data_interfaces/js/case_management", function() {
         $(document).on("mouseup", interfaceSelector + " .dataTables_paginate a", selectNone);
         $(document).on("change", interfaceSelector + " .dataTables_length select", selectNone);
 
-        $(document).on("change", interfaceSelector + " input.selected-commcare-case", function(e) {
+        $(document).on("change", interfaceSelector + " input.selected-commcare-case", function (e) {
             caseManagementModel.updateCaseSelection({}, e);
         });
     });

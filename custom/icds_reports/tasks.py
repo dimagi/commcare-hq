@@ -59,6 +59,7 @@ from custom.icds_reports.models import (
     UcrTableNameMapping)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
+from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
@@ -120,16 +121,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
-]
-
-SQL_VIEWS_PATHS = [
-    ('migrations', 'sql_templates', 'database_views', 'awc_location_months.sql'),
-    ('migrations', 'sql_templates', 'database_views', 'agg_awc_monthly.sql'),
-    ('migrations', 'sql_templates', 'database_views', 'agg_ccs_record_monthly.sql'),
-    ('migrations', 'sql_templates', 'database_views', 'agg_child_health_monthly.sql'),
-    ('migrations', 'sql_templates', 'database_views', 'daily_attendance.sql'),
-    ('migrations', 'sql_templates', 'database_views', 'agg_awc_daily.sql'),
-    ('migrations', 'sql_templates', 'database_views', 'child_health_monthly.sql'),
 ]
 
 
@@ -236,23 +227,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
         ).delay()
-
-
-def create_views(cursor):
-    try:
-        celery_task_logger.info("Starting icds reports create_sql_views")
-        for sql_view_path in SQL_VIEWS_PATHS:
-            path = os.path.join(os.path.dirname(__file__), *sql_view_path)
-            with open(path, "r", encoding='utf-8') as sql_file:
-                sql_to_execute = sql_file.read()
-                cursor.execute(sql_to_execute)
-        celery_task_logger.info("Ended icds reports create_views")
-    except Exception:
-        # This is likely due to a change in the UCR models or aggregation script which should be rare
-        # First step would be to look through this error to find what function is causing the error
-        # and look for recent changes in this folder.
-        _dashboard_team_soft_assert(False, "Unexpected occurred while creating views in dashboard aggregation")
-        raise
 
 
 def _create_aggregate_functions(cursor):
@@ -790,6 +764,14 @@ def collect_inactive_awws():
     sync.store_file_in_blobdb(export_file)
     sync.save()
     celery_task_logger.info("Ended updating the Inactive AWW")
+
+
+@periodic_task(run_every=crontab(hour=23, minute=0, day_of_month='20'), acks_late=True, queue='icds_aggregation_queue')
+def build_disha_dump():
+    month = date.today().replace(day=1)
+    celery_task_logger.info("Started dumping DISHA data")
+    build_dumps_for_month(month)
+    celery_task_logger.info("Finished dumping DISHA data")
 
 
 @periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), queue='background_queue')

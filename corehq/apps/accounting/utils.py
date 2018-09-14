@@ -143,7 +143,7 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
 def domain_is_on_trial(domain_name):
     from corehq.apps.accounting.models import Subscription
     subscription = Subscription.get_active_subscription_by_domain(domain_name)
-    return subscription.is_trial
+    return subscription and subscription.is_trial
 
 
 def is_active_subscription(date_start, date_end, today=None):
@@ -239,30 +239,6 @@ def is_accounting_admin(user):
         return user.prbac_role.has_privilege(accounting_privilege)
     except (AttributeError, UserRole.DoesNotExist):
         return False
-
-
-def get_active_reminders_by_domain_name(domain_name):
-    from corehq.apps.reminders.models import (
-        CaseReminderHandler,
-        REMINDER_TYPE_DEFAULT,
-        REMINDER_TYPE_KEYWORD_INITIATED,
-    )
-    db = CaseReminderHandler.get_db()
-    key = [domain_name]
-    reminder_rules = db.view(
-        'reminders/handlers_by_reminder_type',
-        startkey=key,
-        endkey=(key + [{}]),
-        reduce=False
-    ).all()
-    return [
-        CaseReminderHandler.wrap(reminder_doc)
-        for reminder_doc in iter_docs(db, [r['id'] for r in reminder_rules])
-        if (
-            reminder_doc.get('active', True)
-            and reminder_doc.get('reminder_type', REMINDER_TYPE_DEFAULT) != REMINDER_TYPE_KEYWORD_INITIATED
-        )
-    ]
 
 
 def make_anchor_tag(href, name, attrs=None):

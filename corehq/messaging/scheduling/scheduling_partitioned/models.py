@@ -176,6 +176,23 @@ class ScheduleInstance(PartitionedModel):
 
         return obj
 
+    @staticmethod
+    def expand_group(group):
+        if not isinstance(group, Group):
+            raise TypeError("Expected Group")
+
+        for user in group.get_users(is_active=True, only_commcare=False):
+            yield user
+
+    @staticmethod
+    def expand_location_ids(domain, location_ids):
+        user_ids = set()
+        for location_id in location_ids:
+            for user in get_all_users_by_location(domain, location_id):
+                if user.is_active and user.get_id not in user_ids:
+                    user_ids.add(user.get_id)
+                    yield user
+
     def _expand_recipient(self, recipient):
         if recipient is None:
             return
@@ -186,8 +203,7 @@ class ScheduleInstance(PartitionedModel):
             for case in case_group.get_cases():
                 yield case
         elif isinstance(recipient, Group):
-            group = recipient
-            for user in group.get_users(is_active=True, only_commcare=False):
+            for user in self.expand_group(recipient):
                 yield user
         elif isinstance(recipient, SQLLocation):
             location = recipient
@@ -211,12 +227,8 @@ class ScheduleInstance(PartitionedModel):
             else:
                 location_ids = [location.location_id]
 
-            user_ids = set()
-            for location_id in location_ids:
-                for user in get_all_users_by_location(self.domain, location_id):
-                    if user.is_active and user.get_id not in user_ids:
-                        user_ids.add(user.get_id)
-                        yield user
+            for user in self.expand_location_ids(self.domain, location_ids):
+                yield user
         else:
             raise UnknownRecipientType(recipient.__class__.__name__)
 
@@ -486,12 +498,20 @@ class AlertScheduleInstance(AbstractAlertScheduleInstance):
     class Meta(AbstractAlertScheduleInstance.Meta):
         db_table = 'scheduling_alertscheduleinstance'
 
+        unique_together = (
+            ('alert_schedule_id', 'recipient_type', 'recipient_id'),
+        )
+
 
 class TimedScheduleInstance(AbstractTimedScheduleInstance):
     partition_attr = 'schedule_instance_id'
 
     class Meta(AbstractTimedScheduleInstance.Meta):
         db_table = 'scheduling_timedscheduleinstance'
+
+        unique_together = (
+            ('timed_schedule_id', 'recipient_type', 'recipient_id'),
+        )
 
 
 class CaseScheduleInstanceMixin(object):

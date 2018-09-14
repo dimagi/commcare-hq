@@ -1,7 +1,7 @@
 /*
     To use, include this file on a page that also includes hqwebapp/rollout_modal.html
 */
-hqDefine("hqwebapp/js/rollout_modal", function() {
+hqDefine("hqwebapp/js/rollout_modal", function () {
     var _trackSoftRollout = hqImport('analytix/js/google').trackCategory("Soft Rollout");
 
     function snooze(slug) {
@@ -14,7 +14,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
         return "snooze_" + slug;
     }
 
-    $(function() {
+    $(function () {
         var alert_user = hqImport("hqwebapp/js/alert_user").alert_user,
             $modal = $("#rollout-modal"),
             slug = $modal.data("slug");
@@ -29,16 +29,16 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
         }
 
         // User clicks to turn on flag
-        $modal.on('click', '.flag-enable', function() {
+        $modal.on('click', '.flag-enable', function () {
             $.post({
                 url: hqImport("hqwebapp/js/initial_page_data").reverse("toggle_" + slug),
                 data: {
                     on_or_off: "on",
                 },
-                success: function() {
+                success: function () {
                     window.location.reload(true);
                 },
-                error: function() {
+                error: function () {
                     $modal.modal('hide');
                     alert_user(gettext('We could not turn on the new feature. You will have the opportunity ' +
                                        'to turn it on the next time you visit this page.'), 'danger');
@@ -49,12 +49,12 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
         });
 
         // User clicks to snooze
-        $modal.on('click', '.flag-snooze', function() {
+        $modal.on('click', '.flag-snooze', function () {
             $modal.modal('hide');
             snooze(slug);
         });
 
-        $("#rollout-revert").click(function() {
+        $("#rollout-revert").click(function () {
             var slug = $(this).data("slug"),
                 redirect = $(this).data("redirect");
             $.post({
@@ -62,7 +62,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
                 data: {
                     on_or_off: "off",
                 },
-                success: function(data) {
+                success: function (data) {
                     snooze(slug);
                     if (redirect) {
                         window.location = redirect;
@@ -70,7 +70,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
                         window.location.reload(true);
                     }
                 },
-                error: function() {
+                error: function () {
                     alert_user(gettext('We could not turn off the new feature. Please try again later.'), 'danger');
                 },
             });

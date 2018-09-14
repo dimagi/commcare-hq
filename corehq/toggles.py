@@ -483,7 +483,8 @@ DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
     'Offer hosting and sharing data files for downloading from a secure dropzone',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -556,6 +557,13 @@ EXPORT_NO_SORT = StaticToggle(
     'Do not sort exports',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+DATA_FIND_BY_ID = StaticToggle(
+    'data_find_by_id',
+    "Enable the Data > Find Data by ID page",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -1084,20 +1092,6 @@ COPY_CONDITIONAL_ALERTS = StaticToggle(
     [NAMESPACE_USER],
 )
 
-ABT_REMINDER_RECIPIENT = StaticToggle(
-    'abt_reminder_recipient',
-    "ABT: Custom reminder recipients",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-AUTO_CASE_UPDATE_ENHANCEMENTS = StaticToggle(
-    'auto_case_updates',
-    'Enable enhancements to the Auto Case Update feature.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
@@ -1301,6 +1295,7 @@ ICDS = StaticToggle(
     relevant_environments={'icds', 'icds-new', 'softlayer'},
     always_enabled={
         "icds-dashboard-qa",
+        "reach-test",
         "icds-sql",
         "icds-test",
         "icds-cas",
@@ -1595,6 +1590,14 @@ AGGREGATE_UCRS = StaticToggle(
 )
 
 
+SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
+    'show_raw_data_sources_in_report_builder',
+    'Allow building report builder reports directly from raw UCR Data Sources',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
 RELATED_LOCATIONS = StaticToggle(
     'related_locations',
     'REACH: Enable experimental location many-to-many mappings',
@@ -1602,6 +1605,14 @@ RELATED_LOCATIONS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     notification_emails=['jemord'],
     help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
+)
+
+ICDS_DISHA_API = StaticToggle(
+    'icds_disha_access',
+    'ICDS: Access DISHA API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'icds-new', 'softlayer'},
 )
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
@@ -1620,4 +1631,11 @@ FILTER_ON_GROUPS_AND_LOCATIONS = StaticToggle(
                 '(for example): "Groups or Users: [Salima District] AND [User group Healthworkers]" '
                 'returns 40 healthworkers who are also in salima. Changes this logic to all reports that '
                 'have group and location filters, such as the Submissions by Form report.',
+)
+
+SEARCH_DEACTIVATED_USERS = StaticToggle(
+    'search_deactivated_users',
+    'Allow for searching by deactivating users in form and case reports and exports',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
 )
