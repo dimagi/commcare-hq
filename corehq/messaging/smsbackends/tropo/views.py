@@ -12,7 +12,6 @@ from datetime import datetime
 from corehq.apps.sms.util import strip_plus
 
 
-@csrf_exempt
 def sms_in(request, backend_id=None):
     """
     Handles tropo messaging requests
@@ -49,7 +48,6 @@ def sms_in(request, backend_id=None):
         return HttpResponseBadRequest("Bad Request")
 
 
-@csrf_exempt
 def ivr_in(request):
     """
     Handles tropo call requests
