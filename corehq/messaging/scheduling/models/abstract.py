@@ -422,7 +422,7 @@ class Content(models.Model):
 
         return result
 
-    def send(self, recipient, logged_event):
+    def send(self, recipient, logged_event, phone_entry=None):
         """
         :param recipient: a CommCareUser, WebUser, or CommCareCase/SQL
         representing the contact who should receive the content.
