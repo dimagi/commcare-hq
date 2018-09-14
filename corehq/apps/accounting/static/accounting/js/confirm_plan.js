@@ -9,14 +9,14 @@ hqDefine('accounting/js/confirm_plan', [
     _,
     initialPageData
 ) {
-    var PROJECT_ENDED = "My project ended";
-    var FUNDING_ENDED = "The funding for my project ended";
-    var CONTINUE_COMMCARE = "I don’t need the features of my paid plan anymore but I plan on continuing using CommCare";
-    var SWITCH_TOOLS = "We are switching to a different mobile data collection tool";
-    var BUDGET_REASONS = "For budget reasons";
-    var LIMITED_FEATURES = "I need more limited features";
-    var MORE_FEATURES = "I need additional/custom features";
-    var OTHER = "Other";
+    var PROJECT_ENDED = gettext("My project ended");
+    var FUNDING_ENDED = gettext("The funding for my project ended");
+    var CONTINUE_COMMCARE = gettext("I don’t need the features of my paid plan anymore but I plan on continuing using CommCare");
+    var SWITCH_TOOLS = gettext("We are switching to a different mobile data collection tool");
+    var BUDGET_REASONS = gettext("For budget reasons");
+    var LIMITED_FEATURES = gettext("I need more limited features");
+    var MORE_FEATURES = gettext("I need additional/custom features");
+    var OTHER = gettext("Other");
 
     var confirmPlanModel = function (isUpgrade, currentPlan, newPlan) {
         'use strict';
