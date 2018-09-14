@@ -1072,9 +1072,20 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
     @property
     def page_context(self):
+        mappings = SQLMobileBackendMapping.objects.filter(
+            is_global=False,
+            domain=self.domain,
+            backend_type=SQLMobileBackend.SMS,
+        )
+        extra_backend_mappings = {
+            mapping.prefix: mapping.backend.name
+            for mapping in mappings if mapping.prefix != '*'
+        }
+
         context = self.pagination_context
         context.update({
             'initiate_new_form': InitiateAddSMSBackendForm(is_superuser=self.request.couch_user.is_superuser),
+            'extra_backend_mappings': extra_backend_mappings,
         })
         return context
 

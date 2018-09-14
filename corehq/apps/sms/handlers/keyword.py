@@ -676,6 +676,8 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             else:
                 recipients = [contact]
 
+            recipient_is_sender = survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER
+
             if survey_keyword_action.action == KeywordAction.ACTION_SMS:
                 content = SMSContent(message={'*': survey_keyword_action.message_content})
                 content.set_context(case=case)
@@ -684,7 +686,6 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                     form_unique_id=survey_keyword_action.form_unique_id,
                     expire_after=SQLXFormsSession.MAX_SESSION_LENGTH,
                 )
-                recipient_is_sender = survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER
                 content.set_context(
                     case=case,
                     critical_section_already_acquired=recipient_is_sender,
@@ -693,7 +694,8 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                 raise ValueError("Unexpected action %s" % survey_keyword_action.action)
 
             for recipient in recipients:
-                content.send(recipient, logged_event)
+                phone_entry = verified_number if recipient_is_sender else None
+                content.send(recipient, logged_event, phone_entry=phone_entry)
 
         elif survey_keyword_action.action == KeywordAction.ACTION_STRUCTURED_SMS:
             res = handle_structured_sms(survey_keyword, survey_keyword_action,

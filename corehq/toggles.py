@@ -1092,20 +1092,6 @@ COPY_CONDITIONAL_ALERTS = StaticToggle(
     [NAMESPACE_USER],
 )
 
-ABT_REMINDER_RECIPIENT = StaticToggle(
-    'abt_reminder_recipient',
-    "ABT: Custom reminder recipients",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-AUTO_CASE_UPDATE_ENHANCEMENTS = StaticToggle(
-    'auto_case_updates',
-    'Enable enhancements to the Auto Case Update feature.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',

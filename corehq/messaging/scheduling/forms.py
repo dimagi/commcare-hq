@@ -38,6 +38,7 @@ from corehq.apps.reminders.util import get_form_list
 from corehq.apps.sms.util import get_or_create_translation_doc
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.messaging.scheduling.async_handlers import get_combined_id
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_START,
@@ -444,6 +445,9 @@ class ContentForm(Form):
         elif isinstance(content, SMSSurveyContent):
             result['form_unique_id'] = content.form_unique_id
             result['survey_expiration_in_hours'] = content.expire_after // 60
+            if (content.expire_after % 60) != 0:
+                # The old framework let you enter minutes. If it's not an even number of hours, round up.
+                result['survey_expiration_in_hours'] += 1
 
             if content.reminder_intervals:
                 result['survey_reminder_intervals_enabled'] = 'Y'
@@ -3271,10 +3275,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if self.cleaned_data.get('reset_case_property_enabled') == self.NO:
             return None
 
-        return validate_case_property_name(
+        value = validate_case_property_name(
             self.cleaned_data.get('reset_case_property_name'),
             allow_parent_case_references=False,
         )
+
+        if value in set([field.name for field in CommCareCaseSQL._meta.fields]):
+            raise ValidationError(_("Only dynamic case properties are allowed"))
+
+        return value
 
     def clean_stop_date_case_property_name(self):
         if self.cleaned_data.get('stop_date_case_property_enabled') != self.YES:

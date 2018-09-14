@@ -15,7 +15,6 @@ from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
 
-from corehq.toggles import AUTO_CASE_UPDATE_ENHANCEMENTS
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
 from memoized import memoized
 from django.db import transaction
