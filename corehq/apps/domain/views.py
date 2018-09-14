@@ -1738,7 +1738,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                     ) % (software_plan_name, downgrade_date)
                 )
             else:
-                self.send_downgrade_email()
+                if not request.user.is_superuser:
+                    self.send_downgrade_email()
                 if self.current_subscription.next_subscription is not None:
                     # New subscription has been scheduled for the future
                     current_subscription = self.current_subscription.plan_version.plan.edition
