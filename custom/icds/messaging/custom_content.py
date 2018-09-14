@@ -153,7 +153,7 @@ def get_language_code_for_user(user):
 
 
 def render_content_for_user(user, template, context):
-    language_code = get_language_code_for_user(user)
+    language_code = user.memoized_usercase.get_language_code() or DEFAULT_LANGUAGE
     return render_message(language_code, template, context)
 
 
@@ -254,7 +254,6 @@ def validate_user_location_and_indicator(user, indicator_class):
 
 def run_indicator_for_user(user, indicator_class, language_code=None):
     validate_user_location_and_indicator(user, indicator_class)
-    language_code = language_code or get_language_code_for_user(user)
     indicator = indicator_class(user.domain, user)
     return indicator.get_messages(language_code=language_code)
 
@@ -265,7 +264,7 @@ def run_indicator_for_usercase(usercase, indicator_class):
 
     user = get_user_from_usercase(usercase)
     if user and user.location:
-        return run_indicator_for_user(user, indicator_class)
+        return run_indicator_for_user(user, indicator_class, language_code=usercase.get_language_code())
 
     return []
 
