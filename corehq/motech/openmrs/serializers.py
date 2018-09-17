@@ -8,12 +8,16 @@ import re
 import six
 from dateutil import parser as dateutil_parser
 
+from corehq.motech.const import COMMCARE_DATA_TYPE_DATE, COMMCARE_DATA_TYPE_TEXT
+from corehq.motech.openmrs.const import OPENMRS_DATA_TYPE_DATETIME, OPENMRS_DATA_TYPE_BOOLEAN
+from corehq.motech.serializers import serializers
 
-def to_timestamp(value):
+
+def to_omrs_datetime(value):
     """
-    OpenMRS accepts strings in the same format for both dates and datetimes.
+    Converts CommCare dates and datetimes to OpenMRS datetimes.
 
-    >>> to_timestamp('2017-06-27') == '2017-06-27T00:00:00.000+0000'
+    >>> to_omrs_datetime('2017-06-27') == '2017-06-27T00:00:00.000+0000'
     True
 
     """
@@ -25,6 +29,23 @@ def to_timestamp(value):
         micros = value.strftime('%f')[:3]  # Only 3 digits for OpenMRS
         tz = value.strftime('%z') or '+0000'  # If we don't know, lie
         return value.strftime('%Y-%m-%dT%H:%M:%S.{f}{z}'.format(f=micros, z=tz))
+
+
+def omrs_datetime_to_date(value):
+    """
+    Converts an OpenMRS datetime to a CommCare date
+
+    >>> omrs_datetime_to_date('2017-06-27T00:00:00.000+0000') == '2017-06-27'
+    True
+
+    """
+    if value and 'T' in value:
+        return value.split('T')[0]
+    return value
+
+
+def omrs_boolean_to_text(value):
+    return 'true' if value else 'false'
 
 
 def to_name(value):
@@ -42,3 +63,11 @@ def to_name(value):
 
     nonalpha = re.compile(r'[\W\d_]', re.UNICODE)
     return nonalpha.sub(usually_hyphen, value)
+
+
+serializers.update({
+    # (from_data_type, to_data_type): function
+    (None, OPENMRS_DATA_TYPE_DATETIME): to_omrs_datetime,
+    (OPENMRS_DATA_TYPE_DATETIME, COMMCARE_DATA_TYPE_DATE): omrs_datetime_to_date,
+    (OPENMRS_DATA_TYPE_BOOLEAN, COMMCARE_DATA_TYPE_TEXT): omrs_boolean_to_text,
+})
