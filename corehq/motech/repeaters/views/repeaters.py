@@ -218,6 +218,7 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater = super(AddOpenmrsRepeaterView, self).set_repeater_attr(repeater, cleaned_data)
         repeater.location_id = self.add_repeater_form.cleaned_data['location_id']
+        repeater.atom_feed_enabled = self.add_repeater_form.cleaned_data['atom_feed_enabled']
         return repeater
 
 
