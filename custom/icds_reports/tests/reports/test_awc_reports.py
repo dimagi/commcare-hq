@@ -12,8 +12,6 @@ from mock import mock
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
     get_awc_report_beneficiary, get_awc_report_pregnant, get_pregnant_details
-from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text, \
-    get_awc_report_beneficiary
 from custom.icds_reports.messages import new_born_with_low_weight_help_text, wasting_help_text, \
     exclusive_breastfeeding_help_text, early_initiation_breastfeeding_help_text, \
     children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text, \
