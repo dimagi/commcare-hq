@@ -40,10 +40,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         if 'age_tranche' not in config:
-            if icds_feature_flag:
-                queryset = queryset.exclude(age_tranche=72)
-            else:
-                queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
+            queryset = queryset.exclude(age_tranche=72)
         return queryset
 
     data_for_map = defaultdict(lambda: {

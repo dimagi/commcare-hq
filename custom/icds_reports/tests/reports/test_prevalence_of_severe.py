@@ -58,9 +58,9 @@ class TestPrevalenceOfSevere(TestCase):
                     "severe": 0,
                     "moderate": 4,
                     "normal": 3,
-                    'total_height_eligible': 449,
+                    'total_height_eligible': 454,
                     "total_measured": 7,
-                    "total_weighed": 302,
+                    "total_weighed": 317,
                     'original_name': ["st1"],
                     "fillKey": "7%-100%"
                 },
@@ -68,9 +68,9 @@ class TestPrevalenceOfSevere(TestCase):
                     "severe": 0,
                     "moderate": 5,
                     "normal": 16,
-                    'total_height_eligible': 490,
+                    'total_height_eligible': 497,
                     "total_measured": 20,
-                    "total_weighed": 366,
+                    "total_weighed": 379,
                     'original_name': ["st2"],
                     "fillKey": "7%-100%"
                 }
@@ -105,7 +105,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], "1.35")
+        self.assertEqual(data['rightLegend']['average'], "1.29")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_severe_data_map(
@@ -119,10 +119,10 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '668'},
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '696'},
                 {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
                  'value': '27'},
-                {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '271'},
+                {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '255'},
                 {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
                 {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '33.33%'},
                 {'indicator': '% Normal (0 - 5 years):', 'value': '70.37%'}
@@ -190,8 +190,8 @@ class TestPrevalenceOfSevere(TestCase):
                     'normal': 3,
                     'original_name': ['b1', 'b2'],
                     'severe': 0,
-                    'total_height_eligible': 449,
-                    'total_weighed': 302,
+                    'total_height_eligible': 454,
+                    'total_weighed': 317,
                     'fillKey': '7%-100%'
                 }
             }
@@ -208,7 +208,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='block',
         )
-        self.assertEqual(data['rightLegend']['average'], "1.33")
+        self.assertEqual(data['rightLegend']['average'], "1.26")
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_severe_data_chart(

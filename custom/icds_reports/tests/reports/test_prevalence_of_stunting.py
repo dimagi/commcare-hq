@@ -59,7 +59,7 @@ class TestPrevalenceOfStunting(TestCase):
                     "moderate": 3,
                     "normal": 2,
                     "total_measured": 7,
-                    "total": 449,
+                    "total": 454,
                     'original_name': ["st1"],
                     "fillKey": "38%-100%"
                 },
@@ -68,7 +68,7 @@ class TestPrevalenceOfStunting(TestCase):
                     "moderate": 5,
                     "normal": 11,
                     "total_measured": 25,
-                    "total": 490,
+                    "total": 497,
                     'original_name': ["st2"],
                     "fillKey": "38%-100%"
                 }
@@ -116,10 +116,10 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '939'},
+                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '951'},
                 {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
                  'value': '32'},
-                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '907'},
+                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '919'},
                 {'indicator': '% children (0 - 5 years) with severely stunted growth:', 'value': '34.38%'},
                 {'indicator': '% children (0 - 5 years) with moderate stunted growth:', 'value': '25.00%'},
                 {'indicator': '% children (0 - 5 years) with normal stunted growth:', 'value': '40.62%'}
@@ -187,7 +187,7 @@ class TestPrevalenceOfStunting(TestCase):
                     'normal': 2,
                     'original_name': ['b1', 'b2'],
                     'severe': 2,
-                    'total': 449,
+                    'total': 454,
                     'fillKey': '38%-100%'
                 }
             }
