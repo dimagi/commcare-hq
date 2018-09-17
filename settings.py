@@ -1273,7 +1273,7 @@ LOGGING = {
         'kafka': {
             'handlers': ['file'],
             'level': 'ERROR',
-            'propogate': False,
+            'propagate': False,
         },
     }
 }
