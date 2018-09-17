@@ -350,6 +350,68 @@ def get_status(value, second_part='', normal_value='', exportable=False, data_en
     return status if not exportable else status['value']
 
 
+def get_anamic_status(value):
+    if value['anemic_severe']:
+        return 'Y'
+    elif value['anemic_moderate']:
+        return 'Y'
+    elif value['anemic_normal']:
+        return 'N'
+    elif value['anemic_unknown']:
+        return 'Unknown'
+    else:
+        return 'Not entered'
+
+
+def get_symptoms(value):
+    if value['bleeding']:
+        return 'Bleeding'
+    elif value['swelling']:
+        return 'Face, hand or genital swelling'
+    elif value['blurred_vision']:
+        return 'Blurred vision / headache'
+    elif value['convulsions']:
+        return 'Convulsions / unconsciousness'
+    elif value['rupture']:
+        return 'Water ruptured without labor pains'
+    else:
+        return 'None'
+
+
+def get_counseling(value):
+    counseling = []
+    if value['counsel_immediate_bf']:
+        counseling.append('Immediate breast feeding')
+    if value['counsel_bp_vid']:
+        counseling.append('BP vid')
+    if value['counsel_preparation']:
+        counseling.append('Preparation')
+    if value['counsel_fp_vid']:
+        counseling.append('Family planning vid')
+    if value['counsel_immediate_conception']:
+        counseling.append('Immediate conception')
+    if value['counsel_accessible_postpartum_fp']:
+        counseling.append('Accessible postpartum family planning')
+    if value['counsel_fp_methods']:
+        counseling.append('Family planning methods')
+    if counseling:
+        return ', '.join(counseling)
+    else:
+        return '--'
+
+
+def get_tt_dates(value):
+    tt_dates = []
+    if value['tt_1']:
+        tt_dates.append(value['tt_1'])
+    if value['tt_2']:
+        tt_dates.append(value['tt_2'])
+    if tt_dates:
+        return '; '.join(tt_dates)
+    else:
+        return '--'
+
+
 def current_age(dob, selected_date):
     age = relativedelta(selected_date, dob)
     age_format = ""

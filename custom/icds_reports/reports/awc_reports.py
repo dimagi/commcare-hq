@@ -17,12 +17,13 @@ from custom.icds_reports.messages import wasting_help_text, stunting_help_text, 
     percent_children_enrolled_help_text
 from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
+from custom.icds_reports.models.views import CcsRecordMonthlyView
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
     wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
     current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
-    chosen_filters_to_labels, default_age_interval
+    chosen_filters_to_labels, default_age_interval, get_anamic_status, get_symptoms, get_counseling, get_tt_dates
 from custom.icds_reports.const import MapColors
 import six
 
@@ -1083,3 +1084,148 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
                 'y': float(recorded_weight) if row.recorded_height else 0
             })
     return beneficiary
+
+
+@quickcache([
+    'order', 'reversed_order', 'awc_id'
+], timeout=30 * 60)
+def get_awc_report_pregnant(order, reversed_order, awc_id):
+    ten_months_ago = datetime.utcnow() - relativedelta(months=10, day=1)
+    data = CcsRecordMonthlyView.objects.filter(
+        awc_id=awc_id,
+        pregnant=1,
+        month__gte=ten_months_ago,
+    ).order_by('case_id', '-age_in_months').distinct('case_id').values(
+        'case_id', 'person_name', 'age_in_months', 'opened_on', 'edd', 'trimester', 'anemic_severe',
+        'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant',
+        'num_rations_distributed', 'last_date_thr'
+    )
+    data_count = data.count()
+    config = {
+        'data': [],
+    }
+
+    def base_data(row_data):
+        return dict(
+            case_id=row_data['case_id'],
+            person_name=row_data['person_name'],
+            age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+            opened_on=row_data['opened_on'],
+            edd=row_data['edd'],
+            trimester=row_data['trimester'],
+            anemic=get_anamic_status(row_data),
+            num_anc_complete=row_data['num_anc_complete'],
+            beneficiary='Yes' if row_data['pregnant'] else 'No',
+            number_of_thrs_given=row_data['num_rations_distributed'],
+            last_date_thr=row_data['last_date_thr'],
+        )
+
+    for row in data:
+        config['data'].append(base_data(row))
+
+    config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
+    config["recordsTotal"] = data_count
+    config["recordsFiltered"] = data_count
+
+    return config
+
+
+@quickcache(['case_id', 'awc_id'], timeout=30 * 60)
+def get_pregnant_details(case_id, awc_id):
+    ten_months_ago = datetime.utcnow() - relativedelta(months=10, day=1)
+    data = CcsRecordMonthlyView.objects.filter(
+        case_id=case_id,
+        awc_id=awc_id,
+        month__gte=ten_months_ago,
+    ).order_by('home_visit_date', '-age_in_months').distinct('home_visit_date').values(
+        'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on', 'preg_order',
+        'home_visit_date', 'bp_sys', 'bp_dia', 'anc_weight', 'anc_hemoglobin', 'anemic_severe', 'anemic_moderate',
+        'anemic_normal', 'anemic_unknown', 'bleeding', 'swelling', 'blurred_vision', 'convulsions', 'rupture',
+        'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation', 'counsel_fp_vid',
+        'counsel_immediate_conception', 'counsel_accessible_postpartum_fp', 'counsel_fp_methods', 'using_ifa',
+        'ifa_consumed_last_seven_days', 'tt_1', 'tt_2'
+    )
+
+    config = {
+        'data': [
+            [],
+            [],
+            [],
+        ],
+    }
+    current_trimester = 1
+    current_record = 0
+    for row_data in data:
+        if row_data['trimester'] >= current_trimester:
+            config['data'][row_data['trimester'] - 1].append(dict(
+                case_id=row_data['case_id'],
+                trimester=row_data['trimester'],
+                person_name=row_data['person_name'],
+                age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+                mobile_number=row_data['mobile_number'],
+                edd=row_data['edd'],
+                opened_on=row_data['opened_on'],
+                preg_order=row_data['preg_order'],
+                home_visit_date=row_data['home_visit_date'],
+                bp='{} / {}'.format(
+                    row_data['bp_sys'] if row_data['bp_sys'] else '--',
+                    row_data['bp_dia'] if row_data['bp_dia'] else '--',
+                ),
+                anc_weight=row_data['anc_weight'] if row_data['anc_weight'] else '--',
+                anc_hemoglobin=row_data['anc_hemoglobin'] if row_data['anc_hemoglobin'] else '--',
+                anc_abnormalities=None,  # todo change to num_anc_complete when available in Model
+                anemic=get_anamic_status(row_data),
+                symptoms=get_symptoms(row_data),
+                counseling=get_counseling(row_data),
+                using_ifa='Y' if row_data['using_ifa'] else 'N',
+                ifa_consumed_last_seven_days='Y' if row_data['ifa_consumed_last_seven_days'] else 'N',
+                tt_taken='Y' if row_data['tt_1'] or row_data['tt_2'] else 'N',
+                tt_date=get_tt_dates(row_data),
+            ))
+            if current_trimester == 1 and row_data['trimester'] == 1 and current_record == 0:
+                current_record += 1
+            else:
+                current_trimester = row_data['trimester'] + 1
+    return config
+
+
+@quickcache([
+    'order', 'reversed_order', 'awc_id'
+], timeout=30 * 60)
+def get_awc_report_lactating(order, reversed_order, awc_id):
+    six_months_ago = datetime.utcnow() - relativedelta(months=6, day=1)
+    data = CcsRecordMonthlyView.objects.filter(
+        awc_id=awc_id,
+        lactating=1,
+        month__gte=six_months_ago,
+    ).order_by('case_id', '-age_in_months').distinct('case_id').values(
+        'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery_in_month',
+        'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed'
+    )
+    data_count = data.count()
+    config = {
+        'data': [],
+    }
+
+    def base_data(row_data):
+        return dict(
+            case_id=row_data['case_id'],
+            person_name=row_data['person_name'],
+            age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+            add=row_data['add'],
+            delivery_nature=row_data['delivery_nature'],
+            institutional_delivery_in_month='Y' if row_data['institutional_delivery_in_month'] else 'N',
+            num_pnc_visits=row_data['num_pnc_visits'],
+            breastfed_at_birth='Y' if row_data['breastfed_at_birth'] else 'N',
+            is_ebf='Y' if row_data['is_ebf'] else 'N',
+            num_rations_distributed=row_data['num_rations_distributed'],
+        )
+
+    for row in data:
+        config['data'].append(base_data(row))
+
+    config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
+    config["recordsTotal"] = data_count
+    config["recordsFiltered"] = data_count
+
+    return config
