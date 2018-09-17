@@ -211,6 +211,13 @@ class AttachmentMixin(SaveStateMixin):
                 write_attachments()
                 ...
         """
+        if all(isinstance(a, BlobMeta) for a in self.attachments_list):
+            # do nothing if all attachments have already been written
+            @contextmanager
+            def noop_context():
+                yield lambda: None
+
+            return noop_context()
 
         def write_attachments(blob_db):
             self._attachments_list = [
@@ -220,9 +227,8 @@ class AttachmentMixin(SaveStateMixin):
 
         @contextmanager
         def atomic_attachments():
-            unsaved_attachments = self.attachments_list
-            assert all(isinstance(a, Attachment) for a in unsaved_attachments), \
-                unsaved_attachments
+            unsaved = self.attachments_list
+            assert all(isinstance(a, Attachment) for a in unsaved), unsaved
             with AtomicBlobs(get_blob_db()) as blob_db:
                 if self.deprecated_form_id:
                     # reassign existing attachments to deprecated form
@@ -234,7 +240,7 @@ class AttachmentMixin(SaveStateMixin):
                     if self.deprecated_form_id:
                         # undo reassignment
                         blob_db.metadb.reparent(self.deprecated_form_id, self.form_id)
-                    self._attachments_list = unsaved_attachments
+                    self._attachments_list = unsaved
                     six.reraise(*exc)
 
         return atomic_attachments()
