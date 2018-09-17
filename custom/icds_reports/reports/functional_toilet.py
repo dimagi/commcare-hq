@@ -12,6 +12,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.messages import awcs_reported_functional_toilet_help_text
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
     get_child_locations
@@ -218,10 +219,7 @@ def get_functional_toilet_sector_data(domain, config, loc_level, location_id, sh
 
     return {
         "tooltips_data": dict(tooltips_data),
-        "info": _((
-            "Of the AWCs that submitted an Infrastructure Details form, the percentage of AWCs "
-            "that reported having a functional toilet"
-        )),
+        "info": awcs_reported_functional_toilet_help_text(),
         "chart_data": [
             {
                 "values": chart_data['blue'],

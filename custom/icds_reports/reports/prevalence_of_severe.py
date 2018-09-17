@@ -123,14 +123,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         "rightLegend": {
             "average": "%.2f" % ((sum(values_to_calculate_average)) /
                                  float(len(values_to_calculate_average) or 1)),
-            "info": _((
-                "Of the children enrolled for Anganwadi services, whose weight and height was measured, "
-                "the percentage of children between {} who were moderately/severely wasted in the current month. "
-                "<br/><br/>"
-                "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition "
-                "usually as a consequence of insufficient food intake or a high incidence of infectious diseases."
-                .format(age_label)
-            )),
+            "info": wasting_help_text(age_label),
             "extended_info": [
                 {
                     'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),

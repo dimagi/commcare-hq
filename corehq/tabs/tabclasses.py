@@ -11,8 +11,7 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
-from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
-from corehq.apps.analytics.ab_tests import appcues_template_app_test
+from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_trial, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
@@ -641,6 +640,14 @@ class ProjectDataTab(UITab):
                         'subpages': []
                     })
 
+            if toggles.DATA_FIND_BY_ID.enabled_for_request(self._request):
+                if self.can_view_form_exports or self.can_view_case_exports:
+                    export_data_views.append({
+                        'title': _('Find Data by ID'),
+                        'url': reverse('data_find_by_id', args=[self.domain]),
+                        'icon': 'fa fa-search',
+                    })
+
             if self.should_see_daily_saved_export_list_view:
                 export_data_views.append({
                     "title": _(DailySavedExportListView.page_title),
@@ -782,6 +789,12 @@ class ProjectDataTab(UITab):
                 _(DownloadNewSmsExportView.page_title),
                 url=reverse(DownloadNewSmsExportView.urlname, args=(self.domain,))
             ))
+        if toggles.DATA_FIND_BY_ID.enabled_for_request(self._request):
+            if self.can_view_form_exports or self.can_view_case_exports:
+                items.append(dropdown_dict(
+                    _('Find Data by ID (Beta)'),
+                    url=reverse('data_find_by_id', args=[self.domain])
+                ))
 
         if items:
             items += [dropdown_dict(None, is_divider=True)]
@@ -819,13 +832,14 @@ class ApplicationsTab(UITab):
 
         submenu_context.append(dropdown_dict(_('My Applications'),
                                is_header=True))
-        in_appcues_test = appcues_template_app_test(self._request)
         for app in apps:
             url = reverse('view_app', args=[self.domain, app.get_id]) if self.couch_user.can_edit_apps() \
                 else reverse('release_manager', args=[self.domain, app.get_id])
             app_title = self.make_app_title(app.name, app.doc_type)
-            if in_appcues_test and 'created_from_template' in app and app['created_from_template'] == 'appcues':
-                url = url + '?appcues=1'
+            if 'created_from_template' in app and app['created_from_template'] == 'appcues':
+                if domain_is_on_trial(self.domain):
+                    # If trial is over, domain may have lost web apps access, don't do appcues intro
+                    url = url + '?appcues=1'
 
             submenu_context.append(dropdown_dict(
                 app_title,

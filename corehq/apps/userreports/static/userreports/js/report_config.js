@@ -121,8 +121,12 @@ hqDefine('userreports/js/report_config', function () {
                 self.reportPreviewUrl = config["reportPreviewUrl"];  // Fetch the preview data asynchronously.
                 self.previewDatasourceId = config["previewDatasourceId"];
 
-                self.reportTypeListLabel = (config['sourceType'] === "case") ? "Case List" : "Form List";
-                self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
+                self.reportTypeListLabel = (
+                    (config['sourceType'] === "case") ? "Case List" :
+                        (config['sourceType'] === "form") ? "Form List" : "List");
+                self.reportTypeAggLabel = (
+                    (config['sourceType'] === "case") ? "Case Summary" :
+                        (config['sourceType'] === "form") ? "Form Summary" : "Summary");
                 self.reportType = ko.observable(config['existingReportType'] || constants.REPORT_TYPE_LIST);
                 self.reportType.subscribe(function (newValue) {
                     _ga_track_config_change('Change Report Type', newValue);

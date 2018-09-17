@@ -3,7 +3,9 @@ from __future__ import unicode_literals
 from django.test import TestCase
 
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data
-from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
+from custom.icds_reports.messages import new_born_with_low_weight_help_text, underweight_children_help_text, \
+    early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
+    children_initiated_appropriate_complementary_feeding_help_text
 
 
 class TestMaternalChildData(TestCase):
@@ -24,10 +26,7 @@ class TestMaternalChildData(TestCase):
                 "all": 696,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Of the total children enrolled for Anganwadi services and weighed, "
-                             "the percentage of children between 0-5 years who were moderately/severely "
-                             "underweight in the current month. Children who are moderately or severely "
-                             "underweight have a higher risk of mortality. ",
+                "help_text": underweight_children_help_text(),
                 "percent": -14.901477832512326,
                 "value": 150,
                 "label": "Underweight (Weight-for-Age)"
@@ -53,7 +52,7 @@ class TestMaternalChildData(TestCase):
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": "Of the children enrolled for Anganwadi services, whose weight and height was "
-                             "measured, the percentage of children between 0 - 5 years enrolled who were "
+                             "measured, the percentage of children between 0 - 5 years who were "
                              "moderately/severely wasted in the current month. "
                              "<br/><br/>"
                              "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
@@ -110,7 +109,7 @@ class TestMaternalChildData(TestCase):
                 "all": 4,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": get_new_born_with_low_weight_help_text(html=False),
+                "help_text": new_born_with_low_weight_help_text(html=False),
                 "percent": "Data in the previous reporting period was 0",
                 "value": 2,
                 "label": "Newborns with Low Birth Weight"
@@ -133,10 +132,7 @@ class TestMaternalChildData(TestCase):
                 "all": 7,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Of the children born in the last month and enrolled for Anganwadi services, "
-                             "the percentage whose breastfeeding was initiated within 1 hour of delivery. "
-                             "Early initiation of breastfeeding ensure the newborn recieves the \"first milk\" "
-                             "rich in nutrients and encourages exclusive breastfeeding practice",
+                "help_text": early_initiation_breastfeeding_help_text(),
                 "percent": 128.57142857142856,
                 "value": 4,
                 "label": "Early Initiation of Breastfeeding"
@@ -159,11 +155,7 @@ class TestMaternalChildData(TestCase):
                 "all": 50,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Of the total children enrolled for Anganwadi services between the ages of "
-                             "0 to 6 months, the percentage that was exclusively fed with breast milk. "
-                             "An infant is exclusively breastfed if they receive only breastmilk with no "
-                             "additional food or liquids (even water), ensuring optimal nutrition and growth "
-                             "between 0 - 6 months",
+                "help_text": exclusive_breastfeeding_help_text(),
                 "percent": 149.84615384615384,
                 "value": 28,
                 "label": "Exclusive Breastfeeding"
@@ -186,10 +178,7 @@ class TestMaternalChildData(TestCase):
                 "all": 40,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Of the total children enrolled for Anganwadi services between the ages of "
-                             "6 to 8 months, the percentage that was given a timely introduction to solid, "
-                             "semi-solid or soft food. Timely intiation of complementary feeding in addition "
-                             "to breastmilk at 6 months of age is a key feeding practice to reduce malnutrition",
+                "help_text": children_initiated_appropriate_complementary_feeding_help_text(),
                 "percent": 147.27272727272728,
                 "value": 34,
                 "label": "Children initiated appropriate Complementary Feeding"

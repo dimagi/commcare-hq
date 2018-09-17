@@ -11,7 +11,10 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from custom.icds_reports.messages import wasting_help_text, stunting_help_text
+from custom.icds_reports.messages import wasting_help_text, stunting_help_text, \
+    early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
+    children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text, \
+    percent_children_enrolled_help_text
 from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
 from custom.icds_reports.models.views import CcsRecordMonthlyView
@@ -24,7 +27,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
 from custom.icds_reports.const import MapColors
 import six
 
-from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
+from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
 @quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -537,7 +540,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Newborns with Low Birth Weight'),
                     'help_text': _(
-                        get_new_born_with_low_weight_help_text(html=False)
+                        new_born_with_low_weight_help_text(html=False)
                     ),
                     'percent': percent_diff(
                         'low_birth',
@@ -558,12 +561,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 },
                 {
                     'label': _('Early Initiation of Breastfeeding'),
-                    'help_text': _(
-                        "Of the children born in the last month, the percentage whose "
-                        "breastfeeding was initiated within 1 hour of delivery. Early initiation "
-                        "of breastfeeding ensure the newborn recieves the \"first milk\" rich "
-                        "in nutrients and encourages exclusive breastfeeding practice"
-                    ),
+                    'help_text': early_initiation_breastfeeding_help_text(),
                     'percent': percent_diff(
                         'birth',
                         this_month_data,
@@ -585,12 +583,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             [
                 {
                     'label': _('Exclusive breastfeeding'),
-                    'help_text': _(
-                        "Of the total children between the ages of 0 to 6 months, the percentage that was "
-                        "exclusively fed with breast milk. An infant is exclusively breastfed if they receive "
-                        "only breastmilk with no additional food or liquids (even water), ensuring optimal "
-                        "nutrition and growth between 0 - 6 months"
-                    ),
+                    'help_text': exclusive_breastfeeding_help_text(),
                     'percent': percent_diff(
                         'month_ebf',
                         this_month_data,
@@ -610,12 +603,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 },
                 {
                     'label': _('Children initiated appropriate Complementary Feeding'),
-                    'help_text': _(
-                        "Of the total children between the ages of 6 to 8 months, the percentage that was "
-                        "given a timely introduction to solid, semi-solid or soft food. Timely intiation of "
-                        "complementary feeding in addition to breastmilk at 6 months of age is a key feeding "
-                        "practice to reduce malnutrition"
-                    ),
+                    'help_text': children_initiated_appropriate_complementary_feeding_help_text(),
                     'percent': percent_diff(
                         'month_cf',
                         this_month_data,
@@ -665,11 +653,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 },
                 {
                     'label': _('Institutional Deliveries'),
-                    'help_text': _((
-                        "Of the total number of women who gave birth in the last month, the percentage who "
-                        "delivered in a public or private medical facility. Delivery in medical instituitions "
-                        "is associated with a decrease in maternal mortality rate"
-                    )),
+                    'help_text': institutional_deliveries_help_text(),
                     'percent': percent_diff(
                         'institutional_delivery_in_month_sum',
                         this_month_institutional_delivery_data,
@@ -820,8 +804,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             [
                 {
                     'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
-                    'help_text': _('Of the total number of children between 0-6 years, the percentage '
-                                   'of children who are enrolled for Anganwadi Services'),
+                    'help_text': percent_children_enrolled_help_text(),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
                     'color': 'green' if percent_diff(
                         'child_health_all',

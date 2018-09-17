@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import percent_children_enrolled_help_text
 from custom.icds_reports.reports.enrolled_children import get_enrolled_children_data_map, \
     get_enrolled_children_data_chart, get_enrolled_children_sector_data
 from django.test import TestCase
@@ -23,8 +24,7 @@ class TestEnrolledChildren(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Of the total number of children between 0 - 6 years, the percentage of children "
-                            "who are enrolled for Anganwadi Services",
+                    "info": percent_children_enrolled_help_text(age_label="0 - 6 years"),
                     "average": 643.5,
                     "average_format": "number",
                     'extended_info': [
@@ -83,8 +83,7 @@ class TestEnrolledChildren(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Of the total number of children between 0 - 6 years, the percentage of children "
-                            "who are enrolled for Anganwadi Services",
+                    "info": percent_children_enrolled_help_text(age_label="0 - 6 years"),
                     "average": 309.0,
                     "average_format": "number",
                     'extended_info': [
@@ -188,8 +187,7 @@ class TestEnrolledChildren(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Of the total number of children between 0-6 years, the percentage of "
-                        "children who are enrolled for Anganwadi Services",
+                "info": percent_children_enrolled_help_text(),
                 "tooltips_data": {
                     "s2": {
                         'all': 214,

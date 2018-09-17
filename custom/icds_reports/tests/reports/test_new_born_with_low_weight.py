@@ -7,7 +7,7 @@ from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_wit
     get_newborn_with_low_birth_weight_chart, get_newborn_with_low_birth_weight_data
 from django.test import TestCase
 
-from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
+from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
@@ -82,7 +82,7 @@ class TestNewBornWithLowWeight(TestCase):
             loc_level='state'
         )
         expected = (
-            get_new_born_with_low_weight_help_text(html=True)
+            new_born_with_low_weight_help_text(html=True)
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -374,7 +374,7 @@ class TestNewBornWithLowWeight(TestCase):
         )
         self.assertEquals(
             data['info'],
-            get_new_born_with_low_weight_help_text(html=True)
+            new_born_with_low_weight_help_text(html=True)
         )
 
     def test_sector_data_tooltips_data(self):
