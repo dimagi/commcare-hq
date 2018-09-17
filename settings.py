@@ -1267,7 +1267,7 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'kafka.conn': {
+        'kafka': {
             'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,
