@@ -11,7 +11,6 @@ from mock import mock
 
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
-    icds_reports_pregnant_and_lactating_women_report, \
     get_awc_report_beneficiary, get_awc_report_pregnant, get_pregnant_details
 from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text, \
     get_awc_report_beneficiary
