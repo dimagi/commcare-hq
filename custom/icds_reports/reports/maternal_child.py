@@ -6,12 +6,14 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.messages import wasting_help_text, stunting_help_text
+from custom.icds_reports.messages import wasting_help_text, stunting_help_text, underweight_children_help_text, \
+    early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
+    children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text
 from custom.icds_reports.models import AggChildHealthMonthly, AggCcsRecordMonthly
 from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, exclude_records_by_age_for_column, \
     wasting_moderate_column, wasting_severe_column, stunting_moderate_column, stunting_severe_column, \
     hfa_recorded_in_month_column, wfh_recorded_in_month_column, chosen_filters_to_labels, default_age_interval
-from custom.icds_reports.utils.help_texts import get_new_born_with_low_weight_help_text
+from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
 @quickcache(['domain', 'config', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
@@ -118,12 +120,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
             [
                 {
                     'label': _('Underweight (Weight-for-Age)'),
-                    'help_text': _((
-                        "Of the total children enrolled for Anganwadi services and weighed, the percentage "
-                        "of children between 0-5 years who were moderately/severely underweight in the current "
-                        "month. Children who are moderately or severely underweight have a higher risk "
-                        "of mortality. "
-                    )),
+                    'help_text': underweight_children_help_text(),
                     'percent': percent_diff(
                         'underweight',
                         this_month_data,
@@ -189,7 +186,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 {
                     'label': _('Newborns with Low Birth Weight'),
                     'help_text': _((
-                        get_new_born_with_low_weight_help_text(html=False)
+                        new_born_with_low_weight_help_text(html=False)
                     )),
                     'percent': percent_diff(
                         'low_birth_weight',
@@ -213,12 +210,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
             [
                 {
                     'label': _('Early Initiation of Breastfeeding'),
-                    'help_text': _((
-                        "Of the children born in the last month and enrolled for Anganwadi services, "
-                        "the percentage whose breastfeeding was initiated within 1 hour of delivery. "
-                        "Early initiation of breastfeeding ensure the newborn recieves the \"first milk\" "
-                        "rich in nutrients and encourages exclusive breastfeeding practice")
-                    ),
+                    'help_text': early_initiation_breastfeeding_help_text(),
                     'percent': percent_diff(
                         'bf_birth',
                         this_month_data,
@@ -239,12 +231,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 },
                 {
                     'label': _('Exclusive Breastfeeding'),
-                    'help_text': _((
-                        "Of the total children enrolled for Anganwadi services between the ages of 0 to 6 months, "
-                        "the percentage that was exclusively fed with breast milk. An infant is exclusively "
-                        "breastfed if they receive only breastmilk with no additional food or liquids "
-                        "(even water), ensuring optimal nutrition and growth between 0 - 6 months")
-                    ),
+                    'help_text': exclusive_breastfeeding_help_text(),
                     'percent': percent_diff(
                         'ebf',
                         this_month_data,
@@ -267,12 +254,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
             [
                 {
                     'label': _('Children initiated appropriate Complementary Feeding'),
-                    'help_text': _((
-                        "Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, "
-                        "the percentage that was given a timely introduction to solid, semi-solid or soft food. "
-                        "Timely intiation of complementary feeding in addition to breastmilk at 6 months of age "
-                        "is a key feeding practice to reduce malnutrition")
-                    ),
+                    'help_text': children_initiated_appropriate_complementary_feeding_help_text(),
                     'percent': percent_diff(
                         'cf_initiation',
                         this_month_data,
@@ -293,11 +275,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 },
                 {
                     'label': _('Institutional Deliveries'),
-                    'help_text': _((
-                        "Of the total number of women enrolled for Anganwadi services who gave birth in the last "
-                        "month, the percentage who delivered in a public or private medical facility. Delivery "
-                        "in medical instituitions is associated with a decrease in maternal mortality rate")
-                    ),
+                    'help_text': institutional_deliveries_help_text(),
                     'percent': percent_diff(
                         'institutional_delivery',
                         deliveries_this_month,

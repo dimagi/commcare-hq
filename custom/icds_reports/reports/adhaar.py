@@ -11,6 +11,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
     get_child_locations, person_has_aadhaar_column, person_is_beneficiary_column
@@ -55,10 +56,7 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False, beta=False):
         "fills": fills,
         "rightLegend": {
             "average": average,
-            "info": _((
-                "Of the total number of ICDS beneficiaries, the percentage whose Adhaar "
-                "identification has been captured. "
-            )),
+            "info": percent_aadhaar_seeded_beneficiaries_help_text(),
             "extended_info": [
                 {
                     'indicator': (
@@ -136,10 +134,7 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
 
     return {
         "tooltips_data": dict(tooltips_data),
-        "info": _((
-            "Of the total number of ICDS beneficiaries, the percentage whose Adhaar "
-            "identification has been captured. "
-        )),
+        "info": percent_aadhaar_seeded_beneficiaries_help_text(),
         "chart_data": [
             {
                 "values": chart_data['blue'],
