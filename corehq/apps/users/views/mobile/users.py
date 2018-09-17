@@ -18,12 +18,12 @@ from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import View, TemplateView
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djangular.views.mixins import JSONResponseMixin
 import re
 
 from memoized import memoized
@@ -44,12 +44,12 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
@@ -58,8 +58,9 @@ from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
-    use_angular_js,
+    use_select2_v4,
     use_multiselect,
+    use_ko_validation,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.bulkupload import (
@@ -540,13 +541,13 @@ def update_user_data(request, domain, couch_user_id):
 
 
 @location_safe
-class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
+class MobileWorkerListView(BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
-    @use_select2
-    @use_angular_js
+    @use_select2_v4
+    @use_ko_validation
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
@@ -566,24 +567,13 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
 
     @property
     @memoized
-    def new_mobile_worker_form(self):
-        if self.request.method == "POST":
-            return NewMobileWorkerForm(self.request.project, self.couch_user, self.request.POST)
-        return NewMobileWorkerForm(self.request.project, self.couch_user)
-
-    @property
-    def _mobile_worker_form(self):
-        return self.new_mobile_worker_form
-
-    @property
-    @memoized
     def custom_data(self):
         return CustomDataEditor(
             field_view=UserFieldsView,
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
-            angular_model="mobileWorker.customFields",
+            data_bind_value="mobileWorker.customFields",
         )
 
     @property
@@ -592,8 +582,10 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             bulk_download_url = reverse(FilteredUserDownload.urlname, args=[self.domain])
         else:
             bulk_download_url = reverse("download_commcare_users", args=[self.domain])
+        new_worker_form = NewMobileWorkerForm(self.request.project, self.couch_user)
         return {
-            'new_mobile_worker_form': self.new_mobile_worker_form,
+            'new_mobile_worker_form': new_worker_form,
+            'username_max_length': new_worker_form.max_chars_username,
             'custom_fields_form': self.custom_data.form,
             'custom_fields': [f.slug for f in self.custom_data.fields],
             'custom_field_names': [f.label for f in self.custom_data.fields],
@@ -609,16 +601,168 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             'bulk_download_url': bulk_download_url
         }
 
-    @property
-    @memoized
-    def query(self):
-        return self.request.GET.get('query')
 
-    def _format_user(self, user_json, include_location=False):
+@require_GET
+@login_and_domain_required
+@require_can_edit_commcare_users
+def check_username(request, domain):
+    try:
+        username = request.GET.get('username', '').strip()
+    except KeyError:
+        return HttpResponseBadRequest('You must specify a username')    # TODO: test
+    if username == 'admin' or username == 'demo_user':
+        return json_response({'error': _('Username {} is reserved.').format(username)})
+    try:
+        validate_email("{}@example.com".format(username))
+        if BAD_MOBILE_USERNAME_REGEX.search(username) is not None:
+            raise ValidationError("Username contained an invalid character")    # TODO: test
+    except ValidationError:
+        if '..' in username:
+            return json_response({
+                'error': _("Username may not contain consecutive . (period).")
+            })
+        if username.endswith('.'):
+            return json_response({
+                'error': _("Username may not end with a . (period).")
+            })
+        return json_response({
+            'error': _("Username may not contain special characters.")
+        })
+
+    full_username = format_username(username, domain)
+    exists = user_exists(full_username)
+    if exists.exists:
+        if exists.is_deleted:
+            result = {'warning': _('Username {} belonged to a user that was deleted.'
+                                   ' Reusing it may have unexpected consequences.').format(username)}
+        else:
+            result = {'error': _('Username {} is already taken').format(username)}
+    else:
+        result = {'success': _('Username {} is available').format(username)}
+    return json_response(result)
+
+
+@require_POST
+@login_and_domain_required
+@require_can_edit_commcare_users
+def create_mobile_worker(request, domain):
+    fields = [
+        'username',
+        'password',
+        'first_name',
+        'last_name',
+        'location_id',
+    ]
+
+    if not can_add_extra_mobile_workers(request):
+        return json_response({
+            'error': _("No Permission."),
+        })
+
+    form_data = _construct_form_data(domain, request.POST, fields)
+
+    project = Domain.get_by_name(domain)
+    mobile_worker_form = NewMobileWorkerForm(project, request.couch_user, form_data)
+    custom_data = CustomDataEditor(
+        field_view=UserFieldsView,
+        domain=domain,
+        post_dict=form_data,
+        required_only=True,
+        data_bind_value="mobileWorker.customFields",
+    )
+    is_valid = lambda: mobile_worker_form.is_valid() and custom_data.is_valid()
+    if not is_valid():
+        return json_response({'error': _("Forms did not validate")})    # TODO: errors don't display
+
+    location_id = mobile_worker_form.cleaned_data['location_id']
+    couch_user = CommCareUser.create(
+        domain,
+        mobile_worker_form.cleaned_data['username'],
+        mobile_worker_form.cleaned_data['password'],
+        device_id="Generated from HQ",
+        first_name=mobile_worker_form.cleaned_data['first_name'],
+        last_name=mobile_worker_form.cleaned_data['last_name'],
+        user_data=custom_data.get_data_to_save(),
+        location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
+    )
+
+    return json_response({
+        'success': True,
+        'editUrl': reverse(
+            EditCommCareUserView.urlname,
+            args=[domain, couch_user.userID]
+        )
+    })
+
+
+def _construct_form_data(domain, user_data, fields):
+
+    try:
+        form_data = {}
+        for k, v in json.loads(user_data.get('customFields', '{}')).items():
+            form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
+        for f in fields:
+            form_data[f] = user_data.get(f)
+        form_data['domain'] = domain
+        return form_data
+    except Exception as e:
+        raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
+
+
+@require_can_edit_commcare_users
+@require_POST
+def activate_commcare_user(request, domain, user_id):
+    return _modify_user_status(request, domain, user_id, True)
+
+@require_can_edit_commcare_users
+@require_POST
+def deactivate_commcare_user(request, domain, user_id):
+    return _modify_user_status(request, domain, user_id, False)
+
+
+def _modify_user_status(request, domain, user_id, is_active):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    if (not _can_edit_workers_location(request.couch_user, user)
+            or (is_active and not can_add_extra_mobile_workers(request))):
+        return json_response({
+            'error': _("No Permission."),
+        })
+    if not is_active and user.user_location_id:
+        return json_response({
+            'error': _("This is a location user, archive or delete the "
+                       "corresponding location to deactivate it."),
+        })
+    user.is_active = is_active
+    user.save()
+    return json_response({
+        'success': True,
+    })
+
+@require_can_edit_commcare_users
+@require_GET
+def paginate_mobile_workers(request, domain):
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    query = request.GET.get('query')
+    include_location = request.GET.get('include_location', False)   # TODO: test
+    deactivated_only = bool(int(request.GET.get('showDeactivatedUsers', 0)))
+
+    def _user_query(search_string, page, limit):
+        user_es = get_search_users_in_domain_es_query(
+            domain=domain, search_string=search_string,
+            offset=page * limit, limit=limit)
+        if not request.couch_user.has_permission(domain, 'access_all_locations'):
+            loc_ids = (SQLLocation.objects.accessible_to_user(domain, request.couch_user)
+                                          .location_ids())
+            user_es = user_es.location(list(loc_ids))
+        return user_es.mobile_users()
+
+    def _format_user(user_json, include_location=False):
         user = CouchUser.wrap_correctly(user_json)
         user_data = {}
-        for field in self.custom_data.fields:
-            user_data[field.slug] = user.user_data.get(field.slug, '')
+        # TODO
+        #for field in self.custom_data.fields:
+        #    user_data[field.slug] = user.user_data.get(field.slug, '')
         return {
             'username': user.raw_username,
             'customFields': user_data,
@@ -627,203 +771,27 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             'phoneNumbers': user.phone_numbers,
             'user_id': user.user_id,
             'location': user.sql_location.to_json() if include_location and user.sql_location else None,
-            'mark_activated': False,
-            'mark_deactivated': False,
             'dateRegistered': user.created_on.strftime(USER_DATE_FORMAT) if user.created_on else '',
-            'editUrl': reverse(EditCommCareUserView.urlname, args=[self.domain, user.user_id]),
-            'deactivateUrl': "#",
-            'actionText': _("Deactivate") if user.is_active else _("Activate"),
+            'editUrl': reverse(EditCommCareUserView.urlname, args=[domain, user.user_id]),
             'action': 'deactivate' if user.is_active else 'activate',
         }
 
-    def _user_query(self, search_string, page, limit):
-        user_es = get_search_users_in_domain_es_query(
-            domain=self.domain, search_string=search_string,
-            offset=page * limit, limit=limit)
-        if not self.can_access_all_locations:
-            loc_ids = (SQLLocation.objects.accessible_to_user(self.domain, self.couch_user)
-                                          .location_ids())
-            user_es = user_es.location(list(loc_ids))
-        return user_es.mobile_users()
+    # backend pages start at 0
+    users_query = _user_query(query, page - 1, limit)
 
-    @allow_remote_invocation
-    def get_pagination_data(self, in_data):
-        if not isinstance(in_data, dict):
-            return {
-                'success': False,
-                'error': _("Please provide pagination info."),
-            }
-        try:
-            limit = int(in_data.get('limit', 10))
-        except ValueError:
-            limit = 10
+    # run with a blank query to fetch total records with same scope as in search
+    total_records = _user_query('', 0, 0).count()
+    if deactivated_only:
+        users_query = users_query.show_only_inactive()
+    users_data = users_query.run()
 
-        # front end pages start at one
-        page = in_data.get('page', 1)
-        query = in_data.get('query')
-        include_location = in_data.get('include_location', False)
-
-        # backend pages start at 0
-        users_query = self._user_query(query, page - 1, limit)
-
-        # run with a blank query to fetch total records with same scope as in search
-        total_records = self._user_query('', 0, 0).count()
-        if in_data.get('showDeactivatedUsers', False):
-            users_query = users_query.show_only_inactive()
-        users_data = users_query.run()
-        return {
-            'response': {
-                'itemList': [self._format_user(user, include_location) for user in users_data.hits],
-                'total': users_data.total,
-                'page': page,
-                'query': query,
-                'total_records': total_records
-            },
-            'success': True,
-        }
-
-    @allow_remote_invocation
-    def modify_user_status(self, in_data):
-        try:
-            user_id = in_data['user_id']
-        except KeyError:
-            return {
-                'error': _("Please provide a user_id."),
-            }
-        try:
-            is_active = in_data['is_active']
-        except KeyError:
-            return {
-                'error': _("Please provide an is_active status."),
-            }
-        user = CommCareUser.get_by_user_id(user_id, self.domain)
-        if (not _can_edit_workers_location(self.couch_user, user)
-                or (is_active and not self.can_add_extra_users)):
-            return {
-                'error': _("No Permission."),
-            }
-        if not is_active and user.user_location_id:
-            return {
-                'error': _("This is a location user, archive or delete the "
-                           "corresponding location to deactivate it."),
-            }
-        user.is_active = is_active
-        user.save()
-        return {
-            'success': True,
-        }
-
-    @allow_remote_invocation
-    def check_username(self, in_data):
-        try:
-            username = in_data['username'].strip()
-        except KeyError:
-            return HttpResponseBadRequest('You must specify a username')
-        if username == 'admin' or username == 'demo_user':
-            return {'error': _('Username {} is reserved.').format(username)}
-        try:
-            validate_email("{}@example.com".format(username))
-            if BAD_MOBILE_USERNAME_REGEX.search(username) is not None:
-                raise ValidationError("Username contained an invalid character")
-        except ValidationError:
-            if '..' in username:
-                return {
-                    'error': _("Username may not contain consecutive . (period).")
-                }
-            if username.endswith('.'):
-                return {
-                    'error': _("Username may not end with a . (period).")
-                }
-            return {
-                'error': _("Username may not contain special characters.")
-            }
-
-        full_username = format_username(username, self.domain)
-        exists = user_exists(full_username)
-        if exists.exists:
-            if exists.is_deleted:
-                result = {'warning': _('Username {} belonged to a user that was deleted.'
-                                       ' Reusing it may have unexpected consequences.').format(username)}
-            else:
-                result = {'error': _('Username {} is already taken').format(username)}
-        else:
-            result = {'success': _('Username {} is available').format(username)}
-        return result
-
-    @allow_remote_invocation
-    def create_mobile_worker(self, in_data):
-        fields = [
-            'username',
-            'password',
-            'first_name',
-            'last_name',
-            'location_id',
-        ]
-
-        try:
-            self._ensure_proper_request(in_data)
-            form_data = self._construct_form_data(in_data, fields)
-        except InvalidMobileWorkerRequest as e:
-            return {
-                'error': six.text_type(e)
-            }
-
-        self.request.POST = form_data
-
-        is_valid = lambda: self._mobile_worker_form.is_valid() and self.custom_data.is_valid()
-        if not is_valid():
-            return {'error': _("Forms did not validate")}
-
-        couch_user = self._build_commcare_user()
-
-        return {
-            'success': True,
-            'editUrl': reverse(
-                EditCommCareUserView.urlname,
-                args=[self.domain, couch_user.userID]
-            )
-        }
-
-    def _build_commcare_user(self):
-        username = self.new_mobile_worker_form.cleaned_data['username']
-        password = self.new_mobile_worker_form.cleaned_data['password']
-        first_name = self.new_mobile_worker_form.cleaned_data['first_name']
-        last_name = self.new_mobile_worker_form.cleaned_data['last_name']
-        location_id = self.new_mobile_worker_form.cleaned_data['location_id']
-
-        return CommCareUser.create(
-            self.domain,
-            username,
-            password,
-            device_id="Generated from HQ",
-            first_name=first_name,
-            last_name=last_name,
-            user_data=self.custom_data.get_data_to_save(),
-            location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
-        )
-
-    def _ensure_proper_request(self, in_data):
-        if not self.can_add_extra_users:
-            raise InvalidMobileWorkerRequest(_("No Permission."))
-
-        if 'mobileWorker' not in in_data:
-            raise InvalidMobileWorkerRequest(_("Please provide mobile worker data."))
-
-        return None
-
-    def _construct_form_data(self, in_data, fields):
-
-        try:
-            user_data = in_data['mobileWorker']
-            form_data = {}
-            for k, v in user_data.get('customFields', {}).items():
-                form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
-            for f in fields:
-                form_data[f] = user_data.get(f)
-            form_data['domain'] = self.domain
-            return form_data
-        except Exception as e:
-            raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
+    return json_response({
+        'users': [_format_user(user, include_location) for user in users_data.hits],
+        'total': users_data.total,
+        'page': page,
+        'query': query,
+        'total_records': total_records
+    })
 
 
 class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):

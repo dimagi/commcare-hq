@@ -487,25 +487,25 @@ validate_username = EmailValidator(message=ugettext_lazy('Username contains inva
 
 
 _username_help = """
-<span ng-if="usernameAvailabilityStatus === 'pending'">
+<span data-bind="visible: mobileWorker.usernameIsPending">
     <i class="fa fa-circle-o-notch fa-spin"></i>
     %(checking)s
 </span>
-<span ng-if="usernameAvailabilityStatus === 'taken'"
+<span data-bind="visible: mobileWorker.usernameIsTaken"
       style="word-wrap:break-word;">
     <i class="fa fa-remove"></i>
-    {{ usernameStatusMessage }}
+    <span data-bind="text: mobileWorker.usernameStatusMessage"></span>
 </span>
-<span ng-if="usernameAvailabilityStatus === 'available'"
+<span data-bind="visible: mobileWorker.usernameIsAvailable"
       style="word-wrap:break-word;">
     <i class="fa fa-check"></i>
-    {{ usernameStatusMessage }}
+    <span data-bind="text: mobileWorker.usernameStatusMessage"></span>
 </span>
-<span ng-if="usernameAvailabilityStatus === 'warning'">
+<span data-bind="visible: mobileWorker.usernameIsWarning">
     <i class="fa fa-exclamation-triangle"></i>
-    {{ usernameStatusMessage }}
+    <span data-bind="text: mobileWorker.usernameStatusMessage"></span>
 </span>
-<span ng-if="usernameAvailabilityStatus === 'error'">
+<span data-bind="visible: mobileWorker.usernameIsError">
     <i class="fa fa-exclamation-triangle"></i>
     %(server_error)s
 </span>
@@ -546,7 +546,7 @@ class NewMobileWorkerForm(forms.Form):
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
         email_string = "@{}.commcarehq.org".format(project.name)
-        max_chars_username = 80 - len(email_string)
+        self.max_chars_username = 80 - len(email_string)
         self.project = project
         self.domain = self.project.name
         self.request_user = request_user
@@ -561,7 +561,7 @@ class NewMobileWorkerForm(forms.Form):
                 validator = "validate_password_standard"
             self.fields['password'].widget = forms.TextInput(attrs={
                 validator: "",
-                "ng_keydown": "markNonDefault()",
+                #"ng_keydown": "markNonDefault()",  # TODO
                 "class": "default",
             })
             self.fields['password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
@@ -570,17 +570,21 @@ class NewMobileWorkerForm(forms.Form):
             ))
 
         if project.uses_locations:
-            self.fields['location_id'].widget = AngularLocationSelectWidget(
-                require=not self.can_access_all_locations)
+            from corehq.apps.locations.forms import LocationSelectWidget
+            self.fields['location_id'].widget = LocationSelectWidget(
+                self.domain, multiselect=False,
+                # TODO: require=not self.can_access_all_locations
+                select2_version='v4',
+            )
             location_field = crispy.Field(
                 'location_id',
-                ng_model='mobileWorker.location_id',
+                data_bind='value: mobileWorker.location_id',
             )
         else:
             location_field = crispy.Hidden(
                 'location_id',
                 '',
-                ng_model='mobileWorker.location_id',
+                data_bind='value: mobileWorker.location_id',
             )
 
         self.helper = FormHelper()
@@ -592,38 +596,43 @@ class NewMobileWorkerForm(forms.Form):
                 _('Basic Information'),
                 crispy.Field(
                     'username',
-                    ng_required="true",
-                    validate_username="",
+                    data_bind='value: mobileWorker.username, '
+                              'koValidationStateFeedback: { '
+                              '   validator: mobileWorker.username '
+                              '}',
+                    # TODO
+                    #validate_username="",
                     # What this says is, update as normal or when the element
                     # loses focus. If the update is normal, wait 300 ms to
                     # send the request again. If the update is on blur,
                     # send the request.
-                    ng_model_options="{ "
-                                      " updateOn: 'default blur', "
-                                      " debounce: {'default': 300, 'blur': 0} "
-                                      "}",
-                    ng_model='mobileWorker.username',
-                    ng_maxlength=max_chars_username,
-                    maxlength=max_chars_username,
+                    #ng_model_options="{ "
+                    #                  " updateOn: 'default blur', "
+                    #                  " debounce: {'default': 300, 'blur': 0} "
+                    #                  "}",
                 ),
                 crispy.Field(
                     'first_name',
-                    ng_required="false",
-                    ng_model='mobileWorker.first_name',
-                    ng_maxlength="30",
+                    data_bind='value: mobileWorker.first_name, '
+                              'koValidationStateFeedback: { '
+                              '   validator: mobileWorker.first_name '
+                              '}',
                 ),
                 crispy.Field(
                     'last_name',
-                    ng_required="false",
-                    ng_model='mobileWorker.last_name',
-                    ng_maxlength="30",
+                    data_bind='value: mobileWorker.last_name, '
+                              'koValidationStateFeedback: { '
+                              '   validator: mobileWorker.last_name '
+                              '}',
                 ),
                 location_field,
                 crispy.Field(
                     'password',
-                    ng_required="true",
-                    ng_model='mobileWorker.password',
-                    data_bind="value: password, valueUpdate: 'input'",
+                    data_bind='value: mobileWorker.password, '
+                              'valueUpdate: \'input\', '
+                              'koValidationStateFeedback: { '
+                              '   validator: mobileWorker.password '
+                              '}',
                 ),
             )
         )
@@ -746,30 +755,6 @@ class MultipleSelectionForm(forms.Form):
                 )
             )
         )
-
-
-class AngularLocationSelectWidget(forms.Widget):
-    """
-    Assumptions:
-        mobileWorker.location_id is model
-        scope has searchLocations function to search
-        scope uses availableLocations to search in
-    """
-
-    def __init__(self, require=False, attrs=None):
-        self.require = require
-        super(AngularLocationSelectWidget, self).__init__(attrs)
-
-    def render(self, name, value, attrs=None):
-        # The .format() means I have to use 4 braces to end up with {{$select.selected.name}}
-        return """
-          <ui-select {validator} ng-model="mobileWorker.location_id" theme="select2" style="width: 300px;">
-            <ui-select-match placeholder="Select location...">{{{{$select.selected.name}}}}</ui-select-match>
-            <ui-select-choices refresh="searchLocations($select.search)" refresh-delay="0" repeat="location.id as location in availableLocations | filter:$select.search">
-              <div ng-bind-html="location.name | highlight: $select.search"></div>
-            </ui-select-choices>
-          </ui-select>
-        """.format(validator='validate-location=""' if self.require else '')
 
 
 class PrimaryLocationWidget(forms.Widget):

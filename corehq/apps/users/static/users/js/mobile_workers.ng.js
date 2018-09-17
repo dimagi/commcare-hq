@@ -90,22 +90,6 @@
         },
     };
 
-    var STATUS = {
-        NEW: 'new',
-        PENDING: 'pending',
-        WARNING: 'warning',
-        SUCCESS: 'success',
-        RETRIED: 'retried',
-    };
-
-    var USERNAME_STATUS = {
-        PENDING: 'pending',
-        TAKEN: 'taken',
-        AVAILABLE: 'available',
-        AVAILABLE_WARNING: 'warning',
-        ERROR: 'error', 
-    };
-
     mobileWorkers.constant('customFields', []);
     mobileWorkers.constant('customFieldNames', []);
     mobileWorkers.constant('location_url', '');
@@ -189,13 +173,11 @@
     var mobileWorkerControllers = {};
 
     mobileWorkerControllers.mobileWorkerCreationController = function (
-        $scope, workerCreationFactory, djangoRMI, customFields,
+        $scope, djangoRMI, customFields,
         customFieldNames, generateStrongPasswords, location_url, $http
     ) {
         $scope._ = _;  // make underscore available
         $scope.mobileWorker = {};
-        $scope.usernameAvailabilityStatus = null;
-        $scope.usernameStatusMessage = null;
         $scope.workers = [];
         $scope.customFormFields = customFields;
         $scope.customFormFieldNames = customFieldNames;
@@ -222,8 +204,6 @@
 
         $scope.initializeMobileWorker = function (existingMobileWorker) {
             visualFormCtrl.usernameClear();
-            $scope.usernameAvailabilityStatus = null;
-            $scope.usernameStatusMessage = null;
 
             if (!_.isEmpty(existingMobileWorker)) {
                 mobileWorker.creationStatus = STATUS.RETRIED;
@@ -238,106 +218,15 @@
                     generateStrongPasswords: generateStrongPasswords,
                 });
             }
-            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
-        };
-
-        $scope.submitNewMobileWorker = function () {
-            $("#newMobileWorkerModal").modal('hide');
-            $scope.workers.push($scope.mobileWorker);
-            workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
         };
 
         $scope.retryMobileWorker = function (worker) {
             $scope.initializeMobileWorker(worker);
-            $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
-            $scope.usernameStatusMessage = gettext('Username is available.');
             $scope.markNonDefault();
         };
     };
 
-    var mobileWorkerFactories = {};
-    mobileWorkerFactories.workerCreationFactory = function ($q, djangoRMI) {
-        var self = {};
-
-        self.stageNewMobileWorker = function (newWorker) {
-            newWorker.creationStatus = STATUS.PENDING;
-            var deferred = $q.defer();
-            if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
-                newWorker.password = (hqImport("nic_compliance/js/encoder")()).encode(newWorker.password);
-            }
-            djangoRMI.create_mobile_worker({
-                mobileWorker: newWorker, 
-            })
-                .success(function (data) {
-                    if (data.success) {
-                        newWorker.creationStatus = STATUS.SUCCESS;
-                        newWorker.editUrl = data.editUrl;
-                        deferred.resolve(data);
-                    } else {
-                        newWorker.creationStatus = STATUS.WARNING;
-                        deferred.reject(data);
-                    }
-                })
-                .error(function () {
-                    newWorker.creationStatus = STATUS.WARNING;
-                    deferred.reject(
-                        gettext("Sorry, there was an issue communicating with the server.")
-                    );
-                });
-
-            return deferred.promise;
-        };
-        return self;
-    };
-
     var mobileWorkerDirectives = {};
-    mobileWorkerDirectives.validateUsername = function ($http, $q, djangoRMI) {
-        return {
-            restrict: 'AE',
-            require: 'ngModel',
-            link: function ($scope, $elem, $attr, ctrl) {
-                ctrl.$validators.validateUsername = function (username) {
-                    var deferred = $q.defer();
-                    if (_.isUndefined(username) || _.isEmpty(username)) {
-                        $scope.usernameAvailabilityStatus = null;
-                        deferred.resolve();
-                        visualFormCtrl.usernameClear();
-                    } else {
-                        $scope.usernameAvailabilityStatus = USERNAME_STATUS.PENDING;
-                        visualFormCtrl.usernamePending();
-                        djangoRMI.check_username({
-                            username: username, 
-                        })
-                            .success(function (data) {
-                                if (data.success) {
-                                    visualFormCtrl.usernameSuccess();
-                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
-                                    deferred.resolve(data.success);
-                                    $scope.usernameStatusMessage = data.success;
-                                } else if (data.warning) {
-                                    visualFormCtrl.usernameWarning();
-                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE_WARNING;
-                                    deferred.resolve(data.warning);
-                                    $scope.usernameStatusMessage = data.warning;
-                                } else {
-                                    visualFormCtrl.usernameError();
-                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.TAKEN;
-                                    deferred.reject(data.error);
-                                    $scope.usernameStatusMessage = data.error;
-                                }
-                            })
-                            .error(function () {
-                                $scope.usernameAvailabilityStatus = USERNAME_STATUS.ERROR;
-                                deferred.reject(
-                                    gettext("Sorry, there was an issue communicating with the server.")
-                                );
-                            });
-                    }
-                    return deferred.promise;
-                };
-            },
-        };
-    };
 
     mobileWorkerDirectives.validatePasswordStandard = function () {
         return {
@@ -428,56 +317,9 @@
     mobileWorkerApp.constant('paginationCustomData', {
         customFormFieldNames: initial_page_data('custom_field_names'),
         showDeactivatedUsers: false,
-        activateUser: function (user, djangoRMI) {
-            $('#activate_' + user.user_id).modal('hide');
-            djangoRMI.modify_user_status({
-                user_id: user.user_id,
-                is_active: true,
-            })
-                .success(function (data) {
-                    if (data.success) {
-                        user.mark_activated = true;
-                        user.action_error = '';
-                    } else {
-                        user.action_error = data.error;
-                    }
-                })
-                .error(function () {
-                    user.action_error = gettext("Issue communicating with server. Try again.");
-                });
-        },
-        deactivateUser: function (user, djangoRMI) {
-            $('#deactivate_' + user.user_id).modal('hide');
-            djangoRMI.modify_user_status({
-                user_id: user.user_id,
-                is_active: false,
-            })
-                .success(function (data) {
-                    if (data.success) {
-                        user.mark_deactivated = true;
-                        user.action_error = '';
-                    } else {
-                        user.action_error = data.error;
-                    }
-                })
-                .error(function () {
-                    user.action_error = gettext("Issue communicating with server. Try again.");
-                });
-        },
     });
     mobileWorkerApp.constant('generateStrongPasswords', initial_page_data('strong_mobile_passwords'));
     mobileWorkerApp.constant('location_url', initial_page_data('location_url'));
-    mobileWorkerApp.directive('workertableHeader', function () {
-        return {
-            restrict: 'A',
-            template: '<tr>'
-                        + '<th class="col-xs-3">' + gettext("Username") + '</th>'
-                        + '<th class="col-xs-3">' + gettext("First Name") + '</th>'
-                        + '<th class="col-xs-3">' + gettext("Last Name") + '</th>'
-                        + '<th class="col-xs-3">' + gettext("Status") + '</th>'
-                    + '</tr>',
-        };
-    });
     mobileWorkerApp.constant('paginationLimits', [
         [10, gettext('Show 10 Mobile Workers')],
         [25, gettext('Show 25 Mobile Workers')],

@@ -2,7 +2,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
-{% load djangular_tags %}
 
 {% block stylesheets %}
 <link type="text/css"
@@ -11,15 +10,19 @@
       href="{% static 'ui-select/dist/select.min.css' %}" />
 {% endblock %}
 
-{% block js %}
-<script src="{% static 'hqwebapp/js/pagination.ng.js' %}"></script>
+{% block js %}{{ block.super }}
+<!--script src="{% static 'hqwebapp/js/pagination.ng.js' %}"></script>
 <script src="{% static 'users/js/mobile_workers.ng.js' %}"></script>
 <script src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
-<script src="{% static 'ui-select/dist/select.js' %}"></script>
+<script src="{% static 'ui-select/dist/select.js' %}"></script-->
 {% if strong_mobile_passwords %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
 {% endif %}
-<script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
+<script src="{% static 'nic_compliance/js/encoder.js' %}"></script>{# TODO: don't break this #}
+<script src="{% static 'locations/js/widgets_main_v4.js' %}"></script>
+<script src="{% static 'users/js/mobile_worker_models.js' %}"></script>
+<script src="{% static 'users/js/mobile_worker_creation_models.js' %}"></script>
+<script src="{% static 'users/js/mobile_workers_main.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -30,313 +33,272 @@
     {% initial_page_data 'location_url' location_url %}
     {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
     {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
+    {% initial_page_data 'username_max_length' username_max_length %}
+    {% registerurl 'activate_commcare_user' domain '---' %}
+    {% registerurl 'create_mobile_worker' domain %}
+    {% registerurl 'check_username' domain %}
+    {% registerurl 'deactivate_commcare_user' domain '---' %}
+    {% registerurl 'paginate_mobile_workers' domain %}
 
-    <div ng-app="mobileWorkerApp">
-        <div ng-controller="mobileWorkerCreationController">
-            <div class="row">
-                <div class="col-sm-12">
-                    <p class="lead">
-                        {% blocktrans %}
-                            Mobile Workers can log into applications in this project space
-                            and submit data.
-                        {% endblocktrans %}
-                    </p>
-                    <p>
-                        {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
-                            Their activity and form submissions can be
-                            monitored in the Reports section of this {{ hq_name }} project space.
-                            <br />
-                            Read more about managing mobile workers on our
-                            <a href="http://help.commcarehq.org/" target="_blank">Help Site</a>.
-                        {% endblocktrans %}
-                    </p>
-                    <div class="btn-toolbar" style="margin-bottom: 20px;">
-
-                        <button type="button"
-                                class="btn btn-success"
-                                data-toggle="modal"
-                                data-target="#newMobileWorkerModal"
-                                ng-click="initializeMobileWorker()">
-                            <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
-                        </button>
-                        {% if can_bulk_edit_users and can_access_all_locations %}
-                            <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
-                                <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
-                            </a>
-                            <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}">
-                                {% trans "Bulk Upload" %}
-                            </a>
-                        {% endif %}
-                        {% if can_add_extra_users and can_access_all_locations %}
-                            <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
-                                {% trans "Edit User Fields" %}
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="modal fade" id="newMobileWorkerModal">
-                {% if can_add_extra_users %}
-                    <div class="modal-dialog">
-                        <form id="newMobileWorkerForm"
-                              name="mobileWorkerForm"
-                              novalidate
-                              ng-submit="submitNewMobileWorker()">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <button type="button" class="close" data-dismiss="modal">
-                                        <span aria-hidden="true">&times;</span>
-                                        <span class="sr-only">{% trans 'Close' %}</span>
-                                    </button>
-                                    <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="form-horizontal">
-                                        {% crispy new_mobile_worker_form %}
-                                        {% if custom_fields_form.fields %}
-                                            {% crispy custom_fields_form %}
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-default" ng-click="markDefault()" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                                    <button type="submit"
-                                            ng-disabled="mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'"
-                                            ng-click="markDefault()"
-                                            class="btn btn-primary">
-                                        {% trans "Create" %}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                {% else %}
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal">
-                                    <span aria-hidden="true">&times;</span>
-                                    <span class="sr-only">{% trans 'Close' %}</span>
-                                </button>
-                                <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
-                            </div>
-                            <div class="modal-body">
-                                <div class="alert alert-info">
-                                    {% url 'domain_select_plan' domain as change_plan_url %}
-                                    <p>
-                                    {% blocktrans with request.plan.user_limit as u %}
-                                       <strong>Mobile Worker Limit Reached:</strong> You have reached the limit of {{ u }}
-                                       Mobile Workers included with your plan. You may no longer add new Mobile Workers until you
-                                       confirm your project's billing information.
-                                    {% endblocktrans %}
-                                    </p>
-                                    <p>
-                                       {% blocktrans with request.plan.user_fee as u %}
-                                       There will be an additional charge of {{ u }} per month per additional Mobile Worker over this limit.
-                                       {% endblocktrans %}
-                                    </p>
-                                    <p>
-                                    {% if not can_edit_billing_info %}
-                                       {% blocktrans %}
-                                           Note: You must be an admin web user to confirm your Billing Information.
-                                       {% endblocktrans %}
-                                    {% endif %}
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                                <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary {% if not can_edit_billing_info %}disabled{% endif %}">{% trans 'Confirm Billing Information' %}</a>
-                            </div>
-                        </div>
-                    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <p class="lead">
+                {% blocktrans %}
+                    Mobile Workers can log into applications in this project space
+                    and submit data.
+                {% endblocktrans %}
+            </p>
+            <p>
+                {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+                    Their activity and form submissions can be
+                    monitored in the Reports section of this {{ hq_name }} project space.
+                    <br />
+                    Read more about managing mobile workers on our
+                    <a href="http://help.commcarehq.org/" target="_blank">Help Site</a>.
+                {% endblocktrans %}
+            </p>
+            <div class="btn-toolbar" style="margin-bottom: 20px;">
+                <button type="button"
+                        id="newMobileWorkerModalTrigger"
+                        class="btn btn-success"
+                        data-toggle="modal"
+                        data-target="#newMobileWorkerModal"
+                        data-bind="click: initializeMobileWorker">
+                    <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
+                </button>
+                {% if can_bulk_edit_users and can_access_all_locations %}
+                    <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
+                        <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
+                    </a>
+                    <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}">
+                        {% trans "Bulk Upload" %}
+                    </a>
+                {% endif %}
+                {% if can_add_extra_users and can_access_all_locations %}
+                    <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
+                        {% trans "Edit User Fields" %}
+                    </a>
                 {% endif %}
             </div>
-            {% angularjs %}
-
-            <div class="panel panel-info"
-                 ng-show="workers.length > 0"
-                 ng-cloak>
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        {% trans 'New Mobile Workers' %}
-                    </h3>
-                </div>
-                <div class="panel-body">
-                    <table class="table table-striped">
-                        <thead workertable-header></thead>
-                        <tbody>
-                            <tr ng-repeat="worker in workers">
-                                <td class="{{ worker.creationStatus }}">
-                                    <span ng-if="!worker.editUrl">
-                                        <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
-                                    </span>
-                                    <a href="{{ worker.editUrl }}"
-                                       ng-show="!!worker.editUrl">
-                                        <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
-                                    </a>
-                                </td>
-                                <td class="{{ worker.creationStatus }}">{{ worker.first_name }}</td>
-                                <td class="{{ worker.creationStatus }}">{{ worker.last_name }}</td>
-                                <td class="{{ worker.creationStatus }}">
-                                    <div ng-show="worker.creationStatus==='pending'">
-                                        <i class="fa fa-circle-o-notch fa-spin"></i>
-                                        {% trans 'Pending...' %}
-                                    </div>
-                                    <div ng-show="worker.creationStatus==='success'">
-                                        <span class="text-success">
-                                            <i class="fa fa-check"></i> {% trans 'NEW' %}
-                                        </span>
-                                    </div>
-                                    <div ng-show="worker.creationStatus==='warning'">
-                                        <span class="text-warning">
-                                            <i class="fa fa-exclamation-triangle"></i>
-                                            {% trans "ERROR" %}
-                                        </span>
-                                        <button type="button"
-                                                class="btn btn-default"
-                                                data-toggle="modal"
-                                                data-target="#newMobileWorkerModal"
-                                                ng-click="retryMobileWorker">
-                                            {% trans 'Retry' %}
-                                        </button>
-                                    </div>
-
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endangularjs %}
         </div>
-        <div class="panel panel-default"
-             ng-controller="PaginatedListController"
-             ng-cloak>
-            <div class="panel-heading">
-                <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
+    </div><!-- end controls .row -->
+    <div class="modal fade" id="newMobileWorkerModal">
+        {% if can_add_extra_users %}
+            <div class="modal-dialog">
+                <form id="newMobileWorkerForm" name="mobileWorkerForm" data-bind="submit: submitNewMobileWorker">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">
+                                <span aria-hidden="true">&times;</span>
+                                <span class="sr-only">{% trans 'Close' %}</span>
+                            </button>
+                            <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-horizontal">
+                                {% crispy new_mobile_worker_form %}
+                                {% if custom_fields_form.fields %}
+                                    {% crispy custom_fields_form %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                            <button type="submit" class="btn btn-primary" data-bind="enable: allowMobileWorkerCreation">
+                                {% trans "Create" %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-sm-4">
-                        <div class="input-group">
-                            <input type="text"
-                                   class="form-control"
-                                   ng-keypress="updateQuery($event)"
-                                   ng-model="query"
-                                   placeholder="{% trans "Filter Workers..." %}">
-                            <span class="input-group-btn">
-                                <button class="btn btn-default"
-                                        ng-click="filterData()"
-                                        type="button">
-                                    <i class="fa fa-search"></i>
-                                </button>
-                            </span>
-                        </div>
-                        <p class="help-block">
-                            <i class="fa fa-info-circle"></i>
-                            {% blocktrans %}
-                            Search any text, or use a targeted query. For more info see the <a
-                                href='https://wiki.commcarehq.org/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-C.SearchforMobileWorkers'
-                                target='_blank'>Mobile Workers</a> help page
+        {% else %}
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                            <span class="sr-only">{% trans 'Close' %}</span>
+                        </button>
+                        <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            {% url 'domain_select_plan' domain as change_plan_url %}
+                            <p>
+                            {% blocktrans with request.plan.user_limit as u %}
+                               <strong>Mobile Worker Limit Reached:</strong> You have reached the limit of {{ u }}
+                               Mobile Workers included with your plan. You may no longer add new Mobile Workers until you
+                               confirm your project's billing information.
                             {% endblocktrans %}
-                        </p>
-                    </div>
-                    <div class="col-sm-4">
-                        <select class="form-control"
-                                ng-change="pageChanged()"
-                                ng-model="limit"
-                                ng-options="pl.value as pl.key for pl in paginationLimits">
-                        </select>
-                    </div>
-                    <div class="col-sm-4">
-                        <button type="button"
-                                class="btn btn-default pull-right"
-                                ng-click="showDeactivatedUsers = true; filterData();"
-                                ng-show="!showDeactivatedUsers">
-                            {% trans 'Show Deactivated Mobile Workers' %}
-                        </button>
-                        <button type="button"
-                                class="btn btn-default pull-right"
-                                ng-click="showDeactivatedUsers = false; filterData();"
-                                ng-show="showDeactivatedUsers">
-                            {% trans 'Show Active Mobile Workers' %}
-                        </button>
-                        <div class="pull-right" style="clear: right;">
-                            <pagination direction-links="true"
-                                        total-items="total"
-                                        items-per-page="limit"
-                                        previous-text="&laquo;"
-                                        next-text="&raquo;"
-                                        max-size="maxSize"
-                                        ng-model="currentPage"
-                                        ng-change="pageChanged()"></pagination>
+                            </p>
+                            <p>
+                               {% blocktrans with request.plan.user_fee as u %}
+                               There will be an additional charge of {{ u }} per month per additional Mobile Worker over this limit.
+                               {% endblocktrans %}
+                            </p>
+                            <p>
+                            {% if not can_edit_billing_info %}
+                               {% blocktrans %}
+                                   Note: You must be an admin web user to confirm your Billing Information.
+                               {% endblocktrans %}
+                            {% endif %}
+                            </p>
                         </div>
                     </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                        <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary {% if not can_edit_billing_info %}disabled{% endif %}">{% trans 'Confirm Billing Information' %}</a>
+                    </div>
                 </div>
-                <div class="alert alert-info"
-                     ng-show="total_records != 0 && paginatedItems.length == 0 && !notLoaded && !hasError">
-                    {% blocktrans %}
-                    No Mobile Workers were found that matched your query.
-                    {% endblocktrans %}
-                </div>
-                <div class="alert alert-info"
-                     ng-show="total_records == 0 && paginatedItems.length == 0 && !notLoaded && !hasError">
-                    {% blocktrans %}
-                        <strong>There are currently no Mobile Workers in this project.</strong>
-                        Please Create a new Mobile Worker above to get started.
-                    {% endblocktrans %}
-                </div>
-                <table class="table table-striped table-responsive"
-                       style="margin-bottom: 0;"
-                       ng-show="paginatedItems.length > 0">
-                    <thead>
-                        <tr>
-                            <th class="col-xs-3">{% trans "Username" %}</th>
-                            <th class="col-xs-3">{% trans "First Name" %}</th>
-                            <th class="col-xs-2">{% trans "Last Name" %}</th>
-                            <th class="col-xs-2">{% trans 'Date Registered' %}</th>
-                            <th class="col-xs-2">{% trans 'Action' %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr ng-repeat="user in paginatedItems">
-                            {% angularjs %}
-                            <td>
-                                <a href="{{ user.editUrl }}">
-                                     <i class="fa fa-user"></i>
-                                    <strong>{{ user.username }}</strong>
-                                    <span ng-if="!!user.name">({{ user.name }})</span>
-                                </a>
-                            </td>
-                            <td>{{ user.first_name }}</td>
-                            <td>{{ user.last_name }}</td>
-                            <td>{{ user.dateRegistered }}</td>
-                            <td ng-if="user.action === 'activate'">
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="panel panel-info ko-template" id="new-mobile-workers-list" data-bind="visible: hasUsers">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                {% trans 'New Mobile Workers' %}
+            </h3>
+        </div>
+        <div class="panel-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="col-xs-3">{% trans "Username" %}</th>
+                        <th class="col-xs-3">{% trans "First Name" %}</th>
+                        <th class="col-xs-3">{% trans "Last Name" %}</th>
+                        <th class="col-xs-3">{% trans "Status" %}</th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: users">
+                    <tr>
+                        <td data-bind="attr: {'class': creationStatus }">
+                            <!-- TODO: visibility here is wrong because editUrl defaults to truthy '#' -->
+                            <span data-bind="visible: !editUrl()">
+                                <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
+                            </span>
+                            <a data-bind="attr: {href: editUrl}, visible: editUrl()">
+                                <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
+                            </a>
+                        </td>
+                        <td data-bind="attr: {'class': creationStatus }, text: first_name"></td>
+                        <td data-bind="attr: {'class': creationStatus }, text: last_name"></td>
+                        <td data-bind="attr: {'class': creationStatus }">
+                            <div data-bind="visible: isPending">
+                                <i class="fa fa-circle-o-notch fa-spin"></i>
+                                {% trans 'Pending...' %}
+                            </div>
+                            <div data-bind="visible: isSuccess">
+                                <span class="text-success">
+                                    <i class="fa fa-check"></i> {% trans 'NEW' %}
+                                </span>
+                            </div>
+                            <div data-bind="visible: isWarning">
+                                <span class="text-warning">
+                                    <i class="fa fa-exclamation-triangle"></i>
+                                    {% trans "ERROR" %}
+                                </span>
                                 <button type="button"
                                         class="btn btn-default"
                                         data-toggle="modal"
-                                        ng-show="!user.mark_activated"
-                                        data-target="#activate_{{ user.user_id }}">
+                                        data-target="#newMobileWorkerModal"
+                                        data-bind="retryMobileWorker">
+                                    {% trans 'Retry' %}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel panel-default ko-template" id="mobile-workers-list">
+        <div class="panel-heading">
+            <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" data-bind="value: query"
+                               placeholder="{% trans "Filter Workers..." %}">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" data-bind="click: function() { goToPage(1); }">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </span>
+                    </div>
+                    <p class="help-block">
+                        <i class="fa fa-info-circle"></i>
+                        {% blocktrans %}
+                        Search any text, or use a targeted query. For more info see the <a
+                            href='https://wiki.commcarehq.org/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-C.SearchforMobileWorkers'
+                            target='_blank'>Mobile Workers</a> help page
+                        {% endblocktrans %}
+                    </p>
+                </div>
+                <div class="col-sm-6">
+                    <button type="button" class="btn btn-default pull-right"
+                            data-bind="visible: !inactiveOnly(), click: function() { toggleInactiveOnly(true); }">
+                        {% trans 'Show Deactivated Mobile Workers' %}
+                    </button>
+                    <button type="button" class="btn btn-default pull-right"
+                            data-bind="visible: inactiveOnly(), click: function() { toggleInactiveOnly(false); }">
+                        {% trans 'Show Active Mobile Workers' %}
+                    </button>
+                </div>
+            </div>
+            <div class="alert alert-info" data-bind="visible: showNoUsers">
+                {% blocktrans %}
+                    No Mobile Workers were found that matched your query.
+                {% endblocktrans %}
+            </div>
+            <div class="alert alert-info" data-bind="visible: showProjectHasNoUsers">
+                {% blocktrans %}
+                    <strong>There are currently no Mobile Workers in this project.</strong>
+                    Please Create a new Mobile Worker above to get started.
+                {% endblocktrans %}
+            </div>
+            <table class="table table-striped table-responsive" style="margin-bottom: 0;" data-bind="visible: showTable">
+                <thead>
+                    <tr>
+                        <th class="col-xs-3">{% trans "Username" %}</th>
+                        <th class="col-xs-3">{% trans "First Name" %}</th>
+                        <th class="col-xs-2">{% trans "Last Name" %}</th>
+                        <th class="col-xs-2">{% trans 'Date Registered' %}</th>
+                        <th class="col-xs-2">{% trans 'Action' %}</th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: users">
+                    <tr>
+                        <td>
+                            <a data-bind="attr: {href: editUrl}">
+                                <i class="fa fa-user"></i>
+                                <strong data-bind="text: username"></strong>
+                            </a>
+                        </td>
+                        <td data-bind="text: first_name"></td>
+                        <td data-bind="text: last_name"></td>
+                        <td data-bind="text: dateRegistered"></td>
+                        <td>
+                            <div data-bind="visible: showActivate">
+                                <button type="button" class="btn btn-default" data-toggle="modal"
+                                        data-bind="visible: !mark_activated(), attr: {'data-target': '#activate_' + user_id()}">
                                         {% trans "Reactivate" %}
                                 </button>
-                                <span ng-show="user.mark_activated">
+                                <span data-bind="visible: mark_activated()">
                                     <i class="fa fa-check"></i> {% trans "ACTIVE" %}
                                 </span>
-                                <p ng-show="!!user.action_error">
+                                <p data-bind="visible: action_error">
                                     <i class="fa fa-exclamation-triangle"></i>
-                                    {{ user.action_error }}
+                                    <span data-bind="text: action_error"></span>
                                 </p>
-                                <div id="activate_{{ user.user_id }}"
-                                     class="modal fade">
+                                <div class="modal fade" data-bind="attr: {id: 'activate_' + user_id()}">
                                     <div class="modal-dialog">
-                                        <form class="modal-content"
-                                              method="post"
-                                              ng-submit="activateUser(user, djangoRMI);">
+                                        <div class="modal-content">
                                             <div class="modal-header">
-                                                <button type="button"
-                                                        class="close"
-                                                        data-dismiss="modal">
+                                                <button type="button" class="close" data-dismiss="modal">
                                                     <span aria-hidden="true">&times;</span>
                                                     <span class="sr-only">{% trans "Close" %}</span>
                                                 </button>
@@ -350,8 +312,7 @@
                                                 </p>
                                                 <p class="lead">
                                                     <i class="fa fa-user"></i>
-                                                    <strong>{{ user.username }}</strong>
-                                                    <span ng-if="!!user.name" class="text-center">({{ user.name }})</span>
+                                                    <strong data-bind="text: username"></strong>
                                                 </p>
                                                 <p>
                                                     {% blocktrans %}
@@ -365,45 +326,34 @@
                                                 </p>
                                             </div>
                                             <div class="modal-footer">
-                                                <button type="button"
-                                                        class="btn btn-default"
-                                                        data-dismiss="modal">
+                                                <button type="button" class="btn btn-default" data-dismiss="modal">
                                                     {% trans "Cancel" %}
                                                 </button>
-                                                <button type="submit"
-                                                        class="btn btn-success">
+                                                <button type="button" class="btn btn-success" data-bind="click: function(data, e) { modifyStatus(true, e.currentTarget) }">
                                                     {% trans 'Reactivate' %}
                                                 </button>
                                             </div>
-                                        </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </td>
-                            <td ng-if="user.action === 'deactivate'">
-                                <button type="button"
-                                        class="btn btn-default"
-                                        data-toggle="modal"
-                                        data-target="#deactivate_{{ user.user_id }}"
-                                        ng-show="!user.mark_deactivated">
+                            </div>
+                            <div data-bind="visible: showDeactivate">
+                                <button type="button" class="btn btn-default" data-toggle="modal"
+                                        data-bind="attr: {'data-target': '#deactivate_' + user_id()}, visible: !mark_deactivated()">
                                         {% trans "Deactivate" %}
                                 </button>
-                                <span ng-show="user.mark_deactivated">
+                                <span data-bind="visible: mark_deactivated">
                                     <i class="fa fa-check"></i> {% trans "INACTIVE" %}
                                 </span>
-                                <p ng-show="!!user.action_error">
+                                <p data-bind="visible: action_error">
                                     <i class="fa fa-exclamation-triangle"></i>
-                                    {{ user.action_error }}
+                                    <span data-bind="text: action_error"></span>
                                 </p>
-                                <div id="deactivate_{{ user.user_id }}"
-                                     class="modal fade">
+                                <div class="modal fade" data-bind="attr: {id: 'deactivate_' + user_id()}">
                                     <div class="modal-dialog">
-                                        <form class="modal-content"
-                                              method="post"
-                                              ng-submit="deactivateUser(user, djangoRMI);">
+                                        <div class="modal-content">
                                             <div class="modal-header">
-                                                <button type="button"
-                                                        class="close"
-                                                        data-dismiss="modal">
+                                                <button type="button" class="close" data-dismiss="modal">
                                                     <span aria-hidden="true">&times;</span>
                                                     <span class="sr-only">{% trans "Close" %}</span>
                                                 </button>
@@ -417,8 +367,7 @@
                                                 </p>
                                                 <p class="lead">
                                                     <i class="fa fa-user"></i>
-                                                    <strong>{{ user.username }}</strong>
-                                                    <span ng-if="!!user.name" class="text-center">({{ user.name }})</span>
+                                                    <strong data-bind="text: username"></strong>
                                                 </p>
                                                 <p>
                                                     {% blocktrans %}
@@ -432,50 +381,38 @@
                                                 </p>
                                             </div>
                                             <div class="modal-footer">
-                                                <button type="button"
-                                                        class="btn btn-default"
-                                                        data-dismiss="modal">
+                                                <button type="button" class="btn btn-default" data-dismiss="modal">
                                                     {% trans "Cancel" %}
                                                 </button>
-                                                <button type="submit"
-                                                        class="btn btn-default btn-danger">
+                                                <button type="button" class="btn btn-danger" data-bind="click: function(data, e) { modifyStatus(false, e.currentTarget) }">
                                                     {% trans 'Deactivate' %}
                                                 </button>
                                             </div>
-                                        </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </td>
-                            {% endangularjs %}
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="alert alert-info"
-                     ng-show="!!notLoaded && !hasError">
-                    <i class="fa fa-circle-o-notch fa-spin"></i>
-                    {% trans "Loading Workers..." %}
-                </div>
-                <div class="alert alert-danger"
-                     ng-show="!!hasError">
-                    {% blocktrans %}
-                        <strong>There was an issue contacting the server.</strong>
-                        Please check your internet connection.
-                        If this issue continues, please
-                        <a href="#modalReportIssue"
-                           data-toggle="modal">file a bug report</a>.
-                    {% endblocktrans %}
-                </div>
-                <div class="pull-right">
-                    <pagination direction-links="true"
-                                total-items="total"
-                                items-per-page="limit"
-                                previous-text="&laquo;"
-                                next-text="&raquo;"
-                                max-size="maxSize"
-                                ng-model="currentPage"
-                                ng-change="pageChanged()"></pagination>
-                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="alert alert-info" data-bind="visible: showSpinner">
+                <i class="fa fa-spin fa-spinner"></i>
+                {% trans "Loading Workers..." %}
             </div>
+            <div class="alert alert-danger" data-bind="visible: hasError">
+                {% blocktrans %}
+                    <strong>There was an issue contacting the server.</strong>
+                    Please check your internet connection.
+                    If this issue continues, please
+                    <a href="#modalReportIssue"
+                       data-toggle="modal">report an issue</a>.
+                {% endblocktrans %}
+            </div>
+            <pagination data-apply-bindings="false"
+                        params="goToPage: goToPage,
+                                perPage: itemsPerPage,
+                                totalItems: totalItems"></pagination>
         </div>
     </div>
 {% endblock %}
