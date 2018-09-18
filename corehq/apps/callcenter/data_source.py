@@ -42,9 +42,9 @@ def call_center_data_source_configuration_provider():
     if form_ds_domains:
         yield _get_ds(form_ds_domains, FORM_DATA_SOURCE_PATH)
     if case_ds_domains:
-        yield _get_ds(form_ds_domains, CASE_DATA_SOURCE_PATH)
+        yield _get_ds(case_ds_domains, CASE_DATA_SOURCE_PATH)
     if case_actions_ds_domains:
-        yield _get_ds(form_ds_domains, CASE_ACTION_DATA_SOURCE_PATH)
+        yield _get_ds(case_actions_ds_domains, CASE_ACTION_DATA_SOURCE_PATH)
 
 
 def get_data_source_templates():
