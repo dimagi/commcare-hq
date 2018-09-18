@@ -20,7 +20,7 @@ from corehq.apps.users.models import CommCareUser
 
 from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge
 from custom.ewsghana.utils import prepare_domain, bootstrap_user
-from custom.logistics.tests.test_script import TestScript
+from custom.ilsgateway.tests.test_script import TestScript
 
 TEST_DOMAIN = 'ewsghana-test'
 

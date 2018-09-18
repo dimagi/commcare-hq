@@ -11,7 +11,7 @@ from django.forms.widgets import (
     MultiWidget,
 )
 from django.template.loader import render_to_string
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 import json
 from django.utils.translation import ugettext_noop
@@ -38,101 +38,36 @@ class BootstrapCheckboxInput(CheckboxInput):
             final_attrs['checked'] = 'checked'
         if value not in ('', True, False, None):
             # Only add the 'value' attribute if a value is non-empty.
-            final_attrs['value'] = force_unicode(value)
+            final_attrs['value'] = force_text(value)
         return mark_safe('<label class="checkbox"><input%s /> %s</label>' %
                          (flatatt(final_attrs), self.inline_label))
-
-
-class BootstrapAddressField(MultiValueField):
-    """
-        The original for this was found here:
-        http://stackoverflow.com/questions/7437108/saving-a-form-model-with-using-multiwidget-and-a-multivaluefield
-    """
-
-    def __init__(self,num_lines=3,*args,**kwargs):
-        fields = tuple([CharField(widget=TextInput(attrs={'class':'input-xxlarge'})) for _ in range(0, num_lines)])
-        self.widget = BootstrapAddressFieldWidget(widgets=[field.widget for field in fields])
-        super(BootstrapAddressField, self).__init__(fields=fields,*args,**kwargs)
-
-    def compress(self, data_list):
-        return data_list
-
-
-class BootstrapAddressFieldWidget(MultiWidget):
-
-    def decompress(self, value):
-        return ['']*len(self.widgets)
-
-    def format_output(self, rendered_widgets):
-        lines = list()
-        for field in rendered_widgets:
-            lines.append("<p>%s</p>" % field)
-        return '\n'.join(lines)
-#    def value_from_datadict(self, data, files, name):
-#        line_list = [widget.value_from_datadict(data,files,name+'_%s' %i) for i,widget in enumerate(self.widgets)]
-#        try:
-#            return line_list[0] + ' ' + line_list[1] + ' ' + line_list[2]
-#        except Exception:
-#            return ''
-
-
-class BootstrapDisabledInput(Input):
-    input_type = 'hidden'
-
-    def render(self, name, value, attrs=None):
-        if value is None:
-            value = ''
-        final_attrs = self.build_attrs(attrs, extra_attrs={'type': self.input_type, 'name': name})
-        if value != '':
-            # Only add the 'value' attribute if a value is non-empty.
-            final_attrs['value'] = force_unicode(self._format_value(value))
-        return mark_safe('<span class="uneditable-input %s">%s</span><input%s />' %
-                         (attrs.get('class', ''), value, flatatt(final_attrs)))
-
-
-class BootstrapPhoneNumberInput(Input):
-    input_type = 'text'
-
-    def render(self, name, value, attrs=None):
-        return mark_safe("""<div class="input-prepend">
-        <span class="add-on">+</span>%s
-        </div>""" % super(BootstrapPhoneNumberInput, self).render(name, value, attrs))
 
 
 class AutocompleteTextarea(forms.Textarea):
     """
     Textarea with auto-complete.  Uses a custom extension on top of Twitter
     Bootstrap's typeahead plugin.
-    
     """
 
     def render(self, name, value, attrs=None):
         if hasattr(self, 'choices') and self.choices:
-            output = mark_safe("""
-<script>
-$(function() {
-    $("#%s").select2({
-        multiple: true,
-        tags: %s
-    });
-});
-</script>\n""" % (attrs['id'], json.dumps([{'text': c, 'id': c} for c in self.choices])))
+            if not attrs:
+                attrs = {}
+            attrs.update({
+                'class': 'hqwebapp-autocomplete form-control',
+                'data-choices': json.dumps([{'text': c, 'id': c} for c in self.choices]),
+            })
 
-        else:
-            output = mark_safe("")
-
-        output += super(AutocompleteTextarea, self).render(name, value,
-                                                           attrs=attrs)
-        return output
+        return super(AutocompleteTextarea, self).render(name, value, attrs=attrs)
 
 
 class _Select2Mixin(object):
 
     class Media(object):
         css = {
-            'all': ('select2-3.4.5-legacy/select2.css',)
+            'all': ('select2-3.5.2-legacy/select2.css',)
         }
-        js = ('select2-3.4.5-legacy/select2.js',)
+        js = ('select2-3.5.2-legacy/select2.js',)
 
     def render(self, name, value, attrs=None, choices=()):
         output = super(_Select2Mixin, self).render(name, value, attrs)
@@ -154,7 +89,7 @@ class Select2MultipleChoiceWidget(_Select2Mixin, forms.SelectMultiple):
     pass
 
 
-class Select2Ajax(forms.TextInput):
+class _Select2AjaxMixin():
     """
     A Select2 widget that loads its options asynchronously.
 
@@ -162,18 +97,6 @@ class Select2Ajax(forms.TextInput):
     The url is not specified in the form class definition because in most cases the url will be dependent on the
     domain of the request.
     """
-    class Media(object):
-        css = {
-            'all': ('select2-3.5.2-legacy/select2.css', 'select2-3.5.2-legacy/select2-bootstrap.css')
-        }
-        js = ('select2-3.5.2-legacy/select2.js',)
-
-    def __init__(self, attrs=None, page_size=20, multiple=False):
-        self.page_size = page_size
-        self.multiple = multiple
-        self._initial = None
-        super(Select2Ajax, self).__init__(attrs)
-
     def set_url(self, url):
         self.url = url
 
@@ -190,20 +113,47 @@ class Select2Ajax(forms.TextInput):
             # if its a scalar
             return {"id": val, "text": val}
 
+
+class Select2AjaxV3(_Select2AjaxMixin, forms.TextInput):
+    def __init__(self, attrs=None, page_size=20, multiple=False):
+        self.page_size = page_size
+        self.multiple = multiple
+        self._initial = None
+        super(Select2AjaxV3, self).__init__(attrs)
+
     def render(self, name, value, attrs=None):
         attrs.update({
-            'class': 'form-control hqwebapp-select2-ajax',
+            'class': 'form-control hqwebapp-select2-ajax-v3',
             'data-initial': json.dumps(self._initial if self._initial is not None else self._clean_initial(value)),
             'data-endpoint': self.url,
             'data-page-size': self.page_size,
             'data-multiple': '1' if self.multiple else '0',
         })
-        output = super(Select2Ajax, self).render(name, value, attrs)
+        output = super(Select2AjaxV3, self).render(name, value, attrs)
+        return mark_safe(output)
+
+
+class Select2AjaxV4(_Select2AjaxMixin, forms.Select):
+    def __init__(self, attrs=None, page_size=20, multiple=False):
+        self.page_size = page_size
+        self.multiple = multiple
+        self._initial = None
+        super(Select2AjaxV4, self).__init__(attrs)
+
+    def render(self, name, value, attrs=None):
+        attrs.update({
+            'class': 'form-control hqwebapp-select2-ajax-v4',
+            'data-initial': json.dumps(self._initial if self._initial is not None else self._clean_initial(value)),
+            'data-endpoint': self.url,
+            'data-page-size': self.page_size,
+            'data-multiple': '1' if self.multiple else '0',
+        })
+        output = super(Select2AjaxV4, self).render(name, value, attrs)
         return mark_safe(output)
 
 
 class DateRangePickerWidget(Input):
-    """SUPPORTS BOOTSTRAP 3 ONLY
+    """
     Extends the standard input widget to render a Date Range Picker Widget.
     Documentation and Demo here: http://www.daterangepicker.com/
 

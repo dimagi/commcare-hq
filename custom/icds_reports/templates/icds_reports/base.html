@@ -1,0 +1,6 @@
+{% extends "reports/base_template.html" %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'icds_reports/js/base.js' %}"></script>
+{% endblock %}

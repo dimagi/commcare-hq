@@ -1,19 +1,22 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import datetime
+from datetime import date
 import io
 import json
+import uuid
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from six.moves.urllib.parse import urlencode
+from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import F, Q, Sum
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext
+from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceConflict
 from celery.schedules import crontab
@@ -21,9 +24,11 @@ from celery.task import periodic_task, task
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.database import iter_docs
 from corehq.util.log import send_HTML_email
 
+from corehq.apps.accounting.enterprise import EnterpriseReport
 from corehq.apps.accounting.exceptions import (
     CreditLineError,
     InvoiceError,
@@ -46,6 +51,7 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
+    DomainUserHistory
 )
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
@@ -60,7 +66,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.notifications.models import Notification
-from corehq.apps.users.models import FakeUser, WebUser
+from corehq.apps.users.models import FakeUser, WebUser, CommCareUser
 from corehq.const import (
     SERVER_DATE_FORMAT,
     SERVER_DATETIME_FORMAT_NO_SEC,
@@ -90,15 +96,16 @@ def _activate_subscription(subscription):
 
 def activate_subscriptions(based_on_date=None):
     starting_subscriptions = Subscription.visible_objects.filter(
+        Q(date_end__isnull=True) | Q(date_end__gt=F('date_start')),
         is_active=False,
     )
     if based_on_date:
         starting_subscriptions = starting_subscriptions.filter(date_start=based_on_date)
     else:
-        today = datetime.date.today()
+        today = date.today()
         starting_subscriptions = starting_subscriptions.filter(
-            Q(date_end__isnull=True) | Q(date_end__gt=today),
             date_start__lte=today,
+            date_end__gt=today,
         )
 
     for subscription in starting_subscriptions:
@@ -123,7 +130,8 @@ def _deactivate_subscription(subscription):
         next_subscription.save()
     else:
         next_subscription = assign_explicit_community_subscription(
-            subscription.subscriber.domain, subscription.date_end, account=subscription.account
+            subscription.subscriber.domain, subscription.date_end, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY,
+            account=subscription.account
         )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
@@ -191,7 +199,7 @@ def warn_active_subscriptions_per_domain_not_one():
             log_accounting_error("There is no active subscription for domain %s" % domain_name)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=5), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=5), acks_late=True)
 def update_subscriptions():
     deactivate_subscriptions(datetime.date.today())
     deactivate_subscriptions()
@@ -203,7 +211,7 @@ def update_subscriptions():
     warn_active_subscriptions_per_domain_not_one()
 
 
-@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
@@ -308,7 +316,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
@@ -318,7 +326,7 @@ def remind_subscription_ending():
     send_subscription_reminder_emails(1)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_dimagi_contact_subscription_ending_60_days():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
@@ -358,7 +366,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
             subscription.send_dimagi_ending_reminder_email()
 
 
-@task(ignore_result=True, acks_late=True)
+@task(serializer='pickle', ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
                                 account_created_by,
@@ -378,7 +386,8 @@ def create_wire_credits_invoice(domain_name,
     record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
     if record.should_send_email:
         try:
-            record.send_email(contact_emails=contact_emails)
+            for email in contact_emails:
+                record.send_email(contact_email=email)
         except Exception as e:
             log_accounting_error(
                 "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, e.message),
@@ -389,7 +398,7 @@ def create_wire_credits_invoice(domain_name,
         record.save()
 
 
-@task(ignore_result=True, acks_late=True)
+@task(serializer='pickle', ignore_result=True, acks_late=True)
 def send_purchase_receipt(payment_record, domain,
                           template_html, template_plaintext,
                           additional_context):
@@ -419,13 +428,13 @@ def send_purchase_receipt(payment_record, domain,
     email_plaintext = render_to_string(template_plaintext, context)
 
     send_HTML_email(
-        ugettext("Payment Received - Thank You!"), email, email_html,
+        _("Payment Received - Thank You!"), email, email_html,
         text_content=email_plaintext,
         email_from=get_dimagi_from_email(),
     )
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True)
 def send_autopay_failed(invoice, payment_method):
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user
@@ -462,7 +471,7 @@ def send_autopay_failed(invoice, payment_method):
 
 
 # Email this out every Monday morning.
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
 def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
@@ -557,13 +566,13 @@ def weekly_digest():
         })
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(hour=1, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
 def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
     if app_id:
         try:
@@ -586,16 +595,16 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
             )
 
 
-def ensure_explicit_community_subscription(domain_name, from_date):
+def ensure_explicit_community_subscription(domain_name, from_date, method, web_user=None):
     if not Subscription.visible_objects.filter(
         Q(date_end__gt=from_date) | Q(date_end__isnull=True),
         date_start__lte=from_date,
         subscriber__domain=domain_name,
     ).exists():
-        assign_explicit_community_subscription(domain_name, from_date)
+        assign_explicit_community_subscription(domain_name, from_date, method, web_user=web_user)
 
 
-def assign_explicit_community_subscription(domain_name, start_date, account=None):
+def assign_explicit_community_subscription(domain_name, start_date, method, account=None, web_user=None):
     future_subscriptions = Subscription.visible_objects.filter(
         date_start__gt=start_date,
         subscriber__domain=domain_name,
@@ -619,13 +628,14 @@ def assign_explicit_community_subscription(domain_name, start_date, account=None
         date_start=start_date,
         date_end=end_date,
         skip_invoicing_if_no_feature_charges=True,
-        adjustment_method=SubscriptionAdjustmentMethod.TASK,
+        adjustment_method=method,
         internal_change=True,
         service_type=SubscriptionType.PRODUCT,
+        web_user=web_user,
     )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
 def run_downgrade_process(today=None):
     today = today or datetime.date.today()
 
@@ -636,25 +646,30 @@ def run_downgrade_process(today=None):
 
 
 def _get_domains_with_invoices_over_threshold(today):
-    invoices = Invoice.objects.filter(is_hidden=False,
-                                      subscription__service_type=SubscriptionType.PRODUCT,
-                                      date_paid__isnull=True,
-                                      date_due__lt=today)\
-        .exclude(subscription__plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE)\
-        .order_by('date_due')\
-        .select_related('subscription__subscriber')
+    unpaid_saas_invoices = Invoice.objects.filter(
+        is_hidden=False,
+        subscription__service_type=SubscriptionType.PRODUCT,
+        date_paid__isnull=True,
+    )
+
+    overdue_saas_invoices_in_downgrade_daterange = unpaid_saas_invoices.filter(
+        date_due__lte=today - datetime.timedelta(days=1),
+        date_due__gte=today - datetime.timedelta(days=61),
+    ).order_by('date_due').select_related('subscription__subscriber')
 
     domains = set()
 
-    for invoice in invoices:
-        domain = invoice.get_domain()
+    for overdue_invoice in overdue_saas_invoices_in_downgrade_daterange:
+        domain = overdue_invoice.get_domain()
         if domain not in domains:
-            domains.add(domain)
-            total = Invoice.objects.filter(is_hidden=False,
-                                           subscription__subscriber__domain=domain)\
-                .aggregate(Sum('balance'))['balance__sum']
-            if total >= 100:
-                yield domain, invoice, total
+            total_overdue_to_date = unpaid_saas_invoices.filter(
+                Q(date_due__lte=overdue_invoice.date_due)
+                | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
+                subscription__subscriber__domain=domain,
+            ).aggregate(Sum('balance'))['balance__sum']
+            if total_overdue_to_date >= 100:
+                domains.add(domain)
+                yield domain, overdue_invoice, total_overdue_to_date
 
 
 def _is_subscription_eligible_for_downgrade_process(subscription):
@@ -693,7 +708,7 @@ def _apply_downgrade_process(subscription, oldest_unpaid_invoice, total, today):
 
 def _send_downgrade_notice(invoice, context):
     send_html_email_async.delay(
-        ugettext('Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain())),
+        _('Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain())),
         invoice.contact_emails,
         render_to_string('accounting/email/downgrade.html', context),
         render_to_string('accounting/email/downgrade.txt', context),
@@ -716,7 +731,7 @@ def _downgrade_domain(subscription):
 
 def _send_downgrade_warning(invoice, context):
     send_html_email_async.delay(
-        ugettext("CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(
+        _("CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(
             invoice.get_domain()
         )),
         invoice.contact_emails,
@@ -729,7 +744,7 @@ def _send_downgrade_warning(invoice, context):
 
 def _send_overdue_notice(invoice, context):
     send_html_email_async.delay(
-        ugettext('CommCare Billing Statement 30 days Overdue for {}'.format(invoice.get_domain())),
+        _('CommCare Billing Statement 30 days Overdue for {}'.format(invoice.get_domain())),
         invoice.contact_emails,
         render_to_string('accounting/email/30_days.html', context),
         render_to_string('accounting/email/30_days.txt', context),
@@ -739,7 +754,7 @@ def _send_overdue_notice(invoice, context):
 
 
 def _create_overdue_notification(invoice, context):
-    message = ugettext('Reminder - your {} statement is past due!'.format(
+    message = _('Reminder - your {} statement is past due!'.format(
         invoice.date_start.strftime('%B')
     ))
     note = Notification.objects.create(content=message, url=context['statements_url'],
@@ -748,7 +763,7 @@ def _create_overdue_notification(invoice, context):
     note.activate()
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def archive_logos(self, domain_name):
     try:
@@ -767,7 +782,7 @@ def archive_logos(self, domain_name):
         raise e
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
+@task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def restore_logos(self, domain_name):
     try:
@@ -786,7 +801,7 @@ def restore_logos(self, domain_name):
         raise e
 
 
-@periodic_task(run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
 def send_prepaid_credits_export():
     if settings.ENTERPRISE_MODE:
         return
@@ -840,12 +855,12 @@ def send_prepaid_credits_export():
             if all_credit_lines else 'N/A',
         ])
 
-    file_obj = io.BytesIO()
+    file_obj = io.StringIO()
     writer = csv.writer(file_obj)
     writer.writerow(headers)
     for row in body:
         writer.writerow([
-            val.encode('utf-8') if isinstance(val, six.text_type) else six.binary_type(val)
+            val if isinstance(val, six.text_type) else bytes(val)
             for val in row
         ])
 
@@ -857,3 +872,44 @@ def send_prepaid_credits_export():
         'See attached file.',
         file_attachments=[{'file_obj': file_obj, 'title': filename, 'mimetype': 'text/csv'}],
     )
+
+
+@task(serializer='pickle', queue="email_queue")
+def email_enterprise_report(domain, slug, couch_user):
+    account = BillingAccount.get_account_by_domain(domain)
+    report = EnterpriseReport.create(slug, account.id, couch_user)
+
+    # Generate file
+    csv_file = io.StringIO()
+    writer = csv.writer(csv_file)
+    writer.writerow(report.headers)
+    writer.writerows(report.rows)
+
+    # Store file in redis
+    hash_id = uuid.uuid4().hex
+    redis = get_redis_client()
+    redis.set(hash_id, csv_file.getvalue())
+    redis.expire(hash_id, 60 * 60 * 24)
+    csv_file.close()
+
+    # Send email
+    url = absolute_reverse("enterprise_dashboard_download", args=[domain, report.slug, str(hash_id)])
+    link = "<a href='{}'>{}</a>".format(url, url)
+    subject = _("Enterprise Dashboard: {}").format(report.title)
+    body = "The enterprise report you requested for the account {} is ready.<br>" \
+           "You can download the data at the following link: {}<br><br>" \
+           "Please remember that this link will only be active for 24 hours.".format(account.name, link)
+    send_html_email_async(subject, couch_user.username, body)
+
+
+@periodic_task(serializer='pickle', run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+def calculate_users_in_all_domains():
+    for domain in Domain.get_all_names():
+        num_users = CommCareUser.total_by_domain(domain)
+        record_date = datetime.date.today() - relativedelta(days=1)
+        user_history = DomainUserHistory.create(
+            domain=domain,
+            num_users=num_users,
+            record_date=record_date
+        )
+        user_history.save()

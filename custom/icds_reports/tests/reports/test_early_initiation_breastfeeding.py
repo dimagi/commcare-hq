@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import early_initiation_breastfeeding_help_text
 from custom.icds_reports.reports.early_initiation_breastfeeding import get_early_initiation_breastfeeding_map, \
     get_early_initiation_breastfeeding_chart, get_early_initiation_breastfeeding_data
 from django.test import TestCase
@@ -10,7 +11,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestEarlyInitiationBreastFeeding(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_early_initiation_breastfeeding_map(
@@ -78,12 +78,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Percentage of children who were put to the breast within one hour of birth."
-            "<br/><br/>Early initiation of breastfeeding ensure the newborn "
-            "recieves the 'first milk' rich in nutrients"
-            " and encourages exclusive breastfeeding practice"
-        )
+        expected = early_initiation_breastfeeding_help_text(html=True)
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -295,9 +290,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children who were put to the breast within one hour of birth."
-                        "<br/><br/>Early initiation of breastfeeding ensure the newborn recieves the 'first milk'"
-                        " rich in nutrients and encourages exclusive breastfeeding practice",
+                "info": early_initiation_breastfeeding_help_text(html=True),
                 "tooltips_data": {
                     "s2": {
                         "in_month": 0,

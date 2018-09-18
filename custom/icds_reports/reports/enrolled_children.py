@@ -10,6 +10,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.messages import percent_children_enrolled_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels, \
     indian_formatted_number, get_child_locations
@@ -67,10 +68,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
         "rightLegend": {
             "average": sum(average) / float(len(average) or 1),
             "average_format": 'number',
-            "info": _((
-                "Total number of children between the age of ({}) who are enrolled for Anganwadi Services"
-                .format(age_label)
-            )),
+            "info": percent_children_enrolled_help_text(age_label=age_label),
             "extended_info": [
                 {
                     'indicator':
@@ -214,9 +212,7 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
     return {
         "tooltips_data": dict(tooltips_data),
         "format": "number",
-        "info": _((
-            "Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services"
-        )),
+        "info": percent_children_enrolled_help_text(),
         "chart_data": [
             {
                 "values": chart_data['blue'],

@@ -66,6 +66,7 @@ CALC_XPATHS = FeaturePreview(
     description=_(
         "Specify a custom xpath expression to calculate a value "
         "in the case list or case detail screen."),
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Calculations+in+the+Case+List+and+Details'
 )
 
 ENUM_IMAGE = FeaturePreview(
@@ -84,7 +85,7 @@ CONDITIONAL_ENUM = FeaturePreview(
     label=_('Conditional ID Mapping in Case List'),
     description=_(
         "Specify a custom xpath expression to calculate a lookup key in the case list, case detail screen or "
-        "case tile enum columns"
+        "case tile enum columns."
     ),
 )
 

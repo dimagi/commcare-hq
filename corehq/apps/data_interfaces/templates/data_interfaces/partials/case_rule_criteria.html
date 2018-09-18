@@ -19,18 +19,12 @@
         </div>
     {% endif %}
     {% crispy criteria_form criteria_form.case_type_helper %}
-    <div data-bind="template: {name: get_ko_template_id, foreach: criteria}"></div>
-    <div class="form-group">
+    <div data-bind="template: {name: get_ko_template_id, foreach: criteria, afterRender:disableCriteriaField}"></div>
+    <div class="form-group" data-bind="template: {afterRender:disableCriteriaField}">
         <div class="alert alert-block alert-danger" data-bind="visible: show_add_filter_warning() && selected_case_filter_id() !== 'select-one'">
             <span class="help-block"><strong>{% trans "Please click Add filter or clear the dropdown" %}</strong></span>
         </div>
-        <div class="col-xs-2 col-xs-offset-1 text-right">
-            <button class="btn btn-success" data-bind="click: add_filter">
-                <i class="fa fa-plus"></i>
-                {% trans "Add filter for" %}
-            </button>
-        </div>
-        <div class="col-xs-3">
+        <div class="col-xs-3 col-xs-offset-3">
             <select class="select form-control" data-bind="value: selected_case_filter_id">
                 <option value="select-one">{% trans "(Select one and click Add filter)" %}</option>
                 {% if form.allow_case_modified_filter %}
@@ -50,6 +44,12 @@
                 <option value="custom-filter">{% trans "Custom filter" %}</option>
                 {% endif %}
             </select>
+        </div>
+        <div class="col-xs-2">
+            <button class="btn btn-success" data-bind="click: add_filter">
+                <i class="fa fa-plus"></i>
+                {% trans "Add filter" %}
+            </button>
         </div>
     </div>
 </script>
@@ -101,6 +101,9 @@
                 <option value="{{ form.constants.MATCH_NOT_EQUAL }}">{% trans "does not equal" %}</option>
                 <option value="{{ form.constants.MATCH_HAS_VALUE }}">{% trans "has a value" %}</option>
                 <option value="{{ form.constants.MATCH_HAS_NO_VALUE }}">{% trans "does not have a value" %}</option>
+                {% if form.allow_regex_case_property_match %}
+                <option value="{{ form.constants.MATCH_REGEX }}">{% trans "matches the regular expression" %}</option>
+                {% endif %}
             </select>
         </div>
         <div class="controls col-xs-2" data-bind="visible: show_property_value_input()">

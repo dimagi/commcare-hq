@@ -8,12 +8,9 @@ from datetime import datetime, timedelta
 
 import six
 from alembic.autogenerate.api import compare_metadata
-from kafka.util import kafka_bytestring
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.userreports.const import (
-    KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
-)
+from corehq.apps.userreports.const import KAFKA_TOPICS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import (
     BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
@@ -22,7 +19,7 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
@@ -79,7 +76,7 @@ def _filter_by_hash(configs, ucr_division):
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_provider, auto_repopulate_tables=False, ucr_division=None,
-                 include_ucrs=None, exclude_ucrs=None):
+                 include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -88,6 +85,7 @@ class ConfigurableReportTableManagerMixin(object):
                         first
         include_ucrs -- list of ucr 'table_ids' to be included in this processor
         exclude_ucrs -- list of ucr 'table_ids' to be excluded in this processor
+        bootstrap_interval -- time in seconds when the pillow checks for any data source changes
         """
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
@@ -96,6 +94,7 @@ class ConfigurableReportTableManagerMixin(object):
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
+        self.bootstrap_interval = bootstrap_interval
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
@@ -118,7 +117,7 @@ class ConfigurableReportTableManagerMixin(object):
     def needs_bootstrap(self):
         return (
             not self.bootstrapped
-            or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=REBUILD_CHECK_INTERVAL)
+            or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
         )
 
     def bootstrap_if_needed(self):
@@ -141,19 +140,12 @@ class ConfigurableReportTableManagerMixin(object):
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
-    def _tables_by_engine_id(self, engine_ids):
-        return [
+    def rebuild_tables_if_necessary(self):
+        self._rebuild_sql_tables([
             adapter
             for adapter_list in self.table_adapters_by_domain.values()
             for adapter in adapter_list
-            if get_backend_id(adapter.config, can_handle_laboratory=True) in engine_ids
-        ]
-
-    def rebuild_tables_if_necessary(self):
-        sql_supported_backends = [UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY]
-        es_supported_backends = [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY]
-        self._rebuild_sql_tables(self._tables_by_engine_id(sql_supported_backends))
-        self._rebuild_es_tables(self._tables_by_engine_id(es_supported_backends))
+        ])
 
     def _rebuild_sql_tables(self, adapters):
         tables_by_engine = defaultdict(dict)
@@ -190,11 +182,6 @@ class ConfigurableReportTableManagerMixin(object):
             tables_to_migrate = get_tables_to_migrate(diffs, table_names)
             tables_to_migrate -= tables_to_rebuild
             migrate_tables(engine, raw_diffs, tables_to_migrate)
-
-    def _rebuild_es_tables(self, adapters):
-        # note unlike sql rebuilds this doesn't rebuild the indicators
-        for adapter in adapters:
-            adapter.rebuild_table_if_necessary()
 
     def rebuild_table(self, adapter):
         config = adapter.config
@@ -287,7 +274,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
     def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False):
         change_feed = KafkaChangeFeed(
-            topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
+            topics, client_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
         checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
         event_handler = KafkaCheckpointEventHandler(
@@ -322,7 +309,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
                          num_processes=1, process_num=0, **kwargs):
     topics = topics or KAFKA_TOPICS
-    topics = [kafka_bytestring(t) for t in topics]
+    topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=DynamicDataSourceProvider(),
@@ -342,7 +329,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
                                 num_processes=1, process_num=0, **kwargs):
     topics = topics or KAFKA_TOPICS
-    topics = [kafka_bytestring(t) for t in topics]
+    topics = [t for t in topics]
     return ConfigurableReportKafkaPillow(
         processor=ConfigurableReportPillowProcessor(
             data_source_provider=StaticDataSourceProvider(),
@@ -350,6 +337,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
+            bootstrap_interval=7 * 24 * 60 * 60  # 1 week
         ),
         pillow_name=pillow_id,
         topics=topics,

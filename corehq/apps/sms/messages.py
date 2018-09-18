@@ -10,6 +10,7 @@ MSG_TOUCHFORMS_ERROR = "sms.survey.internalerror"
 MSG_CHOICE_OUT_OF_RANGE = "sms.validation.outofrange"
 MSG_INVALID_CHOICE = "sms.validation.invalidchoice"
 MSG_INVALID_INT = "sms.validation.invalidint"
+MSG_INVALID_INT_RANGE = "sms.validation.invalidintrange"
 MSG_INVALID_FLOAT = "sms.validation.invalidfloat"
 MSG_INVALID_LONG = "sms.validation.invalidlong"
 MSG_INVALID_DATE = "sms.validation.invaliddate"
@@ -53,6 +54,8 @@ _MESSAGES = {
     MSG_CHOICE_OUT_OF_RANGE: ugettext_noop("Answer is out of range."),
     MSG_INVALID_CHOICE: ugettext_noop("Invalid choice."),
     MSG_INVALID_INT: ugettext_noop("Invalid integer entered."),
+    MSG_INVALID_INT_RANGE:
+        ugettext_noop("Invalid integer entered, expected a number between -2147483648 and 2147483647."),
     MSG_INVALID_FLOAT: ugettext_noop("Invalid decimal number entered."),
     MSG_INVALID_LONG: ugettext_noop("Invalid long integer entered."),
     MSG_INVALID_DATE: ugettext_noop("Invalid date format: expected {0}."),

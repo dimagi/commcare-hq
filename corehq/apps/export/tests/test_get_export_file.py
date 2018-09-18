@@ -43,16 +43,28 @@ from corehq.apps.export.tests.util import (
     new_case,
     DOMAIN,
     DEFAULT_CASE_TYPE,
+    get_export_json,
 )
 from corehq.elastic import send_to_elasticsearch, get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.files import TransientTempfile
 from corehq.util.test_utils import trap_extra_setup, flag_enabled
 from couchexport.export import get_writer
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from pillowtop.es_utils import initialize_index_and_mapping
 from six.moves import range
+
+
+def assert_instance_gives_results(docs, export_instance, expected_result):
+    with TransientTempfile() as temp_path:
+        writer = get_export_writer([export_instance], temp_path)
+        with writer.open([export_instance]):
+            write_export_instance(writer, export_instance, docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            assert json.loads(export.read()) == expected_result
 
 
 class WriterTest(SimpleTestCase):
@@ -117,21 +129,12 @@ class WriterTest(SimpleTestCase):
             ]
         )
 
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
-
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['Q3', 'Q1'],
-                        'rows': [['baz', 'foo'], ['bop', 'bip']],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'My table': {
+                'headers': ['Q3', 'Q1'],
+                'rows': [['baz', 'foo'], ['bop', 'bip']],
+            }
+        })
 
     @patch('corehq.apps.export.export.MAX_EXPORTABLE_ROWS', 2)
     @flag_enabled('PAGINATED_EXPORTS')
@@ -161,24 +164,17 @@ class WriterTest(SimpleTestCase):
                 )
             ]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs + self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table_000': {
-                        'headers': ['Q3', 'Q1'],
-                        'rows': [['baz', 'foo'], ['bop', 'bip']],
-                    },
-                    'My table_001': {
-                        'headers': ['Q3', 'Q1'],
-                        'rows': [['baz', 'foo'], ['bop', 'bip']],
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs + self.docs, export_instance, {
+            'My table_000': {
+                'headers': ['Q3', 'Q1'],
+                'rows': [['baz', 'foo'], ['bop', 'bip']],
+            },
+            'My table_001': {
+                'headers': ['Q3', 'Q1'],
+                'rows': [['baz', 'foo'], ['bop', 'bip']],
+            }
+        })
 
     def test_split_questions(self):
         """Ensure columns are split when `split_multiselects` is set to True"""
@@ -206,21 +202,13 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['MC | one', 'MC | two', 'MC | extra'],
-                        'rows': [[EMPTY_VALUE, 1, 'extra'], [1, 1, '']],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'My table': {
+                'headers': ['MC | one', 'MC | two', 'MC | extra'],
+                'rows': [[EMPTY_VALUE, 1, 'extra'], [1, 1, '']],
+            }
+        })
 
     def test_array_data_in_scalar_question(self):
         '''
@@ -253,21 +241,13 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, [doc])
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['Scalar Array'],
-                        'rows': [['one two']],
-
-                    }
-                }
-            )
+        assert_instance_gives_results([doc], export_instance, {
+            'My table': {
+                'headers': ['Scalar Array'],
+                'rows': [['one two']],
+            }
+        })
 
     def test_form_stock_columns(self):
         """Ensure that we can export stock properties in a form export"""
@@ -349,26 +329,18 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
 
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, docs)
-
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['StockItem @type', 'StockItem @quantity'],
-                        'rows': [
-                            ['question-id', '2'],
-                            ['question-id', '2'],
-                            [MISSING_VALUE, MISSING_VALUE],
-                            [MISSING_VALUE, MISSING_VALUE],
-                        ],
-                    }
-                }
-            )
+        assert_instance_gives_results(docs, export_instance, {
+            'My table': {
+                'headers': ['StockItem @type', 'StockItem @quantity'],
+                'rows': [
+                    ['question-id', '2'],
+                    ['question-id', '2'],
+                    [MISSING_VALUE, MISSING_VALUE],
+                    [MISSING_VALUE, MISSING_VALUE],
+                ],
+            }
+        })
 
     def test_transform_dates(self):
         """Ensure dates are transformed for excel when `transform_dates` is set to True"""
@@ -392,21 +364,13 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['Date'],
-                        'rows': [[MISSING_VALUE], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'My table': {
+                'headers': ['Date'],
+                'rows': [[MISSING_VALUE], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
+            }
+        })
 
     def test_split_questions_false(self):
         """Ensure multiselects are not split when `split_multiselects` is set to False"""
@@ -434,21 +398,13 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['MC'],
-                        'rows': [['two extra'], ['one two']],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'My table': {
+                'headers': ['MC'],
+                'rows': [['two extra'], ['one two']],
+            }
+        })
 
     def test_multi_table(self):
         export_instance = FormExportInstance(
@@ -484,24 +440,17 @@ class WriterTest(SimpleTestCase):
                 )
             ]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['Q3'],
-                        'rows': [['baz'], ['bop']],
 
-                    },
-                    'My other table': {
-                        'headers': ['Q4'],
-                        'rows': [['bar'], ['boop']],
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'My table': {
+                'headers': ['Q3'],
+                'rows': [['baz'], ['bop']],
+            },
+            'My other table': {
+                'headers': ['Q4'],
+                'rows': [['bar'], ['boop']],
+            }
+        })
 
     def test_multi_table_order(self):
         tables = [
@@ -525,7 +474,7 @@ class WriterTest(SimpleTestCase):
             export_format=Format.HTML,
             tables=tables
         )
-        writer = get_export_writer([export_instance])
+
         docs = [
             {
                 'domain': 'my-domain',
@@ -533,10 +482,13 @@ class WriterTest(SimpleTestCase):
                 "form": {'q{}'.format(i): 'value {}'.format(i) for i in range(10)}
             }
         ]
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, docs)
-        with ExportFile(writer.path, writer.format) as export:
-            exported_tables = [table for table in re.findall('<table>', export.read())]
+
+        with TransientTempfile() as temp_path:
+            writer = get_export_writer([export_instance], temp_path)
+            with writer.open([export_instance]):
+                write_export_instance(writer, export_instance, docs)
+            with ExportFile(writer.path, writer.format) as export:
+                exported_tables = [table for table in re.findall(b'<table>', export.read())]
 
         expected_tables = [t.label for t in tables]
         self.assertEqual(len(expected_tables), len(exported_tables))
@@ -604,31 +556,32 @@ class WriterTest(SimpleTestCase):
 
         ]
 
-        writer = _ExportWriter(get_writer(Format.JSON))
-        with writer.open(export_instances):
-            write_export_instance(writer, export_instances[0], self.docs)
-            write_export_instance(writer, export_instances[1], self.docs)
-            write_export_instance(writer, export_instances[2], self.docs)
+        with TransientTempfile() as temp_path:
+            writer = _ExportWriter(get_writer(Format.JSON), temp_path)
+            with writer.open(export_instances):
+                write_export_instance(writer, export_instances[0], self.docs)
+                write_export_instance(writer, export_instances[1], self.docs)
+                write_export_instance(writer, export_instances[2], self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['Q3'],
-                        'rows': [['baz'], ['bop']],
+            with ExportFile(writer.path, writer.format) as export:
+                self.assertEqual(
+                    json.loads(export.read()),
+                    {
+                        'My table': {
+                            'headers': ['Q3'],
+                            'rows': [['baz'], ['bop']],
 
-                    },
-                    'Export2-My other table': {
-                        'headers': ['Q4'],
-                        'rows': [['bar'], ['boop']],
-                    },
-                    'Export3-My other table': {
-                        'headers': ['Q4'],
-                        'rows': [['bar'], ['boop']],
-                    },
-                }
-            )
+                        },
+                        'Export2-My other table': {
+                            'headers': ['Q4'],
+                            'rows': [['bar'], ['boop']],
+                        },
+                        'Export3-My other table': {
+                            'headers': ['Q4'],
+                            'rows': [['bar'], ['boop']],
+                        },
+                    }
+                )
 
     def test_empty_location(self):
         export_instance = FormExportInstance(
@@ -662,21 +615,12 @@ class WriterTest(SimpleTestCase):
             }
         ]
 
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, docs)
-
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['location'],
-                        'rows': [[EMPTY_VALUE]],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(docs, export_instance, {
+            'My table': {
+                'headers': ['location'],
+                'rows': [[EMPTY_VALUE]],
+            }
+        })
 
     def test_empty_table_label(self):
         export_instance = FormExportInstance(
@@ -699,21 +643,13 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'Sheet1': {
-                        'headers': ['Q1'],
-                        'rows': [['foo'], ['bip']],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'Sheet1': {
+                'headers': ['Q1'],
+                'rows': [['foo'], ['bip']],
+            }
+        })
 
 
 class ExportTest(SimpleTestCase):
@@ -747,53 +683,50 @@ class ExportTest(SimpleTestCase):
         super(ExportTest, cls).tearDownClass()
 
     def test_get_export_file(self):
-        export_file = get_export_file(
-            [
-                CaseExportInstance(
-                    export_format=Format.JSON,
-                    domain=DOMAIN,
-                    case_type=DEFAULT_CASE_TYPE,
-                    tables=[TableConfiguration(
-                        label="My table",
-                        selected=True,
-                        path=[],
-                        columns=[
-                            ExportColumn(
-                                label="Foo column",
-                                item=ExportItem(
-                                    path=[PathNode(name="foo")]
-                                ),
-                                selected=True,
+        export_json = get_export_json(
+            CaseExportInstance(
+                export_format=Format.JSON,
+                domain=DOMAIN,
+                case_type=DEFAULT_CASE_TYPE,
+                tables=[TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    path=[],
+                    columns=[
+                        ExportColumn(
+                            label="Foo column",
+                            item=ExportItem(
+                                path=[PathNode(name="foo")]
                             ),
-                            ExportColumn(
-                                label="Bar column",
-                                item=ExportItem(
-                                    path=[PathNode(name="bar")]
-                                ),
-                                selected=True,
-                            )
-                        ]
-                    )]
-                ),
-            ],
-            []  # No filters
+                            selected=True,
+                        ),
+                        ExportColumn(
+                            label="Bar column",
+                            item=ExportItem(
+                                path=[PathNode(name="bar")]
+                            ),
+                            selected=True,
+                        )
+                    ]
+                )]
+            ),
         )
-        with export_file as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': [
-                            'Foo column',
-                            'Bar column'],
-                        'rows': [
-                            ['apple', 'banana'],
-                            ['apple', 'banana'],
-                            ['apple', 'banana'],
-                        ],
-                    }
+
+        self.assertEqual(
+            export_json,
+            {
+                'My table': {
+                    'headers': [
+                        'Foo column',
+                        'Bar column'],
+                    'rows': [
+                        ['apple', 'banana'],
+                        ['apple', 'banana'],
+                        ['apple', 'banana'],
+                    ],
                 }
-            )
+            }
+        )
 
     def test_case_name_transform(self):
         docs = [
@@ -831,162 +764,148 @@ class ExportTest(SimpleTestCase):
                 )
             ]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['case_name'],
-                        'rows': [['batman'], [MISSING_VALUE]],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(docs, export_instance, {
+            'My table': {
+                'headers': ['case_name'],
+                'rows': [['batman'], [MISSING_VALUE]],
+            }
+        })
 
     @patch('couchexport.deid.DeidGenerator.random_number', return_value=3)
     def test_export_transforms(self, _):
-        export_file = get_export_file(
-            [
-                CaseExportInstance(
-                    export_format=Format.JSON,
-                    domain=DOMAIN,
-                    case_type=DEFAULT_CASE_TYPE,
-                    tables=[TableConfiguration(
-                        label="My table",
-                        selected=True,
-                        path=[],
-                        columns=[
-                            ExportColumn(
-                                label="DEID Date Transform column",
-                                item=ExportItem(
-                                    path=[PathNode(name="date")]
-                                ),
-                                selected=True,
-                                deid_transform=DEID_DATE_TRANSFORM,
-                            )
-                        ]
-                    )]
-                ),
-            ],
-            []  # No filters
+        export_json = get_export_json(
+            CaseExportInstance(
+                export_format=Format.JSON,
+                domain=DOMAIN,
+                case_type=DEFAULT_CASE_TYPE,
+                tables=[TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    path=[],
+                    columns=[
+                        ExportColumn(
+                            label="DEID Date Transform column",
+                            item=ExportItem(
+                                path=[PathNode(name="date")]
+                            ),
+                            selected=True,
+                            deid_transform=DEID_DATE_TRANSFORM,
+                        )
+                    ]
+                )]
+            ),
         )
-        with export_file as export:
-            export_dict = json.loads(export.read())
-            export_dict['My table']['rows'].sort()
-            self.assertEqual(
-                export_dict,
-                {
-                    'My table': {
-                        'headers': [
-                            'DEID Date Transform column [sensitive]',
-                        ],
-                        'rows': [
-                            [MISSING_VALUE],
-                            ['2016-04-07'],
-                            ['2016-04-27'],  # offset by 3 since that's the mocked random offset
-                        ],
-                    }
+
+        export_json['My table']['rows'].sort()
+        self.assertEqual(
+            export_json,
+            {
+                'My table': {
+                    'headers': [
+                        'DEID Date Transform column [sensitive]',
+                    ],
+                    'rows': [
+                        [MISSING_VALUE],
+                        ['2016-04-07'],
+                        ['2016-04-27'],  # offset by 3 since that's the mocked random offset
+                    ],
                 }
-            )
+            }
+        )
 
     def test_selected_false(self):
-        export_file = get_export_file(
-            [
-                CaseExportInstance(
-                    export_format=Format.JSON,
-                    domain=DOMAIN,
-                    case_type=DEFAULT_CASE_TYPE,
-                    tables=[TableConfiguration(
-                        label="My table",
-                        selected=False,
-                        path=[],
-                        columns=[]
-                    )]
-                ),
-            ],
-            []  # No filters
+        export_json = get_export_json(
+            CaseExportInstance(
+                export_format=Format.JSON,
+                domain=DOMAIN,
+                case_type=DEFAULT_CASE_TYPE,
+                tables=[TableConfiguration(
+                    label="My table",
+                    selected=False,
+                    path=[],
+                    columns=[]
+                )]
+            )
         )
-        with export_file as export:
-            self.assertEqual(json.loads(export.read()), {})
+        self.assertEqual(export_json, {})
 
     def test_simple_bulk_export(self):
 
-        export_file = get_export_file(
-            [
-                CaseExportInstance(
-                    export_format=Format.JSON,
-                    domain=DOMAIN,
-                    case_type=DEFAULT_CASE_TYPE,
-                    tables=[TableConfiguration(
-                        selected=True,
-                        label="My table",
-                        path=MAIN_TABLE,
-                        columns=[
-                            ExportColumn(
-                                label="Foo column",
-                                item=ExportItem(
-                                    path=[PathNode(name="foo")]
+        with TransientTempfile() as temp_path:
+            export_file = get_export_file(
+                [
+                    CaseExportInstance(
+                        export_format=Format.JSON,
+                        domain=DOMAIN,
+                        case_type=DEFAULT_CASE_TYPE,
+                        tables=[TableConfiguration(
+                            selected=True,
+                            label="My table",
+                            path=MAIN_TABLE,
+                            columns=[
+                                ExportColumn(
+                                    label="Foo column",
+                                    item=ExportItem(
+                                        path=[PathNode(name="foo")]
+                                    ),
+                                    selected=True,
                                 ),
-                                selected=True,
-                            ),
-                        ]
-                    )]
-                ),
-                CaseExportInstance(
-                    export_format=Format.JSON,
-                    domain=DOMAIN,
-                    case_type=DEFAULT_CASE_TYPE,
-                    tables=[TableConfiguration(
-                        label="My table",
-                        selected=True,
-                        path=MAIN_TABLE,
-                        columns=[
-                            ExportColumn(
-                                label="Bar column",
-                                item=ExportItem(
-                                    path=[PathNode(name="bar")]
-                                ),
-                                selected=True,
+                            ]
+                        )]
+                    ),
+                    CaseExportInstance(
+                        export_format=Format.JSON,
+                        domain=DOMAIN,
+                        case_type=DEFAULT_CASE_TYPE,
+                        tables=[TableConfiguration(
+                            label="My table",
+                            selected=True,
+                            path=MAIN_TABLE,
+                            columns=[
+                                ExportColumn(
+                                    label="Bar column",
+                                    item=ExportItem(
+                                        path=[PathNode(name="bar")]
+                                    ),
+                                    selected=True,
+                                )
+                            ]
+                        )]
+                    ),
+                ],
+                [],  # No filters
+                temp_path,
+            )
+
+            expected = {
+                'Export1-My table': {
+                    "A1": "Foo column",
+                    "A2": "apple",
+                    "A3": "apple",
+                    "A4": "apple",
+                },
+                "Export2-My table": {
+                    "A1": "Bar column",
+                    "A2": "banana",
+                    "A3": "banana",
+                    "A4": "banana",
+                },
+            }
+
+            with export_file as export:
+                wb = load_workbook(export)
+                self.assertEqual(wb.get_sheet_names(), ["Export1-My table", "Export2-My table"])
+
+                for sheet in expected.keys():
+                    for cell in expected[sheet].keys():
+                        self.assertEqual(
+                            wb[sheet][cell].value,
+                            expected[sheet][cell],
+                            'AssertionError: Sheet "{}", cell "{}" expected: "{}", got "{}"'.format(
+                                sheet, cell, expected[sheet][cell], wb[sheet][cell].value
                             )
-                        ]
-                    )]
-                ),
-            ],
-            []  # No filters
-        )
-
-        expected = {
-            'Export1-My table': {
-                "A1": "Foo column",
-                "A2": "apple",
-                "A3": "apple",
-                "A4": "apple",
-            },
-            "Export2-My table": {
-                "A1": "Bar column",
-                "A2": "banana",
-                "A3": "banana",
-                "A4": "banana",
-            },
-        }
-
-        with export_file as export:
-            wb = load_workbook(export)
-            self.assertEqual(wb.get_sheet_names(), ["Export1-My table", "Export2-My table"])
-
-            for sheet in expected.keys():
-                for cell in expected[sheet].keys():
-                    self.assertEqual(
-                        wb[sheet][cell].value,
-                        expected[sheet][cell],
-                        'AssertionError: Sheet "{}", cell "{}" expected: "{}", got "{}"'.format(
-                            sheet, cell, expected[sheet][cell], wb[sheet][cell].value
                         )
-                    )
 
 
 class TableHeaderTest(SimpleTestCase):

@@ -9,17 +9,27 @@ from django.contrib import messages
 from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy as _
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, \
     toggle_js_user_cachebuster
 from couchforms.analytics import get_last_form_submission_received
-from corehq.apps.domain.decorators import require_superuser_or_developer
+from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.decorators import use_datatables
-from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN, \
-    DynamicallyPredictablyRandomToggle, PredictablyRandomToggle, ALL_NAMESPACES
+from corehq.toggles import (
+    ALL_NAMESPACES,
+    ALL_TAGS,
+    NAMESPACE_USER,
+    NAMESPACE_DOMAIN,
+    TAG_CUSTOM,
+    TAG_DEPRECATED,
+    TAG_INTERNAL,
+    DynamicallyPredictablyRandomToggle,
+    PredictablyRandomToggle,
+    all_toggles,
+)
+from corehq.util.soft_assert import soft_assert
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache, parse_toggle
 import six
@@ -29,7 +39,7 @@ NOT_FOUND = "Not Found"
 
 class ToggleBaseView(BasePageView):
 
-    @method_decorator(require_superuser_or_developer)
+    @method_decorator(require_superuser_or_contractor)
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleBaseView, self).dispatch(request, *args, **kwargs)
 
@@ -98,7 +108,7 @@ class ToggleEditView(ToggleBaseView):
     urlname = 'edit_toggle'
     template_name = 'toggle/edit_flag.html'
 
-    @method_decorator(require_superuser_or_developer)
+    @method_decorator(require_superuser_or_contractor)
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleEditView, self).dispatch(request, *args, **kwargs)
 
@@ -189,11 +199,12 @@ class ToggleEditView(ToggleBaseView):
                 _clear_caches_for_dynamic_toggle(self.toggle_meta())
 
         elif save_randomness:
-            messages.error(request, _("The randomness value {} must be between 0 and 1".format(randomness)))
+            messages.error(request, "The randomness value {} must be between 0 and 1".format(randomness))
 
         toggle.save()
-
+        self._notify_on_change(currently_enabled - previously_enabled)
         changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
+
         _call_save_fn_and_clear_cache(toggle.slug, changed_entries, currently_enabled, self.static_toggle)
 
         data = {
@@ -202,6 +213,25 @@ class ToggleEditView(ToggleBaseView):
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
+
+    def _notify_on_change(self, added_entries):
+        is_deprecated_toggle = (self.static_toggle.tag in (TAG_DEPRECATED, TAG_CUSTOM, TAG_INTERNAL))
+        if added_entries and (self.static_toggle.notification_emails or is_deprecated_toggle):
+            subject = "User {} added {} on {} in environment {}".format(
+                self.request.user.username, self.static_toggle.slug,
+                added_entries, settings.SERVER_ENVIRONMENT
+            )
+
+            if self.static_toggle.notification_emails:
+                emails = [
+                    "{}@{}.com".format(email, "dimagi")
+                    for email in self.static_toggle.notification_emails
+                ]
+                _assert = soft_assert(to=emails, send_to_ops=is_deprecated_toggle)
+            else:
+                _assert = soft_assert(send_to_ops=is_deprecated_toggle)
+
+            _assert(False, subject)
 
 
 def toggle_app_manager_v2(request):

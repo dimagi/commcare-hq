@@ -1,15 +1,18 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import io
 from base64 import b64decode
 from codecs import BOM_UTF8
 import os
 import re
 import tempfile
 import zipfile
-import csv
+import csv342 as csv
 import json
 import bz2
 from collections import OrderedDict
+import openpyxl
 
 from django.template.loader import render_to_string, get_template
 from django.utils.functional import Promise
@@ -17,9 +20,14 @@ import xlwt
 
 from couchexport.models import Format
 import six
+from openpyxl.styles import numbers
+from openpyxl.worksheet.write_only import WriteOnlyCell
 from six.moves import zip
 from six.moves import map
 
+
+class XlsLengthException(Exception):
+    pass
 
 class UniqueHeaderGenerator(object):
 
@@ -108,10 +116,15 @@ class CsvFileWriter(ExportFileWriter):
     def _open(self):
         # Excel needs UTF8-encoded CSVs to start with the UTF-8 byte-order mark (FB 163268)
         self._file.write(BOM_UTF8)
-        self._csvwriter = csv.writer(self._file, csv.excel)
 
     def write_row(self, row):
-        self._csvwriter.writerow(row)
+        buffer = io.StringIO()
+        csvwriter = csv.writer(buffer, csv.excel)
+        csvwriter.writerow([
+            col.decode('utf-8') if isinstance(col, bytes) else col
+            for col in row
+        ])
+        self._file.write(buffer.getvalue().encode('utf-8'))
 
 
 class PartialHtmlFileWriter(ExportFileWriter):
@@ -178,7 +191,7 @@ class ExportWriter(object):
 
     def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
-            if isinstance(name, six.binary_type):
+            if isinstance(name, bytes):
                 name = name.decode('utf8')
             elif isinstance(name, Promise):
                 # noinspection PyCompatibility
@@ -352,15 +365,14 @@ class Excel2007ExportWriter(ExportWriter):
     format = Format.XLS_2007
     max_table_name_size = 31
 
-    def _init(self):
-        try:
-            import openpyxl
-        except ImportError:
-            raise Exception("It doesn't look like this machine is configured for "
-                            "excel export. To export to excel you have to run the "
-                            "command:  easy_install openpyxl")
+    def __init__(self, format_as_text=False):
+        super(Excel2007ExportWriter, self).__init__()
+        self.format_as_text = format_as_text
 
-        self.book = openpyxl.Workbook(optimized_write=True)
+    def _init(self):
+        # https://openpyxl.readthedocs.io/en/latest/optimized.html
+        self.book = openpyxl.Workbook(write_only=True)
+
         self.tables = {}
         self.table_indices = {}
 
@@ -381,7 +393,7 @@ class Excel2007ExportWriter(ExportWriter):
         def get_write_value(value):
             if isinstance(value, six.integer_types + (float,)):
                 return value
-            if isinstance(value, str):
+            if isinstance(value, bytes):
                 value = six.text_type(value, encoding="utf-8")
             elif value is not None:
                 value = six.text_type(value)
@@ -389,10 +401,11 @@ class Excel2007ExportWriter(ExportWriter):
                 value = ''
             return dirty_chars.sub('?', value)
 
-        # NOTE: don't touch this. changing anything like formatting in the
-        # row by referencing the cells will cause huge memory issues.
-        # see: http://openpyxl.readthedocs.org/en/latest/optimized.html
-        sheet.append(list(map(get_write_value, row)))
+        cells = [WriteOnlyCell(sheet, get_write_value(val)) for val in row]
+        if self.format_as_text:
+            for cell in cells:
+                cell.number_format = numbers.FORMAT_TEXT
+        sheet.append(cells)
 
     def _close(self):
         """
@@ -420,6 +433,8 @@ class Excel2003ExportWriter(ExportWriter):
         sheet = self.tables[sheet_index]
         # have to deal with primary ids
         for i, val in enumerate(row):
+            if len(row) >= 256:
+                raise XlsLengthException
             sheet.write(row_index, i, six.text_type(val))
         self.table_indices[sheet_index] = row_index + 1
 
@@ -470,7 +485,10 @@ class JsonExportWriter(InMemoryExportWriter):
         for tablename, data in self.tables.items():
             new_tables[self.table_names[tablename]] = {"headers":data[0], "rows": data[1:]}
 
-        self.file.write(json.dumps(new_tables, cls=self.ConstantEncoder))
+        json_dump = json.dumps(new_tables, cls=self.ConstantEncoder)
+        if six.PY3:
+            json_dump = json_dump.encode('utf-8')
+        self.file.write(json_dump)
 
 
 class PythonDictWriter(InMemoryExportWriter):

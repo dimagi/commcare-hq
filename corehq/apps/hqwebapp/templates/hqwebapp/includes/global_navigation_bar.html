@@ -32,6 +32,15 @@
                 </div>
             </li>
             {% if request.couch_user.is_web_user and domain and domain != 'public' and not request.project.is_snapshot %}
+                {% if IS_DOMAIN_BILLING_ADMIN %}
+                <li class="nav-divider divider"></li>
+                <li class="dropdown-header nav-header">{% trans 'Manage Enterprise' %}</li>
+                <li>
+                    <a href="{% url "enterprise_dashboard" domain %}">
+                        <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Enterprise Dashboard" %}
+                    </a>
+                </li>
+                {% endif %}
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Project' %}</li>
             <li>

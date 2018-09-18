@@ -9,6 +9,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('indicator_config_id')
+        parser.add_argument('--in-place', action='store_true', dest='in_place', default=False,
+                            help='Rebuild table in place (preserve existing data)')
+        parser.add_argument('--initiated-by', action='store', dest='initiated',
+                            help='Who initiated the rebuild (for sending email notifications)')
 
     def handle(self, indicator_config_id, **options):
-        tasks.rebuild_indicators(indicator_config_id)
+        if options['in_place']:
+            tasks.rebuild_indicators_in_place(indicator_config_id, options['initiated'])
+        else:
+            tasks.rebuild_indicators(indicator_config_id, options['initiated'])

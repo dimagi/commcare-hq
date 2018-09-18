@@ -1,11 +1,12 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 import os
 from corehq.apps.app_manager.models import Application
 from corehq.apps.commtrack.util import unicode_slug
+from io import open
 
 
 class Command(BaseCommand):
@@ -32,6 +33,6 @@ class Command(BaseCommand):
             for form_index, form in enumerate(module.get_forms()):
                 form_name = ('{index} - {name}.xml'.format(index=form_index, name=unicode_slug(form.default_name())))
                 form_path = os.path.join(module_dir, form_name)
-                with open(form_path, 'w') as f:
+                with open(form_path, 'wb') as f:
                     f.write(form.source.encode('utf-8'))
                     print('wrote {}'.format(form_path))

@@ -12,6 +12,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.messages import exclusive_breastfeeding_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
     indian_formatted_number, get_child_locations
@@ -57,12 +58,7 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
         "fills": fills,
         "rightLegend": {
             "average": average,
-            "info": _((
-                "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-                "<br/><br/>"
-                "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
-                "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
-            )),
+            "info": exclusive_breastfeeding_help_text(html=True),
             "extended_info": [
                 {
                     'indicator': 'Total number of children between ages 0 - 6 months{}:'
@@ -222,12 +218,7 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
 
     return {
         "tooltips_data": dict(tooltips_data),
-        "info": _((
-            "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-            "<br/><br/>"
-            "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
-            "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
-        )),
+        "info": exclusive_breastfeeding_help_text(html=True),
         "chart_data": [
             {
                 "values": chart_data['blue'],

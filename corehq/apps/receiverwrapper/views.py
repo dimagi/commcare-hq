@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
+import os
 
 import six
 from couchdbkit import ResourceNotFound
@@ -11,7 +12,7 @@ from django.http import (
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.auth import determine_authtype_from_request, BASIC
 from corehq.apps.domain.decorators import (
-    check_domain_migration, login_or_digest_ex, login_or_basic_ex, login_or_token_ex,
+    check_domain_migration, login_or_digest_ex, login_or_basic_ex,
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
@@ -40,11 +41,17 @@ from django.views.decorators.csrf import csrf_exempt
 from couchforms.const import MAGIC_PROPERTY
 from couchforms import openrosa_response
 from couchforms.getters import MultimediaBug
+from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from corehq.apps.ota.utils import handle_401_response
 from corehq import toggles
 
+PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
+PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
+PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
+
+@profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     metric_tags = [
@@ -138,6 +145,7 @@ def _record_metrics(tags, submission_type, response, result=None, timer=None):
     datadog_counter('commcare.xform_submissions.count', tags=tags)
 
 
+@location_safe
 @csrf_exempt
 @require_POST
 @check_domain_migration
@@ -252,20 +260,6 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
-@handle_401_response
-@login_or_token_ex(allow_cc_users=True)
-@two_factor_exempt
-def _secure_post_token(request, domain, app_id=None):
-    """only ever called from secure post"""
-    return _process_form(
-        request=request,
-        domain=domain,
-        app_id=app_id,
-        user_id=request.couch_user.get_id,
-        authenticated=True,
-    )
-
-
 @location_safe
 @csrf_exempt
 @require_POST
@@ -276,8 +270,6 @@ def secure_post(request, domain, app_id=None):
         'basic': _secure_post_basic,
         'noauth': _noauth_post,
     }
-    if toggles.ANONYMOUS_WEB_APPS_USAGE.enabled(domain):
-        authtype_map['token'] = _secure_post_token
 
     if request.GET.get('authtype'):
         authtype = request.GET['authtype']

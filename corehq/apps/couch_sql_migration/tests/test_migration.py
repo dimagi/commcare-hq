@@ -12,8 +12,9 @@ from django.test import TestCase
 from django.test import override_settings
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db
+from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db, PartiallyLockingQueue
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -21,7 +22,6 @@ from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
@@ -35,6 +35,8 @@ from corehq.util.test_utils import (
 )
 from couchforms.models import XFormInstance
 from corehq.util.test_utils import patch_datadog
+from mock import patch, MagicMock
+from io import open
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
@@ -59,9 +61,12 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain.delete()
 
-    def _do_migration_and_assert_flags(self, domain):
+    def _do_migration(self, domain):
         self.assertFalse(should_use_sql_backend(domain))
         call_command('migrate_domain_from_couch_to_sql', domain, MIGRATE=True, no_input=True)
+
+    def _do_migration_and_assert_flags(self, domain):
+        self._do_migration(domain)
         self.assertTrue(should_use_sql_backend(domain))
 
     def _compare_diffs(self, expected):
@@ -77,6 +82,16 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
 
 
 class MigrationTestCase(BaseMigrationTestCase):
+    def test_migration_blacklist(self):
+        COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
+        with self.assertRaises(AssertionError):
+            self._do_migration(self.domain_name)
+        COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
+
+    def test_migration_custom_report(self):
+        with self.assertRaises(AssertionError):
+            self._do_migration("up-nrhm")
+
     def test_basic_form_migration(self):
         create_and_save_a_form(self.domain_name)
         self.assertEqual(1, len(self._get_form_ids()))
@@ -195,7 +210,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._compare_diffs([])
 
     def test_duplicate_form_migration(self):
-        with open('corehq/ex-submodules/couchforms/tests/data/posts/duplicate.xml') as f:
+        with open('corehq/ex-submodules/couchforms/tests/data/posts/duplicate.xml', encoding='utf-8') as f:
             duplicate_form_xml = f.read()
 
         submit_form_locally(duplicate_form_xml, self.domain_name)
@@ -603,3 +618,129 @@ class LedgerMigrationTests(BaseMigrationTestCase):
 
     def _get_ledger_state(self, case_id):
         return LedgerAccessors(self.domain_name).get_case_ledger_state(case_id)
+
+
+class TestLockingQueues(TestCase):
+    def setUp(self):
+        self.queues = PartiallyLockingQueue()
+
+    def _add_to_queues(self, queue_obj_id, lock_ids):
+        self.queues._add_item(lock_ids, DummyObject(queue_obj_id))
+        self._check_queue_dicts(queue_obj_id, lock_ids, -1)
+
+    def _check_queue_dicts(self, queue_obj_id, lock_ids, location=None, present=True):
+        """
+        if location is None, it looks anywhere. If it is an int, it'll look in that spot
+        present determines whether it's expected to be in the queue_by_lock_id or not
+        """
+        for lock_id in lock_ids:
+            if location is not None:
+                self.assertEqual(
+                    present,
+                    (len(self.queues.queue_by_lock_id[lock_id]) > (location - 1) and
+                        queue_obj_id == self.queues.queue_by_lock_id[lock_id][location]))
+            else:
+                self.assertEqual(present, queue_obj_id in self.queues.queue_by_lock_id[lock_id])
+
+        self.assertItemsEqual(lock_ids, self.queues.lock_ids_by_queue_id[queue_obj_id])
+
+    def _check_locks(self, lock_ids, lock_set=True):
+        self.assertEqual(lock_set, self.queues._check_lock(lock_ids))
+
+    def test_has_next(self):
+        self.assertFalse(self.queues.has_next())
+        self._add_to_queues('monadnock', ['heady_topper', 'sip_of_sunshine', 'focal_banger'])
+        self.assertTrue(self.queues.has_next())
+
+    def test_try_obj(self):
+        # first object is fine
+        lock_ids = ['grapefruit_sculpin', '60_minute', 'boom_sauce']
+        queue_obj = DummyObject('little_haystack')
+        self.assertTrue(self.queues.try_obj(lock_ids, queue_obj))
+        self._check_locks(lock_ids, lock_set=True)
+        self._check_queue_dicts('little_haystack', lock_ids, present=False)
+
+        # following objects without overlapping locks are fine
+        new_lock_ids = ['brew_free', 'steal_this_can']
+        new_queue_obj = DummyObject('lincoln')
+        self.assertTrue(self.queues.try_obj(new_lock_ids, new_queue_obj))
+        self._check_locks(new_lock_ids, lock_set=True)
+        self._check_queue_dicts('lincoln', new_lock_ids, present=False)
+
+        # following ojbects with overlapping locks add to queue
+        final_lock_ids = ['grapefruit_sculpin', 'wrought_iron']
+        final_queue_obj = DummyObject('lafayette')
+        self.assertFalse(self.queues.try_obj(final_lock_ids, final_queue_obj))
+        self._check_queue_dicts('lafayette', final_lock_ids, -1)
+        self._check_locks(['grapefruit_sculpin'], lock_set=True)
+        self._check_locks(['wrought_iron'], lock_set=False)
+
+    def test_get_next(self):
+        # nothing returned if nothing in queues
+        self.assertEqual(None, self.queues.get_next())
+
+        # first obj in queues will be returned if nothing blocking
+        lock_ids = ['old_chub', 'dales_pale', 'little_yella']
+        queue_obj_id = 'moosilauke'
+        self._add_to_queues(queue_obj_id, lock_ids)
+        self.assertEqual(queue_obj_id, self.queues.get_next().id)
+        self._check_locks(lock_ids, lock_set=True)
+
+        # next object will not be returned if anything locks are held
+        new_lock_ids = ['old_chub', 'ten_fidy']
+        new_queue_obj_id = 'flume'
+        self._add_to_queues(new_queue_obj_id, new_lock_ids)
+        self.assertEqual(None, self.queues.get_next())
+        self._check_locks(['ten_fidy'], lock_set=False)
+
+        # next object will not be returned if not first in all queues
+        next_lock_ids = ['ten_fidy', 'death_by_coconut']
+        next_queue_obj_id = 'liberty'
+        self._add_to_queues(next_queue_obj_id, next_lock_ids)
+        self.assertEqual(None, self.queues.get_next())
+        self._check_locks(next_lock_ids, lock_set=False)
+
+        # will return something totally orthogonal though
+        final_lock_ids = ['fugli', 'pinner']
+        final_queue_obj_id = 'sandwich'
+        self._add_to_queues(final_queue_obj_id, final_lock_ids)
+        self.assertEqual(final_queue_obj_id, self.queues.get_next().id)
+        self._check_locks(final_lock_ids)
+
+    def test_release_locks(self):
+        lock_ids = ['rubaeus', 'dirty_bastard', 'red\'s_rye']
+        self._check_locks(lock_ids, lock_set=False)
+        self.queues._set_lock(lock_ids)
+        self._check_locks(lock_ids, lock_set=True)
+        self.queues._release_lock(lock_ids)
+        self._check_locks(lock_ids, lock_set=False)
+
+        queue_obj = DummyObject('kancamagus')
+        self.queues._add_item(lock_ids, queue_obj, to_queue=False)
+        self.queues._set_lock(lock_ids)
+        self._check_locks(lock_ids, lock_set=True)
+        self.queues.release_lock_for_queue_obj(queue_obj)
+        self._check_locks(lock_ids, lock_set=False)
+
+    def test_max_size(self):
+        self.assertEqual(-1, self.queues.max_size)
+        self.assertFalse(self.queues.full)  # not full when no max size set
+        self.queues.max_size = 2  # set max_size
+        lock_ids = ['dali', 'manet', 'monet']
+        queue_obj = DummyObject('osceola')
+        self.queues._add_item(lock_ids, queue_obj)
+        self.assertFalse(self.queues.full)  # not full when not full
+        queue_obj = DummyObject('east osceola')
+        self.queues._add_item(lock_ids, queue_obj)
+        self.assertTrue(self.queues.full)  # full when full
+        queue_obj = DummyObject('west osceola')
+        self.queues._add_item(lock_ids, queue_obj)
+        self.assertTrue(self.queues.full)  # full when over full
+
+
+class DummyObject(object):
+    def __init__(self, id=None):
+        self.id = id or uuid.uuid4().hex
+
+    def __repr__(self):
+        return "DummyObject<id={}>".format(self.id)

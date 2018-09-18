@@ -10,7 +10,7 @@ hqDefine('cloudcare/js/util', function () {
         showSpinner: false,
     });
 
-    var getFormUrl = function(urlRoot, appId, moduleId, formId, instanceId) {
+    var getFormUrl = function (urlRoot, appId, moduleId, formId, instanceId) {
         // TODO: make this cleaner
         var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
         if (instanceId) {
@@ -43,7 +43,7 @@ hqDefine('cloudcare/js/util', function () {
         if (message === undefined) {
             message = "Success";
         }
-        _show(message, $el, autoHideTime, "alert alert-success", isHTML);
+        return _show(message, $el, autoHideTime, "alert alert-success", isHTML);
     };
 
     var _show = function (message, $el, autoHideTime, classes, isHTML) {
@@ -68,6 +68,7 @@ hqDefine('cloudcare/js/util', function () {
         if (autoHideTime) {
             $container.delay(autoHideTime).fadeOut(500);
         }
+        return $container;
     };
 
     var showLoading = function (selector) {
@@ -97,7 +98,7 @@ hqDefine('cloudcare/js/util', function () {
         }
     };
 
-    var clearUserDataComplete = function(isError) {
+    var clearUserDataComplete = function (isError) {
         hideLoading();
         if (isError) {
             showError(

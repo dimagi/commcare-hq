@@ -17,6 +17,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.const import MISSING_APP_ID
+from corehq.elastic import ESError
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from memoized import memoized
 
@@ -122,7 +123,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         context.update({
             'unknown_available': bool(self._unknown_forms),
             'unknown': {
-                'show': self._show_unknown,
+                'show': bool(self._show_unknown),
                 'slug': self.unknown_slug,
                 'selected': self._selected_unknown_xmlns,
                 'options': self._unknown_forms_options,
@@ -135,16 +136,19 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             },
             'display_app_type': self.display_app_type,
             'support_email': settings.SUPPORT_EMAIL,
+            'all_form_retrieval_failed': self.all_form_retrieval_failed,
         })
 
         if self.display_app_type and not context['selected']:
             context['selected'] = [PARAM_VALUE_STATUS_ACTIVE]
+
         context["show_advanced"] = (
             self.request.GET.get('show_advanced') == 'on'
             or context["unknown"]["show"]
             or context["hide_fuzzy"]["checked"]
             or (len(context['selected']) > 0
-                and context['selected'][0] != PARAM_VALUE_STATUS_ACTIVE)
+                and context['selected'][0] == PARAM_VALUE_STATUS_DELETED
+                )
         )
         return context
 
@@ -206,13 +210,25 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         return final_map
 
     @property
+    def all_form_retrieval_failed(self):
+        return getattr(self, '_all_form_retrieval_failed', False)
+
+    @property
     @memoized
     def _all_forms(self):
         """
-            Here we grab all forms ever submitted to this domain on CommCare HQ or all forms that the Applications
-            for this domain know about.
+        Here we grab all forms ever submitted to this domain on CommCare HQ or all forms that the Applications
+        for this domain know about.
+
+        This fails after a couple hundred million forms are submitted to the domain.
+        After that happens we'll just display a warning
         """
-        form_buckets = get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain)
+        try:
+            form_buckets = get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain)
+        except ESError:
+            self._all_form_retrieval_failed = True
+            form_buckets = []
+
         all_submitted = {self.make_xmlns_app_key(xmlns, app_id)
                          for xmlns, app_id in form_buckets}
         from_apps = set(self._application_forms)
@@ -420,7 +436,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if instance._show_unknown:
             return True
         for param in params:
-            if param['slug'] == PARAM_SLUG_APP_ID:
+            if param['slug'] in [PARAM_SLUG_APP_ID, PARAM_SLUG_STATUS]:
                 return True
         return False
 
@@ -555,7 +571,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             (_('Application'),
              _("Select an Application") if cls.use_only_last
              else _("Show Forms in all Applications"), PARAM_SLUG_APP_ID),
-            (_('Module'),
+            (_('Menu'),
              _("Select a Menu") if cls.use_only_last
              else _("Show all Forms in selected Application"), PARAM_SLUG_MODULE),
             (_('Form'),

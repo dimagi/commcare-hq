@@ -7,6 +7,8 @@ from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_wit
     get_newborn_with_low_birth_weight_chart, get_newborn_with_low_birth_weight_data
 from django.test import TestCase
 
+from custom.icds_reports.messages import new_born_with_low_weight_help_text
+
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestNewBornWithLowWeight(TestCase):
@@ -80,10 +82,7 @@ class TestNewBornWithLowWeight(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of newborns with born with birth weight less than 2500 grams."
-            "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal "
-            "and neonatal mortality and morbidity, inhibited growth and cognitive development,"
-            " and chronic diseases later in life"
+            new_born_with_low_weight_help_text(html=True)
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -112,8 +111,10 @@ class TestNewBornWithLowWeight(TestCase):
             [
                 {'indicator': 'Total Number of Newborns born in given month:', 'value': "7"},
                 {'indicator': 'Number of Newborns with LBW in given month:', 'value': "2"},
+                {'indicator': 'Total Number of children born and weight in given month:', 'value': '4'},
                 {'indicator': '% newborns with LBW in given month:', 'value': '50.00%'},
-                {'indicator': '% Unweighted:', 'value': '57.14%'}
+                {'indicator': '% of children with weight in normal:', 'value': '50.00%'},
+                {'indicator': '% Unweighted:', 'value': '42.86%'},
             ]
         )
 
@@ -373,10 +374,7 @@ class TestNewBornWithLowWeight(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Percentage of newborns with born with birth weight less than 2500 grams."
-            "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal"
-            " and neonatal mortality and morbidity, inhibited growth and cognitive development,"
-            " and chronic diseases later in life",
+            new_born_with_low_weight_help_text(html=True)
         )
 
     def test_sector_data_tooltips_data(self):

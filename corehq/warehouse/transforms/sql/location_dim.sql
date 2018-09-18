@@ -30,37 +30,54 @@ INSERT INTO {{ location_dim }} (
 )
 
 SELECT
-    l_table.domain,
+    domain,
 
-    l_table.location_id,
-    l_table.sql_location_id,
-    l_table.sql_location_id,
-    l_table.sql_parent_location_id,
+    location_id,
+    sql_location_id,
+    sql_location_id,
+    sql_parent_location_id,
 
-    l_table.name,
-    l_table.site_code,
-    l_table.external_id,
-    l_table.supply_point_id,
-    l_table.is_archived,
-    l_table.latitude,
-    l_table.longitude,
+    name,
+    site_code,
+    external_id,
+    supply_point_id,
+    is_archived,
+    latitude,
+    longitude,
 
-    lt_table.name,
-    lt_table.code,
-    lt_table.location_type_id,
+    location_type_name,
+    location_type_code,
+    location_type_id,
 
-    l_table.location_last_modified,
-    l_table.location_created_on,
+    location_last_modified,
+    location_created_on,
 
     now(),
     now(),
     false,
     '{{ batch_id }}'
 FROM
-    {{ location_staging }} as l_table
-INNER JOIN
-    {{ location_type_staging }} as lt_table
-ON l_table.location_type_id = lt_table.location_type_id AND l_table.domain = lt_table.domain;
+    {{ location_staging }}
+ON CONFLICT (location_id) DO UPDATE
+SET domain = EXCLUDED.domain,
+    sql_location_id = EXCLUDED.sql_location_id,
+    location_level_0 = EXCLUDED.location_level_0,
+    location_level_1 = EXCLUDED.location_level_1,
+    name = EXCLUDED.name,
+    site_code = EXCLUDED.site_code,
+    external_id = EXCLUDED.external_id,
+    supply_point_id = EXCLUDED.supply_point_id,
+    is_archived = EXCLUDED.is_archived,
+    latitude = EXCLUDED.latitude,
+    longitude = EXCLUDED.longitude,
+    location_type_name = EXCLUDED.location_type_name,
+    location_type_code = EXCLUDED.location_type_code,
+    location_type_id = EXCLUDED.location_type_id,
+    location_last_modified = EXCLUDED.location_last_modified,
+    location_created_on = EXCLUDED.location_created_on,
+    dim_last_modified = EXCLUDED.dim_last_modified,
+    deleted = EXCLUDED.deleted,
+    batch_id = EXCLUDED.batch_id;
 
 
 -- After the join update all dims with their new foreign keys

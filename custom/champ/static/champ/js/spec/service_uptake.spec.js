@@ -1,4 +1,3 @@
-/*global ServiceUptakeModel */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -11,7 +10,7 @@ describe('ServiceUptakeModel', function() {
     pageData.registerUrl('service_uptake', 'service_uptake');
 
     beforeEach(function() {
-        viewModel = new ServiceUptakeModel();
+        viewModel = hqImport("champ/js/knockout/service_uptake").model();
     });
 
     it('test onSelectOption', function() {

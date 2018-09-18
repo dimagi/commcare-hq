@@ -45,6 +45,7 @@ from casexml.apps.phone.restore import (
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from six.moves import range
+from io import open
 
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"
@@ -1287,7 +1288,7 @@ class SyncTokenCachingTest(BaseSyncTest):
 
         original_name = config.restore_payload_path_cache.get_value()
         self.assertTrue(original_name)
-        get_blob_db().delete(original_name)
+        get_blob_db().delete(key=original_name)
 
         # resyncing should recreate the cache
         next_config = RestoreConfig(

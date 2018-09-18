@@ -10,6 +10,7 @@ from corehq.apps.app_manager.util import save_xform
 from datetime import datetime
 from corehq.apps.users.models import CouchUser
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
+from io import open
 
 
 class Command(BaseCommand):
@@ -61,7 +62,7 @@ class Command(BaseCommand):
             for form_name in os.listdir(os.path.join(path, module_dir)):
                 form_index, name = form_name.split(' - ')
                 form = module.get_form(int(form_index))
-                with open(os.path.join(path, module_dir, form_name)) as f:
+                with open(os.path.join(path, module_dir, form_name), 'rb') as f:
                     save_xform(app, form, f.read())
 
         app.save()

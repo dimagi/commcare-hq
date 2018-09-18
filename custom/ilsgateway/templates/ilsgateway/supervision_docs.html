@@ -1,5 +1,10 @@
 {% extends 'hqwebapp/two_column.html' %}
+{% load hq_shared_tags %}
 {% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'ilsgateway/js/main.js' %}"></script>
+{% endblock %}
 
 {% block page_content %}
     <h2>Supervision Documents</h2>
@@ -49,9 +54,4 @@
         </form>
     {% endif %}
 
-    <script>
-        $('.delete').click(function() {
-            $(this).parent().find('.modal').modal();
-        })
-    </script>
 {% endblock %}

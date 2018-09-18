@@ -1,28 +1,34 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.reminders import tasks as reminders_tasks
-from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.sms import tasks as sms_tasks
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
 from corehq.sql_db.util import run_query_across_partitioned_databases
+from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from corehq.util.celery_utils import no_result_task
 from dimagi.utils.couch import CriticalSection
 from django.conf import settings
 from django.db.models import Q
+from django.db import transaction
 
 
 def get_sync_key(case_id):
     return 'sync-case-for-messaging-%s' % case_id
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
 def sync_case_for_messaging(self, domain, case_id):
+    if REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain):
+        sync_case_for_messaging.apply_async([domain, case_id], countdown=60)
+        return
+
     try:
         with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
             _sync_case_for_messaging(domain, case_id)
@@ -30,7 +36,7 @@ def sync_case_for_messaging(self, domain, case_id):
         self.retry(exc=e)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
 def sync_case_for_messaging_rule(self, domain, case_id, rule_id):
     try:
@@ -41,21 +47,19 @@ def sync_case_for_messaging_rule(self, domain, case_id, rule_id):
 
 
 def _sync_case_for_messaging(domain, case_id):
-    case = CaseAccessors(domain).get_case(case_id)
-    sms_tasks.clear_case_caches(case)
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+        sms_tasks.clear_case_caches(case)
+    except CaseNotFound:
+        case = None
+
+    if case is None or case.is_deleted:
+        sms_tasks.delete_phone_numbers_for_owners([case_id])
+        delete_schedule_instances_for_cases(domain, [case_id])
+        return
 
     if use_phone_entries():
         sms_tasks._sync_case_phone_number(case)
-
-    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
-        # This runs rules from the old reminders framework. ICDS only uses
-        # the new reminders framework now, so we can spare redis and couch
-        # some hits by not running this at all.
-        # When all environments are on the new framework, we can remove these
-        # lines entirely.
-        handler_ids = CaseReminderHandler.get_handler_ids_for_case_post_save(case.domain, case.type)
-        if handler_ids:
-            reminders_tasks._process_case_changed_for_case(domain, case, handler_ids)
 
     rules = AutomaticUpdateRule.by_domain_cached(case.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
@@ -84,7 +88,7 @@ def _sync_case_for_messaging_rule(domain, case_id, rule_id):
 def initiate_messaging_rule_run(domain, rule_id):
     MessagingRuleProgressHelper(rule_id).set_initial_progress()
     AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=True)
-    run_messaging_rule.delay(domain, rule_id)
+    transaction.on_commit(lambda: run_messaging_rule.delay(domain, rule_id))
 
 
 def get_case_ids_for_messaging_rule(domain, case_type):
@@ -98,13 +102,13 @@ def get_case_ids_for_messaging_rule(domain, case_type):
         )
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
 def set_rule_complete(rule_id):
     AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=False)
     MessagingRuleProgressHelper(rule_id).set_rule_complete()
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True)
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True)
 def run_messaging_rule(domain, rule_id):
     rule = _get_cached_rule(domain, rule_id)
     if not rule:

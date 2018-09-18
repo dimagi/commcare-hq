@@ -57,6 +57,13 @@
     {% initial_page_data 'use_sqlite_backend' use_sqlite_backend %}
     {% initial_page_data 'username' username %}
 
+    <div class='alert alert-info'>
+        {% blocktrans %}
+            This page will be removed in August 2018. Use the "Clean Form Submission" button on the form submission page
+            to edit this form.
+        {% endblocktrans %}
+    </div>
+
     <div class="inline-touchforms" data-bind="template: { name: 'form-fullform-ko-template' }" id="edit-container"></div>
     <div id="loading" class="hq-loading" style="display: none;">
         <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />

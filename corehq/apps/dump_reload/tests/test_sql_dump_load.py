@@ -30,6 +30,7 @@ from corehq.form_processor.models import (
     LedgerValue, LedgerTransaction)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
 from six.moves import zip
+from io import open
 
 
 class BaseDumpLoadTest(TestCase):
@@ -227,12 +228,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             post_json = serializers.serialize('python', [post])[0]
             self.assertDictEqual(pre_json, post_json)
 
-    def tearDown(self):
-        from corehq.apps.data_interfaces.models import AutomaticUpdateAction, AutomaticUpdateRuleCriteria
-        AutomaticUpdateAction.objects.all().delete()
-        AutomaticUpdateRuleCriteria.objects.all().delete()
-        super(TestSQLDumpLoad, self).tearDown()
-
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
         expected_object_counts = Counter({
@@ -310,7 +305,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         self.addCleanup(user.delete)
 
-        with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml') as f:
+        with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml', 'rb') as f:
             xml = f.read()
         submit_form_locally(xml, self.domain_name)
 

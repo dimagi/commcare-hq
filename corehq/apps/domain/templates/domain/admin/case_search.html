@@ -2,14 +2,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    {% include 'domain/admin/partials/case_search_templates.html' %}
-    <script src="{% static 'domain/js/case-search-config.js' %}"></script>
-    <script src="{% static 'domain/js/case_search.js' %}"></script>
-{% endblock %}
-
+{% requirejs_main 'domain/js/case_search_main' %}
 
 {% block page_content %}
+    {% include 'domain/admin/partials/case_search_templates.html' %}
     {% initial_page_data 'case_types' case_types %}
     {% initial_page_data 'values' values %}
     {% registerurl 'case_search_config' request.domain %}

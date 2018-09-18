@@ -2,13 +2,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import logging
 import re
 import sys
 from collections import defaultdict, OrderedDict
 from contextlib import contextmanager
 from functools import partial
+from itertools import chain
 
 import six
 from six.moves.urllib.parse import unquote
@@ -16,11 +17,12 @@ from six.moves.urllib.parse import unquote
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
 
-from corehq.apps.hqadmin.views import _get_db_from_db_name
+from corehq.apps.hqadmin.views.data import get_db_from_db_name
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.util.decorators import change_log_level
 from corehq.util.log import with_progress_bar
+from io import open
 
 
 USAGE = "Usage: ./manage.py blob_storage_report [options] FILE [FILE ...]"
@@ -55,32 +57,61 @@ class Command(BaseCommand):
         parser.add_argument(
             "-s", "--sample-size",
             type=int,
-            default=300,
+            default=500,
             help="Sample size.",
+        )
+        parser.add_argument(
+            "-d", "--default-only",
+            action="store_true",
+            help="Ignore all except the default bucket.",
+        )
+        parser.add_argument(
+            "--list-blob-ids",
+            action="store_true",
+            help="List blob ids in output (--output-file recommended).",
         )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
-    def handle(self, files, output_file, write_csv, sample_size, **options):
+    def handle(self, files, output_file, write_csv, sample_size, default_only,
+               list_blob_ids, **options):
+
+        print("WARNING this report has not been adapted to the new blob db "
+              "metadata API, and therefore is probably broken.")
+
         print("Loading PUT requests from access logs...", file=sys.stderr)
         data = accumulate_put_requests(files)
-        sizes = get_blob_sizes(data, sample_size)
+        sizes, samples_by_type = get_blob_sizes(data, sample_size, default_only)
 
         with make_row_writer(output_file, write_csv) as write:
-            report_blobs_by_type(data, write)
-            report_blob_sizes(data, sizes, write)
+            report_blobs_by_type(data, sizes, samples_by_type, write)
+            report_blob_sizes(data, sizes, samples_by_type, write)
+            report_blob_sizes(data, sizes, samples_by_type, write, summarize=True)
+            if list_blob_ids:
+                report_blob_ids(sizes, write)
 
 
-def report_blobs_by_type(data, write):
+def report_blobs_by_type(data, sizes, samples_by_type, write):
     """report on number of new blobs by blob bucket"""
     assert len(data) < 100, len(data)
-    write(["BUCKET", "BLOB COUNT"])
-    for key, value in sorted(six.iteritems(data)):
-        write([key, len(value)])
+    bucket_missing = defaultdict(int)
+    type_missing = defaultdict(int)
+    for domain_sizes in sizes.values():
+        for size in domain_sizes:
+            if size.length is UNKNOWN:
+                bucket_missing[size.bucket] += 1
+                type_missing[size.doc_type] += 1
+    write(["BUCKET", "BLOB COUNT", "NOT FOUND"])
+    for bucket, key_list in sorted(six.iteritems(data)):
+        if bucket not in samples_by_type:
+            continue
+        write([bucket, len(key_list), bucket_missing.get(bucket, "")])
+        for doc_type, n_samples in sorted(samples_by_type[bucket].items()):
+            write(["  " + doc_type, n_samples, type_missing.get(doc_type, "")])
     write([])
 
 
-def report_blob_sizes(data, sizes, write):
+def report_blob_sizes(data, sizes, samples_by_type, write, summarize=False):
     """report blob type, number of blobs, total size grouped by domain"""
     def iter_headers(by_domain):
         for domain in by_domain:
@@ -92,12 +123,18 @@ def report_blob_sizes(data, sizes, write):
         for domain in by_domain:
             blob_sizes = domain_sizes[domain]
             numerics = [s.length for s in blob_sizes if s.length is not UNKNOWN]
-            mean_size = int(mean(numerics)) if numerics else 0
-            est_size = (
-                mean_size *
-                len(data[blob_sizes[0].bucket]) *       # number blobs in bucket
-                (len(numerics) / samples[doc_type])     # porportion of samples
-            ) if blob_sizes else 0
+            if numerics:
+                bucket = blob_sizes[0].bucket
+                bucket_samples = sum(samples_by_type[bucket].values())
+                mean_size = int(mean(numerics))
+                est_size = (
+                    mean_size *
+                    len(data[bucket]) *                 # number blobs in bucket
+                    (len(numerics) / bucket_samples)    # porportion of samples
+                )
+            else:
+                mean_size = 0
+                est_size = 0
             found_of_total = "{}/{}".format(len(numerics), len(blob_sizes))
             totals[domain]["size"] += est_size
             totals[domain]["found"] += len(numerics)
@@ -116,11 +153,13 @@ def report_blob_sizes(data, sizes, write):
     def sumlens(item):
         return -sum(s.length for s in item[1] if s.length is not UNKNOWN)
 
+    if summarize:
+        sizes = {"EST SIZE": list(chain.from_iterable(six.itervalues(sizes)))}
+
     # get top five domains + all others combined
     OTHER = "OTHER"
     by_domain = OrderedDict()
     by_type = defaultdict(lambda: defaultdict(list))
-    samples = defaultdict(lambda: 0)
     for i, (domain, domain_sizes) in enumerate(sorted(six.iteritems(sizes), key=sumlens)):
         if i < 5:
             by_domain[domain] = domain_sizes
@@ -130,7 +169,6 @@ def report_blob_sizes(data, sizes, write):
             by_domain[OTHER].extend(domain_sizes)
             domain = OTHER
         for size in domain_sizes:
-            samples[size.doc_type] += 1
             by_type[size.doc_type][domain].append(size)
 
     def key(item):
@@ -141,12 +179,38 @@ def report_blob_sizes(data, sizes, write):
         "found": 0,
         "count": 0,
     } for domain in by_domain}
-    write(["Storage use based on sampled estimates (may be inaccurate)"])
+    if summarize:
+        write(["SUMMARY"])
+    else:
+        write(["Storage use based on sampled estimates (may be inaccurate)"])
     write(["DOC_TYPE"] + list(iter_headers(by_domain)))
     for doc_type, domain_sizes in sorted(six.iteritems(by_type), key=key):
         write([doc_type] + list(iter_sizes(doc_type, domain_sizes, totals)))
     write(["---"] + ["---" for x in iter_headers(by_domain)])
     write(list(iter_totals(totals)))
+    write([])
+
+
+def report_blob_ids(sizes, write):
+    def iter_sizes(sizes):
+        for domain_sizes in sizes.values():
+            for size in domain_sizes:
+                yield size
+
+    def key(size):
+        length = 0 if size.length is UNKNOWN else size.length
+        return size.bucket, size.domain, size.doc_type, -length
+
+    write("BUCKET DOMAIN DOC_TYPE SIZE BLOB_ID".split())
+    for size in sorted(iter_sizes(sizes), key=key):
+        write([
+            size.bucket,
+            size.domain,
+            size.doc_type,
+            sizeof_fmt(size.length) if size.length is not UNKNOWN else "",
+            size.blob_id,
+        ])
+    write([])
 
 
 def accumulate_put_requests(files):
@@ -156,15 +220,14 @@ def accumulate_put_requests(files):
         if filepath == "-":
             load_puts(sys.stdin, data)
         else:
-            with open(filepath, "r") as fileobj:
+            with open(filepath, "r", encoding='utf-8') as fileobj:
                 load_puts(fileobj, data)
     return data
 
 
-def get_blob_sizes(data, sample_size):
+def get_blob_sizes(data, sample_size, default_only):
     # get domain, blob type, and blob size for each put request (or a sample of them)
-    # sizes[domain] = {<BlobSize>, ...}
-    def iter_samples(keys_list):
+    def iter_samples(bucket, keys_list):
         for i, keys in enumerate(keys_list):
             if i >= sample_size:
                 break
@@ -175,22 +238,35 @@ def get_blob_sizes(data, sample_size):
                 size = get_default_blob_size(bucket, "/".join(keys))
             yield size
 
-    sizes = defaultdict(list)
-    with_progress = partial(with_progress_bar, oneline="concise", stream=sys.stderr)
+    sizes = defaultdict(list)  # {domain: [<BlobSize>, ...], ...}
+    samples_by_type = {}  # {bucket: {<doc_type>: <n_samples>, ...}, ...}
+    with_progress = partial(
+        with_progress_bar,
+        oneline="concise",
+        stream=sys.stderr,
+        step=1,
+    )
     for bucket, keys_list in sorted(data.items()):
+        counts = defaultdict(int)  # {<doc_type>: <n_samples>, ...}
         length = min(sample_size, len(keys_list))
-        samples = iter_samples(keys_list)
+        if default_only:
+            if bucket != "_default":
+                continue
+            keys_list = (k for k in keys_list if not k[0].startswith("restore-response-"))
+        samples = iter_samples(bucket, keys_list)
         for size in with_progress(samples, length, prefix=bucket):
-            size.bucket = bucket
             sizes[size.domain].append(size)
+            counts[size.doc_type] += 1
+        samples_by_type[bucket] = dict(counts)
     print("", file=sys.stderr)
-    return sizes
+    return sizes, samples_by_type
 
 
 def get_couch_blob_size(db_name, bucket, doc_id, blob_id):
     doc = lookup_doc(doc_id, db_name)
+    key = "/".join([doc_id, blob_id])
     if doc is None:
-        return get_default_blob_size(bucket, "/".join([doc_id, blob_id]))
+        return get_default_blob_size(bucket, key)
     domain = doc.get("domain", UNKNOWN)
     doc_type = doc.get("doc_type", UNKNOWN)
     for blob in doc["external_blobs"].values():
@@ -201,26 +277,27 @@ def get_couch_blob_size(db_name, bucket, doc_id, blob_id):
             except KeyError:
                 pass
     else:
-        size = get_default_blob_size(bucket, "/".join([doc_id, blob_id]))
+        size = get_default_blob_size(bucket, key)
         length = size.length
-    return BlobSize(domain, doc_type, length)
+    return BlobSize(domain, doc_type, length, bucket, key)
 
 
-def get_form_blob_size(bucket, attachment_id, blob_id):
+def get_form_blob_size(bucket, attachment_id, subkey):
     # can't get domain: cannot get attachment metadata from blob id because
     # the metadata is sharded by form_id, which we do not have
-    size = get_default_blob_size(bucket, "/".join([attachment_id, blob_id]))
-    return BlobSize(UNKNOWN, "form", size.length)
+    blob_id = "/".join([attachment_id, subkey])
+    size = get_default_blob_size(bucket, blob_id)
+    return BlobSize(UNKNOWN, "form", size.length, bucket, blob_id)
 
 
 def get_default_blob_size(bucket, blob_id):
     try:
-        size = get_blob_db().size(blob_id, bucket)
+        length = get_blob_db().size(blob_id, bucket)
     except NotFound:
-        size = UNKNOWN
+        length = UNKNOWN
     if blob_id.startswith("restore-response-"):
-        return BlobSize(UNKNOWN, "restore", size)
-    return BlobSize(UNKNOWN, bucket, size)
+        return BlobSize(UNKNOWN, "restore", length, bucket, blob_id)
+    return BlobSize(UNKNOWN, bucket, length, bucket, blob_id)
 
 
 UNKNOWN = "(unknown)"
@@ -236,15 +313,16 @@ SIZE_GETTERS = {
 
 class BlobSize(object):
 
-    def __init__(self, domain, doc_type, length):
+    def __init__(self, domain, doc_type, length, bucket, blob_id):
         self.domain = domain
         self.doc_type = doc_type
         self.length = length
-        self.bucket = None
+        self.bucket = bucket
+        self.blob_id = blob_id
 
 
 def lookup_doc(doc_id, db_name):
-    db = _get_db_from_db_name(db_name)
+    db = get_db_from_db_name(db_name)
     try:
         return db.get(doc_id)
     except ResourceNotFound:
@@ -290,7 +368,7 @@ def make_row_writer(output_file, write_csv):
         return write
 
     if output_file != sys.stdout:
-        output_file = open(output_file, "w")
+        output_file = open(output_file, "w", encoding='utf-8')
     if write_csv:
         writer = csv.writer(output_file, dialect="excel")
         write = writer.writerow

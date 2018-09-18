@@ -4,8 +4,8 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'data_interfaces/js/case_rule_criteria.js' %}"></script>
-    <script src="{% static 'data_interfaces/js/make_read_only.js' %}"></script>
+    {% requirejs_main 'scheduling/js/conditional_alert_main' %}
+
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}
@@ -58,7 +58,7 @@
             </p>
             {% endif %}
         {% endif %}
-
+        {% include 'scheduling/partial/custom_event_templates.html' %}
         <form id="conditional-alert-form" class="form form-horizontal main-form" method="POST" action="#">
             {% crispy basic_info_form %}
             <ul class="nav nav-tabs">
@@ -79,9 +79,7 @@
                 </div>
                 <div class="tab-pane {% if schedule_form_active %}active{% endif %}" id="schedule">
                     <div class="row">
-                        <div id="create-schedule-form" class="col-sm-12">
-                            {% crispy schedule_form %}
-                        </div>
+                        {% include 'scheduling/partial/schedule_form.html' %}
                     </div>
                 </div>
             </div>

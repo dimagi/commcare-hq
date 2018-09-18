@@ -19,15 +19,15 @@ var HQAsyncReport = function (o) {
     self.humanReadableErrors = {
         400: gettext("Please check your Internet connection!"),
         404: gettext("Report Not Found."),
-        408: gettext("Request timed out when rendering this report. This might be an issue with our servers"+
-            " or with your Internet connection. We encourage you to report an issue to CommCare HQ Support so we"+
+        408: gettext("Request timed out when rendering this report. This might be an issue with our servers" +
+            " or with your Internet connection. We encourage you to report an issue to CommCare HQ Support so we" +
             " can look into any possible issues."),
         500: gettext("Problem Rendering Report. Our error monitoring tools have noticed this and we are working quickly to" +
             " resolve this issue as soon as possible. We encourage you to contact CommCare HQ Support" +
             " if this issue persists for more than a few minutes. We appreciate any additional information" +
             " you can give us about this problem so we can fix it immediately."),
         502: gettext("Bad Gateway. Please contact CommCare HQ Support."),
-        503: gettext("CommCare HQ is experiencing server difficulties. We're working quickly to resolve it."+
+        503: gettext("CommCare HQ is experiencing server difficulties. We're working quickly to resolve it." +
             " Thank you for your patience. We are extremely sorry."),
         504: gettext("Gateway Timeout. Please contact CommCare HQ Support."),
     };
@@ -55,9 +55,9 @@ var HQAsyncReport = function (o) {
         }
         self.filterForm.submit(function () {
             var params = hqImport('reports/js/reports.util').urlSerialize(this);
-            History.pushState(null,window.location.title,
+            history.pushState(null,window.location.title,
                 window.location.pathname + '?' + params
-                + (self.additionalWindowParams ? '&' + self.additionalWindowParams: ''));
+                + (self.additionalWindowParams ? '&' + self.additionalWindowParams : ''));
             self.updateFilters(params);
             self.updateReport(false, params, true);
             return false;
@@ -68,7 +68,7 @@ var HQAsyncReport = function (o) {
         self.standardReport.saveDatespanToCookie();
         self.filterRequest = $.ajax({
             url: window.location.pathname.replace(self.standardReport.urlRoot,
-                self.standardReport.urlRoot+'filters/')+"?"+form_params+"&"+self.additionalParams,
+                self.standardReport.urlRoot + 'filters/') + "?" + form_params + "&" + self.additionalParams,
             dataType: 'json',
             success: loadFilters,
         });
@@ -79,9 +79,9 @@ var HQAsyncReport = function (o) {
         if (initial_load) {
             process_filters = "hq_filters=true&";
             if (self.standardReport.loadDatespanFromCookie()) {
-                process_filters = process_filters+
-                    "&startdate="+self.standardReport.datespan.startdate+
-                    "&enddate="+self.standardReport.datespan.enddate;
+                process_filters = process_filters +
+                    "&startdate=" + self.standardReport.datespan.startdate +
+                    "&enddate=" + self.standardReport.datespan.enddate;
             }
         }
         if (setFilters != undefined) {
@@ -95,9 +95,9 @@ var HQAsyncReport = function (o) {
 
         self.reportRequest = $.ajax({
             url: (self.customAsyncUrl || window.location.pathname.replace(self.standardReport.urlRoot,
-                self.standardReport.urlRoot+'async/'))+"?"+process_filters+"&"+params+"&"+self.additionalParams,
+                self.standardReport.urlRoot + 'async/')) + "?" + process_filters + "&" + params + "&" + self.additionalParams,
             dataType: 'json',
-            success: function(data) {
+            success: function (data) {
                 self.reportRequest = null;
                 if (data.filters) {
                     loadFilters(data);
@@ -153,7 +153,7 @@ var HQAsyncReport = function (o) {
                     } else {
                         humanReadable = self.humanReadableErrors[data.status];
                     }
-                    self.loadingIssueModal.find('.report-error-status').html('<strong>'+data.status+'</strong> ' +
+                    self.loadingIssueModal.find('.report-error-status').html('<strong>' + data.status + '</strong> ' +
                         ((humanReadable) ? humanReadable : ""));
                     if (self.issueAttempts > 0)
                         self.loadingIssueModal.find('.btn-primary').button('fail');

@@ -576,10 +576,10 @@ class TestXForm(SimpleTestCase, TestXmlMixin):
         form.source = self.get_file("MySuperSpecialForm", "xml")
 
         xform = form.wrapped_xform()
-        rendered_form = xform.render()
+        rendered_form = xform.render().decode('utf-8')
 
         xform.set_name("NewTotallyAwesomeName")
-        new_rendered_form = xform.render()
+        new_rendered_form = xform.render().decode('utf-8')
 
         self.assertEqual(
             rendered_form.replace(
@@ -592,3 +592,14 @@ class TestXForm(SimpleTestCase, TestXmlMixin):
     def test_set_name_on_empty_form(self):
         form = self.construct_form()
         form.wrapped_xform().set_name("Passes if there is no exception")
+
+
+class TestFormMeta(BaseIndexTest):
+    def test_meta_drift(self):
+        self.assertTrue(
+            """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
+value="if(count(instance('commcaresession')/session/context/drift) = 1, \
+instance('commcaresession')/session/context/drift, '')"/>""" in
+            self.form.render_xform()
+        )
+        self.assertTrue("<orx:drift/>" in self.form.render_xform())

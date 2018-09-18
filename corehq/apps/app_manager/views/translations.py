@@ -8,14 +8,17 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
 
-from corehq import toggles
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
-from corehq.apps.app_manager.app_translations import \
-    expected_bulk_app_sheet_headers, expected_bulk_app_sheet_rows, \
-    process_bulk_app_translation_upload
+from corehq.apps.app_manager.app_translations import (
+    expected_bulk_app_sheet_headers,
+    expected_bulk_app_sheet_rows,
+    process_bulk_app_translation_upload,
+    validate_bulk_app_translation_upload,
+    read_uploaded_app_translation_file,
+)
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
 from corehq.util.workbook_json.excel import InvalidExcelFileException
@@ -75,7 +78,10 @@ def upload_bulk_ui_translations(request, domain, app_id):
 def download_bulk_ui_translations(request, domain, app_id):
     app = get_app(domain, app_id)
     temp = build_ui_translation_download_file(app)
-    return export_response(temp, Format.XLS_2007, "translations")
+    filename = '{app_name} v.{app_version} - CommCare Translations'.format(
+        app_name=app.name,
+        app_version=app.version)
+    return export_response(temp, Format.XLS_2007, filename)
 
 
 @require_can_edit_apps
@@ -86,20 +92,29 @@ def download_bulk_app_translations(request, domain, app_id):
     temp = io.BytesIO()
     data = [(k, v) for k, v in six.iteritems(rows)]
     export_raw(headers, data, temp)
-    return export_response(temp, Format.XLS_2007, "bulk_app_translations")
+    filename = '{app_name} v.{app_version} - App Translations'.format(
+        app_name=app.name,
+        app_version=app.version)
+    return export_response(temp, Format.XLS_2007, filename)
 
 
 @no_conflict_require_POST
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
+    validate = request.POST.get('validate')
     app = get_app(domain, app_id)
-    msgs = process_bulk_app_translation_upload(app, request.file)
-    app.save()
+    workbook, msgs = read_uploaded_app_translation_file(request.file)
+    if workbook:
+        if validate:
+            msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email)
+        else:
+            msgs = process_bulk_app_translation_upload(app, workbook)
+            app.save()
     for msg in msgs:
         # Add the messages to the request object.
         # msg[0] should be a function like django.contrib.messages.error .
-        # mes[1] should be a string.
+        # msg[1] should be a string.
         msg[0](request, msg[1])
 
     # In v2, languages is the default tab on the settings page

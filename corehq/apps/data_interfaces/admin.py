@@ -38,6 +38,7 @@ class CaseRuleSubmissionAdmin(admin.ModelAdmin):
 
     search_fields = [
         'domain',
+        'form_id',
     ]
 
     ordering = ['-created_on']

@@ -19,7 +19,7 @@ from memoized import memoized
 
 
 def total_rows(report):
-    if report.report_config.get('sf') == "sf2":
+    if report.report_config.get('sf') in ["sf2", "sf3"]:
         return {
             "total_under_facilitator": getattr(report, 'total_under_facilitator', 0),
             "total_with_checklist": getattr(report, 'total_with_checklist', 0)
@@ -36,6 +36,7 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport, 
     show_all_rows = True
     default_rows = 20
     printable = True
+    sortable = False
     report_template_path = "up_nrhm/asha_report.html"
     extra_context_providers = [total_rows]
     no_value = '--'
@@ -118,6 +119,8 @@ class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport, 
             rows = self.report.rows
         elif config.get('sf') == 'sf2':
             rows, self.total_under_facilitator, self.total_with_checklist = self.report.rows
+        elif config.get('sf') == 'sf3':
+            rows, self.total_under_facilitator = self.report.rows
         else:
             rows = self.report.rows[0]
         return rows

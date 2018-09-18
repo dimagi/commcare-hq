@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from __future__ import print_function
 from getpass import getpass
 from django.core.management.base import BaseCommand, CommandError
 from django.urls import reverse
@@ -54,6 +55,9 @@ class Command(BaseCommand):
             default='https://www.commcarehq.org',
             help='The URL of the CommCare instance.',
         )
+        parser.add_argument(
+            '--2fa', action='store_true', help='Prompt for 2FA token'
+        )
 
     def _get_required_option(self, name, options):
         value = options.get(name)
@@ -68,12 +72,18 @@ class Command(BaseCommand):
         name = options['to_name']
         url_base = options['url']
         password = options['password']
+        headers = {}
         if not password:
             password = getpass("Please enter the password for '{}': ".format(username))
 
+        if options['2fa']:
+            otp = getpass("Please enter your 2FA token: ")
+            headers['X-COMMCAREHQ-OTP'] = otp
+
         url = reverse('app_source', kwargs={'domain': domain, 'app_id': app_id})
         full_url = '{}{}'.format(url_base, url)
-        resp = requests.get(full_url, auth=HTTPDigestAuth(username, password))
+        print("Making request to: {}".format(full_url))
+        resp = requests.get(full_url, auth=HTTPDigestAuth(username, password), headers=headers)
         if not resp.status_code == 200:
             return "Command Failed: {}: {}".format(resp.status_code, resp.text)
 

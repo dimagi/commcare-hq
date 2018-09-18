@@ -2,8 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 import contextlib
-import os
-import tempfile
 import time
 import sys
 from collections import Counter
@@ -17,10 +15,10 @@ from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
-from corehq.elastic import iter_es_docs, ScanResult
+from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
-from corehq.util.files import safe_filename
-from corehq.util.datadog.gauges import datadog_histogram
+from corehq.util.files import safe_filename, TransientTempfile
+from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -33,6 +31,7 @@ from corehq.apps.export.models.new import (
 )
 from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
 import six
+from io import open
 
 
 class ExportFile(object):
@@ -43,12 +42,11 @@ class ExportFile(object):
         self.format = format
 
     def __enter__(self):
-        self.file = open(self.path, 'r')
+        self.file = open(self.path, 'rb')
         return self.file
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.file.close()
-        os.remove(self.path)
 
 
 class _ExportWriter(object):
@@ -56,11 +54,11 @@ class _ExportWriter(object):
     An object that provides a friendlier interface to couchexport.ExportWriters.
     """
 
-    def __init__(self, writer):
+    def __init__(self, writer, temp_path):
         # An instance of a couchexport.ExportWriter
         self.writer = writer
         self.format = writer.format
-        self._path = None
+        self.path = temp_path
 
     @contextlib.contextmanager
     def open(self, export_instances):
@@ -69,9 +67,6 @@ class _ExportWriter(object):
         Note that this function returns a context manager!
         A _Writer can only be opened once.
         """
-
-        # Create and open a temp file
-        assert self._path is None
 
         if len(export_instances) == 1:
             name = export_instances[0].name or ''
@@ -82,8 +77,7 @@ class _ExportWriter(object):
             table.label for instance in export_instances for table in instance.selected_tables
         )
 
-        fd, self._path = tempfile.mkstemp()
-        with os.fdopen(fd, 'wb') as file:
+        with open(self.path, 'wb') as file:
 
             # open the ExportWriter
             headers = []
@@ -121,20 +115,12 @@ class _ExportWriter(object):
     def get_preview(self):
         return self.writer.get_preview()
 
-    @property
-    def path(self):
-        """
-        The path to the file that this object writes to.
-        """
-        return self._path
-
 
 class _PaginatedExportWriter(object):
 
-    def __init__(self, writer, page_length=None):
+    def __init__(self, writer, temp_path):
         self.format = writer.format
-        self._path = None
-        self.page_length = page_length or MAX_EXPORTABLE_ROWS
+        self.path = temp_path
         self.pages = Counter()
         self.rows_written = Counter()
         # An instance of a couchexport.ExportWriter
@@ -148,15 +134,11 @@ class _PaginatedExportWriter(object):
         A _PaginatedWriter can only be opened once.
         """
 
-        assert self._path is None
-
         self.name = self._get_name(export_instances)
         self.headers = self._get_headers(export_instances)
         self.table_names = self._get_table_names(export_instances)
 
-        # Create and open a temp file
-        fd, self._path = tempfile.mkstemp()
-        with os.fdopen(fd, 'wb') as file_handle:
+        with open(self.path, 'wb') as file_handle:
             self.writer.open(
                 six.iteritems(self._get_paginated_headers()),
                 file_handle,
@@ -270,7 +252,7 @@ class _PaginatedExportWriter(object):
         :param table: A TableConfiguration
         :param row: An ExportRow
         """
-        if self.rows_written[table] >= self.page_length * (self.pages[table] + 1):
+        if self.rows_written[table] >= MAX_EXPORTABLE_ROWS * (self.pages[table] + 1):
             self.pages[table] += 1
             self.writer.add_table(
                 self._paged_table_index(table),
@@ -281,15 +263,8 @@ class _PaginatedExportWriter(object):
         self.writer.write([(self._paged_table_index(table), [FormattedRow(data=row.data)])])
         self.rows_written[table] += 1
 
-    @property
-    def path(self):
-        """
-        The path to the file that this object writes to.
-        """
-        return self._path
 
-
-def get_export_writer(export_instances, allow_pagination=True):
+def get_export_writer(export_instances, temp_path, allow_pagination=True):
     """
     Return a new _Writer
     """
@@ -299,9 +274,9 @@ def get_export_writer(export_instances, allow_pagination=True):
 
     legacy_writer = get_writer(format)
     if allow_pagination and PAGINATED_EXPORTS.enabled(export_instances[0].domain):
-        writer = _PaginatedExportWriter(legacy_writer)
+        writer = _PaginatedExportWriter(legacy_writer, temp_path)
     else:
-        writer = _ExportWriter(legacy_writer)
+        writer = _ExportWriter(legacy_writer, temp_path)
     return writer
 
 
@@ -318,15 +293,13 @@ def get_export_download(export_instances, filters, filename=None):
     return download
 
 
-def get_export_file(export_instances, filters, progress_tracker=None):
+def get_export_file(export_instances, filters, temp_path, progress_tracker=None):
     """
     Return an export file for the given ExportInstance and list of filters
-    # TODO: Add a note about cleaning up the file?
     """
-    writer = get_export_writer(export_instances)
+    writer = get_export_writer(export_instances, temp_path)
     with writer.open(export_instances):
         for export_instance in export_instances:
-            # TODO: Don't get the docs multiple times if you don't have to
             docs = get_export_documents(export_instance, filters)
             write_export_instance(writer, export_instance, docs, progress_tracker)
 
@@ -336,21 +309,7 @@ def get_export_file(export_instances, filters, progress_tracker=None):
 def get_export_documents(export_instance, filters):
     # Pull doc ids from elasticsearch and stream to disk
     query = _get_export_query(export_instance, filters)
-    _, temp_path = tempfile.mkstemp()
-    with open(temp_path, 'w') as f:
-        scroll_result = query.scroll_ids()
-        for doc_id in scroll_result:
-            f.write(doc_id + '\n')
-
-    def iter_export_docs():
-        # Stream doc ids from disk and fetch documents from ES in chunks
-        with open(temp_path) as f:
-            doc_ids = (doc_id.strip() for doc_id in f)
-            for doc in iter_es_docs(query.index, doc_ids):
-                yield doc
-        os.remove(temp_path)
-
-    return ScanResult(scroll_result.count, iter_export_docs())
+    return iter_es_docs_from_query(query)
 
 
 def _get_export_query(export_instance, filters):
@@ -481,14 +440,16 @@ def _get_base_query(export_instance):
         )
 
 
-def rebuild_export(export_instance, filters=None):
+@datadog_track_errors('rebuild_export')
+def rebuild_export(export_instance, progress_tracker):
     """
     Rebuild the given daily saved ExportInstance
     """
-    filters = filters or export_instance.get_filters()
-    export_file = get_export_file([export_instance], filters or [])
-    with export_file as payload:
-        save_export_payload(export_instance, payload)
+    filters = export_instance.get_filters()
+    with TransientTempfile() as temp_path:
+        export_file = get_export_file([export_instance], filters or [], temp_path, progress_tracker)
+        with export_file as payload:
+            save_export_payload(export_instance, payload)
 
 
 def should_rebuild_export(export, last_access_cutoff):

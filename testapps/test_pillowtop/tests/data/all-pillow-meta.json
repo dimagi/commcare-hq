@@ -30,7 +30,7 @@
     "CaseSearchToElasticsearchPillow": {
         "advertised_name": "CaseSearchToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "CaseSearchToElasticsearchPillow-test_case_search_2016-03-15",
+        "checkpoint_id": "CaseSearchToElasticsearchPillow-test_case_search_2018-05-29",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CaseSearchToElasticsearchPillow"
     },
@@ -166,27 +166,6 @@
         "checkpoint_id": "UserPillow-test_hqusers_2017-09-07",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UserPillow"
-    },
-    "WorldVisionChildFluffPillow": {
-        "advertised_name": "WorldVisionChildFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.WorldVisionChildFluffPillow.testhq",
-        "full_class_name": "custom.world_vision.models.WorldVisionChildFluffPillow",
-        "name": "WorldVisionChildFluffPillow"
-    },
-    "WorldVisionHierarchyFluffPillow": {
-        "advertised_name": "WorldVisionHierarchyFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.WorldVisionHierarchyFluffPillow.testhq",
-        "full_class_name": "custom.world_vision.models.WorldVisionHierarchyFluffPillow",
-        "name": "WorldVisionHierarchyFluffPillow"
-    },
-    "WorldVisionMotherFluffPillow": {
-        "advertised_name": "WorldVisionMotherFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.WorldVisionMotherFluffPillow.testhq",
-        "full_class_name": "custom.world_vision.models.WorldVisionMotherFluffPillow",
-        "name": "WorldVisionMotherFluffPillow"
     },
     "XFormToElasticsearchPillow": {
         "advertised_name": "XFormToElasticsearchPillow",

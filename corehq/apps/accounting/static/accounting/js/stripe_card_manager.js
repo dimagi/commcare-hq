@@ -1,51 +1,56 @@
-/* global Stripe */
-hqDefine("accounting/js/stripe_card_manager", function() {
+hqDefine("accounting/js/stripe_card_manager", [
+    'jquery',
+    'knockout',
+    'accounting/js/lib/stripe',
+], function (
+    $,
+    ko,
+    Stripe
+) {
     var newStripeCardModel = function(data, cardManager){
-        'use strict';
         var self = {};
         var mapping = {
             observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token'],
         };
 
-        self.wrap = function(data){
+        self.wrap = function (data) {
             ko.mapping.fromJS(data, mapping, self);
         };
-        self.reset = function(){
+        self.reset = function () {
             self.wrap({'number': '', 'cvc': '', 'expMonth': '', 'expYear': '', 'isAutopay': false, 'token': ''});
         };
         self.reset();
 
-        self.unwrap = function(){
+        self.unwrap = function () {
             return {token: self.token(), autopay: self.isAutopay()};
         };
 
         self.isTestMode = ko.observable(false);
         self.isProcessing = ko.observable(false);
-        self.agreedToPrivacyPolicy = ko.observable(false);
         self.errorMsg = ko.observable('');
 
-        var submit = function(){
+        var submit = function () {
             // Sends the new card to HQ
             return $.ajax({
                 type: "POST",
                 url: data.url,
                 data: self.unwrap(),
-                success: function(data) {
+                success: function (data) {
                     $("#card-modal").modal('hide');
                     $("#success-modal").modal('show');
                     cardManager.wrap(data);
                     self.reset();
                 },
-            }).fail(function(data){
+            }).fail(function (data) {
                 var response = JSON.parse(data.responseText);
                 self.errorMsg(response.error);
-            }).always(function(){
+            }).always(function () {
                 self.isProcessing(false);
             });
         };
 
-        var handleStripeResponse = function(status, response){
-            if (response.error){
+        var handleStripeResponse = function (status, response) {
+            if (response.error) {
                 self.isProcessing(false);
                 self.errorMsg(response.error.message);
             } else {
@@ -55,7 +60,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
             }
         };
 
-        var createStripeToken = function(){
+        var createStripeToken = function () {
             Stripe.card.createToken({
                 number: self.number(),
                 cvc: self.cvc(),
@@ -64,7 +69,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
             }, handleStripeResponse);
         };
 
-        self.saveCard = function(){
+        self.saveCard = function () {
             self.isProcessing(true);
             createStripeToken();
         };
@@ -72,7 +77,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
         return self;
     };
 
-    var stripeCardModel = function(card, baseUrl, cardManager){
+    var stripeCardModel = function (card, baseUrl, cardManager) {
         'use strict';
         var self = {};
         var mapping = {
@@ -80,61 +85,61 @@ hqDefine("accounting/js/stripe_card_manager", function() {
             copy: ['url', 'token'],
         };
 
-        self.wrap = function(data){
+        self.wrap = function (data) {
             ko.mapping.fromJS(data, mapping, self);
             self.is_autopay(self.is_autopay() === 'True');
             self.url = baseUrl + card.token + '/';
         };
         self.wrap(card);
 
-        self.setAutopay = function(){
+        self.setAutopay = function () {
             cardManager.autoPayButtonEnabled(false);
-            self.submit({is_autopay: true}).always(function(){
+            self.submit({is_autopay: true}).always(function () {
                 cardManager.autoPayButtonEnabled(true);
             });
         };
 
-        self.unSetAutopay = function(){
+        self.unSetAutopay = function () {
             cardManager.autoPayButtonEnabled(false);
-            self.submit({is_autopay: false}).always(function(){
+            self.submit({is_autopay: false}).always(function () {
                 cardManager.autoPayButtonEnabled(true);
             });
         };
 
         self.isDeleting = ko.observable(false);
         self.deleteErrorMsg = ko.observable('');
-        self.deleteCard = function(card, button){
+        self.deleteCard = function (card, button) {
             self.isDeleting(true);
             self.deleteErrorMsg = ko.observable('');
             cardManager.cards.destroy(card);
             $.ajax({
                 type: "DELETE",
                 url: self.url,
-                success: function(data) {
+                success: function (data) {
                     cardManager.wrap(data);
                     $(button.currentTarget).closest(".modal").modal('hide');
                     $("#success-modal").modal('show');
                 },
-            }).fail(function(data){
+            }).fail(function (data) {
                 var response = JSON.parse(data.responseText);
                 self.deleteErrorMsg(response.error);
-                if (response.cards){
+                if (response.cards) {
                     cardManager.wrap(response);
                 }
-            }).always(function(){
+            }).always(function () {
                 self.isDeleting(false);
             });
         };
 
-        self.submit = function(data){
+        self.submit = function (data) {
             return $.ajax({
                 type: "POST",
                 url: self.url,
                 data: data,
-                success: function(data) {
+                success: function (data) {
                     cardManager.wrap(data);
                 },
-            }).fail(function(data){
+            }).fail(function (data) {
                 var response = JSON.parse(data.responseText);
                 alert(response.error);
             });
@@ -144,18 +149,17 @@ hqDefine("accounting/js/stripe_card_manager", function() {
     };
 
 
-    var stripeCardManager = function(data){
-        'use strict';
-        var self = this;
+    var stripeCardManager = function (data){
+        var self = {};
         var mapping = {
-            'cards':{
-                create: function(card){
+            'cards': {
+                create: function (card) {
                     return stripeCardModel(card.data, data.url, self);
                 },
             },
         };
 
-        self.wrap = function(data){
+        self.wrap = function (data) {
             ko.mapping.fromJS(data, mapping, self);
         };
         self.wrap(data);

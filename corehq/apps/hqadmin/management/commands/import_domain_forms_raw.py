@@ -11,6 +11,7 @@ from corehq.apps.hqadmin.management.commands.export_domain_forms_raw import Form
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.models import DefaultAuthContext
+from io import open
 
 
 class Command(BaseCommand):
@@ -32,7 +33,7 @@ class Command(BaseCommand):
             if not os.path.isdir(form_dir):
                 continue
 
-            with open(os.path.join(form_dir, 'metadata.json'), 'r') as meta:
+            with open(os.path.join(form_dir, 'metadata.json'), 'r', encoding='utf-8') as meta:
                 metadata = FormMetadata.wrap(json.load(meta))
 
             form_path = os.path.join(form_dir, 'form.xml')
@@ -49,7 +50,7 @@ class Command(BaseCommand):
                 else:
                     self.stderr.write('WARN: missing attachment: {}'.format(path))
 
-            with open(form_path, 'r') as form:
+            with open(form_path, 'r', encoding='utf-8') as form:
                 xml_data = form.read()
 
             auth_type = metadata.auth_context.get('doc_type', None)

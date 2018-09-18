@@ -25,12 +25,14 @@
 
 - id: platform
   name: "Java Phone Platform"
+  description: "The kind of Java phone you want to run the application on"
   values: ['nokia/s40', 'nokia/s60', 'winmo', 'generic']
   value_names: ['Nokia S40 (default)', 'Nokia S60', 'WinMo', 'Generic']
   default: 'nokia/s40'
 
 - id: text_input
   name: "Text Input"
+  description: "What characters to allow users to input"
   widget: text_input
   values: ['roman', 'native', 'custom-keys', 'qwerty']
   value_names: [Roman, Native (International), Custom Keys, Full Keyboard]
@@ -90,18 +92,6 @@
   hide_if_not_enabled: true
   since: "2.0"
   permission: "cloudcare"
-
-- id: anonymous_cloudcare_enabled
-  name: "Anonymous Usage"
-  description: 'Allow visitors to use this application without a login.'
-  description_format: html
-  widget: share_link
-  default: false
-  requires: "{$parent.doc_type}='Application'"
-  hide_if_not_enabled: true
-  since: "2.0"
-  permission: "cloudcare"
-  toggle: ANONYMOUS_WEB_APPS_USAGE
 
 - id: use_custom_suite
   name: "Custom Suite File"
@@ -169,10 +159,12 @@
 
 - id: target_commcare_flavor
   name: Target CommCare Flavor
+  description: "Restrict this app to the selected CommCare flavor"
   toggles: TARGET_COMMCARE_FLAVOR
   values: ['none', 'commcare', 'commcare_lts']
   value_names: ['None', 'CommCare', 'CommCare LTS']
   default: 'none'
+  since: '2.43'
 
 - id: mobile_ucr_restore_version
   name: Mobile UCR Restore Version
@@ -181,3 +173,19 @@
   values: ['1.0', '1.5', '2.0']
   value_names: ['1.0', '1.5', '2.0']
   default: '1.0'
+
+- id: location_fixture_restore
+  name: App Aware Location Fixture Format
+  description: Location Fixture format that is provided in the restore for this app
+  toggle: HIERARCHICAL_LOCATION_FIXTURE
+  values:
+    - 'project_default'
+    - 'both_fixtures'
+    - 'only_flat_fixture'
+    - 'only_hierarchical_fixture'
+  value_names:
+    - 'Project Default'
+    - 'Both Hierarchical and Flat Fixture'
+    - 'Only Flat Fixture'
+    - 'Only Hierarchical Fixture'
+  default: 'project_default'

@@ -11,21 +11,11 @@
     <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
-    {# import error: http://manage.dimagi.com/default.asp?223100 #}
-    {% include 'cloudcare/includes/formplayer-inline.html' %}
-    <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
-    <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
-    <script src="{% static "reports/js/case_details.js" %}"></script>
-    <script src="{% static "case/js/case_property_modal.js" %}"></script>
-    <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
-    <script src="{% static "case/js/case_hierarchy.js" %}"></script>
-{% endblock %}
+{% requirejs_main 'reports/js/case_details' %}
 
 {% block page_content %}
 
-
+{% initial_page_data 'context_case_id' case.case_id %}
 {% initial_page_data 'dynamic_properties' dynamic_properties %}
 {% initial_page_data 'timezone_offset' timezone_offset %}
 {% initial_page_data 'xform_api_url' xform_api_url %}
@@ -33,6 +23,7 @@
 {% registerurl "case_form_data" case.domain case.case_id '---' %}
 {% registerurl "case_property_names" case.domain case.case_id %}
 {% registerurl "edit_case" case.domain case.case_id %}
+{% registerurl "edit_form" case.domain '---' %}
 {% registerurl "case_property_changes" case.domain case.case_id '---' %}
 
 {# This is used in case/partials/repeat_records.html #}
@@ -48,8 +39,8 @@
         </div>
         <div class="row">
             <div class="col-sm-12">
-                <ul class="nav nav-tabs" style="margin-bottom: 10px;">
-                    <li class="active">
+                <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
+                    <li>
                         <a href="#properties" data-toggle="tab">
                             {% trans "Case Properties" %}
                         </a>
@@ -70,7 +61,7 @@
                 </ul>
 
                 <div class="tab-content">
-                    <div class="tab-pane active" id="properties">
+                    <div class="tab-pane" id="properties">
                         <div class="row-fluid">
                             {% if dynamic_properties %}
                                 {% include "hqwebapp/proptable/property_table.html" with tables=dynamic_properties_as_table %}
@@ -241,7 +232,7 @@
                         </div>
                     </div>
                     <h4 class="modal-title">
-                        {% trans "Data Corrections" %}
+                        {% trans "Clean Case Data" %}
                     </h4>
                 </div>
                 <div class="modal-body" data-bind="css: { 'text-center': showSpinner }">
@@ -267,7 +258,7 @@
                                         <div class="form-group container-fluid" data-bind="css: {'has-success': dirty()}">
                                             <label class="col-sm-6 control-label">
                                                 <i class="fa fa-pencil-square" data-bind="visible: dirty()"></i>
-                                                <span data-bind="text: name"></span>
+                                                <span data-bind="html: $root.breakWord(name)"></span>
                                             </label>
                                             <div class="col-sm-6">
                                                 <input type="text" class="form-control"
@@ -313,9 +304,9 @@
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
         {% if show_properties_edit %}
-            <button type="button" class="btn btn-default pull-left" id="edit-dynamic-properties-trigger">
-                <i class="fa fa-edit"></i>
-                {% trans 'Data Corrections' %}
+            <button type="button" class="btn btn-default pull-left data-corrections-trigger">
+                <i class="fa fa-shower"></i>
+                {% trans 'Clean Case Data' %}
             </button>
         {% endif %}
         {% if show_case_rebuild %}
@@ -345,4 +336,10 @@
     {% endif %}
     {% endif %}
 </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% if show_properties_edit %}
+        {% include 'reports/partials/data_corrections_modal.html' %}
+    {% endif %}
 {% endblock %}

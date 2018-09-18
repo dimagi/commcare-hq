@@ -15,15 +15,15 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
     /*
      *  Find any unregistered data. Error on any duplicates.
      */
-    var gather = function(selector, existing) {
+    var gather = function (selector, existing) {
         /*if (document.readyState !== "complete") {
             console.assert(false, "Attempt to call initial_page_data.gather before document is ready"); // eslint-disable-line no-console
             $.get('/assert/initial_page_data/');
         }*/
 
         existing = existing || {};
-        $(selector).each(function() {
-            _.each($(this).children(), function(div) {
+        $(selector).each(function () {
+            _.each($(this).children(), function (div) {
                 var $div = $(div),
                     data = $div.data();
                 if (existing[data.name] !== undefined) {
@@ -39,11 +39,22 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
     /*
      * Fetch a named value.
      */
-    var get = function(name) {
+    var get = function (name) {
         if (_initData[name] === undefined) {
             _initData = gather(data_selector, _initData);
         }
         return _initData[name];
+    };
+
+    /*
+     * Analogous to {% initial_page_data name value %}, but accessible from JS
+     * Useful for mocha tests
+     */
+    var register = function (name, value) {
+        if (_initData[name] !== undefined) {
+            throw new Error("Duplicate key in initial page data: " + name);
+        }
+        _initData[name] = value;
     };
 
     // http://stackoverflow.com/a/21903119/240553
@@ -69,7 +80,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
     /*
      *  Manually add url to registry.
      */
-    var registerUrl = function(name, url) {
+    var registerUrl = function (name, url) {
         urls[name] = url;
     };
 
@@ -90,7 +101,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         });
     };
 
-    $(function() {
+    $(function () {
         _initData = gather(data_selector, _initData);
         urls = gather(url_selector, urls);
     });
@@ -98,6 +109,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
     return {
         gather: gather,
         get: get,
+        register: register,
         getUrlParameter: getUrlParameter,
         getUrlParameterFromString: getUrlParameterFromString,
         registerUrl: registerUrl,

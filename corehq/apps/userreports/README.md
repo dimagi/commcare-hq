@@ -1288,6 +1288,7 @@ Example assuming "village" is a location ID, which is converted to names using t
   "choice_provider": {
       "type": "location",
       "include_descendants": true,
+      "order_by_hierarchy": true,
       "show_full_path": true
   }
 }
@@ -2085,13 +2086,3 @@ This can be done by runnning `./manage.py dbshell` or using `psql`.
 The naming convention for tables is: `config_report_[domain name]_[table id]_[hash]`.
 
 In postgres, you can see all tables by typing `\dt` and use sql commands to inspect the appropriate tables.
-
-## ElasticSearch
-
-Optionally you can use ElasticSearch as a data source. ElasticSearch settings
-can be modified using es_index_settings.
-
-Using ES has the following drawbacks:
-
-- Results will be sorted by the first aggregate column when using aggregations
-- You cannot aggregate reports based on month or year

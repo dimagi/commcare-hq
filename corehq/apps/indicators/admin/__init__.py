@@ -11,7 +11,6 @@ from memoized import memoized
 class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):
     section_name = "Administer Indicators"
     base_template = 'reports/base_template.html'
-    report_template_path = "indicators/interfaces/indicator_admin.html"
     dispatcher = IndicatorAdminInterfaceDispatcher
 
     crud_item_type = "Indicator Definition"
@@ -29,14 +28,6 @@ class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):
             DataTablesColumn("Last Modified"),
             DataTablesColumn("Edit"),
         )
-
-    @property
-    def report_context(self):
-        context = super(BaseIndicatorAdminInterface, self).report_context
-        context.update({
-            "bulk_add_url": self.bulk_add_url,
-        })
-        return context
 
     @property
     def bulk_add_url(self):

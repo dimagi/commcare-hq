@@ -17,13 +17,13 @@ function Util() {
  *          'onConfirm': function() {},
  *      }
  */
-Util.confirmationModal = function(options) {
+Util.confirmationModal = function (options) {
     options = _.defaults(options, {
         title: gettext('Confirm?'),
         message: '',
         confirmText: gettext('OK'),
         cancelText: gettext('Cancel'),
-        onConfirm: function() {},
+        onConfirm: function () {},
     });
     var $modal = $('#js-confirmation-modal');
     $modal.find('.js-modal-title').text(options.title);
@@ -31,7 +31,7 @@ Util.confirmationModal = function(options) {
     $modal.find('#js-confirmation-confirm').text(options.confirmText);
     $modal.find('#js-confirmation-cancel').text(options.cancelText);
 
-    $modal.find('#js-confirmation-confirm').click(function(e) {
+    $modal.find('#js-confirmation-confirm').click(function (e) {
         options.onConfirm(e);
     });
     $modal.modal('show');
@@ -75,12 +75,12 @@ Util.setCrossDomainAjaxOptions = function (options) {
     options.contentType = "application/json;charset=UTF-8";
 };
 
-Util.saveDisplayOptions = function(displayOptions) {
+Util.saveDisplayOptions = function (displayOptions) {
     var displayOptionsKey = Util.getDisplayOptionsKey();
     localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
 };
 
-Util.getSavedDisplayOptions = function() {
+Util.getSavedDisplayOptions = function () {
     var displayOptionsKey = Util.getDisplayOptionsKey();
     try {
         return JSON.parse(localStorage.getItem(displayOptionsKey));
@@ -90,7 +90,7 @@ Util.getSavedDisplayOptions = function() {
     }
 };
 
-Util.getDisplayOptionsKey = function() {
+Util.getDisplayOptionsKey = function () {
     var user = FormplayerFrontend.request('currentUser');
     return [
         user.environment,
@@ -100,7 +100,7 @@ Util.getDisplayOptionsKey = function() {
     ].join(':');
 };
 
-Util.pagesToShow = function(selectedPage, totalPages, limit) {
+Util.pagesToShow = function (selectedPage, totalPages, limit) {
     var limitHalf = Math.floor(limit / 2);
     if (totalPages < limit) {
         return {
@@ -131,6 +131,7 @@ Util.pagesToShow = function(selectedPage, totalPages, limit) {
 
 Util.CloudcareUrl = function (options) {
     this.appId = options.appId;
+    this.copyOf = options.copyOf;
     this.sessionId = options.sessionId;
     this.steps = options.steps;
     this.page = options.page;
@@ -210,6 +211,7 @@ Util.CloudcareUrl.prototype.toJson = function () {
     var self = this;
     var dict = {
         appId: self.appId,
+        copyOf: self.copyOf,
         sessionId: self.sessionId,
         steps: self.steps,
         page: self.page,
@@ -226,6 +228,7 @@ Util.CloudcareUrl.fromJson = function (json) {
     var data = JSON.parse(json);
     var options = {
         'appId': data.appId,
+        'copyOf': data.copyOf,
         'sessionId': data.sessionId,
         'steps': data.steps,
         'page': data.page,
@@ -246,7 +249,7 @@ if (!String.prototype.startsWith) {
 }
 
 if (!String.prototype.endsWith) {
-    String.prototype.endsWith = function(searchString, position) {
+    String.prototype.endsWith = function (searchString, position) {
         var subjectString = this.toString();
         if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
             position = subjectString.length;
@@ -258,7 +261,7 @@ if (!String.prototype.endsWith) {
 }
 
 if (!String.prototype.includes) {
-    String.prototype.includes = function(search, start) {
+    String.prototype.includes = function (search, start) {
         'use strict';
         if (typeof start !== 'number') {
             start = 0;

@@ -22,7 +22,7 @@
         </tr>
         {% endif %}
     {% endifchanged %}
-<tr class="form-data-question {% if question.response == None %}muted form-data-skipped{% endif %}">
+<tr class="form-data-question {% if question.response == None %}text-muted form-data-skipped{% endif %}">
     {% if question.children %}
         {% if question.type %}
             <td colspan="2">
@@ -53,11 +53,19 @@
         <td class="span6" title="{{ question.get_formatted_response }}">
             {% if question.options %}
                 <div class="form-data-readable">
-                {% for option in question.options %}
-                    {% if option.value in question.response.split %}
-                        {{ option.label|linebreaksbr }}
-                    {% endif %}
-                {% endfor %}
+                    {# Display all selected option labels #}
+                    {% for option in question.options %}
+                        {% if option.value in question.response.split %}
+                            {{ option.label|linebreaksbr }}
+                        {% endif %}
+                    {% endfor %}
+
+                    {# Fall back to raw data for any unknown responses #}
+                    {% for response in question.response.split %}
+                        {% if response not in question.option_values %}
+                            {{ response }}
+                        {% endif %}
+                    {% endfor %}
                 </div>
                 <div class="form-data-raw">
                     {% if question.response %}{{ question.response|linebreaksbr }}{% endif %}

@@ -9,27 +9,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="HandheldFriendly" content="True">
 
+        {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
         {% if less_debug %}
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.debug.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
                   href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.debug.less' %}" />
             <link type="text/css"
                   rel="stylesheet"
                   media="all"
@@ -43,23 +28,7 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
                   href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.less' %}" />
             <link type="text/css"
                   rel="stylesheet"
                   media="all"
@@ -88,7 +57,6 @@
               rel="stylesheet"
               media="all"
               href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
-        <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"/>
 
 
         {% if less_debug %}

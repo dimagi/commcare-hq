@@ -3,11 +3,8 @@
 {% load compress %}
 {% load i18n %}
 
-{% compress js %}
-{% block js %}{{ block.super }}
-    <script src="{% static 'case_search/js/case_search.js' %}"></script>
-{% endblock js %}
-{% endcompress %}
+{% requirejs_main 'case_search/js/case_search' %}
+
 {% block page_content %}
     {% registerurl 'case_data' request.domain '___' %}
 
@@ -25,11 +22,11 @@
                             <div class="panel-body">
                                 <label>
                                     {% trans "Case Type:" %}
-                                    <input name="type" type="text" placeholder="Case Type (optional)" data-bind="value: type"/>
+                                    <input name="type" type="text" placeholder="Case Type (optional)" data-bind="value: type" class="form-control"/>
                                 </label>
                                 <label>
                                     {% trans "Owner ID:" %}
-                                    <input name="type" type="text" placeholder="Owner ID (optional)" data-bind="value: owner_id"/>
+                                    <input name="type" type="text" placeholder="Owner ID (optional)" data-bind="value: owner_id" class="form-control"/>
                                 </label>
                                 <label>
                                     {% trans "Include Closed:" %}
@@ -54,13 +51,12 @@
                                     <tbody data-bind="foreach: parameters" >
                                         <tr>
                                             <td>
-                                                <input name="key" type="text" placeholder="e.g. name" data-bind="value: key"/>
+                                                <input name="key" type="text" placeholder="e.g. name" data-bind="value: key" class="form-control"/>
                                             </td>
                                             <td>
-                                                <input name="value" type="text"  placeholder="e.g. redbeard" data-bind="value: value"/>
-                                            </td>
+                                                <input name="value" type="text"  placeholder="e.g. redbeard" data-bind="value: value" class="form-control"/> </td>
                                             <td>
-                                                <select name="clause" data-bind="value: clause">
+                                                <select name="clause" data-bind="value: clause" class="form-control">
                                                     <option value="must">must</option>
                                                     <option value="should">should</option>
                                                     <option value="must_not">must_not</option>
@@ -70,7 +66,7 @@
                                                 <input name="fuzzy" type="checkbox" data-bind="checked: fuzzy">
                                             </td>
                                             <td>
-                                                <input name="value" type="text" spellcheck='false' data-bind="value: regex" placeholder="Regular Expression"/>
+                                                <input name="value" type="text" spellcheck='false' data-bind="value: regex" placeholder="Regular Expression" class="form-control"/>
                                             </td>
                                             <td>
                                                 <span class='btn btn-danger' data-bind="click: $parent.removeParameter">
@@ -83,6 +79,16 @@
                                     </tbody>
                                 </table>
                                 <span class="btn btn-primary" id="add-input" data-bind="click: addParameter"><i class="fa fa-plus"></i> Add input</span>
+                            </div>
+                        </div>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <strong>XPath Expression</strong>
+                            </div>
+                            <div class="panel-body">
+                                <div class="form-group" style="width:100%">
+                                    <textarea style="min-width: 50%" spellcheck="false" class="form-control" name="xpath" type="text" placeholder="e.g: name = 'tyrion' or nickname='the imp'" data-bind="value: xpath"> </textarea>
+                                </div>
                             </div>
                         </div>
                         {% if query_additions %}
@@ -108,7 +114,16 @@
 
         <div class="row">
             <div class="col-sm-12">
-                <h3>{% trans "Results" %} <small data-bind="text: count"></small></h3>
+                <h3>{% trans "Results" %}
+                    <small data-bind="visible: count">
+                        <span data-bind="text: count"></span> results
+                        <span data-bind="visible: took">in <span data-bind="text: took"></span>ms</span>
+                    </small>
+                </h3>
+            </div>
+            <div class="col-sm-12" data-bind="visible: query">
+                <a role="button" data-toggle="collapse" data-target="#query">Show Query</a>
+                <pre id="query" class="collapse" data-bind="text: query"></pre>
             </div>
             <div class="col-sm-12">
                 <table class="table table-striped">

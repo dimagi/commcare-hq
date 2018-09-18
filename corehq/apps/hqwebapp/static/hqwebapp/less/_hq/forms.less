@@ -462,3 +462,249 @@ table .ko-inline-edit .read-only:hover {
 .radio-select_label-placeholder {
   height: @input-height-base;
 }
+
+
+.hs-input {
+  display: block;
+  width: 100%;
+  height: @input-height-base; // Make inputs at least the height of their button counterpart (base line-height + padding + border)
+  padding: @padding-base-vertical @padding-base-horizontal;
+  font-size: @font-size-base;
+  line-height: @line-height-base;
+  color: @input-color;
+  background-color: @input-bg;
+  background-image: none; // Reset unusual Firefox-on-Android default style; see https://github.com/necolas/normalize.css/issues/214
+  border: 1px solid @input-border;
+  border-radius: @input-border-radius; // Note: This has no effect on <select>s in some browsers, due to the limited stylability of <select>s in CSS.
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+
+  // Unstyle the caret on `<select>`s in IE10+.
+  &::-ms-expand {
+    border: 0;
+    background-color: transparent;
+  }
+
+  // Disabled and read-only inputs
+  //
+  // HTML5 says that controls under a fieldset > legend:first-child won't be
+  // disabled if the fieldset is disabled. Due to implementation difficulty, we
+  // don't honor that edge case; we style them as disabled anyway.
+  &[disabled],
+  &[readonly], {
+    background-color: @input-bg-disabled;
+    opacity: 1; // iOS fix for unreadable disabled content; see https://github.com/twbs/bootstrap/issues/11655
+  }
+
+  &[disabled],
+  fieldset[disabled] & {
+    cursor: @cursor-disabled;
+  }
+
+  // Reset height for `textarea`s
+  textarea& {
+    height: auto;
+  }
+}
+
+.hs-form-field {
+  padding-bottom: 10px;
+}
+
+.hs-button {
+  display: inline-block;
+  margin-bottom: 0; // For input.btn
+  font-weight: @btn-font-weight;
+  text-align: center;
+  vertical-align: middle;
+  touch-action: manipulation;
+  cursor: pointer;
+  background-image: none; // Reset unusual Firefox-on-Android default style; see https://github.com/necolas/normalize.css/issues/214
+  border: 1px solid transparent;
+  white-space: nowrap;
+  .button-size(@padding-base-vertical; @padding-base-horizontal; @font-size-base; @line-height-base; @btn-border-radius-base);
+}
+
+.hs-form .actions {
+  background-color: @cc-bg;
+  margin: 15px -15px -15px;
+  padding: 15px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  text-align: right;
+
+  .hs-button.primary {
+    .button-variant(white; @cc-brand-mid; darken(@cc-brand-mid, 5));
+  }
+}
+
+.form-bubble {
+  padding: 20px;
+  margin: 10px 0;
+  .border-top-radius(5px);
+  .border-bottom-radius(5px);
+  box-sizing: content-box;
+  background-color: @cc-brand-mid;
+  color: white;
+
+  fieldset {
+    padding: 0.01em 0 0 0;
+  }
+
+  legend {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding: 0;
+    display: table;
+    text-align: center;
+    color: white;
+  }
+
+  .help-block {
+    text-align: left;
+    color: white;
+  }
+
+  a,
+  a:visited,
+  a:link {
+    color: @cc-brand-hi;
+  }
+}
+
+.form-bubble-purple {
+  // temporary colors while palette changes are worked out
+  @purple: #43467F;
+  @off-white: #E3D0FF;
+
+  background-color: @purple;
+  color: @off-white;
+
+  a.btn-purple {
+    background-color: @purple;
+    color: @component-active-color;
+    border: 1px solid @off-white;
+
+    &:hover {
+      background-color: lighten(@purple, 5);
+    }
+  }
+}
+
+.form-bubble-actions {
+  text-align: center;
+  padding-bottom: 10px;
+
+  a.btn {
+    color: white;
+  }
+}
+
+.form-bubble-lg {
+  input[type="text"],
+  input[type="number"],
+  input[type="password"],
+  span.form-control {
+    .input-size(@input-height-large; @padding-large-vertical; @padding-large-horizontal; @font-size-large; @line-height-large; @input-border-radius-large);
+    width: 100%;
+    color: @cc-text;
+  }
+}
+
+.form-bubble {
+  .has-feedback .form-control {
+    border-width: 2px;
+  }
+
+  .has-success .control-label,
+  .text-success {
+    color: @cc-att-pos-hi;
+  }
+
+  .has-success .form-control,
+  .has-success .form-control:focus,
+  .has-success input[type="text"],
+  .has-success input[type="text"]:focus,
+  .has-success input[type="number"],
+  .has-success input[type="number"]:focus,
+  .has-success input[type="password"],
+  .has-success input[type="password"]:focus {
+    border-color: #47b700;
+  }
+  .has-success .form-control,
+  .has-success input[type="text"],
+  .has-success input[type="number"],
+  .has-success input[type="password"] {
+    .box-shadow(0px 0px 10px 1px rgba(175, 242, 133, .5));
+  }
+  .has-success .form-control:focus,
+  .has-success input[type="text"]:focus,
+  .has-success input[type="number"]:focus,
+  .has-success input[type="password"]:focus {
+    .box-shadow(0px 0px 15px 1px rgba(175, 242, 133, .75));
+  }
+
+  .has-error .control-label,
+  .has-error label,
+  .text-error,
+  .text-danger {
+    color: @cc-att-neg-hi;
+  }
+
+  .has-error .form-control,
+  .has-error .form-control:focus,
+  .has-error input[type="text"],
+  .has-error input[type="text"]:focus,
+  .has-error input[type="number"],
+  .has-error input[type="number"]:focus,
+  .has-error input[type="password"],
+  .has-error input[type="password"]:focus {
+    border-color: #e53e30;
+  }
+  .has-error .form-control,
+  .has-error input[type="text"],
+  .has-error input[type="number"],
+  .has-error input[type="password"] {
+    .box-shadow(0px 0px 10px 1px rgba(239, 207, 203, .5));
+  }
+  .has-error .form-control:focus,
+  .has-error input[type="text"]:focus,
+  .has-error input[type="number"]:focus,
+  .has-error input[type="password"]:focus {
+    .box-shadow(0px 0px 15px 1px rgba(239, 207, 203, .75));
+  }
+
+  .has-warning .control-label,
+  .text-warning {
+    color: @cc-light-warm-accent-hi;
+  }
+
+  .has-warning .form-control,
+  .has-warning .form-control:focus,
+  .has-warning input[type="text"],
+  .has-warning input[type="text"]:focus,
+  .has-warning input[type="number"],
+  .has-warning input[type="number"]:focus,
+  .has-warning input[type="password"],
+  .has-warning input[type="password"]:focus {
+    border-color: #f9c700;
+  }
+  .has-warning .form-control,
+  .has-warning input[type="text"],
+  .has-warning input[type="number"],
+  .has-warning input[type="password"] {
+    .box-shadow(0px 0px 10px 1px rgba(248, 236, 189, .5));
+  }
+  .has-warning .form-control:focus,
+  .has-warning input[type="text"]:focus,
+  .has-warning input[type="number"]:focus,
+  .has-warning input[type="password"]:focus {
+    .box-shadow(0px 0px 15px 1px rgba(248, 236, 189, .75));
+  }
+
+  input[type="checkbox"] {
+    margin-top: 1px;
+    margin-right: 7px;
+    float: left;
+  }
+}

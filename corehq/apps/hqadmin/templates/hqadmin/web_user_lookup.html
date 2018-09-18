@@ -1,9 +1,10 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
-{% block reportcontent %}
+
+{% block page_content %}
     <p>{% trans "See a user's projects by entering their email address below." %}</p>
-    <form class="form-horizontal" method="GET" action="">
-        <input name="q" type="text" style="width: 30em" placeholder="somebody@example.com"/>
+    <form class="form-inline" method="GET" action="">
+        <input name="q" type="text" class="form-control" placeholder="you@example.com"/>
         <input class="btn btn-primary" type="submit"/>
     </form>
     {% if web_user %}
@@ -33,9 +34,9 @@
                 </tr>
             {% endfor %}
         </table>
-        <a class="btn btn-primary" href="{{ audit_report_url }}?username={{ web_user.username }}">View User Audit Report</a>
-        <a class="btn btn-primary" href="{% url 'disable_user' %}?username={{ web_user.username }}">Disable/Enable User Account</a>
-        <a class="btn btn-primary {% if not has_two_factor %}disabled{% endif %}" href="{% url 'disable_two_factor' %}?q={{ web_user.username }}">Disable Two-Factor Authentication</a>
+        <a class="btn btn-primary" href="{{ audit_report_url }}?username={{ web_user.username|urlencode }}">View User Audit Report</a>
+        <a class="btn btn-primary" href="{% url 'disable_user' %}?username={{ web_user.username|urlencode }}">Disable/Enable User Account</a>
+        <a class="btn btn-primary {% if not has_two_factor %}disabled{% endif %}" href="{% url 'disable_two_factor' %}?q={{ web_user.username|urlencode }}">Disable Two-Factor Authentication</a>
         </div>
     {% endif %}
 {% endblock %}

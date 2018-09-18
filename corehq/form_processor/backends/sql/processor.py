@@ -8,6 +8,7 @@ import redis
 from PIL import Image
 from contextlib2 import ExitStack
 from django.db import transaction
+from lxml import etree
 
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import (
@@ -17,12 +18,12 @@ from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStra
 from corehq.form_processor.change_publishers import (
     publish_form_saved, publish_case_saved, publish_ledger_v2_saved,
     republish_all_changes_for_form)
-from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
-from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
+from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
 import six
@@ -52,7 +53,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def copy_attachments(cls, from_form, to_form):
-        to_form.unsaved_attachments = to_form.unsaved_attachments or []
+        to_form.unsaved_attachments = getattr(to_form, 'unsaved_attachments', [])
         for name, att in from_form.attachments.items():
             to_form.unsaved_attachments.append(XFormAttachmentSQL(
                 name=att.name,
@@ -100,6 +101,20 @@ class FormProcessorSQL(object):
         publish_case_saved(case)
 
     @classmethod
+    def new_form_from_old(cls, existing_form, xml, value_responses_map, user_id):
+        from corehq.form_processor.parsers.form import apply_deprecation
+
+        new_xml = etree.tostring(xml)
+        form_json = convert_xform_to_json(new_xml)
+        new_form = cls.new_xform(form_json)
+        new_form.user_id = user_id
+        new_form.domain = existing_form.domain
+        new_form.app_id = existing_form.app_id
+
+        existing_form, new_form = apply_deprecation(existing_form, new_form)
+        return (existing_form, new_form)
+
+    @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
         db_names = {processed_forms.submitted.db}
         if processed_forms.deprecated:
@@ -131,10 +146,13 @@ class FormProcessorSQL(object):
                 LedgerAccessorSQL.save_ledger_values(ledgers_to_save, stock_result)
 
         if publish_to_kafka:
-            cls._publish_changes(processed_forms, cases, stock_result)
+            try:
+                cls.publish_changes_to_kafka(processed_forms, cases, stock_result)
+            except Exception as e:
+                raise KafkaPublishingError(e)
 
     @staticmethod
-    def _publish_changes(processed_forms, cases, stock_result):
+    def publish_changes_to_kafka(processed_forms, cases, stock_result):
         # todo: form deprecations?
         publish_form_saved(processed_forms.submitted)
         if processed_forms.submitted.is_duplicate:
@@ -156,7 +174,8 @@ class FormProcessorSQL(object):
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
         existing_xform.state = XFormInstanceSQL.DEPRECATED
-        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')) or 'unknown'
+        default_user_id = new_xform.user_id or 'unknown'
+        user_id = new_xform.auth_context and new_xform.auth_context.get('user_id') or default_user_id
         operation = XFormOperationSQL(
             user_id=user_id,
             date=new_xform.edited_on,

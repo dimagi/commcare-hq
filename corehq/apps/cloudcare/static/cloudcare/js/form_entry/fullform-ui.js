@@ -1,12 +1,38 @@
-/* globals CodeMirror */
 var Formplayer = {
     Utils: {},
     Const: {},
     ViewModels: {},
     Errors: {},
 };
-var markdowner = window.markdownit();
+var md = window.markdownit();
 
+var defaultRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
+    return self.renderToken(tokens, idx, options);
+};
+
+md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+    // If you are sure other plugins can't add `target` - drop check below
+    var aIndex = tokens[idx].attrIndex('target');
+
+    if (aIndex < 0) {
+        tokens[idx].attrPush(['target', '_blank']); // add new attribute
+    } else {
+        tokens[idx].attrs[aIndex][1] = '_blank';    // replace value of existing attr
+    }
+
+    // pass token to default renderer.
+    return defaultRender(tokens, idx, options, env, self);
+};
+
+_.delay(function () {
+    ko.bindingHandlers.renderMarkdown = {
+        update: function (element, valueAccessor) {
+            var value = ko.unwrap(valueAccessor());
+            value = md.render(value || '');
+            $(element).html(value);
+        },
+    };
+});
 
 //if index is part of a repeat, return only the part beyond the deepest repeat
 function relativeIndex(ix) {
@@ -109,7 +135,7 @@ function Container(json) {
      * Used in KO template to determine what template to use for a child
      * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
      */
-    self.childTemplate = function(child) {
+    self.childTemplate = function (child) {
         return ko.utils.unwrapObservable(child.type) + '-fullform-ko-template';
     };
 }
@@ -119,21 +145,21 @@ function Container(json) {
  * a knockout representation.
  * @param {Object} json - The JSON returned from touchforms to represent a Container
  */
-Container.prototype.fromJS = function(json) {
+Container.prototype.fromJS = function (json) {
     var self = this;
     var mapping = {
         caption: {
-            update: function(options) {
+            update: function (options) {
                 return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
             },
         },
         caption_markdown: {
-            update: function(options) {
-                return options.data ? markdowner.render(options.data) : null;
+            update: function (options) {
+                return options.data ? md.render(options.data) : null;
             },
         },
         children: {
-            create: function(options) {
+            create: function (options) {
                 if (options.data.type === Formplayer.Const.QUESTION_TYPE) {
                     return new Question(options.data, self);
                 } else if (options.data.type === Formplayer.Const.GROUP_TYPE) {
@@ -144,7 +170,7 @@ Container.prototype.fromJS = function(json) {
                     console.error('Could not find question type of ' + options.data.type);
                 }
             },
-            update: function(options) {
+            update: function (options) {
                 if (options.target.pendingAnswer &&
                         options.target.pendingAnswer() !== Formplayer.Const.NO_PENDING_ANSWER) {
                     // There is a request in progress
@@ -170,7 +196,7 @@ Container.prototype.fromJS = function(json) {
                 }
                 return options.target;
             },
-            key: function(data) {
+            key: function (data) {
                 return ko.utils.unwrapObservable(data.uuid) || ko.utils.unwrapObservable(data.ix);
             },
         },
@@ -258,7 +284,7 @@ function Form(json) {
         return !self.showInFormNavigation();
     });
 
-    self.submitForm = function(form) {
+    self.submitForm = function (form) {
         $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);
     };
 
@@ -276,15 +302,20 @@ function Form(json) {
         });
     };
 
-    self.afterRender = function() {
-        $(".help-text-trigger").click(function(event) {
+    self.afterRender = function () {
+        $(".help-text-trigger").click(function (event) {
             var container = $(event.currentTarget).closest(".caption");
+            container.find(".modal").modal('show');
+        });
+
+        $(".unsupported-question-type-trigger").click(function () {
+            var container = $(event.currentTarget).closest(".widget");
             container.find(".modal").modal('show');
         });
     };
 
     $.unsubscribe('session');
-    $.subscribe('session.reconcile', function(e, response, element) {
+    $.subscribe('session.reconcile', function (e, response, element) {
         // TODO where does response status parsing belong?
         if (response.status === 'validation-error') {
             if (response.type === 'required') {
@@ -301,11 +332,11 @@ function Form(json) {
         }
     });
 
-    $.subscribe('session.block', function(e, block) {
+    $.subscribe('session.block', function (e, block) {
         $('#webforms input, #webforms textarea').prop('disabled', !!block);
     });
 
-    self.submitting = function() {
+    self.submitting = function () {
         self.submitText('Submitting...');
     };
 }
@@ -331,18 +362,18 @@ function Group(json, parent) {
     if (self.isRepetition) {
         // If the group is part of a repetition the index can change if the user adds or deletes
         // repeat groups.
-        self.ix.subscribe(function(newValue) {
+        self.ix.subscribe(function (newValue) {
             self.rel_ix(relativeIndex(self.ix()));
         });
     }
 
-    self.deleteRepeat = function() {
+    self.deleteRepeat = function () {
         $.publish('formplayer.' + Formplayer.Const.DELETE_REPEAT, self);
         $.publish('formplayer.dirty');
     };
 
-    self.hasAnyNestedQuestions = function() {
-        return _.any(self.children(), function(d) {
+    self.hasAnyNestedQuestions = function () {
+        return _.any(self.children(), function (d) {
             if (d.type() === 'question' || d.type() === 'repeat-juncture') {
                 return true;
             } else if (d.type() === 'sub-group') {
@@ -372,7 +403,7 @@ function Repeat(json, parent) {
     }
     self.templateType = 'repeat';
 
-    self.newRepeat = function() {
+    self.newRepeat = function () {
         $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, self);
         $.publish('formplayer.dirty');
     };
@@ -406,36 +437,39 @@ function Question(json, parent) {
     // pendingAnswer is a copy of an answer being submitted, so that we know not to reconcile a new answer
     // until the question has received a response from the server.
     self.pendingAnswer = ko.observable(Formplayer.Const.NO_PENDING_ANSWER);
-    self.pendingAnswer.subscribe(function() { self.hasAnswered = true; });
-    self.dirty = ko.computed(function() {
+    self.pendingAnswer.subscribe(function () { self.hasAnswered = true; });
+    self.dirty = ko.computed(function () {
         return self.pendingAnswer() !== Formplayer.Const.NO_PENDING_ANSWER;
     });
-    self.clean = ko.computed(function() {
+    self.clean = ko.computed(function () {
         return !self.dirty() && !self.error() && !self.serverError() && self.hasAnswered;
     });
-    self.hasError = ko.computed(function() {
+    self.hasError = ko.computed(function () {
         return (self.error() || self.serverError()) && !self.dirty();
     });
 
-    self.isValid = function() {
+    self.isValid = function () {
         return self.error() === null && self.serverError() === null;
     };
 
     self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
     self.entry = getEntry(self);
-    self.entryTemplate = function() {
+    self.entryTemplate = function () {
         return self.entry.templateType + '-entry-ko-template';
     };
-    self.afterRender = function() { self.entry.afterRender(); };
+    self.afterRender = function () { self.entry.afterRender(); };
 
-    self.triggerAnswer = function() {
-        $.publish('formplayer.dirty');
+    self.triggerAnswer = function () {
         self.pendingAnswer(_.clone(self.answer()));
-        $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
+        publishAnswerEvent();
     };
-    self.onchange = _.throttle(self.triggerAnswer, self.throttle);
+    var publishAnswerEvent = _.throttle(function () {
+        $.publish('formplayer.dirty');
+        $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
+    }, self.throttle);
+    self.onchange = self.triggerAnswer;
 
-    self.mediaSrc = function(resourceType) {
+    self.mediaSrc = function (resourceType) {
         if (!resourceType || !_.isFunction(Formplayer.resourceMap)) { return ''; }
         return Formplayer.resourceMap(resourceType);
     };
@@ -446,17 +480,17 @@ function Question(json, parent) {
  * a knockout representation.
  * @param {Object} json - The JSON returned from touchforms to represent a Question
  */
-Question.prototype.fromJS = function(json) {
+Question.prototype.fromJS = function (json) {
     var self = this;
     var mapping = {
         caption: {
-            update: function(options) {
+            update: function (options) {
                 return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
             },
         },
         caption_markdown: {
-            update: function(options) {
-                return options.data ? markdowner.render(options.data) : null;
+            update: function (options) {
+                return options.data ? md.render(options.data) : null;
             },
         },
     };
@@ -469,7 +503,7 @@ Question.prototype.fromJS = function(json) {
  * Used to compare if questions are equal to each other by looking at their index
  * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
  */
-var cmpkey = function(e) {
+var cmpkey = function (e) {
     var ix = ko.utils.unwrapObservable(e.ix);
     if (e.uuid) {
         return 'uuid-' + ko.utils.unwrapObservable(e.uuid);
@@ -484,8 +518,8 @@ var cmpkey = function(e) {
  * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
  * @param {Object} set - The set of objects, either Question, Group, or Repeat to search in
  */
-var ixElementSet = function(e, set) {
-    return $.map(set, function(val) {
+var ixElementSet = function (e, set) {
+    return $.map(set, function (val) {
         return cmpkey(val);
     }).indexOf(cmpkey(e));
 };
@@ -496,14 +530,14 @@ var ixElementSet = function(e, set) {
  * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
  * @param {Object} set - The set of objects, either Question, Group, or Repeat to search in
  */
-var inElementSet = function(e, set) {
+var inElementSet = function (e, set) {
     var ix = ixElementSet(e, set);
     return (ix !== -1 ? set[ix] : null);
 };
 
 
 function scroll_pin(pin_threshold, $container, $elem) {
-    return function() {
+    return function () {
         var base_offset = $container.offset().top;
         var scroll_pos = $(window).scrollTop();
         var elem_pos = base_offset - scroll_pos;
@@ -603,7 +637,7 @@ Formplayer.Errors = {
         'Please try again later.'),
 };
 
-Formplayer.Utils.touchformsError = function(message) {
+Formplayer.Utils.touchformsError = function (message) {
     return Formplayer.Errors.GENERIC_ERROR + message;
 };
 
@@ -612,7 +646,7 @@ Formplayer.Utils.touchformsError = function(message) {
  * @param {(string|string[])} answer1 - A string of answers or a single answer
  * @param {(string|string[])} answer2 - A string of answers or a single answer
  */
-Formplayer.Utils.answersEqual = function(answer1, answer2) {
+Formplayer.Utils.answersEqual = function (answer1, answer2) {
     if (answer1 instanceof Array && answer2 instanceof Array) {
         return _.isEqual(answer1, answer2);
     } else if (answer1 === answer2) {
@@ -627,7 +661,7 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
  * @param {Object} resourceMap - Function for resolving multimedia paths
  * @param {Object} $div - The jquery element that the form will be rendered in.
  */
-Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
+Formplayer.Utils.initialRender = function (formJSON, resourceMap, $div) {
     var form = new Form(formJSON),
         $debug = $('#cloudcare-debugger'),
         CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry,
@@ -652,6 +686,6 @@ Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
 };
 
 
-RegExp.escape= function(s) {
+RegExp.escape = function (s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };

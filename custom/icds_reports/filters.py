@@ -5,7 +5,9 @@ from datetime import datetime
 import pytz
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.util import load_locs_json
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import user_can_edit_location, user_can_access_location_id, \
+    user_can_view_location
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
@@ -21,6 +23,90 @@ def location_hierarchy_config(domain, location_types=None):
             domain
         ).location_types if loc_type.code in location_types
     ]
+
+
+# copy/paste from corehq.apps.location.utils
+# added possibility to exclude test locations, test flag is custom added to the metadata in location object
+def load_locs_json(domain, selected_loc_id=None, include_archived=False,
+        user=None, only_administrative=False, show_test=False):
+    """initialize a json location tree for drill-down controls on
+    the client. tree is only partially initialized and branches
+    will be filled in on the client via ajax.
+
+    what is initialized:
+    * all top level locs
+    * if a 'selected' loc is provided, that loc and its complete
+      ancestry
+
+    only_administrative - if False get all locations
+                          if True get only administrative locations
+    """
+
+    def loc_to_json(loc, project):
+        ret = {
+            'name': loc.name,
+            'location_type': loc.location_type.name,  # todo: remove when types aren't optional
+            'uuid': loc.location_id,
+            'is_archived': loc.is_archived,
+            'can_edit': True
+        }
+        if user:
+            if user.has_permission(domain, 'access_all_locations'):
+                ret['can_edit'] = user_can_edit_location(user, loc, project)
+            else:
+                ret['can_edit'] = user_can_access_location_id(domain, user, loc.location_id)
+        return ret
+
+    project = Domain.get_by_name(domain)
+
+    locations = SQLLocation.root_locations(
+        domain, include_archive_ancestors=include_archived
+    )
+
+    if only_administrative:
+        locations = locations.filter(location_type__administrative=True)
+
+    if not show_test:
+        locations = [
+            loc for loc in locations if loc.metadata.get('is_test_location', 'real') != 'test'
+        ]
+
+    loc_json = [
+        loc_to_json(loc, project) for loc in locations
+        if user is None or user_can_view_location(user, loc, project)
+    ]
+
+    # if a location is selected, we need to pre-populate its location hierarchy
+    # so that the data is available client-side to pre-populate the drop-downs
+    if selected_loc_id:
+        selected = SQLLocation.objects.get(
+            domain=domain,
+            location_id=selected_loc_id
+        )
+
+        lineage = selected.get_ancestors()
+
+        parent = {'children': loc_json}
+        for loc in lineage:
+            children = loc.child_locations(include_archive_ancestors=include_archived)
+            if only_administrative:
+                children = children.filter(location_type__administrative=True)
+
+            # find existing entry in the json tree that corresponds to this loc
+            try:
+                this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
+            except IndexError:
+                # if we couldn't find this location the view just break out of the loop.
+                # there are some instances in viewing archived locations where we don't actually
+                # support drilling all the way down.
+                break
+            this_loc['children'] = [
+                loc_to_json(loc, project) for loc in children
+                if user is None or user_can_view_location(user, loc, project)
+            ]
+            parent = this_loc
+
+    return loc_json
 
 
 class ICDSTableauFilterMixin(object):
@@ -47,32 +133,16 @@ class ICDSYearFilter(ICDSTableauFilterMixin, YearFilter):
 
 class IcdsLocationFilter(AsyncLocationFilter):
 
-    auto_drill = False
+    def load_locations_json(self, loc_id):
+        show_test = self.request.GET.get('include_test', False)
+        return load_locs_json(self.domain, loc_id, user=self.request.couch_user, show_test=show_test)
+
+
+class IcdsRestrictedLocationFilter(AsyncLocationFilter):
 
     @property
     def location_hierarchy_config(self):
         return location_hierarchy_config(self.domain)
-
-    @property
-    def filter_context(self):
-        api_root = self.api_root
-        user = self.request.couch_user
-        loc_id = self.request.GET.get('location_id')
-        if not loc_id:
-            domain_membership = user.get_domain_membership(self.domain)
-            if domain_membership:
-                loc_id = domain_membership.location_id
-
-        return {
-            'api_root': api_root,
-            'auto_drill': self.auto_drill,
-            'control_name': self.label,  # todo: cleanup, don't follow this structure
-            'control_slug': self.slug,  # todo: cleanup, don't follow this structure
-            'loc_id': loc_id,
-            'locations': load_locs_json(self.domain, loc_id, user=user),
-            'make_optional': self.make_optional,
-            'hierarchy': self.location_hierarchy_config
-        }
 
 
 class TableauLocationFilter(ICDSTableauFilterMixin, RestrictedAsyncLocationFilter):

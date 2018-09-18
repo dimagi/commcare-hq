@@ -4,19 +4,24 @@ import json
 import os
 import uuid
 
+from collections import OrderedDict
 from django.test import SimpleTestCase
 import yaml
 from django.test.testcases import TestCase
+from mock import patch
 
 from corehq.apps.app_manager.xform import XForm
+from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
+    get_data_cleaning_data,
     get_questions_from_xform_node,
     get_readable_form_data,
     get_readable_data_for_submission)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.utils.xform import FormSubmissionBuilder
+from io import open
 
 
 class ReadableFormdataTest(SimpleTestCase):
@@ -310,6 +315,89 @@ class ReadableFormTest(TestCase):
             json.dumps([q.to_json() for q in actual]),
             json.dumps([FormQuestionResponse(q).to_json() for q in expected])
         )
+
+    @patch('corehq.apps.reports.formdetails.readable.get_questions')
+    def test_get_data_cleaning_data(self, questions_patch):
+        builder = XFormBuilder()
+        responses = OrderedDict()
+
+        # Simple question
+        builder.new_question('something', 'Something')
+        responses['something'] = 'blue'
+
+        # Skipped question - doesn't appear in repsonses, shouldn't appear in data cleaning data
+        builder.new_question('skip', 'Skip me')
+
+        # Simple group
+        lights = builder.new_group('lights', 'Traffic Lights', data_type='group')
+        lights.new_question('red', 'Red means')
+        lights.new_question('green', 'Green means')
+        responses['lights'] = OrderedDict([('red', 'stop'), ('green', 'go')])
+
+        # Simple repeat group, one response
+        one_hit_wonders = builder.new_group('one_hit_wonders', 'One-Hit Wonders', data_type='repeatGroup')
+        one_hit_wonders.new_question('name', 'Name')
+        responses['one_hit_wonders'] = [
+            {'name': 'A-Ha'},
+        ]
+
+        # Simple repeat group, multiple responses
+        snacks = builder.new_group('snacks', 'Snacks', data_type='repeatGroup')
+        snacks.new_question('kind_of_snack', 'Kind of snack')
+        responses['snacks'] = [
+            {'kind_of_snack': 'samosa'},
+            {'kind_of_snack': 'pakora'},
+        ]
+
+        # Repeat group with nested group
+        cups = builder.new_group('cups_of_tea', 'Cups of tea', data_type='repeatGroup')
+        details = cups.new_group('details_of_cup', 'Details', data_type='group')
+        details.new_question('kind_of_cup', 'Flavor')
+        details.new_question('secret', 'Secret', data_type=None)
+        responses['cups_of_tea'] = [
+            {'details_of_cup': {'kind_of_cup': 'green', 'secret': 'g'}},
+            {'details_of_cup': {'kind_of_cup': 'black', 'secret': 'b'}},
+            {'details_of_cup': {'kind_of_cup': 'more green', 'secret': 'mg'}},
+        ]
+
+        xform = XForm(builder.tostring())
+        questions_patch.return_value = get_questions_from_xform_node(xform, ['en'])
+        xml = FormSubmissionBuilder(form_id='123', form_properties=responses).as_xml_string()
+        submitted_xform = submit_form_locally(xml, self.domain).xform
+        form_data, _ = get_readable_data_for_submission(submitted_xform)
+        question_response_map, ordered_question_values = get_data_cleaning_data(form_data, submitted_xform)
+
+        expected_question_values = [
+            '/data/something',
+            '/data/lights/red',
+            '/data/lights/green',
+            '/data/one_hit_wonders/name',
+            '/data/snacks[1]/kind_of_snack',
+            '/data/snacks[2]/kind_of_snack',
+            '/data/cups_of_tea[1]/details_of_cup/kind_of_cup',
+            '/data/cups_of_tea[1]/details_of_cup/secret',
+            '/data/cups_of_tea[2]/details_of_cup/kind_of_cup',
+            '/data/cups_of_tea[2]/details_of_cup/secret',
+            '/data/cups_of_tea[3]/details_of_cup/kind_of_cup',
+            '/data/cups_of_tea[3]/details_of_cup/secret',
+        ]
+        self.assertListEqual(ordered_question_values, expected_question_values)
+
+        expected_response_map = {
+            '/data/something': 'blue',
+            '/data/lights/red': 'stop',
+            '/data/lights/green': 'go',
+            '/data/one_hit_wonders/name': 'A-Ha',
+            '/data/snacks[1]/kind_of_snack': 'samosa',
+            '/data/snacks[2]/kind_of_snack': 'pakora',
+            '/data/cups_of_tea[1]/details_of_cup/kind_of_cup': 'green',
+            '/data/cups_of_tea[1]/details_of_cup/secret': 'g',
+            '/data/cups_of_tea[2]/details_of_cup/kind_of_cup': 'black',
+            '/data/cups_of_tea[2]/details_of_cup/secret': 'b',
+            '/data/cups_of_tea[3]/details_of_cup/kind_of_cup': 'more green',
+            '/data/cups_of_tea[3]/details_of_cup/secret': 'mg',
+        }
+        self.assertDictEqual({k: v['value'] for k, v in question_response_map.items()}, expected_response_map)
 
 
 @use_sql_backend

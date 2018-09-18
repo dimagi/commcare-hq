@@ -4,9 +4,9 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfSevereReportController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
-    baseControllersService) {
+    baseControllersService, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures);
     var vm = this;
     var ageIndex = _.findIndex(ages,function (x) {
         return x.id === vm.filtersData.age;
@@ -32,15 +32,18 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     };
     vm.filters = [];
 
-    vm.rightLegend = {
-        info: 'Percentage of children (6-60 months) enrolled for Anganwadi Services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median.',
-    };
-
-    vm.chosenFilters = function () {
+    vm.chosenFilters = function() {
+        var defaultAge = vm.haveAccessToFeatures ? '0 - 5 years' : '6 - 60 months';
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
-        var age = ageIndex > 0 ? ages[ageIndex].name : '6 - 60 months';
+        var age = ageIndex > 0 ? ages[ageIndex].name : defaultAge;
         var delimiter = gender && age ? ', ' : '';
         return gender || age ? '(' + gender + delimiter + age + ')' : '';
+    };
+
+    vm.rightLegend = {
+        info: 'Of the children enrolled for Anganwadi services, whose weight and height was measured, the percentage of children between ' + vm.chosenFilters() + 'who were moderately/severely wasted in the current month. \n' +
+        '\n' +
+        'Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence of insufficient food intake or a high incidence of infectious diseases.',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -93,10 +96,10 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of children between ' + vm.chosenFilters() + ' enrolled for Anganwadi Services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. \n' +
+        'captionContent': ' Of the children enrolled for Anganwadi services, whose weight and height was measured, the percentage of children between ' + vm.chosenFilters() + ' who were moderately/severely wasted in the current month. \n' +
         '\n' +
-        'Wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
-        'of insufficient food intake or a high incidence of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional status for a child who has severe wasting (weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child that has moderate wasting (weight-for-height) below -2Z.',
+        'Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
+        'of insufficient food intake or a high incidence of infectious diseases.',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;
@@ -163,7 +166,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     };
 }
 
-PrevalenceOfSevereReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService'];
+PrevalenceOfSevereReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('prevalenceOfSevere', function() {
     return {

@@ -11,7 +11,6 @@ INSTALLED_APPS = (
     'testapps.test_elasticsearch',
     'testapps.test_pillowtop',
 ) + tuple(INSTALLED_APPS)
-assert not TEST_APPS, "TEST_APPS is deprecated; use LOCAL_APPS instead"
 
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
@@ -44,10 +43,6 @@ for key, value in {
 
     'NOSE_EXCLUDE_DIRS': ';'.join([
         'scripts',
-
-        # strange error:
-        # TypeError: Attribute setup of <module 'touchforms.backend' ...> is not a python function.
-        'submodules/touchforms-src/touchforms/backend',
     ]),
 }.items():
     os.environ.setdefault(key, value)
@@ -88,7 +83,6 @@ _set_logging_levels({
     'elasticsearch': 'ERROR',
     'quickcache': 'INFO',
     'requests.packages.urllib3': 'WARNING',
-    'restkit.client': 'INFO',
     's3transfer': 'INFO',
     'urllib3': 'WARNING',
     'kafka.conn': 'WARNING',
@@ -110,3 +104,6 @@ REPORTING_DATABASES = {
     'icds-ucr': 'default',
     'icds-test-ucr': 'default',
 }
+
+# See comment under settings.SMS_QUEUE_ENABLED
+SMS_QUEUE_ENABLED = False

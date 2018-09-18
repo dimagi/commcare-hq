@@ -1,21 +1,27 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from itertools import groupby
 from collections import defaultdict
+from itertools import groupby
 from xml.etree.cElementTree import Element
 
-import six
-from django.conf import settings
 from django.db.models import IntegerField
 from django.contrib.postgres.fields.array import ArrayField
 from django_cte import With
 from django_cte.raw import raw_cte_sql
+import six
 
 from casexml.apps.phone.fixtures import FixtureProvider
+from corehq.apps.app_manager.const import (
+    DEFAULT_LOCATION_FIXTURE_OPTION, SYNC_FLAT_FIXTURES, SYNC_HIERARCHICAL_FIXTURE
+)
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.fixtures.utils import get_index_schema_node
-from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
-from corehq.apps.locations.queryutil import ComparedQuerySet, TimingContext
+from corehq.apps.locations.models import (
+    LocationFixtureConfiguration,
+    LocationRelation,
+    LocationType,
+    SQLLocation,
+)
 from corehq import toggles
 
 
@@ -69,8 +75,12 @@ def should_sync_locations(last_sync, locations_queryset, restore_user):
 class LocationFixtureProvider(FixtureProvider):
 
     def __init__(self, id, serializer):
-        self.id = id
+        self._id = id
         self.serializer = serializer
+
+    @property
+    def id(self):
+        return self._id
 
     def __call__(self, restore_state):
         """
@@ -83,7 +93,7 @@ class LocationFixtureProvider(FixtureProvider):
         """
         restore_user = restore_state.restore_user
 
-        if not self.serializer.should_sync(restore_user):
+        if not self.serializer.should_sync(restore_user, restore_state.params.app):
             return []
 
         # This just calls get_location_fixture_queryset but is memoized to the user
@@ -97,8 +107,8 @@ class LocationFixtureProvider(FixtureProvider):
 
 class HierarchicalLocationSerializer(object):
 
-    def should_sync(self, restore_user):
-        return should_sync_hierarchical_fixture(restore_user.project)
+    def should_sync(self, restore_user, app):
+        return should_sync_hierarchical_fixture(restore_user.project, app)
 
     def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
         locations_db = LocationSet(locations_queryset)
@@ -120,8 +130,8 @@ class HierarchicalLocationSerializer(object):
 
 class FlatLocationSerializer(object):
 
-    def should_sync(self, restore_user):
-        return should_sync_flat_fixture(restore_user.project)
+    def should_sync(self, restore_user, app):
+        return should_sync_flat_fixture(restore_user.project, app)
 
     def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
 
@@ -184,24 +194,31 @@ class FlatLocationSerializer(object):
         return root_node
 
 
-def should_sync_hierarchical_fixture(project):
-    # Sync hierarchical fixture for domains with fixture toggle enabled for migration and
-    # configuration set to use hierarchical fixture
-    # Even if both fixtures are set up, this one takes priority for domains with toggle enabled
-    return (
-        project.uses_locations and
-        toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(project.name) and
-        LocationFixtureConfiguration.for_domain(project.name).sync_hierarchical_fixture
-    )
+def should_sync_hierarchical_fixture(project, app):
+    if (not project.uses_locations
+            or not toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(project.name)):
+        return False
+
+    if app and app.location_fixture_restore in SYNC_HIERARCHICAL_FIXTURE:
+        return True
+
+    if app and app.location_fixture_restore != DEFAULT_LOCATION_FIXTURE_OPTION:
+        return False
+
+    return LocationFixtureConfiguration.for_domain(project.name).sync_hierarchical_fixture
 
 
-def should_sync_flat_fixture(project):
-    # Sync flat fixture for domains with conf for flat fixture enabled
-    # This does not check for toggle for migration to allow domains those domains to migrate to flat fixture
-    return (
-        project.uses_locations and
-        LocationFixtureConfiguration.for_domain(project.name).sync_flat_fixture
-    )
+def should_sync_flat_fixture(project, app):
+    if not project.uses_locations:
+        return False
+
+    if app and app.location_fixture_restore in SYNC_FLAT_FIXTURES:
+        return True
+
+    if app and app.location_fixture_restore != DEFAULT_LOCATION_FIXTURE_OPTION:
+        return False
+
+    return LocationFixtureConfiguration.for_domain(project.name).sync_flat_fixture
 
 
 location_fixture_generator = LocationFixtureProvider(
@@ -212,6 +229,62 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
+class RelatedLocationSerializer(FlatLocationSerializer):
+
+    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
+        all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
+            'code', flat=True
+        )
+        location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
+        attrs_to_index = ['@{}'.format(attr) for attr in location_type_attrs]
+        attrs_to_index.extend(_get_indexed_field_name(field.slug) for field in data_fields
+                              if field.index_in_fixture)
+        attrs_to_index.extend(['@id', '@type', 'name', '@distance'])
+
+        xml_nodes = self._get_fixture_node(fixture_id, restore_user, locations_queryset,
+                                           location_type_attrs, data_fields)
+
+        user_locations = restore_user.get_sql_locations(restore_user.domain)
+        distance_dict = LocationRelation.relation_distance_dictionary(user_locations)
+
+        child_node = xml_nodes.getchildren()[0]
+        for grandchild_node in child_node.getchildren():
+            location_id = grandchild_node.get('id')
+            if location_id in distance_dict:
+                minimum_distance = min(six.itervalues(distance_dict[location_id]))
+                grandchild_node.set('distance', str(minimum_distance))
+
+        return [get_index_schema_node(fixture_id, attrs_to_index), xml_nodes]
+
+
+class RelatedLocationsFixtureProvider(FixtureProvider):
+    """This fixture is under active development for REACH, and is expected to change.
+
+    - Relations do not nest. Meaning that a location needs a direct relation
+      to another location for it be included in this fixture.
+    """
+    id = 'related_locations'
+    serializer = RelatedLocationSerializer()
+
+    def __call__(self, restore_state):
+        if not toggles.RELATED_LOCATIONS.enabled(restore_state.domain):
+            return []
+
+        restore_user = restore_state.restore_user
+        user_locations = restore_user.get_sql_locations(restore_user.domain)
+        related_location_ids = LocationRelation.from_locations(user_locations)
+        related_location_pks = (
+            SQLLocation.objects.filter(location_id__in=related_location_ids)
+            .values_list('pk', flat=True)
+        )
+        locations_queryset = _location_queryset_helper(restore_user.domain, list(related_location_pks))
+        data_fields = _get_location_data_fields(restore_user.domain)
+        return self.serializer.get_xml_nodes(self.id, restore_user, locations_queryset, data_fields)
+
+
+related_locations_fixture_generator = RelatedLocationsFixtureProvider()
+
+
 int_field = IntegerField()
 int_array = ArrayField(int_field)
 
@@ -220,131 +293,31 @@ def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type')
 
-    timing = TimingContext("get_location_fixture_queryset")
-    if settings.IS_LOCATION_CTE_ONLY:
-        mptt_set = None
-    else:
-        with timing("mptt"):
-            mptt_set = _mptt_get_location_fixture_queryset(user)
-    if settings.IS_LOCATION_CTE_ENABLED:
-        with timing("cte"):
-            cte_set = _cte_get_location_fixture_queryset(user)
-    else:
-        cte_set = None
-    return ComparedQuerySet(mptt_set, cte_set, timing)
-
-
-def _cte_get_location_fixture_queryset(user):
-
     user_locations = user.get_sql_locations(user.domain)
 
     if user_locations.query.is_empty():
         return user_locations
 
+    return _location_queryset_helper(user.domain, list(user_locations.order_by().values_list("id", flat=True)))
+
+
+def _location_queryset_helper(domain, location_pks):
     fixture_ids = With(raw_cte_sql(
         """
         SELECT "id", "path", "depth"
         FROM get_location_fixture_ids(%s::TEXT, %s)
         """,
-        [user.domain, list(user_locations.order_by().values_list("id", flat=True))],
+        [domain, location_pks],
         {"id": int_field, "path": int_array, "depth": int_field},
     ))
 
-    result = fixture_ids.join(
+    return fixture_ids.join(
         SQLLocation.objects.all(),
         id=fixture_ids.col.id,
     ).annotate(
         path=fixture_ids.col.path,
         depth=fixture_ids.col.depth,
-    ).with_cte(fixture_ids).prefetch_related('location_type')
-
-    return result
-
-
-def _mptt_get_location_fixture_queryset(user):
-    user_locations = user.get_sql_locations(user.domain).prefetch_related('location_type')
-
-    all_locations = _get_include_without_expanding_locations(user.domain, user_locations)
-
-    for user_location in user_locations:
-        location_type = user_location.location_type
-        # returns either None or the level (integer) to exand to
-        expand_to_level = _get_level_to_expand_to(user.domain, location_type.expand_to)
-        expand_from_level = location_type.expand_from or location_type
-
-        # returns either all root locations or a single location (of expand_from_level type)
-        expand_from_locations = _get_locs_to_expand_from(user.domain, user_location, expand_from_level)
-
-        locs_below_expand_from = _get_children(expand_from_locations, expand_to_level)
-        locs_at_or_above_expand_from = (SQLLocation.active_objects
-                                        ._mptt_get_queryset_ancestors(expand_from_locations, include_self=True))
-        locations_to_sync = locs_at_or_above_expand_from | locs_below_expand_from
-        if location_type.include_only.exists():
-            locations_to_sync = locations_to_sync.filter(location_type__in=location_type.include_only.all())
-        all_locations |= locations_to_sync
-
-    return all_locations
-
-
-def _get_level_to_expand_to(domain, expand_to):
-    if expand_to is None:
-        return None
-    return (SQLLocation.active_objects
-            .filter(domain__exact=domain, location_type=expand_to)
-            .values_list('level', flat=True)
-            .first())
-
-
-def _get_locs_to_expand_from(domain, user_location, expand_from):
-    """From the users current location, return all locations of the highest
-    level they want to start expanding from.
-    """
-    if user_location.location_type.expand_from_root:
-        return SQLLocation.root_locations(domain=domain)
-    else:
-        ancestors = (
-            user_location
-            ._mptt_get_ancestors(include_self=True)
-            .filter(location_type=expand_from, is_archived=False)
-            .prefetch_related('location_type')
-        )
-        return ancestors
-
-
-def _get_children(expand_from_locations, expand_to_level):
-    """From the topmost location, get all the children we want to sync
-    """
-    children = (SQLLocation.active_objects
-                ._mptt_get_queryset_descendants(expand_from_locations)
-                .prefetch_related('location_type'))
-    if expand_to_level is not None:
-        children = children.filter(level__lte=expand_to_level)
-    return children
-
-
-def _get_include_without_expanding_locations(domain, assigned_locations):
-    """returns all locations set for inclusion along with their ancestors
-    """
-    # all loctypes to include, based on all assigned location types
-    location_type_ids = {
-        loc.location_type.include_without_expanding_id
-        for loc in assigned_locations
-        if loc.location_type.include_without_expanding_id is not None
-    }
-    # all levels to include, based on the above loctypes
-    forced_levels = (SQLLocation.active_objects
-                     .filter(domain__exact=domain,
-                             location_type_id__in=location_type_ids)
-                     .values_list('level', flat=True)
-                     .order_by('level')
-                     .distinct('level'))
-    if forced_levels:
-        return (SQLLocation.active_objects
-                .filter(domain__exact=domain,
-                        level__lte=max(forced_levels))
-                .prefetch_related('location_type'))
-    else:
-        return SQLLocation.objects.none()
+    ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
 
 
 def _append_children(node, location_db, locations, data_fields):

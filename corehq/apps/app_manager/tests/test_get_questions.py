@@ -158,6 +158,7 @@ QUESTIONS = [
         'calculate': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
 ]
 

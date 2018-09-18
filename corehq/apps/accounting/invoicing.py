@@ -3,14 +3,17 @@ from __future__ import division
 from __future__ import unicode_literals
 import calendar
 import datetime
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Q, Min, Max, Sum
 from django.utils.translation import ugettext as _, ungettext
 
 from memoized import memoized
 
+from corehq.util.dates import get_previous_month_date_range
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -18,17 +21,19 @@ from corehq.apps.accounting.exceptions import (
     LineItemError,
 )
 from corehq.apps.accounting.models import (
-    LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
+    LineItem, FeatureType, Invoice, CustomerInvoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
-    SubscriptionAdjustmentMethod, BillingRecord,
+    SubscriptionAdjustmentMethod, BillingRecord, CustomerBillingRecord,
     CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
+    SubscriptionType, InvoicingPlan, DomainUserHistory
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
     log_accounting_error,
     log_accounting_info,
+    months_from_date
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
@@ -55,14 +60,17 @@ class DomainInvoiceFactory(object):
         self.logged_throttle_error = False
         if self.domain is None:
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
-        self.is_community_invoice = False
 
     def create_invoices(self):
         subscriptions = self._get_subscriptions()
         self._ensure_full_coverage(subscriptions)
         for subscription in subscriptions:
             try:
-                self._create_invoice_for_subscription(subscription)
+                if subscription.account.is_customer_billing_account:
+                    log_accounting_info("Skipping invoice for subscription: %s, because it is part of a Customer "
+                                        "Billing Account." % (subscription))
+                elif should_create_invoice(subscription, self.domain, self.date_start, self.date_end):
+                    self._create_invoice_for_subscription(subscription)
             except InvoiceAlreadyCreatedError as e:
                 log_accounting_error(
                     "Invoice already existed for domain %s: %s" % (self.domain.name, e),
@@ -133,24 +141,6 @@ class DomainInvoiceFactory(object):
             else:
                 return date_end
 
-        if subscription.is_trial:
-            # Don't create invoices for trial subscriptions
-            log_accounting_info(
-                "Skipping invoicing for Subscription %s because it's a trial."
-                % subscription.pk
-            )
-            return
-
-        if (
-            subscription.skip_invoicing_if_no_feature_charges
-            and not subscription.plan_version.feature_charges_exist_for_domain(self.domain)
-        ):
-            log_accounting_info(
-                "Skipping invoicing for Subscription %s because there are no feature charges."
-                % subscription.pk
-            )
-            return
-
         invoice_start = _get_invoice_start(subscription, self.date_start)
         invoice_end = _get_invoice_end(subscription, self.date_end)
 
@@ -159,7 +149,18 @@ class DomainInvoiceFactory(object):
             record = BillingRecord.generate_record(invoice)
         if record.should_send_email:
             try:
-                record.send_email(contact_emails=self.recipients)
+                if invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
+                    if self.recipients:
+                        for email in self.recipients:
+                            record.send_email(contact_email=email)
+                    elif invoice.account.dimagi_contact:
+                        record.send_email(contact_email=invoice.account.dimagi_contact,
+                                          cc_emails=[settings.ACCOUNTS_EMAIL])
+                    else:
+                        record.send_email(contact_email=settings.ACCOUNTS_EMAIL)
+                else:
+                    for email in self.recipients or invoice.contact_emails:
+                        record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
                     log_accounting_error(e.message)
@@ -217,7 +218,7 @@ class DomainInvoiceFactory(object):
                 invoice=invoice,
             )
 
-        DomainInvoiceFactory._generate_line_items(invoice, subscription)
+        generate_line_items(invoice, subscription)
         invoice.calculate_credit_adjustments()
         invoice.update_balance()
         invoice.save()
@@ -233,26 +234,10 @@ class DomainInvoiceFactory(object):
         )
         if should_set_date_due:
             days_until_due = DEFAULT_DAYS_UNTIL_DUE
-            if subscription.date_delay_invoicing is not None:
-                td = subscription.date_delay_invoicing - self.date_end
-                days_until_due = max(days_until_due, td.days)
             invoice.date_due = self.date_end + datetime.timedelta(days_until_due)
         invoice.save()
 
         return invoice
-
-    @staticmethod
-    def _generate_line_items(invoice, subscription):
-        product_rate = subscription.plan_version.product_rate
-        product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
-        product_factory.create()
-
-        for feature_rate in subscription.plan_version.feature_rates.all():
-            feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
-                feature_rate.feature.feature_type
-            )
-            feature_factory = feature_factory_class(subscription, feature_rate, invoice)
-            feature_factory.create()
 
     @property
     def subscriber(self):
@@ -315,7 +300,8 @@ class DomainWireInvoiceFactory(object):
 
         if record.should_send_email:
             try:
-                record.send_email(contact_emails=self.contact_emails)
+                for email in self.contact_emails:
+                    record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 # Currently wire invoices are never throttled
                 if not self.logged_throttle_error:
@@ -337,6 +323,122 @@ class DomainWireInvoiceFactory(object):
             invoice_items=items,
             contact_emails=self.contact_emails
         )
+
+
+class CustomerAccountInvoiceFactory(object):
+    """
+        This generates an invoice for a Customer Billing Account.
+    """
+    def __init__(self, date_start, date_end, account, recipients=None):
+        """
+        The Invoice generated will always be for the month preceding the
+        invoicing_date.
+        For example, if today is July 5, 2014 then the invoice will be from
+        June 1, 2014 to June 30, 2014.
+        """
+        self.date_start = date_start
+        self.date_end = date_end
+        self.account = account
+        self.recipients = recipients
+        self.customer_invoice = None
+        self.subscriptions = {}
+
+    def create_invoice(self):
+        for subscription in self.account.subscription_set.all():
+            if should_create_invoice(subscription, subscription.subscriber.domain, self.date_start, self.date_end):
+                if subscription.plan_version in self.subscriptions:
+                    self.subscriptions[subscription.plan_version].append(subscription)
+                else:
+                    self.subscriptions[subscription.plan_version] = [subscription]
+        if not self.subscriptions:
+            return
+        try:
+            self._generate_customer_invoice()
+            self._email_invoice()
+        except InvoiceAlreadyCreatedError as e:
+            log_accounting_error(
+                "Invoice already existed for account %s: %s" % (self.account.name, e),
+                show_stack_trace=True,
+            )
+
+    def _generate_customer_invoice(self):
+        invoice, is_new_invoice = CustomerInvoice.objects.get_or_create(
+            account=self.account,
+            date_start=self.date_start,
+            date_end=self.date_end
+        )
+        if not is_new_invoice:
+            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
+
+        all_subscriptions = []
+        for plan in self.subscriptions:
+            # Use oldest subscription to bill client for the full length of their software plan
+            self.subscriptions[plan].sort(key=lambda s: s.date_start)
+            oldest_subscription = self.subscriptions[plan][0]
+            generate_line_items(invoice, oldest_subscription)
+            all_subscriptions.extend(self.subscriptions[plan])
+        invoice.subscriptions.set(all_subscriptions)
+        invoice.calculate_credit_adjustments()
+        invoice.update_balance()
+        invoice.save()
+        self._update_invoice_due_date(invoice, self.date_end)
+        self.customer_invoice = invoice
+
+    def _update_invoice_due_date(self, invoice, factory_date_end):
+        should_set_date_due = (
+            invoice.balance > SMALL_INVOICE_THRESHOLD or
+            (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
+        )
+        if should_set_date_due:
+            invoice.date_due = factory_date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
+        invoice.save()
+
+    def _email_invoice(self):
+        record = CustomerBillingRecord.generate_record(self.customer_invoice)
+        try:
+            if self.recipients:
+                for email in self.recipients:
+                    record.send_email(contact_email=email)
+            elif self.account.dimagi_contact:
+                record.send_email(contact_email=self.account.dimagi_contact,
+                                  cc_emails=[settings.ACCOUNTS_EMAIL])
+            else:
+                record.send_email(contact_email=settings.ACCOUNTS_EMAIL)
+        except InvoiceEmailThrottledError as e:
+            log_accounting_error(str(e))
+
+
+def should_create_invoice(subscription, domain, invoice_start, invoice_end):
+    if subscription.is_trial:
+        log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
+        return False
+    if subscription.skip_invoicing_if_no_feature_charges and not \
+            subscription.plan_version.feature_charges_exist_for_domain(domain):
+        log_accounting_info(
+            "Skipping invoicing for Subscription %s because there are no feature charges."
+            % subscription.pk
+        )
+        return False
+    if subscription.date_start >= invoice_end:
+        # No invoice gets created if the subscription didn't start in the previous month.
+        return False
+    if subscription.date_end and subscription.date_end <= invoice_start:
+        # No invoice gets created if the subscription ended before the invoicing period.
+        return False
+    return True
+
+
+def generate_line_items(invoice, subscription):
+    product_rate = subscription.plan_version.product_rate
+    product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
+    product_factory.create()
+
+    for feature_rate in subscription.plan_version.feature_rates.all():
+        feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
+            feature_rate.feature.feature_type
+        )
+        feature_factory = feature_factory_class(subscription, feature_rate, invoice)
+        feature_factory.create()
 
 
 class LineItemFactory(object):
@@ -378,6 +480,10 @@ class LineItemFactory(object):
     def subscribed_domains(self):
         if self.subscription.subscriber.domain is None:
             raise LineItemError("No domain could be obtained as the subscriber.")
+        if self.subscription.account.is_customer_billing_account:
+            return [sub.subscriber.domain for sub in
+                    self.subscription.account.subscription_set
+                        .filter(plan_version=self.subscription.plan_version)]
         return [self.subscription.subscriber.domain]
 
     def create(self):
@@ -460,7 +566,24 @@ class ProductLineItemFactory(LineItemFactory):
     def quantity(self):
         if self.is_prorated:
             return self.num_prorated_days
+        if self.invoice.is_customer_invoice:
+            if self.invoice.account.invoicing_plan == InvoicingPlan.QUARTERLY:
+                return self.months_product_active_over_period(3)
+            elif self.invoice.account.invoicing_plan == InvoicingPlan.YEARLY:
+                return self.months_product_active_over_period(12)
         return 1
+
+    def months_product_active_over_period(self, num_months):
+        # Calculate the number of months out of num_months the subscription was active
+        quantity = 0
+        date_start = months_from_date(self.invoice.date_end, -(num_months - 1))
+        while date_start < self.invoice.date_end:
+            if self.subscription.date_end and self.subscription.date_end <= date_start:
+                continue
+            elif self.subscription.date_start <= date_start:
+                quantity += 1
+            date_start = date_start + relativedelta(months=1)
+        return quantity
 
     @property
     def plan_name(self):
@@ -506,7 +629,33 @@ class UserLineItemFactory(FeatureLineItemFactory):
 
     @property
     def quantity(self):
+        if self.invoice.is_customer_invoice and self.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY:
+            return self.num_excess_users_over_period
         return self.num_excess_users
+
+    @property
+    def num_excess_users_over_period(self):
+        # Iterate through all months in the invoice date range to aggregate total users into one line item
+        dates = self.all_month_ends_in_invoice()
+        excess_users = 0
+        for date in dates:
+            total_users = 0
+            for domain in self.subscribed_domains:
+                try:
+                    history = DomainUserHistory.objects.get(domain=domain, record_date=date)
+                    total_users += history.num_users
+                except DomainUserHistory.DoesNotExist:
+                    total_users += 0
+            excess_users += max(total_users - self.rate.monthly_limit, 0)
+        return excess_users
+
+    def all_month_ends_in_invoice(self):
+        month_end = self.invoice.date_end
+        dates = []
+        while month_end > self.invoice.date_start:
+            dates.append(month_end)
+            _, month_end = get_previous_month_date_range(month_end)
+        return dates
 
     @property
     def num_excess_users(self):

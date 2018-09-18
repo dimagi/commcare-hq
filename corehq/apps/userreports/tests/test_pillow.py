@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import decimal
 import uuid
 from django.test import TestCase, SimpleTestCase, override_settings
-from kafka.common import KafkaUnavailableError
 from mock import patch, MagicMock
 from datetime import datetime, timedelta
 from six.moves import range
@@ -17,7 +16,6 @@ from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator
@@ -28,7 +26,7 @@ from corehq.apps.userreports.tests.utils import get_sample_data_source, get_samp
     doc_to_change, get_data_source_with_related_doc_type
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.util.test_utils import softer_assert, trap_extra_setup
+from corehq.util.test_utils import softer_assert
 from corehq.util.context_managers import drop_connected_signals
 from pillow_retry.models import PillowError
 
@@ -59,7 +57,6 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertTrue(table_manager.needs_bootstrap())
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class IndicatorPillowTest(TestCase):
 
     @classmethod
@@ -84,7 +81,6 @@ class IndicatorPillowTest(TestCase):
     @patch('corehq.apps.userreports.specs.datetime')
     def _check_sample_doc_state(self, expected_indicators, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
-        self.adapter.refresh_table()
         self.assertEqual(1, self.adapter.get_query_object().count())
         row = self.adapter.get_query_object()[0]
         for k in row.keys():
@@ -133,7 +129,6 @@ class IndicatorPillowTest(TestCase):
                 'type': 'ticket',
                 'priority': bad_value
             }))
-        self.adapter.refresh_table()
         # make sure we saved rows to the table for everything
         self.assertEqual(len(bad_ints), self.adapter.get_query_object().count())
 
@@ -150,7 +145,6 @@ class IndicatorPillowTest(TestCase):
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
         sample_doc['domain'] = 'not-this-domain'
         self.pillow.process_change(doc_to_change(sample_doc))
-        self.adapter.refresh_table()
         self.assertEqual(0, self.adapter.get_query_object().count())
 
     @patch('corehq.apps.userreports.specs.datetime')
@@ -208,7 +202,6 @@ class IndicatorPillowTest(TestCase):
         since = self.pillow.get_change_feed().get_latest_offsets()
         CaseAccessorSQL.soft_delete_cases(case.domain, [case.case_id])
         self.pillow.process_changes(since=since, forever=False)
-        self.adapter.refresh_table()
         self.assertEqual(0, self.adapter.get_query_object().count())
 
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
@@ -225,7 +218,6 @@ class IndicatorPillowTest(TestCase):
         sample_doc['type'] = 'wrong_type'
 
         self.pillow.process_change(doc_to_change(sample_doc))
-        self.adapter.refresh_table()
 
         self.assertEqual(0, self.adapter.get_query_object().count())
 
@@ -242,11 +234,6 @@ class IndicatorPillowTest(TestCase):
         self.assertIs(self.adapter.doc_exists(sample_doc), True)
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class IndicatorPillowTestES(IndicatorPillowTest):
-    pass
-
-
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ProcessRelatedDocTypePillowTest(TestCase):
     domain = 'bug-domain'
@@ -259,8 +246,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         self.adapter = get_indicator_adapter(self.config)
 
         self.pillow.bootstrap(configs=[self.config])
-        with trap_extra_setup(KafkaUnavailableError):
-            self.pillow.get_change_feed().get_latest_offsets()
+        self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
         self.config.delete()
@@ -329,8 +315,7 @@ class ReuseEvaluationContextTest(TestCase):
         self.pillow2 = get_kafka_ucr_pillow(topics=['case-sql'])
         self.pillow1.bootstrap(configs=[config1])
         self.pillow2.bootstrap(configs=self.configs)
-        with trap_extra_setup(KafkaUnavailableError):
-            self.pillow1.get_change_feed().get_latest_offsets()
+        self.pillow1.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
         for adapter in self.adapters:
@@ -395,8 +380,7 @@ class AsyncIndicatorTest(TestCase):
         cls.adapter = get_indicator_adapter(cls.config)
 
         cls.pillow.bootstrap(configs=[cls.config])
-        with trap_extra_setup(KafkaUnavailableError):
-            cls.pillow.get_change_feed().get_latest_offsets()
+        cls.pillow.get_change_feed().get_latest_offsets()
 
     @classmethod
     def tearDownClass(cls):
@@ -495,7 +479,6 @@ class AsyncIndicatorTest(TestCase):
         self.assertEqual(indicators.count(), 1)
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class StaticKafkaIndicatorPillowTest(TestCase):
 
     def setUp(self):
@@ -515,11 +498,6 @@ class StaticKafkaIndicatorPillowTest(TestCase):
         MagicMock(return_value=None))
     def test_bootstrap_can_be_called(self):
         self.pillow.bootstrap()
-
-
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class StaticKafkaIndicatorPillowTestES(StaticKafkaIndicatorPillowTest):
-    pass
 
 
 class IndicatorConfigFilterTest(SimpleTestCase):

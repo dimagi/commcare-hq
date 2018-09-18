@@ -110,7 +110,7 @@
             "aggregation":"sum",
             "display":{
                 "fra":"# Structures Trouvées",
-                "en":"# Structures found"
+                "en":"# Structures Found"
             }
         },
         {

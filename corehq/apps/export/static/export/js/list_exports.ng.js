@@ -14,13 +14,14 @@
         'ngMessages',
     ]);
 
-    list_exports.config(['$httpProvider', function($httpProvider) {
+    list_exports.config(['$httpProvider', function ($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
     }]);
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope, modelType
+        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope, modelType,
+        $timeout
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -40,10 +41,26 @@
         self._getExportsList = function () {
             // The method below lives in the subclasses of
             // BaseExportListView.
+
+            var filterMyExports = function (val) {
+                return !!val.my_export;
+            };
+
+            var filterNotMyExports = function (val) {
+                return !val.my_export;
+            };
+
             djangoRMI.get_exports_list({})
                 .success(function (data) {
                     if (data.success) {
                         $scope.exports = data.exports;
+                        $scope.myExports = data.exports.filter(filterMyExports);
+                        $scope.notMyExports = data.exports.filter(filterNotMyExports);
+                        _.each($scope.exports, function (exp) {
+                            if (exp.emailedExport && exp.emailedExport.taskStatus.inProgress) {
+                                $rootScope.pollProgressBar(exp);
+                            }
+                        });
                     } else {
                         $scope.exportsListError = data.error;
                     }
@@ -81,12 +98,12 @@
             var currentUrl = useLegacyBulkExportUrl ? $scope.legacy_bulk_download_url : $scope.bulk_download_url;
             input.closest("form").attr("action", currentUrl);
         };
-        $scope.downloadRequested = function($event) {
+        $scope.downloadRequested = function ($event) {
             var $btn = $($event.target);
             $btn.addClass('disabled');
             $btn.text(gettext('Download Requested'));
         };
-        $scope.copyLinkRequested = function($event, export_) {
+        $scope.copyLinkRequested = function ($event, export_) {
             export_.showLink = true;
             var clipboard = new Clipboard($event.target, {
                 target: function (trigger) {
@@ -108,9 +125,34 @@
             });
             $scope.updateBulkStatus();
         };
-        $scope.sendExportAnalytics = function() {
+        $scope.sendExportAnalytics = function () {
             hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
         };
+
+        $rootScope.pollProgressBar = function (exp) {
+            exp.emailedExport.updatingData = false;
+            exp.emailedExport.taskStatus = {
+                'percentComplete': 0,
+                'inProgress': true,
+                'success': false,
+            };
+            var tick = function () {
+                djangoRMI.get_saved_export_progress({
+                    'export_instance_id': exp.id,
+                }).success(function (data) {
+                    exp.emailedExport.taskStatus = data.taskStatus;
+                    if (!data.taskStatus.success) {
+                        // The first few ticks don't yet register the task
+                        exp.emailedExport.taskStatus.inProgress = true;
+                        $timeout(tick, 1500);
+                    } else {
+                        exp.emailedExport.taskStatus.justFinished = true;
+                    }
+                });
+            };
+            tick();
+        };
+
         $scope.updateEmailedExportData = function (component, exp) {
             $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
             component.updatingData = true;
@@ -122,8 +164,7 @@
                     if (data.success) {
                         var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
                         hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
-                        component.updatingData = false;
-                        component.updatedDataTriggered = true;
+                        $rootScope.pollProgressBar(exp);
                     }
                 });
         };
@@ -137,7 +178,7 @@
                 .success(function (data) {
                     if (data.success) {
                         var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
-                        var event = (exp.isAutoRebuildEnabled ? "Disable": "Enable") + " Saved Export";
+                        var event = (exp.isAutoRebuildEnabled ? "Disable" : "Enable") + " Saved Export";
                         hqImport('analytix/js/google').track.event(exportType + " Exports", event, "Saved");
                         exp.isAutoRebuildEnabled = data.isAutoRebuildEnabled;
                         component.savingAutoRebuildChange = false;
@@ -148,7 +189,7 @@
             // The filterModalExport is used as context for the FeedFilterFormController
             $rootScope.filterModalExport = export_;
         };
-        $scope.isLocationSafeForUser = function(export_) {
+        $scope.isLocationSafeForUser = function (export_) {
             return (!export_.emailedExport) || export_.emailedExport.isLocationSafeForUser;
         };
 
@@ -206,7 +247,7 @@
             $scope.formElement.emwf_form_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_form_filter);
         });
 
-        $scope.$watch("formData.date_range", function(newDateRange) {
+        $scope.$watch("formData.date_range", function (newDateRange) {
             if (!newDateRange) {
                 $scope.formData.date_range = "since";
             } else {
@@ -236,8 +277,7 @@
                 if (data.success) {
                     self._clearSubmitError();
                     export_.emailedExport.filters = $scope.formData;
-                    export_.emailedExport.updatingData = false;
-                    export_.emailedExport.updatedDataTriggered = true;
+                    $rootScope.pollProgressBar(export_);
                     filterFormModalElement().modal('hide');
                 } else {
                     self._handleSubmitError(data);
@@ -248,11 +288,11 @@
             });
         };
 
-        self._handleSubmitError = function(data) {
+        self._handleSubmitError = function (data) {
             $scope.hasFormSubmitError = true;
             $scope.formSubmitErrorMessage = data.error;
         };
-        self._clearSubmitError = function() {
+        self._clearSubmitError = function () {
             $scope.hasFormSubmitError = false;
             $scope.formSubmitErrorMessage = null;
         };

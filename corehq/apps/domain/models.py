@@ -14,8 +14,8 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration.api import set_tz_migration_complete
-from corehq.apps.users.const import ANONYMOUS_USERNAME
-from corehq.apps.users.util import format_username
+from corehq.blobs import CODES as BLOB_CODES
+from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
@@ -237,11 +237,13 @@ class DayTimeWindow(DocumentSchema):
     end_time = TimeProperty()
 
 
-class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
+class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
        see data, reports, charts, etc."""
+
+    _blobdb_type_code = BLOB_CODES.domain
 
     name = StringProperty()
     is_active = BooleanProperty()
@@ -322,6 +324,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
     sms_survey_date_format = StringProperty()
 
+    granted_messaging_access = BooleanProperty(default=False)
+
     # Allowed outbound SMS per day
     # If this is None, then the default is applied. See get_daily_outbound_sms_limit()
     custom_daily_outbound_sms_limit = IntegerProperty()
@@ -386,8 +390,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
 
-    uses_new_reminders = BooleanProperty(default=False)
-
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc
@@ -422,6 +424,10 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         if 'location_types' in data:
             data['obsolete_location_types'] = data.pop('location_types')
 
+        if 'granted_messaging_access' not in data:
+            # enable messaging for domains created before this flag was added
+            data['granted_messaging_access'] = True
+
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
             self.deployment = Deployment()
@@ -441,20 +447,18 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return domain and domain.secure_sessions
 
     @staticmethod
-    @quickcache(['couch_user._id', 'is_active'],
-                skip_arg='strict', timeout=5*60, memoize_timeout=10)
-    def active_for_couch_user(couch_user, is_active=True, strict=False):
+    @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
+    def active_for_couch_user(couch_user, is_active=True):
         domain_names = couch_user.get_domains()
         return Domain.view(
             "domain/by_status",
             keys=[[is_active, d] for d in domain_names],
             reduce=False,
             include_docs=True,
-            stale=settings.COUCH_STALE_QUERY if not strict else None,
         ).all()
 
     @staticmethod
-    def active_for_user(user, is_active=True, strict=False):
+    def active_for_user(user, is_active=True):
         if isinstance(user, AnonymousUser):
             return []
         from corehq.apps.users.models import CouchUser
@@ -463,17 +467,9 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         else:
             couch_user = CouchUser.from_django_user(user)
         if couch_user:
-            return Domain.active_for_couch_user(
-                couch_user, is_active=is_active, strict=strict)
+            return Domain.active_for_couch_user(couch_user, is_active=is_active)
         else:
             return []
-
-    def get_anonymous_mobile_worker(self):
-        from corehq.apps.users.models import CouchUser
-
-        return CouchUser.get_by_username(
-            format_username(ANONYMOUS_USERNAME, self.name)
-        )
 
     @classmethod
     def field_by_prefix(cls, field, prefix=''):
@@ -681,7 +677,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                   copy_by_id=None, share_reminders=True,
                   share_user_roles=True):
         from corehq.apps.app_manager.dbaccessors import get_app
-        from corehq.apps.reminders.models import CaseReminderHandler
+        from corehq.apps.data_interfaces.models import AutomaticUpdateRule
         from corehq.apps.fixtures.models import FixtureDataItem
         from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
         from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
@@ -713,6 +709,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             new_domain.internal = InternalProperties()
             new_domain.creating_user = user.username if user else None
             new_domain.date_created = datetime.utcnow()
+            new_domain.use_sql_backend = True
+            new_domain.granted_messaging_access = False
 
             for field in self._dirty_fields:
                 if hasattr(new_domain, field):
@@ -762,10 +760,24 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                     'FixtureDataType', doc_id, new_domain_name, user=user)
                 copy_data_items(doc_id, component._id)
 
+            def convert_form_unique_id_function(form_unique_id):
+                from corehq.apps.app_manager.models import FormBase
+                form = FormBase.get_form(form_unique_id)
+                form_app = form.get_app()
+                m_index, f_index = form_app.get_form_location(form.unique_id)
+                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
+                return form_copy.unique_id
+
             if share_reminders:
-                for doc_id in get_doc_ids_in_domain_by_class(self.name, CaseReminderHandler):
-                    self.copy_component(
-                        'CaseReminderHandler', doc_id, new_domain_name, user=user)
+                for rule in AutomaticUpdateRule.by_domain(
+                    self.name,
+                    AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                    active_only=False,
+                ):
+                    rule.copy_conditional_alert(
+                        new_domain_name,
+                        convert_form_unique_id_function=convert_form_unique_id_function,
+                    )
             if share_user_roles:
                 for doc_id in get_doc_ids_in_domain_by_class(self.name, UserRole):
                     self.copy_component('UserRole', doc_id, new_domain_name, user=user)
@@ -775,44 +787,15 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                 user.add_domain_membership(new_domain_name, is_admin=True)
             apply_update(user, add_dom_to_user)
 
-        def update_events(handler):
-            """
-            Change the form_unique_id to the proper form for each event in a newly copied CaseReminderHandler
-            """
-            from corehq.apps.app_manager.models import FormBase
-            for event in handler.events:
-                if not event.form_unique_id:
-                    continue
-                form = FormBase.get_form(event.form_unique_id)
-                form_app = form.get_app()
-                m_index, f_index = form_app.get_form_location(form.unique_id)
-                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
-                event.form_unique_id = form_copy.unique_id
-
-        def update_for_copy(handler):
-            handler.active = False
-            update_events(handler)
-
-        if share_reminders:
-            for handler in CaseReminderHandler.get_handlers(new_domain_name):
-                apply_update(handler, update_for_copy)
-
         return new_domain
-
-    def reminder_should_be_copied(self, handler):
-        from corehq.apps.reminders.models import ON_DATETIME
-        return (handler.start_condition_type != ON_DATETIME and
-                handler.user_group_id is None)
 
     def copy_component(self, doc_type, id, new_domain_name, user=None):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
-        from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 
         str_to_cls = {
             'UserRole': UserRole,
-            'CaseReminderHandler': CaseReminderHandler,
             'FixtureDataType': FixtureDataType,
             'FixtureDataItem': FixtureDataItem,
         }
@@ -826,10 +809,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         else:
             cls = str_to_cls[doc_type]
             db = cls.get_db()
-            if doc_type == 'CaseReminderHandler':
-                cur_doc = cls.get(id)
-                if not self.reminder_should_be_copied(cur_doc):
-                    return None
 
             new_id = db.copy_doc(id)['id']
 
@@ -1008,8 +987,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     @property
     def has_custom_logo(self):
-        return (self['_attachments'] and
-                LOGO_ATTACHMENT in self['_attachments'])
+        return self.has_attachment(LOGO_ATTACHMENT)
 
     def get_custom_logo(self):
         if not self.has_custom_logo:
@@ -1017,8 +995,11 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
         return (
             self.fetch_attachment(LOGO_ATTACHMENT),
-            self['_attachments'][LOGO_ATTACHMENT]['content_type']
+            self.blobs[LOGO_ATTACHMENT].content_type
         )
+
+    def put_attachment(self, *args, **kw):
+        return super(Domain, self).put_attachment(domain=self.name, *args, **kw)
 
     def get_case_display(self, case):
         """Get the properties display definition for a given case"""

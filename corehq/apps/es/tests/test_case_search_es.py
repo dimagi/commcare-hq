@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from unittest import TestCase
+from django.test.testcases import SimpleTestCase
 
-from corehq.apps.es.case_search import CaseSearchES, flatten_result, RELEVANCE_SCORE
+from corehq.apps.case_search.const import RELEVANCE_SCORE
+from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
 
 
-class TestCaseSearchES(ElasticTestMixin, TestCase):
+class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
     def setUp(self):
         self.es = CaseSearchES()
@@ -36,18 +37,23 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                                         "path": "case_properties",
                                         "query": {
                                             "filtered": {
-                                                "filter": {
-                                                    "term": {
-                                                        "case_properties.key": "name"
+                                                "query": {
+                                                    "match_all": {
                                                     }
                                                 },
-                                                "query": {
-                                                    "match": {
-                                                        "case_properties.value": {
-                                                            "query": "redbeard",
-                                                            "fuzziness": "0"
+                                                "filter": {
+                                                    "and": (
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "name"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "redbeard"
+                                                            }
                                                         }
-                                                    }
+                                                    )
                                                 }
                                             }
                                         }
@@ -90,38 +96,21 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                                         "query": {
                                             "filtered": {
                                                 "filter": {
-                                                    "term": {
-                                                        "case_properties.key": "name"
-                                                    }
+                                                    "and": (
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "name"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "redbeard"
+                                                            }
+                                                        }
+                                                    )
                                                 },
                                                 "query": {
-                                                    "match": {
-                                                        "case_properties.value": {
-                                                            "query": "redbeard",
-                                                            "fuzziness": "0"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "filtered": {
-                                                "filter": {
-                                                    "term": {
-                                                        "case_properties.key": "parrot_name"
-                                                    }
-                                                },
-                                                "query": {
-                                                    "match": {
-                                                        "case_properties.value": {
-                                                            "query": "polly",
-                                                            "fuzziness": "AUTO"
-                                                        }
+                                                    "match_all": {
                                                     }
                                                 }
                                             }
@@ -137,7 +126,29 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                                             "filtered": {
                                                 "filter": {
                                                     "term": {
-                                                        "case_properties.key": "parrot_name"
+                                                        "case_properties.key.exact": "parrot_name"
+                                                    }
+                                                },
+                                                "query": {
+                                                    "match": {
+                                                        "case_properties.value": {
+                                                            "query": "polly",
+                                                            "fuzziness": "AUTO"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "filtered": {
+                                                "filter": {
+                                                    "term": {
+                                                        "case_properties.key.exact": "parrot_name"
                                                     }
                                                 },
                                                 "query": {
@@ -174,10 +185,15 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                     "_source": {
                         'name': 'blah',
                         'case_properties': [
+                            {'key': '@case_id', 'value': 'should be removed'},
+                            {'key': 'name', 'value': 'should be removed'},
+                            {'key': 'case_name', 'value': 'should be removed'},
+                            {'key': 'last_modified', 'value': 'should be removed'},
                             {'key': 'foo', 'value': 'bar'},
                             {'key': 'baz', 'value': 'buzz'}]
                     }
-                }
+                },
+                include_score=True
             ),
             expected
         )

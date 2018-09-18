@@ -1,10 +1,18 @@
-hqDefine('domain/js/internal_subscription_management', function () {
+hqDefine('domain/js/internal_subscription_management', [
+    'jquery',
+    'knockout',
+    'accounting/js/widgets',
+    'jquery-ui/ui/datepicker',
+], function (
+    $,
+    ko
+) {
     $(function () {
         var viewModel = {
             subscriptionType: ko.observable($('#id_subscription_type').val() || null),
             trialLength: ko.observable(90),
         };
-        viewModel.end_date = ko.computed(function() {
+        viewModel.end_date = ko.computed(function () {
             var date = new Date();
             date.setHours(0, 0, 0, 0);
             date.setDate(date.getDate() + parseInt(viewModel.trialLength()));

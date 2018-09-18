@@ -4,10 +4,9 @@
 {% load compress %}
 {% load i18n %}
 
-{% block title %}⚙ {{ form.name|clean_trans:langs }} - {% trans 'Form Settings' %}{% endblock %}
+{% block title %}{# controlled by app_manager/js/form_view.js #}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
     <style>
         .nodeset {
             min-width: 400px;
@@ -21,9 +20,6 @@
 
 {% block js %}{{ block.super }}
     {% compress js %}
-    <script src="{% static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
-    <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
-    <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
     {% endcompress %}
@@ -36,7 +32,9 @@
     {% endcompress %}
     {% if module.doc_type == 'AdvancedModule' %}
         {% compress js %}
-        <script src="{% static 'app_manager/js/forms/case_config_ui_advanced.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/advanced/case_properties.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/advanced/actions.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/advanced/case_config_ui.js' %}"></script>
         <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
         {% endcompress %}
     {% else %}
@@ -75,6 +73,11 @@
     {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
         {% compress js %}
         <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
+        {% endcompress %}
+    {% endif %}
+    {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
+        {% compress js %}
+        <script src="{% static 'app_manager/js/forms/copy_form_to_app.js' %}"></script>
         {% endcompress %}
     {% endif %}
 {% endblock %}
@@ -124,6 +127,7 @@
     {% initial_page_data 'custom_instances' custom_instances %}
     {% initial_page_data 'form_filter' form.form_filter %}
     {% initial_page_data 'form_filter_patterns' form_filter_patterns %}
+    {% initial_page_data 'form_name' form.name|trans:app.langs %}
     {% initial_page_data 'form_requires' form.requires %}
     {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
     {% initial_page_data 'is_usercase_in_use' is_usercase_in_use %}
@@ -135,7 +139,16 @@
     {% initial_page_data 'put_in_root' module.put_in_root %}
     {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
     {% initial_page_data 'shadow_parent_form_id' form.shadow_parent_form_id %}
+    {% initial_page_data 'is_release_notes_form' form.is_release_notes_form %}
+    {% initial_page_data 'enable_release_notes' form.enable_release_notes %}
+    {% initial_page_data 'is_allowed_to_be_release_notes_form' is_allowed_to_be_release_notes_form %}
+    {% initial_page_data 'is_training_module' is_training_module %}
     {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+    {% initial_page_data 'default_language' app.default_language %}
+    {% initial_page_data 'current_language' lang %}
+    {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
+        {% initial_page_data 'apps_modules' apps_modules %}
+    {% endif %}
     {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
 
     {# End of form navigation #}
@@ -152,18 +165,18 @@
     {% registerurl "get_form_datums" domain app.id %}
 
     <div class="tabbable appmanager-tabs-container">
-        <ul class="nav nav-tabs">
+        <ul class="nav nav-tabs sticky-tabs">
 
             {% if form.uses_cases %}
-            <li class="active">
+            <li>
                 <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
                     {% trans "Case Management" %}
                 </a>
             </li>
             {% endif %}
 
-            <li {% if not form.uses_cases %}class="active"{% endif %}>
-                <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
+            <li>
+                <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
             </li>
 
             {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
@@ -191,12 +204,12 @@
             {% endif %}
         </ul>
 
-        {% include 'app_manager/partials/case_config_ko_templates.html' %}
+        {% include 'app_manager/partials/forms/case_config_ko_templates.html' %}
 
         <div class="tab-content appmanager-tab-content">
 
             {% if form.uses_cases %}
-              <div class="tab-pane active" id="case-configuration">
+              <div class="tab-pane" id="case-configuration">
                   {% if xform_validation_missing %}
                       <p class="alert alert-warning">
                           {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
@@ -223,9 +236,9 @@
                       <div class="casexml" id="casexml_home">
                         {% if module.doc_type == 'AdvancedModule' %}
                             {% initial_page_data 'schedule_options' schedule_options %}
-                            {% include 'app_manager/partials/case_config_advanced.html' %}
+                            {% include 'app_manager/partials/forms/case_config_advanced.html' %}
                         {% else %}
-                            {% include 'app_manager/partials/case_config.html' %}
+                            {% include 'app_manager/partials/forms/case_config.html' %}
                         {% endif %}
                       </div>
                   {% else %}
@@ -238,7 +251,7 @@
 
 
             {% if nav_form %}
-                {% include "app_manager/partials/form_tab_settings.html" %}
+                {% include "app_manager/partials/forms/form_tab_settings.html" %}
             {% endif %}
 
 
@@ -277,7 +290,7 @@
                                     </p>
                                 </div>
                             {% endif %}
-                            {% include 'app_manager/partials/usercase_config.html' %}
+                            {% include 'app_manager/partials/forms/usercase_config.html' %}
                         {% endblock %}
                     </div>
                 {% else %}
@@ -290,11 +303,11 @@
 
             {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
                 {% if module.has_schedule  %}
-                    {% include "app_manager/partials/form_tab_visit_scheduler.html" %}
+                    {% include "app_manager/partials/forms/form_tab_visit_scheduler.html" %}
                 {% endif %}
             {% endif %}
             {% if form.form_type != "shadow_form" %}
-                {% include "app_manager/partials/form_tab_advanced.html" %}
+                {% include "app_manager/partials/forms/form_tab_advanced.html" %}
             {% endif %}
         </div>
     </div>
@@ -302,13 +315,13 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% include "app_manager/partials/form_view_modals.html" %}
+{% include "app_manager/partials/forms/form_view_modals.html" %}
 {% include "app_manager/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
 
 {% block breadcrumbs %}
     {{ block.super }}
-    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
+    {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
     <li>
         <a class="track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
            data-category="App Builder" data-action="View Form" data-label="Breadcrumb">

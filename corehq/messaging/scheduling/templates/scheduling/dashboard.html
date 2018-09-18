@@ -28,9 +28,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         <strong>{% trans "SMS Status:" %}</strong>
-                        <strong class="text-success" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() === 0">{% trans "All Caught Up" %}</strong>
-                        <strong class="text-warning" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() > 0">{% trans "Working" %}</strong>
-                        <strong class="text-danger" data-bind="visible: !is_sms_currently_allowed()">{% trans "Paused" %}</strong>
+                        <strong class="text-success" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() === 0">{% trans "Processing Complete" %}</strong>
+                        <strong class="text-warning" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() > 0">{% trans "Processing In Progress" %}</strong>
+                        <strong class="text-danger" data-bind="visible: !is_sms_currently_allowed()">{% trans "Processing Paused" %}</strong>
                         <span data-bind="visible: queued_sms_count() > 0 || !is_sms_currently_allowed()">
                             (<span data-bind="text: queued_sms_count"></span>
                             {% trans "SMS queued" %})
@@ -39,9 +39,9 @@
                               data-title="{% trans 'SMS Status' %}"
                               data-container="body"
                               data-content="{% blocktrans %}
-                              <p><strong>All Caught Up:</strong> All queued messages have been processed.</p>
-                              <p><strong>Working:</strong> There are queued messages which are currently being processed.</p>
-                              <p><strong>Paused:</strong> No messages are currently being processed. Any messages created will remain queued until SMS processing resumes.</p>
+                              <p><strong>Processing Complete:</strong> All queued messages have been processed.</p>
+                              <p><strong>Processing In Progress:</strong> There are queued messages which are currently being processed.</p>
+                              <p><strong>Processing Paused:</strong> No messages are currently being processed. Any messages created will remain queued until SMS processing resumes.</p>
                               {% endblocktrans %}"
                               data-placement="left">
                         </span>
@@ -118,8 +118,8 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         <strong>{% trans "All Messaging Events Status:" %}</strong>
-                        <strong class="text-success" data-bind="visible: events_pending() === 0">{% trans "All Caught Up" %}</strong>
-                        <strong class="text-warning" data-bind="visible: events_pending() > 0">{% trans "Working" %},</strong>
+                        <strong class="text-success" data-bind="visible: events_pending() === 0">{% trans "Processing Complete" %}</strong>
+                        <strong class="text-warning" data-bind="visible: events_pending() > 0">{% trans "Processing In Progress" %},</strong>
                         <span data-bind="visible: events_pending() > 0">
                             <span data-bind="text: events_pending"></span>
                             {% trans "event(s) queued" %}
@@ -128,8 +128,8 @@
                               data-title="{% trans 'All Messaging Events Status' %}"
                               data-container="body"
                               data-content="{% blocktrans %}
-                              <p><strong>All Caught Up:</strong> All due events have been processed.</p>
-                              <p><strong>Working:</strong> There are events which are due that are currently being processed.</p>
+                              <p><strong>Processing Complete:</strong> All due events have been processed.</p>
+                              <p><strong>Processing In Progress:</strong> There are events which are due that are currently being processed.</p>
                               {% endblocktrans %}"
                               data-placement="left">
                         </span>
@@ -158,11 +158,16 @@
                 <div class="panel-body">
                     <p>
                         {% blocktrans %}
-                        Showing SMS activity over the last 30 days. <a target="_blank" href="{{ message_log_url }}">See all</a>
+                        Showing SMS activity over the last 30 days. <a target="_blank" href="{{ message_log_url }}">See full message log</a>
                         {% endblocktrans %}
                     </p>
                     <div class="row">
                         <div id="sms_count_chart"><svg height="300px"></svg></div>
+                    </div>
+                    <div class="pull-right">
+                        <p class="help-block">
+                            <i class="fa fa-info-circle"></i> {% trans "Dates are presented in YYYY-MM-DD format" %}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -181,11 +186,16 @@
                 <div class="panel-body">
                     <p>
                         {% blocktrans %}
-                        Summarizing messaging events over the last 30 days. <a target="_blank" href="{{ messaging_history_url }}">See all</a>
+                        Summarizing messaging events over the last 30 days. <a target="_blank" href="{{ messaging_history_url }}">See full messaging history for more detail</a>
                         {% endblocktrans %}
                     </p>
                     <div class="row">
                         <div id="event_count_chart"><svg height="300px"></svg></div>
+                    </div>
+                    <div class="pull-right">
+                        <p class="help-block">
+                            <i class="fa fa-info-circle"></i> {% trans "Dates are presented in YYYY-MM-DD format" %}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -204,7 +214,7 @@
                 <div class="panel-body">
                     <p>
                         {% blocktrans %}
-                        Summarizing errors over the last 30 days. <a target="_blank" href="{{ messaging_history_url }}">See all</a>
+                        Summarizing errors over the last 30 days. <a target="_blank" href="{{ messaging_history_errors_url }}">See full messaging error history for more detail</a>
                         {% endblocktrans %}
                     </p>
                     <div class="row">

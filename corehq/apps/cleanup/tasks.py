@@ -15,6 +15,7 @@ from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
     parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
     CANT_MATCH, FORM_HAS_UNDEFINED_XMLNS
+from io import open
 
 
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
@@ -27,7 +28,7 @@ def json_handler(obj):
         return json.JSONEncoder().default(obj)
 
 
-@periodic_task(run_every=crontab(day_of_week=[1, 4], hour=0, minute=0))  # every Monday and Thursday
+@periodic_task(serializer='pickle', run_every=crontab(day_of_week=[1, 4], hour=0, minute=0))  # every Monday and Thursday
 def fix_xforms_with_missing_xmlns():
     log_file_name = 'undefined_xmlns.{}-timestamp.log'.format(int(time()))
     log_file_path = os.path.join(UNDEFINED_XMLNS_LOG_DIR, log_file_name)
@@ -37,10 +38,11 @@ def fix_xforms_with_missing_xmlns():
     with open(log_file_path, "r") as f:
         stats = get_summary_stats_from_stream(f)
 
-    mail_admins_async.delay(
-        'Summary of fix_xforms_with_undefined_xmlns',
-        json.dumps(stats, sort_keys=True, indent=4, default=json_handler)
-    )
+    if any(stats.values()):
+        mail_admins_async.delay(
+            'Summary of fix_xforms_with_undefined_xmlns',
+            json.dumps(stats, sort_keys=True, indent=4, default=json_handler)
+        )
 
     return stats, log_file_path
 
@@ -136,6 +138,6 @@ def pprint_stats(stats, outstream):
             outstream.write("        {}\n".format(user))
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def clear_expired_sessions():
     call_command('clearsessions')

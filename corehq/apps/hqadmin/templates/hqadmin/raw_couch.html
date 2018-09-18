@@ -1,94 +1,73 @@
-{% load hq_shared_tags %}{% load compress %}
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Doc {{ doc_id }}</title>
+{% extends "hqwebapp/base.html" %}
+{% load hq_shared_tags %}
 
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
-        <link type="text/css"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'font-awesome/css/font-awesome.min.css' %}" />
+{% block title %}Doc {{ doc_id }}{% endblock %}
 
-        {% javascript_libraries %}
+{% block js %}{{ block.super }}
+  {% requirejs_main 'hqadmin/js/raw_couch_main' %}
+{% endblock %}
 
-        {# CodeMirror uses granular resources as a means of config #}
-        {% if use_code_mirror %}
-        <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
-        <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
-        <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
-        <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
-        <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
-        <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
-        <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
-        <script src="{% static 'hqadmin/js/raw_couch.js' %}"></script>
-        {% endif %}
 
-        <style>
-            .CodeMirror {
-                height: auto;
-            }
-        </style>
+{% block content %}
+    {% initial_page_data 'all_databases' all_databases %}
+    <div class="container-fluid">
+        <div class="page-header">
+            <h1>Enter a doc id</h1>
+            <form class="form-inline" method="GET" action="" id="doc-form">
+                <input name="id" class="form-control" type="search" style="width: 30em"/>
+                <select class="form-control"
+                        data-bind="options: allDatabases, optionsText:'dbName', optionsValue: 'dbValue'"
+                        name="db_name" style="width: 12em">
+                </select>
+                <input class="btn btn-primary form-control" type="submit"/>
+            </form>
+        </div>
+    </div>
 
-    </head>
-    <body>
-        <div class="container-fluid">
-            <div class="page-header">
-                <h1>Enter a doc id</h1>
-                <form class="form-inline" method="GET" action="">
-                    <input name="id" class="form-control" type="search" style="width: 30em"/>
-                    <select class="form-control" name="db_name" style="width: 12em">
-                        <option value="">All Databases</option>
-                        {% for db in all_databases %}
-                            <option value="{{ db }}">{{ db }}</option>
-                        {% endfor %}
-                    </select>
-                    <input class="btn btn-primary form-control" type="submit"/>
-                </form>
+    {% if doc_id %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-3">
+            <div>
+                <h3>Databases/Tables Searched:</h3>
+                <table class="table">
+                    <tr>
+                        <th>Status</th>
+                        <th>Database Name</th>
+                    </tr>
+                    {% for db in db_results %}
+                    <tr>
+                        <td><span class="label label-{{ db.status }}">{{ db.result }}</span></td>
+                        {% if db.result == "found"  %}
+                            <td><a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ db.dbname }}">
+                                {{ db.dbname }}
+                            </a></td>
+                        {% else %}
+                            <td>{{ db.dbname }}</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </table>
             </div>
         </div>
 
-        {% if doc_id %}
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-xs-3">
+            <div class="col-xs-9">
+                <h3>Doc {{ doc_id }}</h3>
+                <p>Doc type: {{ doc_type }}</p>
+                <p>Database or table: {{ dbname }}</p>
+                <a href="{% url 'global_quick_find' %}?q={{ doc_id }}">
+                    <img src="{% static 'hqwebapp/images/commcare-flower.png' %}"
+                         alt="CommCare" witdth="14px" height="14px"
+                         title="Open in HQ" />
+                </a>
+                <a href="{% url 'doc_in_es' %}?id={{ doc_id }}" target="_blank" title="Search in ES"><i class="fa fa-search"></i></a>
+                <a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
                 <div>
-                    <h3>Databases/Tables Searched:</h3>
-                    <table class="table">
-                        {% for db in db_results %}
-                        <tr>
-                            <td><span class="label label-{{ db.status }}">{{ db.result }}</span></td>
-                            {% if db.result == "found"  %}
-                                <td><a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ db.dbname }}">
-                                    {{ db.dbname }}
-                                </a></td>
-                            {% else %}
-                                <td>{{ db.dbname }}</td>
-                            {% endif %}
-                        </tr>
-                        {% endfor %}
-                    </table>
-                </div>
-            </div>
-
-                <div class="col-xs-9">
-                    <h3>Doc {{ doc_id }}</h3>
-                    <p>Doc type: {{ doc_type }}</p>
-                    <p>Database or table: {{ dbname }}</p>
-                    <a href="{% url 'global_quick_find' %}?q={{ doc_id }}">
-                        <img src="{% static 'hqwebapp/images/commcare-flower.png' %}"
-                             alt="CommCare" witdth="14px" height="14px"
-                             title="Open in HQ" />
-                    </a>
-                    <a href="{% url 'doc_in_es' %}?id={{ doc_id }}" target="_blank" title="Search in ES"><i class="fa fa-search"></i></a>
-                    <a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
-                    <div>
-                        <h3>Raw Doc:</h3>
-                        <pre id="couch-document">{{ doc }}</pre>
-                    </div>
+                    <h3>Raw Doc:</h3>
+                    <pre id="couch-document" data-doc="{% html_attr doc %}"></pre>
                 </div>
             </div>
         </div>
-        {% endif %}
-    </body>
-</html>
+    </div>
+    {% endif %}
+{% endblock content %}

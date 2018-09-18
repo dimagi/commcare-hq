@@ -9,7 +9,9 @@ import six
 
 import xml2json
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
+from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.models import Attachment
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
 
@@ -70,14 +72,31 @@ class FormSubmissionBuilder(object):
         return form_xml
 
 
-def build_form_xml_from_property_dict(form_properties, separator=''):
+def _build_node_list_from_dict(form_properties, separator=''):
     elements = []
-    for key, value in form_properties.items():
-        prop = etree.Element(key)
-        prop.text = value
-        elements.append(prop)
 
-    return separator.join(etree.tostring(e) for e in elements)
+    for key, values in form_properties.items():
+        if not isinstance(values, list):
+            values = [values]
+
+        for value in values:
+            node = etree.Element(key)
+            if isinstance(value, dict):
+                children = _build_node_list_from_dict(value, separator=separator)
+                for child in children:
+                    node.append(child)
+            else:
+                node.text = value
+            elements.append(node)
+
+    return elements
+
+
+def build_form_xml_from_property_dict(form_properties, separator=''):
+    return separator.join(
+        etree.tostring(e).decode('utf-8')
+        for e in _build_node_list_from_dict(form_properties, separator)
+    )
 
 
 def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
@@ -155,15 +174,15 @@ def convert_xform_to_json(xml_string):
     return json_form
 
 
-def adjust_text_to_datetime(text):
+def adjust_text_to_datetime(text, process_timezones=None):
     matching_datetime = iso8601.parse_date(text)
-    if phone_timezones_should_be_processed():
+    if process_timezones or phone_timezones_should_be_processed():
         return matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
     else:
         return matching_datetime.replace(tzinfo=None)
 
 
-def adjust_datetimes(data, parent=None, key=None):
+def adjust_datetimes(data, parent=None, key=None, process_timezones=None):
     """
     find all datetime-like strings within data (deserialized json)
     and format them uniformly, in place.
@@ -177,21 +196,22 @@ def adjust_datetimes(data, parent=None, key=None):
     >>> with force_phone_timezones_should_be_processed():
     >>>     adjust_datetimes(form_json)
     """
+    process_timezones = process_timezones or phone_timezones_should_be_processed()
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
     if isinstance(data, six.string_types) and jsonobject.re_loose_datetime.match(data):
         try:
             parent[key] = six.text_type(json_format_datetime(
-                adjust_text_to_datetime(data)
+                adjust_text_to_datetime(data, process_timezones=process_timezones)
             ))
         except iso8601.ParseError:
             pass
     elif isinstance(data, dict):
         for key, value in data.items():
-            adjust_datetimes(value, parent=data, key=key)
+            adjust_datetimes(value, parent=data, key=key, process_timezones=process_timezones)
     elif isinstance(data, list):
         for i, value in enumerate(data):
-            adjust_datetimes(value, parent=data, key=i)
+            adjust_datetimes(value, parent=data, key=i, process_timezones=process_timezones)
 
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
@@ -206,3 +226,38 @@ def resave_form(domain, form):
         publish_form_saved(form)
     else:
         XFormInstance.get_db().save_doc(form.to_json())
+
+
+def get_node(root, question, xmlns=''):
+    '''
+    Given an xml element, find the node corresponding to a question path.
+    See XFormQuestionValueIterator for question path format.
+    Throws XFormQuestionValueNotFound if question is not present.
+    '''
+
+    def _next_node(node, xmlns, id, index=None):
+        try:
+            return node.findall("{{{}}}{}".format(xmlns, id))[index or 0]
+        except (IndexError, KeyError):
+            raise XFormQuestionValueNotFound()
+
+    node = root
+    i = XFormQuestionValueIterator(question)
+    for (qid, index) in i:
+        node = _next_node(node, xmlns, qid, index)
+    node = _next_node(node, xmlns, i.last())
+    if node is None:
+        raise XFormQuestionValueNotFound()
+    return node
+
+
+def update_response(root, question, response, xmlns=None):
+    '''
+    Given a form submission's xml root, updates the response for an individual question.
+    Question and response are both strings; see XFormQuestionValueIterator for question format.
+    '''
+    node = get_node(root, question, xmlns)
+    if node.text != response:
+        node.text = response
+        return True
+    return False

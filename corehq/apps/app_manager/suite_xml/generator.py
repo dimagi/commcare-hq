@@ -62,18 +62,23 @@ class SuiteGenerator(object):
         entries = EntriesContributor(self.suite, self.app, self.modules)
         menus = MenuContributor(self.suite, self.app, self.modules)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
-        for module in self.modules:
-            self.suite.entries.extend(entries.get_module_contributions(module))
-
-            self.suite.menus.extend(
-                menus.get_module_contributions(module)
-            )
-
-            self.suite.remote_requests.extend(remote_requests.get_module_contributions(module))
 
         if any(module.is_training_module for module in self.modules):
             training_menu = LocalizedMenu(id='training-root')
             training_menu.text = Text(locale_id=id_strings.training_module_locale())
+        else:
+            training_menu = None
+
+        for module in self.modules:
+            self.suite.entries.extend(entries.get_module_contributions(module))
+
+            self.suite.menus.extend(
+                menus.get_module_contributions(module, training_menu)
+            )
+
+            self.suite.remote_requests.extend(remote_requests.get_module_contributions(module))
+
+        if training_menu:
             self.suite.menus.append(training_menu)
 
         self._add_sections([

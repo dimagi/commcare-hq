@@ -164,12 +164,32 @@ class CaseAttachment(object):
         identifier: the tag name
         attachment_src: URL of attachment
         attachment_from: source [local, remote, inline]
-        attachment_name: required if inline for inline blob of attachment - likely identical to identifier
+        attachment_name: required if inline for inline blob of attachment -
+        likely identical to identifier
         """
         self.identifier = identifier
         self.attachment_src = attachment_src
         self.attachment_from = attachment_from
         self.attachment_name = attachment_name
+
+    @property
+    def is_delete(self):
+        """
+        Helper method to see if this is a delete vs. update
+
+        The spec says "no attributes, empty - This will remove the attachment."
+        This implementation only considers `src` and `from` values since that
+        should be sufficient to detect a deletion. However, technically the
+        `name` value could be considered as well, although having a non-empty
+        `name` with empty `src` and `from` is an undefined state.
+        https://github.com/dimagi/commcare-core/wiki/casexml20#case-action-elements
+
+        This property is named differently from
+        `casexml.apps.case.sharedmodels.CommCareCaseAttachment.is_present`
+        to disambiguate the interface of that class from this one since
+        they are not the same but are used in very similar contexts.
+        """
+        return not (self.attachment_src or self.attachment_from)
 
 
 class CaseAttachmentAction(CaseActionBase):
@@ -191,17 +211,13 @@ class CaseAttachmentAction(CaseActionBase):
 
         for id, data in block.items():
             if isinstance(data, six.string_types):
-                attachment_from = None
                 attachment_src = None
+                attachment_from = None
                 attachment_name = None
             else:
-                attachment_from = data.get('@from', None)
                 attachment_src = data.get('@src', None)
+                attachment_from = data.get('@from', None)
                 attachment_name = data.get('@name', None)
-
-            if attachment_from == attachment_src == attachment_name == None:
-                # all null, this is a deletion
-                pass
             attachments[id] = CaseAttachment(id, attachment_src, attachment_from, attachment_name)
         return cls(block, attachments)
 

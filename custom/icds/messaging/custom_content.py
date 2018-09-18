@@ -14,12 +14,14 @@ from custom.icds.case_relationships import (
 from custom.icds.const import (STATE_TYPE_CODE, ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE,
     HINDI, TELUGU, MARATHI, AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE)
 from custom.icds.exceptions import CaseRelationshipError
+from custom.icds.messaging.custom_recipients import skip_notifying_missing_ccs_record_parent
 from custom.icds.messaging.indicators import (
     DEFAULT_LANGUAGE,
     AWWIndicator,
     LSIndicator,
     AWWSubmissionPerformanceIndicator,
     AWWAggregatePerformanceIndicator,
+    AWWVHNDSurveyIndicator,
     LSAggregatePerformanceIndicator,
     LSVHNDSurveyIndicator,
     LSSubmissionPerformanceIndicator,
@@ -32,11 +34,16 @@ from django.template.loader import render_to_string
 GROWTH_MONITORING_XMLNS = 'http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75'
 
 
-def notify_exception_and_return_empty_list():
-    notify_exception(
-        None,
-        message="Error with ICDS custom content handler",
-    )
+def notify_exception_and_return_empty_list(e):
+    if not (
+        isinstance(e, CaseRelationshipError) and
+        skip_notifying_missing_ccs_record_parent(e)
+    ):
+        notify_exception(
+            None,
+            message="Error with ICDS custom content handler",
+        )
+
     return []
 
 
@@ -106,18 +113,18 @@ def static_negative_growth_indicator(recipient, schedule_instance):
 
     try:
         child_person_case = child_person_case_from_child_health_case(schedule_instance.case)
-    except CaseRelationshipError:
-        return notify_exception_and_return_empty_list()
+    except CaseRelationshipError as e:
+        return notify_exception_and_return_empty_list(e)
 
     try:
         weight_prev = Decimal(form.form_data.get('weight_prev'))
-    except (InvalidOperation, TypeError):
-        return notify_exception_and_return_empty_list()
+    except (InvalidOperation, TypeError) as e:
+        return notify_exception_and_return_empty_list(e)
 
     try:
         weight_child = Decimal(form.form_data.get('weight_child'))
-    except (InvalidOperation, TypeError):
-        return notify_exception_and_return_empty_list()
+    except (InvalidOperation, TypeError) as e:
+        return notify_exception_and_return_empty_list(e)
 
     if weight_child > weight_prev:
         return []
@@ -146,7 +153,11 @@ def get_language_code_for_user(user):
 
 
 def render_content_for_user(user, template, context):
-    language_code = get_language_code_for_user(user)
+    if user.memoized_usercase:
+        language_code = user.memoized_usercase.get_language_code() or DEFAULT_LANGUAGE
+    else:
+        language_code = DEFAULT_LANGUAGE
+
     return render_message(language_code, template, context)
 
 
@@ -176,8 +187,8 @@ def render_missed_visit_message(recipient, case_schedule_instance, template):
 
     try:
         mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
-    except CaseRelationshipError:
-        return notify_exception_and_return_empty_list()
+    except CaseRelationshipError as e:
+        return notify_exception_and_return_empty_list(e)
 
     if person_case_is_migrated_or_opted_out(mother_case):
         return []
@@ -225,8 +236,8 @@ def cf_visits_complete(recipient, case_schedule_instance):
 
     try:
         mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
-    except CaseRelationshipError:
-        return notify_exception_and_return_empty_list()
+    except CaseRelationshipError as e:
+        return notify_exception_and_return_empty_list(e)
 
     context = {
         'beneficiary': mother_case.name,
@@ -247,7 +258,6 @@ def validate_user_location_and_indicator(user, indicator_class):
 
 def run_indicator_for_user(user, indicator_class, language_code=None):
     validate_user_location_and_indicator(user, indicator_class)
-    language_code = language_code or get_language_code_for_user(user)
     indicator = indicator_class(user.domain, user)
     return indicator.get_messages(language_code=language_code)
 
@@ -258,7 +268,7 @@ def run_indicator_for_usercase(usercase, indicator_class):
 
     user = get_user_from_usercase(usercase)
     if user and user.location:
-        return run_indicator_for_user(user, indicator_class)
+        return run_indicator_for_user(user, indicator_class, language_code=usercase.get_language_code())
 
     return []
 
@@ -269,6 +279,10 @@ def aww_1(recipient, case_schedule_instance):
 
 def aww_2(recipient, case_schedule_instance):
     return run_indicator_for_usercase(case_schedule_instance.case, AWWAggregatePerformanceIndicator)
+
+
+def phase2_aww_1(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, AWWVHNDSurveyIndicator)
 
 
 def ls_1(recipient, case_schedule_instance):

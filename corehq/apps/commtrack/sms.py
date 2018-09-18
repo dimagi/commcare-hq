@@ -57,7 +57,7 @@ def handle(verified_contact, text, msg):
     except Exception as e:
         if settings.UNIT_TESTING or settings.DEBUG:
             raise
-        send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
+        send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % six.text_type(e))
         return True
 
     process(domain.name, data)

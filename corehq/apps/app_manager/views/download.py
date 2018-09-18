@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-import os
+import re
+from collections import defaultdict, OrderedDict
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
@@ -182,17 +183,6 @@ def download_jar(request, domain, app_id):
     return response
 
 
-def download_test_jar(request):
-    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'CommCare.jar')) as f:
-        jar = f.read()
-
-    response = HttpResponse(content_type="application/java-archive")
-    set_file_download(response, "CommCare.jar")
-    response['Content-Length'] = len(jar)
-    response.write(jar)
-    return response
-
-
 @safe_cached_download
 def download_raw_jar(request, domain, app_id):
     """
@@ -209,12 +199,11 @@ def download_raw_jar(request, domain, app_id):
 class DownloadCCZ(DownloadMultimediaZip):
     name = 'download_ccz'
     compress_zip = True
+    include_index_files = True
 
     @property
     def zip_name(self):
         return 'commcare_v{}.ccz'.format(self.app.version)
-
-    include_index_files = True
 
     def check_before_zipping(self):
         if self.app.is_remote_app():
@@ -271,7 +260,7 @@ def download_file(request, domain, app_id, path):
                 # look for file guaranteed to exist if profile is created
                 request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
             except ResourceNotFound:
-                request.app.create_build_files(save=True, build_profile_id=build_profile)
+                request.app.create_build_files(build_profile_id=build_profile)
                 request.app.save()
         except ResourceConflict:
             if is_retry:
@@ -382,9 +371,34 @@ def download_index(request, domain, app_id):
     all the resource files that will end up zipped into the jar.
 
     """
-    files = []
+    files = defaultdict(list)
     try:
-        files = source_files(request.app)
+        for file_ in source_files(request.app):
+            form_filename = re.search('modules-(\d+)\/forms-(\d+)', file_[0])
+            if form_filename:
+                module_id, form_id = form_filename.groups()
+                module = request.app.get_module(module_id)
+                form = module.get_form(form_id)
+                section_name = "m{} - {}".format(
+                    module_id,
+                    ", ".join(["({}) {}".format(lang, name)
+                               for lang, name in six.iteritems(module.name)])
+                )
+                files[section_name].append({
+                    'name': file_[0],
+                    'source': file_[1],
+                    'readable_name': "f{} - {}".format(
+                        form_id,
+                        ", ".join(["({}) {}".format(lang, name)
+                                   for lang, name in six.iteritems(form.name)])
+                    ),
+                })
+            else:
+                files[None].append({
+                    'name': file_[0],
+                    'source': file_[1],
+                    'readable_name': None,
+                })
     except Exception:
         messages.error(
             request,
@@ -399,7 +413,7 @@ def download_index(request, domain, app_id):
     built_versions = get_all_built_app_ids_and_versions(domain, request.app.copy_of)
     return render(request, "app_manager/download_index.html", {
         'app': request.app,
-        'files': [{'name': f[0], 'source': f[1]} for f in files],
+        'files': OrderedDict(sorted(six.iteritems(files), key=lambda x: x[0])),
         'supports_j2me': request.app.build_spec.supports_j2me(),
         'built_versions': [{
             'app_id': app_id,
@@ -457,7 +471,7 @@ def download_index_files(app, build_profile_id=None):
                                            path.split('/')[1] not in profiles)
         if not (prefix + 'profile.ccpr') in app.blobs:
             # profile hasnt been built yet
-            app.create_build_files(save=True, build_profile_id=build_profile_id)
+            app.create_build_files(build_profile_id=build_profile_id)
             app.save()
         files = [(path[len(prefix):], app.fetch_attachment(path))
                  for path in app.blobs if needed_for_CCZ(path)]

@@ -1,0 +1,58 @@
+domain: agg
+table_id: monthly_aggregate_pregnancies
+display_name: Pregnancy Data Per Month
+primary_table:
+  data_source_id: 550c3cd432d931387e75e8506b5caf9e  # the data source ID of e.g. the 'pregnancy_cases' table
+  key_column: doc_id
+  columns:
+    # this should generate SQL that looks something like:
+    # insert into pregnancy_cases... values... (
+    #   select name as name, lmp as pregnancy_start_date, 1 as open_in_month,
+    #   lmp < :month_end and (delivery_date is null or delivery_date >= :month_start) as pregnant_in_month
+    # )
+    - column_id: name
+      # todo: unclear where (if anywhere) we want to add dimension info. this is one possible place it could go
+      # is_dimension: false
+      type: reference
+      config_params:
+        referenced_column: name
+    - column_id: pregnancy_start_date
+      type: reference
+      config_params:
+        referenced_column: lmp
+    - column_id: open_in_month
+      type: constant
+      config_params:
+        constant: 1
+    - column_id: pregnant_in_month
+      type: sql_statement
+      config_params:
+        # sql statements will only be able to access the current row
+        datatype: small_integer
+        statement: CASE WHEN lmp < :month_end and (delivery_date is null or delivery_date >= :month_start) THEN 1 ELSE 0 END
+        statement_params:
+          # these ':agg' things are magic variables that let you reference the aggregation window's start/end conditions
+          month_start: :agg_window_start
+          month_end: :agg_window_end
+time_aggregation:
+  unit: month  # unit additionally determines the datatype and the column name used
+  # conditions for inclusion of a particular row on a particular month
+  # start and end conditions must (currently) be based off the primary data source table
+  start_column: opened_date  # if value is not set, defaults to excluding the row entirely
+  end_column: closed_date  # if value is not set, defaults to excluding the row beyond the current date
+secondary_tables:
+  # this is a list, though in this example there is only one.
+  - data_source_id: d824a4864ecb421fb3be8bf8173a05d7
+    # how rows will get joined from primary to secondary tables
+    join_column_primary: doc_id
+    join_column_secondary: form.case.@case_id
+    time_window_column: received_on  # determines the window that each secondary row falls in
+    columns:
+      - column_id: fu_forms_in_month
+        aggregation_type: sum
+        config_params:
+          referenced_column: count  # in ucr "count" is an auto-created column that has a 1 in every row
+      - column_id: any_fu_forms_in_month
+        aggregation_type: nonzero_sum
+        config_params:
+          referenced_column: count  # in ucr "count" is an auto-created column that has a 1 in every row

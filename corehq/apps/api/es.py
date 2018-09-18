@@ -18,7 +18,7 @@ from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import ESError, get_es_new
+from corehq.elastic import ESError, get_es_new, report_shard_failures
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
@@ -145,6 +145,7 @@ class ESView(View):
 
         try:
             es_results = self.es.search(self.index, es_type, body=es_query)
+            report_shard_failures(es_results)
         except ElasticsearchException as e:
             if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
                 # the error may have been caused by a bad query string
@@ -331,6 +332,7 @@ class UserES(ESView):
 
         try:
             es_results = self.es.search(self.index, es_type, body=es_query)
+            report_shard_failures(es_results)
         except ElasticsearchException as e:
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (
                 self.index, str(e), es_query)
@@ -563,13 +565,18 @@ class ElasticAPIQuerySet(object):
         for field in fields:
             if not field:
                 continue
-            
+
             direction = 'asc'
+            missing_dir = '_first'
             if field[0] == '-':
                 direction = 'desc'
+                missing_dir = '_last'
                 field = field[1:]
 
-            new_payload['sort'].append({field: direction})
+            new_payload['sort'].append({field: {
+                'order': direction,
+                "missing": missing_dir
+            }})
 
         return self.with_fields(payload=new_payload)
 

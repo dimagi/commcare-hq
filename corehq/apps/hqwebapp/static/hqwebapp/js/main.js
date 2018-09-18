@@ -1,12 +1,17 @@
 hqDefine('hqwebapp/js/main', [
     "jquery",
+    "knockout",
     "underscore",
+    "hqwebapp/js/initial_page_data",
     "hqwebapp/js/alert_user",
     "analytix/js/google",
     "hqwebapp/js/hq_extensions.jquery",
-], function(
+    "jquery.cookie/jquery.cookie",
+], function (
     $,
+    ko,
     _,
+    initialPageData,
     alertUser,
     googleAnalytics
 ) {
@@ -40,7 +45,7 @@ hqDefine('hqwebapp/js/main', [
                 '<a href="#" tabindex="-1">' +
                     '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
         );
-        _.each(['content', 'title', 'html', 'placement', 'container'], function(attr) {
+        _.each(['content', 'title', 'html', 'placement', 'container'], function (attr) {
             $('a', el).data(attr, opts[attr]);
         });
         if (wrap) {
@@ -58,6 +63,23 @@ hqDefine('hqwebapp/js/main', [
         }
     };
 
+    ko.bindingHandlers.makeHqHelp = {
+        update: function (element, valueAccessor) {
+            var opts = valueAccessor(),
+                name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
+                description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
+                placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
+                format = ko.utils.unwrapObservable(opts.format);
+            $(element).find('.hq-help').remove();
+            makeHqHelp({
+                title: name,
+                content: description,
+                html: format === 'html',
+                placement: placement || 'right',
+            }).appendTo(element);
+        },
+    };
+
     var initBlock = function ($elem) {
         'use strict';
 
@@ -68,10 +90,6 @@ hqDefine('hqwebapp/js/main', [
 
             e.preventDefault();
             $.postGo(action, $.unparam(data));
-        });
-        $('.post-link').click(function (e) {
-            e.preventDefault();
-            $.postGo($(this).attr('href'), {});
         });
 
         $(".button", $elem).button().wrap('<span />');
@@ -95,7 +113,7 @@ hqDefine('hqwebapp/js/main', [
         }
     };
 
-    var makeSaveButton = function(messageStrings, cssClass, barClass) {
+    var makeSaveButton = function (messageStrings, cssClass, barClass) {
         'use strict';
         var BAR_STATE = {
             SAVE: 'savebtn-bar-save',
@@ -254,6 +272,61 @@ hqDefine('hqwebapp/js/main', [
         ERROR_SAVING: django.gettext("There was an error deleting"),
     }, 'btn btn-danger', 'savebtn-bar-danger');
 
+    ko.bindingHandlers.saveButton = {
+        init: function (element, getSaveButton) {
+            getSaveButton().ui.appendTo(element);
+        },
+    };
+
+    ko.bindingHandlers.saveButton2 = {
+        init: function (element, valueAccessor, allBindingsAccessor) {
+            var saveOptions = allBindingsAccessor().saveOptions,
+                state = valueAccessor(),
+                saveButton;
+
+            saveButton = SaveButton.init({
+                save: function () {
+                    saveButton.ajax(saveOptions());
+                },
+            });
+            $(element).css('vertical-align', 'top').css('display', 'inline-block');
+
+            saveButton.ui.appendTo(element);
+            element.saveButton = saveButton;
+            saveButton.on('state:change', function () {
+                state(saveButton.state);
+            });
+        },
+        update: function (element, valueAccessor) {
+            var state = ko.utils.unwrapObservable(valueAccessor());
+            element.saveButton.setStateWhenReady(state);
+        },
+    };
+
+    ko.bindingHandlers.deleteButton = {
+        init: function (element, valueAccessor, allBindingsAccessor) {
+            var saveOptions = allBindingsAccessor().saveOptions,
+                state = valueAccessor(),
+                deleteButton;
+
+            deleteButton = DeleteButton.init({
+                save: function () {
+                    deleteButton.ajax(saveOptions());
+                },
+            });
+            $(element).css('vertical-align', 'top').css('display', 'inline-block');
+            deleteButton.ui.appendTo(element);
+            element.deleteButton = deleteButton;
+            deleteButton.on('state:change', function () {
+                state(deleteButton.state);
+            });
+        },
+        update: function (element, valueAccessor) {
+            var state = ko.utils.unwrapObservable(valueAccessor());
+            element.deleteButton.setStateWhenReady(state);
+        },
+    };
+
     var beforeUnload = [];
     var bindBeforeUnload = function (callback) {
         beforeUnload.push(callback);
@@ -274,23 +347,70 @@ hqDefine('hqwebapp/js/main', [
 
         $('#modalTrial30Day').modal('show');
 
-        $(document).on('click', '.track-usage-link', function(e) {
+        $(document).on('click', '.track-usage-link', function (e) {
             var $link = $(e.currentTarget),
                 data = $link.data();
             googleAnalytics.track.click($link, data.category, data.action, data.label, data.value);
         });
 
-        $(document).on('click', '.mainmenu-tab a', function(e) {
+        $(document).on('click', '.mainmenu-tab a', function (e) {
             var data = $(e.currentTarget).closest(".mainmenu-tab").data();
             if (data.category && data.action) {
                 googleAnalytics.track.event(data.category, data.action, data.label);
             }
         });
 
-        // EULA and CDA modals
-        _.each($(".remote-modal"), function(modal) {
+        $(document).on('click', '.post-link', function (e) {
+            e.preventDefault();
+            $.postGo($(this).attr('href'), {});
+        });
+
+        // Maintenance alerts
+        var $maintenance = $(".alert-maintenance");
+        if ($maintenance.length) {
+            var id = $maintenance.data("id"),
+                alertCookie = "alert_maintenance";
+            if ($.cookie(alertCookie) == id) {  // eslint-disable-line eqeqeq
+                $maintenance.addClass('hide');
+            } else {
+                $maintenance.on('click', '.close', function () {
+                    $.cookie(alertCookie, id, { expires: 7, path: '/' });
+                });
+            }
+        }
+
+        // EULA modal
+        var eulaCookie = "gdpr_rollout";
+        if (!$.cookie(eulaCookie)) {
+            var $modal = $("#eulaModal");
+            if ($modal.length) {
+                $("body").addClass("has-eula");
+                $("#eula-agree").click(function () {
+                    $(this).disableButton();
+                    $.ajax({
+                        url: initialPageData.reverse("agree_to_eula"),
+                        method: "POST",
+                        success: function () {
+                            $("#eulaModal").modal('hide');
+                            $("body").removeClass("has-eula");
+                        },
+                        error: function () {
+                            // do nothing, user will get the popup again on next page load
+                            $("body").removeClass("has-eula");
+                        },
+                    });
+                });
+                $modal.modal({
+                    keyboard: false,
+                    backdrop: 'static',
+                });
+            }
+        }
+
+        // CDA modal
+        _.each($(".remote-modal"), function (modal) {
             var $modal = $(modal);
-            $modal.on("show show.bs.modal", function() {
+            $modal.on("show show.bs.modal", function () {
                 $(this).find(".fetched-data").load($(this).data("url"));
             });
             if ($modal.data("showOnPageLoad")) {
@@ -299,18 +419,13 @@ hqDefine('hqwebapp/js/main', [
         });
     });
 
-    var capitalize = function(string) {
+    var capitalize = function (string) {
         return string.charAt(0).toUpperCase() + string.substring(1).toLowerCase();
     };
 
     return {
         beforeUnloadCallback: beforeUnloadCallback,
         eventize: eventize,
-        icons: {
-            GRIP: 'icon-resize-vertical icon-blue fa fa-arrows-v',
-            ADD: 'icon-plus icon-blue fa fa-plus',
-            DELETE: 'icon-remove icon-blue fa fa-remove',
-        },
         initBlock: initBlock,
         initDeleteButton: DeleteButton.init,
         initSaveButton: SaveButton.init,

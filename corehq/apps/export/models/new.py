@@ -12,27 +12,28 @@ from collections import defaultdict, OrderedDict, namedtuple
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
+from django.core.exceptions import ValidationError
 from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
-from django.urls import reverse
 from django.db import models
+from django.db.models import Sum
 from django.http import Http404
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_case_properties
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.userreports.app_manager.data_source_meta import get_form_indicator_data_type
-from corehq.blobs import get_blob_db
-from corehq.blobs.atomic import AtomicBlobs
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.util import random_url_id
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.global_request import get_request_domain
 from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_domain
 from memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
@@ -53,13 +54,12 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.web import get_url_base
 from dimagi.ext.couchdbkit import (
     Document,
     DocumentSchema,
@@ -89,7 +89,9 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
-    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM)
+    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM,
+    SharingOption,
+)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -104,6 +106,7 @@ from corehq.apps.export.utils import (
 import six
 from six.moves import range
 from six.moves import map
+from six.moves import filter
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -143,7 +146,13 @@ class PathNode(DocumentSchema):
         return hash(self.__key())
 
 
-class ExportItem(DocumentSchema):
+class ReadablePathMixin(object):
+    @property
+    def readable_path(self):
+        return '.'.join([node.name for node in self.path])
+
+
+class ExportItem(DocumentSchema, ReadablePathMixin):
     """
     An item for export.
     path: A question path like [PathNode(name=("my_group"), PathNode(name="q1")]
@@ -221,10 +230,6 @@ class ExportItem(DocumentSchema):
         item.inferred_from |= two.inferred_from
         return item
 
-    @property
-    def readable_path(self):
-        return '.'.join([node.name for node in self.path])
-
 
 class ExportColumn(DocumentSchema):
     """
@@ -300,7 +305,18 @@ class ExportColumn(DocumentSchema):
             value = MISSING_VALUE
 
         if isinstance(value, list):
-            value = ' '.join(value)
+            def _serialize(str_or_dict):
+                """
+                Serialize old data for scalar questions that were previously a repeat
+
+                This is a total edge case. See https://manage.dimagi.com/default.asp?280549.
+                """
+                if isinstance(str_or_dict, dict):
+                    return ','.join('{}={}'.format(k, v) for k, v in str_or_dict.items())
+                else:
+                    return str_or_dict
+
+            value = ' '.join(_serialize(elem) for elem in value)
         return value
 
     @staticmethod
@@ -547,10 +563,6 @@ class TableConfiguration(DocumentSchema):
             if isinstance(doc, dict):
                 next_doc = doc.get(path_name, {})
             else:
-                # https://manage.dimagi.com/default.asp?264884
-                _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-                _soft_assert(False, "doc {} - is actually string {} - expected path {}".format(
-                    document_id, doc, path_name))
                 next_doc = {}
             if path[0].is_repeat:
                 if type(next_doc) != list:
@@ -603,15 +615,16 @@ class ExportInstanceFilters(DocumentSchema):
         """
         Return True if the couch_user of the given request has permission to export data with this filter.
         """
-        if self.can_access_all_locations and not request.can_access_all_locations:
+        if request.couch_user.has_permission(
+                request.domain, 'access_all_locations'):
+            return True
+        elif self.can_access_all_locations:
             return False
-        elif not self.can_access_all_locations:
+        else:  # It can be restricted by location
             users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(
                 request.domain, request.couch_user
             )
-            if not set(self.accessible_location_ids).issubset(users_accessible_locations):
-                return False
-        return True
+            return set(self.accessible_location_ids).issubset(users_accessible_locations)
 
 
 class CaseExportInstanceFilters(ExportInstanceFilters):
@@ -621,7 +634,7 @@ class CaseExportInstanceFilters(ExportInstanceFilters):
 
 
 class FormExportInstanceFilters(ExportInstanceFilters):
-    user_types = ListProperty(IntegerProperty, default=[HQUserType.REGISTERED])
+    user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE])
 
 
 class ExportInstance(BlobMixin, Document):
@@ -658,6 +671,13 @@ class ExportInstance(BlobMixin, Document):
     # daily saved export fields:
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
+
+    description = StringProperty(default='')
+
+    sharing = StringProperty(default=SharingOption.EDIT_AND_EXPORT, choices=SharingOption.CHOICES)
+    owner_id = StringProperty(default=None)
+
+    _blobdb_type_code = CODES.data_export
 
     class Meta(object):
         app_label = 'export'
@@ -767,6 +787,15 @@ class ExportInstance(BlobMixin, Document):
                 instance.tables.append(table)
 
         return instance
+
+    def can_view(self, user_id):
+        return self.owner_id is None or self.sharing != SharingOption.PRIVATE or self.owner_id == user_id
+
+    def can_edit(self, user):
+        return self.owner_id is None or self.owner_id == user.get_id or (
+            self.sharing == SharingOption.EDIT_AND_EXPORT
+            and user.can_edit_shared_exports(self.domain)
+        )
 
     @classmethod
     def _move_selected_columns_to_top(cls, columns):
@@ -945,6 +974,7 @@ class ExportInstance(BlobMixin, Document):
     def copy_export(self):
         export_json = self.to_json()
         del export_json['_id']
+        del export_json['external_blobs']
         export_json['name'] = '{} - Copy'.format(self.name)
         new_export = self.__class__.wrap(export_json)
         return new_export
@@ -1264,7 +1294,7 @@ class MultipleChoiceItem(ExportItem):
         return item
 
 
-class ExportGroupSchema(DocumentSchema):
+class ExportGroupSchema(DocumentSchema, ReadablePathMixin):
     """
     An object representing the `ExportItem`s that would appear in a single export table, such as all the
     questions in a particular repeat group, or all the questions not in any repeat group.
@@ -1363,6 +1393,11 @@ class CaseInferredSchema(InferredSchema):
 
 
 class FormInferredSchema(InferredSchema):
+    """This was used during the migratoin from the old models to capture
+    export items that could not be found in the current apps.
+
+    See https://github.com/dimagi/commcare-hq/blob/34a9459462271cf2dcd7562b36cc86e300d343b8/corehq/apps/export/utils.py#L246-L265
+    """
     xmlns = StringProperty(required=True)
     app_id = StringProperty()
 
@@ -1663,13 +1698,21 @@ class FormExportDataSchema(ExportDataSchema):
         )
 
         schemas = [current_schema, xform_schema]
-        schemas.extend(cls._add_export_items_for_cases(app, xform_schema, forms, xform))
+        repeats = cls._get_repeat_paths(xform, app.langs)
+        schemas.extend(cls._add_export_items_for_cases(xform_schema.group_schemas[0], forms, repeats))
 
         return cls._merge_schemas(*schemas)
 
     @classmethod
-    def _add_export_items_for_cases(cls, app, xform_schema, forms, xform):
-        root_group_schema = xform_schema.group_schemas[0]
+    def _add_export_items_for_cases(cls, root_group_schema, forms, repeats):
+        """Updates the root_group_schema in place and also returns a new schema for subcases
+        in repeats (if any).
+
+        :param root_group_schema:
+        :param forms: List of forms. Assume all have the same XMLNS
+        :param repeats: List of repeat paths in the form.
+        :return: FormDataExportSchema containing one group schema for each
+        """
         assert root_group_schema.path == []
 
         case_updates = OrderedSet()
@@ -1693,13 +1736,13 @@ class FormExportDataSchema(ExportDataSchema):
 
                 cls._add_export_items_for_case(
                     root_group_schema, '/data', case_properties,
-                    'case', None, [], create='open_case' in actions, close='close_case' in actions
+                    'case', repeats=[], create='open_case' in actions, close='close_case' in actions
                 )
 
                 if 'usercase_update' in actions and actions['usercase_update'].update:
                     cls._add_export_items_for_case(
                         root_group_schema, '/data/commcare_usercase', actions['usercase_update'].update,
-                        'case', None, [], create='open_case' in actions, close='close_case' in actions
+                        'case', repeats=[], create='open_case' in actions, close='close_case' in actions
                     )
             else:
                 all_actions = [form.actions]
@@ -1710,7 +1753,7 @@ class FormExportDataSchema(ExportDataSchema):
                     for action in actions.load_update_cases:
                         cls._add_export_items_for_case(
                             root_group_schema, '/data/{}'.format(action.form_element_name),
-                            action.case_properties, action.case_tag, None, [],
+                            action.case_properties, action.case_tag, repeats=[],
                             create=False, close=action.close_condition.is_active()
                         )
 
@@ -1718,12 +1761,11 @@ class FormExportDataSchema(ExportDataSchema):
                         if not action.is_subcase:
                             cls._add_export_items_for_case(
                                 root_group_schema, '/data/{}'.format(action.form_element_name),
-                                action.case_properties, action.case_tag, None, [],
+                                action.case_properties, action.case_tag, repeats=[],
                                 create=True, close=action.close_condition.is_active()
                             )
 
-        repeats_with_subcases = []
-        non_repeating_subcases = []
+        subcase_schema = cls()
         for form in forms:
             if isinstance(form.actions, AdvancedFormActions):
                 actions = list(form.actions.get_open_subcase_actions())
@@ -1732,28 +1774,23 @@ class FormExportDataSchema(ExportDataSchema):
 
             repeat_context_count = form.actions.count_subcases_per_repeat_context()
 
-            for action in actions:
-                if action.repeat_context:
-                    action.nest = repeat_context_count[action.repeat_context] > 1
-                    repeats_with_subcases.append(action)
+            for subcase_action in actions:
+                if subcase_action.repeat_context:
+                    root_path = subcase_action.repeat_context
+                    if repeat_context_count[subcase_action.repeat_context] > 1:
+                        root_path = '{}/{}'.format(root_path, subcase_action.form_element_name)
+
+                    group_schema = ExportGroupSchema(
+                        path=_question_path_to_path_nodes(root_path, repeats),
+                        last_occurrences=root_group_schema.last_occurrences,
+                    )
+                    subcase_schema.group_schemas.append(group_schema)
+                    cls._add_export_items_from_subcase_action(group_schema, root_path, subcase_action, repeats)
                 else:
-                    non_repeating_subcases.append(action)
+                    root_path = "/data/{}".format(subcase_action.form_element_name)  # always nest in root
+                    cls._add_export_items_from_subcase_action(root_group_schema, root_path, subcase_action, [])
 
-        for subcase_action in non_repeating_subcases:
-            root_path = "/data/{}".format(subcase_action.form_element_name)  # always nest in root
-            cls._add_export_items_from_subcase_action(root_group_schema, root_path, subcase_action, [])
-
-        subcase_schemas = []
-        if repeats_with_subcases:
-            repeat_case_schema = cls._generate_schema_from_repeat_subcases(
-                xform,
-                repeats_with_subcases,
-                app.langs,
-                app.master_id,
-                app.version,
-            )
-            subcase_schemas.append(repeat_case_schema)
-        return subcase_schemas
+        return [subcase_schema] if subcase_schema.group_schemas else []
 
     @classmethod
     def _add_export_items_from_subcase_action(cls, group_schema, root_path, subcase_action, repeats):
@@ -1769,40 +1806,30 @@ class FormExportDataSchema(ExportDataSchema):
 
         cls._add_export_items_for_case(
             group_schema, root_path, subcase_action.case_properties,
-            label_prefix, subcase_action.repeat_context, repeats, case_indices=index_relationships
+            label_prefix, repeats, case_indices=index_relationships
         )
 
     @classmethod
     def _add_export_items_for_case(cls, group_schema, root_path, case_properties, label_prefix,
-                                   repeat_context, repeats, case_indices=None, create=True, close=False):
-        def _add_to_group_schema(path, label, transform=None):
+                                   repeats, case_indices=None, create=True, close=False):
+        def _add_to_group_schema(path, label, transform=None, datatype=None):
             group_schema.items.append(ExportItem(
                 path=_question_path_to_path_nodes(path, repeats),
                 label='{}.{}'.format(label_prefix, label),
                 last_occurrences=group_schema.last_occurrences,
                 tag=PROPERTY_TAG_CASE,
-                transform=transform
+                transform=transform,
+                datatype=datatype
             ))
 
         # Add case attributes
-        for case_attribute in CASE_ATTRIBUTES:
+        for case_attribute, datatype in CASE_ATTRIBUTES.items():
             path = '{}/case/{}'.format(root_path, case_attribute)
-            _add_to_group_schema(path, case_attribute)
+            _add_to_group_schema(path, case_attribute, datatype=datatype)
 
         # Add case updates
         for case_property, case_path in six.iteritems(case_properties):
-            if repeat_context:
-                # This removes the repeat part of the path. For example, if inside
-                # a repeat group that has the following path:
-                #
-                # /data/repeat/other_group/question
-                #
-                # We want to create a path that looks like:
-                #
-                # /data/repeat/case/update/other_group/question
-                path_suffix = case_path[len(repeat_context) + 1:]
-            else:
-                path_suffix = case_property
+            path_suffix = case_property
             path = '{}/case/update/{}'.format(root_path, path_suffix)
             _add_to_group_schema(path, 'update.{}'.format(case_property))
 
@@ -1810,7 +1837,7 @@ class FormExportDataSchema(ExportDataSchema):
         if create:
             for case_create_element in CASE_CREATE_ELEMENTS:
                 path = '{}/case/create/{}'.format(root_path, case_create_element)
-                _add_to_group_schema(path, 'create.{}'.format(case_create_element))
+                _add_to_group_schema(path, 'create.{}'.format(case_create_element), datatype='string')
 
         if close:
             path = '{}/case/close'.format(root_path)
@@ -1827,37 +1854,6 @@ class FormExportDataSchema(ExportDataSchema):
                     path = '{}/case/index/{}/{}'.format(root_path, identifier, prop)
                     _add_to_group_schema(path, 'index.{}'.format(prop))
 
-    @classmethod
-    def _generate_schema_from_repeat_subcases(cls, xform, repeats_with_subcases, langs, app_id, app_version):
-        """
-        This generates a FormExportDataSchema for repeat groups that generate subcases.
-
-        :param xform: An XForm instance
-        :param repeats_with_subcases: A list of OpenSubCaseAction classes that have a
-            repeat_context.
-        :param langs: An array of application languages
-        :param app_id: The app_id of the corresponding app
-        :param app_version: The build number of the app
-        :returns: An instance of a FormExportDataSchema
-        """
-
-        repeats = cls._get_repeat_paths(xform, langs)
-        schema = cls()
-
-        for subcase_action in repeats_with_subcases:
-            root_path = subcase_action.repeat_context
-            if subcase_action.nest:
-                root_path = '{}/{}'.format(root_path, subcase_action.form_element_name)
-
-            group_schema = ExportGroupSchema(
-                path=_question_path_to_path_nodes(root_path, repeats),
-                last_occurrences={app_id: app_version},
-            )
-            cls._add_export_items_from_subcase_action(group_schema, root_path, subcase_action, repeats)
-
-            schema.group_schemas.append(group_schema)
-        return schema
-
     @staticmethod
     def _get_repeat_paths(xform, langs):
         return [
@@ -1872,9 +1868,18 @@ class FormExportDataSchema(ExportDataSchema):
         schema = cls()
         question_keyfn = lambda q: q['repeat']
 
-        question_groups = [(x, list(y)) for x, y in groupby(
-            sorted(questions, key=question_keyfn), question_keyfn
-        )]
+        question_groups = [
+            (None, [q for q in questions if question_keyfn(q) is None])
+        ] + [
+            (x, list(y)) for x, y in groupby(
+                sorted(
+                    (q for q in questions if question_keyfn(q) is not None),
+                    key=question_keyfn,
+                ),
+                question_keyfn
+            )
+        ]
+
         if None not in [x[0] for x in question_groups]:
             # If there aren't any questions in the main table, a group for
             # it anyways.
@@ -2495,10 +2500,10 @@ class StockFormExportColumn(ExportColumn):
         new_doc = None
         if isinstance(value, list):
             try:
-                new_doc = filter(
+                new_doc = list(filter(
                     lambda node: node.get('@type') == question_id,
                     value,
-                )[0]
+                ))[0]
             except IndexError:
                 new_doc = None
         else:
@@ -2602,19 +2607,6 @@ class ExportMigrationMeta(Document):
     class Meta(object):
         app_label = 'export'
 
-    @property
-    def old_export_url(self):
-        from corehq.apps.export.views import EditCustomCaseExportView, EditCustomFormExportView
-        if self.export_type == FORM_EXPORT:
-            view_cls = EditCustomFormExportView
-        else:
-            view_cls = EditCustomCaseExportView
-
-        return '{}{}'.format(get_url_base(), reverse(
-            view_cls.urlname,
-            args=[self.domain, self.saved_export_id],
-        ))
-
 
 class DailySavedExportNotification(models.Model):
     user_id = models.CharField(max_length=255, db_index=True)
@@ -2634,10 +2626,7 @@ class DailySavedExportNotification(models.Model):
 
     @classmethod
     def user_to_be_notified(cls, domain, user):
-        from corehq.apps.export.views import use_new_daily_saved_exports_ui
-
         return (
-            use_new_daily_saved_exports_ui(domain) and
             cls.user_added_before_feature_release(user.created_on) and
             not DailySavedExportNotification.notified(user.user_id, domain) and
             (
@@ -2647,40 +2636,81 @@ class DailySavedExportNotification(models.Model):
         )
 
 
-class DataFile(models.Model):
-    domain = models.CharField(max_length=126, db_index=True)
-    filename = models.CharField(max_length=255)
-    description = models.CharField(max_length=255)
-    content_type = models.CharField(max_length=255)
-    blob_id = models.CharField(max_length=255)
-    content_length = models.IntegerField(null=True)
+def _meta_property(name):
+    def fget(self):
+        return getattr(self._meta, name)
+    return property(fget)
 
-    class Meta(object):
-        app_label = 'export'
+
+class DataFile(object):
+    """DataFile is a thin wrapper around BlobMeta"""
+    id = _meta_property("id")
+    domain = _meta_property("parent_id")
+    filename = _meta_property("name")
+    blob_id = _meta_property("key")
+    content_type = _meta_property("content_type")
+    content_length = _meta_property("content_length")
+    delete_after = _meta_property("expires_on")
+
+    def __init__(self, meta):
+        self._meta = meta
+
+    @property
+    def description(self):
+        return self._meta.properties["description"]
+
+    @classmethod
+    def get(cls, domain, pk):
+        return cls(cls.meta_query(domain).get(pk=pk))
+
+    @staticmethod
+    def meta_query(domain):
+        Q = models.Q
+        db = get_db_alias_for_partitioned_doc(domain)
+        return BlobMeta.objects.using(db).filter(
+            Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
+            parent_id=domain,
+            type_code=CODES.data_file,
+        )
+
+    @classmethod
+    def get_all(cls, domain):
+        return [cls(meta) for meta in cls.meta_query(domain).order_by("name")]
+
+    @classmethod
+    def get_total_size(cls, domain):
+        return cls.meta_query(domain).aggregate(total=Sum('content_length'))["total"]
+
+    @classmethod
+    def save_blob(cls, file_obj, domain, filename, description, content_type, delete_after):
+        if delete_after is None:
+            raise ValidationError(
+                'delete_after can be None only for legacy files that were added before August 2018'
+            )
+        return cls(get_blob_db().put(
+            file_obj,
+            domain=domain,
+            parent_id=domain,
+            type_code=CODES.data_file,
+            name=filename,
+            key=random_url_id(16),
+            content_type=content_type,
+            expires_on=delete_after,
+            properties={"description": description},
+        ))
 
     def get_blob(self):
         db = get_blob_db()
         try:
-            blob = db.get(self.blob_id)
+            blob = db.get(key=self._meta.key)
         except (KeyError, NotFound) as err:
             raise NotFound(str(err))
         return blob
 
-    def save_blob(self, file_obj):
-        with AtomicBlobs(get_blob_db()) as db:
-            info = db.put(file_obj, random_url_id(16))
-            self.blob_id = info.identifier
-            self.content_length = info.length
-            self.save()
+    def delete(self):
+        get_blob_db().delete(key=self._meta.key)
 
-    def _delete_blob(self):
-        db = get_blob_db()
-        db.delete(self.blob_id)
-        self.blob_id = ''
-
-    def delete(self, using=None, keep_parents=False):
-        self._delete_blob()
-        return super(DataFile, self).delete(using, keep_parents)
+    DoesNotExist = BlobMeta.DoesNotExist
 
 
 class EmailExportWhenDoneRequest(models.Model):

@@ -19,6 +19,7 @@ from corehq.apps.export.multiprocess import (
     UNPROCESSED_PAGES_DIR, _add_compressed_page_to_zip)
 from corehq.util.files import safe_filename
 from six.moves import input
+from io import open
 
 
 class Command(BaseCommand):
@@ -98,7 +99,7 @@ class Command(BaseCommand):
             datetime.utcnow().isoformat()
         )
         payload = export_instance.get_payload(stream=True)
-        with open(export_archive_path, 'w') as download:
+        with open(export_archive_path, 'wb') as download:
             shutil.copyfileobj(payload, download)
         return export_archive_path
 

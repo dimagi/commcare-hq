@@ -66,7 +66,7 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
     ajax_pagination = True
     asynchronous = True
     default_sort = {"pactid": "asc"}
-    report_template_path = "reports/async/tabular.html"
+    report_template_path = "reports/tabular.html"
     flush_layout = True
 
     fields = [

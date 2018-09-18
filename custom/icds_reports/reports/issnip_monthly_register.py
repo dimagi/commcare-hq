@@ -4,21 +4,24 @@ from __future__ import unicode_literals
 
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, \
-    AggChildHealthMonthly, ChildHealthMonthly
+    AggChildHealthMonthly, ChildHealthMonthly, AggCcsRecordMonthly
 from django.db.models.aggregates import Sum, Count
 from django.db.models import Case, When, Q, F, IntegerField
 from django.utils.functional import cached_property
 
-from custom.icds_reports.sqldata import AWCInfrastructureUCR, VHNDFormUCR, CcsRecordMonthlyURC, \
-    ChildHealthMonthlyURC
+from custom.icds_reports.sqldata.awc_infrastructure import AWCInfrastructureUCR
+from custom.icds_reports.sqldata.vhnd_form import VHNDFormUCR
+from custom.icds_reports.utils import stunting_moderate_column, stunting_severe_column, wasting_moderate_column, \
+    wasting_severe_column
 
 DATA_NOT_ENTERED = "Data Not Entered"
 AWC_LOCATION_LEVEL = 5
 
 
 class ISSNIPMonthlyReport(object):
-    def __init__(self, config):
+    def __init__(self, config, icds_feature_flag=False):
         self.config = config
+        self.icds_feature_flag = icds_feature_flag
 
     def filter_by(self, config, column, default=0):
         return Case(
@@ -109,16 +112,6 @@ class ISSNIPMonthlyReport(object):
         return {row['awc_id']: row for row in list(data.values())}
 
     @cached_property
-    def ccs_record_monthly_ucr(self):
-        data = CcsRecordMonthlyURC(self.config.copy()).data or {}
-        return {row['awc_id']: row for row in list(data.values())}
-
-    @cached_property
-    def child_health_monthly_ucr(self):
-        data = ChildHealthMonthlyURC(self.config.copy()).data or {}
-        return {row['awc_id']: row for row in list(data.values())}
-
-    @cached_property
     def child_health_monthly(self):
         data = ChildHealthMonthly.objects.filter(
             awc_id__in=self.config['awc_id'],
@@ -194,6 +187,76 @@ class ISSNIPMonthlyReport(object):
                 'days_ration_given_child__gt': 21,
                 'minority': 'yes'
             }, 'case_id', None)),
+            pre_sc_boys_48_72=Count(self.filter_by({
+                'caste': 'sc',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_sc_girls_48_72=Count(self.filter_by({
+                'caste': 'sc',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_st_boys_48_72=Count(self.filter_by({
+                'caste': 'st',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_st_girls_48_72=Count(self.filter_by({
+                'caste': 'st',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_obc_boys_48_72=Count(self.filter_by({
+                'caste': 'obc',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_obc_girls_48_72=Count(self.filter_by({
+                'caste': 'obc',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_general_boys_48_72=Count(self.filter_by({
+                'caste': 'other',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_general_girls_48_72=Count(self.filter_by({
+                'caste': 'other',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_total_boys_48_72=Count(self.filter_by({
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_total_girls_48_72=Count(self.filter_by({
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_minority_boys_48_72=Count(self.filter_by({
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'minority': 'yes',
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_minority_girls_48_72=Count(self.filter_by({
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'minority': 'yes',
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
         )
         return {row['awc_id']: row for row in data}
 
@@ -255,59 +318,59 @@ class ISSNIPMonthlyReport(object):
             boys_stunted_0_3=Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'M'
-            }, 'stunting_moderate')) + Sum(self.filter_by({
+            }, stunting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'M'
-            }, 'stunting_severe')),
+            }, stunting_severe_column(self.icds_feature_flag))),
             girls_stunted_0_3=Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'F'
-            }, 'stunting_moderate')) + Sum(self.filter_by({
+            }, stunting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'F'
-            }, 'stunting_severe')),
+            }, stunting_severe_column(self.icds_feature_flag))),
             boys_stunted_3_5=Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'M'
-            }, 'stunting_moderate')) + Sum(self.filter_by({
+            }, stunting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'M'
-            }, 'stunting_severe')),
+            }, stunting_severe_column(self.icds_feature_flag))),
             girls_stunted_3_5=Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'F'
-            }, 'stunting_moderate')) + Sum(self.filter_by({
+            }, stunting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'F'
-            }, 'stunting_severe')),
+            }, stunting_severe_column(self.icds_feature_flag))),
             boys_wasted_0_3=Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'M'
-            }, 'wasting_moderate')) + Sum(self.filter_by({
+            }, wasting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'M'
-            }, 'wasting_severe')),
+            }, wasting_severe_column(self.icds_feature_flag))),
             girls_wasted_0_3=Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'F'
-            }, 'wasting_moderate')) + Sum(self.filter_by({
+            }, wasting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'F'
-            }, 'wasting_severe')),
+            }, wasting_severe_column(self.icds_feature_flag))),
             boys_wasted_3_5=Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'M'
-            }, 'wasting_moderate')) + Sum(self.filter_by({
+            }, wasting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'M'
-            }, 'wasting_severe')),
+            }, wasting_severe_column(self.icds_feature_flag))),
             girls_wasted_3_5=Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'F'
-            }, 'wasting_moderate')) + Sum(self.filter_by({
+            }, wasting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'F'
-            }, 'wasting_severe')),
+            }, wasting_severe_column(self.icds_feature_flag))),
             sc_boys_6_36=Sum(self.filter_by({
                 'caste': 'sc',
                 'gender': 'M',
@@ -366,12 +429,67 @@ class ISSNIPMonthlyReport(object):
                 'age_tranche__in': ['6', '12', '24', '36'],
                 'minority': 'yes'
             }, 'rations_21_plus_distributed')),
+        )
+        return {row['awc_id']: row for row in data}
 
+    @cached_property
+    def agg_ccs_record_monthly(self):
+        data = AggCcsRecordMonthly.objects.filter(
+            awc_id__in=self.config['awc_id'],
+            aggregation_level=AWC_LOCATION_LEVEL,
+            month=self.config['month']
+        ).values('awc_id').annotate(
+            sc_pregnant=Sum(self.filter_by({
+                'caste': 'sc',
+                'ccs_status': 'pregnant'
+            }, 'rations_21_plus_distributed')),
+            st_pregnant=Sum(self.filter_by({
+                'caste': 'st',
+                'ccs_status': 'pregnant'
+            }, 'rations_21_plus_distributed')),
+            obc_pregnant=Sum(self.filter_by({
+                'caste': 'obc',
+                'ccs_status': 'pregnant'
+            }, 'rations_21_plus_distributed')),
+            general_pregnant=Sum(self.filter_by({
+                'caste': 'general',
+                'ccs_status': 'pregnant'
+            }, 'rations_21_plus_distributed')),
+            total_pregnant=Sum(self.filter_by({
+                'ccs_status': 'pregnant'
+            }, 'rations_21_plus_distributed')),
+            sc_lactating=Sum(self.filter_by({
+                'caste': 'sc',
+                'ccs_status': 'lactating'
+            }, 'rations_21_plus_distributed')),
+            st_lactating=Sum(self.filter_by({
+                'caste': 'st',
+                'ccs_status': 'lactating'
+            }, 'rations_21_plus_distributed')),
+            obc_lactating=Sum(self.filter_by({
+                'caste': 'obc',
+                'ccs_status': 'lactating'
+            }, 'rations_21_plus_distributed')),
+            general_lactating=Sum(self.filter_by({
+                'caste': 'general',
+                'ccs_status': 'lactating'
+            }, 'rations_21_plus_distributed')),
+            total_lactating=Sum(self.filter_by({
+                'ccs_status': 'lactating'
+            }, 'rations_21_plus_distributed')),
+            minority_pregnant=Sum(self.filter_by({
+                'ccs_status': 'pregnant',
+                'minority': 'yes'
+            }, 'rations_21_plus_distributed')),
+            minority_lactating=Sum(self.filter_by({
+                'ccs_status': 'lactating',
+                'minority': 'yes'
+            }, 'rations_21_plus_distributed')),
         )
         return {row['awc_id']: row for row in data}
 
     def get_awc_name(self, awc_id):
-        return SQLLocation.objects.get(location_id=awc_id).name,
+        return SQLLocation.objects.get(location_id=awc_id).name
 
     @cached_property
     def to_pdf_format(self):
@@ -383,8 +501,7 @@ class ISSNIPMonthlyReport(object):
                 css_record_monthly=self.css_record_monthly.get(awc, None),
                 infrastructure_data=self.infrastructure_data.get(awc, None),
                 vhnd_data=self.vhnd_data.get(awc, None),
-                ccs_record_monthly_ucr=self.ccs_record_monthly_ucr.get(awc, None),
-                child_health_monthly_ucr=self.child_health_monthly_ucr.get(awc, None),
+                agg_ccs_record_monthly=self.agg_ccs_record_monthly.get(awc, None),
                 agg_child_health_monthly=self.agg_child_health_monthly.get(awc, None),
                 child_health_monthly=self.child_health_monthly.get(awc, None),
             )

@@ -65,7 +65,7 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
         "rightLegend": {
             "average": average,
             "info": _((
-                "Percentage of Angwanwadi Centers that were open yesterday."
+                "Of the total number of AWCs, the percentage of AWCs that were open yesterday."
             )),
             'period': 'Daily',
             "extended_info": [
@@ -142,10 +142,10 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
         [
             dict(
                 loc_name=key,
-                value=value['in_day']
+                percent=value['in_day'] * 100 / value['all']
             ) for key, value in six.iteritems(best_worst)
         ],
-        key=lambda x: x['value'],
+        key=lambda x: x['percent'],
         reverse=True
     )
 
@@ -252,7 +252,7 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of Angwanwadi Centers that were open yesterday."
+            "Of the total number of AWCs, the percentage of AWCs that were open yesterday."
         )),
         "chart_data": [
             {

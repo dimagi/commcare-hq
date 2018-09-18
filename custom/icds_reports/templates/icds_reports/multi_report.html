@@ -1,4 +1,4 @@
-{% extends "reports/async/tabular.html" %}
+{% extends "reports/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -51,21 +51,4 @@
 {% endif %}
 {% endblock %}
 {% block posttable %}{% endblock %}
-{% endblock %}
-
-{% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
-        $(function() {
-            $('#fieldset_location_async').on('change', 'select', function(e) {
-                e.stopPropagation();
-                var state = $('select.form-control')[0].selectedIndex;
-                var applyBtn = $('#apply-filters');
-                if (state == 0) {
-                    applyBtn.disableButtonNoSpinner();
-                } else {
-                    applyBtn.enableButton();
-                }
-            })
-        })
-    </script>
 {% endblock %}

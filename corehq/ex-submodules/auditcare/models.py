@@ -20,6 +20,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from auditcare import utils
 import six
+from io import open
 
 log = logging.getLogger(__name__)
 
@@ -154,7 +155,7 @@ class ModelActionAudit(AuditEvent):
             #if it's an existing version, then save it
             instance_copy.pop('_rev')
             json_string = json.dumps(instance_copy)
-        return hashlib.sha1(json_string).hexdigest()
+        return hashlib.sha1(json_string.encode('utf-8') if six.PY3 else json_string).hexdigest()
 
     def compute_changes(self, save=False):
         """
@@ -477,7 +478,7 @@ class AuditCommand(AuditEvent):
             # only supporting linux at this point, adding other OS's can be done later
             # This is largely for production logging of these commands.
             if puname[0] == 'Linux':
-                with open('/proc/%s/cmdline' % audit.pid, 'r') as fin:
+                with open('/proc/%s/cmdline' % audit.pid, 'r', encoding='utf-8') as fin:
                     cmd_args = fin.read()
                     audit.description = cmd_args.replace('\0', ' ')
             elif puname[0] == 'Darwin':

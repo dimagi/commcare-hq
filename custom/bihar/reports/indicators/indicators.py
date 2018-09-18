@@ -279,7 +279,9 @@ class IndicatorConfig(object):
 class IndicatorSet(object):
 
     def __init__(self, spec):
-        from django.utils.datastructures import SortedDict
+        # this used to be an invalid import. Rather than attempt to fix it just fail explicitly
+        # with the aim to delete this code soon.
+        raise Exception("This has been broken since February 2017")
         self.slug = spec["slug"]
         self.name = spec["name"]
         self.indicators = SortedDict()

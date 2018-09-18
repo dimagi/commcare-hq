@@ -236,7 +236,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         original_form = app.new_form(module.id, "Untitled Form", None)
         original_form.source = '<source>'
 
-        app._copy_form(module, original_form, module, rename=True)
+        app.copy_form(module, original_form, module, rename=True)
 
         form_count = 0
         for f in app.get_forms():
@@ -244,6 +244,21 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             if f.unique_id != original_form.unique_id:
                 self.assertEqual(f.name['en'], 'Copy of {}'.format(original_form.name['en']))
         self.assertEqual(form_count, 2, 'Copy form has copied multiple times!')
+
+    def test_copy_form_to_app(self):
+        src_app = Application.new_app('domain', "Source Application")
+        src_module = src_app.add_module(AdvancedModule.new_module('Source Module', None))
+        original_form = src_app.new_form(src_module.id, "Untitled Form", None)
+        original_form.source = '<source>'
+        dst_app = Application.new_app('domain', "Destination Application")
+        dst_module = dst_app.add_module(AdvancedModule.new_module('Destination Module', None))
+
+        src_app.copy_form(src_module, original_form, dst_module, rename=True)
+
+        self.assertEqual(len(list(src_app.get_forms())), 1, 'Form copied to the wrong app')
+        dst_app_forms = list(dst_app.get_forms())
+        self.assertEqual(len(dst_app_forms), 1)
+        self.assertEqual(dst_app_forms[0].name['en'], 'Copy of Untitled Form')
 
     def test_owner_name(self):
         self._test_generic_suite('owner-name')
@@ -383,7 +398,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite('app_print_detail', 'suite-print-detail')
 
     def test_fixture_to_case_selection(self):
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
 
         module, form = factory.new_basic_module('my_module', 'cases')
         module.fixture_select.active = True
@@ -397,7 +412,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), factory.app.create_suite())
 
     def test_fixture_to_case_selection_with_form_filtering(self):
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
 
         module, form = factory.new_basic_module('my_module', 'cases')
         module.fixture_select.active = True
@@ -413,7 +428,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection-with-form-filtering'), factory.app.create_suite())
 
     def test_fixture_to_case_selection_localization(self):
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
 
         module, form = factory.new_basic_module('my_module', 'cases')
         module.fixture_select.active = True
@@ -428,7 +443,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection-localization'), factory.app.create_suite())
 
     def test_fixture_to_case_selection_parent_child(self):
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
 
         m0, m0f0 = factory.new_basic_module('parent', 'parent')
         m0.fixture_select.active = True
@@ -511,10 +526,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ),
         ]
 
-        key1_varname = hashlib.md5("gender = 'male' and age <= 21").hexdigest()[:8]
-        key2_varname = hashlib.md5("gender = 'female' and age <= 21").hexdigest()[:8]
-        key3_varname = hashlib.md5("gender = 'male' and age > 21").hexdigest()[:8]
-        key4_varname = hashlib.md5("gender = 'female' and age > 21").hexdigest()[:8]
+        key1_varname = hashlib.md5("gender = 'male' and age <= 21".encode('utf-8')).hexdigest()[:8]
+        key2_varname = hashlib.md5("gender = 'female' and age <= 21".encode('utf-8')).hexdigest()[:8]
+        key3_varname = hashlib.md5("gender = 'male' and age > 21".encode('utf-8')).hexdigest()[:8]
+        key4_varname = hashlib.md5("gender = 'female' and age > 21".encode('utf-8')).hexdigest()[:8]
 
         icon_mapping_spec = """
         <partial>
@@ -589,8 +604,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         ]
 
         key1_varname = '10'
-        key2_varname = hashlib.md5('age > 50').hexdigest()[:8]
-        key3_varname = hashlib.md5('15%').hexdigest()[:8]
+        key2_varname = hashlib.md5('age > 50'.encode('utf-8')).hexdigest()[:8]
+        key3_varname = hashlib.md5('15%'.encode('utf-8')).hexdigest()[:8]
 
         icon_mapping_spec = """
             <partial>

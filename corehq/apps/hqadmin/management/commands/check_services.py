@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks, UnknownCheckException
+import sys
 
 
 class Command(BaseCommand):
@@ -13,6 +14,7 @@ class Command(BaseCommand):
         parser.add_argument(
             'service_name',
             nargs='?',
+            choices=list(CHECKS)
         )
 
     def handle(self, service_name, **options):
@@ -24,8 +26,12 @@ class Command(BaseCommand):
             print("Services available are:")
             for service_name in CHECKS.keys():
                 print("- {}".format(service_name))
+
+            sys.exit(-1)
         else:
             self.print_results(statuses)
+            if not all(status[1].success for status in statuses):
+                sys.exit(1)
 
     @staticmethod
     def print_results(results):

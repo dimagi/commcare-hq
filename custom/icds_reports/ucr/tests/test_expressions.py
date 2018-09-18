@@ -201,6 +201,37 @@ class TestFormsExpressionSpecWithFilter(TestCase):
         self.assertEqual(len(forms), 0)
         self.assertEqual(forms, [])
 
+    def test_expression_with_raw_dates(self):
+        dates = [
+            # hack to get just the date part
+            f['server_modified_on'][0:10]
+            for f in self.forms
+        ]
+        min_date = min(dates)
+        max_date = max(dates)
+
+        expression = ExpressionFactory.from_spec({
+            "type": "icds_get_case_forms_in_date",
+            "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            },
+            "from_date_expression": {
+                "type": "constant",
+                "constant": min_date,
+                "datatype": "date"
+            },
+            "to_date_expression": {
+                "type": "constant",
+                "constant": max_date,
+                "datatype": "date"
+            },
+        })
+        context = EvaluationContext({"domain": self.domain}, 0)
+        forms = expression(self.case.to_json(), context)
+
+        self.assertEqual(len(forms), len(self.forms))
+
 
 @override_settings(DISABLE_RANDOM_TOGGLES=False)
 class TestFormsExpressionSpecWithFilterEsVersion(TestFormsExpressionSpecWithFilter):

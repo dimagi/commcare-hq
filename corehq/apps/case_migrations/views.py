@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from django.http.response import Http404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.generic import FormView
@@ -10,8 +11,10 @@ from django.views.generic import FormView
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreContent, RestoreResponse
 from casexml.apps.phone.xml import get_case_element, get_registration_element_for_case
-from corehq.apps.domain.decorators import domain_admin_required, mobile_auth
+from corehq.apps.domain.auth import formplayer_auth
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import WEBAPPS_CASE_MIGRATION
 from corehq.util import reverse
@@ -47,14 +50,15 @@ class MigrationView(BaseMigrationView, FormView):
         return HttpResponseRedirect(self.page_url)
 
 
-def get_case_and_descendants(domain, case_id):
-    from corehq.apps.reports.view_helpers import get_case_hierarchy
-    case = CaseAccessors(domain).get_case(case_id)
-    return [c for c in get_case_hierarchy(case, {})['case_list']
-            if not c.closed]
+def get_case_hierarchy_for_restore(case):
+    from corehq.apps.reports.view_helpers import get_children
+    return [
+        c for c in get_children(case)['case_list']
+        if not c.closed
+    ]
 
 
-@mobile_auth
+@formplayer_auth
 def migration_restore(request, domain, case_id):
     """Restore endpoint used in bulk case migrations
 
@@ -62,11 +66,16 @@ def migration_restore(request, domain, case_id):
     * Registration block
     * The passed in case and its full network of cases
     """
-    restore_user = request.couch_user
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+        if case.domain != domain or case.is_deleted:
+            raise Http404
+    except CaseNotFound:
+        raise Http404
 
-    with RestoreContent(restore_user.username) as content:
-        content.append(get_registration_element_for_case(restore_user, case_id))
-        for case in get_case_and_descendants(domain, case_id):
+    with RestoreContent('Case[{}]'.format(case_id)) as content:
+        content.append(get_registration_element_for_case(case))
+        for case in get_case_hierarchy_for_restore(case):
             # Formplayer will be creating these cases for the first time, so
             # include create blocks
             content.append(get_case_element(case, ('create', 'update'), V2))

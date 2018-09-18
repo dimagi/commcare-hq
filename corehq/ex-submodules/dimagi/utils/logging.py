@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import sys
 import logging
+from corehq.util.global_request import get_request
 
 
 notify_logger = logging.getLogger('notify')
@@ -17,11 +18,19 @@ def notify_exception(request, message=None, details=None, exec_info=None):
     :param message: message string
     :param details: dict with additional details to be included in the output
     """
+    if request is None:
+        request = get_request()
     if request is not None:
         message = message or request.path
+    if isinstance(message, bytes):
+        message = message.encode('utf-8')
+
+    message = 'Notify Exception: %s' % (
+        message or "No message provided, fix error handler"
+    )
+
     notify_logger.error(
-        b'Notify Exception: %s' % (message
-                                  or b"No message provided, fix error handler"),
+        message,
         exc_info=exec_info or sys.exc_info(),
         extra={
             'status_code': 500,

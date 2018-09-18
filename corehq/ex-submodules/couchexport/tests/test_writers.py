@@ -66,6 +66,24 @@ class CsvFileWriterTests(SimpleTestCase):
         file_start = writer.get_file().read(6)
         self.assertEqual(file_start, BOM_UTF8 + b'ham')
 
+    def test_csv_file_writer_utf8(self):
+        writer = CsvFileWriter()
+        headers = ['hám', 'spam', 'eggs']
+        writer.open('Spam')
+        writer.write_row(headers)
+        writer.finish()
+        file_start = writer.get_file().read(7)
+        self.assertEqual(file_start, BOM_UTF8 + 'hám'.encode('utf-8'))
+
+    def test_csv_file_writer_int(self):
+        writer = CsvFileWriter()
+        headers = [100, 'spam', 'eggs']
+        writer.open('Spam')
+        writer.write_row(headers)
+        writer.finish()
+        file_start = writer.get_file().read(6)
+        self.assertEqual(file_start, BOM_UTF8 + b'100')
+
 
 class HtmlExportWriterTests(SimpleTestCase):
 

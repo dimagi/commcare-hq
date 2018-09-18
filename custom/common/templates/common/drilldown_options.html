@@ -31,7 +31,7 @@
 </div>
 
 {% block filter_js %}
-<script type="text/javascript">
+<script>
     $.getScript("{% static 'reports/js/filters/drilldown_options.js' %}").done(function(){
         $.getScript("{% static 'common/ko/report_filter.drilldown_options.js' %}").done(function () {
             $('#{{ css_id }}').drilldownOptionFilter({

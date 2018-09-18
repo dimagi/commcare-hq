@@ -104,7 +104,6 @@ class FormsStyleGuideView(BaseStyleGuideArticleView):
         return [
             'forms/intro',
             'forms/anatomy',
-            'forms/controls',
         ]
 
     @property

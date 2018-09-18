@@ -35,7 +35,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data['cases_person_referred'], 0)
         self.assertEqual(data['aww_name'], 'aww_name48')
         self.assertEqual(data['contact_phone_number'], '91552222')
-        self.assertIsNone(data['num_anc_visits'])
+        self.assertEqual(data['num_anc_visits'], 0)
         self.assertIsNone(data['num_children_immunized'])
 
     def test_child_health_monthly_data(self):
@@ -88,25 +88,19 @@ class TestInstitutionalDeliveriesSector(TestCase):
         }
         with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
                         return_value='a48'):
-            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['ccs_record_monthly_ucr']
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['agg_ccs_record_monthly']
+        self.assertEqual(data['sc_pregnant'], 0)
+        self.assertEqual(data['st_pregnant'], 0)
+        self.assertEqual(data['obc_pregnant'], 0)
+        self.assertEqual(data['general_pregnant'], 0)
+        self.assertEqual(data['total_pregnant'], 0)
+        self.assertEqual(data['sc_lactating'], 0)
+        self.assertEqual(data['st_lactating'], 0)
         self.assertEqual(data['obc_lactating'], 4)
+        self.assertEqual(data['general_lactating'], 0)
         self.assertEqual(data['total_lactating'], 4)
+        self.assertEqual(data['minority_pregnant'], 0)
         self.assertEqual(data['minority_lactating'], 4)
-
-    def test_child_health_monthly_ucr(self):
-        config = {
-            'awc_id': ['a3'],
-            'month': datetime(2017, 5, 1).date(),
-            'domain': 'icds-cas'
-        }
-        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
-                        return_value='a3'):
-            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['child_health_monthly_ucr']
-        self.assertEqual(data['pre_st_boys_36_72'], 1)
-        self.assertEqual(data['pre_obc_boys_36_72'], 3)
-        self.assertEqual(data['pre_obc_girls_36_72'], 3)
-        self.assertEqual(data['pre_total_boys_36_72'], 4)
-        self.assertEqual(data['pre_total_girls_36_72'], 3)
 
     def test_agg_child_health_monthly(self):
         config = {
@@ -172,6 +166,19 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEquals(data['sc_boys_48_72'], 0)
         self.assertEquals(data['minority_boys_48_72_num'], 0)
 
+        self.assertEqual(data['pre_sc_boys_48_72'], 0)
+        self.assertEqual(data['pre_sc_girls_48_72'], 0)
+        self.assertEqual(data['pre_st_boys_48_72'], 1)
+        self.assertEqual(data['pre_st_girls_48_72'], 0)
+        self.assertEqual(data['pre_obc_boys_48_72'], 3)
+        self.assertEqual(data['pre_obc_girls_48_72'], 3)
+        self.assertEqual(data['pre_general_boys_48_72'], 0)
+        self.assertEqual(data['pre_general_girls_48_72'], 0)
+        self.assertEqual(data['pre_total_boys_48_72'], 4)
+        self.assertEqual(data['pre_total_girls_48_72'], 3)
+        self.assertEqual(data['pre_minority_boys_48_72'], 0)
+        self.assertEqual(data['pre_minority_girls_48_72'], 0)
+
     def test_agg_awc_monthly_data_multiple_locations(self):
         config = {
             'awc_id': ['a48', 'a3'],
@@ -196,7 +203,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data_a48['cases_person_referred'], 0)
         self.assertEqual(data_a48['aww_name'], 'aww_name48')
         self.assertEqual(data_a48['contact_phone_number'], '91552222')
-        self.assertIsNone(data_a48['num_anc_visits'])
+        self.assertEqual(data_a48['num_anc_visits'], 0)
         self.assertIsNone(data_a48['num_children_immunized'])
 
         self.assertEqual(data_a3['block_name'], 'b2')
@@ -212,7 +219,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data_a3['cases_person_referred'], 0)
         self.assertIsNone(data_a3['aww_name'])
         self.assertIsNone(data_a3['contact_phone_number'])
-        self.assertIsNone(data_a3['num_anc_visits'])
+        self.assertEqual(data_a3['num_anc_visits'], 0)
         self.assertIsNone(data_a3['num_children_immunized'])
 
     def test_child_health_monthly_data_multiple_locations(self):
@@ -277,36 +284,33 @@ class TestInstitutionalDeliveriesSector(TestCase):
         with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
                         return_value='a48'):
             data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)
-            data_a48 = data[0]['ccs_record_monthly_ucr']
-            data_a3 = data[1]['ccs_record_monthly_ucr']
+            data_a48 = data[0]['agg_ccs_record_monthly']
+            data_a3 = data[1]['agg_ccs_record_monthly']
+        self.assertEqual(data_a48['sc_pregnant'], 0)
+        self.assertEqual(data_a48['st_pregnant'], 0)
+        self.assertEqual(data_a48['obc_pregnant'], 0)
+        self.assertEqual(data_a48['general_pregnant'], 0)
+        self.assertEqual(data_a48['total_pregnant'], 0)
+        self.assertEqual(data_a48['sc_lactating'], 0)
+        self.assertEqual(data_a48['st_lactating'], 0)
         self.assertEqual(data_a48['obc_lactating'], 4)
+        self.assertEqual(data_a48['general_lactating'], 0)
         self.assertEqual(data_a48['total_lactating'], 4)
+        self.assertEqual(data_a48['minority_pregnant'], 0)
         self.assertEqual(data_a48['minority_lactating'], 4)
 
-        self.assertEqual(data_a3['total_lactating'], 2)
-        self.assertEqual(data_a3['total_pregnant'], 1)
-        self.assertEqual(data_a3['st_lactating'], 1)
         self.assertEqual(data_a3['sc_pregnant'], 1)
+        self.assertEqual(data_a3['st_pregnant'], 0)
+        self.assertEqual(data_a3['obc_pregnant'], 0)
+        self.assertEqual(data_a3['general_pregnant'], 0)
+        self.assertEqual(data_a3['total_pregnant'], 1)
+        self.assertEqual(data_a3['sc_lactating'], 0)
+        self.assertEqual(data_a3['st_lactating'], 1)
         self.assertEqual(data_a3['obc_lactating'], 1)
-
-    def test_child_health_monthly_ucr_multiple_locations(self):
-        config = {
-            'awc_id': ['a48', 'a3'],
-            'month': datetime(2017, 5, 1).date(),
-            'domain': 'icds-cas'
-        }
-        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
-                        return_value='a48'):
-            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)
-            data_a48 = data[0]['child_health_monthly_ucr']
-            data_a3 = data[1]['child_health_monthly_ucr']
-        self.assertEqual(data_a48['awc_id'], 'a48')
-
-        self.assertEqual(data_a3['pre_st_boys_36_72'], 1)
-        self.assertEqual(data_a3['pre_obc_boys_36_72'], 3)
-        self.assertEqual(data_a3['pre_obc_girls_36_72'], 3)
-        self.assertEqual(data_a3['pre_total_boys_36_72'], 4)
-        self.assertEqual(data_a3['pre_total_girls_36_72'], 3)
+        self.assertEqual(data_a3['general_lactating'], 0)
+        self.assertEqual(data_a3['total_lactating'], 2)
+        self.assertEqual(data_a3['minority_pregnant'], 0)
+        self.assertEqual(data_a3['minority_lactating'], 0)
 
     def test_agg_child_health_monthly_multiple_locations(self):
         config = {
@@ -410,6 +414,19 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEquals(data_a48['sc_boys_48_72'], 0)
         self.assertEquals(data_a48['minority_boys_48_72_num'], 0)
 
+        self.assertEqual(data_a48['pre_sc_boys_48_72'], 0)
+        self.assertEqual(data_a48['pre_sc_girls_48_72'], 0)
+        self.assertEqual(data_a48['pre_st_boys_48_72'], 0)
+        self.assertEqual(data_a48['pre_st_girls_48_72'], 0)
+        self.assertEqual(data_a48['pre_obc_boys_48_72'], 0)
+        self.assertEqual(data_a48['pre_obc_girls_48_72'], 0)
+        self.assertEqual(data_a48['pre_general_boys_48_72'], 0)
+        self.assertEqual(data_a48['pre_general_girls_48_72'], 0)
+        self.assertEqual(data_a48['pre_total_boys_48_72'], 0)
+        self.assertEqual(data_a48['pre_total_girls_48_72'], 0)
+        self.assertEqual(data_a48['pre_minority_boys_48_72'], 0)
+        self.assertEqual(data_a48['pre_minority_girls_48_72'], 0)
+
         self.assertEquals(data_a3['obc_boys_48_72'], 0)
         self.assertEquals(data_a3['general_boys_48_72'], 0)
         self.assertEquals(data_a3['total_boys_48_72'], 0)
@@ -421,3 +438,16 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEquals(data_a3['sc_girls_48_72'], 0)
         self.assertEquals(data_a3['sc_boys_48_72'], 0)
         self.assertEquals(data_a3['minority_boys_48_72_num'], 0)
+
+        self.assertEqual(data_a3['pre_sc_boys_48_72'], 0)
+        self.assertEqual(data_a3['pre_sc_girls_48_72'], 0)
+        self.assertEqual(data_a3['pre_st_boys_48_72'], 1)
+        self.assertEqual(data_a3['pre_st_girls_48_72'], 0)
+        self.assertEqual(data_a3['pre_obc_boys_48_72'], 3)
+        self.assertEqual(data_a3['pre_obc_girls_48_72'], 3)
+        self.assertEqual(data_a3['pre_general_boys_48_72'], 0)
+        self.assertEqual(data_a3['pre_general_girls_48_72'], 0)
+        self.assertEqual(data_a3['pre_total_boys_48_72'], 4)
+        self.assertEqual(data_a3['pre_total_girls_48_72'], 3)
+        self.assertEqual(data_a3['pre_minority_boys_48_72'], 0)
+        self.assertEqual(data_a3['pre_minority_girls_48_72'], 0)

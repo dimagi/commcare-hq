@@ -3,8 +3,11 @@ from __future__ import unicode_literals
 import json
 import datetime
 from django.utils.translation import ugettext as _
+from redis import ConnectionError
 from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
+
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime
 
 
@@ -28,9 +31,12 @@ def notify_event(domain, couch_user, app_id, form_unique_id, message):
         'text': message,
         'timestamp': json_format_datetime(datetime.datetime.utcnow()),
     }))
-    RedisPublisher(
-        facility=get_facility_for_form(domain, app_id, form_unique_id), broadcast=True
-    ).publish_message(message_obj)
+    try:
+        RedisPublisher(
+            facility=get_facility_for_form(domain, app_id, form_unique_id), broadcast=True
+        ).publish_message(message_obj)
+    except ConnectionError:
+        notify_exception(None, "Redis pub-sub error")
 
 
 def get_facility_for_form(domain, app_id, form_unique_id):

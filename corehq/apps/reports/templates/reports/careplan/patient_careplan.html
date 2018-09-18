@@ -1,6 +1,7 @@
 {% extends "reports/async/default.html" %}
 {% load i18n %}
 {% load case_tags %}
+{% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
     <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
@@ -21,9 +22,6 @@
     {% block patient_content %}
         <div class="col-sm-11">
             <div class="row">
-                {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
-                {# import error on the case details page: http://manage.dimagi.com/default.asp?223100 #}
-                {% include 'cloudcare/includes/formplayer-inline.html' %}
                 {% include "case/partials/case_hierarchy.html" %}
             </div>
         </div>

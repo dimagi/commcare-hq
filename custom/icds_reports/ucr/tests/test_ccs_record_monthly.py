@@ -7,7 +7,6 @@ from django.test import override_settings
 import mock
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
-from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element, mget_query_fake
 
 XMNLS_BP_FORM = 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB'
@@ -17,7 +16,6 @@ XMLNS_EBF_FORM = 'http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 @mock.patch('custom.icds_reports.ucr.expressions.mget_query', mget_query_fake)
 class TestCCSRecordDataSource(BaseICDSDatasourceTest):
     datasource_filename = 'ccs_record_cases_monthly_tableau2'
@@ -165,46 +163,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             mother_thr = ElementTree.Element('mother_thr')
             add_element(mother_thr, 'days_ration_given_mother', rations_distributed)
             form.append(mother_thr)
-
-        self._submit_form(form)
-
-    def _submit_pnc_form(self, form_date, case_id, counsel_methods='no'):
-
-        form = ElementTree.Element('data')
-        form.attrib['xmlns'] = XMLNS_PNC_FORM
-        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
-
-        meta = ElementTree.Element('meta')
-        add_element(meta, 'timeEnd', form_date.isoformat())
-        form.append(meta)
-
-        case = ElementTree.Element('case')
-        case.attrib['date_modified'] = form_date.isoformat()
-        case.attrib['case_id'] = case_id
-        case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
-        form.append(case)
-
-        add_element(form, 'counsel_methods', counsel_methods)
-
-        self._submit_form(form)
-
-    def _submit_ebf_form(self, form_date, case_id, counsel_methods='no'):
-
-        form = ElementTree.Element('data')
-        form.attrib['xmlns'] = XMLNS_EBF_FORM
-        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
-
-        meta = ElementTree.Element('meta')
-        add_element(meta, 'timeEnd', form_date.isoformat())
-        form.append(meta)
-
-        case = ElementTree.Element('case')
-        case.attrib['date_modified'] = form_date.isoformat()
-        case.attrib['case_id'] = case_id
-        case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
-        form.append(case)
-
-        add_element(form, 'counsel_methods', counsel_methods)
 
         self._submit_form(form)
 
@@ -721,29 +679,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    def test_pnc_in_month(self):
-        case_id = uuid.uuid4().hex
-        self._create_ccs_case(
-            case_id=case_id,
-            dob=date(1990, 1, 1),
-            edd=date(2016, 2, 5),
-            add=date(2016, 2, 24),
-            date_opened=datetime(2015, 12, 10),
-            date_modified=datetime(2016, 3, 12),
-        )
-
-        self._submit_pnc_form(
-            form_date=datetime(2016, 3, 2),
-            case_id=case_id
-        )
-
-        cases = [
-            (0, [('pnc_visited_in_month', 0)]),
-            (1, [('pnc_visited_in_month', 1)]),
-            (2, [('pnc_visited_in_month', 0)]),
-        ]
-        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
-
     def test_bp_last_submitted_form(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -996,64 +931,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('anemic_normal', 0),
                  ('anemic_moderate', 0),
                  ('anemic_severe', 1)]),
-        ]
-        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
-
-    def test_counsel_methods_pnc(self):
-        case_id = uuid.uuid4().hex
-        self._create_ccs_case(
-            case_id=case_id,
-            dob=date(1990, 1, 1),
-            edd=date(2016, 3, 5),
-            add=date(2016, 2, 25),
-            date_opened=datetime(2015, 12, 10),
-            date_modified=datetime(2016, 3, 12),
-        )
-
-        self._submit_pnc_form(
-            form_date=datetime(2016, 2, 26),
-            case_id=case_id,
-            counsel_methods='no',
-        )
-        self._submit_pnc_form(
-            form_date=datetime(2016, 3, 2),
-            case_id=case_id,
-            counsel_methods='yes',
-        )
-
-        cases = [
-            (0, [('counsel_fp_methods', 0)]),
-            (1, [('counsel_fp_methods', 1)]),
-            (2, [('counsel_fp_methods', 1)]),
-        ]
-        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
-
-    def test_counsel_methods_ebf(self):
-        case_id = uuid.uuid4().hex
-        self._create_ccs_case(
-            case_id=case_id,
-            dob=date(1990, 1, 1),
-            edd=date(2016, 1, 5),
-            add=date(2016, 1, 6),
-            date_opened=datetime(2015, 12, 10),
-            date_modified=datetime(2016, 3, 12),
-        )
-
-        self._submit_ebf_form(
-            form_date=datetime(2016, 2, 26),
-            case_id=case_id,
-            counsel_methods='no',
-        )
-        self._submit_ebf_form(
-            form_date=datetime(2016, 3, 2),
-            case_id=case_id,
-            counsel_methods='yes',
-        )
-
-        cases = [
-            (0, [('counsel_fp_methods', 0)]),
-            (1, [('counsel_fp_methods', 1)]),
-            (2, [('counsel_fp_methods', 1)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 

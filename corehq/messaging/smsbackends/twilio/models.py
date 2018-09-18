@@ -37,7 +37,11 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
 
     @classmethod
     def get_opt_in_keywords(cls):
-        return ['START', 'YES']
+        return ['START']
+
+    @classmethod
+    def get_pass_through_opt_in_keywords(cls):
+        return ['YES']
 
     @classmethod
     def get_opt_out_keywords(cls):

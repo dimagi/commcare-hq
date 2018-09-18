@@ -4,8 +4,9 @@ import uuid
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.const import CASE_INDEX_CHILD
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-from ..views import get_case_and_descendants
+from ..views import get_case_hierarchy_for_restore
 
 
 class TestRelatedCases(TestCase):
@@ -51,7 +52,8 @@ class TestRelatedCases(TestCase):
         )
 
     def test_get_related_case_ids(self):
-        related_cases = get_case_and_descendants(self.domain, self.dad.case_id)
+        dad_case = CaseAccessors(self.domain).get_case(self.dad.case_id)
+        related_cases = get_case_hierarchy_for_restore(dad_case)
         # cases "above" this one should not be included
         self.assertItemsEqual(
             [c.case_id for c in related_cases],

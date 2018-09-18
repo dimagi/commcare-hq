@@ -1,8 +1,25 @@
 // for product and user per location selection
-hqDefine("locations/js/location", function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
-    var LocationModels = hqImport('locations/js/location_drilldown');
-    var insert_new_user = function(user) {
+hqDefine("locations/js/location", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/alert_user',
+    'analytix/js/google',
+    'locations/js/location_drilldown',
+    'hqwebapp/js/select_2_ajax_widget_v4',
+    'hqwebapp/js/widgets_v4',       // custom data fields use a .ko-select2
+    'locations/js/widgets_main_v4',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    alertUser,
+    googleAnalytics,
+    LocationModels
+) {
+    var insert_new_user = function (user) {
         var $select = $('#id_users-selected_ids');
         // Add the newly created user to the users that are already at the location.
         var currentUsers = $select.select2('data');
@@ -15,28 +32,27 @@ hqDefine("locations/js/location", function() {
                                              "A validation message has been sent to the phone number provided.")),
     };
 
-    $(function() {
+    $(function () {
         var form_node = $('#add_commcare_account_form');
         var url = form_node.prop('action');
 
-        $('#new_user').on('show.bs.modal', function() {
+        $('#new_user').on('show.bs.modal', function () {
             form_node.html('<i class="fa fa-refresh fa-spin"></i>');
-            $.get(url, function(data) {
+            $.get(url, function (data) {
                 form_node.html(data.form_html);
             });
         });
 
-        form_node.submit(function(event) {
-            var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
+        form_node.submit(function (event) {
             event.preventDefault();
             $.ajax({
                 type: 'POST',
                 url: url,
                 data: form_node.serialize(),
-                success: function(data) {
+                success: function (data) {
                     if (data.status === 'success') {
                         insert_new_user(data.user);
-                        alert_user(
+                        alertUser.alert_user(
                             TEMPLATE_STRINGS.new_user_success({name: data.user.text}),
                             'success'
                         );
@@ -45,14 +61,14 @@ hqDefine("locations/js/location", function() {
                         form_node.html(data.form_html);
                     }
                 },
-                error: function() {
-                    alert_user(gettext('Error saving user', 'danger'));
+                error: function () {
+                    alertUser.alert_user(gettext('Error saving user', 'danger'));
                 },
             });
         });
 
     });
-    $(function() {
+    $(function () {
 
         var location_url = initialPageData.get('api_root');
         var loc_id = initialPageData.get('location.get_id');
@@ -63,27 +79,27 @@ hqDefine("locations/js/location", function() {
             "hierarchy": hierarchy,
             "default_caption": "\u2026",
             "auto_drill": false,
-            "loc_filter": function(loc) {
+            "loc_filter": function (loc) {
                 return loc.uuid() !== loc_id && loc.can_have_children();
             },
             "loc_url": location_url,
         });
         model.editing = ko.observable(false);
-        model.allowed_child_types = ko.computed(function() {
+        model.allowed_child_types = ko.computed(function () {
             var active_loc = (this.selected_location() || this.root());
             return (active_loc ? active_loc.allowed_child_types() : []);
         }, model);
         model.loc_type = ko.observable();
-        model.loc_type.subscribe(function(val) {
+        model.loc_type.subscribe(function (val) {
             var subforms = $('.custom_subform');
-            $.each(subforms, function(i, e) {
+            $.each(subforms, function (i, e) {
                 var $e = $(e);
                 var loc_type = $e.attr('loctype');
                 $e[loc_type === val ? 'show' : 'hide']();
             });
         });
 
-        model.has_user = ko.computed(function() {
+        model.has_user = ko.computed(function () {
             var loc_type = (
                 model.allowed_child_types().length === 1 ?
                     model.allowed_child_types()[0] :
@@ -96,15 +112,15 @@ hqDefine("locations/js/location", function() {
         model.load(locs, selected_parent);
         model.orig_parent_id = model.selected_locid();
 
-        $("#loc_form :button[type='submit']").click(function() {
+        $("#loc_form :button[type='submit']").click(function () {
             if (this.name === 'update-loc') {
-                hqImport('analytix/js/google').track.event('Organization Structure', 'Edit', 'Update Location');
+                googleAnalytics.track.event('Organization Structure', 'Edit', 'Update Location');
             } else {
-                hqImport('analytix/js/google').track.event('Organization Structure', 'Edit', 'Create Child Location');
+                googleAnalytics.track.event('Organization Structure', 'Edit', 'Create Child Location');
             }
         });
 
-        hqImport('analytix/js/google').track.click($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location');
+        googleAnalytics.track.click($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location');
 
         $('#loc_form').koApplyBindings(model);
 

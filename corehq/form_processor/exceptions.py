@@ -14,6 +14,10 @@ class XFormNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
 
 
+class XFormQuestionValueNotFound(Exception):
+    pass
+
+
 class LedgerValueNotFound(Exception):
     pass
 
@@ -52,4 +56,8 @@ class UnknownActionType(Exception):
 
 
 class PostSaveError(Exception):
+    pass
+
+
+class KafkaPublishingError(Exception):
     pass

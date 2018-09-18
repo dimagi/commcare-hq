@@ -24,7 +24,7 @@
             } else if (self.strength() < 1) {
                 return gettext("Your password is too weak! Try adding numbers or symbols!");
             } else if (self.strength() === 1) {
-                return gettext("Your password is almost strong enough!");
+                return gettext("Your password is almost strong enough! Try adding numbers or symbols!");
             } else {
                 return gettext("Good Job! Your password is strong!");
             }

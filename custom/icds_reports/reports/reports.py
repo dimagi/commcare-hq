@@ -4,12 +4,11 @@ from django.urls import reverse
 
 from corehq import toggles
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from custom.icds_reports.asr_sqldata import ASRIdentification, ASROperationalization, ASRPopulation, Annual, \
     DisabledChildren, Infrastructure, Equipment
-from custom.icds_reports.filters import ICDSMonthFilter, IcdsLocationFilter
+from custom.icds_reports.filters import ICDSMonthFilter, IcdsLocationFilter, IcdsRestrictedLocationFilter
 from custom.icds_reports.mpr_sqldata import MPRIdentification, MPRSectors, MPRPopulation, MPRBirthsAndDeaths, \
     MPRAWCDetails, MPRSupplementaryNutrition, MPRUsingSalt, MPRProgrammeCoverage, MPRPreschoolEducation, \
     MPRGrowthMonitoring, MPRImmunizationCoverage, MPRVhnd, MPRReferralServices, MPRMonitoring
@@ -25,7 +24,7 @@ class MPRReport(IcdsBaseReport):
     slug = 'mpr_report'
     name = 'Block MPR'
 
-    fields = [AsyncLocationFilter, ICDSMonthFilter, YearFilter]
+    fields = [IcdsLocationFilter, ICDSMonthFilter, YearFilter]
 
     @property
     @memoized
@@ -57,7 +56,7 @@ class ASRReport(IcdsBaseReport):
     slug = 'asr_report'
     name = 'Block ASR'
 
-    fields = [IcdsLocationFilter]
+    fields = [IcdsRestrictedLocationFilter]
 
     @property
     @memoized
@@ -72,27 +71,6 @@ class ASRReport(IcdsBaseReport):
             Infrastructure(config=config),
             Equipment(config=config)
         ]
-
-
-@location_safe
-class TableauReport(CustomProjectReport):
-
-    slug = 'tableau_dashboard'
-    name = 'ICDS-CAS Dashboard'
-
-    @classmethod
-    def get_url(cls, domain=None, **kwargs):
-        domain_to_workbook_mapping = {
-            'icds-test': 'DashboardTest',
-            'icds-cas': 'DashboardR5',
-        }
-        workbook_name = domain_to_workbook_mapping.get(domain, domain_to_workbook_mapping['icds-cas'])
-        worksheet_name = 'Dashboard'
-        return reverse('icds_tableau', args=[domain, workbook_name, worksheet_name])
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return toggles.ICDS_REPORTS.enabled(domain)
 
 
 @location_safe

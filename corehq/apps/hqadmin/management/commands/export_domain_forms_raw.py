@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from dimagi.ext.jsonobject import JsonObject
 import six
+from io import open
 
 
 class FormMetadata(JsonObject):
@@ -51,13 +52,16 @@ class Command(BaseCommand):
                 auth_context=form.auth_context,
             )
 
-            with open(os.path.join(form_path, 'metadata.json'), 'w') as meta:
-                json.dump(form_meta.to_json(), meta)
+            with open(os.path.join(form_path, 'metadata.json'), 'w', encoding='utf-8') as meta:
+                form_meta_data = json.dumps(form_meta.to_json())
+                if six.PY2:
+                    form_meta_data = form_meta_data.decode('utf-8')
+                meta.write(form_meta_data)
 
             xml = form.get_xml()
-            with open(os.path.join(form_path, 'form.xml'), 'w') as f:
+            with open(os.path.join(form_path, 'form.xml'), 'wb') as f:
                 f.write(xml)
 
             for name, meta in form.attachments.items():
-                with open(os.path.join(form_path, name), 'w') as f:
+                with open(os.path.join(form_path, name), 'wb') as f:
                     f.write(form.get_attachment(name))

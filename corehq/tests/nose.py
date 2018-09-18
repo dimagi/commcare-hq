@@ -50,7 +50,6 @@ class HqTestFinderPlugin(Plugin):
         "submodules/dimagi-utils-src",
         "submodules/django-digest-src",
         "submodules/toggle",
-        "submodules/touchforms-src",
     ]
 
     def options(self, parser, env):
@@ -146,14 +145,21 @@ class ErrorOnDbAccessContext(object):
             "similar test base class.")
         db_mock.side_effect = error
 
-        mock_couch = Mock(side_effect=error, spec=[])
+        class CouchSpec(object):
+            dbname = None
+
+        def mock_couch(app):
+            dbname = dbs.get(app, main_db_url).rsplit("/", 1)[1]
+            return Mock(name=dbname, dbname=dbname, spec_set=CouchSpec)
 
         # register our dbs with the extension document classes
+        main_db_url = settings.COUCH_DATABASE
+        dbs = dict(settings.COUCHDB_DATABASES)
         self.db_classes = db_classes = []
         for app, value in loading.couchdbkit_handler.app_schema.items():
             for cls in value.values():
                 db_classes.append(cls)
-                cls.set_db(mock_couch)
+                cls.set_db(mock_couch(app))
 
     def teardown(self):
         """Enable database access"""
@@ -226,7 +232,7 @@ class HqdbContext(DatabaseContext):
                 return False
             old_names.append((connection, db["NAME"], True))
 
-        self.old_names = old_names, []
+        self.old_names = old_names
         return True
 
     def delete_couch_databases(self):

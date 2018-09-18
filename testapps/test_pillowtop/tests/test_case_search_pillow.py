@@ -1,12 +1,18 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import uuid
 
+from django.test import TestCase, override_settings
+from mock import MagicMock, patch
+
+from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
-from corehq.apps.case_search.models import CaseSearchConfig, case_search_enabled_for_domain
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import \
-    change_meta_from_kafka_message
+from corehq.apps.change_feed.consumer.feed import (
+    change_meta_from_kafka_message,
+)
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_multi_topic_offset
@@ -14,14 +20,19 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.pillows.case_search import delete_case_search_cases, get_case_search_to_elasticsearch_pillow, \
-    CaseSearchReindexerFactory
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, CASE_SEARCH_INDEX_INFO
+from corehq.pillows.case_search import (
+    CaseSearchReindexerFactory,
+    delete_case_search_cases,
+    domains_needing_search_index,
+    get_case_search_to_elasticsearch_pillow,
+)
+from corehq.pillows.mappings.case_search_mapping import (
+    CASE_SEARCH_INDEX,
+    CASE_SEARCH_INDEX_INFO,
+)
 from corehq.util.elastic import ensure_index_deleted
-from django.test import TestCase, override_settings
-from mock import MagicMock, patch
-from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.util.test_utils import create_and_save_a_case
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class CaseSearchPillowTest(TestCase):
@@ -56,7 +67,7 @@ class CaseSearchPillowTest(TestCase):
         self.assertEqual(self.domain, change_meta.domain)
 
         # enable case search for domain
-        with patch('corehq.pillows.case_search.case_search_enabled_for_domain',
+        with patch('corehq.pillows.case_search.domain_needs_search_index',
                    new=MagicMock(return_value=True)) as fake_case_search_enabled_for_domain:
             # send to elasticsearch
             self.pillow.process_changes(since=kafka_seq, forever=False)
@@ -70,8 +81,7 @@ class CaseSearchPillowTest(TestCase):
         """
         other_domain = "yunkai"
         CaseSearchConfig.objects.get_or_create(pk=other_domain, enabled=True)
-        case_search_enabled_for_domain.clear(self.domain)
-        case_search_enabled_for_domain.clear(other_domain)
+        domains_needing_search_index.clear()
 
         desired_case = self._make_case(domain=other_domain)
         undesired_case = self._make_case(domain=self.domain)  # noqa
@@ -121,7 +131,7 @@ class CaseSearchPillowTest(TestCase):
         self.assertEqual(self.domain, change_meta.domain)
 
         # enable case search for domain
-        with patch('corehq.pillows.case_search.case_search_enabled_for_domain',
+        with patch('corehq.pillows.case_search.domain_needs_search_index',
                    new=MagicMock(return_value=True)) as fake_case_search_enabled_for_domain:
             # send to elasticsearch
             self.pillow.process_changes(since=kafka_seq, forever=False)
@@ -157,7 +167,13 @@ class CaseSearchPillowTest(TestCase):
         self.assertItemsEqual(list(case_doc['case_properties'][0]), ['key', 'value'])
         for case_property in case_doc['case_properties']:
             key = case_property['key']
-            self.assertEqual(case.get_case_property(key), case_property['value'])
+            try:
+                self.assertEqual(
+                    SPECIAL_CASE_PROPERTIES_MAP[key].value_getter(case.to_json()),
+                    case_property['value'],
+                )
+            except KeyError:
+                self.assertEqual(case.get_case_property(key), case_property['value'])
 
     def _assert_index_empty(self):
         self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
@@ -166,7 +182,7 @@ class CaseSearchPillowTest(TestCase):
 
     def _bootstrap_cases_in_es_for_domain(self, domain):
         case = self._make_case(domain)
-        CaseSearchConfig.objects.get_or_create(pk=domain, enabled=True)
-        case_search_enabled_for_domain.clear(domain)
-        CaseSearchReindexerFactory(domain=domain).build().reindex()
+        with patch('corehq.pillows.case_search.domains_needing_search_index',
+                   MagicMock(return_value=[domain])):
+            CaseSearchReindexerFactory(domain=domain).build().reindex()
         return case

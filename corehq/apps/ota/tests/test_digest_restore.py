@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import time
+
+import mock
+from django.http import HttpResponse
+
 from python_digest import build_authorization_request, calculate_nonce
 from django.test import TestCase, Client
 from django.conf import settings
@@ -22,30 +26,38 @@ class DigestOtaRestoreTest(TestCase):
     web_username = 'test-webuser'
     password = "123"
 
-    def setUp(self):
-        create_domain(self.domain)
-        create_domain(self.wrong_domain)
-        self.commcare_user = CommCareUser.create(self.domain, self.username, self.password)
-        self.web_user = WebUser.create(self.domain, self.web_username, self.password)
+    @classmethod
+    def setUpClass(cls):
+        super(DigestOtaRestoreTest, cls).setUpClass()
+        create_domain(cls.domain)
+        create_domain(cls.wrong_domain)
+        cls.commcare_user = CommCareUser.create(cls.domain, cls.username, cls.password)
+        cls.web_user = WebUser.create(cls.domain, cls.web_username, cls.password)
 
-    def tearDown(self):
-        self.commcare_user.delete()
-        self.web_user.delete()
+    @classmethod
+    def tearDownClass(cls):
+        cls.commcare_user.delete()
+        cls.web_user.delete()
         delete_all_domains()
+        super(DigestOtaRestoreTest, cls).tearDownClass()
 
-    def test_commcare_user_restore(self):
+    @mock.patch('corehq.apps.ota.views.get_restore_response')
+    def test_commcare_user_restore(self, mock_restore):
+        # mock for the sake for fast running test
+        mock_restore.return_value = (HttpResponse('Success', status=200), None)
         uri, client = self._set_restore_client(self.domain, self.commcare_user.username)
         resp = client.get(uri, follow=True)
         self.assertEqual(resp.status_code, 200)
-        content = list(resp.streaming_content)[0]
-        self.assertTrue("Successfully restored account {}!".format(self.username) in content)
+        self.assertEqual(resp.content, "Success")
 
-    def test_web_user_restore(self):
+    @mock.patch('corehq.apps.ota.views.get_restore_response')
+    def test_web_user_restore(self, mock_restore):
+        # mock for the sake for fast running test
+        mock_restore.return_value = (HttpResponse('Success', status=200), None)
         uri, client = self._set_restore_client(self.domain, self.web_user.username)
         resp = client.get(uri, follow=True)
         self.assertEqual(resp.status_code, 200)
-        content = list(resp.streaming_content)[0]
-        self.assertTrue("Successfully restored account {}!".format(self.web_username) in content)
+        self.assertEqual(resp.content, "Success")
 
     def test_wrong_domain_web_user(self):
         uri, client = self._set_restore_client(self.wrong_domain, self.web_user.username)

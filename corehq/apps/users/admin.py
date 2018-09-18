@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.contrib import admin
 from django_digest.models import UserNonce, PartialDigest
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
 
 
 class DDUserNonceAdmin(admin.ModelAdmin):
@@ -15,3 +17,12 @@ class DDPartialDigestAdmin(admin.ModelAdmin):
 
 admin.site.register(UserNonce, DDUserNonceAdmin)
 admin.site.register(PartialDigest, DDPartialDigestAdmin)
+
+
+class CustomUserAdmin(UserAdmin):
+    def has_add_permission(self, request):
+        return False
+
+
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)

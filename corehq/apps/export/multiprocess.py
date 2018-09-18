@@ -35,12 +35,13 @@ from datetime import timedelta
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import (
-    ExportFile, get_export_writer, save_export_payload, get_export_size, get_export_documents)
+    get_export_writer, save_export_payload, get_export_size, get_export_documents)
 from corehq.apps.export.export import write_export_instance
 from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
 from couchexport.export import get_writer
 from couchexport.writers import ZippedExportWriter
+from io import open
 
 TEMP_FILE_PREFIX = 'cchq_export_dump_'
 
@@ -169,8 +170,8 @@ def run_export_with_logging(export_instance, page_number, dump_path, doc_count, 
 
 def run_export(export_instance, page_number, dump_path, doc_count, progress_tracker=None):
     docs = _get_export_documents_from_file(dump_path, doc_count)
-    export_file = get_export_file(export_instance, docs, progress_tracker)
-    return SuccessResult(page_number, export_file.path, doc_count)
+    export_file_path = _get_export_file_path(export_instance, docs, progress_tracker)
+    return SuccessResult(page_number, export_file_path, doc_count)
 
 
 def _get_export_documents_from_file(dump_path, doc_count):
@@ -184,12 +185,16 @@ def _get_export_documents_from_file(dump_path, doc_count):
     return ScanResult(doc_count, _doc_iter())
 
 
-def get_export_file(export_instance, docs, progress_tracker=None):
+def _get_export_file_path(export_instance, docs, progress_tracker=None):
     export_instances = [export_instance]
-    writer = get_export_writer(export_instances, allow_pagination=False)
+    # Multiprocess exports sometimes intentionally keep the tempfile,
+    # so TransientTempfile isn't appropriate here
+    fd, temp_path = tempfile.mkstemp()
+    os.close(fd)
+    writer = get_export_writer(export_instances, temp_path, allow_pagination=False)
     with writer.open(export_instances):
         write_export_instance(writer, export_instance, docs, progress_tracker)
-        return ExportFile(writer.path, writer.format)
+        return writer.path
 
 
 class LoggingProgressTracker(object):
@@ -360,7 +365,7 @@ class MultiprocessExporter(object):
 
     def upload(self, final_path):
         logger.info('Uploading final export')
-        with open(final_path, 'r') as payload:
+        with open(final_path, 'rb') as payload:
             save_export_payload(self.export_instance, payload)
         if not self.keep_file:
             os.remove(final_path)

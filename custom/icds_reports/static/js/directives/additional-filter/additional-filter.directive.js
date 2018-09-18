@@ -1,16 +1,19 @@
-function AdditionalModalController($location, $uibModalInstance, filters, genders, ages) {
+function AdditionalModalController($location, $uibModalInstance, filters, genders, ages, haveAccessToFeatures) {
     var vm = this;
     vm.filters = filters;
 
     vm.genders = window.angular.copy(genders);
 
     vm.ages = window.angular.copy(ages);
+    vm.haveAccessToFeatures = haveAccessToFeatures;
 
-    var path = $location.path();
-    if (path.indexOf('underweight_children') !== -1 || path.indexOf('wasting') !== -1 || path.indexOf('stunting') !== -1) {
-        vm.ages.pop();
-        if (path.indexOf('wasting') !== -1 || path.indexOf('stunting') !== -1) {
-            vm.ages.splice(1,1);
+    if (!vm.haveAccessToFeatures) {
+        var path = $location.path();
+        if (path.indexOf('underweight_children') !== -1 || path.indexOf('wasting') !== -1 || path.indexOf('stunting') !== -1) {
+            vm.ages.pop();
+            if (path.indexOf('wasting') !== -1 || path.indexOf('stunting') !== -1) {
+                vm.ages.splice(1, 1);
+            }
         }
     }
 
@@ -18,6 +21,11 @@ function AdditionalModalController($location, $uibModalInstance, filters, gender
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
 
     vm.apply = function() {
+        window.ga('send', 'event', {
+            'eventCategory': 'Additional Filter',
+            'eventAction': 'Filter Changed',
+            'eventLabel': '',
+        });
         $uibModalInstance.close({
             gender: vm.selectedGender,
             age: vm.selectedAge,
@@ -97,7 +105,7 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
 }
 
 AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
-AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters', 'genders', 'ages'];
+AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters', 'genders', 'ages', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive("additionalFilter", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

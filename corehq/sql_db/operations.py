@@ -10,6 +10,9 @@ from django.db.migrations.operations.special import RunSQL
 from django.template import engines
 
 from corehq.sql_db.routers import allow_migrate
+from io import open
+
+NOOP = object()
 
 
 class IndexRenameOperationException(Exception):
@@ -41,13 +44,14 @@ class HqRunPython(HqOpMixin, RunPython):
     pass
 
 
+def noop_migration_fn(apps, schema_editor):
+    pass
+
+
 def noop_migration():
     """
     A migration that does nothing. Used to replace old migrations that are no longer required e.g moved.
     """
-    def noop_migration_fn(apps, schema_editor):
-        pass
-
     return RunPython(noop_migration_fn, noop_migration_fn)
 
 
@@ -83,7 +87,10 @@ class RunSqlLazy(RunSQL):
             super(RunSqlLazy, self).database_backwards(app_label, schema_editor, from_state, to_state)
 
     def _render_template(self, path):
-        with open(self.sql) as f:
+        if path is NOOP:
+            return "SELECT 1"
+
+        with open(path, encoding='utf-8') as f:
             template_string = f.read()
 
         template = engines['django'].from_string(template_string)
@@ -98,24 +105,28 @@ class RawSQLMigration(object):
 
         migrator = RawSQLMigration(('base', 'path'), {'variable': 'value'})
         migrator.get_migration('sql_template.sql')
+
+    The reverse migration will be a no-op by default. To make a
+    non-reversible migration, set the reverse template to None:
+
+        migrator.get_migration('sql_template.sql', None)  # non-reversible
     """
 
     def __init__(self, base_path_tuple, template_context=None):
         self.template_context = template_context
         self.base_path = os.path.join(*base_path_tuple)
 
-    def get_migration(self, forward_template, reverse_template=Ellipsis, testing_only=False):
+    def get_migration(self, forward_template, reverse_template=NOOP, testing_only=False):
         if testing_only and not settings.UNIT_TESTING:
             return noop_migration()
 
         forward_path = os.path.join(self.base_path, forward_template)
 
-        if reverse_template is Ellipsis:
-            # reverse could be None to make the migration non-reversible
-            reverse_template = 'SELECT 1'  # noop reverse
-
-        reverse_path = None
-        if reverse_template:
+        if reverse_template is NOOP:
+            reverse_path = NOOP
+        elif reverse_template is None:
+            reverse_path = None  # make the migration non-reversible
+        else:
             reverse_path = os.path.join(self.base_path, reverse_template)
 
         return RunSqlLazy(

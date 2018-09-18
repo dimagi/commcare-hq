@@ -1,8 +1,12 @@
 /* globals ko, $ */
 
-hqDefine("data_interfaces/js/case_rule_criteria", function() {
+hqDefine("data_interfaces/js/case_rule_criteria", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+], function ($, ko, initialPageData) {
 
-    var CaseRuleCriteria = function(initial, constants) {
+    var CaseRuleCriteria = function (initial, constants) {
         'use strict';
         var self = this;
 
@@ -12,30 +16,30 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
         self.selected_case_filter_id = ko.observable();
         self.show_add_filter_warning = ko.observable(false);
 
-        self.filter_on_server_modified = ko.computed(function() {
+        self.filter_on_server_modified = ko.computed(function () {
             var result = 'false';
-            $.each(self.criteria(), function(index, value) {
-                if(value.ko_template_id === 'case-modified-filter') {
+            $.each(self.criteria(), function (index, value) {
+                if (value.ko_template_id === 'case-modified-filter') {
                     result = 'true';
                 }
             });
             return result;
         });
 
-        self.server_modified_boundary = ko.computed(function() {
+        self.server_modified_boundary = ko.computed(function () {
             var result = '';
-            $.each(self.criteria(), function(index, value) {
-                if(value.ko_template_id === 'case-modified-filter') {
+            $.each(self.criteria(), function (index, value) {
+                if (value.ko_template_id === 'case-modified-filter') {
                     result = value.days();
                 }
             });
             return result;
         });
 
-        self.custom_match_definitions = ko.computed(function() {
+        self.custom_match_definitions = ko.computed(function () {
             var result = [];
-            $.each(self.criteria(), function(index, value) {
-                if(value.ko_template_id === 'custom-filter') {
+            $.each(self.criteria(), function (index, value) {
+                if (value.ko_template_id === 'custom-filter') {
                     result.push({
                         name: value.name() || '',
                     });
@@ -44,24 +48,24 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
             return JSON.stringify(result);
         });
 
-        self.property_match_definitions = ko.computed(function() {
+        self.property_match_definitions = ko.computed(function () {
             var result = [];
-            $.each(self.criteria(), function(index, value) {
-                if(value.ko_template_id === 'case-property-filter') {
+            $.each(self.criteria(), function (index, value) {
+                if (value.ko_template_id === 'case-property-filter') {
                     result.push({
                         property_name: value.property_name() || '',
                         property_value: value.property_value() || '',
                         match_type: value.match_type() || '',
                     });
-                } else if(value.ko_template_id === 'date-case-property-filter') {
+                } else if (value.ko_template_id === 'date-case-property-filter') {
                     result.push({
                         property_name: value.property_name() || '',
                         property_value: '0',
                         match_type: value.match_type() || '',
                     });
-                } else if(value.ko_template_id === 'advanced-date-case-property-filter') {
+                } else if (value.ko_template_id === 'advanced-date-case-property-filter') {
                     var property_value = value.property_value();
-                    if($.isNumeric(property_value) && value.plus_minus() === '-') {
+                    if ($.isNumeric(property_value) && value.plus_minus() === '-') {
                         // The value of plus_minus tells us if we should negate the number
                         // given in property_value(). We only attempt to do this if it
                         // actually represents a number. If it doesn't, let the django
@@ -79,23 +83,23 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
             return JSON.stringify(result);
         });
 
-        self.filter_on_closed_parent = ko.computed(function() {
+        self.filter_on_closed_parent = ko.computed(function () {
             var result = 'false';
-            $.each(self.criteria(), function(index, value) {
-                if(value.ko_template_id === 'parent-closed-filter') {
+            $.each(self.criteria(), function (index, value) {
+                if (value.ko_template_id === 'parent-closed-filter') {
                     result = 'true';
                 }
             });
             return result;
         });
 
-        self.get_ko_template_id = function(obj) {
+        self.get_ko_template_id = function (obj) {
             return obj.ko_template_id;
         };
 
-        self.filter_already_added = function(ko_template_id) {
-            for(var i = 0; i < self.criteria().length; i++) {
-                if(self.criteria()[i].ko_template_id === ko_template_id) {
+        self.filter_already_added = function (ko_template_id) {
+            for (var i = 0; i < self.criteria().length; i++) {
+                if (self.criteria()[i].ko_template_id === ko_template_id) {
                     return true;
                 }
             }
@@ -103,50 +107,55 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
             return false;
         };
 
-        self.add_filter = function() {
+        self.disableCriteriaField = function () {
+            if (initialPageData.get('read_only_mode')) {
+                $('.main-form :input').prop('disabled', true);
+            }
+        };
+        self.add_filter = function () {
             var case_filter_id = self.selected_case_filter_id();
-            if(case_filter_id === 'select-one') {
+            if (case_filter_id === 'select-one') {
                 return;
             }
 
-            if(case_filter_id === 'case-modified-filter') {
-                if(!self.filter_already_added(case_filter_id)) {
+            if (case_filter_id === 'case-modified-filter') {
+                if (!self.filter_already_added(case_filter_id)) {
                     self.criteria.push(new NotModifiedSinceDefinition(case_filter_id));
                 }
-            } else if(
+            } else if (
                 case_filter_id === 'case-property-filter' ||
                 case_filter_id === 'date-case-property-filter' ||
                 case_filter_id === 'advanced-date-case-property-filter'
             ) {
                 self.criteria.push(new MatchPropertyDefinition(case_filter_id));
-            } else if(case_filter_id === 'parent-closed-filter') {
-                if(!self.filter_already_added(case_filter_id)) {
+            } else if (case_filter_id === 'parent-closed-filter') {
+                if (!self.filter_already_added(case_filter_id)) {
                     self.criteria.push(new ClosedParentDefinition(case_filter_id));
                 }
-            } else if(case_filter_id === 'custom-filter') {
+            } else if (case_filter_id === 'custom-filter') {
                 self.criteria.push(new CustomMatchDefinition(case_filter_id));
             }
             self.selected_case_filter_id('select-one');
             self.show_add_filter_warning(false);
         };
 
-        self.remove_filter = function() {
+        self.remove_filter = function () {
             self.criteria.remove(this);
         };
 
-        self.load_initial = function() {
+        self.load_initial = function () {
             var obj = null;
-            if(initial.filter_on_server_modified !== 'false') {
+            if (initial.filter_on_server_modified !== 'false') {
                 // check for not false in order to help prevent accidents in the future
                 obj = new NotModifiedSinceDefinition('case-modified-filter');
                 obj.days(initial.server_modified_boundary);
                 self.criteria.push(obj);
             }
-
-            $.each(initial.property_match_definitions, function(index, value) {
-                if(
+            $.each(initial.property_match_definitions, function (index, value) {
+                if (
                     value.match_type === constants.MATCH_EQUAL ||
                     value.match_type === constants.MATCH_NOT_EQUAL ||
+                    value.match_type === constants.MATCH_REGEX ||
                     value.match_type === constants.MATCH_HAS_VALUE ||
                     value.match_type === constants.MATCH_HAS_NO_VALUE
                 ) {
@@ -155,12 +164,12 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
                     obj.property_value(value.property_value);
                     obj.match_type(value.match_type);
                     self.criteria.push(obj);
-                } else if(
+                } else if (
                     value.match_type === constants.MATCH_DAYS_BEFORE ||
                     value.match_type === constants.MATCH_DAYS_AFTER
                 ) {
                     var days = Number.parseInt(value.property_value);
-                    if(days === 0) {
+                    if (days === 0) {
                         obj = new MatchPropertyDefinition('date-case-property-filter');
                         obj.property_value(value.property_value);
                     } else {
@@ -174,20 +183,20 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
                 }
             });
 
-            $.each(initial.custom_match_definitions, function(index, value) {
+            $.each(initial.custom_match_definitions, function (index, value) {
                 obj = new CustomMatchDefinition('custom-filter');
                 obj.name(value.name);
                 self.criteria.push(obj);
             });
 
-            if(initial.filter_on_closed_parent !== 'false') {
+            if (initial.filter_on_closed_parent !== 'false') {
                 // check for not false in order to help prevent accidents in the future
                 self.criteria.push(new ClosedParentDefinition('parent-closed-filter'));
             }
         };
     };
 
-    var NotModifiedSinceDefinition = function(ko_template_id) {
+    var NotModifiedSinceDefinition = function (ko_template_id) {
         'use strict';
         var self = this;
         self.ko_template_id = ko_template_id;
@@ -196,7 +205,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
         self.days = ko.observable();
     };
 
-    var MatchPropertyDefinition = function(ko_template_id) {
+    var MatchPropertyDefinition = function (ko_template_id) {
         'use strict';
         var self = this;
         self.ko_template_id = ko_template_id;
@@ -207,7 +216,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
         self.property_value = ko.observable();
         self.match_type = ko.observable();
 
-        self.show_property_value_input = ko.computed(function() {
+        self.show_property_value_input = ko.computed(function () {
             return (
                 self.match_type() !== criteria_model.constants.MATCH_HAS_VALUE &&
                 self.match_type() !== criteria_model.constants.MATCH_HAS_NO_VALUE
@@ -215,7 +224,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
         });
     };
 
-    var CustomMatchDefinition = function(ko_template_id) {
+    var CustomMatchDefinition = function (ko_template_id) {
         'use strict';
         var self = this;
         self.ko_template_id = ko_template_id;
@@ -224,7 +233,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
         self.name = ko.observable();
     };
 
-    var ClosedParentDefinition = function(ko_template_id) {
+    var ClosedParentDefinition = function (ko_template_id) {
         'use strict';
         var self = this;
         self.ko_template_id = ko_template_id;
@@ -234,17 +243,17 @@ hqDefine("data_interfaces/js/case_rule_criteria", function() {
 
     var criteria_model = null;
 
-    $(function() {
+    $(function () {
         criteria_model = new CaseRuleCriteria(
-            hqImport("hqwebapp/js/initial_page_data").get('criteria_initial'),
-            hqImport("hqwebapp/js/initial_page_data").get('criteria_constants')
+            initialPageData.get('criteria_initial'),
+            initialPageData.get('criteria_constants')
         );
         $('#rule-criteria').koApplyBindings(criteria_model);
         criteria_model.load_initial();
     });
 
     return {
-        get_criteria_model: function() {return criteria_model;},
+        get_criteria_model: function () {return criteria_model;},
     };
 
 });

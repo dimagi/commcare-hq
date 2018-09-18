@@ -33,43 +33,7 @@
               href="{% url 'osdd' %}"
               title="CommCare HQ{% if env %} - {{env}}{% endif %}" />
 
-        {% if less_debug %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.debug.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.debug.less' %}" />
-        {% else %}
-        {% compress css %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.less' %}" />
-        {% endcompress %}
-        {% endif %}
+        {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
 
         {% block stylesheets %}{% endblock stylesheets %}
         {% block csrf_token_block %}
@@ -156,18 +120,11 @@
         {% endif %}
 
 
-        {% if request.use_maps or request.use_maps_async %}
+        {% if request.use_maps %}
         {% compress css %}
         <link rel="stylesheet" href="{% static 'leaflet/dist/leaflet.css' %}" />
         <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
         {% endcompress %}
-        {% endif %}
-
-        {% if request.guided_tour %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% static 'bootstrap-tour/build/css/bootstrap-tour.min.css' %}" />
         {% endif %}
 
         {% if not requirejs_main %}
@@ -235,15 +192,30 @@
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">
 
-                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-                    <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
-                        <li>
-                            <a href="#hq-full-menu" data-toggle="collapse">
-                                <i class="fa fa-bars"></i>
-                                {% trans "Menu" %}
-                            </a>
-                        </li>
-                    </ul>
+                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated  %}
+                        <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
+                            <li>
+                                <a href="#hq-full-menu" data-toggle="collapse">
+                                    <i class="fa fa-bars"></i>
+                                    {% trans "Menu" %}
+                                </a>
+                            </li>
+                        </ul>
+                    {% endif %}
+
+                    {% if not request.user.is_authenticated %}
+                      <nav class="navbar-menus navbar-signin" role="navigation">
+                        <div class="nav-settings-bar pull-right">
+                          <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
+                          {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+                            <a href="#cta-form-get-demo"
+                               target="_blank"
+                               data-toggle="modal"
+                               id="cta-form-get-demo-button"
+                               class="btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
+                          {% endif %}
+                        </div>
+                      </nav>
                     {% endif %}
 
                     <div class="navbar-header hq-header">
@@ -257,29 +229,24 @@
                         </a>
                     </div>
 
-                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
+                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
+                      <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
+                          <li>
+                              <a href="#hq-main-tabs" data-toggle="collapse">
+                                  <i class="fa fa-bars"></i>
+                                  {% trans "Menu" %}
+                              </a>
+                          </li>
+                      </ul>
 
-                    <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
-                        <li>
-                            <a href="#hq-main-tabs" data-toggle="collapse">
-                                <i class="fa fa-bars"></i>
-                                {% trans "Menu" %}
-                            </a>
-                        </li>
-                    </ul>
-
-                    <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
-                        <div class="nav-settings-bar pull-right">
-                        {% if request.user.is_authenticated %}
+                      <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
+                          <div class="nav-settings-bar pull-right">
                             {% include 'hqwebapp/includes/global_navigation_bar.html' %}
-                        {% else %}
-                            <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-                        {% endif %}
-                        </div>
-                        {% block tabs %}
-                            {% format_main_menu %}
-                        {% endblock %}
-                    </nav>
+                          </div>
+                          {% block tabs %}
+                              {% format_main_menu %}
+                          {% endblock %}
+                      </nav>
                     {% endif %}
 
                 </div>
@@ -329,48 +296,29 @@
         </div>
         {% if not enterprise_mode %}
         {% block footer %}
-        <footer>
-            <nav id="hq-footer"
-                 role="navigation"
-                 class="navbar navbar-inverse navbar-hq-footer">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-xs-12">
-                            <a href="http://www.commcarehq.org/" class="footer-link-img">
-                                <img src="{% static 'hqwebapp/images/commcare-flower-footer.png' %}"
-                                     alt="CommCare"
-                                     height="30"  />
-                            </a>
-                            <a href="http://www.dimagi.com/" class="footer-link-img">
-                                <img src="{% static 'hqwebapp/images/dimagi-footer.png' %}"
-                                     alt="Powered by Dimagi, Inc."
-                                     height="20"/>
-                            </a>
-                        &nbsp;
-                            {% blocktrans %}
-                                <a href="http://www.commcarehq.org/">CommCare HQ</a>
-                                is <span ondblclick="throw new Error('jls/add-js-to-sentry ' + (new Date()).toString() + ' from ' + window.location.href);">copyright</span> &copy;
-                            {% endblocktrans %}{% now "Y" %}
-                            <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
-                            {% if request.user.is_authenticated %}
-                                &nbsp;|&nbsp;
-                                <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>
-                            {% endif %}
-                            &nbsp;|&nbsp;
-                            <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
-                            &nbsp;|&nbsp;
-                            <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
-                            &nbsp;|&nbsp;
-                            <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-        </footer>
+        {% include 'hqwebapp/partials/footer.html' %}
         {% endblock %}
         {% endif %}
         {# modals #}
         {% block modals %}{% endblock modals %}
+
+        {% if show_mobile_ux_warning %}
+          {% include "hqwebapp/partials/mobile_ux_warning.html" %}
+        {% endif %}
+
+        {# Report Issue #}
+        {% include 'hqwebapp/includes/modal_report_issue.html' %}
+
+        {% if EULA_COMPLIANCE %}
+            {% if request.couch_user and not request.couch_user.is_eula_signed %}
+                {% registerurl 'agree_to_eula' %}
+                {% include 'hqwebapp/includes/modal_eula.html' %}
+            {% endif %}
+        {% endif %}
+
+        {# 30 Day Trial #}
+        {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
+
 
         {% block additional_initial_page_data %}
             {% comment %}
@@ -378,12 +326,15 @@
                 awkward or impossible to include it in another block
             {% endcomment %}
         {% endblock %}
+        {%  initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
+        {%  initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
         <div class="initial-page-data" class="hide">
         {% block initial_page_data %}
             {# do not override this block, use initial_page_data template tag to populate #}
         {% endblock %}
         </div>
         {% registerurl 'notifications_service' %}   {# used by notifications_service.js below #}
+        {% registerurl 'send_mobile_reminder' %}  {# used by mobile reminder popup below #}
         <div class="commcarehq-urls" class="hide">
         {% block registered_urls %}
             {# do not override this block, use registerurl template tag to populate #}
@@ -410,7 +361,7 @@
             <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
             <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
             <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
-            <script type="text/javascript">
+            <script>
                 requirejs.config({
                     deps: ['knockout', 'ko.mapping'],
                     callback: function (ko, mapping) {
@@ -422,6 +373,7 @@
                     'raven-js/dist/raven',
                     {% endif %}
                     'hqwebapp/js/common',
+<<<<<<< HEAD
                     'jquery.cookie/jquery.cookie',
                     'hqwebapp/js/layout',
                     'hqwebapp/js/hq-bug-report',
@@ -436,6 +388,14 @@
                         arguments[0].config('https://{{ SENTRY_PUBLIC_KEY }}@sentry.io/{{ SENTRY_PROJECT_ID }}').install();
                     {% endif %}
                     requirejs(['{{ requirejs_main }}']);
+=======
+                ], function() {
+                    requirejs([
+                        'hqwebapp/js/base_main',
+                    ], function () {
+                        requirejs(['{{ requirejs_main }}']);
+                    });
+>>>>>>> master
                 });
             </script>
         {% endif %}
@@ -451,6 +411,7 @@
                 <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
             {% endcompress %}
         {% endif %}
 
@@ -517,15 +478,8 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.guided_tour and not requirejs_main %}
-        {% compress js %}
-        <script src="{% static 'tour/js/tour.utils.js' %}"></script>
-        <script src="{% static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-
         {% if not requirejs_main %}
-        {% if request.use_maps or request.use_maps_async %}
+        {% if request.use_maps %}
         {% compress js %}
         <script src="{% static 'jquery-color/jquery.color.js' %}"></script>
         <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
@@ -533,23 +487,8 @@
         {% endif %}
         {% endif %}
 
-        {% if request.maps_prefer_canvas and not requirejs_main %}
-        {% addtoblock js-inline %}
-        {# This is fine as an inline script; this flag is only used by custom reports which we're not currently externalizing #}
-        <script>L_PREFER_CANVAS = true;</script>
-        {% endaddtoblock %}
-        {% endif %}
-
         {% if request.use_maps and not requirejs_main %}
         {% compress js %}
-        <script src="{% static 'reports/js/maps.js' %}"></script>
-        <script src="{% static 'reports/js/maps_utils.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-
-        {% if request.use_maps_async and not requirejs_main %}
-        {% compress js %}
-        <script src="{% static 'reports/js/async_maps.js' %}"></script>
         <script src="{% static 'reports/js/maps_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
@@ -571,23 +510,47 @@
           <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
         {% endif %}
 
+        {% if not request.user.is_authenticated and is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+
+          <div class="modal fade" id="cta-form-get-demo">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+                  <h4 class="modal-title">{% trans "Get a Demo of CommCare" %}</h4>
+                </div>
+                <div class="modal-body form-horizontal">
+                  <div class="form form-horizontal" id="get-demo-cta-form-body">
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!--[if lte IE 8]>
+          <script charset="utf-8" src="//js.hsforms.net/forms/v2-legacy.js"></script>
+          <![endif]-->
+          <script charset="utf-8" src="//js.hsforms.net/forms/v2.js"></script>
+          <script>
+            hbspt.forms.create({
+              portalId: "{{ ANALYTICS_IDS.HUBSPOT_API_ID }}",
+              formId: "0f5de42e-b562-4ece-85e5-cfd2db97eba8",
+              target: "#get-demo-cta-form-body",
+              css: ""
+            });
+          </script>
+        {% endif %}
+
+        {# Knockout component templates #}
+        {% include 'hqwebapp/ko_pagination.html' %}
+        {% include 'hqwebapp/partials/ko_inline_edit.html' %}
+
         {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
         {# If it's loaded early, then execution of all following scripts block on it #}
         {% if request.domain and request.user.username and not requirejs_main %}
             <script src="{% toggle_js_url request.domain request.user.username %}"></script>
         {% endif %}
         {% block js %}{% endblock js %}
-
-        {# Report Issue #}
-        {% include 'hqwebapp/includes/modal_report_issue.html' %}
-
-        {# EULA #}
-        {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
-            {% include 'hqwebapp/includes/modal_eula.html' with needs_agreement=True %}
-        {% endif %}
-
-        {# 30 Day Trial #}
-        {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
 
         {% block js-inline %}{% endblock js-inline %}
 

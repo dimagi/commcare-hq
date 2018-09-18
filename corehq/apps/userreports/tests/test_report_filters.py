@@ -7,14 +7,13 @@ from django.test import SimpleTestCase, TestCase
 from django.utils.http import urlencode
 from mock import Mock
 
-import settings
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
     NumericFilter, DynamicChoiceListFilter, Choice, PreFilter, LocationDrilldownFilter, REQUEST_USER_KEY
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.userreports.const import UCR_BACKENDS, UCR_SQL_BACKEND
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
@@ -148,69 +147,63 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
         cls.data_sources = {}
         cls.adapters = {}
 
-        # this is a hack to have both sql and es backends created in a class
-        # method. alternative would be to have these created on each test run
-        for backend_id in UCR_BACKENDS:
-            config = DataSourceConfiguration(
-                backend_id=backend_id,
-                domain=cls.domain,
-                display_name=cls.domain,
-                referenced_doc_type='CommCareCase',
-                table_id="foo",
-                configured_filter={
-                    "type": "boolean_expression",
-                    "operator": "eq",
+        config = DataSourceConfiguration(
+            domain=cls.domain,
+            display_name=cls.domain,
+            referenced_doc_type='CommCareCase',
+            table_id="foo",
+            configured_filter={
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                },
+                "property_value": cls.case_type,
+            },
+            configured_indicators=[
+                {
+                    "type": "expression",
                     "expression": {
                         "type": "property_name",
-                        "property_name": "type"
+                        "property_name": 'my_date'
                     },
-                    "property_value": cls.case_type,
+                    "column_id": 'date_as_string',
+                    "display_name": 'date_as_string',
+                    "datatype": "string"
                 },
-                configured_indicators=[
-                    {
-                        "type": "expression",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": 'my_date'
-                        },
-                        "column_id": 'date_as_string',
-                        "display_name": 'date_as_string',
-                        "datatype": "string"
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'my_date'
                     },
-                    {
-                        "type": "expression",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": 'my_date'
-                        },
-                        "column_id": 'date_as_date',
-                        "datatype": "date"
+                    "column_id": 'date_as_date',
+                    "datatype": "date"
+                },
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "my_datetime",
                     },
-                    {
-                        "type": "expression",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "my_datetime",
-                        },
-                        "column_id": "datetime_as_datetime",
-                        "datatype": "datetime"
-                    }
-                ],
-            )
-            config.validate()
-            config.save()
-            rebuild_indicators(config._id)
-            adapter = get_indicator_adapter(config)
-            adapter.refresh_table()
-            cls.data_sources[backend_id] = config
-            cls.adapters[backend_id] = adapter
+                    "column_id": "datetime_as_datetime",
+                    "datatype": "datetime"
+                }
+            ],
+        )
+        config.validate()
+        config.save()
+        rebuild_indicators(config._id)
+        adapter = get_indicator_adapter(config)
+        cls.data_sources[UCR_SQL_BACKEND] = config
+        cls.adapters[UCR_SQL_BACKEND] = adapter
 
     @classmethod
     def _create_report(cls):
-        backend_id = settings.OVERRIDE_UCR_BACKEND or UCR_SQL_BACKEND
         report_config = ReportConfiguration(
             domain=cls.domain,
-            config_id=cls.data_sources[backend_id]._id,
+            config_id=cls.data_sources[UCR_SQL_BACKEND]._id,
             title='foo',
             filters=[
                 {

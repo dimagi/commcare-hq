@@ -9,6 +9,7 @@ import sys
 
 import simplejson
 from django.conf import settings
+from kafka import KafkaConsumer
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
@@ -145,15 +146,29 @@ def safe_force_seq_int(seq, default=None):
         return default
 
 
+def _get_consumer():
+    return KafkaConsumer(
+        client_id='pillowtop_utils',
+        bootstrap_servers=settings.KAFKA_BROKERS,
+        request_timeout_ms=1000
+    )
+
+
 def get_all_pillows_json():
     pillow_configs = get_all_pillow_configs()
-    return [get_pillow_json(pillow_config) for pillow_config in pillow_configs]
+    consumer = _get_consumer()
+    return [get_pillow_json(pillow_config, consumer) for pillow_config in pillow_configs]
 
 
-def get_pillow_json(pillow_config):
+def get_pillow_json(pillow_config, consumer=None):
     assert isinstance(pillow_config, PillowConfig)
 
+    def _is_kafka(checkpoint):
+        return checkpoint.sequence_format == 'json'
+
     pillow = pillow_config.get_instance()
+    if consumer is None:
+        consumer = _get_consumer()
 
     checkpoint = pillow.get_checkpoint()
     timestamp = checkpoint.timestamp
@@ -172,11 +187,19 @@ def get_pillow_json(pillow_config):
         seconds_since_last = 0
         prettified_time_since_last = ''
         hours_since_last = None
-    offsets = pillow.get_change_feed().get_latest_offsets_json()
+
+    if _is_kafka(checkpoint):
+        # breaking composition boundaries so that we can use one Kafka connection
+        offsets = {
+            "{},{}".format(tp.topic, tp.partition): offset
+            for tp, offset in consumer.end_offsets(checkpoint.wrapped_sequence.keys()).items()
+        }
+    else:
+        offsets = pillow.get_change_feed().get_latest_offsets_json()
 
     def _seq_to_int(checkpoint, seq):
         from pillowtop.models import kafka_seq_to_str
-        if checkpoint.sequence_format == 'json':
+        if _is_kafka(checkpoint):
             return json.loads(kafka_seq_to_str(seq))
         else:
             return force_seq_int(seq)
@@ -237,7 +260,10 @@ def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
     payloads = [b'']
     for bulk_chunk in chunked(bulk_changes, chunk_size):
         current_payload = payloads[-1]
-        payload_chunk = b'\n'.join(map(simplejson.dumps, bulk_chunk)) + b'\n'
+        json_bulk_chunks = map(simplejson.dumps, bulk_chunk)
+        if six.PY3:
+            json_bulk_chunks = [chunk.encode('utf-8') for chunk in json_bulk_chunks]
+        payload_chunk = b'\n'.join(json_bulk_chunks) + b'\n'
         appended_payload = current_payload + payload_chunk
         new_payload_size = sys.getsizeof(appended_payload)
         if new_payload_size > max_size:

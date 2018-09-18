@@ -14,6 +14,7 @@ from xml.sax.saxutils import escape, unescape
 from django.conf import settings
 from corehq.apps.sms.api import incoming as incoming_sms
 import logging
+import requests
 import six
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,13 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
     </gviSmsMessage>"""
 
 
+class GrapevineException(Exception):
+    pass
+
+
 class SQLGrapevineBackend(SQLSMSBackend):
+
+    show_inbound_api_key_during_edit = False
 
     class Meta(object):
         app_label = 'sms'
@@ -65,9 +72,31 @@ class SQLGrapevineBackend(SQLSMSBackend):
     def get_form_class(cls):
         return GrapevineBackendForm
 
+    def handle_response(self, response):
+        """
+        Raising an exception makes the framework retry sending the message.
+        """
+        status_code = response.status_code
+        response_text = response.text
+
+        if status_code != 200:
+            raise GrapevineException("Received status code %s" % status_code)
+
+        try:
+            root = ElementTree.fromstring(response_text)
+        except (TypeError, ElementTree.ParseError):
+            raise GrapevineException("Invalid XML returned from API")
+
+        result_code = root.find('resultCode')
+        if result_code is None:
+            raise GrapevineException("resultCode tag not found in XML response")
+
+        if result_code.text != '0':
+            raise GrapevineException("Received non-zero result code: %s" % result_code.text)
+
     def send(self, msg, *args, **kwargs):
         phone_number = clean_phone_number(msg.phone_number)
-        text = msg.text.encode('utf-8')
+        text = msg.text
 
         config = self.config
         data = TEMPLATE.format(
@@ -78,9 +107,15 @@ class SQLGrapevineBackend(SQLSMSBackend):
         )
 
         url = 'http://www.gvi.bms9.vine.co.za/httpInputhandler/ApplinkUpload'
-        req = six.moves.urllib.request.Request(url, data)
-        response = six.moves.urllib.request.urlopen(req, timeout=settings.SMS_GATEWAY_TIMEOUT)
-        resp = response.read()
+
+        response = requests.post(
+            url,
+            data=data.encode('utf-8'),
+            headers={'content-type': 'text/xml'},
+            timeout=settings.SMS_GATEWAY_TIMEOUT,
+        )
+
+        self.handle_response(response)
 
 
 class SmsMessage(object):

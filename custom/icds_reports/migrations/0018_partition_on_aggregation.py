@@ -15,6 +15,4 @@ class Migration(migrations.Migration):
          '0017_add_v2_indicators'),
     ]
 
-    operations = [
-        migrator.get_migration('create_functions.sql'),
-    ]
+    operations = []

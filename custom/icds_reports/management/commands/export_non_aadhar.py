@@ -1,7 +1,7 @@
 from __future__ import absolute_import, print_function
 
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import os
 
 from django.core.management.base import BaseCommand
@@ -10,6 +10,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 
 from corehq.sql_db.connections import connection_manager
+from io import open
 
 PERSON_TABLE_ID = 'static-person_cases_v2'
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
@@ -34,7 +35,10 @@ class Command(BaseCommand):
         awc_location_table_name = get_table_name(domain, AWC_LOCATION_TABLE_ID)
         session = session_helper.Session
 
-        with open(os.path.join(os.path.dirname(__file__), 'sql_scripts', 'select_non_aadhar.sql')) as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), 'sql_scripts', 'select_non_aadhar.sql'),
+            encoding='utf-8'
+        ) as f:
             sql_script = f.read()
             rows = session.execute(
                 sql_script % {

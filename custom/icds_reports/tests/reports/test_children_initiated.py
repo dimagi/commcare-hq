@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import children_initiated_appropriate_complementary_feeding_help_text
 from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_map, \
     get_children_initiated_data_chart, get_children_initiated_sector_data
 from django.test import TestCase
@@ -10,7 +11,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestChildrenInitiated(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_children_initiated_data_map(
@@ -78,10 +78,7 @@ class TestChildrenInitiated(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Percentage of children between 6 - 8 months"
-            " given timely introduction to solid, semi-solid or soft food."
-        )
+        expected = children_initiated_appropriate_complementary_feeding_help_text(html=True)
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -296,8 +293,7 @@ class TestChildrenInitiated(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children between 6 - 8 months "
-                        "given timely introduction to solid, semi-solid or soft food.",
+                "info": children_initiated_appropriate_complementary_feeding_help_text(html=True),
                 "tooltips_data": {
                     "s2": {
                         "all": 7,

@@ -21,7 +21,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -37,7 +37,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -85,13 +85,13 @@ class TestPrevalenceOfStunting(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of children (6 - 60 months) enrolled for Anganwadi Services with "
-            "height-for-age below -2Z standard deviations of "
-            "the WHO Child Growth Standards median.<br/><br/>Stunting "
-            "is a sign of chronic undernutrition and has long "
-            "lasting harmful consequences on the growth of a child"
+            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
+            "children between 0 - 5 years who were moderately/severely stunted in the current month. "
+            "<br/><br/>"
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
+            "on the growth of a child"
         )
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_prevalence_of_stunting_data_map(
@@ -102,7 +102,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], "63.71")
+        self.assertEqual(data['rightLegend']['average'], "63.71")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_stunting_data_map(
@@ -116,13 +116,13 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (6 - 60 months) eligible to have height measured:', 'value': '939'},
-                {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '939'},
+                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
                  'value': '32'},
-                {'indicator': 'Number of Children (6 - 60 months) unmeasured:', 'value': '907'},
-                {'indicator': '% children (6 - 60 months) with severely stunted growth:', 'value': '34.38%'},
-                {'indicator': '% children (6 - 60 months) with moderate stunted growth:', 'value': '25.00%'},
-                {'indicator': '% children (6 - 60 months) with normal stunted growth:', 'value': '40.62%'}
+                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '907'},
+                {'indicator': '% children (0 - 5 years) with severely stunted growth:', 'value': '34.38%'},
+                {'indicator': '% children (0 - 5 years) with moderate stunted growth:', 'value': '25.00%'},
+                {'indicator': '% children (0 - 5 years) with normal stunted growth:', 'value': '40.62%'}
             ]
         )
 
@@ -154,7 +154,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'severe')
+        self.assertEqual(data['slug'], 'severe')
 
     def test_map_data_label(self):
         data = get_prevalence_of_stunting_data_map(
@@ -165,7 +165,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent of Children Stunted (6 - 60 months)')
+        self.assertEqual(data['label'], 'Percent of Children Stunted (0 - 5 years)')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_prevalence_of_stunting_data_map(
@@ -204,7 +204,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], "75.00")
+        self.assertEqual(data['rightLegend']['average'], "75.00")
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -215,7 +215,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
 
     def test_chart_data_location_type(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -226,7 +226,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['location_type'], 'State')
+        self.assertEqual(data['location_type'], 'State')
 
     def test_chart_data_bottom_five(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -283,7 +283,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data['chart_data']), 3)
+        self.assertEqual(len(data['chart_data']), 3)
 
     def test_chart_data_pink(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -456,7 +456,7 @@ class TestPrevalenceOfStunting(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
 
     def test_sector_data_info(self):
         data = get_prevalence_of_stunting_sector_data(
@@ -471,12 +471,13 @@ class TestPrevalenceOfStunting(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
-            "Percentage of children (6 - 60 months) enrolled for Anganwadi Services with height-for-age below"
-            " -2Z standard deviations of the WHO Child Growth Standards median."
-            "<br/><br/>Stunting is a sign of chronic undernutrition "
-            "and has long lasting harmful consequences on the growth of a child"
+            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
+            "children between  (0 - 5 years) who were moderately/severely stunted in the current month. "
+            "<br/><br/>"
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful "
+            "consequences on the growth of a child"
         )
 
     def test_sector_data_tooltips_data(self):

@@ -4,7 +4,7 @@ import hashlib
 from datetime import datetime
 
 from couchdbkit import ResourceNotFound
-from jsonobject.properties import ListProperty, BooleanProperty
+from jsonobject.properties import ListProperty, BooleanProperty, JsonArray, JsonSet, JsonDict
 
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
 from dimagi.utils.couch.database import get_db
@@ -98,6 +98,7 @@ def paginate_function(data_function, args_provider, event_handler=None):
     event_handler = event_handler or PaginationEventHandler()
     total_emitted = 0
     args, kwargs = args_provider.get_initial_args()
+
     while True:
         event_handler.page_start(total_emitted, *args, **kwargs)
         results = data_function(*args, **kwargs)
@@ -129,6 +130,18 @@ class ResumableIteratorState(JsonObject):
     complete = BooleanProperty(default=False)
 
 
+def unpack_jsonobject(json_object):
+    if isinstance(json_object, JsonArray):
+        return [unpack_jsonobject(x) for x in json_object]
+    elif isinstance(json_object, JsonSet):
+        return {unpack_jsonobject(x) for x in json_object}
+    elif isinstance(json_object, JsonDict):
+        return {
+            unpack_jsonobject(k): unpack_jsonobject(v) for k, v in six.iteritems(json_object)
+        }
+    return json_object
+
+
 class ResumableArgsProvider(ArgsProvider):
     def __init__(self, iterator_state, args_provider):
         self.args_provider = args_provider
@@ -138,7 +151,7 @@ class ResumableArgsProvider(ArgsProvider):
 
     def get_initial_args(self):
         if self.resume:
-            return self.resume_args, self.resume_kwargs
+            return unpack_jsonobject(self.resume_args), unpack_jsonobject(self.resume_kwargs)
         return self.args_provider.get_initial_args()
 
     def get_next_args(self, last_item, *last_args, **last_kwargs):
@@ -166,7 +179,7 @@ class ResumableFunctionIterator(object):
         self.args_provider = args_provider
         self.item_getter = item_getter
         self.event_handler = event_handler
-        self.iteration_id = hashlib.sha1(self.iteration_key).hexdigest()
+        self.iteration_id = hashlib.sha1(self.iteration_key.encode('utf-8')).hexdigest()
 
         self.couch_db = get_db('meta')
         self._state = None

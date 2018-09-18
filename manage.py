@@ -73,7 +73,8 @@ def _should_patch_gevent(args, gevent_commands):
 
 
 def set_default_settings_path(argv):
-    if len(argv) > 1 and argv[1] == 'test':
+    if len(argv) > 1 and argv[1] == 'test' or os.environ.get('CCHQ_TESTING') == '1':
+        os.environ.setdefault('CCHQ_TESTING', '1')
         module = 'testsettings'
     else:
         module = 'settings'
@@ -113,15 +114,17 @@ if __name__ == "__main__":
         GeventCommand('mvp_force_update', None),
         GeventCommand('run_gunicorn', None),
         GeventCommand('preindex_everything', None),
+        GeventCommand('migrate_multi', None),
         GeventCommand('prime_views', None),
         GeventCommand('ptop_preindex', None),
         GeventCommand('sync_prepare_couchdb_multi', None),
         GeventCommand('sync_couch_views', None),
         GeventCommand('celery', '-P gevent'),
         GeventCommand('populate_form_date_modified', None),
+        GeventCommand('migrate_domain_from_couch_to_sql', None),
+        GeventCommand('migrate_multiple_domains_from_couch_to_sql', None),
     )
     if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
-        from restkit.session import set_session; set_session(b"gevent")
         from gevent.monkey import patch_all; patch_all(subprocess=True)
         from psycogreen.gevent import patch_psycopg; patch_psycopg()
 

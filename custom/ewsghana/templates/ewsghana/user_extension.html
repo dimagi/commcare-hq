@@ -1,6 +1,11 @@
 {% extends 'hqwebapp/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static "locations/js/widgets_main_v3.js" %}"></script>
+{% endblock %}
+
 {% block page_content %}
     <a class="btn btn-primary" href="{% url 'user_account' domain=domain couch_user_id=couch_user.get_id %}">Back to user account settings</a>
     <form id="commtrack_form" class="form form-horizontal" name="" method="post">

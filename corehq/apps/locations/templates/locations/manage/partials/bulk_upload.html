@@ -1,7 +1,8 @@
 {% extends "hqwebapp/partials/bulk_upload.html" %}
 {% load i18n %}
 
-{% block extra_option %}
+{% block download_file %}
+
     {% if manage_consumption %}
     <div class="controls">
         <label for="include_consumption" class="checkbox">
@@ -13,4 +14,23 @@
         </label>
     </div>
     {% endif %}
+
+    <p>
+        {% if request.can_access_all_locations %}
+        <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=full">
+            <button class="btn btn-success">
+                <i class="fa fa-cloud-download"></i>
+                {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
+                Download {{ plural_noun }}
+                {% endblocktrans %}
+            </button>
+        </a>
+        {% endif %}
+        <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=empty">
+            <button class="btn btn-info">
+                {% trans "Download empty template" %}
+            </button>
+        </a>
+    </p>
+
 {% endblock %}

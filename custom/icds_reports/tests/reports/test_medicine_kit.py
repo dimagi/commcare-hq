@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test.utils import override_settings
 
+from custom.icds_reports.messages import awcs_reported_medicine_kit_help_text
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_map, get_medicine_kit_data_chart, \
     get_medicine_kit_sector_data
 from django.test import TestCase
@@ -11,7 +12,6 @@ from custom.icds_reports.const import ChartColors, MapColors
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestMedicineKit(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_medicine_kit_data_map(
@@ -79,9 +79,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Percentage of AWCs that reported having a Medicine Kit"
-        )
+        expected = awcs_reported_medicine_kit_help_text()
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -346,7 +344,7 @@ class TestMedicineKit(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs that reported having a Medicine Kit",
+                "info": awcs_reported_medicine_kit_help_text(),
                 "tooltips_data": {
                     "s2": {
                         "in_month": 2,

@@ -23,7 +23,6 @@ from couchforms.analytics import get_number_of_forms_in_domain, \
     get_last_form_submission_received
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from dimagi.utils.parsing import json_format_datetime
@@ -36,6 +35,7 @@ from corehq.motech.repeaters.models import Repeater
 from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.messaging.scheduling.util import domain_has_reminders
 
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
@@ -240,8 +240,7 @@ def app_list(domain, *args):
 
 
 def uses_reminders(domain, *args):
-    handlers = CaseReminderHandler.get_handlers(domain)
-    return len(handlers) > 0
+    return domain_has_reminders(domain)
 
 
 def not_implemented(domain, *args):

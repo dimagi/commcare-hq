@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.app_manager.xform import XForm
-from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
+from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, CaseIndexItem
 from corehq.apps.export.system_properties import BOTTOM_MAIN_FORM_TABLE_PROPERTIES, MAIN_CASE_TABLE_PROPERTIES
 from corehq.apps.userreports.app_manager.data_source_meta import make_form_data_source_filter, \
     make_case_data_source_filter
@@ -31,13 +31,17 @@ def get_case_data_source(app, case_type):
     meta_properties_to_use = [property_def for property_def in meta_properties_to_use if property_def.item.transform is None]
     meta_indicators = [_export_column_to_ucr_indicator(c) for c in meta_properties_to_use]
     dynamic_indicators = _get_dynamic_indicators_from_export_schema(schema)
+    # filter out any duplicately defined columns from dynamic indicators
+    meta_column_names = set([c['column_id'] for c in meta_indicators])
+    dynamic_indicators = [indicator for indicator in dynamic_indicators if
+                          indicator['column_id'] not in meta_column_names]
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='CommCareCase',
         table_id=clean_table_name(app.domain, case_type),
         display_name=case_type,
         configured_filter=make_case_data_source_filter(case_type),
-        configured_indicators=meta_indicators + dynamic_indicators,
+        configured_indicators=meta_indicators + dynamic_indicators + _get_shared_indicators(),
     )
 
 
@@ -51,7 +55,7 @@ def get_form_data_sources(app):
 
     for module in app.get_modules():
         for form in module.get_forms():
-            forms = {form.xmlns: get_form_data_source(app, form)}
+            forms[form.xmlns] = get_form_data_source(app, form)
 
     return forms
 
@@ -72,9 +76,24 @@ def get_form_data_source(app, form):
         referenced_doc_type='XFormInstance',
         table_id=clean_table_name(app.domain, form_name),
         display_name=form_name,
-        configured_filter=make_form_data_source_filter(xform.data_node.tag_xmlns),
-        configured_indicators=meta_properties + dynamic_properties,
+        configured_filter=make_form_data_source_filter(xform.data_node.tag_xmlns, app.get_id),
+        configured_indicators=meta_properties + dynamic_properties + _get_shared_indicators(),
     )
+
+
+def _get_shared_indicators():
+    return [
+        {
+            "type": "expression",
+            "column_id": 'count',
+            "display_name": 'count',
+            "datatype": 'small_integer',
+            "expression": {
+                "type": "constant",
+                'constant': 1,
+            }
+        }
+    ]
 
 
 def _get_dynamic_indicators_from_export_schema(schema):
@@ -106,15 +125,53 @@ def _export_item_to_ucr_indicator(export_item):
     :param export_item:
     :return: a dict ready to be inserted into a UCR data source
     """
+    if isinstance(export_item, CaseIndexItem):
+        # dereference indices
+        inner_expression = {
+            "type": "nested",
+            # this pulls out the entire CommCareCaseIndex object
+            "argument_expression": {
+                "type": "array_index",
+                "array_expression": {
+                    # filter indices down to those with the correct case type
+                    "type": "filter_items",
+                    "items_expression": {
+                        "type": "property_name",
+                        "property_name": "indices"
+                    },
+                    "filter_expression": {
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "referenced_type"
+                        },
+                        "operator": "eq",
+                        "property_value": export_item.case_type
+                    }
+                },
+                # return the first (assumes only 0 or 1)
+                "index_expression": {
+                    "type": "constant",
+                    "constant": 0
+                }
+            },
+            # this pulls out the referenced case ID from the object
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "referenced_id"
+            }
+        }
+    else:
+        inner_expression = {
+            "type": "property_path",
+            'property_path': [p.name for p in export_item.path],
+        }
     return {
         "type": "expression",
         "column_id": get_column_name(export_item.readable_path, add_hash=False),
         "display_name": export_item.path[-1].name,
         "datatype": export_item.datatype or 'string',
-        "expression": {
-            "type": "property_path",
-            'property_path': [p.name for p in export_item.path],
-        }
+        "expression": inner_expression,
     }
 
 

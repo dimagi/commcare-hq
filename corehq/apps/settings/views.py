@@ -5,13 +5,13 @@ import re
 from base64 import b64encode
 from django.views.decorators.debug import sensitive_post_parameters
 from pygooglechart import QRChart
-from corehq.apps.hqwebapp.utils import sign
+from corehq.apps.hqwebapp.utils import sign, update_session_language
 from corehq.apps.settings.forms import (
     HQPasswordChangeForm, HQPhoneNumberMethodForm, HQDeviceValidationForm,
     HQTOTPDeviceForm, HQPhoneNumberForm, HQTwoFactorMethodForm, HQEmptyForm
 )
 from corehq.apps.settings.utils import get_temp_file
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.users.forms import AddPhoneNumberForm
 from django.conf import settings
 from django.contrib import messages
@@ -23,8 +23,7 @@ import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_lazy,
-    activate, LANGUAGE_SESSION_KEY)
+from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_lazy)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required, two_factor_exempt)
 from django.urls import reverse
@@ -44,6 +43,7 @@ from two_factor.views import (
     BackupTokensView, DisableView, PhoneSetupView, PhoneDeleteView
 )
 import six
+from io import open
 
 
 @login_and_domain_required
@@ -113,7 +113,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     api_key = None
     template_name = 'settings/edit_my_account.html'
 
-    @use_select2
+    @use_select2_v4
     @two_factor_exempt
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -217,11 +217,8 @@ class MyAccountSettingsView(BaseMyAccountView):
             old_lang = self.request.couch_user.language
             self.settings_form.update_user()
             new_lang = self.request.couch_user.language
-            if new_lang != old_lang:
-                # update the current session's language setting
-                request.session[LANGUAGE_SESSION_KEY] = new_lang
-                # and activate it for the current thread so the response page is translated too
-                activate(new_lang)
+            update_session_language(request, old_lang, new_lang)
+
         return self.get(request, *args, **kwargs)
 
 
@@ -477,12 +474,12 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
         message_v1 = json.dumps([
             {'username': request.user.username},
             {'flag': MULTIPLE_APPS_UNLIMITED.slug}
-        ]).replace(' ', '')
+        ]).replace(' ', '').encode('utf-8')
 
         message_v2 = json.dumps([
             {'username': request.user.username},
             {'flags': [MULTIPLE_APPS_UNLIMITED.slug, ADVANCED_SETTINGS_ACCESS.slug]}
-        ]).replace(' ', '')
+        ]).replace(' ', '').encode('utf-8')
 
         qrcode_data = json.dumps({
             'username': request.user.username,

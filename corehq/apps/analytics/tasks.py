@@ -1,14 +1,18 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-import csv
+from __future__ import division
+import csv342 as csv
 import os
+
+import math
 from celery.schedules import crontab
 from celery.task import periodic_task
 import tinys3
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
+from corehq.apps.users.models import WebUser
 from corehq.util.dates import unix_time
 from corehq.apps.analytics.utils import get_instance_string, get_meta
 from datetime import datetime, date, timedelta
@@ -20,7 +24,6 @@ import KISSmetrics
 import logging
 
 from django.conf import settings
-from django.urls import reverse
 from email_validator import validate_email, EmailNotValidError
 from corehq.toggles import deterministic_random
 from corehq.util.decorators import analytics_task
@@ -34,11 +37,12 @@ from corehq.util.datadog.utils import (
     DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC
 )
 
-from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from memoized import memoized
 
 from corehq.apps.analytics.utils import analytics_enabled_for_email
+from io import open
+from six.moves import range
 
 _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
                                                '{}@{}'.format('biyeun', 'dimagi.com'),
@@ -221,9 +225,10 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
         if webuser:
-            data.update({'firstname': webuser.first_name,
-                         'lastname': webuser.last_name,
-                         })
+            data.update({
+                'firstname': webuser.first_name,
+                'lastname': webuser.last_name,
+            })
         if extra_fields:
             data.update(extra_fields)
 
@@ -237,46 +242,59 @@ def _send_hubspot_form_request(url, data):
     return requests.post(url, data=data)
 
 
-@analytics_task()
-def update_hubspot_properties(webuser, properties):
+@analytics_task(serializer='pickle', )
+def update_hubspot_properties_v2(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         _track_on_hubspot(webuser, properties)
 
 
-@analytics_task()
-def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
-    from corehq.apps.registration.views import ProcessRegistrationView
-    if path.startswith(reverse(ProcessRegistrationView.urlname)):
-        tracking_dict = {
-            'created_account_in_hq': True,
-            'is_a_commcare_user': True,
-            'lifecyclestage': 'lead'
-        }
-        if (hasattr(webuser, 'phone_numbers') and len(webuser.phone_numbers) > 0):
-            tracking_dict.update({
-                'phone': webuser.phone_numbers[0],
-            })
-        if webuser.atypical_user:
-            tracking_dict.update({
-                'atypical_user': True
-            })
-        tracking_dict.update(get_ab_test_properties(webuser))
-        _track_on_hubspot(webuser, tracking_dict)
-        _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, hubspot_cookie, meta)
+def track_web_user_registration_hubspot(request, web_user, properties):
+    if not settings.ANALYTICS_IDS.get('HUBSPOT_API_ID'):
+        return
+
+    tracking_info = {
+        'created_account_in_hq': True,
+        'is_a_commcare_user': True,
+        'lifecyclestage': 'lead',
+    }
+    env = get_instance_string()
+    tracking_info['{}date_created'.format(env)] = web_user.date_joined.isoformat()
+
+    if (hasattr(web_user, 'phone_numbers') and len(web_user.phone_numbers) > 0):
+        tracking_info.update({
+            'phone': web_user.phone_numbers[0],
+        })
+
+    if web_user.atypical_user:
+        tracking_info.update({
+            'atypical_user': True
+        })
+
+    tracking_info.update(get_ab_test_properties(web_user))
+    tracking_info.update(properties)
+
+    send_hubspot_form(
+        HUBSPOT_SIGNUP_FORM_ID, request,
+        user=web_user, extra_fields=tracking_info
+    )
+
+
+@analytics_task(serializer='pickle', )
+def track_user_sign_in_on_hubspot_v2(webuser, hubspot_cookie, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
-@analytics_task()
-def track_built_app_on_hubspot(webuser):
+@analytics_task(serializer='pickle', )
+def track_built_app_on_hubspot_v2(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
         _track_on_hubspot(webuser, {'built_app': True})
 
 
-@analytics_task()
-def track_confirmed_account_on_hubspot(webuser):
+@analytics_task(serializer='pickle', )
+def track_confirmed_account_on_hubspot_v2(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
@@ -291,7 +309,7 @@ def track_confirmed_account_on_hubspot(webuser):
         })
 
 
-def send_hubspot_form(form_id, request, user=None):
+def send_hubspot_form(form_id, request, user=None, extra_fields=None):
     """
     pulls out relevant info from request object before sending to celery since
     requests cannot be pickled
@@ -300,31 +318,39 @@ def send_hubspot_form(form_id, request, user=None):
         user = getattr(request, 'couch_user', None)
     if request and user and user.is_web_user():
         meta = get_meta(request)
-        send_hubspot_form_task.delay(form_id, user, request.COOKIES.get(HUBSPOT_COOKIE), meta)
+        send_hubspot_form_task_v2.delay(
+            form_id, user.user_id, request.COOKIES.get(HUBSPOT_COOKIE),
+            meta, extra_fields=extra_fields
+        )
 
 
 @analytics_task()
-def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta):
-    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta)
+def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
+                              extra_fields=None):
+    # TODO - else avoids transient celery errors.  Can remove after deploying to all environments.
+    web_user = WebUser.get_by_user_id(web_user_id) if isinstance(web_user_id, six.string_types) else web_user_id
+    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
+                          extra_fields=extra_fields)
 
-@analytics_task()
-def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
+
+@analytics_task(serializer='pickle', )
+def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
     ab = {
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
     }
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, hubspot_cookie, meta, extra_fields=ab)
 
 
-@analytics_task()
-def track_job_candidate_on_hubspot(user_email):
+@analytics_task(serializer='pickle', )
+def track_job_candidate_on_hubspot_v2(user_email):
     properties = {
         'job_candidate': True
     }
     _track_on_hubspot_by_email(user_email, properties=properties)
 
 
-@analytics_task()
-def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
+@analytics_task(serializer='pickle', )
+def track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
     if number < 0.33:
@@ -350,22 +376,32 @@ def track_workflow(email, event, properties=None):
     """
     if analytics_enabled_for_email(email):
         timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-        _track_workflow_task.delay(email, event, properties, timestamp)
+        _track_workflow_task_v2.delay(email, event, properties, timestamp)
 
 
-@analytics_task()
-def _track_workflow_task(email, event, properties=None, timestamp=0):
+@analytics_task(serializer='pickle', )
+def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
+    def _no_nonascii_unicode(value):
+        if isinstance(value, six.text_type):
+            return value.encode('utf-8')
+        return value
+
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-        res = km.record(email, event, properties if properties else {}, timestamp)
+        res = km.record(
+            email,
+            event,
+            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in six.iteritems(properties)} if properties else {},
+            timestamp
+        )
         _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
         # TODO: Consider adding some better error handling for bad/failed requests.
         _raise_for_urllib3_response(res)
 
 
-@analytics_task()
-def identify(email, properties):
+@analytics_task(serializer='pickle', )
+def identify_v2(email, properties):
     """
     Set the given properties on a KISSmetrics user.
     :param email: The email address by which to identify the user.
@@ -395,45 +431,77 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
-@periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
+def _log_failed_periodic_data(email, message):
+    soft_assert(to='{}@{}'.format('bbuczyk', 'dimagi.com'))(
+        False, "ANALYTICS - Failed to sync periodic data", {
+            'user_email': email,
+            'message': message,
+        }
+    )
+
+
+@periodic_task(serializer='pickle', run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
     Sync data that is neither event or page based with hubspot/Kissmetrics
     :return:
     """
     # Start by getting a list of web users mapped to their domains
-    six_months_ago = date.today() - timedelta(days=180)
-    users_to_domains = (UserES().web_users()
-                        .last_logged_in(gte=six_months_ago).source(['domains', 'email', 'date_joined'])
-                        .analytics_enabled()
-                        .run().hits)
-    # users_to_domains is a list of dicts
-    domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
-        .aggregations.domain.counts_by_bucket()
-    domains_to_mobile_users = UserES().mobile_users().terms_aggregation('domain', 'domain').size(0).run()\
-                                      .aggregations.domain.counts_by_bucket()
+    three_months_ago = date.today() - timedelta(days=90)
 
-    # Keep track of india and www data seperately
-    env = get_instance_string()
+    user_query = (UserES()
+                  .web_users()
+                  .last_logged_in(gte=three_months_ago)
+                  .sort('date_joined', desc=True)
+                  .source(['domains', 'email', 'date_joined'])
+                  .analytics_enabled())
+
+    total_users = user_query.count()
+    chunk_size = 100
+    num_chunks = int(math.ceil(float(total_users) / float(chunk_size)))
 
     # Track no of users and domains with max_forms greater than HUBSPOT_THRESHOLD
-    number_of_users = 0
-    number_of_domains_with_forms_gt_threshold = 0
+    hubspot_number_of_users = 0
+    hubspot_number_of_domains_with_forms_gt_threshold = 0
 
-    for num_forms in domains_to_forms.values():
-        if num_forms > HUBSPOT_THRESHOLD:
-            number_of_domains_with_forms_gt_threshold += 1
+    for chunk in range(num_chunks):
+        users_to_domains = (user_query
+                            .size(chunk_size)
+                            .start(chunk * chunk_size)
+                            .run()
+                            .hits)
 
-    # For each web user, iterate through their domains and select the max number of form submissions and
-    # max number of mobile workers
-    for users in chunked(users_to_domains, 500):
+        # users_to_domains is a list of dicts
+        domains_to_forms = (FormES()
+                            .terms_aggregation('domain', 'domain')
+                            .size(0)
+                            .run()
+                            .aggregations.domain.counts_by_bucket())
+        domains_to_mobile_users = (UserES()
+                                   .mobile_users()
+                                   .terms_aggregation('domain', 'domain')
+                                   .size(0)
+                                   .run()
+                                   .aggregations
+                                   .domain
+                                   .counts_by_bucket())
+
+        # Keep track of india and www data seperately
+        env = get_instance_string()
+
+        for num_forms in domains_to_forms.values():
+            if num_forms > HUBSPOT_THRESHOLD:
+                hubspot_number_of_domains_with_forms_gt_threshold += 1
+
+        # For each web user, iterate through their domains and select the max number of form submissions and
+        # max number of mobile workers
         submit = []
-        for user in users:
+        for user in users_to_domains:
             email = user.get('email')
             if not _email_is_valid(email):
                 continue
 
-            number_of_users += 1
+            hubspot_number_of_users += 1
             date_created = user.get('date_joined')
             max_forms = 0
             max_workers = 0
@@ -488,11 +556,11 @@ def track_periodic_data():
             submit.append(user_json)
 
         submit_json = json.dumps(submit)
-
         submit_data_to_hub_and_kiss(submit_json)
+
     update_datadog_metrics({
-        DATADOG_WEB_USERS_GAUGE: number_of_users,
-        DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: number_of_domains_with_forms_gt_threshold
+        DATADOG_WEB_USERS_GAUGE: hubspot_number_of_users,
+        DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: hubspot_number_of_domains_with_forms_gt_threshold
     })
 
 
@@ -595,3 +663,4 @@ def get_ab_test_properties(user):
         'a_b_test_variable_first_submission':
             'A' if deterministic_random(user.username + 'a_b_test_variable_first_submission') > 0.5 else 'B',
     }
+

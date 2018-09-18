@@ -39,8 +39,13 @@ describe('Location Filter Controller', function () {
         $provide.constant("userLocationId", null);
         $provide.constant("allUserLocationId", []);
         $provide.constant("haveAccessToAllLocations", true);
-        $provide.constant("locationHierarchy", [['awc', ['supervisor']], ['block', ['district']],
-            ['district', ['state']], ['state', [null]], ['supervisor', ['block']]]);
+        $provide.constant("locationHierarchy", [
+            ['state', [null]],
+            ['district', ['state']],
+            ['block', ['district']],
+            ['supervisor', ['block']],
+            ['awc', ['supervisor']],
+        ]);
     }));
 
     beforeEach(function () {
@@ -51,6 +56,7 @@ describe('Location Filter Controller', function () {
             storageService = _storageService_;
             locationsService = _locationsService_;
 
+            window.ga = function() {};
             controller = $controller(LocationFilterController, {
                 $scope: scope,
                 $uibModal: $uibModal,
@@ -74,11 +80,11 @@ describe('Location Filter Controller', function () {
     it('tests init hierarchy', function () {
         var result = controller.hierarchy;
         var expected = [
-            [{"name": "awc", "parents": ["supervisor"], "level": 4}],
-            [{"name": "block", "parents": ["district"], "level": 2}],
-            [{"name": "district", "parents": ["state"], "level": 1}],
             [{"name": "state", "parents": [null], "level": 0}],
+            [{"name": "district", "parents": ["state"], "level": 1}],
+            [{"name": "block", "parents": ["district"], "level": 2}],
             [{"name": "supervisor", "parents": ["block"], "level": 3}],
+            [{"name": "awc", "parents": ["supervisor"], "level": 4}],
         ];
 
         assert.deepEqual(expected, result);

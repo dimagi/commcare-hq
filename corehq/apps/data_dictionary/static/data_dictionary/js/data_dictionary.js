@@ -1,4 +1,4 @@
-define([
+hqDefine("data_dictionary/js/data_dictionary", [
     "jquery",
     "knockout",
     "underscore",
@@ -6,7 +6,7 @@ define([
     "hqwebapp/js/main",
     "analytix/js/google",
     "hqwebapp/js/knockout_bindings.ko",
-], function(
+], function (
     $,
     ko,
     _,
@@ -73,10 +73,10 @@ define([
         self.availableDataTypes = typeChoices;
         self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
-            save: function() {
+            save: function () {
                 var postProperties = [];
                 var currentGroup = '';
-                _.each(self.casePropertyList(), function(element) {
+                _.each(self.casePropertyList(), function (element) {
                     if (!element.isGroup) {
                         var data = {
                             'caseType': element.caseType,
@@ -98,11 +98,11 @@ define([
                     data: {
                         'properties': JSON.stringify(postProperties),
                     },
-                    success: function() {
+                    success: function () {
                         var activeCaseType = self.getActiveCaseType();
                         activeCaseType.properties(self.casePropertyList());
                     },
-                    error: function() {
+                    error: function () {
                         throw gettext("There was an error saving");
                     },
                 });
@@ -118,7 +118,7 @@ define([
                 .done(function (data) {
                     _.each(data.case_types, function (caseTypeData) {
                         var caseTypeObj = caseType(caseTypeData.name);
-                        var groupDict = _.groupBy(caseTypeData.properties, function(prop) {return prop.group;});
+                        var groupDict = _.groupBy(caseTypeData.properties, function (prop) {return prop.group;});
                         caseTypeObj.init(groupDict, changeSaveButton);
                         self.caseTypes.push(caseTypeObj);
                     });
@@ -202,14 +202,14 @@ define([
         return self;
     };
 
-    $(function() {
+    $(function () {
         var dataUrl = initialPageData.reverse('data_dictionary_json'),
             casePropertyUrl = initialPageData.reverse('update_case_property'),
             typeChoices = initialPageData.get('typeChoices'),
             viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices);
         viewModel.init();
         $('#hq-content').parent().koApplyBindings(viewModel);
-        $('#download-dict').click(function() {
+        $('#download-dict').click(function () {
             googleAnalytics.track.event('Data Dictionary', 'downloaded data dictionary');
         });
     });

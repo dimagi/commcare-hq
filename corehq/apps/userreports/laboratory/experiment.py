@@ -26,7 +26,7 @@ class UCRExperiment(laboratory.Experiment):
             self.log_exception(control_value, candidate.exc_info)
         else:
             self.log_timing(control, candidate)
-            if cmp(control_value, candidate_value) != 0:
+            if control_value != candidate_value:
                 self.log_diff(control_value, candidate_value)
 
     def log_exception(self, control_value, candidate_exc):
@@ -38,6 +38,7 @@ class UCRExperiment(laboratory.Experiment):
             extra={
                 'domain': self.context['domain'],
                 'report_config_id': self.context['report_config_id'],
+                'new_report_config_id': self.context['new_report_config_id'],
                 'filter_values': self.context['filter_values'],
                 'candidate': formatted_exception,
             })
@@ -49,6 +50,7 @@ class UCRExperiment(laboratory.Experiment):
             extra={
                 'domain': self.context['domain'],
                 'report_config_id': self.context['report_config_id'],
+                'new_report_config_id': self.context['new_report_config_id'],
                 'filter_values': self.context['filter_values'],
                 'control': json.dumps(control_value, cls=DjangoJSONEncoder),
                 'diff': json.dumps(diff, cls=DjangoJSONEncoder)
@@ -60,6 +62,7 @@ class UCRExperiment(laboratory.Experiment):
             extra={
                 'domain': self.context['domain'],
                 'report_config_id': self.context['report_config_id'],
+                'new_report_config_id': self.context['new_report_config_id'],
                 'filter_values': self.context['filter_values'],
                 'control_duration': control.duration,
                 'candidate_duration': candidate.duration

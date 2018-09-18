@@ -1,10 +1,5 @@
 {% if label %}
-    <span class="label label-default form-label-{{ label }}" data-title="{{ xmlns }}" data-placement="right">{{ label }}</span>
-    <script>
-        $(function () {
-            $(".form-label-{{ label }}").tooltip();
-        });
-    </script>
+    <span class="label label-default form-label form-label-{{ label }}" data-title="{{ xmlns }}" data-placement="right">{{ label }}</span>
 {% else %}
     <code>{{ xmlns }}</code>
 {% endif %}

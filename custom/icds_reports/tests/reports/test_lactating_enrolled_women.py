@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import percent_lactating_women_enrolled_help_text
 from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
     get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
 from django.test import TestCase
@@ -102,7 +103,7 @@ class TestLactatingEnrolledWomen(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Lactating Mothers enrolled for Anganwadi Services.",
+                "info": percent_lactating_women_enrolled_help_text(),
                 "tooltips_data": {
                     "s2": {
                         "valid": 24,
@@ -147,7 +148,7 @@ class TestLactatingEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Lactating Mothers enrolled for Anganwadi Services.",
+                    "info": percent_lactating_women_enrolled_help_text(),
                     "average": 83.0,
                     "average_format": "number",
                     'extended_info': [
@@ -201,7 +202,7 @@ class TestLactatingEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Lactating Mothers enrolled for Anganwadi Services.",
+                    "info": percent_lactating_women_enrolled_help_text(),
                     "average": 43.5,
                     "average_format": "number",
                     'extended_info': [

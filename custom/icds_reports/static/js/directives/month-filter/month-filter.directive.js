@@ -23,8 +23,8 @@ function MonthModalController($location, $uibModalInstance) {
         });
     }
 
-    vm.selectedMonth = $location.search()['month'] !== void(0) ? $location.search()['month'] : new Date().getMonth() + 1;
-    vm.selectedYear = $location.search()['year'] !== void(0) ? $location.search()['year'] : new Date().getFullYear();
+    vm.selectedMonth = $location.search()['month'] !== void(0) ? parseInt($location.search()['month']) : new Date().getMonth() + 1;
+    vm.selectedYear = $location.search()['year'] !== void(0) ? parseInt($location.search()['year']) : new Date().getFullYear();
 
     if (vm.selectedYear === new Date().getFullYear()) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
@@ -39,6 +39,11 @@ function MonthModalController($location, $uibModalInstance) {
     }
 
     vm.apply = function() {
+        window.ga('send', 'event', {
+            'eventCategory': 'Date Filter',
+            'eventAction': 'Date Changed',
+            'eventLabel': '',
+        });
         $uibModalInstance.close({
             month: vm.selectedMonth,
             year: vm.selectedYear,

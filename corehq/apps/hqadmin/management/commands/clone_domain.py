@@ -25,7 +25,6 @@ types = [
     'apps',
     'user_fields',
     'user_roles',
-    'auto_case_updates',
     'repeaters',
 ]
 
@@ -38,7 +37,6 @@ help_text = """Clone a domain and it's data:
   * apps
   * custom user fields
   * custom user roles
-  * auto case update rules
   * repeaters
 """
 
@@ -97,9 +95,6 @@ class Command(BaseCommand):
         if self._clone_type(options, 'user_roles'):
             from corehq.apps.users.models import UserRole
             self._copy_all_docs_of_type(UserRole)
-
-        if self._clone_type(options, 'auto_case_updates'):
-            self.copy_auto_case_update_rules()
 
         if self._clone_type(options, 'repeaters'):
             self.copy_repeaters()
@@ -260,7 +255,7 @@ class Command(BaseCommand):
 
             old_id, new_id = self.save_couch_copy(report, self.new_domain)
             report_map[old_id] = new_id
-        report_map = get_static_report_mapping(self.existing_domain, self.new_domain, report_map)
+        report_map.update(get_static_report_mapping(self.existing_domain, self.new_domain))
         return report_map
 
     def copy_ucr_datasources(self):
@@ -282,22 +277,6 @@ class Command(BaseCommand):
             StaticDataSourceConfiguration.by_id(new_id)
             datasource_map[static_datasource.get_id] = new_id
         return datasource_map
-
-    def copy_auto_case_update_rules(self):
-        from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-        update_rules = AutomaticUpdateRule.objects.filter(deleted=False, domain=self.existing_domain)
-        for rule in update_rules:
-            criteria = list(rule.automaticupdaterulecriteria_set.all())
-            actions = rule.automaticupdateaction_set.all()
-
-            self.save_sql_copy(rule, self.new_domain)
-            for crit in criteria:
-                crit.rule = rule
-                self.save_sql_copy(crit, self.new_domain)
-
-            for action in actions:
-                action.rule = rule
-                self.save_sql_copy(action, self.new_domain)
 
     def copy_repeaters(self):
         from corehq.motech.repeaters.models import Repeater

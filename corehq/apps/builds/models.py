@@ -7,24 +7,31 @@ from corehq.apps.app_manager.const import APP_V2
 from dimagi.ext.couchdbkit import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
+from corehq.apps.domain import SHARED_DOMAIN
+from corehq.blobs import CODES as BLOB_CODES
+from corehq.blobs.mixin import BlobMixin
 from corehq.util.quickcache import quickcache
 from itertools import groupby
+from distutils.version import StrictVersion
 
 
 class SemanticVersionProperty(StringProperty):
 
     def validate(self, value, required=True):
         super(SemanticVersionProperty, self).validate(value, required)
+        if not self.required and not value:
+            return value
         try:
-            major, minor, _ = value.split('.')
+            major, minor, point = value.split('.')
             int(major)
             int(minor)
+            int(point)
         except Exception:
             raise BadValueError("Build version %r does not comply with the x.y.z schema" % value)
         return value
 
 
-class CommCareBuild(Document):
+class CommCareBuild(BlobMixin, Document):
     """
     #python manage.py shell
     #>>> from corehq.apps.builds.models import CommCareBuild
@@ -36,6 +43,7 @@ class CommCareBuild(Document):
     version = SemanticVersionProperty()
     time = DateTimeProperty()
     j2me_enabled = BooleanProperty(default=True)
+    _blobdb_type_code = BLOB_CODES.commcarebuild
 
     def put_file(self, payload, path, filename=None):
         """
@@ -50,7 +58,7 @@ class CommCareBuild(Document):
             'jad': 'text/vnd.sun.j2me.app-descriptor',
             'jar': 'application/java-archive',
         }.get(path.split('.')[-1])
-        self.put_attachment(payload, path, content_type)
+        self.put_attachment(payload, path, content_type, domain=SHARED_DOMAIN)
 
     def fetch_file(self, path, filename=None):
         if filename:
@@ -165,7 +173,7 @@ class CommCareBuild(Document):
 
 
 class BuildSpec(DocumentSchema):
-    version = StringProperty()
+    version = SemanticVersionProperty(required=False)
     build_number = IntegerProperty(required=False)
     latest = BooleanProperty()
 
@@ -218,6 +226,11 @@ class BuildSpec(DocumentSchema):
 
     def major_release(self):
         return self.version.split('.')[0]
+
+    def release_greater_than_or_equal_to(self, version):
+        if not self.version:
+            return False
+        return StrictVersion(self.version) >= StrictVersion(version)
 
 
 class BuildMenuItem(DocumentSchema):

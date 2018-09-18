@@ -12,12 +12,15 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 
 from memoized import memoized
+
+from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES
+from corehq.motech.utils import b64_aes_encrypt
 from dimagi.utils.post import simple_post
 
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView, BaseProjectSettingsView
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.users.models import Permissions
 
@@ -28,7 +31,7 @@ from corehq.motech.repeaters.forms import (
     OpenmrsRepeaterForm,
     SOAPCaseRepeaterForm,
     SOAPLocationRepeaterForm,
-)
+    Dhis2RepeaterForm)
 from corehq.motech.repeaters.models import Repeater, RepeatRecord, BASIC_AUTH, DIGEST_AUTH
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.repeaters.utils import get_all_repeater_types
@@ -61,7 +64,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
             'repeaters': self.repeaters,
             'pending_record_count': RepeatRecord.count(self.domain),
             'gefingerpoken': self.request.couch_user.is_superuser or
-                             toggles.IS_DEVELOPER.enabled(self.request.couch_user.username)
+                             toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
         }
 
 
@@ -128,8 +131,13 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         repeater.url = cleaned_data['url']
         repeater.auth_type = cleaned_data['auth_type'] or None
         repeater.username = cleaned_data['username']
-        repeater.password = cleaned_data['password']
+        if cleaned_data['password'] != PASSWORD_PLACEHOLDER:
+            repeater.password = '${algo}${ciphertext}'.format(
+                algo=ALGO_AES,
+                ciphertext=b64_aes_encrypt(cleaned_data['password'])
+            )
         repeater.format = cleaned_data['format']
+        repeater.skip_cert_verify = cleaned_data['skip_cert_verify']
         return repeater
 
     def post_save(self, request, repeater):
@@ -186,7 +194,7 @@ class AddCaseRepeaterView(AddRepeaterView):
     urlname = 'add_case_repeater'
     repeater_form_class = CaseRepeaterForm
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(AddCaseRepeaterView, self).dispatch(request, *args, **kwargs)
 
@@ -210,6 +218,18 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater = super(AddOpenmrsRepeaterView, self).set_repeater_attr(repeater, cleaned_data)
         repeater.location_id = self.add_repeater_form.cleaned_data['location_id']
+        return repeater
+
+
+class AddDhis2RepeaterView(AddFormRepeaterView):
+    urlname = 'new_dhis2_repeater$'
+    repeater_form_class = Dhis2RepeaterForm
+    page_title = ugettext_lazy("Forward to DHIS2")
+    page_name = ugettext_lazy("Forward to DHIS2")
+
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super(AddDhis2RepeaterView, self).set_repeater_attr(repeater, cleaned_data)
+        repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
         return repeater
 
 
@@ -262,10 +282,12 @@ class EditRepeaterView(BaseRepeaterView):
         else:
             repeater_id = self.kwargs['repeater_id']
             repeater = Repeater.get(repeater_id)
+            data = repeater.to_json()
+            data['password'] = PASSWORD_PLACEHOLDER
             return self.repeater_form_class(
                 domain=self.domain,
                 repeater_class=self.repeater_class,
-                data=repeater.to_json(),
+                data=data,
                 submit_btn_text=_("Update Repeater"),
             )
 
@@ -309,6 +331,11 @@ class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
 
 class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
     urlname = 'edit_openmrs_repeater'
+    page_title = ugettext_lazy("Edit OpenMRS Repeater")
+
+
+class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
+    urlname = 'edit_dhis2_repeater'
     page_title = ugettext_lazy("Edit OpenMRS Repeater")
 
 
@@ -363,6 +390,7 @@ def test_repeater(request, domain):
 
         username = request.POST.get('username')
         password = request.POST.get('password')
+        verify = not request.POST.get('skip_cert_verify') == 'true'
         if auth_type == BASIC_AUTH:
             auth = HTTPBasicAuth(username, password)
         elif auth_type == DIGEST_AUTH:
@@ -371,7 +399,7 @@ def test_repeater(request, domain):
             auth = None
 
         try:
-            resp = simple_post(fake_post, url, headers=headers, auth=auth)
+            resp = simple_post(fake_post, url, headers=headers, auth=auth, verify=verify)
             if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
                                                 "response": resp.content,

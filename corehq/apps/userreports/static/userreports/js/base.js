@@ -1,32 +1,37 @@
-/* globals CodeMirror */
-hqDefine('userreports/js/base', function() {
+hqDefine('userreports/js/base', [
+    'jquery',
+    'ace-builds/src-min-noconflict/ace',
+], function (
+    $,
+    ace
+) {
+    function initJsonWidget(element) {
+        var $element = $(element),
+            editorElement = $element.after('<pre />').next()[0];
+        $element.hide();
+        var editor = ace.edit(
+            editorElement,
+            {
+                showPrintMargin: false,
+                maxLines: 40,
+                minLines: 3,
+                fontSize: 14,
+                wrap: true,
+                useWorker: true,
+            }
+        );
+        editor.session.setMode('ace/mode/json');
+        editor.getSession().setValue($element.val());
+        editor.getSession().on('change', function () {
+            $element.val(editor.getSession().getValue());
+        });
+    }
+
     $(function () {
-        if (!hqImport('hqwebapp/js/initial_page_data').get("code_mirror_off")) {
-            $('.jsonwidget').each(function () {
-                var elem = this;
-                var codeMirror = CodeMirror.fromTextArea(elem, {
-                    lineNumbers: true,
-                    mode: {name: "javascript", json: true},
-                    viewportMargin: Infinity,
-                    foldGutter: true,
-                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-                });
- 
-                var toggleLabel = $('label[for="' + this.id + '"]').click(function (e) {
-                    $(codeMirror.display.wrapper).toggle();
-                    setTimeout(adjustToggleAppearance, 0);
-                    e.preventDefault();
-                });
-                var toggleIcon = $('<a href="#"></a>').prependTo(toggleLabel);
-                function adjustToggleAppearance() {
-                    if ($(codeMirror.display.wrapper).is(':hidden')) {
-                        toggleIcon.html('<i class="icon-angle-right"></i>');
-                    } else {
-                        toggleIcon.html('<i class="icon-angle-down"></i>');
-                    }
-                }
-                adjustToggleAppearance();
-            });
-        }
+        _.each($('.jsonwidget'), initJsonWidget);
     });
+
+    return {
+        initJsonWidget: initJsonWidget,
+    };
 });

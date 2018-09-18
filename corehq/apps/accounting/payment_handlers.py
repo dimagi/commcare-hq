@@ -277,7 +277,7 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
                 invoice.update_balance()
                 invoice.save()
         if amount:
-            account = BillingAccount.get_or_create_account_by_domain(self.domain)
+            account = BillingAccount.get_or_create_account_by_domain(self.domain)[0]
             CreditLine.add_credit(
                 amount, account=account,
                 payment_record=payment_record,

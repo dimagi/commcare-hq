@@ -8,7 +8,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
         self.documentType = ko.observable(initialData.documentType);
         self.documentId = ko.observable(initialData.documentId);
         self.dataSourceId = ko.observable(initialData.dataSourceId);
-        self.expressionText = ko.observable(editor.getValue());
+        self.expressionText = ko.observable(editor.getSession().getValue());
         self.uiFeedback = ko.observable();
 
         self.getExpressionJSON = function () {
@@ -18,8 +18,8 @@ hqDefine('userreports/js/expression_evaluator', function () {
                 return null;
             }
         };
-        self.editor.on('change', function () {
-            self.expressionText(self.editor.getValue());
+        self.editor.getSession().on('change', function () {
+            self.expressionText(self.editor.getSession().getValue());
         });
 
         self.hasError = ko.computed(function () {
@@ -44,7 +44,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
             }
         };
 
-        self.evaluateExpression = function() {
+        self.evaluateExpression = function () {
             self.uiFeedback("");
             if (self.hasError()) {
                 self.uiFeedback("Please fix all parsing errors before evaluating.");

@@ -5,7 +5,10 @@ from django.test import TestCase
 from mock import patch
 
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_FORM, DATA_SOURCE_TYPE_CASE
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_FORM, DATA_SOURCE_TYPE_CASE, \
+    DATA_SOURCE_TYPE_RAW
+from corehq.apps.userreports.app_manager.helpers import get_form_data_source, get_case_data_source
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 
@@ -13,7 +16,7 @@ from corehq.apps.userreports.reports.builder.columns import MultiselectQuestionC
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
-    DataSourceBuilder)
+    DataSourceBuilder, ReportBuilderDataSourceReference)
 from corehq.apps.userreports.tests.utils import get_simple_xform
 
 
@@ -24,10 +27,15 @@ class ReportBuilderDBTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(ReportBuilderDBTest, cls).setUpClass()
-        cls.app = Application.new_app(cls.domain, 'Untitled Application')
-        module = cls.app.add_module(Module.new_module('Untitled Module', None))
-        module.case_type = cls.case_type
-        cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', get_simple_xform())
+        factory = AppFactory(domain=cls.domain)
+        module, form = factory.new_basic_module('Untitled Module', cls.case_type)
+        form.source = get_simple_xform()
+        cls.form = form
+        factory.form_requires_case(form, case_type=cls.case_type, update={
+            'first_name': '/data/first_name',
+            'last_name': '/data/last_name',
+        })
+        cls.app = factory.app
         cls.app.save()
 
     @classmethod
@@ -49,15 +57,40 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
         self.assertEqual('XFormInstance', builder.source_doc_type)
         expected_filter = {
-            "operator": "eq",
-            "expression": {
-                "type": "property_name",
-                "property_name": "xmlns"
-            },
-            "type": "boolean_expression",
-            "property_value": self.form.xmlns
+            "type": "and",
+            "filters": [
+                {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "property_value": self.form.xmlns,
+                },
+                {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "app_id"
+                    },
+                    "property_value": self.app.get_id,
+                }
+            ]
         }
         self.assertEqual(expected_filter, builder.filter)
+        expected_property_names = [
+            'username', 'userID', 'timeStart', 'timeEnd', 'deviceID',
+            '/data/first_name', '/data/last_name', '/data/children', '/data/dob', '/data/state'
+        ]
+        self.assertEqual(expected_property_names, list(builder.data_source_properties.keys()))
+        user_id_prop = builder.data_source_properties['userID']
+        self.assertEqual('userID', user_id_prop.get_id())
+        self.assertEqual('User ID', user_id_prop.get_text())
+        name_prop = builder.data_source_properties['/data/first_name']
+        self.assertEqual('/data/first_name', name_prop.get_id())
+        self.assertEqual('First Name', name_prop.get_text())
 
     def test_builder_for_cases(self):
         builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
@@ -72,6 +105,65 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             "property_value": self.case_type,
         }
         self.assertEqual(expected_filter, builder.filter)
+        expected_property_names = [
+            "closed", "first_name", "last_name", "modified_on", "name", "opened_on", "owner_id", "user_id",
+            "computed/owner_name", "computed/user_name",
+        ]
+        self.assertEqual(expected_property_names, list(builder.data_source_properties.keys()))
+        owner_name_prop = builder.data_source_properties['computed/owner_name']
+        self.assertEqual('computed/owner_name', owner_name_prop.get_id())
+        self.assertEqual('Case Owner', owner_name_prop.get_text())
+        first_name_prop = builder.data_source_properties['first_name']
+        self.assertEqual('first_name', first_name_prop.get_id())
+        self.assertEqual('first name', first_name_prop.get_text())
+
+
+class DataSourceReferenceTest(ReportBuilderDBTest):
+
+    def test_reference_for_forms(self):
+        form_data_source = get_form_data_source(self.app, self.form)
+        form_data_source.save()
+        reference = ReportBuilderDataSourceReference(
+            self.domain, self.app, DATA_SOURCE_TYPE_RAW, form_data_source._id,
+        )
+        # todo: we should filter out some of these columns
+        expected_property_names = [
+            "doc_id", "inserted_at", "completed_time", "started_time", "username", "userID", "@xmlns", "@name",
+            "App Version", "deviceID", "location", "app_id", "build_id", "@version", "state", "last_sync_token",
+            "partial_submission", "received_on", "edited_on", "submit_ip",
+            "form.first_name", "form.last_name", "form.children", "form.dob", "form.state",
+            "form.case.@date_modified", 'form.case.@user_id', 'form.case.@case_id', 'form.case.update.first_name',
+            'form.case.update.last_name', "count",
+        ]
+
+        self.assertEqual(expected_property_names, list(reference.data_source_properties.keys()))
+        user_id_prop = reference.data_source_properties['userID']
+        self.assertEqual('userID', user_id_prop.get_id())
+        self.assertEqual('userID', user_id_prop.get_text())
+        name_prop = reference.data_source_properties['form.first_name']
+        self.assertEqual('form.first_name', name_prop.get_id())
+        self.assertEqual('form.first_name', name_prop.get_text())
+
+    def test_reference_for_cases(self):
+        case_data_source = get_case_data_source(self.app, self.case_type)
+        case_data_source.save()
+        reference = ReportBuilderDataSourceReference(
+            self.domain, self.app, DATA_SOURCE_TYPE_RAW, case_data_source._id,
+        )
+        # todo: we should filter out some of these columns
+        expected_property_names = [
+            "doc_id", "inserted_at", "name", "case_type", "closed", "closed_by_user_id", "closed_date",
+            "external_id", "last_modified_by_user_id", "last_modified_date", "opened_by_user_id", "opened_date",
+            "owner_id", "server_last_modified_date", "state",
+            "first_name", "last_name", "count",
+        ]
+        self.assertEqual(expected_property_names, list(reference.data_source_properties.keys()))
+        owner_id_prop = reference.data_source_properties['owner_id']
+        self.assertEqual('owner_id', owner_id_prop.get_id())
+        self.assertEqual('owner_id', owner_id_prop.get_text())
+        first_name_prop = reference.data_source_properties['first_name']
+        self.assertEqual('first_name', first_name_prop.get_id())
+        self.assertEqual('first_name', first_name_prop.get_text())
 
 
 class ReportBuilderTest(ReportBuilderDBTest):
@@ -84,6 +176,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make report
         builder_form = ConfigureListReportForm(
+            self.domain,
             "Report one",
             self.app._id,
             "form",
@@ -101,6 +194,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make another report
         builder_form = ConfigureListReportForm(
+            self.domain,
             "Report two",
             self.app._id,
             "form",
@@ -126,6 +220,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make report
         builder_form = ConfigureTableReportForm(
+            self.domain,
             "Test Report",
             self.app._id,
             "case",
@@ -146,6 +241,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make an edit to the first report builder report
         builder_form = ConfigureTableReportForm(
+            self.domain,
             "Test Report",
             self.app._id,
             "case",
@@ -180,6 +276,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make report
         builder_form = ConfigureListReportForm(
+            self.domain,
             "Test Report",
             self.app._id,
             "form",
@@ -204,6 +301,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
 
         # Make an edit to the first report builder report
         builder_form = ConfigureListReportForm(
+            self.domain,
             "Test Report",
             self.app._id,
             "form",
@@ -229,6 +327,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
         (FB 268655)
         """
         builder_form = ConfigureListReportForm(
+            self.domain,
             "My Report",
             self.app._id,
             "form",
@@ -245,7 +344,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
         )
         self.assertTrue(builder_form.is_valid())
         with patch('corehq.apps.userreports.tasks.delete_data_source_task'):
-            data_source_config_id = builder_form.create_temp_data_source('admin@example.com')
+            data_source_config_id = builder_form.create_temp_data_source_if_necessary('admin@example.com')
         data_source = DataSourceConfiguration.get(data_source_config_id)
         indicators = sorted([(ind['column_id'], ind['type']) for ind in data_source.configured_indicators])
         expected_indicators = [
@@ -278,6 +377,7 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
         """
 
         builder_form = ConfigureListReportForm(
+            self.domain,
             "My Report",
             self.app._id,
             "form",
@@ -293,6 +393,7 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
         Confirm that data sources for reports with multiselects use "choice_list" indicators for mselect questions.
         """
         builder_form = ConfigureListReportForm(
+            self.domain,
             "My Report",
             self.app._id,
             "form",
@@ -320,6 +421,7 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
         Check report column aggregation for multi-select questions set to "group by"
         """
         builder_form = ConfigureTableReportForm(
+            self.domain,
             "My Report",
             self.app._id,
             "form",

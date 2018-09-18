@@ -7,20 +7,17 @@ import bz2
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
+from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.dhis2.dbaccessors import get_dhis2_connection
 from corehq.motech.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY
 from corehq.motech.dhis2.models import Dhis2Connection
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
-
-LOG_LEVEL_CHOICES = (
-    (99, 'Disable logging'),
-    (logging.ERROR, 'Error'),
-    (logging.INFO, 'Info'),
-)
 
 SEND_FREQUENCY_CHOICES = (
     (SEND_FREQUENCY_MONTHLY, 'Monthly'),
@@ -33,7 +30,6 @@ class Dhis2ConnectionForm(forms.Form):
                                  help_text=_('e.g. "https://play.dhis2.org/demo/api/"'))
     username = forms.CharField(label=_('Username'), required=True)
     password = forms.CharField(label=_('Password'), widget=forms.PasswordInput, required=False)
-    log_level = forms.TypedChoiceField(label=_('Log Level'), required=False, choices=LOG_LEVEL_CHOICES, coerce=int)
 
     def __init__(self, *args, **kwargs):
         super(Dhis2ConnectionForm, self).__init__(*args, **kwargs)
@@ -47,7 +43,6 @@ class Dhis2ConnectionForm(forms.Form):
                 crispy.Field('server_url'),
                 crispy.Field('username'),
                 crispy.Field('password'),
-                crispy.Field('log_level'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -70,9 +65,49 @@ class Dhis2ConnectionForm(forms.Form):
                 # strong, considering we'd have to store the algorithm and the key together anyway; it just
                 # shouldn't be plaintext.
                 dhis2_conn.password = b64encode(bz2.compress(self.cleaned_data['password']))
-            dhis2_conn.log_level = self.cleaned_data['log_level']
             dhis2_conn.save()
             return True
         except Exception as err:
             logging.error('Unable to save DHIS2 connection: %s' % err)
             return False
+
+
+class Dhis2ConfigForm(forms.Form):
+    form_configs = JsonField(expected_type=list)
+
+    def __init__(self, *args, **kwargs):
+        super(Dhis2ConfigForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.add_input(Submit('submit', _('Save Changes')))
+
+    def clean_form_configs(self):
+        errors = []
+        for form_config in self.cleaned_data['form_configs']:
+            if form_config.get('xmlns'):
+                required_msg = _('The "%(property)s" property is required for '
+                                 'form "{}".').format(form_config['xmlns'])
+            else:
+                required_msg = _('The "%(property)s" property is required.')
+
+            if not form_config.get('program_id'):
+                errors.append(ValidationError(
+                    '{} {}'.format(required_msg, _('Please specify the DHIS2 Program of the event.')),
+                    params={'property': 'program_id'},
+                    code='required_property',
+                ))
+            if not form_config.get('event_date'):
+                errors.append(ValidationError(
+                    '{} {}'.format(required_msg, _('Please provide a FormQuestion, FormQuestionMap or '
+                                                   'ConstantString to determine the date of the event.')),
+                    params={'property': 'event_date'},
+                    code='required_property',
+                ))
+            if not form_config.get('datavalue_maps'):
+                errors.append(ValidationError(
+                    '{} {}'.format(required_msg, _('Please map CommCare values to OpenMRS data elements.')),
+                    params={'property': 'datavalue_maps'},
+                    code='required_property',
+                ))
+        if errors:
+            raise ValidationError(errors)
+        return self.cleaned_data['form_configs']

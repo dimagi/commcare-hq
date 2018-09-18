@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import save_export_payload
+from io import open
 
 
 class Command(BaseCommand):

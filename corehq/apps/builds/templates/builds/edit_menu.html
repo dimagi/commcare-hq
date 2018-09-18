@@ -3,11 +3,7 @@
 {% load compress %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'builds/js/edit-builds.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% requirejs_main 'builds/js/edit-builds' %}
 
 {% block stylesheets %}
     <style type="text/css">
@@ -16,9 +12,6 @@
         }
         #menu-table td {
             line-height: 30px;
-        }
-        #build-note {
-            padding: 0 0 15px 23px;
         }
     </style>
 {% endblock %}
@@ -135,32 +128,14 @@
             </h3>
         </div>
         <div class="panel-body">
-            <ol>
-                <li><a href="http://jenkins.dimagi.com/view/CommCare%20Mobile/" target="_blank">{% trans "Browse builds" %}</a></li>
-                <li>{% blocktrans %}
-                      Click on a CommCare version (example: "commcare-mobile-2.13",
-                      <strong>NOT</strong>
-                      "commcare-odk-2.13")
-                    {% endblocktrans %}
-                </li>
-                <li>{% trans "Click on the most recent successful build in the table at left" %}</li>
-                <li>{% trans "Click 'Build Artifacts' -> 'application' -> 'posttmp'" %}</li>
-                <li>{% trans "Right-click on 'artifacts.zip' and select 'Copy Link Address'" %}</li>
-                <li>{% trans "Paste the address into the box below" %}</li>
-                <li>{% trans "Click Submit" %}</li>
-                <li>{% trans "Wait until the page loads. If successful click back and refresh to see your new build." %}</li>
-            </ol>
-            <div id="build-note">
-                <strong>{% trans "Note: Adding version without artifacts would make the corresponding app builds incompatible with Java phones" %}</strong>
-            </div>
             <form class="form-horizontal" action="{% url 'import_build' %}" method="post">
                 {% csrf_token %}
                 <div class="form-group">
-                    <label class="control-label col-sm-3" for="import_build_name">
-                        {% trans "Source for artifacts.zip" %}
+                    <label class="control-label col-sm-3" for="import_build_build_number">
+                        {% trans "Build Number*" %}
                     </label>
                     <div class="col-sm-8">
-                        <input id="import_build_name" type="text" name="source" class="form-control" />
+                        <input id="import_build_build_number" type="text" name="build_number" class="form-control" />
                     </div>
                 </div>
                 <div class="form-group">
@@ -169,14 +144,36 @@
                     </label>
                     <div class="col-sm-8">
                         <input id="import_build_version" type="text" name="version" class="form-control" />
+                        <ol class="help-block">
+                            <li><a href="http://jenkins.dimagi.com/view/CommCare%20Mobile/" target="_blank">{% trans "Browse builds" %}</a></li>
+                            <li>
+                                {% blocktrans %}
+                                  Click on the appropriate commcare-android-2.X link
+                                {% endblocktrans %}
+                            </li>
+                            <li>{% trans "Click on the most recent successful build in the table at left" %}</li>
+                            <li>{% trans "Grab the version, a six-digit number, from the URL" %}</li>
+                        </ol>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="control-label col-sm-3" for="import_build_build_number">
-                        {% trans "Build Number*" %}
+                    <label class="control-label col-sm-3" for="import_build_name">
+                        {% trans "Source for artifacts.zip (J2ME only)" %}
                     </label>
                     <div class="col-sm-8">
-                        <input id="import_build_build_number" type="text" name="build_number" class="form-control" />
+                        <input id="import_build_name" type="text" name="source" class="form-control" />
+                        <ol class="help-block">
+                            <li><a href="http://jenkins.dimagi.com/view/CommCare%20Mobile/" target="_blank">{% trans "Browse builds" %}</a></li>
+                            <li>
+                                {% blocktrans %}
+                                  Click on the appropriate commcare-core-2.X link
+                                {% endblocktrans %}
+                            </li>
+                            <li>{% trans "Click on the most recent successful build in the table at left" %}</li>
+                            <li>{% trans "Click 'Build Artifacts' -> 'application' -> 'posttmp'" %}</li>
+                            <li>{% trans "Right-click on 'artifacts.zip' and select 'Copy Link Address'" %}</li>
+                            <li>{% trans "Paste the address into the box above" %}</li>
+                        </ol>
                     </div>
                 </div>
                 <div class="form-actions">

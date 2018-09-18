@@ -6,6 +6,7 @@ import json
 from django.core.management import BaseCommand, CommandError
 from pillowtop import get_pillow_by_name
 from six.moves import input
+from io import open
 
 
 class Command(BaseCommand):
@@ -22,7 +23,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, filename, **options):
-        with open(filename) as f:
+        with open(filename, encoding='utf-8') as f:
             checkpoint_map = json.loads(f.read())
 
         for pillow_name in sorted(checkpoint_map.keys()):

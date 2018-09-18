@@ -165,7 +165,6 @@ class ESQuery(object):
         self.debug_host = debug_host
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
-        self._source = None
         self.es_instance_alias = es_instance_alias
         self.es_query = {"query": {
             "filtered": {
@@ -314,6 +313,25 @@ class ESQuery(object):
         es.es_query['query']['filtered']['query'] = query
         return es
 
+    def add_query(self, new_query, clause):
+        """
+        Add a query to the current list of queries
+        """
+        current_query = self._query.get(queries.BOOL)
+        if current_query is None:
+            return self.set_query(
+                queries.BOOL_CLAUSE(
+                    queries.CLAUSES[clause]([new_query])
+                )
+            )
+        elif current_query.get(clause) and isinstance(current_query[clause], list):
+            current_query[clause] += [new_query]
+        else:
+            current_query.update(
+                queries.CLAUSES[clause]([new_query])
+            )
+        return self
+
     def get_query(self):
         return self.es_query['query']['filtered']['query']
 
@@ -391,21 +409,34 @@ class ESQuery(object):
         """pretty prints the JSON query that will be sent to elasticsearch."""
         print(self.dumps(pretty=True))
 
-    def sort(self, field, desc=False, reset_sort=True):
-        """Order the results by field."""
+    def _sort(self, sort, reset_sort):
         query = deepcopy(self)
-        sort_field = {
-            field: {'order': 'desc' if desc else 'asc'}
-        }
-
         if reset_sort:
-            query.es_query['sort'] = [sort_field]
+            query.es_query['sort'] = [sort]
         else:
             if not query.es_query.get('sort'):
                 query.es_query['sort'] = []
-            query.es_query['sort'].append(sort_field)
+            query.es_query['sort'].append(sort)
 
         return query
+
+    def sort(self, field, desc=False, reset_sort=True):
+        """Order the results by field."""
+        sort_field = {
+            field: {'order': 'desc' if desc else 'asc'}
+        }
+        return self._sort(sort_field, reset_sort)
+
+    def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True):
+        """Order results by the value of a nested field
+        """
+        sort_field = {
+            '{}.{}'.format(path, field_name): {
+                'order': 'desc' if desc else 'asc',
+                'nested_filter': nested_filter,
+            }
+        }
+        return self._sort(sort_field, reset_sort)
 
     def set_sorting_block(self, sorting_block):
         """To be used with `get_sorting_block`, which interprets datatables sorting"""

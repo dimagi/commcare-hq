@@ -14,11 +14,11 @@
     <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'reports_core/js/choice_list_utils.js' %}"></script>
     <script src="{% static 'reports_core/js/charts.js' %}"></script>
-    <script src="{% static 'reports_core/js/maps.js' %}"></script>
     <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-    <script src="{% static 'reports/js/maps_utils.js' %}"></script>
+    <script src="{% static 'reports/js/maps_utils.js' %}"></script><!-- depends on leaflet -->
+    <script src="{% static 'reports_core/js/maps.js' %}"></script>
     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
-    <script src="{% static 'reports/js/filters/main.js' %}"></script>
+    {% include 'reports/partials/filters_js.html' %}
     {% include 'reports/partials/graphs/charts_js.html' %}
     <script src="{% static 'reports_core/js/base_template_new.js' %}"></script>
 {% endblock %}

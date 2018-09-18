@@ -3,9 +3,13 @@ from __future__ import unicode_literals
 from django.test import TestCase
 
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data
+from custom.icds_reports.messages import new_born_with_low_weight_help_text, underweight_children_help_text, \
+    early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
+    children_initiated_appropriate_complementary_feeding_help_text
 
 
 class TestMaternalChildData(TestCase):
+    maxDiff = None
     def test_data_underweight_weight_for_age(self):
         self.assertDictEqual(
             get_maternal_child_data(
@@ -22,11 +26,7 @@ class TestMaternalChildData(TestCase):
                 "all": 696,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Percentage of children between 0-5 years enrolled for Anganwadi Services"
-                             " with weight-for-age less than -2 standard deviations"
-                             " of the WHO Child Growth Standards median. "
-                             "Children who are moderately or severely underweight"
-                             " have a higher risk of mortality.",
+                "help_text": underweight_children_help_text(),
                 "percent": -14.901477832512326,
                 "value": 150,
                 "label": "Underweight (Weight-for-Age)"
@@ -41,21 +41,25 @@ class TestMaternalChildData(TestCase):
                     'month': (2017, 5, 1),
                     'prev_month': (2017, 4, 1),
                     'aggregation_level': 1
-                }
+                },
+                False,
+                True
             )['records'][0][1],
             {
                 "redirect": "wasting",
-                "color": "red",
-                "all": 31,
+                "color": "green",
+                "all": 27,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Percentage of children (6-60 months) with weight-for-height below"
-                             " -3 standard deviations of the WHO Child Growth Standards median. "
-                             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of"
-                             " acute undernutrition usually as a consequence of insufficient "
-                             "food intake or a high incidence of infectious diseases.",
-                "percent": 41.935483870967715,
-                "value": 8,
+                "help_text": "Of the children enrolled for Anganwadi services, whose weight and height was "
+                             "measured, the percentage of children between 0 - 5 years who were "
+                             "moderately/severely wasted in the current month. "
+                             "<br/><br/>"
+                             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+                             "undernutrition usually as a consequence of insufficient food intake or a high "
+                             "incidence of infectious diseases.",
+                "percent": 0,
+                "value": 9,
                 "label": "Wasting (Weight-for-Height)"
             }
         )
@@ -68,7 +72,9 @@ class TestMaternalChildData(TestCase):
                     'month': (2017, 5, 1),
                     'prev_month': (2017, 4, 1),
                     'aggregation_level': 1
-                }
+                },
+                False,
+                True
             )['records'][1][0],
             {
                 "redirect": "stunting",
@@ -76,11 +82,12 @@ class TestMaternalChildData(TestCase):
                 "all": 32,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Percentage of children (6-60 months) with height-for-age below -2Z"
-                             " standard deviations of the WHO Child Growth Standards median. "
-                             "Stunting is a sign of chronic undernutrition and has "
-                             "long lasting harmful consequences on the growth of a child",
-                "percent": -27.43055555555556,
+                "help_text": "Of the children whose height was measured, the percentage of children between "
+                             "0 - 5 years who were moderately/severely stunted in the current month."
+                             "<br/><br/>"
+                             "Stunting is a sign of chronic undernutrition and has long lasting harmful "
+                             "consequences on the growth of a child",
+                "percent": -14.236111111111107,
                 "value": 19,
                 "label": "Stunting (Height-for-Age)"
             }
@@ -102,11 +109,7 @@ class TestMaternalChildData(TestCase):
                 "all": 4,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Percentage of newborns born with birth weight less than 2500 grams."
-                             " Newborns with Low Birth Weight are closely associated "
-                             "with foetal and neonatal mortality and morbidity,"
-                             " inhibited growth and cognitive development,"
-                             " and chronic diseases later in life",
+                "help_text": new_born_with_low_weight_help_text(html=False),
                 "percent": "Data in the previous reporting period was 0",
                 "value": 2,
                 "label": "Newborns with Low Birth Weight"
@@ -129,10 +132,7 @@ class TestMaternalChildData(TestCase):
                 "all": 7,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Percentage of children breastfed within an hour of birth. "
-                             "Early initiation of breastfeeding ensure the newborn "
-                             "recieves the 'first milk' rich in nutrients "
-                             "and encourages exclusive breastfeeding practice",
+                "help_text": early_initiation_breastfeeding_help_text(),
                 "percent": 128.57142857142856,
                 "value": 4,
                 "label": "Early Initiation of Breastfeeding"
@@ -155,10 +155,7 @@ class TestMaternalChildData(TestCase):
                 "all": 50,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Percentage of children between 0 - 6 months exclusively breastfed. "
-                             "An infant is exclusively breastfed if they recieve only breastmilk "
-                             "with no additional food, liquids (even water) ensuring "
-                             "optimal nutrition and growth between 0 - 6 months",
+                "help_text": exclusive_breastfeeding_help_text(),
                 "percent": 149.84615384615384,
                 "value": 28,
                 "label": "Exclusive Breastfeeding"
@@ -181,10 +178,7 @@ class TestMaternalChildData(TestCase):
                 "all": 40,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Percentage of children between 6 - 8 months given timely "
-                             "introduction to solid or semi-solid food. Timely intiation"
-                             " of complementary feeding in addition to breastmilk "
-                             "at 6 months of age is a key feeding practice to reduce malnutrition",
+                "help_text": children_initiated_appropriate_complementary_feeding_help_text(),
                 "percent": 147.27272727272728,
                 "value": 34,
                 "label": "Children initiated appropriate Complementary Feeding"
@@ -207,10 +201,10 @@ class TestMaternalChildData(TestCase):
                 "all": 26,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Percentage of pregnant women who delivered in a public "
-                             "or private medical facility in the last month. "
-                             "Delivery in medical instituitions is associated "
-                             "with a decrease in maternal mortality rate",
+                "help_text": "Of the total number of women enrolled for Anganwadi services who gave birth in "
+                             "the last month, the percentage who delivered in a public or private medical "
+                             "facility. Delivery in medical instituitions is associated with a decrease in "
+                             "maternal mortality rate",
                 "percent": 156.41025641025647,
                 "value": 20,
                 "label": "Institutional Deliveries"

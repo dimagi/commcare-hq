@@ -4,6 +4,7 @@
 
 {% initial_page_data 'lang' lang %}
 {% initial_page_data 'translations' translations %}
+{% initial_page_data 'smart_lang_display_enabled' smart_lang_display_enabled %}
 {% registerurl "edit_app_langs" domain app.id %}
 {% registerurl "edit_app_ui_translations" domain app.id %}
 {% registerurl "get_app_ui_translations" domain %}
@@ -23,7 +24,7 @@
       </div>
       <div class="panel-collapse collapse in" id="supported-languages">
         <div class="panel-body">
-          {% include "app_manager/partials/supported-languages.html" %}
+          {% include "app_manager/partials/settings/supported_languages.html" with show_smart_lang_option='true' %}
         </div>
       </div>
     </div>

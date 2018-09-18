@@ -8,7 +8,7 @@
 
 {% block page_content %}
     {% initial_page_data 'current_version' subscription.plan_version.id %}
-    <ul class="nav nav-tabs" id="user-settings-tabs">
+    <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
         <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
         <li><a href="#invoices" data-toggle="tab">{% trans "Invoices" %}</a></li>
         {% if can_change_subscription %}

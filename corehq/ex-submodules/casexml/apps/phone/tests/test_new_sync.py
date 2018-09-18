@@ -188,6 +188,11 @@ class TestNewSyncSpecifics(TestCase):
         )
         cls.user_id = cls.user.user_id
 
+    @classmethod
+    def tearDownClass(cls):
+        set_request(None)
+        super(TestNewSyncSpecifics, cls).tearDownClass()
+
     def test_legacy_support_toggle(self):
         restore_config = RestoreConfig(self.project, restore_user=self.user)
         factory = CaseFactory(domain=self.project.name, case_defaults={'owner_id': self.user_id})

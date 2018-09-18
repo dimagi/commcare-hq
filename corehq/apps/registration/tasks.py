@@ -15,7 +15,7 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
-@periodic_task(
+@periodic_task(serializer='pickle',
     run_every=crontab(minute=0),  # execute once every hour
     queue='background_queue',
 )
@@ -35,6 +35,7 @@ def activation_24hr_reminder_email():
             "domain": request.domain,
             "registration_link": registration_link,
             "full_name": user.full_name,
+            "first_name": user.first_name,
             'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,
         }
 

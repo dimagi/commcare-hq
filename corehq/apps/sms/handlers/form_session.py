@@ -9,7 +9,7 @@ from corehq.apps.sms.api import (
 )
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.util import format_message_list, get_date_format
-from touchforms.formplayer.api import current_question
+from corehq.apps.formplayer_api.smsforms.api import current_question
 from corehq.apps.smsforms.app import (
     get_responses,
     _responses_to_text,
@@ -157,8 +157,11 @@ def validate_answer(event, text, v):
     # Validate int
     elif event.datatype == "int":
         try:
-            int(text)
-            valid = True
+            value = int(text)
+            if value >= -2147483648 and value <= 2147483647:
+                valid = True
+            else:
+                error_msg = get_message(MSG_INVALID_INT_RANGE, v)
         except ValueError:
             error_msg = get_message(MSG_INVALID_INT, v)
     

@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
-    CaseTriggerInfo,
     CreatePatientIdentifierTask,
     CreatePersonAddressTask,
     CreatePersonAttributeTask,
@@ -15,11 +14,12 @@ from corehq.motech.openmrs.repeater_helpers import (
     UpdatePersonAttributeTask,
     UpdatePersonNameTask,
     UpdatePersonPropertiesTask,
-    get_openmrs_location_uuid,
+    get_ancestor_location_openmrs_uuid,
     get_patient,
 )
 from corehq.motech.openmrs.workflow import WorkflowTask, execute_workflow
 from corehq.motech.utils import pformat_json
+from corehq.motech.value_source import CaseTriggerInfo
 from dimagi.utils.parsing import string_to_utc_datetime
 
 
@@ -184,7 +184,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         """
         subtasks = []
         provider_uuid = getattr(self.openmrs_config, 'openmrs_provider', None)
-        location_uuid = get_openmrs_location_uuid(self.domain, self.info.case_id)
+        location_uuid = get_ancestor_location_openmrs_uuid(self.domain, self.info.case_id)
         self.info.form_question_values.update(self.form_question_values)
         for form_config in self.openmrs_config.form_configs:
             if form_config.xmlns == self.form_json['form']['@xmlns']:

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import percent_pregnant_women_enrolled_help_text
 from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_map, \
     get_enrolled_women_data_chart, get_enrolled_women_sector_data
 from django.test import TestCase
@@ -23,7 +24,7 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
+                    "info": percent_pregnant_women_enrolled_help_text(),
                     "average": 77.5,
                     "average_format": "number",
                     'extended_info': [
@@ -80,7 +81,7 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
+                    "info": percent_pregnant_women_enrolled_help_text(),
                     "average": 35.0,
                     "average_format": "number",
                     'extended_info': [
@@ -207,7 +208,7 @@ class TestEnrolledWomen(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
+                "info": percent_pregnant_women_enrolled_help_text(),
                 "tooltips_data": {
                     "s2": {
                         "valid": 24,

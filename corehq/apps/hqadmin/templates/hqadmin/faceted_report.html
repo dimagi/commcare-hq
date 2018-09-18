@@ -5,12 +5,8 @@
 {% block view-tabs %}
 {% endblock %}
 
-{% block stylesheets %}{{ block.super }}
-    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
-{% endblock %}
-
 {% block js %}{{ block.super }}
-    <script src="{% static 'reports/js/reports.config.js' %}"></script>
+    <script src="{% static 'reports/js/hq_report.js' %}"></script>
     <script src="{% static 'reports/js/reports.util.js' %}"></script>
     {% include 'reports/partials/filters_js.html' %}
     <script src="{% static 'reports/js/reports.async.js' %}"></script>
@@ -31,5 +27,6 @@
 
 {% block page_content %}
     {% initial_page_data 'js_options' report.js_options %}
+    {% initial_page_data 'report_table_js_options' report_table_js_options %}
     {{ block.super }}
 {% endblock %}

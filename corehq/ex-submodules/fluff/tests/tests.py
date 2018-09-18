@@ -221,23 +221,23 @@ class FluffTest(TestCase):
             classname = cls.__name__
             self.fakedb.add_view('fluff/generic', [
                 (
-                    {'reduce': True, 'key': [classname, 'a', 'b', 'value_week', 'null', None], 'wrap_doc': True},
+                    {'reduce': True, 'key': [classname, 'a', 'b', 'value_week', 'null', None]},
                     [{"key": None, "value": {"sum": 3}}]
                 ),
                 (
-                    {'reduce': True, 'key': [classname, 'a', 'b', 'value_week', 'null_value', None], 'wrap_doc': True},
+                    {'reduce': True, 'key': [classname, 'a', 'b', 'value_week', 'null_value', None]},
                     [{"key": None, "value": {"max": 8}}]
                 ),
                 (
                     {'startkey': [classname, 'a', 'b', 'value_week', 'date', start],
                         'endkey': [classname, 'a', 'b', 'value_week', 'date', end],
-                        'reduce': True, 'wrap_doc': True},
+                        'reduce': True},
                     [{"key": None, "value": {"count": 7}}]
                 ),
                 (
                     {'startkey': [classname, 'a', 'b', 'value_week', 'date_value', start],
                         'endkey': [classname, 'a', 'b', 'value_week', 'date_value', end],
-                        'reduce': True, 'wrap_doc': True},
+                        'reduce': True},
                     [{"key": None, "value": {"sum": 11}}]
                 )
             ])

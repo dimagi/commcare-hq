@@ -4,6 +4,7 @@ from django.test import TestCase
 from corehq.apps.case_importer.tracking.filestorage import transient_file_store, persistent_file_store
 from corehq.util.files import file_extention_from_filename
 from corehq.util.test_utils import generate_cases
+from io import open
 
 
 class FilestorageTest(TestCase):
@@ -13,19 +14,19 @@ class FilestorageTest(TestCase):
         cls.filename = '/tmp/test_file.txt'
         cls.content = 'this is the message\n'
 
-        with open(cls.filename, 'w') as f:
+        with open(cls.filename, 'w', encoding='utf-8') as f:
             f.write(cls.content)
 
 
 @generate_cases([(transient_file_store,),
                  (persistent_file_store,)], FilestorageTest)
 def test_transient(self, file_store):
-    with open(self.filename, 'r') as f:
-        identifier = file_store.write_file(f, 'test_file.txt').identifier
+    with open(self.filename, 'r', encoding='utf-8') as f:
+        identifier = file_store.write_file(f, 'test_file.txt', 'test-domain').identifier
 
     tmpfile = file_store.get_tempfile_ref_for_contents(identifier)
     self.assertEqual(file_extention_from_filename(tmpfile), '.txt')
-    with open(tmpfile) as f:
+    with open(tmpfile, encoding='utf-8') as f:
         self.assertEqual(f.read(), self.content)
 
     self.assertEqual(file_store.get_filename(identifier), 'test_file.txt')

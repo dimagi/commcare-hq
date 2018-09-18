@@ -7,7 +7,9 @@ from django.core.management.base import CommandError, BaseCommand
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration, get_diff_db)
-from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import _blow_away_migration
+from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import (
+    _blow_away_migration, _get_sigterm_handler
+)
 from corehq.apps.couch_sql_migration.progress import (
     set_couch_sql_migration_started, couch_sql_migration_in_progress,
     set_couch_sql_migration_not_started, set_couch_sql_migration_complete
@@ -19,8 +21,11 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 from corehq.util.markup import shell_green, SimpleTableWriter, TableRowFormatter
+from corehq.util.signals import SignalHandlerContext
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
+import signal
+from io import open
 
 
 class Command(BaseCommand):
@@ -39,9 +44,10 @@ class Command(BaseCommand):
 
         self.stdout.ending = "\n"
         self.stderr.ending = "\n"
-        with open(path, 'r') as f:
-            domains = [name.strip() for name in f.readlines()]
+        with open(path, 'r', encoding='utf-8') as f:
+            domains = [name.strip() for name in f.readlines() if name.strip()]
 
+        failed = []
         self.stdout.write("Processing {} domains".format(len(domains)))
         for domain in with_progress_bar(domains, oneline=False):
             try:
@@ -51,6 +57,15 @@ class Command(BaseCommand):
                     traceback.print_exc()
                 self.stderr.write("Error migrating domain {}: {}".format(domain, e))
                 self.abort(domain)
+                failed.append((domain, e))
+
+        if failed:
+            self.stderr.write("Errors:")
+            self.stderr.write(
+                "\n".join(
+                    ["{}: {}".format(domain, exc) for domain, exc in failed]))
+        else:
+            self.stdout.write("All migrations successful!")
 
     def migrate_domain(self, domain):
         if should_use_sql_backend(domain):
@@ -59,12 +74,14 @@ class Command(BaseCommand):
 
         set_couch_sql_migration_started(domain)
 
-        do_couch_to_sql_migration(domain, with_progress=False, debug=False)
+        with SignalHandlerContext([signal.SIGTERM, signal.SIGINT], _get_sigterm_handler(domain)):
+            do_couch_to_sql_migration(domain, with_progress=False, debug=False)
+
         stats = self.get_diff_stats(domain)
         if stats:
             self.stderr.write("Migration has diffs, aborting for domain {}".format(domain))
             self.abort(domain)
-            writer = SimpleTableWriter(self.stdout, TableRowFormatter([50, 10, 10, 10]))
+            writer = SimpleTableWriter(self.stdout, TableRowFormatter([50, 10, 10, 10, 10]))
             writer.write_table(['Doc Type', '# Couch', '# SQL', '# Diffs', '# Docs with Diffs'], [
                 (doc_type,) + stat for doc_type, stat in stats.items()
             ])

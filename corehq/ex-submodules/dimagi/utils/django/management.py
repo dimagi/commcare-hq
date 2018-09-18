@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 from django.http import HttpResponse
 
 from dimagi.utils.parsing import string_to_boolean

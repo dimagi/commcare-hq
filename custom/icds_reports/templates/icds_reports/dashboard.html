@@ -21,93 +21,99 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'perfect-scrollbar/css/perfect-scrollbar.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
-        
+        {% include 'analytics/google.html' %}
         {% javascript_libraries underscore=True hq=True %}
-        <script type="text/javascript" src="{% static 'd3-3.5.17/d3.js' %}"></script>
-        <script type="text/javascript" src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
-        <script type="text/javascript" src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
-        <script type="text/javascript" src="{% static 'datatables-fixedheader/js/dataTables.fixedHeader.js'%}"></script>
-        <script type="text/javascript" src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular/angular.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-datatables/dist/angular-datatables.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-datatables/dist/plugins/bootstrap/angular-datatables.bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-datatables/dist/plugins/fixedcolumns/angular-datatables.fixedcolumns.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-datatables/dist/plugins/fixedheader/angular-datatables.fixedheader.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-route/angular-route.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'ui-select/dist/select.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
-        <script type="text/javascript" src="{% static 'nvd3-1.8.6/build/nv.d3.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
-        <script type="text/javascript" src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
-        <script type="text/javascript" src="{% static 'angular-leaflet-directive/dist/angular-leaflet-directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'perfect-scrollbar/js/perfect-scrollbar.jquery.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-perfect-scrollbar/src/angular-perfect-scrollbar.js' %}"></script>
+        <script src="{% static 'd3-3.5.17/d3.js' %}"></script>
+        <script src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
+        <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
+        <script src="{% static 'datatables-fixedheader/js/dataTables.fixedHeader.js'%}"></script>
+        <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+        <script src="{% static 'angular/angular.js' %}"></script>
+        <script src="{% static 'angular-datatables/dist/angular-datatables.min.js' %}"></script>
+        <script src="{% static 'angular-datatables/dist/plugins/bootstrap/angular-datatables.bootstrap.min.js' %}"></script>
+        <script src="{% static 'angular-datatables/dist/plugins/fixedcolumns/angular-datatables.fixedcolumns.js' %}"></script>
+        <script src="{% static 'angular-datatables/dist/plugins/fixedheader/angular-datatables.fixedheader.js' %}"></script>
+        <script src="{% static 'angular-route/angular-route.js' %}"></script>
+        <script src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
+        <script src="{% static 'ui-select/dist/select.js' %}"></script>
+        <script src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
+        <script src="{% static 'nvd3-1.8.6/build/nv.d3.js' %}"></script>
+        <script src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
+        <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
+        <script src="{% static 'angular-leaflet-directive/dist/angular-leaflet-directive.js' %}"></script>
+        <script src="{% static 'perfect-scrollbar/js/perfect-scrollbar.jquery.min.js' %}"></script>
+        <script src="{% static 'angular-perfect-scrollbar/src/angular-perfect-scrollbar.js' %}"></script>
 
-        <script type="text/javascript" src="{% static 'topojson/topojson.js' %}"></script>
-        <script type="text/javascript" src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/topojsons/states.topojson.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/topojsons/district.topojson.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/topojsons/block_v2.topojson.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
+        <script src="{% static 'topojson/topojson.js' %}"></script>
+        <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
+    {% if have_access_to_features %}
+        <script src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
+        <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
+        <script src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
+    {% else %}
+        <script src="{% static 'js/topojsons/states.topojson.js' %}"></script>
+        <script src="{% static 'js/topojsons/district.topojson.js' %}"></script>
+        <script src="{% static 'js/topojsons/block_v2.topojson.js' %}"></script>
+    {% endif %}
+        <script src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
+        <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
 
-        <script type="text/javascript" src="{% static 'js/icds_app.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/filters/property-filter/property.filter.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
+        <script src="{% static 'js/icds_app.js' %}"></script>
+        <script src="{% static 'js/filters/property-filter/property.filter.js' %}"></script>
+        <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
 
-        <script type="text/javascript" src="{% static 'js/angular-services/maternal-child.service.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/angular-services/system-usage.service.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/angular-services/locations.service.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/angular-services/progress-report.service.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/angular-services/storage.service.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/angular-services/icds-cas-reach.service.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/angular-services/demographics.service.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/angular-services/issnip.service.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/angular-services/baseControllers.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/maternal-child.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/system-usage.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/locations.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/progress-report.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/storage.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/icds-cas-reach.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/demographics.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/download.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/baseControllers.service.js' %}"></script>
 
-        <script type="text/javascript" src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/month-filter/month-filter.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/additional-filter/additional-filter.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/system-usage/system-usage.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/navigation/navigation.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/awc-opened-yesterday/awc-opened-yesterday.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/underweight-children-report/underweight-children-report.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/prevalence-of-severe-report/prevalence-of-severe-report.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/prevalence-of-stunting-report/prevalence-of-stunting-report.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/newborn_with_low_weight/newborn_with_low_weight.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/early_initiation_breastfeeding/early_initiation_breastfeeding.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/awc-reports/awc-reports.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/download/download.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/progress-report/progress-report.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/print/print.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/exclusive-breastfeeding/exlusive-breastfeeding.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/children-initiated/children-initiated.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/institutional-deliveries/institutional-deliveries.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/immunization_coverage/immunization_coverage.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/awc-daily-status/awc-daily-status.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/awcs-covered/awcs-covered.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/registered-household/registered-household.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/enrolled-children/enrolled-children.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/enrolled-women/enrolled-women.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/lactating-enrolled-women/lactating-enrolled-women.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/adolescent-girls/adolescent-girls.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/adhaar-beneficiary/adhaar-beneficiary.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/clean-water/clean-water.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/functional-toilet/functional-toilet.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/medicine-kit/medicine-kit.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/infants-weight-scale/infants-weight-scale.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/adult-weight-scale/adult-weight-scale.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/access-denied/access-denied.directive.js' %}"></script>
+        <script src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
+        <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
+        <script src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>
+        <script src="{% static 'js/directives/month-filter/month-filter.directive.js' %}"></script>
+        <script src="{% static 'js/directives/additional-filter/additional-filter.directive.js' %}"></script>
+        <script src="{% static 'js/directives/system-usage/system-usage.directive.js' %}"></script>
+        <script src="{% static 'js/directives/navigation/navigation.directive.js' %}"></script>
+        <script src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
+        <script src="{% static 'js/directives/awc-opened-yesterday/awc-opened-yesterday.directive.js' %}"></script>
+        <script src="{% static 'js/directives/underweight-children-report/underweight-children-report.directive.js' %}"></script>
+        <script src="{% static 'js/directives/prevalence-of-severe-report/prevalence-of-severe-report.directive.js' %}"></script>
+        <script src="{% static 'js/directives/prevalence-of-stunting-report/prevalence-of-stunting-report.directive.js' %}"></script>
+        <script src="{% static 'js/directives/newborn_with_low_weight/newborn_with_low_weight.directive.js' %}"></script>
+        <script src="{% static 'js/directives/early_initiation_breastfeeding/early_initiation_breastfeeding.directive.js' %}"></script>
+        <script src="{% static 'js/directives/awc-reports/awc-reports.directive.js' %}"></script>
+        <script src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
+        <script src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
+        <script src="{% static 'js/directives/download/download.directive.js' %}"></script>
+        <script src="{% static 'js/directives/progress-report/progress-report.directive.js' %}"></script>
+        <script src="{% static 'js/directives/print/print.directive.js' %}"></script>
+        <script src="{% static 'js/directives/exclusive-breastfeeding/exlusive-breastfeeding.directive.js' %}"></script>
+        <script src="{% static 'js/directives/children-initiated/children-initiated.directive.js' %}"></script>
+        <script src="{% static 'js/directives/institutional-deliveries/institutional-deliveries.directive.js' %}"></script>
+        <script src="{% static 'js/directives/immunization_coverage/immunization_coverage.directive.js' %}"></script>
+        <script src="{% static 'js/directives/awc-daily-status/awc-daily-status.directive.js' %}"></script>
+        <script src="{% static 'js/directives/awcs-covered/awcs-covered.directive.js' %}"></script>
+        <script src="{% static 'js/directives/registered-household/registered-household.directive.js' %}"></script>
+        <script src="{% static 'js/directives/enrolled-children/enrolled-children.directive.js' %}"></script>
+        <script src="{% static 'js/directives/enrolled-women/enrolled-women.directive.js' %}"></script>
+        <script src="{% static 'js/directives/lactating-enrolled-women/lactating-enrolled-women.directive.js' %}"></script>
+        <script src="{% static 'js/directives/adolescent-girls/adolescent-girls.directive.js' %}"></script>
+        <script src="{% static 'js/directives/adhaar-beneficiary/adhaar-beneficiary.directive.js' %}"></script>
+        <script src="{% static 'js/directives/clean-water/clean-water.directive.js' %}"></script>
+        <script src="{% static 'js/directives/functional-toilet/functional-toilet.directive.js' %}"></script>
+        <script src="{% static 'js/directives/medicine-kit/medicine-kit.directive.js' %}"></script>
+        <script src="{% static 'js/directives/infants-weight-scale/infants-weight-scale.directive.js' %}"></script>
+        <script src="{% static 'js/directives/adult-weight-scale/adult-weight-scale.directive.js' %}"></script>
+        <script src="{% static 'js/directives/access-denied/access-denied.directive.js' %}"></script>
 </head>
 <body>
-<div id="app">
+<div id="app" ng-cloak>
     <div ng-controller="MainController" class="container-fluid">
         <div class="row">
             <div class="col-xs-2 col-md-2 left-menu">
@@ -268,7 +274,7 @@
         </div>
     </script>
     {% include 'hqwebapp/includes/modal_report_issue.html' %}
-    <script type="text/javascript" src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
     <script>
         var $modal = $('#modalReportIssue');
         $modal.find('.modal-title').text('Report an Issue with ICDS-CAS Dashboard');
@@ -298,13 +304,13 @@
     ]);
     angular.module('icdsApp').constant('ages', [
         {id: '', name: 'All'},
-        {id: '6', name: '0-6 months'},
-        {id: '12', name: '6-12 months'},
-        {id: '24', name: '12-24 months'},
-        {id: '36', name: '24-36 months'},
-        {id: '48', name: '36-48 months'},
-        {id: '60', name: '48-60 months'},
-        {id: '72', name: '60-72 months'},
+        {id: '6', name: '0-6 months (0-180 days)'},
+        {id: '12', name: '6-12 months (181-365 days)'},
+        {id: '24', name: '12-24 months (366-730 days)'},
+        {id: '36', name: '24-36 months (731-1095 days)'},
+        {id: '48', name: '36-48 months (1096-1460 days)'},
+        {id: '60', name: '48-60 months (1461-1825 days)'},
+        {id: '72', name: '60-72 months (1826-2190 days)'},
     ]);
     angular.module('icdsApp').value('cgBusyDefaults', {
       message:'Loading data',

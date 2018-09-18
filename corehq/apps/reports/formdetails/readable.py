@@ -1,19 +1,30 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from copy import deepcopy
+import datetime
 from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.exceptions import XFormException
+from corehq.form_processor.utils.xform import get_node
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.timezones.utils import get_timezone_for_request
-from dimagi.ext.jsonobject import *
+from dimagi.ext.jsonobject import (
+    BooleanProperty,
+    DictProperty,
+    JsonObject,
+    ListProperty,
+    ObjectProperty,
+    StringProperty,
+)
 from jsonobject.base import DefaultProperty
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Application, FormActionCondition
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from django.utils.translation import ugettext_lazy as _
+import re
 import six
 from six.moves import map
 
@@ -45,7 +56,7 @@ class FormQuestion(JsonObject):
     @property
     def icon(self):
         try:
-            return "{} {}".format(VELLUM_TYPES[self.type]['icon'], VELLUM_TYPES[self.type]['icon_bs3'])
+            return VELLUM_TYPES[self.type]['icon']
         except KeyError:
             return 'fa fa-question-circle'
 
@@ -56,6 +67,19 @@ class FormQuestion(JsonObject):
             if self.value.startswith(prefix):
                 return self.value[len(prefix):]
         return '/'.join(self.value.split('/')[2:])
+
+    @property
+    def option_values(self):
+        return [o.value for o in self.options]
+
+    @property
+    def editable(self):
+        if not self.type:
+            return True
+        vtype = VELLUM_TYPES[self.type]
+        if 'editable' not in vtype:
+            return False
+        return vtype['editable']
 
 
 class FormQuestionResponse(FormQuestion):
@@ -92,9 +116,17 @@ class CaseFormMeta(JsonObject):
     errors = ListProperty(six.text_type)
 
 
+class CaseDetailMeta(JsonObject):
+    module_id = StringProperty()
+    header = DictProperty()
+    format = StringProperty()
+
+
 class CaseProperty(JsonObject):
     name = StringProperty()
     forms = ListProperty(CaseFormMeta)
+    short_details = ListProperty(CaseDetailMeta)
+    long_details = ListProperty(CaseDetailMeta)
     has_errors = BooleanProperty()
     description = StringProperty()
 
@@ -119,6 +151,12 @@ class CaseProperty(JsonObject):
             question=question,
             condition=(condition if condition and condition.type == 'if' else None)
         ))
+
+    def add_detail(self, type_, module_id, header, format):
+        {
+            "short": self.short_details,
+            "long": self.long_details,
+        }[type_].append(CaseDetailMeta(module_id=module_id, header=header, format=format))
 
 
 class CaseTypeMeta(JsonObject):
@@ -196,6 +234,13 @@ class AppCaseMetadata(JsonObject):
         prop.has_errors = True
         form = prop.get_form(form_id)
         form.errors.append(message)
+        return prop
+
+    def add_property_detail(self, detail_type, root_case_type, module_id, column):
+        if column.useXpathExpression:
+            return column.field
+        prop = self.get_property(root_case_type, column.field)
+        prop.add_detail(detail_type, module_id, column.header, column.format)
         return prop
 
     def get_error_property(self, case_type, name):
@@ -307,7 +352,7 @@ def get_readable_form_data(xform_data, questions, process_label=None):
 def strip_form_data(data):
     data = data.copy()
     # remove all case, meta, attribute nodes from the top level
-    for key in data.keys():
+    for key in list(data.keys()):
         if (
             not form_key_filter(key) or
             key in ('meta', 'case', 'commcare_usercase') or
@@ -511,3 +556,61 @@ def questions_in_hierarchy(questions):
                 and question.value not in question_lists_by_group:
             question_lists_by_group[question.value] = question.children
     return question_lists_by_group[None]
+
+
+def get_data_cleaning_data(form_data, instance):
+    question_response_map = {}
+    ordered_question_values = []
+    repeats = {}
+
+    def _repeat_question_value(question, repeat_index):
+        return "{}[{}]{}".format(question.repeat, repeat_index,
+                                 re.sub(r'^' + question.repeat, '', question.value))
+
+    def _add_to_question_response_map(data, repeat_index=None):
+        for index, question in enumerate(data):
+            if question.children:
+                next_index = repeat_index if question.repeat else index
+                _add_to_question_response_map(question.children, repeat_index=next_index)
+            elif question.editable and question.response is not None:  # ignore complex and skipped questions
+                value = question.value
+                if question.repeat:
+                    if question.repeat not in repeats:
+                        repeats[question.repeat] = repeat_index + 1
+                    else:
+                        # This is the second or later instance of a repeat group, so it gets [i] notation
+                        value = _repeat_question_value(question, repeat_index + 1)
+
+                        # Update first instance of repeat group, which didn't know it needed [i] notation
+                        if question.value in question_response_map:
+                            first_value = _repeat_question_value(question, repeat_index)
+                            question_response_map[first_value] = question_response_map.pop(question.value)
+                            try:
+                                index = ordered_question_values.index(question.value)
+                                ordered_question_values[index] = first_value
+                            except ValueError:
+                                pass
+
+                # Limit data cleaning to nodes that can be found in the response submission.
+                # form_data may contain other data that shouldn't be clean-able, like subcase attributes.
+                try:
+                    get_node(instance.get_xml_element(), value, instance.xmlns)
+                except XFormQuestionValueNotFound:
+                    continue
+
+                question_response_map[value] = {
+                    'label': question.label,
+                    'icon': question.icon,
+                    'value': question.response,
+                }
+                ordered_question_values.append(value)
+
+    _add_to_question_response_map(form_data)
+
+    # Add splitName with zero-width spaces for display purposes
+    for key in question_response_map.keys():
+        question_response_map[key].update({
+            'splitName': re.sub(r'/', '/\u200B', key),
+        })
+
+    return (question_response_map, ordered_question_values)

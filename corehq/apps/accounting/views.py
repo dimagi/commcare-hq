@@ -3,21 +3,33 @@ from __future__ import unicode_literals
 from datetime import date
 import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
+from django.core.paginator import Paginator
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
 from django.urls import reverse
 from django.http import (
+    HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseNotFound,
     HttpResponseRedirect,
     Http404,
+    JsonResponse,
 )
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 
-from corehq.apps.domain.decorators import require_superuser
+from couchexport.export import Format
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from couchdbkit import ResourceNotFound
+
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
@@ -25,16 +37,19 @@ from corehq.apps.hqwebapp.decorators import (
     use_multiselect,
 )
 
+import csv342 as csv
 from memoized import memoized
 
+from corehq.apps.accounting.enterprise import EnterpriseReport
 from corehq.apps.accounting.forms import (
     BillingAccountBasicForm, BillingAccountContactForm, CreditForm,
     SubscriptionForm, CancelForm,
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
-    ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
+    ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm, TriggerCustomerInvoiceForm,
     TestReminderEmailFrom,
     CreateAdminForm,
+    EnterpriseSettingsForm,
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
 )
@@ -45,7 +60,7 @@ from corehq.apps.accounting.exceptions import (
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface, SubscriptionInterface, SoftwarePlanInterface,
-    InvoiceInterface, WireInvoiceInterface
+    InvoiceInterface, WireInvoiceInterface, CustomerInvoiceInterface
 )
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
@@ -53,6 +68,7 @@ from corehq.apps.accounting.async_handlers import (
     SoftwareProductRateAsyncHandler,
     Select2BillingInfoHandler,
     Select2InvoiceTriggerHandler,
+    Select2CustomerInvoiceTriggerHandler,
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
     AccountFilterAsyncHandler,
@@ -61,9 +77,10 @@ from corehq.apps.accounting.async_handlers import (
     SoftwarePlanAsyncHandler,
 )
 from corehq.apps.accounting.models import (
-    Invoice, WireInvoice, BillingAccount, CreditLine, Subscription,
-    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan, StripePaymentMethod
+    Invoice, WireInvoice, CustomerInvoice, BillingAccount, CreditLine, Subscription,
+    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan, StripePaymentMethod, InvoicePdf
 )
+from corehq.apps.accounting.tasks import email_enterprise_report
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended,
@@ -72,6 +89,7 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMix
 from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Role, Grant
+from django_prbac.utils import has_privilege
 
 from six.moves.urllib.parse import urlencode
 
@@ -661,6 +679,47 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
+class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
+    urlname = 'accounting_trigger_customer_invoice'
+    page_title = 'Trigger Customer Invoice'
+    template_name = 'accounting/trigger_customer_invoice.html'
+    async_handlers = [
+        Select2CustomerInvoiceTriggerHandler,
+    ]
+
+    @property
+    @memoized
+    def trigger_customer_invoice_form(self):
+        if self.request.method == 'POST':
+            return TriggerCustomerInvoiceForm(self.request.POST)
+        return TriggerCustomerInvoiceForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'trigger_customer_form': self.trigger_customer_invoice_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_customer_invoice_form.is_valid():
+            try:
+                self.trigger_customer_invoice_form.trigger_customer_invoice()
+                messages.success(
+                    request,
+                    "Successfully triggered invoices for Customer Billing Account %s."
+                    % self.trigger_customer_invoice_form.cleaned_data['customer_account']
+                )
+            except (CreditLineError, InvoiceError) as e:
+                messages.error(request, 'Error generating invoices: %s' % e, extra_tags='html')
+        return self.get(request, *args, **kwargs)
+
+
 class TriggerBookkeeperEmailView(AccountingSectionView):
     urlname = 'accounting_trigger_bookkeeper_email'
     page_title = "Trigger Bookkeeper Email"
@@ -746,7 +805,7 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             'billing_records': [
                 {
                     'date_created': billing_record.date_created,
-                    'email_recipients': ', '.join(billing_record.recipients),
+                    'email_recipients': ', '.join(billing_record.emailed_to_list),
                     'invoice': billing_record.invoice,
                     'pdf_data_id': billing_record.pdf_data_id,
                 }
@@ -804,7 +863,10 @@ class InvoiceSummaryViewBase(AccountingSectionView):
         elif SuppressInvoiceForm.submit_kwarg in self.request.POST:
             if self.suppress_invoice_form.is_valid():
                 self.suppress_invoice_form.suppress_invoice()
-                return HttpResponseRedirect(InvoiceInterface.get_url())
+                if self.invoice.is_customer_invoice:
+                    return HttpResponseRedirect(CustomerInvoiceInterface.get_url())
+                else:
+                    return HttpResponseRedirect(InvoiceInterface.get_url())
         return self.get(request, *args, **kwargs)
 
 
@@ -872,6 +934,88 @@ class InvoiceSummaryView(InvoiceSummaryViewBase):
         return context
 
 
+class CustomerInvoiceSummaryView(InvoiceSummaryViewBase):
+    urlname = 'customer_invoice_summary'
+    invoice_class = CustomerInvoice
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': CustomerInvoiceInterface.name,
+            'url': CustomerInvoiceInterface.get_url()
+        }]
+
+    @property
+    @memoized
+    def adjust_balance_form(self):
+        if self.request.method == 'POST':
+            return AdjustBalanceForm(self.invoice, self.request.POST)
+        return AdjustBalanceForm(self.invoice)
+
+    @property
+    @memoized
+    def billing_records(self):
+        return self.invoice.customerbillingrecord_set.all()
+
+    @property
+    @memoized
+    def adjustment_list(self):
+        adjustment_list = CreditAdjustment.objects.filter(customer_invoice=self.invoice)
+        return adjustment_list.order_by('-date_created')
+
+    @property
+    def can_send_email(self):
+        return True
+
+    @property
+    def page_context(self):
+        context = super(CustomerInvoiceSummaryView, self).page_context
+        context.update({
+            'adjustment_balance_form': self.adjust_balance_form,
+            'adjustment_list': self.adjustment_list
+        })
+        return context
+
+
+class CustomerInvoicePdfView(View):
+    urlname = 'invoice_pdf_view'
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(CustomerInvoicePdfView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        statement_id = kwargs.get('statement_id')
+        if statement_id is None:
+            raise Http404()
+        try:
+            invoice_pdf = InvoicePdf.get(statement_id)
+        except ResourceNotFound:
+            raise Http404()
+
+        try:
+            if not invoice_pdf.is_customer:
+                raise NotImplementedError
+            else:
+                invoice = CustomerInvoice.objects.get(pk=invoice_pdf.invoice_id)
+        except (Invoice.DoesNotExist, WireInvoice.DoesNotExist, CustomerInvoice.DoesNotExist):
+            raise Http404()
+
+        filename = "%(pdf_id)s_%(edition)s_%(filename)s" % {
+            'pdf_id': invoice_pdf._id,
+            'edition': 'customer',
+            'filename': invoice_pdf.get_filename(invoice),
+        }
+        try:
+            data = invoice_pdf.get_data(invoice)
+            response = HttpResponse(data, content_type='application/pdf')
+            response['Content-Disposition'] = 'inline;filename="%s' % filename
+        except Exception as e:
+            log_accounting_error('Fetching invoice PDF failed: %s' % e)
+            return HttpResponse(_("Could not obtain billing statement. "
+                                  "An issue has been submitted."))
+        return response
+
+
 class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
     template_name = 'accounting/accounting_admins.html'
     urlname = 'accounting_manage_admins'
@@ -900,7 +1044,10 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
     def accounting_admin_queryset(self):
         return User.objects.filter(
             prbac_role__role__memberships_granted__to_role__slug=privileges.OPERATIONS_TEAM
-        ).exclude(username=self.request.user.username)
+        )
+
+    def paginated_admins(self):
+        return Paginator(self.accounting_admin_queryset, self.limit)
 
     @property
     @memoized
@@ -916,7 +1063,7 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for admin in self.accounting_admin_queryset:
+        for admin in self.paginated_admins().page(self.page):
             yield {
                 'itemData': self._fmt_admin_data(admin),
                 'template': 'accounting-admin-row',
@@ -984,3 +1131,112 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         if self.async_response:
             return self.async_response
         return HttpResponseBadRequest("Please check your query.")
+
+
+def _get_account_or_404(request, domain):
+    account = BillingAccount.get_account_by_domain(domain)
+
+    if account is None:
+        raise Http404()
+
+    if not account.has_enterprise_admin(request.couch_user.username):
+        if not has_privilege(request, privileges.ACCOUNTING_ADMIN):
+            raise Http404()
+
+    return account
+
+
+@login_and_domain_required
+def enterprise_dashboard(request, domain):
+    account = _get_account_or_404(request, domain)
+    context = {
+        'account': account,
+        'domain': domain,
+        'reports': [EnterpriseReport.create(slug, account.id, request.couch_user) for slug in (
+            EnterpriseReport.DOMAINS,
+            EnterpriseReport.WEB_USERS,
+            EnterpriseReport.MOBILE_USERS,
+            EnterpriseReport.FORM_SUBMISSIONS,
+        )],
+        'current_page': {
+            'page_name': _('Enterprise Dashboard'),
+            'title': _('Enterprise Dashboard'),
+        }
+    }
+    return render(request, "accounting/enterprise_dashboard.html", context)
+
+
+@login_and_domain_required
+def enterprise_dashboard_total(request, domain, slug):
+    account = _get_account_or_404(request, domain)
+    report = EnterpriseReport.create(slug, account.id, request.couch_user)
+    return JsonResponse({'total': report.total})
+
+
+@login_and_domain_required
+def enterprise_dashboard_download(request, domain, slug, export_hash):
+    account = _get_account_or_404(request, domain)
+    report = EnterpriseReport.create(slug, account.id, request.couch_user)
+
+    redis = get_redis_client()
+    content = redis.get(export_hash)
+
+    if content:
+        file = ContentFile(content)
+        response = HttpResponse(file, Format.FORMAT_DICT[Format.UNZIPPED_CSV])
+        response['Content-Length'] = file.size
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
+        return response
+
+    return HttpResponseNotFound(_("That report was not found. Please remember that "
+                                  "download links expire after 24 hours."))
+
+
+@login_and_domain_required
+def enterprise_dashboard_email(request, domain, slug):
+    account = _get_account_or_404(request, domain)
+    report = EnterpriseReport.create(slug, account.id, request.couch_user)
+    email_enterprise_report.delay(domain, slug, request.couch_user)
+    message = _("Generating {title} report, will email to {email} when complete.").format(**{
+        'title': report.title,
+        'email': request.couch_user.username,
+    })
+    return JsonResponse({'message': message})
+
+
+@login_and_domain_required
+def enterprise_settings(request, domain):
+    account = _get_account_or_404(request, domain)
+
+    if request.method == 'POST':
+        form = EnterpriseSettingsForm(request.POST, domain=domain, account=account)
+    else:
+        form = EnterpriseSettingsForm(domain=domain, account=account)
+
+    context = {
+        'account': account,
+        'accounts_email': settings.ACCOUNTS_EMAIL,
+        'domain': domain,
+        'restrict_signup': request.POST.get('restrict_signup', account.restrict_signup),
+        'current_page': {
+            'title': _('Enterprise Settings'),
+            'page_name': _('Enterprise Settings'),
+        },
+        'settings_form': form,
+    }
+    return render(request, "accounting/enterprise_settings.html", context)
+
+
+@login_and_domain_required
+@require_POST
+def edit_enterprise_settings(request, domain):
+    account = _get_account_or_404(request, domain)
+    form = EnterpriseSettingsForm(request.POST, domain=domain, account=account)
+
+    if form.is_valid():
+        form.save(account)
+        messages.success(request, "Account successfully updated.")
+    else:
+        return enterprise_settings(request, domain)
+
+    return HttpResponseRedirect(reverse('enterprise_settings', args=[domain]))

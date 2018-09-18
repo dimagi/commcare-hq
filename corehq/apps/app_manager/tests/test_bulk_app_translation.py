@@ -1,14 +1,15 @@
 # coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import codecs
 import tempfile
 
 from django.test import SimpleTestCase
+import io
 from io import BytesIO
 
 from mock import patch
 
+from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 from couchexport.export import export_raw
@@ -20,7 +21,9 @@ from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_rows,
     expected_bulk_app_sheet_headers,
     update_form_translations,
-    get_unicode_dicts)
+    get_unicode_dicts,
+    read_uploaded_app_translation_file,
+)
 from six.moves import zip
 
 
@@ -58,7 +61,9 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
 
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
-            messages = process_bulk_app_translation_upload(self.app, f)
+            workbook, messages = read_uploaded_app_translation_file(f)
+            assert workbook, messages
+            messages = process_bulk_app_translation_upload(self.app, workbook)
 
         self.assertListEqual(
             [m[1] for m in messages], expected_messages
@@ -74,9 +79,10 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         """
         if not expected_messages:
             expected_messages = ["App Translations Updated!"]
-
-        with codecs.open(self.get_path(name, "xlsx")) as f:
-            messages = process_bulk_app_translation_upload(self.app, f)
+        with io.open(self.get_path(name, "xlsx"), 'rb') as f:
+            workbook, messages = read_uploaded_app_translation_file(f)
+            assert workbook, messages
+            messages = process_bulk_app_translation_upload(self.app, workbook)
 
         self.assertListEqual(
             [m[1] for m in messages], expected_messages
@@ -116,7 +122,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     file_path = "data", "bulk_app_translation", "basic"
 
     upload_headers = (
-        ("Modules_and_forms", (
+        (MODULES_AND_FORMS_SHEET_NAME, (
             "Type", "sheet_name", "default_en", "default_fra", 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', "unique_id"
         )),
         ("module1", (
@@ -128,7 +134,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     )
 
     upload_headers_bad_column = (  # bad column is default-fra
-        ("Modules_and_forms", (
+        (MODULES_AND_FORMS_SHEET_NAME, (
             "Type", "sheet_name", "default_en", "default-fra",
             "icon_filepath_en", "icon_filepath_fra", "audio_filepath_en", "audio_filepath_fra", "unique_id"
         )),
@@ -142,7 +148,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     )
 
     upload_data = (
-        ("Modules_and_forms", (
+        (MODULES_AND_FORMS_SHEET_NAME, (
           ("Module", "module1", "My & awesome module", "", "", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
           ("Form", "module1_form1", "My more & awesome form", "", "", "", "", "", "", "", "93ea2a40df57d8f33b472f5b2b023882281722d4")
         )),
@@ -183,13 +189,15 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     )
 
     upload_no_change_headers = (
-        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'default_fra', 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', 'unique_id')),
+        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'sheet_name', 'default_en', 'default_fra',
+                                        'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en',
+                                        'audio_filepath_fra', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
         ('module1_form1', ('label', 'default_en', 'default_fra', 'audio_en', 'audio_fra', 'image_en', 'image_fra', 'video_en', 'video_fra'))
     )
 
     upload_no_change_data = (
-        ('Modules_and_forms',
+        (MODULES_AND_FORMS_SHEET_NAME,
          (('Module', 'module1', 'My & awesome module', '', '', '', '', '', '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
           ('Form', 'module1_form1', 'My more & awesome form', '', '', '', '', '', '', '', '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
         ('module1',
@@ -222,6 +230,43 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '', '', '', ''),
         ))
      )
+
+    upload_empty_translations = (
+        (MODULES_AND_FORMS_SHEET_NAME,
+         (('Module', 'module1', 'My & awesome module', '', '', '', '', '',
+           '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
+          ('Form', 'module1_form1', '', '', '', '', '', '', '', '', '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
+        ('module1',
+         (('name', 'list', '', ''),
+          ('name', 'detail', 'Name', ''),
+          ('other-prop (ID Mapping Text)', 'detail', 'Other Prop', 'Autre Prop'),
+          ('foo (ID Mapping Value)', 'detail', 'bar', ''),
+          ('baz (ID Mapping Value)', 'detail', 'quz', ''),
+          ('mood (ID Mapping Text)', 'detail', 'Other Prop', ''),
+          ('. < 3 (ID Mapping Value)', 'detail', ':(', ':-('),
+          ('. >= 3 (ID Mapping Value)', 'detail', ':)', ':-)'),
+          ('energy (ID Mapping Text)', 'detail', 'Other Prop', ''),
+          ('. < 3 (ID Mapping Value)', 'detail',
+           'jr://file/commcare/image/module1_list_icon_energy_high.jpg',
+           'jr://file/commcare/image/module1_list_icon_energy_high_french.jpg'),
+          ('. >= 3 (ID Mapping Value)', 'detail',
+           'jr://file/commcare/image/module1_list_icon_energy_low.jpg',
+           'jr://file/commcare/image/module1_list_icon_energy_low_french.jpg'))),
+        ('module1_form1',
+         (('question1-label', '', '', '', '', '', '', '', ''),
+          ('question2-label', 'question2', 'question2', '', '', '', '', '', ''),
+          ('question2-item1-label', 'item1', 'item1', '', '', '', '', '', ''),
+          ('question2-item2-label', 'item2', 'item2', '', '', '', '', '', ''),
+          ('question3-label', 'question3', 'question3', '', '', '', '', '', ''),
+          ('question3/question4-label', 'question4', 'question4', '', '', '', '', '', ''),
+          ('question3/question5-label', 'question5', 'question5', '', '', '', '', '', ''),
+          ('question7-label', 'question7', 'question7', '', '', '', '', '', ''),
+          ('add_markdown-label', 'add_markdown', 'add_markdown', '', '', '', '', '', ''),
+          ('update_markdown-label', '# update_markdown', '# update_markdown', '', '', '', '', '', ''),
+          ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '',
+           '', '', '', '', ''),
+          ))
+    )
 
     def test_set_up(self):
         self._shared_test_initial_set_up()
@@ -299,12 +344,13 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             self.upload_headers_bad_column,
             self.upload_data,
             expected_messages=[
-                'Sheet "Modules_and_forms" has fewer columns than expected. Sheet '
+                'Sheet "{}" has fewer columns than expected. Sheet '
                 'will be processed but the following translations will be '
-                'unchanged: default_fra',
+                'unchanged: default_fra'.format(MODULES_AND_FORMS_SHEET_NAME),
 
-                'Sheet "Modules_and_forms" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'Sheet "{}" has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra'.format(
+                    MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "module1" has fewer columns than expected. Sheet '
                 'will be processed but the following translations will be '
@@ -320,6 +366,43 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
                 'Sheet "module1_form1" has unrecognized columns. Sheet will '
                 'be processed but ignoring the following columns: default-fra',
+
+                'App Translations Updated!'
+            ]
+        )
+
+    def test_empty_translations(self):
+        # make the form a registration form
+        self.app.modules[0].forms[0].actions.open_case.condition.type = 'always'
+        self.upload_raw_excel_translations(
+            self.upload_headers_bad_column,
+            self.upload_empty_translations,
+            expected_messages=[
+                'Sheet "{}" has fewer columns than expected. Sheet '
+                'will be processed but the following translations will be '
+                'unchanged: default_fra'.format(MODULES_AND_FORMS_SHEET_NAME),
+
+                'Sheet "{}" has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra'.format(
+                    MODULES_AND_FORMS_SHEET_NAME),
+
+                'Sheet "module1" has fewer columns than expected. Sheet '
+                'will be processed but the following translations will be '
+                'unchanged: default_fra',
+
+                'Sheet "module1" has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra',
+                "You must provide at least one translation of the case property 'name'",
+
+                'Sheet "module1_form1" has fewer columns than expected. Sheet '
+                'will be processed but the following translations will be '
+                'unchanged: default_fra',
+
+                'Sheet "module1_form1" has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra',
+
+                "You must provide at least one translation for the label 'question1-label' "
+                "in sheet 'module1_form1'",
 
                 'App Translations Updated!'
             ]
@@ -356,13 +439,14 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     maxDiff = None
 
     excel_headers = (
-        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'icon_filepath_en', 'audio_filepath_en', 'unique_id')),
+        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'sheet_name', 'default_en', 'icon_filepath_en',
+                                        'audio_filepath_en', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en')),
         ('module1_form1', ('label', 'default_en', 'audio_en', 'image_en', 'video_en'))
     )
 
     excel_data = (
-        ('Modules_and_forms',
+        (MODULES_AND_FORMS_SHEET_NAME,
          (('Module', 'module1', 'Stethoscope', 'jr://file/commcare/image/module0.png', '', '58ce5c9cf6eda401526973773ef216e7980bc6cc'),
           ('Form',
            'module1_form1',
@@ -435,7 +519,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'bulk_app_translation', 'aggregate')
 
     headers = (
-        ('Modules_and_forms', (
+        (MODULES_AND_FORMS_SHEET_NAME, (
             'Type', 'sheet_name',
             'default_en', 'default_afr', 'default_fra',
             'icon_filepath_en', 'icon_filepath_afr', 'icon_filepath_fra',
@@ -454,7 +538,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         ))
     )
     data = (
-        ('Modules_and_forms',
+        (MODULES_AND_FORMS_SHEET_NAME,
          (('Module', 'module1',
            'Untitled Module', 'Ongetitelde Module', 'Module Sans Titre',
            '', '', '',

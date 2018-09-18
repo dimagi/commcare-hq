@@ -35,12 +35,20 @@ def get_all_case_properties(domain, case_types=None):
     for case_type in case_types:
         properties = set()
         schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case_type)
-        for group_schema in schema.group_schemas:
-            for item in group_schema.items:
-                if item.tag:
-                    name = item.tag
-                else:
-                    name = '/'.join([p.name for p in item.path])
+
+        # only the first schema contains case properties. The others contain meta info
+        group_schema = schema.group_schemas[0]
+        for item in group_schema.items:
+            if len(item.path) > 1:
+                continue
+
+            if item.tag:
+                name = item.tag
+            else:
+                name = item.path[-1].name
+
+            if '/' not in name:
+                # Filter out index and parent properties as some are stored as parent/prop in item.path
                 properties.add(name)
 
         case_type_props_from_app = case_properties_from_apps.get(case_type, {})

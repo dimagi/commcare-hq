@@ -8,6 +8,7 @@
 					<how_are_you_today/>
 					<is_this_a_delivery/>
 					<how_many_babies/>
+					<facility_name/>
 					<babies jr:template="">
 						<whats_the_babys_name/>
 						<eye_color/>

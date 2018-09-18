@@ -1,5 +1,5 @@
-hqDefine("domain/js/commtrack_settings", function() {
-    $(function() {
+hqDefine("domain/js/commtrack_settings", ['jquery'], function (jquery) {
+    $(function () {
         $("#id_use_auto_consumption").change(function () {
             $("#id_consumption_min_transactions, " +
               "#id_consumption_min_window, " +

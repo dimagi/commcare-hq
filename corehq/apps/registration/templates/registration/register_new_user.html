@@ -35,12 +35,11 @@
         <script src="{% static 'hqwebapp/js/password_validators.ko.js' %}"></script>
         <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
         <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
-        <script src="{% static 'blazy/blazy.js' %}"></script>
         <script src="{% static 'registration/js/register_new_user.js' %}"></script>
     {% endcompress %}
     {% if is_saas_environment %}
       <!-- Google Code for Destination Lead Conversion Page -->
-      <script type="text/javascript">
+      <script>
       /* <![CDATA[ */
       var google_conversion_id = 941515958;
       var google_conversion_language = "en";
@@ -50,7 +49,7 @@
       var google_remarketing_only = false;
       /* ]]> */
       </script>
-      <script type="text/javascript" src="//www.googleadservices.com/pagead/conversion.js"></script>
+      <script src="//www.googleadservices.com/pagead/conversion.js"></script>
       <noscript>
         <div style="display:inline;">
           <img height="1" width="1" style="border-style:none;" alt="" src="//www.googleadservices.com/pagead/conversion/941515958/?label=glkzCMmv73UQtsn5wAM&amp;guid=ON&amp;script=0"/>
@@ -58,9 +57,9 @@
       </noscript>
 
       <!-- linked in -->
-      <script type="text/javascript">
+      <script>
       _linkedin_data_partner_id = "63907";
-      </script><script type="text/javascript">
+      </script><script>
       (function(){var s = document.getElementsByTagName("script")[0];
       var b = document.createElement("script");
       b.type = "text/javascript";b.async = true;
@@ -74,47 +73,18 @@
     {% endif %}
 {% endblock %}
 
-{% block stylesheets %}
-<link type="text/css"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
-
-{% if less_debug %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'registration/less/registration.debug.less' %}" />
-{% else %}
-{% compress css %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'registration/less/registration.less' %}" />
-{% endcompress %}
-{% endif %}
-{% endblock stylesheets %}
-
-{% block background_content %}
-  <div class="bg-container">
-    <div class="bg-full-cover-fixed bg-registration b-lazy"
-         data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
-  </div>
-{% endblock %}
-
 {% block content %}
+{% initial_page_data 'demo_test' demo_test %}
 {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
-{% initial_page_data 'show_number' show_number %}
 {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
 {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
-
-{% analytics_ab_test 'kissmetrics.new_phone_jan2016' ab_show_number|JSON %}
 
 {% registerurl 'process_registration' %}
 <div class="container">
   <div class="row">
-    <div class="col-xs-8 col-xs-offset-4 col-md-7 col-md-offset-5 reg-form-column animate-height" style="min-height: 450px">
-      <div id="registration-form-container" {% if show_number %}class="has-phonenumber"{% endif %}>
+    <div class="col-xs-12">
+      <div id="registration-form-container"
+           class="reg-form-container">
         <ul class="form-step-progress">
           <li class="active">{% trans "Create Account" %}</li>
           <li data-bind="css: { active: currentStep() > 0 }">{% trans "Name Project" %}</li>
@@ -123,14 +93,14 @@
               action=""
               autocomplete="off"
               class="form form-with-steps form-with-steps-primary form-with-steps-centered">
-          <div class="form-step loading-form-step">
+          <div class="form-bubble form-step loading-form-step">
             <h2>{% trans 'Loading...just a second!' %}</h2>
             <p class="commcare-icon">
               <i class="fcc fcc-flower fa-spin"></i>
             </p>
           </div>
           {% crispy reg_form %}
-          <div class="form-step final-step" style="display: none;">
+          <div class="form-bubble form-step final-step" style="display: none;">
 
             {% include "registration/partials/register_new_user/submit_info.html" %}
             {% include "registration/partials/register_new_user/submit_errors.html" %}
@@ -139,12 +109,20 @@
 
           </div>
         </form>
+
+        {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_test %}
+            <div class="form-bubble form-bubble-purple text-center">
+                {% blocktrans %}
+                    Want to learn more before signing up?
+                    &nbsp;&nbsp;&nbsp;
+                    <a href="#cta-form-get-demo" id="test-cta-form-get-demo-button" target="_blank" data-toggle="modal" class="btn btn-purple">
+                        Get a Demo
+                    </a>
+                {% endblocktrans %}
+            </div>
+        {% endif %}
       </div>
     </div>
   </div>
 </div>
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-    {% include 'hqwebapp/includes/modal_eula.html' %}
 {% endblock %}

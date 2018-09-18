@@ -89,7 +89,7 @@ function send_metric_to_datadog() {
               ]}
             ]
         }" \
-    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}"
+    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}" || true
 }
 
 function _run_tests() {

@@ -18,6 +18,7 @@ from corehq.apps.app_manager.static_strings import STATICALLY_ANALYZABLE_TRANSLA
 from corehq.apps.app_manager.models import Application
 import six
 from six.moves import range
+from io import open
 
 
 class CommCareSettingsTest(SimpleTestCase):
@@ -113,7 +114,7 @@ class CommCareSettingsTest(SimpleTestCase):
         static_strings = set(STATICALLY_ANALYZABLE_TRANSLATIONS)
 
         for filepath, keys_to_translate in files_and_keys_to_translate:
-            with open(os.path.join(base_path, filepath)) as f:
+            with open(os.path.join(base_path, filepath), encoding='utf-8') as f:
                 cc_settings = yaml.load(f)
                 for setting in cc_settings:
                     for key in keys_to_translate:

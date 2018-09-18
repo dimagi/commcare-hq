@@ -571,7 +571,7 @@ class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
 
     base_template = "hqadmin/faceted_report.html"
-    report_template_path = "reports/async/tabular.html"
+    report_template_path = "reports/tabular.html"
     section_name = ugettext_noop("ADMINREPORT")
     default_params = {}
     is_admin_report = True

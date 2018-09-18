@@ -5,7 +5,8 @@ from distutils.version import LooseVersion
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.xml_models import LocaleResource, XFormResource, PracticeUserRestoreResource
+from corehq.apps.app_manager.suite_xml.xml_models import LocaleResource, XFormResource, \
+    PracticeUserRestoreResource, ReleaseInfoXFormResource
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import languages_mapping
 
@@ -28,7 +29,15 @@ class FormResourceContributor(SectionContributor):
                 remote_path = '{path}?profile={profile}'.format(path=path, profile=self.build_profile_id)
             else:
                 remote_path = path
-            resource = XFormResource(
+
+            if form.is_release_notes_form:
+                if form.enable_release_notes:
+                    element_class = ReleaseInfoXFormResource
+                else:
+                    continue
+            else:
+                element_class = XFormResource
+            resource = element_class(
                 id=id_strings.xform_resource(form),
                 version=form.get_version(),
                 local=path,

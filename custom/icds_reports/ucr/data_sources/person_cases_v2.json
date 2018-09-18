@@ -1,6 +1,7 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-test",
     "icds-sql",
     "icds-test",
     "icds-cas",
@@ -133,7 +134,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": true,
+        "create_index": false,
         "column_id": "state_id",
         "expression": {
           "location_id_expression": {
@@ -174,7 +175,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "closed_on",
-        "create_index": true,
+        "create_index": false,
         "type": "raw",
         "property_name": "closed_on"
       },
@@ -195,7 +196,7 @@
         "datatype": "date",
         "is_primary_key": false,
         "column_id": "dob",
-        "create_index": true,
+        "create_index": false,
         "is_nullable": true,
         "type": "raw",
         "property_name": "dob"
@@ -206,7 +207,7 @@
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "age_at_reg",
-        "create_index": true,
+        "create_index": false,
         "is_nullable": true,
         "type": "raw",
         "property_name": "age_at_reg"
@@ -2768,16 +2769,19 @@
       }
     },
     "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "state_id",
+          "subtype": "string_lastchars",
+          "constraint": "3"
+        }
+      ]
+    },
     "sql_column_indexes": [
       {
         "column_ids": [
           "block_id",
-          "dob"
-        ]
-      },
-      {
-        "column_ids": [
-          "district_id",
           "dob"
         ]
       },

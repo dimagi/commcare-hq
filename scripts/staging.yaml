@@ -49,23 +49,19 @@
 trunk: master
 name: autostaging
 branches:
-  - vellum-staging # J$ 11/13
-  - jls/privacy-policy  # Jenny 3/19
-  - jls/data-corrections-forms  # Jenny 3/27
-  - ce/app-status-staging+np/training-module # CE 4/10
-  - je/report-builder-button # J$ 4/3
-  - ce/auto-batches # Cal April 6
-  - ce/app-status-staging # Cal April 9
-  - jls/externalize-js-locations-widgets # Jenny April 19
-  - jls/externalize-js-reassign-cases # Jenny April 19
-  - emord-patch-1 # J$ April 19 (upgrading celery)
-  - jr/drilldown-filters-again # jordan April 23
-  - jls/sentry-js # Jenny April 26
+  - revert-21236-fr/add-secure-urllib3  # Danny July 18
+  - rn_sending_report_to_celery_task # Rohit Aug 8
+#  - np/celery-4.x-monkeypatch  # Nick P Sept 4
+#  - np/celery-4.x-2  # Nick P Aug 22
+  - pv/deactivated-users # Preethi Aug 23
+  - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
+  - sr-batch-ucrpillow # Sravan Sept 4
+  - rn_migratin_download_index # Rohit Sept 10
+  - rn_pre_migration_work_for_hqmedia # Rohit Sept 11
+  - nh/omrs/atom  # Norman Sept 12
+  - lwyszomi:lw/report_export_v3  # Jenny Sept 12
+  - downgrade-modal-required-questions # Gabriella Sept 14
 submodules:
-  submodules/touchforms-src:
-    # let's leave this here even when empty
-    # just so we always get latest master
-    branches: []
   submodules/django-digest-src:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:

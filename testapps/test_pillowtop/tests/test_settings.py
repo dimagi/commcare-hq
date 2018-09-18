@@ -8,6 +8,7 @@ import json
 from corehq.util.test_utils import TestFileMixin
 from pillowtop.utils import get_all_pillow_configs
 from testapps.test_pillowtop.utils import real_pillow_settings
+from io import open
 
 
 @override_settings(DEBUG=True)
@@ -40,7 +41,7 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
 
     def _rewrite_file(self, pillow_configs):
         # utility that should only be called manually
-        with open(self.get_path('all-pillow-meta', 'json'), 'w') as f:
+        with open(self.get_path('all-pillow-meta', 'json'), 'w', encoding='utf-8') as f:
             f.write(
                 json.dumps({config.name: _pillow_meta_from_config(config) for config in pillow_configs},
                            indent=4, sort_keys=True)

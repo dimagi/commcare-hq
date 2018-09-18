@@ -2,32 +2,49 @@
 // Registration form styles
 // --------------------------------
 
-@reg-form-width: 380px;
+@reg-form-width: 480px;
 @reg-form-height: 375px;
 
-#registration-form-container {
-  position: absolute;
-  left: 50%;
-  margin-left: -@reg-form-width/2;
-  width: @reg-form-width;
-  top: 50%;
-  margin-top: -@reg-form-height/2 - 40px;
-  height: @reg-form-height;
+
+.reg-form-container {
+  width: 100%;
+  max-width: @reg-form-width;
+  margin: 0 auto;
+  margin-top: 10vh;
+  transition: margin-top .5s ease-in-out;
+
+  @media(max-height: 685px) {
+    margin-top: 5vh;
+  }
+
+  @media(max-height: 602px) {
+    margin-top: 0;
+  }
 }
 
-#registration-form-container.has-phonenumber {
-  margin-top: -@reg-form-height/2 - 80px;
-}
-
-.reg-form-column {
-  position: relative;
-  min-height: 400px;
+@media (min-width: @screen-md-min) {
+  .reg-form-container {
+    width: @reg-form-width;
+  }
 }
 
 ul.form-step-progress li {
   width: 50%;
   &:before {
     width: 80%;
+  }
+}
+
+.sign-in-container {
+  margin-top: 2vh;
+  margin-bottom: 2vh;
+
+  @media(max-height: 685px) {
+    margin-top: 5vh;
+  }
+
+  @media(max-height: 602px) {
+    margin-top: 0;
   }
 }
 
@@ -65,42 +82,6 @@ p.validation-message-block {
   margin-bottom: 1.1em;
 }
 
-.has-feedback .form-control {
-  border-width: 2px;
-}
-
-.has-success .form-control,
-.has-success .form-control:focus {
-  border-color: #47b700;
-}
-.has-success .form-control {
-  .box-shadow(0px 0px 10px 1px rgba(175, 242, 133, .5));
-}
-.has-success .form-control:focus {
-  .box-shadow(0px 0px 15px 1px rgba(175, 242, 133, .75));
-}
-
-.has-error .form-control,
-.has-error .form-control:focus {
-  border-color: #e53e30;
-}
-.has-error .form-control {
-  .box-shadow(0px 0px 10px 1px rgba(239, 207, 203, .5));
-}
-.has-error .form-control:focus {
-  .box-shadow(0px 0px 15px 1px rgba(239, 207, 203, .75));
-}
-
-.has-warning .form-control,
-.has-warning .form-control:focus {
-  border-color: #f9c700;
-}
-.has-warning .form-control {
-  .box-shadow(0px 0px 10px 1px rgba(248, 236, 189, .5));
-}
-.has-warning .form-control:focus {
-  .box-shadow(0px 0px 15px 1px rgba(248, 236, 189, .75));
-}
 
 .submit-errors {
   p, ul {
@@ -123,10 +104,6 @@ p.validation-message-block {
 .server-errors,
 .submit-success {
   text-align: left;
-}
-
-.animate-height {
-  .transition(min-height .3s ease-in-out);
 }
 
 .initial-padding {
@@ -205,4 +182,8 @@ p.validation-message-block {
 .radio-select_label-placeholder {
   height: @input-height-large;
   line-height: @input-height-large - 2px;
+}
+
+.sign-up-bubble {
+  margin: 10px 0;
 }

@@ -9,6 +9,7 @@ from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVers
 from corehq.apps.api.resources.auth import AdminAuthentication
 from tastypie import fields
 
+
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from django_prbac.models import Role
 import six
@@ -165,10 +166,10 @@ class SubscriptionResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = Subscription.visible_and_suppressed_objects.all().order_by('pk')
-        fields = ['id', 'salesforce_contract_id', 'date_start', 'date_end', 'date_delay_invoicing',
+        fields = ['id', 'salesforce_contract_id', 'date_start', 'date_end',
                   'date_created', 'is_active', 'do_not_invoice', 'auto_generate_credits', 'is_trial',
                   'service_type', 'pro_bono_status', 'last_modified', 'funding_source', 'is_hidden_to_ops',
-                  'skip_auto_downgrade']
+                  'skip_auto_downgrade', 'skip_auto_downgrade_reason']
         resource_name = 'subscription'
 
 
@@ -185,7 +186,9 @@ class InvoiceResource(ModelResource):
 
 
 class LineItemResource(ModelResource):
-    invoice = fields.IntegerField('invoice_id', null=True)
+    invoice = fields.IntegerField('subscription_invoice_id', null=True)
+    subscription_invoice = fields.IntegerField('subscription_invoice_id', null=True)
+    customer_invoice = fields.IntegerField('customer_invoice_id', null=True)
     feature_rate = fields.IntegerField('feature_rate_id', null=True)
     product_rate = fields.IntegerField('product_rate_id', null=True)
     subtotal = fields.DecimalField('subtotal')
@@ -260,8 +263,12 @@ class SubscriptionAndAdjustmentResource(ModelResource):
 
 class BillingRecordResource(ModelResource):
     invoice = fields.IntegerField('invoice_id', null=True)
+    emailed_to = fields.CharField(readonly=True)
 
     class Meta(AccountingResourceMeta):
         queryset = BillingRecord.objects.all().order_by('pk')
-        fields = ['id', 'date_created', 'emailed_to', 'pdf_data_id', 'skipped_email', 'last_modified']
+        fields = ['id', 'date_created', 'pdf_data_id', 'skipped_email', 'last_modified']
         resource_name = 'billing_record'
+
+    def dehydrate_emailed_to(self, bundle):
+        return ','.join(bundle.obj.emailed_to_list)

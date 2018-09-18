@@ -1,17 +1,50 @@
 {% extends "hqwebapp/base_page.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
 
-{% block title %}{% trans "Log into CommCare HQ" %}{% endblock title %}
+{% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
 
-{% block page_content %}
-    {% block login-content %}
-    {% include "login_and_password/partials/login_full.html" %}
-    {% endblock %}
-{% endblock page_content %}
+{% block background_content %}
+  <div class="bg-container">
+    <div class="bg-full-cover-fixed bg-registration b-lazy"
+         data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
+  </div>
+{% endblock %}
+
+{% block stylesheets %}
+<link type="text/css"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
+
+{% if less_debug %}
+<link type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'registration/less/registration.debug.less' %}" />
+{% else %}
+{% compress css %}
+<link type="text/less"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'registration/less/registration.less' %}" />
+{% endcompress %}
+{% endif %}
+{% endblock stylesheets %}
+
+{% block content %}
+  {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
+  {% block login-content %}
+  {% include "login_and_password/partials/login_full.html" %}
+  {% endblock %}
+{% endblock content %}
 
 {% block js %}
-    {{ block.super }}
-    {% if implement_password_obfuscation %}
-        {% include "nic_compliance/password_encoder.html" %}
-    {% endif %}
+  {{ block.super }}
+  {% compress js %}
+    <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
+    <script src="{% static 'blazy/blazy.js' %}"></script>
+    <script src="{% static 'registration/js/login.js' %}"></script>
+  {% endcompress %}
 {% endblock %}

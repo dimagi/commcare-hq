@@ -1,12 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import numbers
 import re
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils import html, safestring
 
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq import privileges, toggles
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.util.quickcache import quickcache
@@ -97,7 +99,10 @@ def username_to_user_id(username):
 def user_id_to_username(user_id):
     from corehq.apps.users.models import CouchUser
     if not user_id:
-        return user_id
+        return None
+    if isinstance(user_id, numbers.Number):
+        # couch chokes on numbers so just short-circuit this
+        return None
     elif user_id == DEMO_USER_ID:
         return DEMO_USER_ID
     try:
@@ -204,7 +209,6 @@ def user_location_data(location_ids):
 
 def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, save=True):
     from corehq.apps.users.models import CommCareUser
-    from custom.enikshay.user_setup import set_enikshay_device_id
 
     updated = False
     if device_id and isinstance(user, CommCareUser):
@@ -215,8 +219,6 @@ def update_device_meta(user, device_id, commcare_version=None, device_app_meta=N
                 commcare_version=commcare_version,
                 device_app_meta=device_app_meta,
             )
-            if toggles.ENIKSHAY.enabled(user.domain):
-                updated = set_enikshay_device_id(user, device_id) or updated
             if save and updated:
                 user.save(fire_signals=False)
     return updated

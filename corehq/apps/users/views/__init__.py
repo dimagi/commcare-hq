@@ -20,10 +20,9 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from django_otp.plugins.otp_static.models import StaticToken
-from djangular.views.mixins import allow_remote_invocation
 
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.landing_pages import get_allowed_landing_pages
@@ -48,8 +47,9 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
-from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin, logout
-from corehq.apps.locations.permissions import location_safe, user_can_access_other_user
+from corehq.apps.hqwebapp.views import BasePageView, logout
+from corehq.apps.locations.permissions import (location_safe, user_can_access_other_user,
+                                               conditionally_location_safe)
 from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
@@ -81,6 +81,13 @@ from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 from corehq import toggles
 from django.views.decorators.csrf import csrf_exempt
+
+
+def _is_exempt_from_location_safety(view_fn, *args, **kwargs):
+    return toggles.LOCATION_SAFETY_EXEMPTION.enabled(kwargs.get("domain", None))
+
+
+location_safe_for_ews_ils = conditionally_location_safe(_is_exempt_from_location_safety)
 
 
 def _users_context(request, domain):
@@ -279,6 +286,7 @@ class BaseEditUserView(BaseUserSettingsView):
             return self.get(request, *args, **kwargs)
 
 
+@location_safe_for_ews_ils
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
@@ -373,82 +381,15 @@ def get_domain_languages(domain):
     return sorted(domain_languages) or langcodes.get_all_langs_for_select()
 
 
-class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
+@location_safe_for_ews_ils
+class ListWebUsersView(BaseUserSettingsView):
     template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
 
-    @use_angular_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
-
-    def query_es(self, limit, skip, query=None):
-        web_user_filter = [
-            {"term": {"user.domain_memberships.domain": self.domain}},
-        ]
-        web_user_filter.extend(ADD_TO_ES_FILTER['web_users'])
-
-        q = {
-            "filter": {"and": web_user_filter},
-            "sort": {'username.exact': 'asc'},
-        }
-        default_fields = ["username", "last_name", "first_name"]
-        q["query"] = search_string_query(query, default_fields)
-        return es_query(
-            params={}, q=q, es_index='users',
-            size=limit, start_at=skip,
-        )
-
-    @allow_remote_invocation
-    def get_users(self, in_data):
-        if not isinstance(in_data, dict):
-            return {
-                'success': False,
-                'error': _("Please provide pagination info."),
-            }
-        try:
-            limit = in_data.get('limit', 10)
-            page = in_data.get('page', 1)
-            skip = limit * (page - 1)
-            query = in_data.get('query')
-
-            web_users_query = self.query_es(limit, skip, query=query)
-            total = web_users_query.get('hits', {}).get('total', 0)
-            results = web_users_query.get('hits', {}).get('hits', [])
-
-            web_users = [WebUser.wrap(w['_source']) for w in results]
-
-            def _fmt_result(domain, u):
-                return {
-                    'email': u.get_email(),
-                    'domain': domain,
-                    'name': u.full_name,
-                    'role': u.role_label(domain),
-                    'phoneNumbers': u.phone_numbers,
-                    'id': u.get_id,
-                    'editUrl': reverse('user_account', args=[domain, u.get_id]),
-                    'removeUrl': (
-                        reverse('remove_web_user', args=[domain, u.user_id])
-                        if self.request.user.username != u.username else None
-                    ),
-                }
-            web_users_fmt = [_fmt_result(self.domain, u) for u in web_users]
-
-            return {
-                'response': {
-                    'users': web_users_fmt,
-                    'total': total,
-                    'page': page,
-                    'query': query,
-                },
-                'success': True,
-            }
-        except Exception as e:
-            return {
-                'error': e.message,
-                'success': False,
-            }
 
     @property
     @memoized
@@ -553,7 +494,64 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
 
 
 @require_can_edit_web_users
+@require_GET
+@location_safe_for_ews_ils
+def paginate_web_users(request, domain):
+    def _query_es(limit, skip, query=None):
+        web_user_filter = [
+            {"term": {"user.domain_memberships.domain": domain}},
+        ]
+        web_user_filter.extend(ADD_TO_ES_FILTER['web_users'])
+
+        q = {
+            "filter": {"and": web_user_filter},
+            "sort": {'username.exact': 'asc'},
+        }
+        default_fields = ["username", "last_name", "first_name"]
+        q["query"] = search_string_query(query, default_fields)
+        return es_query(
+            params={}, q=q, es_index='users',
+            size=limit, start_at=skip,
+        )
+
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+    skip = limit * (page - 1)
+    query = request.GET.get('query')
+
+    web_users_query = _query_es(limit, skip, query=query)
+    total = web_users_query.get('hits', {}).get('total', 0)
+    results = web_users_query.get('hits', {}).get('hits', [])
+
+    web_users = [WebUser.wrap(w['_source']) for w in results]
+
+    def _fmt_result(domain, u):
+        return {
+            'email': u.get_email(),
+            'domain': domain,
+            'name': u.full_name,
+            'role': u.role_label(domain),
+            'phoneNumbers': u.phone_numbers,
+            'id': u.get_id,
+            'editUrl': reverse('user_account', args=[domain, u.get_id]),
+            'removeUrl': (
+                reverse('remove_web_user', args=[domain, u.user_id])
+                if request.user.username != u.username else None
+            ),
+        }
+    web_users_fmt = [_fmt_result(domain, u) for u in web_users]
+
+    return json_response({
+        'users': web_users_fmt,
+        'total': total,
+        'page': page,
+        'query': query,
+    })
+
+
+@require_can_edit_web_users
 @require_POST
+@location_safe_for_ews_ils
 def remove_web_user(request, domain, couch_user_id):
     user = WebUser.get_by_user_id(couch_user_id, domain)
     # if no user, very likely they just pressed delete twice in rapid succession so
@@ -577,6 +575,7 @@ def remove_web_user(request, domain, couch_user_id):
 
 
 @require_can_edit_web_users
+@location_safe_for_ews_ils
 def undo_remove_web_user(request, domain, record_id):
     record = DomainRemovalRecord.get(record_id)
     record.undo()
@@ -796,6 +795,7 @@ def accept_invitation(request, domain, invitation_id):
 
 @require_POST
 @require_can_edit_web_users
+@location_safe_for_ews_ils
 def reinvite_web_user(request, domain):
     invitation_id = request.POST['invite']
     try:
@@ -810,6 +810,7 @@ def reinvite_web_user(request, domain):
 
 @require_POST
 @require_can_edit_web_users
+@location_safe_for_ews_ils
 def delete_invitation(request, domain):
     invitation_id = request.POST['id']
     invitation = Invitation.get(invitation_id)
@@ -819,6 +820,7 @@ def delete_invitation(request, domain):
 
 @require_POST
 @require_can_edit_web_users
+@location_safe_for_ews_ils
 def delete_request(request, domain):
     DomainRequest.objects.get(id=request.POST['id']).delete()
     return json_response({'status': 'ok'})
@@ -838,6 +840,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
         }]
 
 
+@location_safe_for_ews_ils
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
@@ -972,6 +975,7 @@ class DomainRequestView(BasePageView):
 
 @require_POST
 @require_permission_to_edit_user
+@location_safe_for_ews_ils
 def make_phone_number_default(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
     if not user.is_current_web_user(request) and not user.is_commcare_user():
@@ -989,6 +993,7 @@ def make_phone_number_default(request, domain, couch_user_id):
 
 @require_POST
 @require_permission_to_edit_user
+@location_safe_for_ews_ils
 def delete_phone_number(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
     if not user.is_current_web_user(request) and not user.is_commcare_user():
@@ -1005,6 +1010,7 @@ def delete_phone_number(request, domain, couch_user_id):
 
 
 @require_permission_to_edit_user
+@location_safe_for_ews_ils
 def verify_phone_number(request, domain, couch_user_id):
     """
     phone_number cannot be passed in the url due to special characters

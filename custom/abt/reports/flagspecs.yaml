@@ -385,6 +385,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema relatado: Nem todo o insecticida e   água de lavagem contaminada foi usada para encher as bombas dos roceadores "
     warning_fr: "Problème signalé : Les pesticides et l’eau de rinçage contaminée ne sont pas intégralement utilisés pour remplir les réservoirs des opérateurs de pulvérisation."
   - question: [q9_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Approved vehicle?"
     flag_name_por: "Viatura aprovada?"
     flag_name_fr: "Véhicule approuvé ?"
@@ -392,6 +393,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Viatura não foi inspeccionada antes de contractada."
     warning_fr: "Problème constaté : Le véhicule n’a pas été inspecté avant d’établir le contrat."
   - question: [q10_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Driver with appropriate certs?"
     flag_name_por: "Motorista com habilitações apropriadas?"
     flag_name_fr: "Pilote avec certs appropriées ? ?"
@@ -399,6 +401,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Viatura não tem rlicença ou certificado exigido"
     warning_fr: "Problème constaté : Le véhicule n’a pas le permis ou le certificat requis."
   - question: [q11_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Driver trained?"
     flag_name_por: "Motorista formado?"
     flag_name_fr: "Conducteur formé ?"
@@ -407,6 +410,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Fornecer formação sobre segurança para o motorista"
     warning_fr: "Problème noté : Fournir une formation à la sécurité au conducteur."
   - question: [q12_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Pesticides transported with SOs?"
     flag_name_por: "Insecticida transportado com os Roceadores?"
     flag_name_fr: "Pesticides transportés avec operateurs ?"
@@ -414,6 +418,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Transporte separado necessário para os roceadores  e para os insecticidas diferente do que é oferecido diariamente "
     warning_fr: "Problème constaté : Transport séparé requis pour les opérateurs et les pesticides autres que ceux de l’approvisionnement du jour."
   - question: [q13_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Multiple use vehicle?"
     flag_name_por: "Viatura de uso múltiplo?"
     flag_name_fr: "Multiple véhicule utilisation ?"
@@ -421,6 +426,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Violação do transporte dos produtos misturadas, sugere refrescamento de formacao."
     warning_fr: "Problème constaté : Violation relative au transport de marchandises mélangées ; suggérer de fournir une nouvelle formation."
   - question: [q14]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Spill kit and response procedure??"
     flag_name_por: "Kit de derramamento e procedimento de resposta ?"
     flag_name_fr: "Kit de déversement et de la procédure de réponse ?"
@@ -431,6 +437,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Falta de {msg} para a viatura"
     warning_fr: "Problème constaté : {msg} manquants pour le véhicule."
   - question: [q14]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Delivery date?"
     flag_name_por: "Data da entrega?"
     flag_name_fr: "Date de livraison ?"
@@ -441,6 +448,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Confirmar data de entrega para {msg}"
     warning_fr: "Confirmer la date de livraison pour {msg}"
   - question: [q15]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "First aid kit?"
     flag_name_por: "Kit de primeiros socorros?"
     flag_name_fr: "Trousse de premiers soins ?"
@@ -451,6 +459,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Falta de {msg} kit de primeiros socorros para a viatura."
     warning_fr: "Problème constaté : {msg} manquants pour la trousse de premiers secours du véhicule."
   - question: [q15]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Delivery date?"
     flag_name_por: "Data da entrega?"
     flag_name_fr: "Date de livraison ?"
@@ -461,6 +470,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Confirmar data de entrega para {msg}"
     warning_fr: "Confirmer la date de livraison pour {msg} pour la trousse de premiers secours."
   - question: [q16_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Driver's cell and PPE?"
     flag_name_por: "Telemovel e EPI para os  motoristas?"
     flag_name_fr: "La mobile et EPI de conduire ?"
@@ -468,6 +478,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Motoristas não têm telemovel  e / ou EPI adequado"
     warning_fr: "Problème constaté : Les conducteurs n’ont pas un téléphone cellulaire et/ou un EPI approprié."
   - question: [q17_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Pesticide securable?"
     flag_name_por: "Insecticida seguro e  protegido?"
     flag_name_fr: "Pesticide sécurisable ?"
@@ -475,6 +486,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Necessidade de fornecer materiais para assegurar e amarrar o insecticida na viatura"
     warning_fr: "Problème constaté : Il est nécessaire de fournir des matériaux pour sécuriser et attacher les pesticides dans le véhicule"
   - question: [q18_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Fire extinguisher?"
     flag_name_por: "Extintor de incêndio?"
     flag_name_fr: "Extincteur ?"
@@ -482,6 +494,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema relatado: As viaturas de transporte de insecticida devem sempre levar um extintor de incêndio."
     warning_fr: "Problème signalé : Le véhicule de transport de pesticides doit toujours avoir un extincteur."
   - question: [q19_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Seats and railings?"
     flag_name_por: "Assentos e parapeitos?"
     flag_name_fr: "Sièges et garde-corps ?"
@@ -489,6 +502,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: A  viatura de transporte de roceadores devem estar configuradas com assentos e parapeitos"
     warning_fr: "Problème constaté : Le véhicule de transport des opérateurs de pulvérisation doit être équipé de sièges et de barrières métalliques"
   - question: [q19a]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Date of modification?"
     flag_name_por: "Data da modificação"
     flag_name_fr: "Date de le modification?"
@@ -496,6 +510,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Confirmar a data para a viatura de transporte a ser modificada"
     warning_fr: "Confirmer la date à laquelle le véhicule de transport sera modifié."
   - question: [q20_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Pumps between SOs legs?"
     flag_name_por: "Bombas entre as pernas dos roceadores?"
     flag_name_fr: "Pompes entre les jambes des operateurs ?"
@@ -503,6 +518,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema relatado: Os roceadores devem estar sentados corretamente com a bomba assegurada entre as pernas na viatura de transporte"
     warning_fr: "Problème signalé : Les opérateurs de pulvérisation doivent être assis correctement dans le véhicule de transport, en maintenant la pompe de manière sécurisée entre les jambes."
   - question: [q21_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Overcrowded vehicle?"
     flag_name_por: "Viaturas superlotadas?"
     flag_name_fr: "Véhicule surpeuplées ?"
@@ -510,6 +526,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Necessidade de se fornecer uma viatura adicional para os roceadores"
     warning_fr: "Problème constaté : Il faut fournir un véhicule supplémentaire pour les opérateurs de pulvérisation."
   - question: [q22_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Pesticide leakage?"
     flag_name_por: "Vazamento de insecticidadas?"
     flag_name_fr: "Fuite de pesticides ?"
@@ -517,6 +534,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Evidências de vazamento de insecticida na viatura."
     warning_fr: "Problème constaté : Il y a des preuves de fuite de pesticides dans le véhicule."
   - question: [q23_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Exposure: IRF?"
     flag_name_por: "Exposição: Relatório de Incidente de exposição de Insecticida?"
     flag_name_fr: "Exposition de pesticide ?"
@@ -524,6 +542,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_por: "Problema observado: Relatório do incidente de exposição de insecticida. Acompanhamento para garantir que um formulário de relatório de incidente seja preenchido e enviado à COP, ECO, Gestor de Operações, TPM & ECM imediatamente."
     warning_fr: "Problème constaté : Incident d’exposition aux pesticides signalé. Un travail de suivi est effectué pour s’assurer qu’un formulaire de rapport d’incident soit rempli et envoyé immédiatement au COP, à l’ECO, au responsable des opérations, au coordonnateur technique et à l’ECM."
   - question: [q24_action]
+    base_path: [transportation_vehicle_inspection]
     flag_name: "Accident: IRF?"
     flag_name_por: "Acidente: Relatorio de Incidente de exposical de Insecticida?"
     flag_name_fr: "Accident du vehicule?"

@@ -26,8 +26,7 @@ from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
-from corehq.sql_db.models import PartitionedModel, RequireDBManager
-from corehq.sql_db.routers import db_for_read_write
+from corehq.sql_db.models import PartitionedModel, RestrictedManager
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
@@ -36,7 +35,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from memoized import memoized
-from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
+from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, IsImageMixin
 from .exceptions import AttachmentNotFound
 import six
 from six.moves import map
@@ -131,18 +130,6 @@ class AttachmentMixin(SaveStateMixin):
 
     def _get_attachments_from_db(self):
         raise NotImplementedError
-
-
-class RestrictedManager(RequireDBManager):
-
-    def raw(self, raw_query, params=None, translations=None, using=None):
-        from django.db.models.query import RawQuerySet
-        if not using:
-            using = db_for_read_write(self.model)
-        return RawQuerySet(
-            raw_query, model=self.model,
-            params=params, translations=translations, using=using
-        )
 
 
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
@@ -436,6 +423,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
     content_length = models.IntegerField(null=True)
     blob_id = models.CharField(max_length=255, default=None)
     blob_bucket = models.CharField(max_length=255, null=True, default=None)
+    name = models.CharField(max_length=255, default=None)
 
     # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255, default=None)
@@ -454,10 +442,11 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
         content_readable = content
         if isinstance(content, six.text_type):
             content_readable = StringIO(content)
-        elif isinstance(content, six.binary_type):
+        elif isinstance(content, bytes):
             content_readable = BytesIO(content)
         db = get_blob_db()
         bucket = self.blobdb_bucket()
+        assert bucket != "", "blob migrated from couch, should never happen"
         if self.blob_id:
             # Overwrite and rewrite the existing entry in the database with this identifier
             info = db.put(content_readable, self.blob_id, bucket=bucket)
@@ -483,7 +472,10 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
 
         db = get_blob_db()
         try:
-            blob = db.get(self.blob_id, self.blobdb_bucket())
+            if self.blobdb_bucket() == "":
+                blob = db.get(key=self.blob_id)
+            else:
+                blob = db.get(self.blob_id, self.blobdb_bucket())
         except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.name)
 
@@ -496,7 +488,11 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
     def delete_content(self):
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        deleted = db.delete(self.blob_id, bucket)
+        if bucket == "":
+            # blob was migrated from couch using new blobmeta API
+            deleted = db.delete(key=self.blob_id)
+        else:
+            deleted = db.delete(self.blob_id, bucket)
         if deleted:
             self.blob_id = None
 
@@ -519,7 +515,6 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'form'
 
-    name = models.CharField(max_length=255, default=None)
     form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_id', db_index=False,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
@@ -792,9 +787,9 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
-    def _get_attachment_from_db(self, identifier):
+    def _get_attachment_from_db(self, name):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachment_by_identifier(self.case_id, identifier)
+        return CaseAccessorSQL.get_attachment_by_name(self.case_id, name)
 
     def _get_attachments_from_db(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -830,7 +825,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def case_attachments(self):
-        return {attachment.identifier: attachment for attachment in self.get_attachments()}
+        return {attachment.name: attachment for attachment in self.get_attachments()}
 
     @property
     @memoized
@@ -956,26 +951,24 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         db_table = CommCareCaseSQL_DB_TABLE
 
 
-class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
+class CaseAttachmentSQL(AbstractAttachment, IsImageMixin):
     partition_attr = 'case_id'
     objects = RestrictedManager()
     _attachment_prefix = 'case'
 
-    name = models.CharField(max_length=255, default=None)
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
         on_delete=models.CASCADE,
     )
-    identifier = models.CharField(max_length=255, default=None)
-    attachment_src = models.TextField(null=True)
-    attachment_from = models.TextField(null=True)
 
-    def from_form_attachment(self, attachment):
+    def from_form_attachment(self, attachment, attachment_src):
         """
         Update fields in this attachment with fields from another attachment
 
-        :param attachment: XFormAttachmentSQL or CaseAttachmentSQL object
+        :param attachment: XFormAttachmentSQL object.
+        :param attachment_src: Attachment file name. Used for content type
+        guessing if the form attachment has no content type.
         """
         self.content_length = attachment.content_length
         self.blob_id = attachment.blob_id
@@ -984,29 +977,14 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         self.content_type = attachment.content_type
         self.properties = attachment.properties
 
-        if not self.content_type and self.attachment_src:
-            guessed = mimetypes.guess_type(self.attachment_src)
+        if not self.content_type and attachment_src:
+            guessed = mimetypes.guess_type(attachment_src)
             if len(guessed) > 0 and guessed[0] is not None:
                 self.content_type = guessed[0]
 
-        if isinstance(attachment, CaseAttachmentSQL):
-            assert self.identifier == attachment.identifier
-            self.attachment_src = attachment.attachment_src
-            self.attachment_from = attachment.attachment_from
-
     @classmethod
-    def from_case_update(cls, attachment):
-        if attachment.attachment_src:
-            ret = cls(
-                attachment_id=uuid.uuid4(),
-                name=attachment.attachment_name or attachment.identifier,
-                identifier=attachment.identifier,
-                attachment_src=attachment.attachment_src,
-                attachment_from=attachment.attachment_from
-            )
-        else:
-            ret = cls(name=attachment.identifier, identifier=attachment.identifier)
-        return ret
+    def new(cls, name):
+        return cls(name=name, attachment_id=uuid.uuid4())
 
     def __unicode__(self):
         return six.text_type(
@@ -1018,17 +996,14 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
             "content_length='{a.content_length}', "
             "md5='{a.md5}', "
             "blob_id='{a.blob_id}', "
-            "properties='{a.properties}', "
-            "identifier='{a.identifier}', "
-            "attachment_src='{a.attachment_src}', "
-            "attachment_from='{a.attachment_from}')"
+            "properties='{a.properties}')"
         ).format(a=self)
 
     class Meta(object):
         app_label = "form_processor"
         db_table = CaseAttachmentSQL_DB_TABLE
         index_together = [
-            ["case", "identifier"],
+            ["case", "name"],
         ]
 
 

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import csv342 as csv
 import json
 import os.path
 import re
@@ -11,11 +12,11 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.standard.cases.basic import CaseListMixin, CaseListReport
-from corehq.apps.hqwebapp.decorators import use_maps_async
 from dimagi.utils.modules import to_function
 from django.template.loader import render_to_string
 import six
 from six.moves import zip
+from io import open
 
 
 class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
@@ -207,12 +208,11 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                 yield data
 
     def _get_data_csv(self, params, filters):
-        import csv
-        with open(params['path']) as f:
+        with open(params['path'], encoding='utf-8') as f:
             return list(csv.DictReader(f))
 
     def _get_data_geojson(self, params, filters):
-        with open(params['path']) as f:
+        with open(params['path'], encoding='utf-8') as f:
             data = json.load(f)
 
         for feature in data['features']:
@@ -251,45 +251,3 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return True
-
-
-class ElasticSearchMapReport(GetParamsMixin, GenericTabularReport, GenericMapReport):
-
-    report_template_path = "reports/async/maps.html"
-    report_partial_path = "reports/partials/base_maps.html"
-    ajax_pagination = True
-    asynchronous = True
-    flush_layout = True
-
-    @use_maps_async
-    def decorator_dispatcher(self, request, *args, **kwargs):
-        super(ElasticSearchMapReport, self).decorator_dispatcher(request, *args, **kwargs)
-
-    def get_report(self):
-        Report = to_function(self.data_source['report'])
-        assert issubclass(Report, GenericTabularReport), '[%s] must be a GenericTabularReport!' % self.data_source['report']
-
-        report = Report(request=self.request, domain=self.domain, **self.data_source.get('report_params', {}))
-        return report
-
-    @property
-    def total_records(self):
-        report = self.get_report()
-        return report.total_records
-
-    @property
-    def json_dict(self):
-        ret = super(ElasticSearchMapReport, self).json_dict
-        layers = getattr(settings, 'MAPS_LAYERS', None)
-        if not layers:
-            layers = {'Default': {'family': 'fallback'}}
-        data = self._get_data()
-        display = self.dynamic_config(self.display_config, data['features'])
-
-        context = {
-            'data': data,
-            'config': display,
-            'layers': layers,
-        }
-        ret.update(dict(context=context))
-        return ret

@@ -1,3 +1,7 @@
 {% extends 'hqwebapp/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static "locations/js/widgets_main_v3.js" %}"></script>
+{% endblock %}

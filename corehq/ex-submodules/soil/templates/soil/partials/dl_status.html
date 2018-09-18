@@ -28,7 +28,6 @@
             </p>
         {% endif %}
         <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">{% csrf_token %}
-            <input type="hidden" name="dropbox-next" value="" />
             <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
                 <i class="fa fa-download"></i>
                 {% trans "Download File Now" %}
@@ -50,11 +49,6 @@
         {% endfor %}
         </ul>
     {% endif %}
-    <script>
-        {% if allow_dropbox_sync %}
-            $('input[name="dropbox-next"]').attr('value', window.location.href);
-        {% endif %}
-    </script>
     </div>
 {% else %}
     {% include 'soil/partials/download_in_progress.html' %}

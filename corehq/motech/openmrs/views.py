@@ -13,6 +13,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.tasks import import_patients_to_domain
@@ -21,19 +22,16 @@ from corehq.motech.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormC
 from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm
 from corehq.motech.openmrs.models import ColumnMapping
 from corehq.motech.openmrs.repeater_helpers import (
-    Requests,
     get_patient_identifier_types,
     get_person_attribute_types,
 )
+from corehq.motech.requests import Requests
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.utils import b64_aes_encrypt
 from memoized import memoized
 from dimagi.utils.web import json_response
 from six.moves import map
 from six.moves import range
-
-
-PASSWORD_PLACEHOLDER = '*' * 16
 
 
 @login_and_domain_required
@@ -83,7 +81,7 @@ class OpenmrsModelListViewHelper(object):
     @property
     @memoized
     def requests(self):
-        return Requests(self.repeater.url, self.repeater.username, self.repeater.password)
+        return Requests(self.domain, self.repeater.url, self.repeater.username, self.repeater.password)
 
 
 def _filter_out_links(json):
@@ -115,7 +113,7 @@ def openmrs_raw_api(request, domain, repeater_id, rest_uri):
     no_links = get_params.pop('links', None) is None
     repeater = OpenmrsRepeater.get(repeater_id)
     assert repeater.domain == domain
-    requests = Requests(repeater.url, repeater.username, repeater.password)
+    requests = Requests(repeater.domain, repeater.url, repeater.username, repeater.password)
     raw_json = requests.get('/ws/rest/v1' + rest_uri, get_params).json()
     if no_links:
         return JsonResponse(_filter_out_links(raw_json))
@@ -183,7 +181,6 @@ class OpenmrsImporterView(BaseProjectSettingsView):
 
     @property
     def page_context(self):
-        # TODO: JsonField fields must render with CodeMirror
         # TODO: Look up locations for location_id field.
 
         openmrs_importers = []

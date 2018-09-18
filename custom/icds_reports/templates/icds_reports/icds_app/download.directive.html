@@ -1,4 +1,4 @@
-<div class="download-directive">
+<div class="download-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
     <div class="row fixes-filters">
         <div class="col-md-11">
             <span class="breadcrump-element">Export Program Area Indicators: </span>
@@ -202,20 +202,10 @@
                     </div>
                 </div>
             </div>
-            <div class="form-group" ng-if="!$ctrl.isISSNIPMonthlyRegisterSelected()">
+            <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-6">
                     <form action="{% url 'icds_export_indicator' domain %}" method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="location" ng-value="$ctrl.selectedLocationId" />
-                        <input type="hidden" name="aggregation_level" ng-value="$ctrl.selectedLevel" />
-                        <input type="hidden" name="month" ng-value="$ctrl.selectedMonth" />
-                        <input type="hidden" name="year" ng-value="$ctrl.selectedYear" />
-                        <input type="hidden" name="indicator" ng-value="$ctrl.selectedIndicator" />
-                        <input type="hidden" name="format" ng-value="$ctrl.selectedFormat" />
-                        <input type="hidden" name="pdfformat" ng-value="$ctrl.selectedPDFFormat" />
-                        <input type="hidden" name="selected_awcs" ng-value="$ctrl.selectedPDFFormat === 'one' ? 'all' : $ctrl.selectedAWCs" />
-                        <input ng-if="$ctrl.isChildBeneficiaryListSelected()" type="hidden" ng-repeat="filter in $ctrl.selectedFilterOptions()" name="filter[]" ng-value="filter.id"/>
-                        <button type="submit"
+                        <button type="button" ng-click="$ctrl.submitForm('{{ csrf_token }}')"
                                 class="btn btn-default normalButton orangeButton"
                                 ng-disabled="$ctrl.hasErrors() || $ctrl.hasErrorsISSNIPExport()">
                             Export
@@ -227,25 +217,10 @@
                     </form>
                 </div>
             </div>
-            <div class="form-group" ng-if="$ctrl.isISSNIPMonthlyRegisterSelected()">
-                <div class="col-sm-offset-2 col-sm-6">
-                    <form action="{% url 'icds_export_indicator' domain %}" method="POST">
-                        <button type="button" ng-click="$ctrl.submitISSNIPForm('{{ csrf_token }}')"
-                                class="btn btn-default normalButton orangeButton"
-                                ng-disabled="$ctrl.hasErrors() || $ctrl.hasErrorsISSNIPExport()">
-                            Export
-                        </button>
-                        <button type="button" ng-click="$ctrl.resetForm()"
-                                class="btn btn-default normalButton orangeButton">
-                            Reset
-                        </button>
-                    </form>
-                </div>
-            </div>
-            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedISSNIPTask) && !$ctrl.downloaded">
-                <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask" class="fa fa-circle-o-notch fa-spin"></i>
-                <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask">Preparing your ICDS-CAS monthly register report...</span>
-                <span ng-if="$ctrl.readyToDownload()">Your ICDS-CAS monthly register report is ready to be downloaded</span>
+            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedTask) && !$ctrl.downloaded">
+                <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask" class="fa fa-circle-o-notch fa-spin"></i>
+                <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask">Preparing your report...</span>
+                <span ng-if="$ctrl.readyToDownload()">Your report is ready to be downloaded</span>
                 <a class="btn btn-primary" ng-click="$ctrl.goToLink()"
                    ng-disabled="!$ctrl.readyToDownload()"><span>Download</span></a>
             </div>

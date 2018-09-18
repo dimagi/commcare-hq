@@ -1,10 +1,9 @@
 from __future__ import absolute_import
-from corehq.apps.styleguide.tabs import SGExampleTab, SimpleCrispyFormSGExample, \
-    ControlsDemoSGExample
+from corehq.apps.styleguide.tabs import SGExampleTab, SimpleCrispyFormSGExample
 from corehq.tabs.tabclasses import DashboardTab, ProjectReportsTab, ProjectInfoTab, SetupTab, \
     ProjectDataTab, ApplicationsTab, CloudcareTab, MessagingTab, ProjectUsersTab, \
     AdminTab, IndicatorAdminTab, SMSAdminTab, AccountingTab, ProjectSettingsTab, \
-    MySettingsTab
+    MySettingsTab, EnterpriseSettingsTab, TranslationsTab
 
 MENU_TABS = (
     DashboardTab,
@@ -19,7 +18,9 @@ MENU_TABS = (
     MessagingTab,
     # invisible
     ProjectSettingsTab,
+    EnterpriseSettingsTab,
     MySettingsTab,
+    TranslationsTab,
     # Admin
     AdminTab,
     SMSAdminTab,
@@ -27,5 +28,4 @@ MENU_TABS = (
     # Styleguide
     SGExampleTab,
     SimpleCrispyFormSGExample,
-    ControlsDemoSGExample,
 )

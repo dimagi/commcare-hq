@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 from io import BytesIO
 import attr
 import datetime
-import json
 import logging
 
 from django.core import cache
@@ -14,7 +13,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import connections
 from django.db.utils import OperationalError
-from restkit import Resource
 from celery import Celery
 import requests
 
@@ -24,10 +22,9 @@ from soil import heartbeat
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.app_manager.models import Application
-from corehq.apps.change_feed.connection import get_kafka_client_or_none
+from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.es import GroupES
-from corehq.blobs import get_blob_db
-from corehq.blobs.util import random_url_id
+from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
 from corehq.util.decorators import change_log_level
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
@@ -63,8 +60,7 @@ def check_rabbitmq():
         mq_management_url = amqp_parts[0].replace('5672', '15672')
         vhost = amqp_parts[1]
         try:
-            mq = Resource('http://%s' % mq_management_url, timeout=2)
-            vhost_dict = json.loads(mq.get('api/vhosts', timeout=2).body_string())
+            vhost_dict = requests.get('http://%s/api/vhosts' % mq_management_url, timeout=2).json()
             for d in vhost_dict:
                 if d['name'] == vhost:
                     return ServiceStatus(True, 'RabbitMQ OK')
@@ -77,32 +73,17 @@ def check_rabbitmq():
 
 @change_log_level('kafka.client', logging.WARNING)
 def check_kafka():
-    client = get_kafka_client_or_none()
-    if not client:
-        return ServiceStatus(False, "Could not connect to Kafka")
-    elif len(client.brokers) == 0:
+    try:
+        client = get_kafka_client()
+    except Exception as e:
+        return ServiceStatus(False, "Could not connect to Kafka: %s" % e)
+
+    if len(client.cluster.brokers()) == 0:
         return ServiceStatus(False, "No Kafka brokers found")
-    elif len(client.topics) == 0:
+    elif len(client.cluster.topics()) == 0:
         return ServiceStatus(False, "No Kafka topics found")
     else:
         return ServiceStatus(True, "Kafka seems to be in order")
-
-
-def check_touchforms():
-    if not getattr(settings, 'XFORMS_PLAYER_URL', None):
-        return ServiceStatus(True, "Touchforms isn't needed for this cluster")
-
-    try:
-        res = requests.post(settings.XFORMS_PLAYER_URL,
-                            data='{"action": "heartbeat"}',
-                            timeout=5)
-    except requests.exceptions.ConnectTimeout:
-        return ServiceStatus(False, "Could not establish a connection in time")
-    except requests.ConnectionError:
-        return ServiceStatus(False, "Could not connect to touchforms")
-    else:
-        msg = "Touchforms returned a {} status code".format(res.status_code)
-        return ServiceStatus(res.ok, msg)
 
 
 @change_log_level('urllib3.connectionpool', logging.WARNING)
@@ -126,10 +107,15 @@ def check_blobdb():
     """Save something to the blobdb and try reading it back."""
     db = get_blob_db()
     contents = b"It takes Pluto 248 Earth years to complete one orbit!"
-    info = db.put(BytesIO(contents), random_url_id(16))
-    with db.get(info.identifier) as fh:
+    meta = db.put(
+        BytesIO(contents),
+        domain="<unknown>",
+        parent_id="check_blobdb",
+        type_code=CODES.tempfile,
+    )
+    with db.get(key=meta.key) as fh:
         res = fh.read()
-    db.delete(info.identifier)
+    db.delete(key=meta.key)
     if res == contents:
         return ServiceStatus(True, "Successfully saved a file to the blobdb")
     return ServiceStatus(False, "Failed to save a file to the blobdb")
@@ -151,9 +137,11 @@ def check_celery():
 def check_heartbeat():
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     if celery_monitoring:
-        cresource = Resource(celery_monitoring, timeout=3)
-        t = cresource.get("api/workers", params_dict={'status': True}).body_string()
-        all_workers = json.loads(t)
+        all_workers = requests.get(
+            celery_monitoring + '/api/workers',
+            params={'status': True},
+            timeout=3,
+        ).json()
         bad_workers = []
         expected_running, expected_stopped = parse_celery_workers(all_workers)
 
@@ -212,7 +200,10 @@ def check_couch():
 
 def check_formplayer():
     try:
-        res = requests.get('{}/serverup'.format(get_formplayer_url()), timeout=5)
+        # Setting verify=False in this request keeps this from failing for urls with self-signed certificates.
+        # Allowing this because the certificate will always be self-signed in the "provable deploy"
+        # bootstrapping test in commcare-cloud.
+        res = requests.get('{}/serverup'.format(get_formplayer_url()), timeout=5, verify=False)
     except requests.exceptions.ConnectTimeout:
         return ServiceStatus(False, "Could not establish a connection in time")
     except requests.ConnectionError:
@@ -264,10 +255,6 @@ CHECKS = {
     'heartbeat': {
         "always_check": False,
         "check_func": check_heartbeat,
-    },
-    'touchforms': {
-        "always_check": True,
-        "check_func": check_touchforms,
     },
     'elasticsearch': {
         "always_check": True,

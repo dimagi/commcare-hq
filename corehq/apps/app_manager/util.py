@@ -1,18 +1,25 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import namedtuple, OrderedDict
-from copy import deepcopy, copy
-from couchdbkit import ResourceNotFound
+
 import json
 import os
 import uuid
 import re
 import logging
-
 import yaml
-from django.urls import reverse
+import six
+from collections import namedtuple, OrderedDict
+from copy import deepcopy, copy
+from io import open
+
+
+from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
+from memoized import memoized
+
+from django.urls import reverse
 from django.core.cache import cache
+from django.http import Http404
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
@@ -34,16 +41,10 @@ from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
-import six
 
 
 logger = logging.getLogger(__name__)
-
-CASE_XPATH_PATTERN_MATCHES = [
-    DOT_INTERPOLATE_PATTERN
-]
 
 CASE_XPATH_SUBSTRING_MATCHES = [
     "instance('casedb')",
@@ -52,9 +53,6 @@ CASE_XPATH_SUBSTRING_MATCHES = [
     "#parent",
     "#host",
 ]
-
-
-USER_CASE_XPATH_PATTERN_MATCHES = []
 
 USER_CASE_XPATH_SUBSTRING_MATCHES = [
     "#user",
@@ -98,21 +96,21 @@ def xpath_references_case(xpath):
     # We want to determine here if the xpath references any cases other
     # than the user case. To determine if the xpath references the user
     # case, see xpath_references_user_case()
+    # Assumes xpath has already been dot interpolated as needed.
     for substring in USER_CASE_XPATH_SUBSTRING_MATCHES:
         xpath = xpath.replace(substring, '')
 
     return _check_xpath_for_matches(
         xpath,
         substring_matches=CASE_XPATH_SUBSTRING_MATCHES,
-        pattern_matches=CASE_XPATH_PATTERN_MATCHES
     )
 
 
 def xpath_references_user_case(xpath):
+    # Assumes xpath has already been dot interpolated as needed.
     return _check_xpath_for_matches(
         xpath,
         substring_matches=USER_CASE_XPATH_SUBSTRING_MATCHES,
-        pattern_matches=USER_CASE_XPATH_PATTERN_MATCHES,
     )
 
 
@@ -121,6 +119,10 @@ def split_path(path):
     name = path_parts.pop(-1)
     path = '/'.join(path_parts)
     return path, name
+
+
+def first_elem(elem_list):
+    return elem_list[0] if elem_list else None
 
 
 def save_xform(app, form, xml):
@@ -297,7 +299,7 @@ def all_apps_by_domain(domain):
 def languages_mapping():
     mapping = cache.get('__languages_mapping')
     if not mapping:
-        with open('submodules/langcodes/langs.json') as langs_file:
+        with open('submodules/langcodes/langs.json', encoding='utf-8') as langs_file:
             lang_data = json.load(langs_file)
             mapping = dict([(l["two"], l["names"]) for l in lang_data])
         mapping["default"] = ["Default Language"]
@@ -337,10 +339,12 @@ def get_commcare_versions(request_user):
 
 
 def get_commcare_builds(request_user):
+    can_view_superuser_builds = (request_user.is_superuser
+                                 or toggles.IS_CONTRACTOR.enabled(request_user.username))
     return [
         i.build
         for i in CommCareBuildConfig.fetch().menu
-        if request_user.is_superuser or not i.superuser_only
+        if can_view_superuser_builds or not i.superuser_only
     ]
 
 
@@ -456,7 +460,7 @@ def _app_callout_templates():
         'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
     )
     if os.path.exists(path):
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             data = yaml.load(f)
     else:
         logger.info("not found: %s", path)
@@ -667,8 +671,13 @@ def get_form_source_download_url(xform):
     if not xform.build_id:
         return None
 
-    from corehq.apps.app_manager.models import Application
-    app = Application.get(xform.build_id)
+    try:
+        app = get_app(xform.domain, xform.build_id)
+    except Http404:
+        return None
+    if app.is_remote_app():
+        return None
+
     try:
         form = app.get_forms_by_xmlns(xform.xmlns)[0]
     except KeyError:

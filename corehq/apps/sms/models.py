@@ -178,6 +178,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_INVALID_DESTINATION_NUMBER = 'INVALID_DESTINATION_NUMBER'
     ERROR_MESSAGE_TOO_LONG = 'MESSAGE_TOO_LONG'
     ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
+    ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -194,6 +195,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
             ugettext_noop("The gateway could not process the message because it was too long."),
         ERROR_CONTACT_IS_INACTIVE:
             ugettext_noop("The recipient has been deactivated."),
+        ERROR_TRIAL_SMS_EXCEEDED:
+            ugettext_noop("The number of SMS that can be sent on a trial plan has been exceeded."),
     }
 
     UUIDS_TO_GENERATE = ['couch_id']
@@ -1086,24 +1089,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     def get_recipient_doc_type(self):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
 
-    def create_subevent(self, reminder_definition, reminder, recipient):
-        recipient_type = MessagingEvent.get_recipient_type(recipient)
-        content_type, form_unique_id, form_name = self.get_content_info_from_reminder(
-            reminder_definition, reminder, parent=self)
-
-        obj = MessagingSubEvent.objects.create(
-            parent=self,
-            date=datetime.utcnow(),
-            recipient_type=recipient_type,
-            recipient_id=recipient.get_id if recipient_type else None,
-            content_type=content_type,
-            form_unique_id=form_unique_id,
-            form_name=form_name,
-            case_id=reminder.case_id,
-            status=MessagingEvent.STATUS_IN_PROGRESS,
-        )
-        return obj
-
     def create_ivr_subevent(self, recipient, form_unique_id, case_id=None):
         recipient_type = MessagingEvent.get_recipient_type(recipient)
         obj = MessagingSubEvent.objects.create(
@@ -1174,46 +1159,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         return self.messagingsubevent_set.all()
 
     @classmethod
-    def get_source_from_reminder(cls, reminder_definition):
-        from corehq.apps.reminders.models import (REMINDER_TYPE_ONE_TIME,
-            REMINDER_TYPE_DEFAULT)
-
-        default = (cls.SOURCE_OTHER, None)
-        return {
-            REMINDER_TYPE_ONE_TIME:
-                (cls.SOURCE_BROADCAST, reminder_definition.get_id),
-            REMINDER_TYPE_DEFAULT:
-                (cls.SOURCE_REMINDER, reminder_definition.get_id),
-        }.get(reminder_definition.reminder_type, default)
-
-    @classmethod
     def get_form_name_or_none(cls, form_unique_id):
         try:
             form = Form.get_form(form_unique_id)
             return form.full_path_name
         except:
             return None
-
-    @classmethod
-    def get_content_info_from_reminder(cls, reminder_definition, reminder, parent=None):
-        from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_CALLBACK,
-            METHOD_SMS_SURVEY, METHOD_IVR_SURVEY, METHOD_EMAIL)
-        content_type = {
-            METHOD_SMS: cls.CONTENT_SMS,
-            METHOD_SMS_CALLBACK: cls.CONTENT_SMS_CALLBACK,
-            METHOD_SMS_SURVEY: cls.CONTENT_SMS_SURVEY,
-            METHOD_IVR_SURVEY: cls.CONTENT_IVR_SURVEY,
-            METHOD_EMAIL: cls.CONTENT_EMAIL,
-        }.get(reminder_definition.method, cls.CONTENT_SMS)
-
-        form_unique_id = reminder.current_event.form_unique_id
-        if parent and parent.form_unique_id == form_unique_id:
-            form_name = parent.form_name
-        else:
-            form_name = (cls.get_form_name_or_none(form_unique_id)
-                if form_unique_id else None)
-
-        return (content_type, form_unique_id, form_name)
 
     @classmethod
     def get_content_info_from_keyword(cls, keyword):
@@ -1231,54 +1182,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                     content_type = cls.CONTENT_SMS
 
         return (content_type, form_unique_id, form_name)
-
-    @classmethod
-    def create_from_reminder(cls, reminder_definition, reminder, recipient=None):
-        if reminder_definition.messaging_event_id:
-            return cls.objects.get(pk=reminder_definition.messaging_event_id)
-
-        source, source_id = cls.get_source_from_reminder(reminder_definition)
-        content_type, form_unique_id, form_name = cls.get_content_info_from_reminder(
-            reminder_definition, reminder)
-
-        if recipient and reminder_definition.recipient_is_list_of_locations(recipient):
-            if len(recipient) == 1:
-                recipient_type = (cls.RECIPIENT_LOCATION_PLUS_DESCENDANTS
-                                  if reminder_definition.include_child_locations
-                                  else cls.RECIPIENT_LOCATION)
-                recipient_id = recipient[0].location_id
-            elif len(recipient) > 1:
-                recipient_type = (cls.RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS
-                                  if reminder_definition.include_child_locations
-                                  else cls.RECIPIENT_VARIOUS_LOCATIONS)
-                recipient_id = None
-            else:
-                # len(recipient) should never be 0 when we invoke this method,
-                # but catching this situation here just in case
-                recipient_type = cls.RECIPIENT_UNKNOWN
-                recipient_id = None
-        elif isinstance(recipient, list):
-            recipient_type = cls.RECIPIENT_VARIOUS
-            recipient_id = None
-        elif recipient is None:
-            recipient_type = cls.RECIPIENT_UNKNOWN
-            recipient_id = None
-        else:
-            recipient_type = cls.get_recipient_type(recipient)
-            recipient_id = recipient.get_id if recipient_type else None
-
-        return cls.objects.create(
-            domain=reminder_definition.domain,
-            date=datetime.utcnow(),
-            source=source,
-            source_id=source_id,
-            content_type=content_type,
-            form_unique_id=form_unique_id,
-            form_name=form_name,
-            status=cls.STATUS_IN_PROGRESS,
-            recipient_type=recipient_type,
-            recipient_id=recipient_id
-        )
 
     @classmethod
     def get_source_and_id_from_schedule_instance(cls, schedule_instance):
@@ -1328,7 +1231,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         if isinstance(content, (SMSContent, CustomContent)):
             return cls.CONTENT_SMS, None, None
         elif isinstance(content, SMSSurveyContent):
-            app, module, form = content.get_memoized_app_module_form(domain)
+            app, module, form, requires_input = content.get_memoized_app_module_form(domain)
             form_name = form.full_path_name if form else None
             return cls.CONTENT_SMS_SURVEY, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
@@ -2021,12 +1924,22 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # to this backend
     reply_to_phone_number = models.CharField(max_length=126, null=True)
 
+    # Some backends use their own inbound api key and not the default hq-generated one.
+    # For those, we don't show the inbound api key on the edit backend page.
+    show_inbound_api_key_during_edit = True
+
     class Meta(object):
         db_table = 'messaging_mobilebackend'
         app_label = 'sms'
 
     class ExpectedDomainLevelBackend(Exception):
         pass
+
+    def __unicode__(self):
+        if self.is_global:
+            return "Global Backend '%s'" % self.name
+        else:
+            return "Domain '%s' Backend '%s'" % (self.domain, self.name)
 
     @quickcache(['self.pk', 'domain'], timeout=5 * 60)
     def domain_is_shared(self, domain):
@@ -2487,6 +2400,24 @@ class SQLSMSBackend(SQLMobileBackend):
         return []
 
     @classmethod
+    def get_pass_through_opt_in_keywords(cls):
+        """
+        Use this to define opt-in keywords that the gateway counts as opt-in
+        keywords but that we don't want to have block normal processing in HQ.
+
+        This is useful when the gateway defines an opt-in keyword like
+        YES that is a common reply to SMS survey questions, and we don't
+        want users to continuously be getting opt-in replies when
+        sending YES.
+
+        When receiving these keywords, HQ will still mark the phone as having
+        opted-in in the PhoneBlacklist entry because it's important that the
+        opt-in status between the gateway and HQ remain in sync, but after doing
+        that, HQ will then process the inbound SMS just as a normal inbound message.
+        """
+        return []
+
+    @classmethod
     def get_opt_out_keywords(cls):
         """
         Override to specify a set of opt-out keywords to use for this
@@ -2563,13 +2494,28 @@ class SQLMobileBackendMapping(models.Model):
     """
     A SQLMobileBackendMapping instance is used to map SMS or IVR traffic
     to a given backend based on phone prefix.
+
+    The SQLMobileBackendMappings that have is_global set to True are managed
+    in CommCareHQ's Admin section for SMS Connectivity and Billing.
+
+    It also possible to create SQLMobileBackendMappings that have is_global_set to False
+    in order to define custom rules for how to route outbound SMS traffic for a specific project.
+    This is used so infrequently that no CommCareHQ UI exists to manage it, but if
+    you need to enable this you can do so using the Django admin. Just create a
+    SQLMobileBackendMapping entry with couch_id blank, is_global False, domain equal
+    to the domain you wish to apply this for, backend_type SMS, prefix equal to the
+    mobile prefix that you want to route outbound SMS traffic for, and then for
+    backend choose a backend either in the same project as domain, one that is
+    shared with domain, or one that is global.
     """
     class Meta(object):
         db_table = 'messaging_mobilebackendmapping'
         app_label = 'sms'
         unique_together = ('domain', 'backend_type', 'prefix')
 
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    # This column can be left null for new entries. If there aren't any references to it anywhere, it
+    # can probably be dropped.
+    couch_id = models.CharField(max_length=126, null=True, db_index=True, blank=True)
 
     # True if this mapping applies globally (system-wide). False if it only applies
     # to a domain

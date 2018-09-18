@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test.utils import override_settings
 
+from custom.icds_reports.messages import awcs_reported_weighing_scale_infants_help_text
 from custom.icds_reports.reports.infants_weight_scale import get_infants_weight_scale_data_map, \
     get_infants_weight_scale_data_chart, get_infants_weight_scale_sector_data
 from django.test import TestCase
@@ -11,7 +12,6 @@ from custom.icds_reports.const import ChartColors, MapColors
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestInfantsWeightScale(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_infants_weight_scale_data_map(
@@ -79,9 +79,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Percentage of AWCs that reported having a weighing scale for infants"
-        )
+        expected = awcs_reported_weighing_scale_infants_help_text()
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -399,7 +397,7 @@ class TestInfantsWeightScale(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Percentage of AWCs that reported having a weighing scale for infants"
+            awcs_reported_weighing_scale_infants_help_text()
         )
 
     def test_sector_data_tooltips_data(self):

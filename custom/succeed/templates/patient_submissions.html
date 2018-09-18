@@ -1,4 +1,4 @@
-{% extends "reports/async/tabular.html" %}
+{% extends "reports/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -43,7 +43,7 @@
 {% endblock reportcontent %}
 
 {% block js-inline %} {{ block.super }}
-<script type="text/javascript">
+<script>
     $(function() {
         if ($('#paramSelectorForm').find('#patient_id_field').length == 0) {
             $('<input>').attr({id: 'patient_id_field', type: 'hidden', name: 'patient_id', value: '{{ patient_id }}' }).appendTo('#paramSelectorForm');

@@ -273,7 +273,7 @@ def _validate_indices(case_db, cases):
                 if invalid:
                     # fail hard on invalid indices
                     from distutils.version import LooseVersion
-                    if case_db.cached_xforms:
+                    if case_db.cached_xforms and case_db.domain != 'commcare-tests':
                         xform = case_db.cached_xforms[0]
                         if xform.metadata and xform.metadata.commcare_version:
                             commcare_version = xform.metadata.commcare_version

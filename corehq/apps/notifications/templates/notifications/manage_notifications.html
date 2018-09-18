@@ -1,9 +1,9 @@
 {% extends 'hqwebapp/base_page.html' %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
-{% block js %}{{ block.super }}
-	<script src="{% static 'notifications/js/manage_notifications.js' %}"></script>
-{% endblock %}
+
+{% requirejs_main 'notifications/js/manage_notifications' %}
+
 {% block page_content %}
 {% initial_page_data 'alerts' alerts %}
     <div id="ko-alert-container">

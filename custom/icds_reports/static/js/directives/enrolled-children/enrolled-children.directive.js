@@ -37,7 +37,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     }
 
     vm.rightLegend = {
-        info: 'Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
+        info: 'Of the total number of children between 0-6 years, the percentage of children who are enrolled for Anganwadi Services',
     };
     vm.hideRanking = true;
 
@@ -80,7 +80,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     var options = {
         'xAxisTickFormat': '%m/%d/%y',
         'yAxisTickFormat': ",",
-        'captionContent': ' Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
+        'captionContent': ' Of the total number of children between 0-6 years, the percentage of children who are enrolled for Anganwadi Services',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.type = 'multiBarChart';
@@ -99,6 +99,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             return ["0-1 month", "1-6 months", "6-12 months", "1-3 years", "3-6 years"];
         },
     };
+    vm.chartOptions.chart.showControls = false;
 
     vm.tooltipContent = function (dataInMonth, x) {
         var average = (dataInMonth.all !== 0) ? d3.format(".2%")(dataInMonth.y / dataInMonth.all) : 0;

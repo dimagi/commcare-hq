@@ -1,0 +1,13 @@
+domains: ["example", "dimagi"]
+server_environment: ["localdev"]
+config:
+  referenced_doc_type: "CommCareCase"
+  table_id: "all_candidates"
+  display_name: "Candidates"
+  configured_filter: {}
+  configured_indicators:
+    - column_id: "name"
+      type: "raw"
+      display_name: "Name"
+      datatype: "string"
+      property_name: "name"

@@ -3,15 +3,13 @@ from __future__ import unicode_literals
 import uuid
 
 from sqlagg import SumWhen
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.columns import get_distinct_values
-from corehq.apps.userreports.const import (
-    DEFAULT_MAXIMUM_EXPANSION, UCR_SQL_BACKEND, UCR_ES_BACKEND
-)
+from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
@@ -26,7 +24,6 @@ from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import delete_all_cases
 from six.moves import range
 
 
@@ -82,7 +79,6 @@ class TestFieldColumn(SimpleTestCase):
             })
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class ChoiceListColumnDbTest(TestCase):
 
     def test_column_uniqueness_when_truncated(self):
@@ -118,18 +114,11 @@ class ChoiceListColumnDbTest(TestCase):
             'doc_type': 'CommCareCase',
             'long_column': 'duplicate_choice_1(s)',
         })
-        adapter.refresh_table()
         # and query it back
         q = adapter.get_query_object()
         self.assertEqual(1, q.count())
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class ChoiceListColumnDbTestES(ChoiceListColumnDbTest):
-    pass
-
-
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
@@ -165,8 +154,6 @@ class TestExpandedColumn(TestCase):
 
         if build_data_source:
             tasks.rebuild_indicators(self.data_source_config._id)
-            adapter = get_indicator_adapter(self.data_source_config)
-            adapter.refresh_table()
 
         report_config = ReportConfiguration(
             domain=self.domain,
@@ -312,11 +299,6 @@ class TestExpandedColumn(TestCase):
         expected_rows = [get_expected_row(v, set(submitted_vals)) for v in submitted_vals]
         data = data_source.get_data()
         self.assertEqual(sorted(expected_rows), sorted(data))
-
-
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class TestExpandedColumnES(TestExpandedColumn):
-    pass
 
 
 class TestAggregateDateColumn(SimpleTestCase):

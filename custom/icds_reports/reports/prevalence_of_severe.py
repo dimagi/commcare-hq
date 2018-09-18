@@ -12,13 +12,15 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.messages import wasting_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations
+    get_child_locations, wasting_moderate_column, wasting_severe_column, wasting_normal_column, \
+    default_age_interval, wfh_recorded_in_month_column
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False, icds_feature_flag=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -27,18 +29,21 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         ).values(
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            moderate=Sum('wasting_moderate'),
-            severe=Sum('wasting_severe'),
-            normal=Sum('wasting_normal'),
+            moderate=Sum(wasting_moderate_column(icds_feature_flag)),
+            severe=Sum(wasting_severe_column(icds_feature_flag)),
+            normal=Sum(wasting_normal_column(icds_feature_flag)),
             total_height_eligible=Sum('height_eligible'),
             total_weighed=Sum('nutrition_status_weighed'),
-            total_measured=Sum('weighed_and_height_measured_in_month'),
+            total_measured=Sum(wfh_recorded_in_month_column(icds_feature_flag)),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         if 'age_tranche' not in config:
-            queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
+            if icds_feature_flag:
+                queryset = queryset.exclude(age_tranche=72)
+            else:
+                queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
         return queryset
 
     data_for_map = defaultdict(lambda: {
@@ -103,7 +108,10 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     fills.update({'7%-100%': MapColors.RED})
     fills.update({'defaultFill': MapColors.GREY})
 
-    gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='6 - 60 months')
+    gender_label, age_label, chosen_filters = chosen_filters_to_labels(
+        config,
+        default_interval=default_age_interval(icds_feature_flag)
+    )
 
     return {
         "slug": "severe",
@@ -115,17 +123,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         "rightLegend": {
             "average": "%.2f" % ((sum(values_to_calculate_average)) /
                                  float(len(values_to_calculate_average) or 1)),
-            "info": _((
-                "Percentage of children between {} enrolled for Anganwadi Services with "
-                "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "
-                "<br/><br/>"
-                "Wasting in children is a symptom of acute undernutrition usually as a consequence "
-                "of insufficient food intake or a high incidence of infectious diseases. Severe Acute "
-                "Malnutrition (SAM) is nutritional status for a child who has severe wasting "
-                "(weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional "
-                "status for a child that has moderate wasting (weight-for-height) below -2Z."
-                .format(age_label)
-            )),
+            "info": wasting_help_text(age_label),
             "extended_info": [
                 {
                     'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
@@ -158,8 +156,8 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=False, icds_feature_flag=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -171,18 +169,21 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
     ).values(
         'month', '%s_name' % loc_level
     ).annotate(
-        moderate=Sum('wasting_moderate'),
-        severe=Sum('wasting_severe'),
-        normal=Sum('wasting_normal'),
+        moderate=Sum(wasting_moderate_column(icds_feature_flag)),
+        severe=Sum(wasting_severe_column(icds_feature_flag)),
+        normal=Sum(wasting_normal_column(icds_feature_flag)),
         total_height_eligible=Sum('height_eligible'),
         total_weighed=Sum('nutrition_status_weighed'),
-        total_measured=Sum('weighed_and_height_measured_in_month'),
+        total_measured=Sum(wfh_recorded_in_month_column(icds_feature_flag)),
     ).order_by('month')
 
     if not show_test:
         chart_data = apply_exclude(domain, chart_data)
     if 'age_tranche' not in config:
-        chart_data = chart_data.exclude(age_tranche__in=[0, 6, 72])
+        if icds_feature_flag:
+            chart_data = chart_data.exclude(age_tranche=72)
+        else:
+            chart_data = chart_data.exclude(age_tranche__in=[0, 6, 72])
 
     data = {
         'red': OrderedDict(),
@@ -230,7 +231,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
 
     top_locations = sorted(
         [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
-        key=lambda x: x['percent']
+        key=lambda x: (x['percent'], x['loc_name'])
     )
 
     return {
@@ -288,8 +289,9 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id, show_test=False,
+                                         icds_feature_flag=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -298,18 +300,21 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
     ).values(
         *group_by
     ).annotate(
-        moderate=Sum('wasting_moderate'),
-        severe=Sum('wasting_severe'),
-        normal=Sum('wasting_normal'),
+        moderate=Sum(wasting_moderate_column(icds_feature_flag)),
+        severe=Sum(wasting_severe_column(icds_feature_flag)),
+        normal=Sum(wasting_normal_column(icds_feature_flag)),
         total_height_eligible=Sum('height_eligible'),
         total_weighed=Sum('nutrition_status_weighed'),
-        total_measured=Sum('weighed_and_height_measured_in_month'),
+        total_measured=Sum(wfh_recorded_in_month_column(icds_feature_flag)),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
         data = apply_exclude(domain, data)
     if 'age_tranche' not in config:
-        data = data.exclude(age_tranche__in=[0, 6, 72])
+        if icds_feature_flag:
+            data = data.exclude(age_tranche=72)
+        else:
+            data = data.exclude(age_tranche__in=[0, 6, 72])
 
     chart_data = {
         'blue': [],
@@ -356,16 +361,14 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
+    gender_label, age_label, chosen_filters = chosen_filters_to_labels(
+        config,
+        default_interval=default_age_interval(icds_feature_flag)
+    )
+
     return {
         "tooltips_data": dict(tooltips_data),
-        "info": _((
-            "Percentage of children between 6 - 60 months enrolled for Anganwadi Services with "
-            "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
-            "<br/><br/>"
-            "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
-            "undernutrition usually as a consequence of insufficient food intake or a high "
-            "incidence of infectious diseases."
-        )),
+        "info": _(wasting_help_text(age_label)),
         "chart_data": [
             {
                 "values": chart_data['blue'],

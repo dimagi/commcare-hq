@@ -1,6 +1,7 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-test",
     "icds-sql",
     "icds-test",
     "icds-cas",
@@ -105,7 +106,7 @@
         },
         "is_nullable": false,
         "is_primary_key": false,
-        "create_index": true,
+        "create_index": false,
         "transform": {},
         "type": "expression"
       },
@@ -230,7 +231,7 @@
       },
       {
         "column_id": "supervisor_id",
-        "create_index": true,
+        "create_index": false,
         "datatype": "string",
         "display_name": null,
         "expression": {
@@ -577,20 +578,69 @@
           "operator": "eq",
           "property_value": "yes",
           "expression": {
-            "type": "icds_get_last_case_property_update",
-            "case_id_expression": {
-              "type": "icds_parent_id"
+            "type": "conditional",
+            "test": {
+              "type": "not",
+              "filter": {
+                "type": "boolean_expression",
+                "operator": "in",
+                "expression": {
+                  "type": "named",
+                  "name": "aadhar_date_from_person_case"
+                },
+                "property_value": ["", null]
+              }
             },
-            "case_property": "has_aadhar",
-            "end_date": {
-              "type": "named",
-              "name": "month_end"
+            "expression_if_true": {
+              "type": "conditional",
+              "test": {
+                "type": "boolean_expression",
+                "operator": "gte",
+                "expression": {
+                  "type": "diff_days",
+                  "from_date_expression": {
+                    "type": "named",
+                    "name": "aadhar_date_from_person_case"
+                  },
+                  "to_date_expression": {
+                    "type": "named",
+                    "name": "month_end"
+                  }
+                },
+                "property_value": 0
+              },
+              "expression_if_true": {
+                "type": "constant",
+                "constant": "yes"
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": "no"
+              }
             },
-            "xmlns": [
-              "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
-              "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
-              "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
-            ]
+            "expression_if_false": {
+            "type": "conditional",
+              "test": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "named",
+                    "name": "aadhar_number_from_forms"
+                  },
+                  "property_value": ["", null]
+                }
+              },
+              "expression_if_true": {
+                "type": "constant",
+                "constant": "yes"
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": "no"
+              }
+            }
           }
         },
         "comment": "Filter history on add household, add member and edit member"
@@ -1149,41 +1199,16 @@
         "transform": {},
         "display_name": null,
         "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "named",
-            "name": "thr_eligible"
-          },
-          "expression_if_true": {
-            "type": "named",
-            "name": "rations_distributed"
-          },
-          "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
-          }
+          "type": "constant",
+          "constant": 0
         }
       },
       {
         "column_id": "rations_21_plus_distributed",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "name": "thr_eligible",
-              "type": "named"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "gte",
-              "property_value": 21,
-              "expression": {
-                "type": "named",
-                "name": "rations_distributed"
-              }
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1205,41 +1230,16 @@
         "transform": {},
         "display_name": null,
         "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "named",
-            "name": "pse_eligible"
-          },
-          "expression_if_true": {
-            "type": "named",
-            "name": "pse_days"
-          },
-          "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
-          }
+          "type": "constant",
+          "constant": 0
         }
       },
       {
         "column_id": "pse_attended_16_days",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "name": "pse_eligible",
-              "type": "named"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "gte",
-              "property_value": 16,
-              "expression": {
-                "type": "named",
-                "name": "pse_days"
-              }
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1327,29 +1327,8 @@
         "column_id": "ebf_in_month",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "yes",
-              "expression": {
-                "type": "nested",
-                "argument_expression": {
-                  "type": "named",
-                  "name": "get_ebf_repeat_in_month"
-                },
-                "value_expression": {
-                  "type": "property_name",
-                  "property_name": "is_ebf"
-                }
-              }
-            },
-            {
-              "name": "ebf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1357,25 +1336,8 @@
         "column_id": "ebf_no_info_recorded",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "in",
-              "property_value": [
-                "",
-                null
-              ],
-              "expression": {
-                "type": "named",
-                "name": "get_ebf_repeat_in_month"
-              }
-            },
-            {
-              "name": "ebf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1388,85 +1350,16 @@
         "transform": {},
         "display_name": null,
         "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "named",
-            "name": "ebf_eligible"
-          },
-          "expression_if_true": {
-            "type": "named",
-            "name": "ebf_not_breastfeeding_reason"
-          },
-          "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
-          }
+          "type": "constant",
+          "constant": null
         }
       },
       {
         "column_id": "ebf_drinking_liquid",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "or",
-              "filters": [
-                {
-                  "type": "boolean_expression",
-                  "operator": "eq",
-                  "property_value": "yes",
-                  "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                      "type": "named",
-                      "name": "get_ebf_repeat_in_month"
-                    },
-                    "value_expression": {
-                      "type": "property_name",
-                      "property_name": "water_or_milk"
-                    }
-                  }
-                },
-                {
-                  "type": "boolean_expression",
-                  "operator": "eq",
-                  "property_value": "yes",
-                  "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                      "type": "named",
-                      "name": "get_ebf_repeat_in_month"
-                    },
-                    "value_expression": {
-                      "type": "property_name",
-                      "property_name": "other_milk_to_child"
-                    }
-                  }
-                },
-                {
-                  "type": "boolean_expression",
-                  "operator": "eq",
-                  "property_value": "yes",
-                  "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                      "type": "named",
-                      "name": "get_ebf_repeat_in_month"
-                    },
-                    "value_expression": {
-                      "type": "property_name",
-                      "property_name": "tea_other"
-                    }
-                  }
-                }
-              ]
-            },
-            {
-              "name": "ebf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1474,29 +1367,8 @@
         "column_id": "ebf_eating",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "yes",
-              "expression": {
-                "type": "nested",
-                "argument_expression": {
-                  "type": "named",
-                  "name": "get_ebf_repeat_in_month"
-                },
-                "value_expression": {
-                  "type": "property_name",
-                  "property_name": "eating"
-                }
-              }
-            },
-            {
-              "name": "ebf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1504,22 +1376,8 @@
         "column_id": "ebf_no_bf_no_milk",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "not_enough_milk",
-              "expression": {
-                "type": "named",
-                "name": "ebf_not_breastfeeding_reason"
-              }
-            },
-            {
-              "name": "ebf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1527,22 +1385,8 @@
         "column_id": "ebf_no_bf_pregnant_again",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "pregnant_again",
-              "expression": {
-                "type": "named",
-                "name": "ebf_not_breastfeeding_reason"
-              }
-            },
-            {
-              "name": "ebf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1550,22 +1394,8 @@
         "column_id": "ebf_no_bf_child_too_old",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "child_too_old",
-              "expression": {
-                "type": "named",
-                "name": "ebf_not_breastfeeding_reason"
-              }
-            },
-            {
-              "name": "ebf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1573,22 +1403,8 @@
         "column_id": "ebf_no_bf_mother_sick",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "child_mother_sick",
-              "expression": {
-                "type": "named",
-                "name": "ebf_not_breastfeeding_reason"
-              }
-            },
-            {
-              "name": "ebf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1605,13 +1421,8 @@
         "column_id": "cf_in_month",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1628,13 +1439,8 @@
         "column_id": "cf_initiated",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1642,13 +1448,8 @@
         "column_id": "cf_diet_diversity",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1656,13 +1457,8 @@
         "column_id": "cf_diet_quantity",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1670,13 +1466,8 @@
         "column_id": "cf_handwashing",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1684,13 +1475,8 @@
         "column_id": "cf_demo",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1867,52 +1653,8 @@
         "column_id": "counsel_ebf",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "property_value": 0,
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "filter_items",
-                  "items_expression": {
-                    "type": "named",
-                    "name": "get_all_ebf_repeats"
-                  },
-                  "filter_expression": {
-                    "type": "or",
-                    "filters": [
-                      {
-                        "type": "boolean_expression",
-                        "operator": "eq",
-                        "property_value": "yes",
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "counsel_exclusive_bf"
-                        }
-                      },
-                      {
-                        "type": "boolean_expression",
-                        "operator": "eq",
-                        "property_value": "yes",
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "counsel_only_milk"
-                        }
-                      }
-                    ]
-                  }
-                }
-              }
-            },
-            {
-              "name": "ebf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1920,38 +1662,8 @@
         "column_id": "counsel_adequate_bf",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "property_value": 0,
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "filter_items",
-                  "items_expression": {
-                    "type": "named",
-                    "name": "get_all_ebf_repeats"
-                  },
-                  "filter_expression": {
-                    "type": "boolean_expression",
-                    "operator": "eq",
-                    "property_value": "yes",
-                    "expression": {
-                      "type": "property_name",
-                      "property_name": "counsel_adequate_bf"
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "name": "ebf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1959,13 +1671,8 @@
         "column_id": "counsel_pediatric_ifa",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1973,13 +1680,8 @@
         "column_id": "counsel_comp_feeding_vid",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1987,47 +1689,8 @@
         "column_id": "counsel_increase_food_bf",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "property_value": 0,
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "filter_items",
-                  "filter_expression": {
-                    "type": "boolean_expression",
-                    "operator": "eq",
-                    "property_value": "yes",
-                    "expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "counsel_increase_food_bf"
-                      ]
-                    }
-                  },
-                  "items_expression": {
-                    "type": "icds_get_case_forms_by_date",
-                    "xmlns": [
-                      "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
-                    ],
-                    "end_date": {
-                      "type": "named",
-                      "name": "month_end"
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "name": "pnc_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -2035,47 +1698,8 @@
         "column_id": "counsel_manage_breast_problems",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "property_value": 0,
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "filter_items",
-                  "filter_expression": {
-                    "type": "boolean_expression",
-                    "operator": "eq",
-                    "property_value": "yes",
-                    "expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "counsel_breast"
-                      ]
-                    }
-                  },
-                  "items_expression": {
-                    "type": "icds_get_case_forms_by_date",
-                    "xmlns": [
-                      "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
-                    ],
-                    "end_date": {
-                      "type": "named",
-                      "name": "month_end"
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "name": "pnc_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -2083,55 +1707,8 @@
         "column_id": "counsel_skin_to_skin",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "property_value": 0,
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "filter_items",
-                  "filter_expression": {
-                    "type": "boolean_expression",
-                    "operator": "eq",
-                    "property_value": "yes",
-                    "expression": {
-                      "type": "property_name",
-                      "property_name": "skin_to_skin"
-                    }
-                  },
-                  "items_expression": {
-                    "type": "icds_get_all_forms_repeats",
-                    "forms_expression": {
-                      "type": "icds_get_case_forms_by_date",
-                      "xmlns": [
-                        "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
-                      ],
-                      "end_date": {
-                        "type": "named",
-                        "name": "month_end"
-                      }
-                    },
-                    "repeat_path": [
-                      "form",
-                      "child",
-                      "item"
-                    ],
-                    "case_id_path": [
-                      "@id"
-                    ]
-                  }
-                }
-              }
-            },
-            {
-              "name": "pnc_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -2139,90 +1716,13 @@
         "column_id": "counsel_immediate_breastfeeding",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "icds_get_case_forms_by_date",
-                  "xmlns": [
-                    "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
-                  ],
-                  "form_filter": {
-                    "operator": "eq",
-                    "type": "boolean_expression",
-                    "expression": {
-                      "datatype": "string",
-                      "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "bp2",
-                        "immediate_breastfeeding"
-                      ]
-                    },
-                    "property_value": "yes"
-                  },
-                  "case_id_expression": {
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                      "type": "icds_parent_id"
-                    },
-                    "value_expression": {
-                      "value_expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "referenced_id"
-                      },
-                      "type": "nested",
-                      "argument_expression": {
-                        "type": "array_index",
-                        "array_expression": {
-                          "type": "filter_items",
-                          "items_expression": {
-                            "datatype": "array",
-                            "type": "property_name",
-                            "property_name": "indices"
-                          },
-                          "filter_expression": {
-                            "type": "boolean_expression",
-                            "operator": "eq",
-                            "property_value": "mother",
-                            "expression": {
-                              "type": "property_name",
-                              "property_name": "identifier"
-                            }
-                          }
-                        },
-                        "index_expression": {
-                          "type": "constant",
-                          "constant": 0
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "property_value": 0
-            },
-            {
-              "name": "born_in_month",
-              "type": "named"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "yes",
-              "expression": {
-                "type": "named",
-                "name": "valid_in_month"
-              }
-            }
-          ]
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "constant",
+            "constant": 1
+          },
+          "property_value": 0
         },
         "type": "boolean"
       },
@@ -2336,67 +1836,6 @@
           "age_in_days": {
             "type": "named",
             "name": "age_in_days"
-          }
-        }
-      },
-      "rations_distributed": {
-        "type": "reduce_items",
-        "aggregation_fn": "sum",
-        "items_expression": {
-          "type": "map_items",
-          "items_expression": {
-            "type": "icds_get_all_forms_repeats",
-            "forms_expression": {
-              "type": "icds_get_case_forms_by_date",
-              "xmlns": [
-                "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
-              ],
-              "start_date": {
-                "type": "named",
-                "name": "month_start"
-              },
-              "end_date": {
-                "type": "named",
-                "name": "month_end"
-              },
-              "form_filter": {
-                "operator": "eq",
-                "type": "boolean_expression",
-                "expression": {
-                  "datatype": null,
-                  "type": "property_path",
-                  "property_path": [
-                    "form",
-                    "thr_given_child"
-                  ]
-                },
-                "property_value": "1"
-              }
-            },
-            "repeat_path": [
-              "form",
-              "child_thr",
-              "child_persons",
-              "item"
-            ],
-            "case_id_path": [
-              "child_health_case_id"
-            ],
-            "repeat_filter": {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "expression": {
-                "datatype": "string",
-                "type": "property_name",
-                "property_name": "distribute_ration_child"
-              },
-              "property_value": "yes"
-            }
-          },
-          "map_expression": {
-            "datatype": "integer",
-            "type": "property_name",
-            "property_name": "days_ration_given_child"
           }
         }
       },
@@ -2528,39 +1967,6 @@
           "constant": "unweighed"
         }
       },
-      "pse_days": {
-        "type": "icds_get_case_forms_in_date",
-        "case_id_expression": {
-          "expression": {
-            "type": "property_name",
-            "property_name": "_id"
-          },
-          "type": "root_doc"
-        },
-        "from_date_expression": {
-          "type": "named",
-          "name": "month_start"
-        },
-        "to_date_expression": {
-          "type": "named",
-          "name": "month_end"
-        },
-        "xmlns": [
-          "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
-        ],
-        "count": true
-      },
-      "ebf_not_breastfeeding_reason": {
-        "type": "nested",
-        "argument_expression": {
-          "type": "named",
-          "name": "get_ebf_repeat_in_month"
-        },
-        "value_expression": {
-          "type": "property_name",
-          "property_name": "not_breastfeeding"
-        }
-      },
       "task_case_id": {
         "type": "nested",
         "argument_expression": {
@@ -2608,54 +2014,6 @@
           "type": "property_name",
           "property_name": "_id"
         }
-      },
-      "get_ebf_repeat_in_month": {
-        "type": "icds_get_last_form_repeat",
-        "forms_expression": {
-          "type": "icds_get_case_forms_by_date",
-          "xmlns": [
-            "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
-            "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
-          ],
-          "start_date": {
-            "type": "named",
-            "name": "month_start"
-          },
-          "end_date": {
-            "type": "named",
-            "name": "month_end"
-          }
-        },
-        "repeat_path": [
-          "form",
-          "child",
-          "item"
-        ],
-        "case_id_path": [
-          "child_health_case_id"
-        ]
-      },
-      "get_all_ebf_repeats": {
-        "type": "icds_get_all_forms_repeats",
-        "forms_expression": {
-          "type": "icds_get_case_forms_by_date",
-          "xmlns": [
-            "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
-            "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
-          ],
-          "end_date": {
-            "type": "named",
-            "name": "month_end"
-          }
-        },
-        "repeat_path": [
-          "form",
-          "child",
-          "item"
-        ],
-        "case_id_path": [
-          "child_health_case_id"
-        ]
       },
       "stunting_last_recorded": {
         "type": "switch",
@@ -3269,6 +2627,33 @@
           "type": "constant",
           "constant": "no"
         }
+      },
+      "aadhar_number_from_forms": {
+        "type": "icds_get_last_case_property_update",
+        "case_id_expression": {
+          "type": "icds_parent_id"
+        },
+        "case_property": "aadhar_number",
+        "end_date": {
+          "type": "named",
+          "name": "month_end"
+        },
+        "xmlns": [
+          "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
+          "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
+          "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
+        ]
+      },
+      "aadhar_date_from_person_case": {
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "icds_parent_id"
+        },
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "aadhar_date"
+        }
       }
     },
     "named_filters": {
@@ -3815,6 +3200,15 @@
             }
           }
         ]
+      },
+      "false": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "property_value": 0,
+        "expression": {
+          "type": "constant",
+          "constant": 1
+        }
       }
     },
     "asynchronous": true,

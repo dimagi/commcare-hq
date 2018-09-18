@@ -2,16 +2,19 @@ from __future__ import absolute_import, division
 from __future__ import unicode_literals
 import json
 import os
+import time
 import zipfile
 
 from collections import defaultdict
 from datetime import datetime, timedelta
+from functools import wraps
 
 import operator
 
+import pytz
 import qrcode
 from base64 import b64encode
-from six.moves import cStringIO
+from io import BytesIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
 from xhtml2pdf import pisa
@@ -20,19 +23,23 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
+from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
-from dimagi.utils.couch import get_redis_client
+from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
 import six
 import uuid
 from six.moves import range
+from sqlagg.filters import EQ, NOT, AND
+from io import open
 
 OPERATORS = {
     "==": operator.eq,
@@ -53,6 +60,9 @@ GREY = '#9D9D9D'
 DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
+DATA_NOT_VALID = "Data Not Valid"
+
+india_timezone = pytz.timezone('Asia/Kolkata')
 
 
 class MPRData(object):
@@ -67,13 +77,13 @@ class ICDSData(object):
 
     def __init__(self, domain, filters, report_id):
         report_config = ConfigurableReportDataSource.from_spec(
-            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain))
+            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain), domain)
         )
         report_config.set_filter_values(filters)
         self.report_config = report_config
 
-    def _get_static_report_configuration_without_owner_transform(self, report_id):
-        static_report_configuration = StaticReportConfiguration.by_id(report_id)
+    def _get_static_report_configuration_without_owner_transform(self, report_id, domain):
+        static_report_configuration = StaticReportConfiguration.by_id(report_id, domain)
         for report_column in static_report_configuration.report_columns:
             transform = report_column.transform
             if transform.get('type') == 'custom' and transform.get('custom_type') == 'owner_display':
@@ -105,7 +115,7 @@ class ICDSMixin(object):
 
     @property
     def sources(self):
-        with open(os.path.join(os.path.dirname(__file__), self.resource_file)) as f:
+        with open(os.path.join(os.path.dirname(__file__), self.resource_file), encoding='utf-8') as f:
             return json.loads(f.read())[self.slug]
 
     @property
@@ -327,10 +337,10 @@ def get_latest_issue_tracker_build_id():
     return get_latest_released_build_id('icds-cas', ISSUE_TRACKER_APP_ID)
 
 
-def get_status(value, second_part='', normal_value='', exportable=False):
-    status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+def get_status(value, second_part='', normal_value='', exportable=False, data_entered=False):
+    status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     if not value or value in ['unweighed', 'unmeasured', 'unknown']:
-        status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+        status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     elif value in ['severely_underweight', 'severe']:
         status = {'value': 'Severely ' + second_part, 'color': 'red'}
     elif value in ['moderately_underweight', 'moderate']:
@@ -338,6 +348,68 @@ def get_status(value, second_part='', normal_value='', exportable=False):
     elif value in ['normal']:
         status = {'value': normal_value, 'color': 'black'}
     return status if not exportable else status['value']
+
+
+def get_anamic_status(value):
+    if value['anemic_severe']:
+        return 'Y'
+    elif value['anemic_moderate']:
+        return 'Y'
+    elif value['anemic_normal']:
+        return 'N'
+    elif value['anemic_unknown']:
+        return 'Unknown'
+    else:
+        return 'Not entered'
+
+
+def get_symptoms(value):
+    if value['bleeding']:
+        return 'Bleeding'
+    elif value['swelling']:
+        return 'Face, hand or genital swelling'
+    elif value['blurred_vision']:
+        return 'Blurred vision / headache'
+    elif value['convulsions']:
+        return 'Convulsions / unconsciousness'
+    elif value['rupture']:
+        return 'Water ruptured without labor pains'
+    else:
+        return 'None'
+
+
+def get_counseling(value):
+    counseling = []
+    if value['counsel_immediate_bf']:
+        counseling.append('Immediate breast feeding')
+    if value['counsel_bp_vid']:
+        counseling.append('BP vid')
+    if value['counsel_preparation']:
+        counseling.append('Preparation')
+    if value['counsel_fp_vid']:
+        counseling.append('Family planning vid')
+    if value['counsel_immediate_conception']:
+        counseling.append('Immediate conception')
+    if value['counsel_accessible_postpartum_fp']:
+        counseling.append('Accessible postpartum family planning')
+    if value['counsel_fp_methods']:
+        counseling.append('Family planning methods')
+    if counseling:
+        return ', '.join(counseling)
+    else:
+        return '--'
+
+
+def get_tt_dates(value):
+    tt_dates = []
+    if value['tt_1']:
+        tt_dates.append(value['tt_1'])
+    if value['tt_2']:
+        tt_dates.append(value['tt_2'])
+    if tt_dates:
+        return '; '.join(tt_dates)
+    else:
+        return '--'
 
 
 def current_age(dob, selected_date):
@@ -432,13 +504,13 @@ def chosen_filters_to_labels(config, default_interval=''):
     }
 
     age_intervals = {
-        '6': '0-6 months',
-        '12': '6-12 months',
-        '24': '12-24 months',
-        '36': '24-36 months',
-        '48': '36-48 months',
-        '60': '48-60 months',
-        '72': '60-72 months'
+        '6': '0-6 months (0-180 days)',
+        '12': '6-12 months (181-365 days)',
+        '24': '12-24 months (366-730 days)',
+        '36': '24-36 months (731-1095 days)',
+        '48': '36-48 months (1096-1460 days)',
+        '60': '48-60 months (1461-1825 days)',
+        '72': '60-72 months (1826-2190 days)'
     }
 
     gender = config.get('gender')
@@ -463,22 +535,42 @@ def chosen_filters_to_labels(config, default_interval=''):
 
 def zip_folder(pdf_files):
     zip_hash = uuid.uuid4().hex
-    client = get_redis_client()
-    in_memory = cStringIO()
+    icds_file = IcdsFile(blob_id=zip_hash, data_type='issnip_monthly')
+    in_memory = BytesIO()
     zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
-    for pdf_file in pdf_files:
-        file = client.get(pdf_file['uuid'])
-        zip_file.writestr('ICDS_CAS_monthly_register_{}.pdf'.format(pdf_file['location_name']), file)
+    files_to_zip = IcdsFile.objects.filter(blob_id__in=list(pdf_files.keys()), data_type='issnip_monthly')
+
+    for pdf_file in files_to_zip:
+        zip_file.writestr(
+            'ICDS_CAS_monthly_register_{}.pdf'.format(pdf_files[pdf_file.blob_id]),
+            pdf_file.get_file_from_blobdb().read()
+        )
     zip_file.close()
-    client.set(zip_hash, in_memory.getvalue())
-    client.expire(zip_hash, 24 * 60 * 60)
+
+    # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
+    # we read this to save file in blobdb
+    in_memory.seek(0)
+    icds_file.store_file_in_blobdb(in_memory, expired=60 * 60 * 24)
+    icds_file.save()
     return zip_hash
 
 
-def create_pdf_file(pdf_hash, pdf_context):
+def create_excel_file(excel_data, data_type, file_format):
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    export_from_tables(excel_data, export_file, file_format)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.save()
+    return file_hash
+
+
+def create_pdf_file(pdf_context):
+    pdf_hash = uuid.uuid4().hex
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
-    resultFile = cStringIO()
-    client = get_redis_client()
+    resultFile = BytesIO()
+    icds_file = IcdsFile(blob_id=pdf_hash, data_type='issnip_monthly')
     try:
         pdf_page = template.render(pdf_context)
     except Exception as ex:
@@ -487,9 +579,12 @@ def create_pdf_file(pdf_hash, pdf_context):
         pdf_page,
         dest=resultFile,
         show_error_as_pdf=True)
-    client.set(pdf_hash, resultFile.getvalue())
-    client.expire(pdf_hash, 24 * 60 * 60)
-    resultFile.close()
+    # we need to reset buffer position to the beginning after creating pdf, if not read() will return empty string
+    # we read this to save file in blobdb
+    resultFile.seek(0)
+
+    icds_file.store_file_in_blobdb(resultFile, expired=60 * 60 * 24)
+    icds_file.save()
     return pdf_hash
 
 
@@ -503,7 +598,7 @@ def generate_qrcode(data):
     qr.add_data(data)
     qr.make(fit=True)
     image = qr.make_image()
-    output = cStringIO()
+    output = BytesIO()
     image.save(output, "PNG")
     qr_content = b64encode(output.getvalue())
     return qr_content
@@ -544,3 +639,92 @@ def person_has_aadhaar_column(beta):
 
 def person_is_beneficiary_column(beta):
     return 'cases_person_beneficiary_v2'
+
+
+def wasting_moderate_column(beta):
+    return 'wasting_moderate_v2'
+
+
+def wasting_severe_column(beta):
+    return 'wasting_severe_v2'
+
+
+def wasting_normal_column(beta):
+    return 'wasting_normal_v2'
+
+
+def stunting_moderate_column(beta):
+    return 'zscore_grading_hfa_moderate'
+
+
+def stunting_severe_column(beta):
+    return 'zscore_grading_hfa_severe'
+
+
+def stunting_normal_column(beta):
+    return 'zscore_grading_hfa_normal'
+
+
+def current_month_stunting_column(beta):
+    return 'current_month_stunting_v2'
+
+
+def current_month_wasting_column(beta):
+    return 'current_month_wasting_v2'
+
+
+def hfa_recorded_in_month_column(beta):
+    return 'zscore_grading_hfa_recorded_in_month'
+
+
+def wfh_recorded_in_month_column(beta):
+    return 'zscore_grading_wfh_recorded_in_month'
+
+
+def default_age_interval(beta):
+    return '0 - 5 years'
+
+
+def get_age_filters(beta):
+    return [
+        NOT(EQ('age_tranche', 'age_72'))
+    ]
+
+
+def get_age_condition(beta):
+    return "age_tranche != :age_72"
+
+
+def track_time(func):
+    """A decorator to track the duration an aggregation script takes to execute"""
+    from custom.icds_reports.models import AggregateSQLProfile
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        AggregateSQLProfile.objects.create(
+            name=func.__name__,
+            duration=int(end - start)
+        )
+        return result
+
+    return wrapper
+
+
+def percent_num(x, y):
+    return (x or 0) * 100 / float(y or 1)
+
+
+def percent(x, y):
+    return "%.2f %%" % (percent_num(x, y))
+
+
+def percent_or_not_entered(x, y):
+    return percent(x, y) if y else DATA_NOT_ENTERED
+
+
+class ICDSDatabaseColumn(DatabaseColumn):
+    def get_raw_value(self, row):
+        return (self.view.get_value(row) or '') if row else ''

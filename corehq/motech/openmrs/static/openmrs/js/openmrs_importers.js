@@ -1,8 +1,16 @@
-/* globals hqDefine, ko, $, _, gettext */
-
-hqDefine('openmrs/js/openmrs_importers', function () {
-    'use strict';
-
+hqDefine('openmrs/js/openmrs_importers', [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/alert_user',
+    'userreports/js/base',
+], function (
+    $,
+    ko,
+    initialPageData,
+    alertUser,
+    ucrBase
+) {
     var openmrsImporter = function (properties) {
         var self = {};
 
@@ -60,7 +68,6 @@ hqDefine('openmrs/js/openmrs_importers', function () {
 
     var openmrsImporters = function (openmrsImporters, importNowUrl) {
         var self = {};
-        var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
         self.openmrsImporters = ko.observableArray();
 
@@ -78,6 +85,12 @@ hqDefine('openmrs/js/openmrs_importers', function () {
             self.openmrsImporters.push(openmrsImporter({}));
         };
 
+        self.initOpenmrsImporterTemplate = function (elements) {
+            _.each(elements, function (element) {
+                _.each($(element).find('.jsonwidget'), ucrBase.initJsonWidget);
+            });
+        };
+
         self.removeOpenmrsImporter = function (openmrsImporter) {
             self.openmrsImporters.remove(openmrsImporter);
         };
@@ -91,25 +104,25 @@ hqDefine('openmrs/js/openmrs_importers', function () {
             $.post(
                 form.action,
                 {'openmrs_importers': JSON.stringify(openmrsImporters)},
-                function (data) { alert_user(data['message'], 'success', true); }
-            ).fail(function () { alert_user(gettext('Unable to save OpenMRS Importers'), 'danger'); });
+                function (data) { alertUser.alert_user(data['message'], 'success', true); }
+            ).fail(function () { alertUser.alert_user(gettext('Unable to save OpenMRS Importers'), 'danger'); });
         };
 
         self.importNow = function () {
             $.post(importNowUrl, {}, function () {
-                alert_user(gettext("Importing from OpenMRS will begin shortly."), "success");
+                alertUser.alert_user(gettext("Importing from OpenMRS will begin shortly."), "success");
             }).fail(function () {
-                alert_user(gettext("Failed to schedule task to import from OpenMRS."), "danger");
+                alertUser.alert_user(gettext("Failed to schedule task to import from OpenMRS."), "danger");
             });
         };
 
         return self;
     };
 
-    $(function() {
+    $(function () {
         var viewModel = openmrsImporters(
-            hqImport("hqwebapp/js/initial_page_data").get('openmrs_importers'),
-            hqImport("hqwebapp/js/initial_page_data").reverse('openmrs_import_now')
+            initialPageData.get('openmrs_importers'),
+            initialPageData.reverse('openmrs_import_now')
         );
         viewModel.init();
         $('#openmrs-importers').koApplyBindings(viewModel);

@@ -1,11 +1,13 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-test",
     "icds-cas"
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds-new",
+    "icds"
   ],
   "config": {
     "table_id": "static-thr_forms_v2",

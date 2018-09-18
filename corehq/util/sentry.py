@@ -10,11 +10,8 @@ from corehq.util.cache_utils import is_rate_limited
 from corehq.util.datadog.gauges import datadog_counter
 
 RATE_LIMITED_EXCEPTIONS = {
-    'restkit.errors.RequestError': 'couchdb',
-    'restkit.errors.RequestFailed': 'couchdb',
     'dimagi.utils.couch.bulk.BulkFetchException': 'couchdb',
     'socketpool.pool.MaxTriesError': 'couchdb',
-    'http_parser.http.NoMoreData': 'couchdb',
 
     'corehq.elastic.ESError': 'elastic',
 
@@ -26,8 +23,9 @@ RATE_LIMITED_EXCEPTIONS = {
     'botocore.exceptions.ClientError': 'riak',
     'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
     'botocore.vendored.requests.exceptions.ReadTimeout': 'riak',
-}
 
+    'celery.beat.SchedulingError': 'celery-beat'
+}
 
 def _get_rate_limit_key(exc_info):
     exc_type = exc_info[0]

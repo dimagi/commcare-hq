@@ -16,7 +16,7 @@
 <div class="form-group report-filter-location-async"
      data-bind="visible: show_location_filter_bool()"
      data-make-optional='{{ make_optional|JSON }}'
-     data-loc-id='{{ loc_id|JSON }}'
+     data-loc-id='{{ loc_id }}'
      data-location-url='{{ api_root }}'
      data-hierarchy='{{ hierarchy|JSON }}'
      data-auto-drill='{{ auto_drill|JSON }}'
@@ -34,5 +34,5 @@
         </div>
         <i id="loc_ajax" class="fa fa-spinner fa-spin hide"></i>
     </div>
-</div>
 <input name="location_id" type="hidden" data-bind="value: selected_locid" />
+</div>

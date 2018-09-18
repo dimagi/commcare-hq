@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
+import json
 import math
 import pytz
 import warnings
@@ -130,7 +131,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                 [(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]
             ))
         for user_id in submitted_user_ids:
-            if user_id in registered_users_by_id and user_filter[HQUserType.REGISTERED].show:
+            if user_id in registered_users_by_id and user_filter[HQUserType.ACTIVE].show:
                 user = registered_users_by_id[user_id]
                 users.append(user)
             elif (user_id not in registered_users_by_id and
@@ -143,7 +144,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if user_filter[HQUserType.UNKNOWN].show:
             users.append(TempCommCareUser(domain, '*', None))
 
-        if user_filter[HQUserType.REGISTERED].show:
+        if user_filter[HQUserType.ACTIVE].show:
             # now add all the registered users who never submitted anything
             users.extend(user for id, user in registered_users_by_id.items() if id not in submitted_user_ids)
 
@@ -495,7 +496,7 @@ def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     return user_es_query.count() > USER_QUERY_LIMIT
 
 
-def send_report_download_email(title, user, link):
+def send_report_download_email(title, recipient, link):
     subject = "%s: Requested export excel data"
     body = "The export you requested for the '%s' report is ready.<br>" \
            "You can download the data at the following link: %s<br><br>" \
@@ -503,7 +504,34 @@ def send_report_download_email(title, user, link):
 
     send_HTML_email(
         _(subject) % title,
-        user.get_email(),
+        recipient,
         _(body) % (title, "<a href='%s'>%s</a>" % (link, link)),
         email_from=settings.DEFAULT_FROM_EMAIL
     )
+
+
+class DatatablesParams(object):
+    def __init__(self, count, start, desc, echo, search=None):
+        self.count = count
+        self.start = start
+        self.desc = desc
+        self.echo = echo
+        self.search = search
+
+    def __repr__(self):
+        return json.dumps({
+            'start': self.start,
+            'count': self.count,
+            'echo': self.echo,
+        }, indent=2)
+
+    @classmethod
+    def from_request_dict(cls, query):
+        count = int(query.get("iDisplayLength", "10"))
+        start = int(query.get("iDisplayStart", "0"))
+
+        desc = (query.get("sSortDir_0", "desc") == "desc")
+        echo = query.get("sEcho", "0")
+        search = query.get("sSearch", "")
+
+        return DatatablesParams(count, start, desc, echo, search)

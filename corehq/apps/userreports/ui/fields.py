@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 import json
 from django import forms
 from django.utils.translation import ugettext as _
+
+from corehq import toggles
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     StaticDataSourceConfiguration
 from corehq.apps.userreports.ui.widgets import JsonWidget
@@ -16,8 +18,11 @@ class ReportDataSourceField(forms.ChoiceField):
         standard_sources = DataSourceConfiguration.by_domain(self.domain)
         custom_sources = list(StaticDataSourceConfiguration.by_domain(domain))
         available_data_sources = standard_sources + custom_sources
+        if toggles.AGGREGATE_UCRS.enabled(domain):
+            from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
+            available_data_sources += AggregateTableDefinition.objects.filter(domain=self.domain)
         super(ReportDataSourceField, self).__init__(
-            choices=[(src._id, src.display_name) for src in available_data_sources],
+            choices=[(src.data_source_id, src.display_name) for src in available_data_sources],
             *args, **kwargs
         )
 

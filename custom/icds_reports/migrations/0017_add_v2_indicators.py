@@ -17,6 +17,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('update_tables9.sql'),
-        migrator.get_migration('setup_agg_awc_daily.sql'),
-        migrator.get_migration('create_functions.sql'),
+        migrator.get_migration('setup_agg_awc_daily.sql')
     ]

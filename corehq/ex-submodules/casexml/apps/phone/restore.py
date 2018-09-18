@@ -18,6 +18,7 @@ from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
+from django.utils.text import slugify
 
 from casexml.apps.phone.data_providers import get_element_providers, get_async_providers
 from casexml.apps.phone.exceptions import (
@@ -56,7 +57,7 @@ from casexml.apps.phone.const import (
     LIVEQUERY,
 )
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
-from corehq.blobs import get_blob_db
+from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
 
 
@@ -122,7 +123,7 @@ class RestoreContent(object):
 
     def append(self, xml_element):
         self.num_items += 1
-        if isinstance(xml_element, six.binary_type):
+        if isinstance(xml_element, bytes):
             xml_element, num = get_cached_items_with_count(xml_element)
             self.num_items += num - 1
             self.response_body.write(xml_element)
@@ -135,7 +136,7 @@ class RestoreContent(object):
 
     def _write_to_file(self, fileobj):
         # Add 1 to num_items to account for message element
-        items = (self.items_template % (self.num_items + 1)) if self.items else b''
+        items = (self.items_template % ('%s' % (self.num_items + 1)).encode('utf-8')) if self.items else b''
         fileobj.write(self.start_tag_template % {
             b"items": items,
             b"username": self.username.encode("utf8"),
@@ -220,18 +221,32 @@ class AsyncRestoreResponse(object):
 class CachedResponse(object):
 
     def __init__(self, name):
+        if name and name.startswith("restore-response-"):
+            # Name template was 'restore-response-{}.xml' before new
+            # blob metadata API was implemented. This can be removed
+            # when all old responses have expired.
+            #
+            # '_default' is the bucket name from the old blob db API.
+            name = "_default/" + name
         self.name = name
 
     @classmethod
-    def save_for_later(cls, fileobj, timeout):
+    def save_for_later(cls, fileobj, timeout, domain, restore_user_id):
         """Save restore response for later
 
         :param fileobj: A file-like object.
         :param timeout: Minimum content expiration in seconds.
         :returns: A new `CachedResponse` pointing to the saved content.
         """
-        name = 'restore-response-{}.xml'.format(uuid4().hex)
-        get_blob_db().put(NoClose(fileobj), name, timeout=max(timeout // 60, 60))
+        name = 'restore-{}.xml'.format(uuid4().hex)
+        get_blob_db().put(
+            NoClose(fileobj),
+            domain=domain,
+            parent_id=restore_user_id,
+            type_code=CODES.restore,
+            key=name,
+            timeout=max(timeout // 60, 60),
+        )
         return cls(name)
 
     def __bool__(self):
@@ -250,12 +265,12 @@ class CachedResponse(object):
         try:
             value = self._fileobj
         except AttributeError:
-            value = get_blob_db().get(self.name) if self.name else None
+            value = get_blob_db().get(key=self.name) if self.name else None
             self._fileobj = value
         return value
 
     def get_http_response(self):
-        headers = {'Content-Length': get_blob_db().size(self.name)}
+        headers = {'Content-Length': get_blob_db().size(key=self.name)}
         return stream_response(self.as_file(), headers)
 
 
@@ -661,7 +676,12 @@ class RestoreConfig(object):
         is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
 
         if async or self.force_cache or is_long_restore or self.sync_log:
-            response = CachedResponse.save_for_later(fileobj, self.cache_timeout)
+            response = CachedResponse.save_for_later(
+                fileobj,
+                self.cache_timeout,
+                self.domain,
+                self.restore_user.user_id,
+            )
             self.restore_payload_path_cache.set_value(response.name, self.cache_timeout)
             return response
         return None
@@ -719,7 +739,21 @@ class RestoreConfig(object):
                         'commcare.restores.{}'.format(segment),
                         tags=tags + ['duration:%s' % bucket],
                     )
+                elif timer.name.startswith('fixture:'):
+                    bucket = bucket_value(timer.duration, timer_buckets, 's')
+                    datadog_counter(
+                        'commcare.restores.fixture',
+                        tags=tags + [
+                            'duration:%s' % bucket,
+                            timer.name,
+                        ],
+                    )
             tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
+
+        if settings.ENTERPRISE_MODE and self.params.app and self.params.app.copy_of:
+            app_name = slugify(self.params.app.name)
+            tags.append('app:{}-{}'.format(app_name, self.params.app.version))
+
         datadog_counter('commcare.restores.count', tags=tags)
 
 

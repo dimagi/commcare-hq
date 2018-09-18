@@ -23,25 +23,34 @@ from couchforms.models import UnfinishedSubmissionStub
 from couchforms.openrosa_response import ResponseNature
 from dimagi.utils.post import tmpfile
 from couchforms.signals import successful_form_received
+from io import open
 
 
 class SubmissionErrorTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
+    @classmethod
+    def setUpClass(cls):
+        super(SubmissionErrorTest, cls).setUpClass()
+        cls.domain = create_domain("submit-errors")
+        cls.couch_user = WebUser.create(None, "test", "foobar")
+        cls.couch_user.add_domain_membership(cls.domain.name, is_admin=True)
+        cls.couch_user.save()
+        cls.client = Client()
+        cls.client.login(**{'username': 'test', 'password': 'foobar'})
+        cls.url = reverse("receiver_post", args=[cls.domain])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.couch_user.delete()
+        cls.domain.delete()
+        super(SubmissionErrorTest, cls).tearDownClass()
+
     def setUp(self):
-        self.domain = create_domain("submit-errors")
-        self.couch_user = WebUser.create(None, "test", "foobar")
-        self.couch_user.add_domain_membership(self.domain.name, is_admin=True)
-        self.couch_user.save()
-        self.client = Client()
-        self.client.login(**{'username': 'test', 'password': 'foobar'})
-        self.url = reverse("receiver_post", args=[self.domain])
         FormProcessorTestUtils.delete_all_xforms(self.domain.name)
 
     def tearDown(self):
-        self.couch_user.delete()
-        self.domain.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain.name)
         UnfinishedSubmissionStub.objects.all().delete()
 
@@ -81,7 +90,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn("Form is a duplicate", log.problem)
-        with open(file) as f:
+        with open(file, encoding='utf-8') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     def _test_submission_error_post_save(self, openrosa_version):
@@ -116,7 +125,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         f, path = tmpfile()
         with f:
             f.write("this isn't even close to xml")
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             res = self.client.post(self.url, {
                     "xml_submission_file": f
             })
@@ -142,7 +151,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn(message, log.problem)
-        with open(file) as f:
+        with open(file, encoding='utf-8') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     @flag_enabled('DATA_MIGRATION')
@@ -198,7 +207,22 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
 @use_sql_backend
 class SubmissionErrorTestSQL(SubmissionErrorTest):
-    pass
+
+    def test_error_publishing_to_kafka(self):
+        sql_patch = patch(
+            'corehq.form_processor.backends.sql.processor.FormProcessorSQL.publish_changes_to_kafka',
+            side_effect=ValueError
+        )
+        with sql_patch:
+            _, res = self._submit('form_with_case.xml')
+
+        self.assertEqual(res.status_code, 201)
+        stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=True).all()
+        self.assertEqual(1, len(stubs))
+
+        form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
+        self.assertFalse(form.is_error)
+        self.assertTrue(form.initial_processing_complete)
 
 
 @contextlib.contextmanager

@@ -9,7 +9,7 @@ from django.shortcuts import redirect, render
 
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
-    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
+    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER, DatatablesParams
 from corehq.apps.reports_core.filters import Choice, PreFilter
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
@@ -19,7 +19,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
 )
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
-    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE, UCR_LABORATORY_BACKEND
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.tasks import export_ucr_async
 
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
@@ -53,7 +53,6 @@ from corehq.apps.userreports.reports.util import (
     ReportExport,
     has_location_filter,
 )
-from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.userreports.util import (
     default_language,
     has_report_builder_trial,
@@ -63,9 +62,7 @@ from corehq.apps.userreports.util import (
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from corehq.util.view_utils import reverse
-from couchexport.export import export_from_tables
 from couchexport.models import Format
-from dimagi.utils.couch.pagination import DatatablesParams
 from memoized import memoized
 
 from dimagi.utils.web import json_request
@@ -192,7 +189,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def has_viable_configuration(self):
         try:
             self.spec
-        except DocumentNotFound:
+        except (DocumentNotFound, BadSpecError):
             return False
         else:
             return True
@@ -441,11 +438,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         }
         if total_row is not None:
             json_response["total_row"] = total_row
-        if data_source.data_source.config.backend_id == UCR_LABORATORY_BACKEND:
-            compare_ucr_dbs.delay(
-                self.domain, self.report_config_id, self.filter_values,
-                sort_column, sort_order, params
-            )
         return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):
@@ -602,7 +594,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         report_config_id = subreport_slug
         try:
             report_class = self._report_class(domain, report_config_id)
-        except BadSpecError:
+        except (BadSpecError, DocumentNotFound):
             raise Http404
         return report_class.as_view()(request, domain=domain, subreport_slug=report_config_id, **kwargs)
 

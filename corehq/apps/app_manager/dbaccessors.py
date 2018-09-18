@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from itertools import chain
 
-from couchdbkit.exceptions import DocTypeError
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit.exceptions import DocTypeError, ResourceNotFound
+
 from corehq.util.quickcache import quickcache
 from django.http import Http404
 from django.core.cache import cache
@@ -327,6 +327,21 @@ def get_built_app_ids_with_submissions_for_app_ids_and_versions(domain, app_ids_
     return results
 
 
+def get_auto_generated_built_apps(domain, app_id):
+    """
+    Returns all the built apps that were automatically generated for an application id.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'saved_apps_auto_generated/view',
+        startkey=[domain, app_id],
+        endkey=[domain, app_id, {}],
+        reduce=False,
+        include_docs=False,
+    ).all()
+    return [doc['value'] for doc in results]
+
+
 def get_latest_app_ids_and_versions(domain, app_id=None):
     """
     Returns all the latest app_ids and versions in a dictionary.
@@ -425,8 +440,25 @@ def get_all_built_app_results(domain, app_id=None):
         'app_manager/saved_app',
         startkey=startkey,
         endkey=endkey,
-        include_docs=True,
+        include_docs=False,
     ).all()
+
+
+def get_available_versions_for_app(domain, app_id):
+    from .models import Application
+    result = Application.get_db().view('app_manager/saved_app',
+                                       startkey=[domain, app_id, {}],
+                                       endkey=[domain, app_id],
+                                       descending=True)
+    return [doc['value']['version'] for doc in result]
+
+
+def get_version_build_id(domain, app_id, version):
+    built_app_ids = get_all_built_app_ids_and_versions(domain, app_id)
+    for app_built_version in built_app_ids:
+        if app_built_version.version == version:
+            return app_built_version.build_id
+    raise Exception("Build for version requested not found")
 
 
 def get_case_types_from_apps(domain):

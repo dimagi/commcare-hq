@@ -130,7 +130,7 @@ class InvoiceTemplate(object):
                  swift_code=settings.BANK_SWIFT_CODE,
                  applied_credit=None,
                  subtotal=None, tax_rate=None, applied_tax=None, total=None,
-                 is_wire=False, is_prepayment=False):
+                 is_wire=False, is_customer=False, is_prepayment=False, account_name=''):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
@@ -155,7 +155,9 @@ class InvoiceTemplate(object):
         self.applied_tax = applied_tax
         self.total = total
         self.is_wire = is_wire
+        self.is_customer = is_customer
         self.is_prepayment = is_prepayment
+        self.account_name = account_name
 
         self.items = []
 
@@ -164,21 +166,25 @@ class InvoiceTemplate(object):
                                       subtotal, credits, total))
 
     def get_pdf(self):
-        self.canvas.setStrokeColor(STROKE_COLOR)
-        self.draw_logo()
-        self.draw_from_address()
-        self.draw_to_address()
-        self.draw_project_name()
-        if not self.is_prepayment:
-            self.draw_statement_period()
-        self.draw_invoice_label()
-        self.draw_details()
-        if not self.is_wire or self.is_prepayment:
-            self.draw_table()
-        self.draw_footer()
-
-        self.canvas.showPage()
-        self.canvas.save()
+        if self.is_customer:
+            items = self.items
+            while len(items) > 0:
+                items_to_draw = items[12:]
+                items = items[:12]
+                self.draw_header()
+                self.draw_table(items)
+                self.canvas.showPage()
+                self.canvas.save()
+                items = items_to_draw
+            self.draw_totals_on_new_page()
+        else:
+            self.draw_header()
+            if not self.is_wire or self.is_prepayment:
+                self.draw_table(self.items)
+            self.draw_totals(totals_x=inches(5.85), line_height=inches(0.25), subtotal_y=inches(3.5))
+            self.draw_footer()
+            self.canvas.showPage()
+            self.canvas.save()
 
     def draw_logo(self):
         self.canvas.drawImage(self.logo_filename, inches(0.5), inches(2.5),
@@ -271,6 +277,35 @@ class InvoiceTemplate(object):
 
         self.canvas.translate(-origin_x, -origin_y)
 
+    def draw_account_name(self):
+        origin_x = inches(.5)
+        origin_y = inches(7.7)
+        self.canvas.translate(origin_x, origin_y)
+
+        left = inches(0)
+        middle_vertical = inches(1)
+        right = inches(7.25)
+        top = inches(0)
+        bottom = inches(-0.3)
+        self.canvas.rect(left, bottom, right - left, top - bottom)
+
+        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.rect(left, bottom, middle_vertical - left, top - bottom,
+                         fill=1)
+
+        self.canvas.setFillColorRGB(*BLACK)
+        self.canvas.setFontSize(SMALL_FONT_SIZE)
+        self.canvas.drawCentredString(
+            midpoint(left - inches(.1), middle_vertical),
+            bottom + inches(0.1),
+            "ACCOUNT"
+        )
+        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+        self.canvas.drawString(middle_vertical + inches(0.2),
+                               bottom + inches(0.1), self.account_name)
+
+        self.canvas.translate(-origin_x, -origin_y)
+
     def draw_statement_period(self):
         origin_x = inches(0.5)
         origin_y = inches(7.15)
@@ -348,12 +383,26 @@ class InvoiceTemplate(object):
 
         self.canvas.translate(-origin_x, -origin_y)
 
-    def draw_table(self):
+    def draw_header(self):
+        self.canvas.setStrokeColor(STROKE_COLOR)
+        self.draw_logo()
+        self.draw_from_address()
+        self.draw_to_address()
+        if self.is_customer:
+            self.draw_account_name()
+        else:
+            self.draw_project_name()
+        if not self.is_prepayment:
+            self.draw_statement_period()
+        self.draw_invoice_label()
+        self.draw_details()
+
+    def draw_table(self, items):
         origin_x = inches(0.5)
         origin_y = inches(6.72)
         self.canvas.translate(origin_x, origin_y)
 
-        height = inches(2.9)
+        height = inches(0.725 * len(items))
         description_x = inches(2.4)
         quantity_x = inches(3.15)
         rate_x = inches(3.9)
@@ -395,10 +444,10 @@ class InvoiceTemplate(object):
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
 
         coord_y = 0
-        for item_index in range(len(self.items)):
+        for item_index in range(len(items)):
             if coord_y < -height:
                 raise InvoiceError("Cannot fit line items on invoice")
-            item = self.items[item_index]
+            item = items[item_index]
 
             description = Paragraph(item.description,
                                     ParagraphStyle('',
@@ -439,11 +488,95 @@ class InvoiceTemplate(object):
         self.canvas.translate(-origin_x, -origin_y)
 
     def draw_footer(self):
-        from corehq.apps.domain.views import DomainBillingStatementsView
+        width = inches(5.00)
+        left_x = inches(0.5)
 
-        totals_x = inches(5.85)
-        line_height = inches(0.25)
-        subtotal_y = inches(3.5)
+        options = "PAYMENT OPTIONS:"
+        self.canvas.setFontSize(SMALL_FONT_SIZE)
+        options_text = Paragraph(options, ParagraphStyle(''))
+        options_text.wrapOn(self.canvas, width, inches(.12))
+        options_text.drawOn(self.canvas, left_x, inches(3.5))
+        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+
+        flywire = """<strong>International payments:</strong>
+                            Make payments in your local currency
+                            via bank transfer or credit card by following this link:
+                            <link href='{flywire_link}' color='blue'>{flywire_link}</link><br />""".format(
+            flywire_link="https://wl.flywire.com/?destination=DMG"
+        )
+        flywire_text = Paragraph(flywire, ParagraphStyle(''))
+        flywire_text.wrapOn(self.canvas, width, inches(.4))
+        flywire_text.drawOn(self.canvas, left_x, inches(2.95))
+
+        from corehq.apps.domain.views import DomainBillingStatementsView
+        credit_card = """<strong>Credit card payments (USD)</strong> can be made online here:<br />
+                            <link href='{payment_page}' color='blue'>{payment_page}</link><br />""".format(
+            payment_page=absolute_reverse(
+                DomainBillingStatementsView.urlname, args=[self.project_name])
+        )
+        credit_card_text = Paragraph(credit_card, ParagraphStyle(''))
+        credit_card_text.wrapOn(self.canvas, width, inches(.5))
+        credit_card_text.drawOn(self.canvas, left_x, inches(2.4))
+
+        ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH
+                            or Wire, please make sure to email
+                            <font color='blue'>{invoicing_contact_email}</font>
+                            so that we can match your payment to the correct invoice.  Please include:
+                            Invoice No., Project Space, and payment date in the email. <br />""".format(
+            invoicing_contact_email=settings.INVOICING_CONTACT_EMAIL,
+        )
+        ach_or_wire_text = Paragraph(ach_or_wire, ParagraphStyle(''))
+        ach_or_wire_text.wrapOn(self.canvas, width, inches(.5))
+        ach_or_wire_text.drawOn(self.canvas, left_x, inches(1.7))
+
+        ach_payment_text = """<strong>ACH payment</strong>
+                            (preferred over wire payment for transfer in the US):<br />
+                            Bank: {bank_name}
+                            Bank Address: {bank_address}
+                            Account Number: {account_number}
+                            Routing Number or ABA: {routing_number_ach}<br />""".format(
+            bank_name=self.bank_name,
+            bank_address=self.bank_address,
+            account_number=self.account_number,
+            routing_number_ach=self.routing_number_ach
+        )
+        wire_payment_text = """<strong>Wire payment</strong>:<br />
+                            Bank: {bank_name}
+                            Bank Address: {bank_address}
+                            Account Number: {account_number}
+                            Routing Number or ABA: {routing_number_wire}
+                            Swift Code: {swift_code}<br/>""".format(
+            bank_name=self.bank_name,
+            bank_address=self.bank_address,
+            account_number=self.account_number,
+            routing_number_wire=self.routing_number_wire,
+            swift_code=self.swift_code
+        )
+        payment_info2 = Paragraph('\n'.join([
+            ach_payment_text,
+            wire_payment_text,
+        ]), ParagraphStyle(''))
+        payment_info2.wrapOn(self.canvas, width - inches(0.1), inches(0.9))
+        payment_info2.drawOn(self.canvas, inches(0.6), inches(0.5))
+
+    def draw_totals_on_new_page(self):
+        self.canvas.setStrokeColor(STROKE_COLOR)
+        self.draw_logo()
+        self.draw_from_address()
+        self.draw_to_address()
+        self.draw_account_name()
+        if not self.is_prepayment:
+            self.draw_statement_period()
+        self.draw_invoice_label()
+        self.draw_details()
+
+        self.draw_totals(totals_x=inches(5.85), line_height=inches(0.25), subtotal_y=inches(7.0))
+        self.draw_footer()
+
+        self.canvas.showPage()
+        self.canvas.save()
+
+    def draw_totals(self, totals_x, line_height, subtotal_y):
         tax_y = subtotal_y - line_height
         credit_y = tax_y - line_height
         total_y = credit_y - (line_height * 2)
@@ -453,7 +586,7 @@ class InvoiceTemplate(object):
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
         self.canvas.rect(
             inches(5.7),
-            inches(2.3),
+            subtotal_y - inches(1.2),
             inches(2.05),
             inches(0.5),
             fill=1
@@ -487,76 +620,6 @@ class InvoiceTemplate(object):
         )
 
         self.canvas.setFontSize(SMALL_FONT_SIZE)
-        self.canvas.drawString(inches(5.85), inches(2.1),
+        self.canvas.drawString(inches(5.85), subtotal_y - inches(1.4),
                                "Thank you for using CommCare HQ.")
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
-
-        width = inches(5.00)
-        left_x = inches(0.5)
-
-        options = "PAYMENT OPTIONS:"
-        self.canvas.setFontSize(SMALL_FONT_SIZE)
-        options_text = Paragraph(options, ParagraphStyle(''))
-        options_text.wrapOn(self.canvas, width, inches(.12))
-        options_text.drawOn(self.canvas, left_x, inches(3.5))
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
-
-        flywire = """<strong>International payments:</strong>
-Make payments in your local currency
-via bank transfer or credit card by following this link:
-<link href='{flywire_link}' color='blue'>{flywire_link}</link><br />""".format(
-            flywire_link="https://wl.flywire.com/?destination=DMG"
-        )
-        flywire_text = Paragraph(flywire, ParagraphStyle(''))
-        flywire_text.wrapOn(self.canvas, width, inches(.4))
-        flywire_text.drawOn(self.canvas, left_x, inches(2.95))
-
-        credit_card = """<strong>Credit card payments (USD)</strong> can be made online here:<br />
-<link href='{payment_page}' color='blue'>{payment_page}</link><br />""".format(
-            payment_page=absolute_reverse(
-                DomainBillingStatementsView.urlname, args=[self.project_name])
-        )
-        credit_card_text = Paragraph(credit_card, ParagraphStyle(''))
-        credit_card_text.wrapOn(self.canvas, width, inches(.5))
-        credit_card_text.drawOn(self.canvas, left_x, inches(2.4))
-
-        ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH
-or Wire, please make sure to email
-<font color='blue'>{invoicing_contact_email}</font>
-so that we can match your payment to the correct invoice.  Please include:
-Invoice No., Project Space, and payment date in the email. <br />""".format(
-            invoicing_contact_email=settings.INVOICING_CONTACT_EMAIL,
-        )
-        ach_or_wire_text = Paragraph(ach_or_wire, ParagraphStyle(''))
-        ach_or_wire_text.wrapOn(self.canvas, width, inches(.5))
-        ach_or_wire_text.drawOn(self.canvas, left_x, inches(1.7))
-
-        ach_payment_text = """<strong>ACH payment</strong>
-(preferred over wire payment for transfer in the US):<br />
-Bank: {bank_name}
-Bank Address: {bank_address}
-Account Number: {account_number}
-Routing Number or ABA: {routing_number_ach}<br />""".format(
-            bank_name=self.bank_name,
-            bank_address=self.bank_address,
-            account_number=self.account_number,
-            routing_number_ach=self.routing_number_ach
-        )
-        wire_payment_text = """<strong>Wire payment</strong>:<br />
-Bank: {bank_name}
-Bank Address: {bank_address}
-Account Number: {account_number}
-Routing Number or ABA: {routing_number_wire}
-Swift Code: {swift_code}<br/>""".format(
-            bank_name=self.bank_name,
-            bank_address=self.bank_address,
-            account_number=self.account_number,
-            routing_number_wire=self.routing_number_wire,
-            swift_code=self.swift_code
-        )
-        payment_info2 = Paragraph('\n'.join([
-            ach_payment_text,
-            wire_payment_text,
-        ]), ParagraphStyle(''))
-        payment_info2.wrapOn(self.canvas, width - inches(0.1), inches(0.9))
-        payment_info2.drawOn(self.canvas, inches(0.6), inches(0.5))

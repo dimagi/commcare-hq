@@ -3,7 +3,7 @@
 {% block filter_js %}
     {{ block.super }}
 
-    <script type="text/javascript">
+    <script>
     $(function () {
         $("fieldset .help-block").each( function (index, data) {
             $(this).parents('.form-group').find("label:first").append('<span class="hq-help-template" data-placement="top" data-content="' + data.textContent + '"></span>');

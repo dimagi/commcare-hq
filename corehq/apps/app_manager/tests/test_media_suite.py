@@ -14,6 +14,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
+from corehq.util.test_utils import flag_enabled
 
 import commcare_translations
 
@@ -21,11 +22,15 @@ import commcare_translations
 class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
-    def test_all_media_paths(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_all_media_paths(self, mock):
         image_path = 'jr://file/commcare/image{}.jpg'
         audio_path = 'jr://file/commcare/audio{}.mp3'
         app = Application.wrap(self.get_json('app'))
 
+        for num in ['1', '2', '3', '4']:
+            app.create_mapping(CommCareImage(_id=num), image_path.format(num), save=False)
+            app.create_mapping(CommCareAudio(_id=num), audio_path.format(num), save=False)
         app.get_module(0).case_list.show = True
         app.get_module(0).case_list.set_icon('en', image_path.format('4'))
         app.get_module(0).case_list.set_audio('en', audio_path.format('4'))
@@ -43,7 +48,19 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         should_contain_media = [image_path.format(num) for num in [1, 2, 3, 4]] + \
                                [audio_path.format(num) for num in [1, 2, 3, 4]]
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(app.all_media_paths, set(should_contain_media))
+        self.assertEqual(app.all_media_paths(), set(should_contain_media))
+        self.assertEqual(set(app.multimedia_map.keys()), set(should_contain_media))
+
+        # test multimedia removed
+        app.get_module(0).case_list.set_icon('en', '')
+        app.get_module(0).case_list.set_audio('en', '')
+        app.get_module(0).set_icon('en', '')
+        app.get_module(0).set_audio('en', '')
+        app.get_module(0).case_list_form.set_icon('en', '')
+        app.get_module(0).case_list_form.set_audio('en', '')
+        app.get_module(0).get_form(0).set_icon('en', '')
+        app.get_module(0).get_form(0).set_audio('en', '')
+        self.assertFalse(list(app.multimedia_map.keys()))
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_all_media_paths_with_inline_video(self, mock):
@@ -51,7 +68,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app = Application.wrap(self.get_json('app_video_inline'))
 
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(app.all_media_paths, set([inline_video_path]))
+        self.assertEqual(app.all_media_paths(), set([inline_video_path]))
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_all_media_paths_with_expanded_audio(self, mock):
@@ -59,7 +76,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app = Application.wrap(self.get_json('app_expanded_audio'))
 
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(app.all_media_paths, set([inline_video_path]))
+        self.assertEqual(app.all_media_paths(), set([inline_video_path]))
 
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
     def test_case_list_media(self):
@@ -131,7 +148,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app.get_module(0).media_audio.update({'en': audio_path})
 
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(len(app.all_media), 2)
+        self.assertEqual(len(app.all_media()), 2)
 
 
 class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
@@ -152,7 +169,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.app = Application.new_app('domain', "my app")
         self.module = self.app.add_module(Module.new_module("Module 1", None))
         self.form = self.app.new_form(0, "Form 1", None)
-        self.min_spec = BuildSpec.from_string('2.21/latest')
+        self.min_spec = BuildSpec.from_string('2.21.0/latest')
         self.app.build_spec = self.min_spec
 
     def makeXML(self, menu_locale_id, image_locale_id, audio_locale_id):
@@ -293,6 +310,21 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         audio_locale = id_strings.case_list_audio_locale(self.module)
         self._test_correct_icon_translations(self.app, self.module.case_list, icon_locale)
         self._test_correct_audio_translations(self.app, self.module.case_list, audio_locale)
+
+    def test_use_default_media(self):
+        self.module.use_default_image_for_all = True
+        self.module.use_default_audio_for_all = True
+
+        self.module.set_icon('en', self.image_path)
+        self.module.set_audio('en', self.audio_path)
+        self.module.set_icon('hin', 'jr://file/commcare/case_list_image_hin.jpg')
+        self.module.set_audio('hin', 'jr://file/commcare/case_list_audio_hin.mp3')
+
+        with flag_enabled('LANGUAGE_LINKED_MULTIMEDIA'):
+            en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
+            hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
+        self.assertEqual(en_app_strings['modules.m0.icon'], hin_app_strings['modules.m0.icon'])
+        self.assertEqual(en_app_strings['modules.m0.audio'], hin_app_strings['modules.m0.audio'])
 
     def _assert_app_strings_available(self, app, lang):
         et = etree.XML(app.create_suite())

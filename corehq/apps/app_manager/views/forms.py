@@ -35,7 +35,7 @@ from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException, XFormValidationFailed)
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.templatetags.xforms_extras import trans, clean_trans
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.util import (
     save_xform,
@@ -43,9 +43,7 @@ from corehq.apps.app_manager.util import (
     enable_usercase,
     actions_use_usercase,
     advanced_actions_use_usercase,
-    CASE_XPATH_PATTERN_MATCHES,
     CASE_XPATH_SUBSTRING_MATCHES,
-    USER_CASE_XPATH_PATTERN_MATCHES,
     USER_CASE_XPATH_SUBSTRING_MATCHES,
 )
 from corehq.apps.app_manager.xform import (
@@ -63,7 +61,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest, api_domain_view
 )
 from corehq.apps.app_manager.const import USERCASE_PREFIX, USERCASE_TYPE
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
@@ -87,7 +85,6 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
-from corehq.apps.tour import tours
 import six
 from six.moves import zip
 
@@ -122,23 +119,24 @@ def copy_form(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
     module = form.get_module()
+    to_app = get_app(domain, request.POST['to_app_id']) if request.POST.get('to_app_id') else app
     to_module_id = int(request.POST['to_module_id'])
-    to_module = app.get_module(to_module_id)
+    to_module = to_app.get_module(to_module_id)
     new_form = None
     try:
-        new_form = app.copy_form(module.id, form.id, to_module.id)
+        new_form = app.copy_form(module, form, to_module, rename=True)
         if module['case_type'] != to_module['case_type']:
             messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
-        app.save()
+        to_app.save()
     except IncompatibleFormTypeException:
         # don't save!
         messages.error(request, _('This form could not be copied because it '
                                   'is not compatible with the selected module.'))
     else:
-        app.save()
+        to_app.save()
 
     if new_form:
-        return back_to_main(request, domain, app_id=app_id, form_unique_id=new_form.unique_id)
+        return back_to_main(request, domain, app_id=to_app._id, form_unique_id=new_form.unique_id)
     return HttpResponseRedirect(reverse('view_form', args=(domain, app._id, form.unique_id)))
 
 
@@ -310,6 +308,16 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         form.post_form_workflow = request.POST['post_form_workflow']
     if should_edit('auto_gps_capture'):
         form.auto_gps_capture = request.POST['auto_gps_capture'] == 'true'
+    if should_edit('is_release_notes_form'):
+        form.is_release_notes_form = request.POST['is_release_notes_form'] == 'true'
+    if should_edit('enable_release_notes'):
+        form.enable_release_notes = request.POST['enable_release_notes'] == 'true'
+        if not form.is_release_notes_form and form.enable_release_notes:
+            return json_response(
+                {'message': _("You can't enable a form as release notes without allowing it as "
+                    "a release notes form <TODO messaging>")},
+                status_code=400
+            )
     if should_edit('no_vellum'):
         form.no_vellum = request.POST['no_vellum'] == 'true'
     if (should_edit("form_links_xpath_expressions") and
@@ -477,7 +485,17 @@ def get_xform_source(request, domain, app_id, form_unique_id):
         form = app.get_form(form_unique_id)
     except IndexError:
         raise Http404()
-    return _get_xform_source(request, app, form)
+
+    lang = request.COOKIES.get('lang', app.langs[0])
+    source = form.source
+    response = HttpResponse(source)
+    response['Content-Type'] = "application/xml"
+    for lc in [lang] + app.langs:
+        if lc in form.name:
+            filename = "%s.xml" % unidecode(form.name[lc])
+            break
+    set_file_download(response, filename)
+    return response
 
 
 @require_GET
@@ -498,6 +516,36 @@ def get_form_questions(request, domain, app_id):
         raise Http404()
     xform_questions = form.get_questions(langs, include_triggers=True)
     return json_response(xform_questions)
+
+
+def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_doc_types=('Application',)):
+    """
+    Returns a domain's Applications and their modules.
+
+    If current_app_id and current_module_id are given, "is_current" is
+    set to True for them. The interface uses this to select the current
+    app and module by default.
+
+    Linked and remote apps are omitted. Use the app_doc_types parameter
+    to change this behaviour. (Deleted apps are not returned because the
+    underlying Couch view doesn't include them.)
+    """
+    return [
+        {
+            'app_id': app.id,
+            'name': app.name,
+            'is_current': app.id == current_app_id,
+            'modules': [{
+                'module_id': module.id,
+                'name': clean_trans(module.name, app.langs),
+                'is_current': module.unique_id == current_module_id,
+            } for module in app.modules]
+        }
+        for app in get_apps_in_domain(domain)
+        # No linked, deleted or remote apps. (Use app.doc_type not
+        # app.get_doc_type() so that the suffix isn't dropped.)
+        if app.doc_type in app_doc_types
+    ]
 
 
 def get_form_view_context_and_template(request, domain, form, langs, messages=messages):
@@ -621,13 +669,13 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
+        'is_training_module': module.is_training_module,
+        'is_allowed_to_be_release_notes_form': form.is_allowed_to_be_release_notes_form,
         'root_requires_same_case': module.root_requires_same_case(),
         'is_case_list_form': form.is_case_list_form,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'form_filter_patterns': {
-            'case': CASE_XPATH_PATTERN_MATCHES,
             'case_substring': CASE_XPATH_SUBSTRING_MATCHES,
-            'usercase': USER_CASE_XPATH_PATTERN_MATCHES,
             'usercase_substring': USER_CASE_XPATH_SUBSTRING_MATCHES,
         },
         'custom_instances': [
@@ -640,6 +688,9 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
         context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
+
+    if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
+        context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
         def qualified_form_name(form, auto_link):
@@ -762,44 +813,6 @@ def view_form(request, domain, app_id, form_unique_id):
         request, domain, app_id,
         form_unique_id=form_unique_id
     )
-
-
-def _get_xform_source(request, app, form, filename="form.xml"):
-    download = json.loads(request.GET.get('download', 'false'))
-    lang = request.COOKIES.get('lang', app.langs[0])
-    source = form.source
-    if download:
-        response = HttpResponse(source)
-        response['Content-Type'] = "application/xml"
-        for lc in [lang] + app.langs:
-            if lc in form.name:
-                filename = "%s.xml" % unidecode(form.name[lc])
-                break
-        set_file_download(response, filename)
-        return response
-    else:
-        return json_response(source)
-
-
-def xform_display(request, domain, form_unique_id):
-    try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
-    except ResourceNotFound:
-        raise Http404()
-    if domain != app.domain:
-        raise Http404()
-    langs = [request.GET.get('lang')] + app.langs
-
-    questions = form.get_questions(langs, include_triggers=True,
-                                   include_groups=True)
-
-    if request.GET.get('format') == 'html':
-        questions = [FormQuestionResponse(q) for q in questions]
-        return render(request, "app_manager/xform_display.html", {
-            'questions': questions_in_hierarchy(questions)
-        })
-    else:
-        return json_response(questions)
 
 
 @require_can_edit_apps

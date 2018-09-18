@@ -1,9 +1,17 @@
-hqDefine("repeaters/js/add_form_repeater", function() {
-    $(function() {
+hqDefine("repeaters/js/add_form_repeater", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/widgets_v4',       // case repeaters ("Forward Cases") use .ko-select2
+    'locations/js/widgets_main_v4',    // openmrs repeaters use the LocationSelectWidget
+], function (
+    $,
+    initialPageData
+) {
+    $(function () {
         var $testLinkButton = $('#test-forward-link'),
             $testResult = $('#test-forward-result');
 
-        var handleSuccess = function(resp) {
+        var handleSuccess = function (resp) {
             /*
              * Handles a successful attempt to test the link. Note, just gets run when HQ returns
              * successful not if the link being tested returns successful
@@ -28,7 +36,7 @@ hqDefine("repeaters/js/add_form_repeater", function() {
             }
         };
 
-        var handleFailure = function(resp) {
+        var handleFailure = function (resp) {
             /*
              * Handles an HQ failure to test the URL
              */
@@ -43,20 +51,22 @@ hqDefine("repeaters/js/add_form_repeater", function() {
             var data = {
                 url: $('#id_url').val(),
                 format: $('#id_format').val(),
-                repeater_type: hqImport("hqwebapp/js/initial_page_data").get("repeater_type"),
+                repeater_type: initialPageData.get("repeater_type"),
                 auth_type: $('#id_auth_type').val(),
                 username: $('#id_username').val(),
                 password: $('#id_password').val(),
+                skip_cert_verify: $('#id_skip_cert_verify').prop('checked'),
             };
             $testLinkButton.disableButton();
 
             $.post({
-                url: hqImport("hqwebapp/js/initial_page_data").reverse("test_repeater"),
+                url: initialPageData.reverse("test_repeater"),
                 data: data,
                 success: handleSuccess,
                 error: handleFailure,
             });
         });
+
         $('#id_url').change(function () {
             if ($(this).val()) {
                 $testLinkButton.removeClass('disabled');
@@ -64,5 +74,8 @@ hqDefine("repeaters/js/add_form_repeater", function() {
                 $testLinkButton.addClass('disabled');
             }
         });
+
+        // Set initial button state
+        $('#id_url').trigger('change');
     });
 });

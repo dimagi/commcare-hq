@@ -3,9 +3,9 @@ from __future__ import unicode_literals
 import uuid
 
 from django.conf import settings
-from django.core.management import call_command
 from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
+import mock
 
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_domain
@@ -19,6 +19,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
     run_with_all_backends
+from corehq.pillows.case_search import domains_needing_search_index
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
@@ -82,14 +83,15 @@ class PillowtopReindexerTest(TestCase):
 
         # With case search not enabled, case should not make it to ES
         CaseSearchConfig.objects.all().delete()
+        domains_needing_search_index.clear()
         reindex_and_clean('case-search')
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_es_empty(esquery=CaseSearchES())
 
         # With case search enabled, it should get indexed
-        CaseSearchConfig.objects.create(domain=self.domain, enabled=True)
-        self.addCleanup(CaseSearchConfig.objects.all().delete)
-        reindex_and_clean('case-search')
+        with mock.patch('corehq.pillows.case_search.domains_needing_search_index',
+                        mock.MagicMock(return_value=[self.domain])):
+            reindex_and_clean('case-search')
 
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_case_is_in_es(case, esquery=CaseSearchES())

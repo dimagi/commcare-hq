@@ -1,8 +1,0 @@
-{% if item.media_image or item.media_audio %}
-    <display>
-        <text><locale id="{{ locale_id }}"/></text>
-        <media{% if item.media_image %} image="{{ item.media_image }}"{% endif %}{% if item.media_audio %} audio="{{ item.media_audio }}"{% endif %}/>
-    </display>
-{% else %}
-    <text><locale id="{{ locale_id }}"/></text>
-{% endif %}

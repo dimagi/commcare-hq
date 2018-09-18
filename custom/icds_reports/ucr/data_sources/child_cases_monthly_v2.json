@@ -1,6 +1,7 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-test",
     "icds-test",
     "icds-cas"
   ],
@@ -107,7 +108,7 @@
           "name": "display_month"
         },
         "column_id": "month",
-        "create_index": true
+        "create_index": false
       },
       {
         "display_name": null,
@@ -3272,24 +3273,6 @@
     "asynchronous": true,
     "engine_id": "icds-ucr",
     "sql_column_indexes": [
-      {
-        "column_ids": [
-          "awc_id",
-          "month"
-        ]
-      },
-      {
-        "column_ids": [
-          "district_id",
-          "month"
-        ]
-      },
-      {
-        "column_ids": [
-          "supervisor_id",
-          "month"
-        ]
-      },
       {
         "column_ids": [
           "block_id",

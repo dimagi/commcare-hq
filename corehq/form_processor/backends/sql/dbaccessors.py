@@ -56,7 +56,7 @@ from corehq.form_processor.utils.sql import (
     fetchall_as_namedtuple
 )
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
-from corehq.sql_db.routers import db_for_read_write
+from corehq.sql_db.routers import get_cursor
 from corehq.sql_db.util import split_list_by_db_partition
 from corehq.util.queries import fast_distinct_in_domain
 from dimagi.utils.chunked import chunked
@@ -69,11 +69,6 @@ doc_type_to_state = {
     "XFormArchived": XFormInstanceSQL.ARCHIVED,
     "SubmissionErrorLog": XFormInstanceSQL.SUBMISSION_ERROR_LOG
 }
-
-
-def get_cursor(model):
-    db = db_for_read_write(model)
-    return connections[db].cursor()
 
 
 def iter_all_rows(reindex_accessor):
@@ -109,7 +104,7 @@ class ShardAccessor(object):
     hash_key = b'\x00' * 16
 
     @staticmethod
-    def hash_doc_ids_sql(doc_ids):
+    def hash_doc_ids_sql_for_testing(doc_ids):
         """Get HASH for each doc_id from PostgreSQL
 
         This is used to ensure the python version is consistent with what's
@@ -128,7 +123,7 @@ class ShardAccessor(object):
             return {row.doc_id: row.hash for row in rows}
 
     @staticmethod
-    def hash_doc_uuid_sql(doc_uuid):
+    def hash_doc_uuid_sql_for_testing(doc_uuid):
         """Get the hash for a UUID from PostgreSQL
 
         This is used to ensure the python version is consistent with what's
@@ -397,13 +392,13 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         :returns: An iterator of XFormInstanceSQL objects
         '''
-        from corehq.sql_db.util import run_query_across_partitioned_databases
+        from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
         annotate = {
             'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
         }
 
-        return run_query_across_partitioned_databases(
+        return paginate_query_across_partitioned_databases(
             XFormInstanceSQL,
             Q(last_modified__gt=start_datetime),
             annotate=annotate,
@@ -767,9 +762,11 @@ class CaseReindexAccessor(ReindexAccessor):
     """
     :param: domain: If supplied the accessor will restrict results to only that domain
     """
-    def __init__(self, domain=None, limit_db_aliases=None):
+    def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None):
         super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
+        self.start_date = start_date
+        self.end_date = end_date
 
     @property
     def model_class(self):
@@ -789,6 +786,10 @@ class CaseReindexAccessor(ReindexAccessor):
         filters = [Q(deleted=False)]
         if self.domain:
             filters.append(Q(domain=self.domain))
+        if self.start_date is not None:
+            filters.append(Q(server_modified_on__gte=self.start_date))
+        if self.end_date is not None:
+            filters.append(Q(server_modified_on__lt=self.end_date))
         return filters
 
 
@@ -915,18 +916,18 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return sum([result.deleted_count for result in results])
 
     @staticmethod
-    def get_attachment_by_identifier(case_id, identifier):
+    def get_attachment_by_name(case_id, attachment_name):
         try:
             return CaseAttachmentSQL.objects.raw(
-                'select * from get_case_attachment_by_identifier(%s, %s)',
-                [case_id, identifier]
+                'select * from get_case_attachment_by_name(%s, %s)',
+                [case_id, attachment_name]
             )[0]
         except IndexError:
-            raise AttachmentNotFound(identifier)
+            raise AttachmentNotFound(attachment_name)
 
     @staticmethod
-    def get_attachment_content(case_id, attachment_id):
-        meta = CaseAccessorSQL.get_attachment_by_identifier(case_id, attachment_id)
+    def get_attachment_content(case_id, attachment_name):
+        meta = CaseAccessorSQL.get_attachment_by_name(case_id, attachment_name)
         return AttachmentContent(meta.content_type, meta.read_content(stream=True))
 
     @staticmethod
@@ -1026,8 +1027,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     attachment.save()
 
                 CaseAttachmentSQL.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
-                for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
-                    attachment.delete_content()
 
                 case.clear_tracked_models()
         except InternalError as e:

@@ -8,11 +8,8 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
 
-from couchexport.models import SavedExportSchema
-
 from corehq import privileges
 from corehq.apps.accounting.utils import (
-    get_active_reminders_by_domain_name,
     log_accounting_error,
     get_privileges,
 )
@@ -20,10 +17,17 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
 from corehq.const import USER_DATE_FORMAT
+from corehq.messaging.scheduling.models import (
+    ImmediateBroadcast,
+    ScheduledBroadcast,
+    AlertSchedule,
+    TimedSchedule,
+)
+from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
+from django.db import transaction
 
 
 class BaseModifySubscriptionHandler(object):
@@ -68,9 +72,91 @@ class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
         return all(response)
 
 
-# TODO - cache
-def _active_reminders(domain):
-    return get_active_reminders_by_domain_name(domain.name)
+def _get_active_immediate_broadcasts(domain, survey_only=False):
+    result = list(ImmediateBroadcast.objects.filter(domain=domain.name, deleted=False, schedule__active=True))
+    if survey_only:
+        result = [broadcast for broadcast in result if broadcast.schedule.memoized_uses_sms_survey]
+
+    return result
+
+
+def _get_active_scheduled_broadcasts(domain, survey_only=False):
+    result = list(ScheduledBroadcast.objects.filter(domain=domain.name, deleted=False, schedule__active=True))
+    if survey_only:
+        result = [broadcast for broadcast in result if broadcast.schedule.memoized_uses_sms_survey]
+
+    return result
+
+
+def _get_active_scheduling_rules(domain, survey_only=False):
+    rules = AutomaticUpdateRule.by_domain(domain.name, AutomaticUpdateRule.WORKFLOW_SCHEDULING, active_only=False)
+
+    result = []
+    for rule in rules:
+        schedule = rule.get_messaging_rule_schedule()
+        if schedule.active and (not survey_only or schedule.memoized_uses_sms_survey):
+            result.append(rule)
+
+    return result
+
+
+def get_refresh_alert_schedule_instances_call(broadcast):
+    def refresh():
+        refresh_alert_schedule_instances.delay(
+            broadcast.schedule_id,
+            broadcast.recipients,
+        )
+
+    return refresh
+
+
+def get_refresh_timed_schedule_instances_call(broadcast):
+    def refresh():
+        refresh_timed_schedule_instances.delay(
+            broadcast.schedule_id,
+            broadcast.recipients,
+            start_date=broadcast.start_date
+        )
+
+    return refresh
+
+
+def _deactivate_schedules(domain, survey_only=False):
+    """
+    The subscription changes are executed within a transaction, so
+    we need to make sure any celery tasks only get started after the
+    transaction commits.
+    """
+    from corehq.messaging.tasks import initiate_messaging_rule_run
+
+    for broadcast in _get_active_immediate_broadcasts(domain, survey_only=survey_only):
+        AlertSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=False)
+        # We have to generate this function outside of this context otherwise it will be
+        # bound to the name broadcast which changes over the course of iteration
+        transaction.on_commit(get_refresh_alert_schedule_instances_call(broadcast))
+
+    for broadcast in _get_active_scheduled_broadcasts(domain, survey_only=survey_only):
+        TimedSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=False)
+        # We have to generate this function outside of this context otherwise it will be
+        # bound to the name broadcast which changes over the course of iteration
+        transaction.on_commit(get_refresh_timed_schedule_instances_call(broadcast))
+
+    for rule in _get_active_scheduling_rules(domain, survey_only=survey_only):
+        """
+        Deactivating a scheduling rule involves only deactivating the schedule, and
+        leaving the rule active. See ConditionalAlertListView.get_activate_ajax_response
+        for more information.
+        """
+        with transaction.atomic():
+            schedule = rule.get_messaging_rule_schedule()
+            if isinstance(schedule, AlertSchedule):
+                AlertSchedule.objects.filter(schedule_id=schedule.schedule_id).update(active=False)
+            elif isinstance(schedule, TimedSchedule):
+                TimedSchedule.objects.filter(schedule_id=schedule.schedule_id).update(active=False)
+            else:
+                raise TypeError("Expected AlertSchedule or TimedSchedule")
+
+            initiate_messaging_rule_run(domain.name, rule.pk)
 
 
 class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
@@ -110,9 +196,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         Reminder rules will be deactivated.
         """
         try:
-            for reminder in _active_reminders(domain):
-                reminder.active = False
-                reminder.save()
+            _deactivate_schedules(domain)
         except Exception:
             log_accounting_error(
                 "Failed to downgrade outbound sms for domain %s."
@@ -127,10 +211,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         All Reminder rules utilizing "survey" will be deactivated.
         """
         try:
-            surveys = [x for x in _active_reminders(domain) if x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
-            for survey in surveys:
-                survey.active = False
-                survey.save()
+            _deactivate_schedules(domain, survey_only=True)
         except Exception:
             log_accounting_error(
                 "Failed to downgrade inbound sms for domain %s."
@@ -309,12 +390,6 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
 
-# TODO - cache
-def _active_reminder_methods(domain):
-    reminder_rules = get_active_reminders_by_domain_name(domain.name)
-    return [reminder.method for reminder in reminder_rules]
-
-
 def _fmt_alert(message, details=None):
     if details is not None and not isinstance(details, list):
         raise ValueError("details should be a list.")
@@ -433,14 +508,18 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Reminder rules will be deactivated.
         """
-        num_active = len(_active_reminder_methods(domain))
+        num_active = (
+            len(_get_active_immediate_broadcasts(domain)) +
+            len(_get_active_scheduled_broadcasts(domain)) +
+            len(_get_active_scheduling_rules(domain))
+        )
         if num_active > 0:
             return _fmt_alert(
                 ungettext(
-                    "You have %(num_active)d active Reminder Rule. Selecting "
-                    "this plan will deactivate this rule.",
-                    "You have %(num_active)d active Reminder Rules. Selecting "
-                    "this plan will deactivate these rules.",
+                    "You have %(num_active)d active Reminder Rule or Broadcast. Selecting "
+                    "this plan will deactivate it.",
+                    "You have %(num_active)d active Reminder Rules and Broadcasts. Selecting "
+                    "this plan will deactivate them.",
                     num_active
                 ) % {
                     'num_active': num_active,
@@ -452,15 +531,18 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
-        surveys = [x for x in _active_reminder_methods(domain) if x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
-        num_survey = len(surveys)
+        num_survey = (
+            len(_get_active_immediate_broadcasts(domain, survey_only=True)) +
+            len(_get_active_scheduled_broadcasts(domain, survey_only=True)) +
+            len(_get_active_scheduling_rules(domain, survey_only=True))
+        )
         if num_survey > 0:
             return _fmt_alert(
                 ungettext(
-                    "You have %(num_active)d active Reminder Rule for a Survey. "
-                    "Selecting this plan will deactivate this rule.",
-                    "You have %(num_active)d active Reminder Rules for a Survey. "
-                    "Selecting this plan will deactivate these rules.",
+                    "You have %(num_active)d active Reminder Rule or Broadcast which uses a Survey. "
+                    "Selecting this plan will deactivate it.",
+                    "You have %(num_active)d active Reminder Rules and Broadcasts which use a Survey. "
+                    "Selecting this plan will deactivate them.",
                     num_survey
                 ) % {
                     'num_active': num_survey,
@@ -468,20 +550,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             )
 
     @staticmethod
-    def response_deidentified_data(domain, new_plan_version):
+    def response_deidentified_data(project, new_plan_version):
         """
         De-id exports will be hidden
         """
-        startkey = json.dumps([domain.name, ""])[:-3]
-        endkey = "%s{" % startkey
-        reports = SavedExportSchema.view(
-            "couchexport/saved_export_schemas",
-            startkey=startkey,
-            endkey=endkey,
-            include_docs=True,
-            reduce=False,
-        )
-        num_deid_reports = len([r for r in reports if r.is_safe])
+        from corehq.apps.export.dbaccessors import get_deid_export_count
+        num_deid_reports = get_deid_export_count(project.name)
         if num_deid_reports > 0:
             return _fmt_alert(
                 ungettext(

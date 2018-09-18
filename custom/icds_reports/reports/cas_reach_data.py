@@ -7,6 +7,7 @@ from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
+from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
 
@@ -81,14 +82,14 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
     else:
         monthly_attendance_percent = percent_increase('awc_num_open', awc_this_month_data, awc_prev_month_data)
         number_of_awc_open_yesterday = {
-            'help_text': _(("Total Number of AWCs open for at least one day in month")),
+            'help_text': _("Total Number of AWCs open for at least one day in month"),
             'label': _('Number of AWCs open for at least one day in month'),
             'color': 'green' if monthly_attendance_percent > 0 else 'red',
             'percent': monthly_attendance_percent,
             'value': get_value(awc_this_month_data, 'awc_num_open'),
             'all': get_value(awc_this_month_data, 'all_awcs'),
             'format': 'div',
-            'frequency': 'day',
+            'frequency': 'month',
         }
 
     return {
@@ -96,9 +97,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             [
                 {
                     'label': _('AWCs Launched'),
-                    'help_text': _('Total AWCs that have launched ICDS-CAS. '
-                                   'AWCs are considered launched after submitting at least '
-                                   'one Household Registration form. '),
+                    'help_text': awcs_launched_help_text(),
                     'percent': percent_increase('awcs', awc_this_month_data, awc_prev_month_data),
                     'color': 'green' if percent_increase(
                         'awcs',

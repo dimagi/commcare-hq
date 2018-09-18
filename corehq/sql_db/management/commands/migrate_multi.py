@@ -2,10 +2,14 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from copy import copy
+import sys
 
+import gevent
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
+
+from corehq.util.log import get_traceback_string
 
 
 class Command(BaseCommand):
@@ -33,11 +37,10 @@ class Command(BaseCommand):
             args.append(app_label)
         if migration_name is not None:
             args.append(migration_name)
-        for db_alias in settings.DATABASES.keys():
-            print('\n======================= Migrating DB: {} ======================='.format(db_alias))
-            if not settings.DATABASES[db_alias].get('MIGRATE', True):
-                print("Skipping.")
-                continue
+
+        options['verbosity'] = 0
+
+        def migrate_db(db_alias, options=options):
             call_options = copy(options)
             call_options['database'] = db_alias
             call_command(
@@ -45,3 +48,33 @@ class Command(BaseCommand):
                 *args,
                 **call_options
             )
+
+        dbs_to_migrate = [
+            db_alias
+            for db_alias in settings.DATABASES.keys()
+            if settings.DATABASES[db_alias].get('MIGRATE', True)
+        ]
+        dbs_to_skip = list(set(settings.DATABASES) - set(dbs_to_migrate))
+
+        print('\nThe following databases will be migrated:\n * {}\n'.format('\n * '.join(dbs_to_migrate)))
+        if dbs_to_skip:
+            print('\nThe following databases will be skipped:\n * {}\n'.format('\n * '.join(dbs_to_skip)))
+
+        jobs = [
+            gevent.spawn(migrate_db, db_alias)
+            for db_alias in dbs_to_migrate
+        ]
+
+        gevent.joinall(jobs)
+
+        migration_error_occured = False
+        for job in jobs:
+            try:
+                job.get()
+            except Exception:
+                print('\n======================= Error During Migration =======================')
+                print(get_traceback_string())
+                migration_error_occured = True
+
+        if migration_error_occured:
+            sys.exit(1)

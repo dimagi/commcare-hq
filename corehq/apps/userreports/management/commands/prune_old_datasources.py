@@ -7,7 +7,6 @@ from collections import defaultdict
 from alembic.autogenerate.api import compare_metadata
 from django.core.management.base import BaseCommand
 
-from corehq.apps.userreports.const import UCR_ES_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql.adapter import metadata
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -67,9 +66,6 @@ class Command(BaseCommand):
     def _get_engine_ids(self, data_sources, engine_id):
         engine_ids = set()
         for data_source in data_sources:
-            if data_source.backend_id == UCR_ES_BACKEND:
-                continue
-
             if engine_id and data_source.engine_id != engine_id:
                 continue
 

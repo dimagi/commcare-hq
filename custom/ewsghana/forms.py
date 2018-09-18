@@ -1,9 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.urls import reverse
-from corehq.apps.reminders.forms import BroadcastForm
-from corehq.apps.reminders.models import (RECIPIENT_USER_GROUP, RECIPIENT_LOCATION)
-from corehq.apps.users.forms import SupplyPointSelectWidget
+from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.messaging.scheduling.forms import BroadcastForm as NewRemindersBroadcastForm
 from crispy_forms import layout as crispy
 from django import forms
 from django.core.exceptions import ValidationError
@@ -39,43 +38,50 @@ class InputStockForm(forms.Form):
     default_consumption = forms.DecimalField(min_value=0, required=False)
 
 
-class EWSBroadcastForm(BroadcastForm):
-    role = forms.ChoiceField(
-        required=False,
-        label=ugettext_lazy('Send to users with role'),
+class NewRemindersEWSBroadcastForm(NewRemindersBroadcastForm):
+    use_advanced_user_data_filter = False
+
+    ews_user_role = forms.ChoiceField(
+        required=True,
+        label=ugettext_lazy("Send to users with role"),
         choices=((role, ugettext_lazy(role)) for role in EWS_USER_ROLES),
     )
 
-    @property
-    def crispy_recipient_fields(self):
-        fields = super(EWSBroadcastForm, self).crispy_recipient_fields
+    def get_recipients_layout_fields(self):
+        fields = super(NewRemindersEWSBroadcastForm, self).get_recipients_layout_fields()
         fields.append(
             crispy.Div(
-                crispy.Field(
-                    'role',
-                    data_bind='value: role',
-                ),
-                data_bind='visible: showUserGroupSelect() || showLocationSelect()',
+                crispy.Field('ews_user_role'),
             )
         )
         return fields
 
-    def clean_role(self):
-        if self.cleaned_data.get('recipient_type') not in (RECIPIENT_USER_GROUP,
-                RECIPIENT_LOCATION):
-            return None
-
-        value = self.cleaned_data.get('role')
-        if value not in EWS_USER_ROLES:
-            raise ValidationError(_('Invalid choice selected.'))
-        return value
-
-    def get_user_data_filter(self):
-        role = self.cleaned_data.get('role')
-        if role is None or role == ROLE_ALL:
+    def distill_user_data_filter(self):
+        role = self.cleaned_data['ews_user_role']
+        if role == ROLE_ALL:
             return {}
-        else:
-            return {'role': [role]}
+
+        return {'role': [role]}
+
+    def clean_use_user_data_filter(self):
+        return None
+
+    def clean_user_data_property_name(self):
+        return None
+
+    def clean_user_data_property_value(self):
+        return None
+
+    def compute_initial(self):
+        result = super(NewRemindersEWSBroadcastForm, self).compute_initial()
+        if self.initial_schedule:
+            if (
+                self.initial_schedule.user_data_filter and
+                len(self.initial_schedule.user_data_filter.get('role', [])) == 1
+            ):
+                result['ews_user_role'] = self.initial_schedule.user_data_filter['role'][0]
+
+        return result
 
 
 class EWSUserSettings(forms.Form):
@@ -89,9 +95,9 @@ class EWSUserSettings(forms.Form):
             domain = kwargs['domain']
             del kwargs['domain']
         super(EWSUserSettings, self).__init__(*args, **kwargs)
-        query_url = reverse('custom.ewsghana.views.non_administrative_locations_for_select2',
-                            args=[domain])
-        self.fields['facility'].widget = SupplyPointSelectWidget(domain=domain, id='facility', query_url=query_url)
+        query_url = reverse('non_administrative_locations_for_select2', args=[domain])
+        self.fields['facility'].widget = LocationSelectWidget(domain=domain, id='facility', query_url=query_url,
+                                                              select2_version='v3')
 
     def save(self, user, domain):
         ews_extension = EWSExtension.objects.get_or_create(user_id=user.get_id, domain=domain)[0]

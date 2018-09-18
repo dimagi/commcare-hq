@@ -291,15 +291,6 @@ class SettingsForm(Form):
         min_value=1000,
     )
 
-    uses_new_reminders = ChoiceField(
-        label=ugettext_lazy("New Reminders Framework"),
-        required=False,
-        choices=(
-            ('Y', ugettext_lazy("Enabled")),
-            ('N', ugettext_lazy("Disabled")),
-        ),
-    )
-
     @property
     def section_general(self):
         fields = [
@@ -569,14 +560,6 @@ class SettingsForm(Form):
 
         if self._cchq_is_previewer:
             result.append(self.section_internal)
-
-        if self.new_reminders_migrator:
-            result.append(
-                crispy.Fieldset(
-                    _("New Reminders"),
-                    crispy.Field('uses_new_reminders')
-                )
-            )
 
         result.append(
             hqcrispy.FormActions(
@@ -859,9 +842,6 @@ class SettingsForm(Form):
 
         return value
 
-    def clean_uses_new_reminders(self):
-        return self.cleaned_data.get('uses_new_reminders') == 'Y'
-
 
 class BackendForm(Form):
     _cchq_domain = None
@@ -885,6 +865,11 @@ class BackendForm(Form):
     reply_to_phone_number = CharField(
         required=False,
         label=ugettext_noop("Reply-To Phone Number"),
+    )
+    inbound_api_key = CharField(
+        required=False,
+        label=ugettext_lazy("Inbound API Key"),
+        disabled=True,
     )
 
     @property
@@ -911,6 +896,12 @@ class BackendForm(Form):
                     data_bind="visible: showAuthorizedDomains",
                 ),
             ])
+
+        if self._cchq_backend_id:
+            backend = SQLMobileBackend.load(self._cchq_backend_id)
+            if backend.show_inbound_api_key_during_edit:
+                self.fields['inbound_api_key'].initial = backend.inbound_api_key
+                fields.append(crispy.Field('inbound_api_key'))
 
         return fields
 
@@ -948,6 +939,13 @@ class BackendForm(Form):
                 ),
             ),
         )
+
+        if self._cchq_backend_id:
+            #   When editing, don't allow changing the name because name might be
+            # referenced as a contact-level backend preference.
+            #   By setting disabled to True, Django makes sure the value won't change
+            # even if something else gets posted.
+            self.fields['name'].disabled = True
 
     @property
     def gateway_specific_fields(self):

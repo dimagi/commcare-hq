@@ -7,25 +7,14 @@
 
 {% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
 
-{% block stylesheets %}{{ block.super }}
-    {% if request|toggle_enabled:"APPCUES_AB_TEST" %}
-        <style type="text/css">
-            .helpbubble {
-                display: none !important;
-            }
-        </style>
-    {% endif %}
-{% endblock stylesheets %}
-
 {% block js %}
     {{ block.super }}
     {% compress js %}
     <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
     <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
-    <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
+    <script src="{% static 'app_manager/js/menu.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager.js' %}"></script><!-- depends on menu.js -->
     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
     <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
     <script src="{% static 'app_manager/js/section_changer.js' %}"></script>
@@ -51,44 +40,40 @@
     </div>
     <nav class="appmanager-content">
 
-      <div class="{% if not module %}active {% endif %}appnav-name-wrapper{% if release_manager %} active{% endif %}">
-          <div class="appnav-name-settings">
-              <a href="{% url "app_settings" domain app.id %}" class="{% if is_app_settings_page %}active{% endif %} appnav-responsive">
-                  <i class="fa fa-gear"></i>
-              </a>
-          </div>
-          <h2 class="appnav-name">
-            <a href="{% url "view_app" domain app.id %}"
-               class="appnav-responsive">
-                <span class="variable-app_name appname-text">{{ app.name }}</span>
-            </a>
-          </h2>
-          <div id="js-publish-status"
-               class="appnav-name-publish"
-               style="display: none;">
-            {% trans "Updates Available to Publish" %}
-          </div>
-      </div>
+      {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app.id app_name=app.name releases_active=release_manager settings_active=is_app_settings_page %}
 
       {% if app.get_doc_type == 'Application' %}
         {% if not app.is_remote_app and app.langs|length > 1%}
-            <div id="langs" class="appnav-language-select">
-                <label for="app-language-select-nav">{% trans "Language" %}</label>
-                <select name="lang" class="form-control input-sm">
-                    {% for lang in app.langs %}
-                        <option value="{{ lang }}"
-                                {% if lang == langs.0 %}selected=""{% endif %}>
-                            {% if lang == app.langs.0 %}*{% endif %}
-                            {{ lang }}
-                        </option>
-                    {% endfor %}
-                </select>
-          </div>
+            {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app.langs langs=langs %}
         {% endif %}
 
-        {% include 'app_manager/partials/appnav_menu.html' %}
+        {% include 'app_manager/partials/menu/appnav_menu.html' %}
       {% endif %}
     </nav>
+  {% endif %}
+  {% if show_ui_notification_to_hide_translations %}
+    {% if request|ui_notify_enabled:"ABILITY_TO_HIDE_TRANSLATIONS" %}
+      <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
+         data-slug="{{ 'ABILITY_TO_HIDE_TRANSLATIONS'|ui_notify_slug }}"
+         role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <p class="lead">{% trans 'New setting to hide translations' %}</p>
+        <p>
+            {% blocktrans %}
+                Working with multiple languages but want to just focus on app building?
+            {% endblocktrans %}
+        </p>
+        <p>
+          <a class="btn btn-primary-dark"
+             target="_blank"
+             href="https://confluence.dimagi.com/display/commcarepublic/Hide+languages+in+forms">
+            {% trans "Learn More" %}
+          </a>
+        </p>
+      </div>
+    {% endif %}
   {% endif %}
 {% endblock %}
 
@@ -101,7 +86,7 @@
     {% initial_page_data 'formdesigner' formdesigner %}
     {% initial_page_data 'add_ons' add_ons %}
     {% initial_page_data 'add_ons_layout' add_ons_layout %}
-    {% initial_page_data 'current_app_version_url' current_app_version_url %}
+    {% registerurl 'current_app_version' domain app.id %}
     {% registerurl "new_form" domain app.id "---" %}
     {% registerurl "toggle_app_manager_v2" %}
     {% block pre_form_content %}{% endblock %}
@@ -218,4 +203,5 @@
 
 {% block modals %}{{ block.super }}
     {% include "hqwebapp/rollout_revert_modal.html" %}
+    {% include 'app_manager/partials/confirm_delete_app.html' %}
 {% endblock %}

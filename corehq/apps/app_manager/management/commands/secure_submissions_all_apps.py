@@ -6,7 +6,7 @@ from distutils.version import LooseVersion
 from django.core.management import BaseCommand
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.util import all_apps_by_domain
-from corehq.apps.builds import get_default_build_spec
+from corehq.apps.builds.utils import get_default_build_spec
 
 
 def turn_on_secure_submissions_for_all_apps(domain):

@@ -22,10 +22,10 @@ from soil.util import expose_cached_download, get_download_context
 from corehq import toggles
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
-from corehq.apps.custom_data_fields import CustomDataModelMixin
+from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_select2, use_select2_v4
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_select2_v4
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
@@ -36,7 +36,6 @@ from corehq.apps.locations.tasks import download_locations_async, import_locatio
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
-from custom.enikshay.user_setup import ENikshayLocationFormSet
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -55,9 +54,9 @@ from .permissions import (
     can_edit_any_location,
 )
 from .models import LocationType, SQLLocation, filter_for_archived
-from .forms import LocationFormSet, UsersAtLocationForm
+from .forms import LocationFormSet, UsersAtLocationForm, RelatedLocationForm
 from .tree_utils import assert_no_cycles
-from .util import load_locs_json, location_hierarchy_config, dump_locations
+from .util import load_locs_json, location_hierarchy_config
 import six
 from six.moves import map
 from six.moves import range
@@ -272,7 +271,7 @@ class LocationTypesView(BaseDomainView):
     @method_decorator(can_edit_location_types)
     @use_jquery_ui
     @method_decorator(check_pending_locations_import())
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 
@@ -332,8 +331,25 @@ class LocationTypesView(BaseDomainView):
             sql_loc_types[pk] = loc_type
             loc_type.save()
 
+        def unique_name_and_code():
+            current_location_types = LocationType.objects.by_domain(request.domain)
+            for location_type in current_location_types:
+                if location_type.pk in payload_loc_type_name_by_pk:
+                    # to check if the name/code was swapped with another location by confirming if
+                    # either name/code has changed but the current name is still present in the names/codes passed
+                    if (
+                            (location_type.name != payload_loc_type_name_by_pk.get(location_type.pk) and
+                             location_type.name in names) or
+                            (location_type.code != payload_loc_type_code_by_pk.get(location_type.pk) and
+                             location_type.code in codes)
+                    ):
+                        return False
+            return True
+
         loc_types = payload['loc_types']
         pks = []
+        payload_loc_type_name_by_pk = {}
+        payload_loc_type_code_by_pk = {}
         for loc_type in loc_types:
             for prop in ['name', 'parent_type', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
@@ -342,14 +358,23 @@ class LocationTypesView(BaseDomainView):
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
-
-        names = [lt['name'] for lt in loc_types]
+            payload_loc_type_name_by_pk[loc_type['pk']] = loc_type['name']
+            if loc_type.get('code'):
+                payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
+        names = list(payload_loc_type_name_by_pk.values())
         names_are_unique = len(names) == len(set(names))
-        codes = [lt['code'] for lt in loc_types if lt['code']]
+        codes = list(payload_loc_type_code_by_pk.values())
         codes_are_unique = len(codes) == len(set(codes))
         if not names_are_unique or not codes_are_unique:
             raise LocationConsistencyError("'name' and 'code' are supposed to be unique")
 
+        if not unique_name_and_code():
+            messages.error(request, LocationConsistencyError(_(
+                "Looks like you are assigning a location name/code to a different location "
+                "in the same request. Please do this in two separate updates by using a "
+                "temporary name to free up the name/code to be re-assigned."))
+            )
+            return self.get(request, *args, **kwargs)
         hierarchy = self.get_hierarchy(loc_types)
 
         if not self.remove_old_location_types(pks):
@@ -485,6 +510,7 @@ class NewLocationView(BaseLocationView):
     form_tab = 'basic'
 
     @use_multiselect
+    @use_select2_v4
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)
@@ -528,9 +554,7 @@ class NewLocationView(BaseLocationView):
     @memoized
     def location_form(self):
         data = self.request.POST if self.request.method == 'POST' else None
-        form_set = (ENikshayLocationFormSet if toggles.ENIKSHAY.enabled(self.domain)
-                    else LocationFormSet)
-        return form_set(
+        return LocationFormSet(
             self.location,
             bound_data=data,
             request_user=self.request.couch_user,
@@ -645,6 +669,7 @@ class EditLocationView(NewLocationView):
     creates_new_location = False
 
     @method_decorator(can_edit_location)
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(EditLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -705,12 +730,19 @@ class EditLocationView(NewLocationView):
             domain_object=self.domain_object,
             location=self.location,
             data=self.request.POST if self.request.method == "POST" else None,
-            submit_label=_("Update Location Membership"),
-            fieldset_title=_("Specify Workers at this Location"),
-            prefix="users",
         )
-        form.fields['selected_ids'].label = _("Workers at Location")
         return form
+
+    @property
+    @memoized
+    def related_location_form(self):
+        if not toggles.RELATED_LOCATIONS.enabled(self.request.domain):
+            return None
+
+        return RelatedLocationForm(
+            self.domain, self.location,
+            data=self.request.POST if self.request.method == "POST" else None,
+        )
 
     @property
     def active_products(self):
@@ -733,6 +765,7 @@ class EditLocationView(NewLocationView):
         context.update({
             'products_per_location_form': self.products_form,
             'users_per_location_form': self.users_form,
+            'related_location_form': self.related_location_form,
         })
         return context
 
@@ -753,6 +786,15 @@ class EditLocationView(NewLocationView):
         self.location.save()
         return self.form_valid()
 
+    def related_location_form_post(self, request, *args, **kwargs):
+        if self.related_location_form.is_valid():
+            self.related_location_form.save()
+            return self.form_valid()
+        else:
+            self.request.method = "GET"
+            self.form_tab = 'related_location'
+            return self.get(request, *args, **kwargs)
+
     @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "location-settings":
@@ -762,10 +804,14 @@ class EditLocationView(NewLocationView):
         elif (self.request.POST['form_type'] == "location-products"
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
+        elif (self.request.POST['form_type'] == "related_location"
+              and toggles.RELATED_LOCATIONS.enabled(request.domain)):
+            return self.related_location_form_post(request, *args, **kwargs)
         else:
             raise Http404()
 
 
+@location_safe
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
@@ -787,6 +833,7 @@ class LocationImportStatusView(BaseLocationView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@location_safe
 class LocationImportView(BaseLocationView):
     urlname = 'location_import'
     page_title = ugettext_noop('Upload Organization Structure From Excel')
@@ -819,7 +866,6 @@ class LocationImportView(BaseLocationView):
         })
         return context
 
-    @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         upload = request.FILES.get('bulk_upload_file')
         if not upload:
@@ -834,19 +880,12 @@ class LocationImportView(BaseLocationView):
 
         domain = args[0]
 
-        # stash this in soil to make it easier to pass to celery
-        TEN_HOURS = 10 * 60 * 60
-        file_ref = expose_cached_download(
-            upload.read(),
-            expiry=TEN_HOURS,
-            file_extension=file_extention_from_filename(upload.name),
-        )
-        # We need to start this task after this current request finishes because this
-        # request uses the lock_locations decorator which acquires the same lock that
-        # the task will try to acquire.
-        task = import_locations_async.apply_async(args=[domain, file_ref.download_id], countdown=10)
-        # put the file_ref.download_id in cache to lookup from elsewhere
-        cache.set(import_locations_task_key(domain), file_ref.download_id, TEN_HOURS)
+        ref = self._cache_file(request, domain, upload)
+        if not isinstance(ref, LocationImportView.Ref):
+            # ref is HTTP response: lock could not be acquired
+            return ref
+        file_ref = ref.value
+        task = import_locations_async.delay(domain, file_ref.download_id, request.couch_user.user_id)
         file_ref.set_task(task)
         return HttpResponseRedirect(
             reverse(
@@ -855,8 +894,34 @@ class LocationImportView(BaseLocationView):
             )
         )
 
+    @staticmethod
+    @lock_locations
+    def _cache_file(request, domain, upload):
+        """Stash in soil for ten hours to make it easier to pass to celery
+
+        :returns: `LocationImportView.Ref` object that can be identified
+        with `isinstance(rval, LocationImportView.Ref)` or an HTTP
+        response generated by `lock_locations` (and guaranteed not to be
+        `LocationImportView.Ref`) if the lock could not be acquired.
+        """
+        TEN_HOURS = 10 * 60 * 60
+        file_ref = expose_cached_download(
+            upload.read(),
+            expiry=TEN_HOURS,
+            file_extension=file_extention_from_filename(upload.name),
+        )
+        # put the file_ref.download_id in cache to lookup from elsewhere
+        cache.set(import_locations_task_key(domain), file_ref.download_id, TEN_HOURS)
+        return LocationImportView.Ref(file_ref)
+
+    class Ref(object):
+
+        def __init__(self, value):
+            self.value = value
+
 
 @require_can_edit_locations
+@location_safe
 def location_importer_job_poll(request, domain, download_id,
                                template="hqwebapp/partials/download_status.html"):
     template = "locations/manage/partials/locations_upload_status.html"
@@ -874,19 +939,25 @@ def location_importer_job_poll(request, domain, download_id,
 
 
 @require_can_edit_locations
+@location_safe
 def location_export(request, domain):
+    headers_only = request.GET.get('download_type', 'full') == 'empty'
+    if not request.can_access_all_locations and not headers_only:
+        return no_permissions(request)
     if not LocationType.objects.filter(domain=domain).exists():
         messages.error(request, _("You need to define organization levels before "
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
     download = DownloadBase()
-    res = download_locations_async.delay(domain, download.download_id, include_consumption)
+    res = download_locations_async.delay(domain, download.download_id,
+                                         include_consumption, headers_only)
     download.set_task(res)
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
 
 @require_can_edit_locations
+@location_safe
 def location_download_job_poll(request, domain,
                                download_id,
                                template="hqwebapp/partials/shared_download_status.html"):
@@ -898,6 +969,7 @@ def location_download_job_poll(request, domain,
     return render(request, template, context)
 
 
+@location_safe
 class DownloadLocationStatusView(BaseLocationView):
     urlname = 'download_org_structure_status'
     page_title = ugettext_noop('Download Organization Structure Status')

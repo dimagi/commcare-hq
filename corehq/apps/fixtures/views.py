@@ -122,7 +122,7 @@ def update_tables(request, domain, data_type_id, test_patch=None):
 
         # validate tag and fields
         validation_errors = []
-        if is_identifier_invalid(data_tag):
+        if is_identifier_invalid("{}_list".format(data_tag)):
             validation_errors.append(data_tag)
         for field_name, options in fields_update['fields'].items():
             method = list(options.keys())
@@ -130,10 +130,12 @@ def update_tables(request, domain, data_type_id, test_patch=None):
                 field_name = options['update']
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
-        validation_errors = [_("\"%s\" cannot include special characters or "
-                                            "begin with \"xml\" or a number.") % e for e in validation_errors]
-        if len(data_tag) > 31:
-            validation_errors.append(_("Table ID can not be longer than 31 characters."))
+        validation_errors = [_(
+            "\"%s\" cannot include special characters, begin or end with a space, "
+            "or begin with \"xml\" or a number") % e for e in validation_errors
+        ]
+        if len(data_tag) < 1 or len(data_tag) > 31:
+            validation_errors.append(_("Table ID must be between 1 and 31 characters."))
 
         if validation_errors:
             return json_response({
@@ -328,7 +330,7 @@ class UploadItemLists(TemplateView):
             validate_fixture_file_format(file_ref.get_filename())
         except FixtureUploadError as e:
             messages.error(
-                request, _('Please fix the following formatting issues in your excel file: %s') %
+                request, _('Please fix the following formatting issues in your Excel file: %s') %
                 '<ul><li>{}</li></ul>'.format('</li><li>'.join(e.errors)),
                 extra_tags='html'
             )
@@ -432,7 +434,7 @@ def _upload_fixture_api(request, domain):
         except FixtureUploadError as e:
             return UploadFixtureAPIResponse(
                 'fail',
-                _('Please fix the following formatting issues in your excel file: %s')
+                _('Please fix the following formatting issues in your Excel file: %s')
                 % '\n'.join(e.errors))
 
         result = upload_fixture_file(domain, filename, replace=replace)

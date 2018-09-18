@@ -1,8 +1,9 @@
-djtables
-xlutils
-github3.py
-mocker
-ethiopian-date
+# https://github.com/maxtepkeev/architect/pull/52
 architect
-ethiopian-date-converter
+# https://github.com/django-nose/django-nose/pull/228
 django-nose
+ddtrace
+feedparser
+pycrypto
+restkit
+http-parser

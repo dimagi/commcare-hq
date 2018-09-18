@@ -4,6 +4,10 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+    <!-- "Additional Information" uses a .ko-select2 -->
+    <!-- Uses v3 because BaseCommTrackManageView use_select2 -->
+    <script src="{% static 'hqwebapp/js/widgets_v3.js' %}"></script>
     <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
     {% include 'hqwebapp/includes/ui_element_js.html' %}
 {% endblock %}

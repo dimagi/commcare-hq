@@ -28,7 +28,9 @@ from django.template import loader
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, LANGUAGE_SESSION_KEY
+
+
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
@@ -42,11 +44,14 @@ from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
+from corehq.apps.users.models import CouchUser
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from memoized import memoized
+
+from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
@@ -67,7 +72,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name, update_session_language
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
@@ -98,10 +103,17 @@ def format_traceback_the_way_python_does(type, exc, tb):
     NameError: name 'name' is not defined
     """
 
+    if six.PY3:
+        exc_message = six.text_type(exc)
+    else:
+        exc_message = exc.message
+        if isinstance(exc_message, bytes):
+            exc_message = exc_message.decode('utf-8')
+
     return 'Traceback (most recent call last):\n{}{}: {}'.format(
         ''.join(traceback.format_tb(tb)),
         type.__name__,
-        six.text_type(exc)
+        exc_message
     )
 
 
@@ -152,10 +164,7 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            if settings.SERVER_ENVIRONMENT == 'production':
-                url = "https://www.dimagi.com/"
-            else:
-                url = reverse('login')
+            url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
@@ -263,13 +272,12 @@ def server_up(req):
     statuses = run_checks(checks_to_do)
     failed_checks = [(check, status) for check, status in statuses if not status.success]
 
-    tags = [
-        'status:{}'.format('failed' if failed_checks else 'ok'),
-    ]
     for check_name, status in statuses:
-        datadog_gauge('commcare.serverup.check', status.duration, tags=tags + [
+        tags = [
+            'status:{}'.format('failed' if not status.success else 'ok'),
             'check:{}'.format(check_name)
-        ])
+        ]
+        datadog_gauge('commcare.serverup.check', status.duration, tags=tags)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
@@ -333,9 +341,15 @@ def _login(req, domain_name, template_name):
             return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
     if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
-        req.POST._mutable = True
-        req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
-        req.POST._mutable = False
+        with mutable_querydict(req.POST):
+            req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
+
+    if 'auth-username' in req.POST:
+        couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
+        if couch_user:
+            new_lang = couch_user.language
+            old_lang = req.session.get(LANGUAGE_SESSION_KEY)
+            update_session_language(req, old_lang, new_lang)
 
     req.base_template = settings.BASE_TEMPLATE
 
@@ -357,17 +371,17 @@ def _login(req, domain_name, template_name):
         context.update({
             'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
         })
-
-    auth_view = HQLoginView if not domain_name else CloudCareLoginView
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        auth_view = CloudCareLoginView
+    else:
+        auth_view = HQLoginView if not domain_name else CloudCareLoginView
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
 @two_factor_exempt
 @sensitive_post_parameters('auth-password')
 def login(req):
-    # this view, and the one below, is overridden because
-    # we need to set the base template to use somewhere
-    # somewhere that the login page can access it.
+    # This is a wrapper around the _login view
 
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
@@ -380,6 +394,7 @@ def login(req):
 
 @location_safe
 def domain_login(req, domain, template_name="login_and_password/login.html"):
+    # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
         raise Http404
@@ -437,7 +452,7 @@ def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file
 
 
 def dropbox_next_url(request, download_id):
-    return request.POST.get('dropbox-next', None) or request.META.get('HTTP_REFERER', '/')
+    return request.META.get('HTTP_REFERER', '/')
 
 
 @login_required
@@ -555,9 +570,6 @@ class BugReportView(View):
             'sentry_id',
         )])
 
-        report['user_agent'] = req.META['HTTP_USER_AGENT']
-        report['datetime'] = datetime.utcnow()
-
         try:
             couch_user = req.couch_user
             full_name = couch_user.full_name
@@ -584,11 +596,17 @@ class BugReportView(View):
             "full name: {full_name}\n"
             "domain: {domain}\n"
             "url: {url}\n"
-            "datetime: {datetime}\n"
-            "User Agent: {user_agent}\n"
         ).format(**report)
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
+        debug_context = {
+            'datetime': datetime.utcnow(),
+            'self_started': '<unknown>',
+            'scale_backend': '<unknown>',
+            'has_handoff_info': '<unknown>',
+            'project_description': '<unknown>',
+            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+        }
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
             new_project_description = req.POST.get('project_description')
@@ -598,36 +616,18 @@ class BugReportView(View):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
-            matching_subscriptions = Subscription.visible_objects.filter(
-                is_active=True,
-                subscriber__domain=domain,
-            )
-            if len(matching_subscriptions) >= 1:
-                software_plan = matching_subscriptions[0].plan_version
-            else:
-                software_plan = 'domain has no active subscription'
-
             message += ((
                 "software plan: {software_plan}\n"
-                "Is self start: {self_started}\n"
-                "Feature Flags: {feature_flags}\n"
-                "Feature Previews: {feature_previews}\n"
-                "Is scale backend: {scale_backend}\n"
-                "Has Support Hand-off Info: {has_handoff_info}\n"
-                "Internal Project Information: {internal_info_link}\n"
-                "Project description: {project_description}\n"
-                "Sentry Error: {sentry_error}\n"
             ).format(
-                software_plan=software_plan,
-                self_started=domain_object.internal.self_started,
-                feature_flags=list(toggles.toggles_dict(username=report['username'], domain=domain)),
-                feature_previews=list(feature_previews.previews_dict(domain)),
-                scale_backend=should_use_sql_backend(domain),
-                has_handoff_info=bool(domain_object.internal.partner_contact),
-                internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),
-                project_description=domain_object.project_description,
-                sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+                software_plan=Subscription.get_subscribed_plan_by_domain(domain),
             ))
+
+            debug_context.update({
+                'self_started': domain_object.internal.self_started,
+                'scale_backend': should_use_sql_backend(domain),
+                'has_handoff_info': bool(domain_object.internal.partner_contact),
+                'project_description': domain_object.project_description,
+            })
 
         subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
         cc = [el for el in report['cc'].strip().split(",") if el]
@@ -644,11 +644,19 @@ class BugReportView(View):
 
         message += "Message:\n\n{message}\n".format(message=report['message'])
         if req.POST.get('five-hundred-report'):
-            extra_message = ("This messge was reported from a 500 error page! "
+            extra_message = ("This message was reported from a 500 error page! "
                              "Please fix this ASAP (as if you wouldn't anyway)...")
+            extra_debug_info = (
+                "datetime: {datetime}\n"
+                "Is self start: {self_started}\n"
+                "Is scale backend: {scale_backend}\n"
+                "Has Support Hand-off Info: {has_handoff_info}\n"
+                "Project description: {project_description}\n"
+                "Sentry Error: {sentry_error}\n"
+            ).format(**debug_context)
             traceback_info = cache.cache.get(report['500traceback'])
             cache.cache.delete(report['500traceback'])
-            message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
+            message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
 
         email = EmailMessage(
             subject=subject,
@@ -690,10 +698,6 @@ def render_static(request, template, page_name):
                   {'tmpl': template, 'page_name': page_name})
 
 
-def eula(request):
-    return render_static(request, "eula.html", _("End User License Agreement"))
-
-
 def cda(request):
     return render_static(request, "cda.html", _("Content Distribution Agreement"))
 
@@ -704,23 +708,6 @@ def apache_license(request):
 
 def bsd_license(request):
     return render_static(request, "bsd_license.html", _("BSD License"))
-
-
-def product_agreement(request):
-    return render_static(request, "product_agreement.html", _("Product Subscription Agreement"))
-
-
-def unsubscribe(request, user_id):
-    # todo in the future we should not require a user to be logged in to unsubscribe.
-    from django.contrib import messages
-    from corehq.apps.settings.views import MyAccountSettingsView
-    messages.info(request,
-                  _('Check "Opt out of emails about new features '
-                    'and other CommCare updates" in your account '
-                    'settings and then click "Update Information" '
-                    'if you do not want to receive future emails '
-                    'from us.'))
-    return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
 
 
 class BasePageView(TemplateView):
@@ -1081,7 +1068,7 @@ def quick_find(request):
         if redirect and doc_info.link:
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
-        elif request.couch_user.is_superuser:
+        elif redirect and request.couch_user.is_superuser:
             return HttpResponseRedirect('{}?id={}'.format(reverse('raw_couch'), doc.get('_id')))
         else:
             return json_response(doc_info)
@@ -1160,10 +1147,10 @@ class MaintenanceAlertsView(BasePageView):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
         return {
             'alerts': [{
-            'created': six.text_type(alert.created),
-            'active': alert.active,
-            'html': alert.html,
-            'id': alert.id,
+                'created': six.text_type(alert.created),
+                'active': alert.active,
+                'html': alert.html,
+                'id': alert.id,
             } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
         }
 

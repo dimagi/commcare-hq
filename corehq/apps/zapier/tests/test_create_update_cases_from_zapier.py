@@ -89,7 +89,7 @@ class TestZapierCreateCaseAction(TestCase):
                                content_type='application/json',
                                HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     def test_update_case_wrong_domain(self):
         response = self.client.post(reverse(ZapierCreateCase.urlname,
@@ -129,12 +129,14 @@ class TestZapierCreateCaseAction(TestCase):
                                content_type='application/json',
                                HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 400)
 
     def test_user_does_not_have_access(self):
         fake_domain = Domain.get_or_create_with_name('fake', is_active=True)
         fake_user = WebUser.create('fake', 'faker2', '******')
-        query_string = "?domain=fruit&case_type=fake&user_id=test_user&user=faker2"
+        self.addCleanup(fake_domain.delete)
+        self.addCleanup(fake_user.delete)
+        query_string = "?domain=fruit&case_type=fake&user_id=test_user&user=faker2&owner_id=test_user"
         response = self.client.post(reverse(ZapierCreateCase.urlname,
                                             kwargs={'domain': self.domain}) + query_string,
                                data=json.dumps(self.data),
@@ -142,5 +144,3 @@ class TestZapierCreateCaseAction(TestCase):
                                HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 403)
-        fake_domain.delete()
-        fake_user.delete()

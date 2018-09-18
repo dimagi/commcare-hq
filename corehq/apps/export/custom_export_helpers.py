@@ -4,7 +4,6 @@ import json
 from django_prbac.utils import has_privilege
 from corehq import privileges
 from corehq.apps.export.exceptions import BadExportConfiguration
-from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from couchexport.models import ExportTable, ExportSchema, ExportColumn, display_column_types, SplitColumn
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -165,7 +164,6 @@ class CustomExportHelper(object):
         self.update_custom_params()
         self.custom_export.custom_validate()
         self.custom_export.save()
-        touch_exports(self.domain)
 
         if self.presave:
             HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export.get_id)

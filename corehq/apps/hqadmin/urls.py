@@ -3,36 +3,42 @@ from __future__ import unicode_literals
 from django.conf.urls import include, url
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
-from corehq.apps.hqadmin.views import (
-    AdminRestoreView,
-    AuthenticateAs,
+from corehq.apps.hqadmin.views.data import (
+    doc_in_es,
+    raw_couch,
+    raw_doc,
+)
+from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
+    mass_email,
+    ReprocessMessagingCaseUpdatesView,
+)
+from corehq.apps.hqadmin.views.reports import (
     DimagisphereView,
     DownloadGIRView,
     DownloadMALTView,
-    FlagBrokenBuilds,
-    RecentCouchChangesView,
-    ReprocessMessagingCaseUpdatesView,
-    SuperuserManagement,
-    SystemInfoView,
-    WebUserDataView,
     admin_reports_stats_data,
-    branches_on_staging,
-    callcenter_test,
-    check_services,
-    default,
-    doc_in_es,
-    download_recent_changes,
-    raw_couch,
-    raw_doc,
-    run_command,
     stats_data,
-    system_ajax,
-    pillow_operation_api,
-    web_user_lookup,
     top_five_projects_by_country,
+)
+from corehq.apps.hqadmin.views.system import (
+    RecentCouchChangesView,
+    SystemInfoView,
+    branches_on_staging,
+    check_services,
+    download_recent_changes,
+    pillow_operation_api,
+    system_ajax,
+)
+from corehq.apps.hqadmin.views.utils import default
+from corehq.apps.hqadmin.views.users import (
+    AdminRestoreView,
+    AuthenticateAs,
     DisableTwoFactorView,
-    DisableUserView
+    DisableUserView,
+    SuperuserManagement,
+    WebUserDataView,
+    web_user_lookup,
 )
 
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -48,15 +54,16 @@ urlpatterns = [
     url(r'^system/system_ajax$', system_ajax, name="system_ajax"),
     url(r'^system/check_services$', check_services, name="check_services"),
     url(r'^system/autostaging/$', branches_on_staging, name="branches_on_staging"),
+    url(r'^mass_email/$', mass_email, name="mass_email"),
+    # Same view supported with three possible urls to support tracking
+    # username and domain in the url via audit
     url(r'^auth_as/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^auth_as/(?P<username>[^/]*)/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^auth_as/(?P<username>[^/]*)/(?P<domain>{})/$'.format(new_domain_re),
         AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
-    url(r'^run_command/$', run_command, name="run_management_command"),
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
-    url(r'^flag_broken_builds/$', FlagBrokenBuilds.as_view(), name="flag_broken_builds"),
     url(r'^stats_data/$', stats_data, name="admin_stats_data"),
     url(r'^admin_reports_stats_data/$', admin_reports_stats_data, name="admin_reports_stats_data"),
     url(r'^do_pillow_op/$', pillow_operation_api, name="pillow_operation_api"),
@@ -66,7 +73,6 @@ urlpatterns = [
     url(r'^doc_in_es/$', doc_in_es, name='doc_in_es'),
     url(r'^raw_couch/$', raw_couch, name='raw_couch'),
     url(r'^raw_doc/$', raw_doc, name='raw_doc'),
-    url(r'^callcenter_test/$', callcenter_test, name='callcenter_test'),
     url(r'^api/', include(admin_api_urlpatterns)),
     url(r'^callcenter_ucr_check/$', CallcenterUCRCheck.as_view(), name=CallcenterUCRCheck.urlname),
     url(r'^api/', include(admin_api_urlpatterns)),

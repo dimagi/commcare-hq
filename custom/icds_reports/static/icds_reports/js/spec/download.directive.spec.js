@@ -13,11 +13,12 @@ describe('Download Directive', function () {
         beforeEach(module('icdsApp', function ($provide) {
             $provide.constant("userLocationId", null);
             $provide.constant("locationHierarchy", [
-                ['awc', ['supervisor']],
-                ['block', ['district']],
-                ['district', ['state']],
                 ['state', [null]],
-                ['supervisor', ['block']]]);
+                ['district', ['state']],
+                ['block', ['district']],
+                ['supervisor', ['block']],
+                ['awc', ['supervisor']],
+            ]);
             $provide.constant("haveAccessToFeatures", false);
         }));
 
@@ -38,6 +39,7 @@ describe('Download Directive', function () {
             var fakeDate = new Date(2016, 9, 1);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
 
+            window.ga = function() {};
             var element = window.angular.element("<download data='test'></download>");
             var compiled = $compile(element)($scope);
 
@@ -110,11 +112,11 @@ describe('Download Directive', function () {
         it('tests initialize hierarchy', function () {
             var result = controller.hierarchy;
             var expected = [
-                [{"name": "awc", "parents": ["supervisor"], "level": 4}],
-                [{"name": "block", "parents": ["district"], "level": 2}],
-                [{"name": "district", "parents": ["state"], "level": 1}],
                 [{"name": "state", "parents": [null], "level": 0}],
+                [{"name": "district", "parents": ["state"], "level": 1}],
+                [{"name": "block", "parents": ["district"], "level": 2}],
                 [{"name": "supervisor", "parents": ["block"], "level": 3}],
+                [{"name": "awc", "parents": ["supervisor"], "level": 4}],
             ];
 
             assert.deepEqual(expected, result);

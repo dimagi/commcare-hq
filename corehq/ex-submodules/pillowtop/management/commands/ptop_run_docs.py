@@ -7,6 +7,7 @@ from django.core.management.base import CommandError, BaseCommand
 from pillowtop.feed.interface import Change
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import FACTORIES_BY_SLUG
 from corehq.util.doc_processor.couch import CouchDocumentProvider
+from io import open
 
 
 class Command(BaseCommand):
@@ -52,7 +53,7 @@ class Command(BaseCommand):
                 return
 
         def doc_ids():
-            with open(docs_filename) as f:
+            with open(docs_filename, encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
                     if line:
@@ -66,7 +67,7 @@ class Command(BaseCommand):
 
     def check_file(self, docs_filename):
         ok = True
-        with open(docs_filename) as f:
+        with open(docs_filename, encoding='utf-8') as f:
             for line in f:
                 line = line.strip()
                 if line and not self.check_id(line):

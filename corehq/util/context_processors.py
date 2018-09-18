@@ -3,10 +3,12 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.urls import resolve, reverse
 from django.http import Http404
+from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.accounting.models import BillingAccount
 
 
 COMMCARE = 'commcare'
@@ -56,6 +58,7 @@ def get_per_domain_context(project, request=None):
     return {
         'CUSTOM_LOGO_URL': custom_logo_url,
         'allow_report_an_issue': allow_report_an_issue,
+        'EULA_COMPLIANCE': getattr(settings, 'EULA_COMPLIANCE', False),
     }
 
 
@@ -64,6 +67,24 @@ def domain(request):
 
     project = getattr(request, 'project', None)
     return get_per_domain_context(project, request=request)
+
+
+def domain_billing_context(request):
+    is_domain_billing_admin = False
+    restrict_domain_creation = settings.RESTRICT_DOMAIN_CREATION
+    if getattr(request, 'couch_user', None) and getattr(request, 'domain', None):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        if account:
+            if has_privilege(request, privileges.ACCOUNTING_ADMIN):
+                is_domain_billing_admin = True
+            elif account.has_enterprise_admin(request.couch_user.username):
+                is_domain_billing_admin = True
+            if not is_domain_billing_admin:
+                restrict_domain_creation = restrict_domain_creation or account.restrict_domain_creation
+    return {
+        'IS_DOMAIN_BILLING_ADMIN': is_domain_billing_admin,
+        'restrict_domain_creation': restrict_domain_creation,
+    }
 
 
 def current_url_name(request):
@@ -112,7 +133,6 @@ def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE,
         'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
-        'restrict_domain_creation': settings.RESTRICT_DOMAIN_CREATION,
     }
 
 
@@ -122,4 +142,24 @@ def commcare_hq_names(request):
             'COMMCARE_NAME': settings.COMMCARE_NAME,
             'COMMCARE_HQ_NAME': settings.COMMCARE_HQ_NAME
         }
+    }
+
+
+def mobile_experience(request):
+    show_mobile_ux_warning = False
+    mobile_ux_cookie_name = ''
+    if (hasattr(request, 'couch_user')
+        and hasattr(request, 'user_agent')
+        and (settings.SERVER_ENVIRONMENT
+             in ['production', 'staging', 'localdev'])):
+        mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
+        show_mobile_ux_warning = (
+            not request.COOKIES.get(mobile_ux_cookie_name)
+            and request.user_agent.is_mobile
+            and request.user.is_authenticated
+            and request.user.is_active
+        )
+    return {
+        'show_mobile_ux_warning': show_mobile_ux_warning,
+        'mobile_ux_cookie_name': mobile_ux_cookie_name,
     }

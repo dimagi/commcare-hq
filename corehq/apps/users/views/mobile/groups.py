@@ -10,6 +10,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.filters.api import MobileWorkersOptionsView
 from corehq.apps.hqwebapp.decorators import (
     use_multiselect,
+    use_select2_v4,
 )
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -20,7 +21,6 @@ from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.sms.models import Keyword
-from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import get_simplified_users
 from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
@@ -32,6 +32,7 @@ from corehq.apps.sms.verify import (
 from corehq.apps.users.forms import GroupMembershipForm
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
+from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq import privileges
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
 from memoized import memoized
@@ -125,6 +126,7 @@ class BaseGroupsView(BaseUserSettingsView):
 
     @method_decorator(require_can_edit_commcare_users)
     @use_multiselect
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(BaseGroupsView, self).dispatch(request, *args, **kwargs)
 
@@ -207,7 +209,7 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     def page_context(self):
         domain_has_reminders_or_keywords = (
-            CaseReminderHandler.domain_has_reminders(self.domain) or
+            domain_has_reminders(self.domain) or
             Keyword.domain_has_keywords(self.domain)
         )
         bulk_sms_verification_enabled = (

@@ -8,7 +8,9 @@ from corehq.apps.app_manager.xform import XForm
 
 DATA_SOURCE_TYPE_CASE = 'case'
 DATA_SOURCE_TYPE_FORM = 'form'
-DATA_SOURCE_TYPE_VALUES = (DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM)
+DATA_SOURCE_TYPE_RAW = 'data_source'  # this is only used in report builder
+APP_DATA_SOURCE_TYPE_VALUES = (DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM)
+REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES = (DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM, DATA_SOURCE_TYPE_RAW)
 DATA_SOURCE_TYPE_CHOICES = (
     (DATA_SOURCE_TYPE_CASE, _("Cases")),
     (DATA_SOURCE_TYPE_FORM, _("Forms")),
@@ -35,15 +37,29 @@ def make_case_data_source_filter(case_type):
     }
 
 
-def make_form_data_source_filter(xmlns):
+def make_form_data_source_filter(xmlns, app_id):
     return {
-        "type": "boolean_expression",
-        "operator": "eq",
-        "expression": {
-            "type": "property_name",
-            "property_name": "xmlns"
-        },
-        "property_value": xmlns,
+        "type": "and",
+        "filters": [
+            {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "xmlns"
+                },
+                "property_value": xmlns,
+            },
+            {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "app_id"
+                },
+                "property_value": app_id,
+            }
+        ]
     }
 
 
@@ -55,7 +71,7 @@ def get_app_data_source_meta(domain, data_source_type, data_source_id):
     :param data_source_id: for forms - the unique form ID, for cases the case type
     :return: an AppDataSourceMeta object corresponding to the data source type and ID
     """
-    assert data_source_type in DATA_SOURCE_TYPE_VALUES
+    assert data_source_type in APP_DATA_SOURCE_TYPE_VALUES
     if data_source_type == DATA_SOURCE_TYPE_CASE:
         return CaseDataSourceMeta(domain, data_source_type, data_source_id)
     else:
@@ -94,7 +110,8 @@ class FormDataSourceMeta(AppDataSourceMeta):
         self.source_xform = XForm(self.source_form.source)
 
     def get_filter(self):
-        return make_form_data_source_filter(self.source_xform.data_node.tag_xmlns)
+        return make_form_data_source_filter(
+            self.source_xform.data_node.tag_xmlns, self.source_form.get_app().get_id)
 
 
 def make_form_question_indicator(question, column_id=None, data_type=None, root_doc=False):

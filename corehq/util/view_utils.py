@@ -8,8 +8,9 @@ from functools import wraps
 from django import http
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.urls import reverse as _reverse
-from django.utils.encoding import smart_bytes
+from django.utils.encoding import smart_text
 from django.utils.http import urlencode
 
 from dimagi.utils.logging import notify_exception
@@ -73,7 +74,8 @@ def json_error(f):
         except BadRequest as e:
             return _get_json_exception_response(400, request, e)
         except Exception as e:
-            notify_exception(request, b'JSON exception response: {}'.format(smart_bytes(e)))
+            message = 'JSON exception response: {}'.format(smart_text(e))
+            notify_exception(request, message)
             return _get_json_exception_response(500, request, e)
     return inner
 
@@ -97,7 +99,7 @@ def _get_json_exception_response(code, request, exception, log_message=None):
 
 
 def _json_exception_response_data(code, exception):
-    if isinstance(exception.args[0], six.binary_type):
+    if isinstance(exception.args[0], bytes):
         message = exception.args[0].decode('utf-8')
     else:
         message = six.text_type(exception)
@@ -129,3 +131,56 @@ def reverse(viewname, params=None, absolute=False, **kwargs):
 
 def absolute_reverse(*args, **kwargs):
     return reverse(*args, absolute=True, **kwargs)
+
+
+def get_case_or_404(domain, case_id):
+    from corehq.form_processor.exceptions import CaseNotFound
+    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+        if case.domain != domain or case.is_deleted:
+            raise Http404()
+        return case
+    except CaseNotFound:
+        raise Http404()
+
+
+def get_form_or_404(domain, id):
+    from corehq.form_processor.exceptions import XFormNotFound
+    from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+    try:
+        form = FormAccessors(domain).get_form(id)
+        if form.domain != domain or form.is_deleted:
+            raise Http404()
+        return form
+    except XFormNotFound:
+        raise Http404()
+
+
+def request_as_dict(request):
+    """
+    Function returns the dictionary which contains the data of request object.
+    :Parameter request:
+            Object of HttpRequest
+
+    :Return request_data:
+            Dict containing the request data
+    """
+
+    request_data = dict(
+        GET=request.GET if request.method == 'GET' else request.POST,
+        META=dict(
+            QUERY_STRING=request.META.get('QUERY_STRING'),
+            PATH_INFO=request.META.get('PATH_INFO')
+        ),
+        datespan=request.datespan,
+        couch_user=None,
+        can_access_all_locations=request.can_access_all_locations
+    )
+
+    try:
+        request_data.update(couch_user=request.couch_user.get_id)
+    except Exception as e:
+        logging.error("Could not pickle the couch_user id from the request object. Error: %s" % e)
+
+    return request_data

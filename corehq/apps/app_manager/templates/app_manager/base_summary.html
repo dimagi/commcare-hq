@@ -1,0 +1,145 @@
+{% extends 'hqwebapp/base.html' %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block page_breadcrumbs %}{% endblock %}
+
+{% block stylesheets %}{{ block.super }}
+
+  {% include 'app_manager/partials/apps_stylesheets.html' %}
+
+  {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/summary.debug.less' %}" />
+    {% else %}
+    {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'app_manager/less/summary.less' %}" />
+    {% endcompress %}
+  {% endif %}
+
+{% endblock stylesheets %}
+
+{% block content %}
+    {% initial_page_data 'form_name_map' form_name_map %}
+    {% initial_page_data 'lang' lang %}
+    {% initial_page_data 'langs' app_langs %}
+    {% initial_page_data 'read_only' read_only %}
+    {% initial_page_data 'VELLUM_TYPES' VELLUM_TYPES %}
+    {% registerurl 'current_app_version' domain app_id %}
+    <div class="container-fluid">
+        <div class="row appmanager-content-row">
+            <div id="hq-sidebar" class="appmanager-sidebar col-hq-sidebar nav-hq-sidebar appsummary-sidebar" role="navigation">
+
+                <nav>
+                    {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app_id app_name=app_name releases_active=True %}
+
+                    {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app_langs langs=langs %}
+
+                    <ul class="nav nav-hq-sidebar appnav-menu">
+                        <li role="presentation">
+                            <div class="appnav-item">
+                                <a href="{% url 'download_app_summary' domain app_id %}?lang={{ lang }}"
+                                   class="appnav-link-full">
+                                    <i class="fa fa-download appnav-primary-icon"></i>
+                                    <span>{% trans "High Level Summary" %}</span>
+                                </a>
+                            </div>
+                        </li>
+                        <li role="presentation" class="nav-divider"></li>
+                        <li role="presentation">
+                            <div class="appnav-item{% if is_form_summary %} active{% endif %}">
+                                <a href="{% url 'app_form_summary' domain app_id %}"
+                                   class="appnav-title appnav-title-secondary appnav-responsive">
+                                    <i class="fa fa-file-text-o appnav-primary-icon"></i>
+                                    <span>{% trans "Form Summary" %}</span>
+                                </a>
+                                <a class="appnav-secondary" href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}">
+                                    <i class="fa fa-download"></i>
+                                </a>
+                            </div>
+                        </li>
+                        <li role="presentation">
+                            <div class="appnav-item{% if is_case_summary %} active{% endif %}">
+                                <a href="{% url 'app_case_summary' domain app_id %}"
+                                   class="appnav-title appnav-title-secondary appnav-responsive">
+                                    <i class="fcc fcc-fd-external-case appnav-primary-icon"></i>
+                                    <span>{% trans "Case Summary" %}</span>
+                                </a>
+                                <a class="appnav-secondary" href="{% url "download_case_summary" domain app_id %}?lang={{ lang }}">
+                                    <i class="fa fa-download"></i>
+                                </a>
+                            </div>
+                        </li>
+                        <li role="presentation" class="nav-divider"></li>
+                        <li role="presentation">
+                            <div class="appnav-item" data-bind="click: selectAll, css: { active: viewAllSelected }">
+                                <a class="appnav-link-full">
+                                  <i class="fa fa-search appnav-primary-icon"></i>
+                                  <span data-bind="text: viewAllItems"></span>
+                                </a>
+                            </div>
+                        </li>
+                        <!-- ko foreach: items -->
+                            <li role="presentation">
+                                <div class="appnav-item" data-bind="click: $root.select, css: { active: isSelected }">
+                                    <a class="appnav-link-full">
+                                        <i data-bind="attr: { 'class': $data.icon }"></i>
+                                        <span data-bind="text: name"></span>
+                                        <i class="fa fa-exclamation-triangle text-danger" data-bind="visible: has_errors"></i>
+                                    </a>
+                                </div>
+                                <!-- ko foreach: subitems -->
+                                    <ul class="appnav-menu appnav-menu-nested">
+                                        <li>
+                                            <div class="appnav-item" data-bind="click: $root.select, css: { active: isSelected }">
+                                                <a class="appnav-link-full">
+                                                    <i data-bind="attr: { 'class': $data.icon }"></i>
+                                                    <span data-bind="text: name"></span>
+                                                </a>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                <!-- /ko -->
+                            </li>
+                        <!-- /ko -->
+                    </ul>
+
+                </nav>
+            </div>
+            <div id="hq-content" class="appmanager-main-container">
+                <div class="appmanager-settings-content ko-template" id="js-appmanager-body">
+                  {% block content_extra %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Question label/id switcher #}
+    <script type="text/html" id="label-id-toggle">
+        <div class="btn-group" role="group" >
+            <button type="button" class="btn btn-default" data-bind="click: turnLabelsOn, css: { 'active': showLabels }">
+                {% trans "Labels" %}
+            </button>
+            <button type="button" class="btn btn-default" data-bind="click: turnIdsOn, css: { 'active': showIds }">
+                {% trans "Question IDs" %}
+            </button>
+        </div>
+    </script>
+
+    {# Question/property filter #}
+    <script type="text/html" id="search-box">
+        <form class="form-inline" role="form">
+            <div class="form-group">
+                <label class="sr-only" for="property" data-bind="text: queryLabel"></label>
+                <input type="text" class="form-control" data-bind="value: query, valueUpdate: 'afterkeydown', attr: {placeholder: queryLabel}" />
+            </div>
+            <button class="btn btn-default" data-bind="click: clearQuery" type="button"><i class="fa fa-times"></i></button>
+        </form>
+    </script>
+{% endblock content %}

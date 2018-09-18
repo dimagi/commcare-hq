@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import argparse
 import yaml
 import six
+from io import open
 
 parser = argparse.ArgumentParser(
     description='''
@@ -47,7 +48,7 @@ if __name__ == "__main__":
     prefix = args.prefix
     output = []
 
-    with open(yaml_filename, 'r') as f:
+    with open(yaml_filename, 'r', encoding='utf-8') as f:
         doc = yaml.load(f)
 
     for entry in doc:

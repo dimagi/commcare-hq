@@ -1,15 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import functools
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
 from corehq.apps.es import forms as form_es, filters as es_filters
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
-from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports import util
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import SubmitHistoryFilter as EMWF
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -51,7 +48,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.SubmitHistoryFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -146,7 +143,7 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
     @property
     def headers(self):
         h = [
-            DataTablesColumn(_("View Form")),
+            DataTablesColumn(_("View Form"), css_class="view-form-link"),
             DataTablesColumn(_("Username"), prop_name='form.meta.username'),
             DataTablesColumn(
                 _("Submission Time") if self.by_submission_time

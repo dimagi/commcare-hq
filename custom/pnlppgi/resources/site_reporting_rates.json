@@ -1,5 +1,6 @@
 {
   "domains": ["pnlppgi"],
+  "server_environment": ["production"],
   "config": {
     "configured_filter": {
       "operator": "eq",

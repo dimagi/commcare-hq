@@ -17,13 +17,15 @@ def _get_exactly_one_parent_case(case, identifier, relationship, expected_parent
     if len(related) != 1:
         raise CaseRelationshipError(
             "Expected exactly one parent for %s, relationship %s/%s" %
-            (case.case_id, identifier, relationship)
+            (case.case_id, identifier, relationship),
+            case.case_id, case.type, identifier, relationship, len(related)
         )
 
     parent_case = related[0]
     if parent_case.type != expected_parent_case_type:
         raise CaseRelationshipError(
-            "Expected case type of '%s' for %s" % (expected_parent_case_type, parent_case.case_id)
+            "Expected case type of '%s' for %s" % (expected_parent_case_type, parent_case.case_id),
+            case.case_id, case.type, identifier, relationship, len(related)
         )
 
     return parent_case

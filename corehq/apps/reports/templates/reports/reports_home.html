@@ -1,14 +1,18 @@
-{% extends "reports/base_template.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load case_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load report_tags %}
 {% load compress %}
 
+{% requirejs_main 'reports/js/saved_reports_main' %}
+
 {% block page_content %}
 {% initial_page_data 'configs' configs %}
-<ul class="nav nav-tabs" style="margin-bottom: 10px;">
-    <li class="active"><a href="#ko-report-config-list" data-toggle="tab">{% trans "My Saved Reports" %}</a></li>
+{% registerurl 'add_report_config' domain %}
+
+<ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
+    <li><a href="#ko-report-config-list" data-toggle="tab">{% trans "My Saved Reports" %}</a></li>
     <li><a href="#scheduled-reports" data-toggle="tab">
         {% if others_scheduled_reports %}
             {% trans "Scheduled Reports" %}
@@ -18,7 +22,7 @@
     </a></li>
 </ul>
 <div class="tab-content">
-    <div class="tab-pane active" id="ko-report-config-list">
+    <div class="tab-pane" id="ko-report-config-list">
         <div class="row">
             <div class="col-sm-12">
                 <div style="display: none"

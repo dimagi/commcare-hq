@@ -22,7 +22,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'form_workflow')
 
     def test_basic(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
         m1, m1f0 = factory.new_basic_module('m1', 'frog')
 
@@ -33,7 +33,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(self.get_xml('form_link_basic'), factory.app.create_suite(), "./entry[1]")
 
     def test_with_case_management_both_update(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
         factory.form_requires_case(m0f0)
         m1, m1f0 = factory.new_basic_module('m1', 'frog')
@@ -47,7 +47,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(self.get_xml('form_link_update_case'), factory.app.create_suite(), "./entry[1]")
 
     def test_with_case_management_create_update(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
         factory.form_opens_case(m0f0)
         m1, m1f0 = factory.new_basic_module('m1', 'frog')
@@ -61,7 +61,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(self.get_xml('form_link_create_update_case'), factory.app.create_suite(), "./entry[1]")
 
     def test_with_case_management_multiple_links(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
         factory.form_opens_case(m0f0)
         m1, m1f0 = factory.new_basic_module('m1', 'frog')
@@ -79,7 +79,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(self.get_xml('form_link_multiple'), factory.app.create_suite(), "./entry[1]")
 
     def test_link_to_child_module(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
 
@@ -104,7 +104,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")
 
     def test_manual_form_link(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
 
@@ -134,7 +134,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(self.get_xml('form_link_tdh'), factory.app.create_suite(), "./entry")
 
     def test_manual_form_link_with_fallback(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
 
@@ -200,7 +200,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         #
         # See corehq.apps.app_manager.suite_xml.post_process.workflow._replace_session_references_in_stack
 
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('person registration', 'person')
         factory.form_opens_case(m0f0)
 
@@ -222,7 +222,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(self.get_xml('form_link_enikshay'), factory.app.create_suite(), "./entry")
 
     def test_return_to_parent_module(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
 
@@ -251,7 +251,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[3]/stack")
 
     def test_return_to_child_module(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
 
@@ -281,7 +281,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(expected, factory.app.create_suite(), "./entry[3]/stack")
 
     def test_link_to_form_in_parent_module(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('enroll child', 'child')
         factory.form_opens_case(m0f0)
 
@@ -302,7 +302,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
     def test_form_links_submodule(self):
         # Test that when linking between two forms in a submodule we match up the
         # session variables between the source and target form correctly
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('child visit', 'child')
         factory.form_requires_case(m0f0)
         factory.form_opens_case(m0f0, 'visit', is_subcase=True)
@@ -323,7 +323,7 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(self.get_xml('form_link_submodule'), factory.app.create_suite(), "./entry")
 
     def _build_workflow_app(self, mode):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', '')
         factory.new_form(m0)
 

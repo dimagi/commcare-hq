@@ -5,7 +5,6 @@ from django.conf import settings
 from django.test import TestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
-from kafka.common import KafkaUnavailableError
 from mock import MagicMock, patch
 
 from corehq.apps.change_feed import topics
@@ -19,7 +18,7 @@ from pillow_retry.api import process_pillow_retry
 from pillow_retry.models import PillowError
 from pillowtop.feed.couch import populate_change_metadata
 from pillowtop.feed.interface import Change
-from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.pillow.interface import ConstructedPillow, PillowRuntimeContext
 from pillowtop.processors.sample import CountingProcessor
 from testapps.test_pillowtop.utils import process_pillow_changes
 
@@ -46,20 +45,27 @@ class TestMixin(object):
 
 class CouchPillowRetryProcessingTest(TestCase, TestMixin):
     def setUp(self):
+        super(CouchPillowRetryProcessingTest, self).setUp()
         self._fake_couch = FakeCouchDb()
         self._fake_couch.dbname = 'test_commcarehq'
-        with trap_extra_setup(KafkaUnavailableError):
-            self.consumer = KafkaConsumer(
-                topics.CASE,
-                group_id='test-consumer',
-                bootstrap_servers=[settings.KAFKA_URL],
-                consumer_timeout_ms=100,
-            )
+        self.consumer = KafkaConsumer(
+            topics.CASE,
+            client_id='test-consumer',
+            bootstrap_servers=settings.KAFKA_BROKERS,
+            consumer_timeout_ms=100,
+            enable_auto_commit=False,
+        )
+        try:
+            next(self.consumer)
+        except StopIteration:
+            pass
         self.pillow = get_change_feed_pillow_for_db('fake-changefeed-pillow-id', self._fake_couch)
         self.original_process_change = self.pillow.process_change
 
     def tearDown(self):
         PillowError.objects.all().delete()
+        self.consumer.close()
+        super(CouchPillowRetryProcessingTest, self).tearDown()
 
     def test(self):
         document = {
@@ -75,7 +81,7 @@ class CouchPillowRetryProcessingTest(TestCase, TestMixin):
             # first change creates error
             message = 'test retry 1'
             self.pillow.process_change = MagicMock(side_effect=TestException(message))
-            self.pillow.process_with_error_handling(change)
+            self.pillow.process_with_error_handling(change, PillowRuntimeContext(changes_seen=0))
 
             errors = self._check_errors(1, message)
 
@@ -111,7 +117,7 @@ class KakfaPillowRetryProcessingTest(TestCase, TestMixin):
             name='test-kafka-case-feed',
             checkpoint=None,
             change_feed=KafkaChangeFeed(
-                topics=[topics.CASE, topics.CASE_SQL], group_id='test-kafka-case-feed'
+                topics=[topics.CASE, topics.CASE_SQL], client_id='test-kafka-case-feed'
             ),
             processor=self.processor
         )
@@ -135,7 +141,7 @@ class KakfaPillowRetryProcessingTest(TestCase, TestMixin):
             # first change creates error
             message = 'test retry 1'
             self.pillow.process_change = MagicMock(side_effect=TestException(message))
-            self.pillow.process_with_error_handling(change)
+            self.pillow.process_with_error_handling(change, PillowRuntimeContext(changes_seen=0))
 
             errors = self._check_errors(1, message)
 

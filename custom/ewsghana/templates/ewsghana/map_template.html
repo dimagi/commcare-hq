@@ -3,6 +3,14 @@
 {% load report_tags %}
 {% load i18n %}
 
+{% block js %}
+    {{ block.super }}
+    {# L_PREFER_CANVAS needs to be set before leaflet.js is included - see https://leafletjs.com/reference-0.7.7.html #}
+    <script>L_PREFER_CANVAS = true;</script>
+    <script src="{% static 'jquery-color/jquery.color.js' %}"></script>
+    <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %}
     {{ block.super }}
     <script>

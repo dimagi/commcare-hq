@@ -6,6 +6,7 @@ from django.test.utils import override_settings
 
 from django.test import TestCase
 
+from custom.icds_reports.messages import awcs_reported_functional_toilet_help_text
 from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_map, \
     get_functional_toilet_data_chart, get_functional_toilet_sector_data
 from custom.icds_reports.const import ChartColors, MapColors
@@ -13,7 +14,6 @@ from custom.icds_reports.const import ChartColors, MapColors
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestFunctionalToilet(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_functional_toilet_data_map(
@@ -82,7 +82,8 @@ class TestFunctionalToilet(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of AWCs that reported having a functional toilet"
+            "Of the AWCs that submitted an Infrastructure Details form, the percentage of AWCs that reported "
+            "having a functional toilet"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -348,7 +349,7 @@ class TestFunctionalToilet(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs that reported having a functional toilet",
+                "info": awcs_reported_functional_toilet_help_text(),
                 "tooltips_data": {
                     "s2": {
                         "in_month": 0,

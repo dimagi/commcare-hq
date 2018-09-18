@@ -8,13 +8,14 @@ from django.core.validators import validate_email
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ugettext
 
-from corehq.apps.programs.models import Program
-from corehq.apps.users.models import CouchUser
-from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.forms import clean_password, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
-from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.hqwebapp.utils import decode_password
+from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.apps.programs.models import Program
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.forms import RoleForm
 
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 from django.utils.functional import lazy
@@ -40,7 +41,7 @@ class RegisterWebUserForm(forms.Form):
         widget=forms.PasswordInput(),
     )
     phone_number = forms.CharField(
-        label=_("Include area code or any other prefix"),
+        label=_("Phone Number"),
         required=False,
     )
     persona = forms.ChoiceField(
@@ -63,29 +64,21 @@ class RegisterWebUserForm(forms.Form):
     eula_confirmed = forms.BooleanField(
         required=False,
         label=mark_safe_lazy(_(
-            """I have read and agree to the
-            <a data-toggle='modal'
-               data-target='#eulaModal'
-               href='#eulaModal'>
-               CommCare HQ End User License Agreement</a>.""")))
+            """I have read and agree to Dimagi's
+            <a href="http://www.dimagi.com/terms/latest/privacy/"
+               target="_blank">Privacy Policy</a>,
+            <a href="http://www.dimagi.com/terms/latest/tos/"
+               target="_blank">Terms of Service</a>,
+            <a href="http://www.dimagi.com/terms/latest/ba/"
+               target="_blank">Business Agreement</a>, and
+            <a href="http://www.dimagi.com/terms/latest/aup/"
+               target="_blank">Acceptable Use Policy</a>.
+            """)))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
-        self.show_phone_number = kwargs.pop('show_number', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
-        if not self.show_phone_number:
-            del self.fields['phone_number']
-            phone_number_fields = []
-        else:
-            phone_number_fields = [
-                hqcrispy.InlineField(
-                    'phone_number',
-                    css_class="input-lg",
-                    data_bind="value: phoneNumber, "
-                              "valueUpdate: 'keyup'"
-                ),
-            ]
 
         persona_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
@@ -132,20 +125,23 @@ class RegisterWebUserForm(forms.Form):
                                   "   validator: fullName "
                                   "}"
                     ),
-                    hqcrispy.InlineField(
-                        'email',
-                        css_class="input-lg",
-                        data_bind="value: email, "
-                                  "valueUpdate: 'keyup', "
-                                  "koValidationStateFeedback: { "
-                                  "  validator: email, "
-                                  "  delayedValidator: emailDelayed "
-                                  "}",
+                    crispy.Div(
+                        hqcrispy.InlineField(
+                            'email',
+                            css_class="input-lg",
+                            data_bind="value: email, "
+                                      "valueUpdate: 'keyup', "
+                                      "koValidationStateFeedback: { "
+                                      "  validator: email, "
+                                      "  delayedValidator: emailDelayed "
+                                      "}",
+                        ),
+                        crispy.HTML('<p class="validation-message-block" '
+                                    'data-bind="visible: isEmailValidating, '
+                                    'text: validatingEmailMsg">&nbsp;</p>'),
+                        hqcrispy.ValidationMessage('emailDelayed'),
+                        data_bind="validationOptions: { allowHtmlMessages: 1 }",
                     ),
-                    crispy.HTML('<p class="validation-message-block" '
-                                'data-bind="visible: isEmailValidating, '
-                                'text: validatingEmailMsg">&nbsp;</p>'),
-                    hqcrispy.ValidationMessage('emailDelayed'),
                     hqcrispy.InlineField(
                         'password',
                         css_class="input-lg",
@@ -158,7 +154,12 @@ class RegisterWebUserForm(forms.Form):
                                   "}",
                     ),
                     hqcrispy.ValidationMessage('passwordDelayed'),
-                    crispy.Div(*phone_number_fields),
+                    hqcrispy.InlineField(
+                        'phone_number',
+                        css_class="input-lg",
+                        data_bind="value: phoneNumber, "
+                                  "valueUpdate: 'keyup'"
+                    ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
                         ugettext("Next"),
@@ -168,7 +169,7 @@ class RegisterWebUserForm(forms.Form):
                     hqcrispy.InlineField('is_mobile'),
                     css_class="check-password",
                 ),
-                css_class="form-step step-1",
+                css_class="form-bubble form-step step-1",
                 style="display: none;"
             ),
             crispy.Div(
@@ -202,7 +203,7 @@ class RegisterWebUserForm(forms.Form):
                                   "disable: disableNextStepTwo"
                     )
                 ),
-                css_class="form-step step-2",
+                css_class="form-bubble form-step step-2",
                 style="display: none;"
             ),
         )
@@ -230,7 +231,9 @@ class RegisterWebUserForm(forms.Form):
             # sync django user
             duplicate.save()
         if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
-            raise forms.ValidationError('Username already taken; please try another')
+            raise forms.ValidationError(
+                ugettext("Username already taken. Please try another.")
+            )
         return data
 
     def clean_password(self):
@@ -239,10 +242,29 @@ class RegisterWebUserForm(forms.Form):
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
         if data is not True:
-            raise forms.ValidationError(
-                "You must agree to our End User License Agreement in order "
-                "to register an account."
-            )
+            raise forms.ValidationError(ugettext(
+                "You must agree to our Terms of Service and Business Agreement "
+                "in order to register an account."
+            ))
+        return data
+
+    def clean_persona(self):
+        data = self.cleaned_data['persona'].strip()
+        if not data and settings.IS_SAAS_ENVIRONMENT:
+            raise forms.ValidationError(ugettext(
+                "Please specify how you plan to use CommCare so we know how to "
+                "best help you."
+            ))
+        return data
+
+    def clean_persona_other(self):
+        data = self.cleaned_data['persona_other'].strip().lower()
+        persona = self.cleaned_data['persona'].strip()
+        if persona == 'Other' and not data and settings.IS_SAAS_ENVIRONMENT:
+            raise forms.ValidationError(ugettext(
+                "Please specify how you plan to use CommCare so we know how to "
+                "best help you."
+            ))
         return data
 
     def clean(self):
@@ -316,12 +338,16 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
                                         help_text=mark_safe_lazy(_(
-                                            """I have read and agree to the
-                                               <a data-toggle='modal'
-                                                  data-target='#eulaModal'
-                                                  href='#eulaModal'>
-                                                  CommCare HQ End User License Agreement
-                                               </a>.""")))
+                                            """I have read and agree to Dimagi's
+                                                <a href="http://www.dimagi.com/terms/latest/privacy/"
+                                                    target="_blank">Privacy Policy</a>,
+                                                <a href="http://www.dimagi.com/terms/latest/tos/"
+                                                    target="_blank">Terms of Service</a>,
+                                                <a href="http://www.dimagi.com/terms/latest/ba/"
+                                                    target="_blank">Business Agreement</a>, and
+                                                <a href="http://www.dimagi.com/terms/latest/aup/"
+                                                    target="_blank">Acceptable Use Policy</a>.
+                                               """)))
 
     def __init__(self, *args, **kwargs):
         super(WebUserInvitationForm, self).__init__(*args, **kwargs)
@@ -361,7 +387,8 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
         if data is not True:
-            raise forms.ValidationError('You must agree to our End User License Agreement in order to register an account.')
+            raise forms.ValidationError('You must agree to our Terms of Service and Business Agreement '
+                                        'in order to register an account.')
         return data
 
 
@@ -382,9 +409,8 @@ class _BaseForm(object):
 class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
     # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
     # and do need to relabel some things.
-    email       =  forms.EmailField(label="Email Address",
-                                    max_length=User._meta.get_field('email').max_length)
-#    is_domain_admin = forms.BooleanField(label='User is a domain administrator', initial=False, required=False)
+    email = forms.EmailField(label="Email Address",
+                             max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
     def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
@@ -398,8 +424,9 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             del kwargs['location']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain and domain.commtrack_enabled:
-            self.fields['supply_point'] = forms.CharField(label='Supply Point', required=False,
-                                                          widget=SupplyPointSelectWidget(domain.name),
+            widget = LocationSelectWidget(domain.name, select2_version='v3')
+            self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
+                                                          widget=widget,
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
             programs = Program.by_domain(domain.name, wrap=False)

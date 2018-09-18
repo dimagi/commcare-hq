@@ -1,12 +1,20 @@
 {% extends "domain/base_change_plan.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-
-{% block js %}{{ block.super }}
-    <script src="{% static 'domain/js/confirm_plan.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'accounting/js/confirm_plan' %}
 
 {% block form_content %}
+{% initial_page_data 'is_upgrade' is_upgrade %}
+{% initial_page_data 'next_invoice_date' next_invoice_date %}
+{% initial_page_data 'current_plan' current_plan %}
+{% initial_page_data 'new_plan_edition' new_plan_edition %}
+{% initial_page_data 'new_plan_name' plan.name %}
+{% initial_page_data 'is_downgrade_before_minimum' is_downgrade_before_minimum %}
+{% initial_page_data 'current_subscription_end_date' current_subscription_end_date %}
+{% initial_page_data 'start_date_after_minimum_subscription' start_date_after_minimum_subscription %}
+{% registerurl 'email_on_downgrade' domain %}
+{% registerurl 'confirm_billing_account_info' domain %}
+<div class="container" id="confirm-plan-content">
     <p class="lead">
         {% blocktrans with plan.name as p %}
         You have selected the <strong>{{ p }} Software Plan</strong>.
@@ -35,36 +43,42 @@
     </p>
     {% endif %}
     {% if current_plan %}
-    <hr />
-    <div class="alert alert-danger">
-        {% blocktrans with current_plan.name as p %}
-        <h4>Note: Continuing will change your current subscription.</h4>
-        <p>You are currently subscribed to the <strong>{{ p }} Software Plan</strong></p>
-        {% endblocktrans %}
-    </div>
-    {% endif %}
-
-    {% if downgrade_messages %}
-    <hr />
-    <h4>
-        {% if show_community_notice %}
-        {% trans 'Note: If you do not upgrade from the Community Plan the following changes will take place.' %}
-        {% else %}
-        {% trans 'Note: Selecting this plan will result in the following changes to your project.' %}
-        {% endif %}
-    </h4>
-    {% endif %}
-
-    {% for message in downgrade_messages %}
-        <div class="alert alert-warning">
-            {{ message.message }}
-            <ul>
-            {% for detail in message.details %}
-                <li>{{ detail|safe }}</li>
-            {% endfor %}
-            </ul>
+        {% if is_upgrade %}
+        <hr />
+        <div class="alert alert-danger">
+            {% blocktrans with next_invoice_date as invoice_date %}
+            <h4>Note: Continuing will change your current subscription.</h4>
+            <p>CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.
+                You should expect your first invoice on {{ invoice_date }}, or you can prepay for your
+                subscription by following the instructions
+                <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>.
+            </p>
+            <input type="checkbox" data-bind="checked: userAgreementSigned"> I understand and wish to continue.<br>
+            {% endblocktrans %}
         </div>
-    {% endfor %}
+        {% elif is_downgrade_before_minimum %}
+        <hr />
+        <div class="alert alert-danger">
+            {% blocktrans with current_plan as p %}
+            <p>We're sorry to see you downgrade! You’ll have access to the features on your
+            <strong>{{ p }} Edition Software Plan </strong> through {{ current_subscription_end_date }}.
+            On {{ start_date_after_minimum_subscription }} your current subscription will be downgraded
+            to the {{ new_plan_edition }} Edition Software Plan.
+            </p>
+            {% endblocktrans %}
+        </div>
+        {% else %}
+        <hr />
+        <div class="alert alert-danger">
+            {% blocktrans with current_plan as p %}
+            <h4>Note: Continuing will change your current subscription.</h4>
+            <p>We're sorry to see you downgrade! You are currently subscribed to the
+            <strong>{{ p }} Software Plan</strong></p>
+            {% endblocktrans %}
+        </div>
+        {% endif %}
+    {% endif %}
+
     {% if show_community_notice %}
     <div class="form-actions">
         <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
@@ -73,36 +87,96 @@
     {% else %}
     <form action="{% url 'confirm_billing_account_info' domain %}" method="post" class="form">
         {% csrf_token %}
-        <hr />
         <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
+        <input type="hidden" value="" name="downgrade_reason" id="downgrade-reason"/>
+        <input type="hidden" value="" name="will_project_restart" id="will-project-restart"/>
+        <input type="hidden" value="" name="new_tool" id="new-tool"/>
+        <input type="hidden" value="" name="new_tool_reason" id="new-tool-reason"/>
+        <input type="hidden" value="" name="feedback" id="feedback"/>
+        <hr />
         <p>
             {% blocktrans %}
-            Clicking the 'Select this Plan' button below will bring you to a page where you can enter basic billing information.
+            Clicking the 'Confirm Plan' button below will bring you to a page where you can confirm your billing information.
             {% endblocktrans %}
         </p>
-        <div class="checkbox">
-            <label  style="font-weight: bold;">
-                <input type="checkbox" id="confirm-product-agreement" name="confirm_legal" />
-                {% url "product_agreement" as pa_url %}
-                {% blocktrans %}
-                    I have read and agree to the <a href="{{ pa_url }}" target="_blank">
-                    Software Product Subscription Agreement</a>.
-                {% endblocktrans %}
-            </label>
-        </div>
         <div class="form-actions">
             <div class="col-sm-6">
                 <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
-                <button type="submit" class="btn btn-primary disabled" id="submit-button-pa" disabled="disabled">
-                    {% trans 'Select this Plan' %}
+                <button class="btn btn-primary" data-bind="enable: userAgreementSigned, click: openDowngradeModal">
+                    {% trans 'Confirm Plan' %}
                 </button>
-                <span class="label label-info label-lg" id="submit-button-help-qa">
-                    {% blocktrans %}
-                    Please agree to the Product Subscription Agreement above before continuing.
-                    {% endblocktrans %}
-                </span>
             </div>
         </div>
     </form>
     {% endif %}
+{% endblock %}
+</div>
+
+{% block modals %}{{ block.super }}
+<div class="modal fade" id="modal-downgrade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">{% trans "Close" %}</span>
+                </button>
+                <h4 class="modal-title">{% trans 'Downgrading?' %}</h4>
+            </div>
+            <div class="modal-body">
+                {% blocktrans %}
+                    We’d love to make CommCare work better for you.
+                    Please help us, by answering these simple questions.
+                {% endblocktrans %}
+
+                <br><br>
+                {% blocktrans %}
+                    Why are you downgrading your subscription today?
+                {% endblocktrans %}
+                <select multiple="multiple" class="form-control" id="select-downgrade-reason" data-bind="value: downgradeReason, options: downgradeReasonList"></select>
+                <br><br>
+
+                <div data-bind="visible: projectEnded">
+                    {% blocktrans %}
+                        Is there a chance your project may start again?
+                    {% endblocktrans %}
+                    <select class="form-control" id="select-project-restart">
+                        <option value='yes'>{% trans "Yes" %}</option>
+                        <option value='no' selected="selected">{% trans "No" %}</option>
+                    </select>
+                    <br><br>
+                </div>
+
+                <div data-bind="visible: newToolNeeded">
+                    {% blocktrans %}
+                        Could you indicate which new tool you’re using?
+                    {% endblocktrans %}
+                    <textarea class="form-control" id="text-new-tool" data-bind="textInput: newTool"></textarea>
+                    <br><br>
+                    {% blocktrans %}
+                        Why are you switching to a new tool?
+                    {% endblocktrans %}
+                    <select multiple="multiple" class="form-control" id="select-tool-reason" data-bind="options: newToolReasonList, value: newToolReason"></select>
+                    <br><br>
+
+                    <div data-bind="visible: otherSelected">
+                        {% blocktrans %}
+                            Please specify
+                        {% endblocktrans %}
+                        <textarea class="form-control" id="text-tool-reason" data-bind="textInput: otherNewToolReason"></textarea>
+                        <br><br>
+                    </div>
+                </div>
+
+                {% blocktrans %}
+                    Please let us know any other feedback you have
+                {% endblocktrans %}
+                <textarea class="form-control" id="text-feedback"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade, enable: requiredQuestionsAnswered">{% trans "Continue" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
 
+from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
 
 
@@ -29,10 +30,7 @@ class TestICDSCASReach(TestCase):
                             "value": 19,
                             "label": "AWCs Launched",
                             "frequency": "month",
-                            "help_text": (
-                                "Total AWCs that have launched ICDS-CAS. AWCs are considered launched "
-                                "after submitting at least one Household Registration form. "
-                            )
+                            "help_text": awcs_launched_help_text()
                         },
                         {
                             "all": 50,
@@ -41,7 +39,7 @@ class TestICDSCASReach(TestCase):
                             "percent": 127.27272727272728,
                             "value": 50,
                             "label": "Number of AWCs open for at least one day in month",
-                            "frequency": "day",
+                            "frequency": "month",
                             "help_text": (
                                 "Total Number of AWCs open for at least one day in month"
                             )
@@ -111,8 +109,7 @@ class TestICDSCASReach(TestCase):
                             "all": 50,
                             "frequency": "month",
                             "format": "div",
-                            "help_text": "Total AWCs that have launched ICDS-CAS. AWCs are considered launched "
-                                         "after submitting at least one Household Registration form. ",
+                            "help_text": awcs_launched_help_text(),
                             "percent": 0.0,
                             "value": 19,
                             "label": "AWCs Launched"
@@ -194,8 +191,7 @@ class TestICDSCASReach(TestCase):
                             "all": 50,
                             "frequency": "month",
                             "format": "div",
-                            "help_text": "Total AWCs that have launched ICDS-CAS. AWCs are considered launched "
-                                         "after submitting at least one Household Registration form. ",
+                            "help_text": awcs_launched_help_text(),
                             "percent": 0.0,
                             "value": 19,
                             "label": "AWCs Launched"

@@ -16,99 +16,150 @@
 {% block tabs %}{% endblock %}
 
 {% block login-content %}
-    <div class="row">
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="reg-form-container sign-in-container">
         {% if request.user.is_authenticated %}
-            <div class="col-sm-8">
-                {% if not mobile_user %}
-                    <form name="form" method="post" action="" class="form-horizontal">
-                        {% csrf_token %}
-                        {{ form.as_table }}
-                        <fieldset>
-                            <legend>{% trans "Accept Invitation?" %}</legend>
-                            <p>{% if invited_user %}<strong>{% trans "Note:" %}</strong>
-                            {% blocktrans %}
-                            You are signed in with an email different from the invited email, {{ invited_user }}. Are you sure you want
-                            {% endblocktrans %}
-                            {% else %}
-                            {% trans "Would you like" %}
-                            {% endif %}
-                            {% blocktrans with user.username as username %}
-                            to accept the invitation to join the CommCare HQ {{ invite_type }} <strong>{{ invite_to }}</strong> as <strong>{{ username }}</strong>?</p>
-                            {% endblocktrans %}
-                        </fieldset>
-                        <button type="submit" class="btn btn-primary btn-lg">{% trans "Accept Invitation" %}</button>
-                    </form>
-                {% else %}
-                    <p><strong>{% trans 'Note' %}:</strong>
-                    {% trans "You are signed in as a mobile user, but to accept this invitation, you must be a web user." %}</p>
-                    <p>
-                        {% trans 'Please' %}
-                        <a href="?switch=true" class="btn btn-default">{% trans 'switch accounts' %}</a>
-                        {% trans 'or' %}
-                        <a href="?create=true" class="btn btn-default">{% trans "create a web account" %}</a>
+          <div class="form-bubble form-bubble-lg">
+              {% if not mobile_user %}
+              <form name="form" method="post" action="">
+                <h2>
+                  {% blocktrans %}
+                    Accept Invitation?
+                  {% endblocktrans %}
+                </h2>
+                  {% csrf_token %}
+                  {{ form.as_table }}
+
+                  {% if invited_user %}
+                    <p class="lead">
+                      You are signed in with an email different from the
+                      invited email, {{ invited_user }}.
                     </p>
-                {% endif %}
-            </div>
-            <div class="col-sm-4">
-                <aside class="well">
-                    <h3>{% blocktrans with formatted_username|safe as username %}Not {{ username }}?{% endblocktrans %}</h3>
-                    <a href="?create=true" class="btn btn-info">{% trans "Create an Account" %}</a><br />
-                    {% trans "or" %}<br />
-                    <a href="?switch=true" class="btn btn-info">{% trans "Switch Accounts" %}</a>
-                </aside>
-            </div>
+                    <p>
+                      {% blocktrans with user.username as username %}
+                        Are you sure you want to to accept the invitation
+                        to join the CommCare HQ {{ invite_type }}
+                        <strong>{{ invite_to }}</strong> as <strong>{{ username }}</strong>?
+                      {% endblocktrans %}
+                    </p>
+                  {% else %}
+                    <p class="lead">
+                      {% blocktrans with user.username as username %}
+                        Would you liketo to accept the invitation
+                        to join the CommCare HQ {{ invite_type }}
+                        <strong>{{ invite_to }}</strong> as <strong>{{ username }}</strong>?
+                      {% endblocktrans %}
+                    </p>
+                  {% endif %}
+
+
+                  <div class="form-bubble-actions">
+                    <button type="submit" class="btn btn-lg btn-success">
+                      {% trans "Accept Invitation" %}
+                    </button>
+                  </div>
+
+              </form>
+            {% else %}
+                <p>
+                  <strong>{% trans 'Note' %}:</strong>
+                  {% trans "You are signed in as a mobile user, but to accept this invitation, you must be a web user." %}
+                </p>
+                <p>
+                    {% trans 'Please' %}
+                    <a href="?switch=true" class="btn btn-default">{% trans 'switch accounts' %}</a>
+                    {% trans 'or' %}
+                    <a href="?create=true" class="btn btn-default">{% trans "create a web account" %}</a>
+                </p>
+            {% endif %}
+          </div>
+          <div class="well sign-up-bubble ">
+              <h2 class="text-center">
+                {% blocktrans with formatted_username|safe as username %}
+                  Not {{ username }}?
+                {% endblocktrans %}
+              </h2>
+              <p class="text-center">
+                <a href="?create=true" class="btn btn-primary-dark btn-lg">
+                    {% trans 'Create an Account' %}
+                </a> or
+                <a href="?switch=true" class="btn btn-primary-dark btn-lg">
+                    {% trans 'Switch Accounts' %}
+                </a>
+              </p>
+          </div>
         {% else %}
-            {% blocktrans %}
-                <div class="help-block">To accept this {{ invite_type|lower }} invitation, you must create an account.</div>
-            {% endblocktrans %}
-            <div class="col-sm-8">
-                <form name="form" method="post" action="" class="form-horizontal">
-                    {% csrf_token %}
-                    {% for global_error in form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {{ global_error }}
-                        </div>
-                    {% endfor %}
-                    <fieldset class="check-password">
-                        {% if create_domain %}
-                            <legend>{% trans 'New user information' %}</legend>
-                        {% endif %}
-                        {% include "users/partial/field.html" with field=form.full_name %}
-                        {% include "users/partial/field.html" with field=form.email %}
-                        {% include "users/partial/field.html" with field=form.password %}
-                        {% if form.captcha %}
-                            {% include "users/partial/field.html" with field=form.captcha %}
-                        {% endif %}
-                        {% include "users/partial/field.html" with field=form.eula_confirmed %}
-                        {% if create_domain %}
-                            <legend>{% trans "Create your first project" %}</legend>
-                            {% include "registration/partials/field.html" with field=form.hr_name %}
-                        {% endif %}
-                        {% for hidden in form.hidden_fields %}
-                            {{ hidden }}
-                        {% endfor %}
-                        <div class="hide">
-                          {{ form.errors }}
-                        </div>
-                        <div class="form-actions">
-                        <div class="col-sm-offset-4 col-sm-4">
-                            <button type="submit" class="btn btn-primary" data-bind="enable: passwordSufficient">{% trans 'Create Account' %}</button>
-                        </div>
-                        </div>
-                    </fieldset>
-                </form>
+          <div class="form-bubble form-bubble-lg">
+            <h2>
+              {% blocktrans %}Create Account{% endblocktrans %}
+            </h2>
+            <div class="help-block">
+              {% blocktrans %}
+                To accept this {{ invite_type|lower }} invitation, you must create an account.
+              {% endblocktrans %}
             </div>
-            <div class="col-sm-4">
-                <aside class="well">
-                    <h3>{% trans 'Already have an account?' %}</h3>
-                    <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-primary btn-lg">
-                        {% trans 'Sign In Now' %}
-                    </a>
-                </aside>
-            </div>
+            <form name="form" method="post" action="">
+              {% csrf_token %}
+              {% for global_error in form.non_field_errors %}
+                  <div class="alert alert-danger">
+                      {{ global_error }}
+                  </div>
+              {% endfor %}
+              <fieldset class="check-password">
+                {% if create_domain %}
+                    <legend>{% trans 'New user information' %}</legend>
+                {% endif %}
+                {% for field in form.visible_fields %}
+                  <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
+                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                    <div id="div_id_{{ field.name }}">
+                      {{ field }}
+                      {% for error in field.errors %}
+                        <p class="help-block">{{ error }}</p>
+                      {% endfor %}
+                      {% if field.help_text %}
+                        <p class="help-block">
+                            {{ field.help_text }}
+                        </p>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+                {% if create_domain %}
+                    <legend>{% trans "Create your first project" %}</legend>
+                    {% include "registration/partials/field.html" with field=form.hr_name %}
+                {% endif %}
+                {% for hidden in form.hidden_fields %}
+                    {{ hidden }}
+                {% endfor %}
+                <div class="hide">
+                  {{ form.errors }}
+                </div>
+
+                <div class="form-bubble-actions">
+                  <button type="submit"
+                          class="btn btn-lg btn-success"
+                          data-bind="enable: passwordSufficient">
+                    {% trans "Create Account" %}
+                  </button>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+          <div class="well sign-up-bubble ">
+              <h2 class="text-center">{% trans 'Already have an account?' %}</h2>
+              <p class="text-center">
+                <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-primary-dark btn-lg">
+                    {% trans 'Sign In Now' %}
+                </a>
+              </p>
+          </div>
         {% endif %}
+
+      </div>
     </div>
-{% endblock %}
-{% block modals %}{{ block.super }}
-    {% include 'hqwebapp/includes/modal_eula.html' %}
+  </div>
+</div>
 {% endblock %}

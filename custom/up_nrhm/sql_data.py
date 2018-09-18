@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 from sqlagg.base import CustomQueryColumn, QueryMeta, AliasColumn, TableNotFoundException
 from sqlagg.columns import CountUniqueColumn, SumWhen, SimpleColumn
-from sqlagg.filters import BETWEEN, EQ, LTE
+from sqlagg.filters import BETWEEN, EQ, LTE, GTE, OR, ISNULL
 import sqlalchemy
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
@@ -144,7 +144,11 @@ class ASHAFacilitatorsData(SqlData):
                 _("Total number of ASHAs under the Facilitator"),
                 CountUniqueColumn(
                     "case_id",
-                    filters=[EQ('owner_id', 'af'), LTE('registration_date', 'enddate')],
+                    filters=[
+                        EQ('owner_id', 'af'),
+                        OR([ISNULL('closed_on'), GTE('closed_on', 'enddate')]),
+                        LTE('registration_date', 'enddate')
+                    ],
                     alias="total_ashas"
                 )
             ),
@@ -212,7 +216,7 @@ class ASHAFacilitatorsData(SqlData):
                     FunctionalityChecklistColumn(
                         whens={'hv_percent_functionality >= 60': 1},
                         alias='percent_functionality'),
-                    AliasColumn('total_ashas')
+                    AliasColumn('total_ashas_checklist')
                 ],
                 format_fn=lambda x: x
             ),

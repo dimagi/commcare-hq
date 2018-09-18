@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 from django.core.management.base import BaseCommand
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -8,6 +8,7 @@ from corehq.form_processor.models import XFormInstanceSQL
 from corehq.util.log import with_progress_bar
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance as CouchForm
+from io import open
 
 
 class Command(BaseCommand):
@@ -20,7 +21,7 @@ class Command(BaseCommand):
     def handle(self, domains, file_name, **options):
         blob_db = get_blob_db()
 
-        with open(file_name, 'w') as csv_file:
+        with open(file_name, 'w', encoding='utf-8') as csv_file:
             field_names = ['domain', 'archived', 'form_id', 'received_on']
             csv_writer = csv.DictWriter(csv_file, field_names)
             csv_writer.writeheader()

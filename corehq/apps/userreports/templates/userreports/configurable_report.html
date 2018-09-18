@@ -4,22 +4,17 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'reports/js/reports.util.js' %}"></script>
-    <script src="{% static 'reports/js/reports.config.js' %}"></script>
+    <script src="{% static 'reports/js/hq_report.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/saved_reports.js' %}"></script>
+    <script src="{% static 'reports/js/report_config_models.js' %}"></script>
     <script src="{% static 'userreports/js/configurable_report.js' %}"></script>
+    <script src="{% static 'userreports/js/build_in_progress_warning.js' %}"></script>
 {% endblock %}
 
 {% block report_alerts %}
     {{ block.super }}
-    {% if not report.is_static and not report.data_source.config.is_static %}
-    <div id="built-warning" class="alert alert-warning hide">
-        <h4><i class="fa fa-exclamation-triangle"></i> {% trans "Your report is still being populated." %}</h4>
-        {% blocktrans %}
-        What you are seeing now is just a preview, and contains some or none of your data.
-        The report will refresh automatically when the data is finished being populated.
-        {% endblocktrans %}
-    </div>
+    {% if not report.data_source.config.is_static %}
+        {% include 'userreports/partials/build_in_progress_warning.html' %}
     {% endif %}
 {% endblock %}
 
@@ -29,7 +24,7 @@
     {% initial_page_data 'standardHQReport' True %}
     {% initial_page_data 'builder_report_type' report.spec.report_meta.builder_report_type %}
     {% initial_page_data 'report_builder_events' report_builder_events %}
-    {% initial_page_data 'is_static' report.is_static %}
+    {% initial_page_data 'is_static_data_source' report.data_source.config.is_static %}
     {% initial_page_data 'default_config' default_config %}
     {% initial_page_data 'report_configs' report_configs %}
     {% initial_page_data 'has_datespan' report.has_datespan %}

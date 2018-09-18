@@ -31,7 +31,6 @@
 
 {% block js %} {{ block.super }}
     <!-- todo add the media player back in -->
-    <script src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
     <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
     <script src="{% static 'hqmedia/js/references_main.js' %}"></script>
     <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
@@ -91,10 +90,9 @@
             {% if totals|length %}
             <div class="well">
                 <p>
-                    <a class="btn btn-primary"
+                    <a class="btn btn-primary download-zip"
                         href="#multimedia-zip-modal"
-                        data-toggle="modal"
-                        onclick="hqImport('app_manager/js/download_async_modal').downloadApplicationZip()">
+                        data-toggle="modal">
                         <i class="fa fa-download"></i> {% trans 'Download ZIP' %}
                     </a>
                 </p>
@@ -172,7 +170,6 @@
         {% include 'hqmedia/partials/multimedia_uploader.html' %}
     {% endfor %}
 
-    <div id="jquery_jplayer"></div>
     {% endif %}
 </div>
 

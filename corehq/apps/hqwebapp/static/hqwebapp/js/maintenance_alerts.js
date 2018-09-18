@@ -1,7 +1,10 @@
-hqDefine("hqwebapp/js/maintenance_alerts", function() {
-    $(function() {
+hqDefine("hqwebapp/js/maintenance_alerts",[
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+], function ($, initialPageData) {
+    $(function () {
         $('#ko-alert-container').koApplyBindings({
-            alerts: hqImport("hqwebapp/js/initial_page_data").get('alerts'),
+            alerts: initialPageData.get('alerts'),
         });
     });
 });

@@ -1,5 +1,6 @@
 {
     "domains": ["mc-inscale"],
+    "server_environment": ["production"],
     "config": {
         "referenced_doc_type": "XFormInstance",
         "engine_id": "ucr",

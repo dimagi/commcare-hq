@@ -20,7 +20,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
     child_module_class = None
 
     def setUp(self):
-        self.factory = AppFactory(build_version='2.9', domain=DOMAIN)
+        self.factory = AppFactory(build_version='2.9.0', domain=DOMAIN)
         self.module_0, _ = self.factory.new_basic_module('parent', 'gold-fish')
         self.module_1, _ = self.factory.new_module(self.child_module_class, 'child', 'guppy', parent_module=self.module_0)
 
@@ -329,7 +329,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
         """
         The session vars in the entries for the submodule should match the parent and avoid naming conflicts.
         """
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         reg_goldfish_mod, reg_goldfish_form = factory.new_basic_module('reg_goldfish', 'gold-fish')
         factory.form_opens_case(reg_goldfish_form)
         reg_guppy_mod, reg_guppy_form = factory.new_advanced_module('reg_guppy', 'guppy')
@@ -364,7 +364,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
 
     def test_incorrect_case_var_for_case_update(self):
         # see http://manage.dimagi.com/default.asp?230013
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         new_episode_module, new_episode_form = factory.new_basic_module('register_episode', 'episode')
         factory.form_opens_case(new_episode_form)
 
@@ -409,7 +409,7 @@ class BasicSubModuleTests(SimpleTestCase, TestXmlMixin):
         """
         Test parent case is correctly set in preloads when first form of parent module updates a case
         """
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         upd_goldfish_mod, upd_goldfish_form = factory.new_basic_module('upd_goldfish', 'gold-fish')
         factory.form_requires_case(upd_goldfish_form)
 

@@ -1,11 +1,22 @@
-hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
-    var SMSRateCalculator = function (form_data) {
+hqDefine("smsbillables/js/smsbillables.rate_calc", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/select2_handler',
+    'hqwebapp/js/widgets_v3',  // the public sms page uses a .ko-select2 for country input
+], function (
+    $,
+    ko,
+    _,
+    select2Handler
+) {
+    var SMSRateCalculator = function (formData) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.gateway = ko.observable();
         self.direction = ko.observable();
-        self.select2CountryCode = select2SmsRateHandler(form_data.country_code);
+        self.select2CountryCode = select2SmsRateHandler(formData.country_code);
         self.rate = ko.observable();
         self.hasError = ko.observable(false);
         self.noError = ko.computed(function () {
@@ -62,11 +73,13 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
                 });
             }
         };
+
+        return self;
     };
 
-    var PublicSMSRateCalculator = function() {
+    var PublicSMSRateCalculator = function () {
         'use strict';
-        var self = this;
+        var self = {};
 
         var rates = [];
         self.country_code = ko.observable();
@@ -77,7 +90,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
             return ! self.hasError();
         });
         self.calculatingRate = ko.observable(false);
-        self.showTable = ko.computed(function (){
+        self.showTable = ko.computed(function () {
             return !self.hasError() && !self.calculatingRate();
         });
         self.showRateInfo = ko.computed(function () {
@@ -109,12 +122,13 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
             });
         };
         self.country_code.subscribe(updateRate);
+
+        return self;
     };
 
-    var baseSelect2Handler = hqImport("hqwebapp/js/select2_handler").baseSelect2Handler;
     var select2SmsRateHandler = function (options) {
         'use strict';
-        var self = baseSelect2Handler(options);
+        var self = select2Handler.baseSelect2Handler(options);
 
         self.getHandlerSlug = function () {
             return 'sms_rate_calc';
@@ -131,9 +145,9 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
         return self;
     };
 
-    $(function() {
-        _.each($(".ko-sms-rate-calculator"), function(element) {
-            var smsRateCalculator = new SMSRateCalculator({
+    $(function () {
+        _.each($(".ko-sms-rate-calculator"), function (element) {
+            var smsRateCalculator = SMSRateCalculator({
                 country_code: {
                     fieldName: 'country_code',
                     currentValue: '',
@@ -143,8 +157,8 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
             smsRateCalculator.init();
         });
 
-        _.each($(".ko-public-sms-rate-calculator"), function(element) {
-            var smsRateCalculator = new PublicSMSRateCalculator({
+        _.each($(".ko-public-sms-rate-calculator"), function (element) {
+            var smsRateCalculator = PublicSMSRateCalculator({
                 country_code: {
                     fieldName: 'country_code',
                     currentValue: '',

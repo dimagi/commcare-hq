@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import re
 import uuid
 import datetime
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CouchUser
 from django.conf import settings
@@ -214,17 +214,26 @@ def get_contact(domain, contact_id):
     return contact
 
 
-def touchforms_error_is_config_error(touchforms_error):
+def touchforms_error_is_config_error(domain, touchforms_error):
     """
     Returns True if the given TouchformsError is the result of a
     form configuration error.
     """
-    error_type = touchforms_error.response_data.get('error_type', '')
-    return any([s in error_type for s in (
-        'XPathTypeMismatchException',
-        'XPathUnhandledException',
-        'XFormParseException',
-    )])
+    # Unfortunately there isn't a better way to do this.
+    # What we want to do is try and pick out the types of exceptions
+    # that are configuration errors such as an xpath reference error
+    # or misconfigured case sharing settings.
+    exception_text = touchforms_error.response_data.get('exception') or ''
+    exception_text = exception_text.lower()
+    return any(s in exception_text for s in (
+        'case sharing settings',
+        'error in calculation',
+        'problem with display condition',
+    ))
+
+
+def get_formplayer_exception(domain, touchforms_error):
+    return touchforms_error.response_data.get('exception')
 
 
 @quickcache(['backend_id'], timeout=5 * 60)

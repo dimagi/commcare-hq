@@ -18,6 +18,7 @@ from django.utils.safestring import mark_safe
 from memoized import memoized
 from django_prbac.utils import has_privilege
 
+from corehq.motech.utils import pformat_json
 from dimagi.utils.make_uuid import random_hex
 from corehq import privileges
 from corehq.apps.domain.models import Domain
@@ -28,6 +29,7 @@ from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq import toggles
 import six
+from io import open
 
 
 register = template.Library()
@@ -101,6 +103,14 @@ try:
     from resource_versions import resource_versions
 except (ImportError, SyntaxError):
     resource_versions = {}
+
+
+@register.filter
+def pp_json(data):
+    """
+    Pretty-print data as JSON
+    """
+    return pformat_json(data)
 
 
 @register.filter
@@ -321,14 +331,14 @@ def _get_py_filename(module):
 def toggles_cachebuster():
     import corehq.toggles
     with open(_get_py_filename(corehq.toggles)) as f:
-        return hashlib.sha1(f.read()).hexdigest()[:3]
+        return hashlib.sha1(f.read().encode('utf-8')).hexdigest()[:3]
 
 
 @memoized
 def previews_cachebuster():
     import corehq.feature_previews
     with open(_get_py_filename(corehq.feature_previews)) as f:
-        return hashlib.sha1(f.read()).hexdigest()[:3]
+        return hashlib.sha1(f.read().encode('utf-8')).hexdigest()[:3]
 
 
 @register.filter
@@ -489,7 +499,9 @@ def maintenance_alert():
         return ''
     else:
         return format_html(
-            '<div class="alert alert-warning alert-maintenance" style="text-align: center; margin-bottom: 0;">{}</div>',
+            '<div class="alert alert-warning alert-maintenance" data-id="{}">{}{}</div>',
+            alert.id,
+            mark_safe('<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'),
             mark_safe(alert.html),
         )
 
@@ -628,7 +640,8 @@ def url_replace(context, field, value):
 
 @register.filter
 def view_pdb(element):
-    import ipdb; ipdb.set_trace()
+    import ipdb
+    ipdb.sset_trace()
     return element
 
 

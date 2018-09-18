@@ -5,6 +5,12 @@ from django.utils.translation import ugettext_lazy as _
 TABLE_ID = _(
     "Choose something short, unique, and memorable using "
     "lowercase letters, numbers, and underscores")
+REPORT_ID = _(
+    'The System ID of the report (sometimes needed in APIs or other advanced features)'
+)
+DATA_SOURCE_ID = _(
+    'The System ID of the data source (sometimes needed in APIs or other advanced features)'
+)
 DISPLAY_NAME = _(
     "This is what the data source will be called in navigation, page title, etc.")
 DESCRIPTION = _(

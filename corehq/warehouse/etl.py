@@ -4,20 +4,23 @@ Each object is meant for transferring one type of data to another type.
 '''
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import os
 
-from django.db import connections
 from django.conf import settings
+from django.db import connections
 from django.template import engines
 
-from corehq.warehouse.utils import django_batch_records
 from corehq.sql_db.routers import db_for_read_write
+from corehq.warehouse.utils import django_batch_records
+from corehq.warehouse.models.meta import Batch
+from io import open
 
 
 class BaseETLMixin(object):
 
     @classmethod
-    def load(cls, start_datetime, end_datetime):
+    def load(cls, batch):
         raise NotImplementedError
 
 
@@ -66,7 +69,7 @@ class CustomSQLETLMixin(BaseETLMixin):
             context[dep] = dep_cls._meta.db_table
         context['start_datetime'] = batch.start_datetime.isoformat()
         context['end_datetime'] = batch.end_datetime.isoformat()
-        context['batch_id'] = batch.batch_id
+        context['batch_id'] = batch.id
         context.update(cls.additional_sql_context())
         return context
 
@@ -88,7 +91,7 @@ class CustomSQLETLMixin(BaseETLMixin):
         return _render_template(path, cls._table_context(batch))
 
 
-class CouchToDjangoETLMixin(BaseETLMixin):
+class HQToWarehouseETLMixin(BaseETLMixin):
     '''
     Mixin for transferring docs from Couch to a Django model.
     '''
@@ -110,11 +113,11 @@ class CouchToDjangoETLMixin(BaseETLMixin):
         assert issubclass(cls, WarehouseTable)
         record_iter = cls.record_iter(batch.start_datetime, batch.end_datetime)
 
-        django_batch_records(cls, record_iter, cls.field_mapping(), batch.batch_id)
+        django_batch_records(cls, record_iter, cls.field_mapping(), batch.id)
 
 
 def _render_template(path, context):
-    with open(path) as f:
+    with open(path, 'rb') as f:
         template_string = f.read()
 
     template = engines['django'].from_string(template_string)

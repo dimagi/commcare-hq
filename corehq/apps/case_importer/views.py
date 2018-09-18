@@ -3,7 +3,9 @@ from __future__ import unicode_literals
 import os.path
 from django.http import HttpResponseRedirect
 from django.utils.datastructures import MultiValueDictKeyError
+from django.utils.html import format_html
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
+from corehq.apps.app_manager.models import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
@@ -11,7 +13,7 @@ from corehq.apps.case_importer.exceptions import ImporterError
 from django.views.decorators.http import require_POST
 from corehq.apps.case_importer.suggested_fields import get_suggested_case_fields
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
-
+from corehq.util.workbook_reading import SpreadsheetFileExtError
 from corehq.apps.case_importer.util import get_importer_error_message
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.users.decorators import require_permission
@@ -30,6 +32,27 @@ def render_error(request, domain, message):
     """ Load error message and reload page for excel file load errors """
     messages.error(request, _(message))
     return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
+
+
+def validate_column_names(column_names, invalid_column_names):
+    for column_name in column_names:
+        try:
+            validate_property(column_name, allow_parents=False)
+        except ValueError:
+            invalid_column_names.add(column_name)
+
+
+# Cobble together the context needed to render breadcrumbs that class-based views get from BasePageView
+# For use by function-based views that extend hqwebapp/base_section.html
+def _case_importer_breadcrumb_context(page_name, domain):
+    return {
+        'current_page': {
+            'title': page_name,
+            'page_name': page_name,
+            'parents': [base.ImportCases.current_page_context(domain=domain)]
+        },
+        'section': base.ImportCases.section_context(),
+    }
 
 
 @require_can_edit_data
@@ -63,17 +86,29 @@ def excel_config(request, domain):
 
     # stash content in the default storage for subsequent views
     case_upload = CaseUpload.create(uploaded_file_handle,
-                                    filename=uploaded_file_handle.name)
+                                    filename=uploaded_file_handle.name,
+                                    domain=domain)
 
     request.session[EXCEL_SESSION_ID] = case_upload.upload_id
     try:
         case_upload.check_file()
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
-
+    except SpreadsheetFileExtError:
+        return render_error(request, domain, _("Please upload file with extension .xls or .xlsx"))
+    invalid_column_names = set()
     with case_upload.get_spreadsheet() as spreadsheet:
         columns = spreadsheet.get_header_columns()
+        validate_column_names(columns, invalid_column_names)
         row_count = spreadsheet.max_row
+
+    if invalid_column_names:
+        error_message = format_html(
+            _("Column names must be <a target='_blank' href='https://www.w3schools.com/xml/xml_elements.asp'>"
+              "valid XML elements</a> and cannot start with a number or contain spaces or most special characters."
+              " Please update the following: {}.").format(
+                ', '.join(invalid_column_names)))
+        return render_error(request, domain, error_message)
 
     if row_count == 0:
         return render_error(request, domain, _(
@@ -86,9 +121,9 @@ def excel_config(request, domain):
             'A maximum of %(max_columns)s is supported.'
         ) % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
 
-    case_types_from_apps = get_case_types_from_apps(domain)
-    unrecognized_case_types = [t for t in get_case_types_for_domain_es(domain)
-                               if t not in case_types_from_apps]
+    case_types_from_apps = sorted(get_case_types_from_apps(domain))
+    unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
+                                      if t not in case_types_from_apps])
 
     if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
         return render_error(request, domain, _(
@@ -97,19 +132,15 @@ def excel_config(request, domain):
             'file until you have existing cases or applications.'
         ))
 
-    return render(
-        request,
-        "case_importer/excel_config.html", {
-            'columns': columns,
-            'unrecognized_case_types': unrecognized_case_types,
-            'case_types_from_apps': case_types_from_apps,
-            'domain': domain,
-            'report': {
-                'name': 'Import: Configuration'
-            },
-            'slug': base.ImportCases.slug
-        }
-    )
+    context = {
+        'columns': columns,
+        'unrecognized_case_types': unrecognized_case_types,
+        'case_types_from_apps': case_types_from_apps,
+        'domain': domain,
+        'slug': base.ImportCases.slug,
+    }
+    context.update(_case_importer_breadcrumb_context(_('Case Options'), domain))
+    return render(request, "case_importer/excel_config.html", context)
 
 
 @require_POST
@@ -149,9 +180,8 @@ def excel_fields(request, domain):
         search_column = request.POST['search_column']
     except MultiValueDictKeyError:
         # this is only true if your configuration is messed up in an irreparable way
-        messages.error(request, _('It looks like you may have accessed this page from a stale page. '
-                                  'Please start over.'))
-        return _spreadsheet_expired(request, domain)
+        messages.error(request, _('The excel file you are trying to import does not have any headers.'))
+        return HttpResponseRedirect(base.ImportCases.get_url(domain))
 
     search_field = request.POST['search_field']
     create_new_cases = request.POST.get('create_new_cases') == 'on'
@@ -176,23 +206,18 @@ def excel_fields(request, domain):
 
     case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
-    return render(
-        request,
-        "case_importer/excel_fields.html", {
-            'case_type': case_type,
-            'search_column': search_column,
-            'search_field': search_field,
-            'create_new_cases': create_new_cases,
-            'columns': columns,
-            'excel_fields': excel_fields,
-            'case_field_specs': case_field_specs,
-            'domain': domain,
-            'report': {
-                'name': 'Import: Match columns to fields'
-            },
-            'slug': base.ImportCases.slug
-        }
-    )
+    context = {
+        'case_type': case_type,
+        'search_column': search_column,
+        'search_field': search_field,
+        'create_new_cases': create_new_cases,
+        'columns': columns,
+        'excel_fields': excel_fields,
+        'case_field_specs': case_field_specs,
+        'domain': domain,
+    }
+    context.update(_case_importer_breadcrumb_context(_('Match Excel Columns to Case Properties'), domain))
+    return render(request, "case_importer/excel_fields.html", context)
 
 
 @require_POST
@@ -223,9 +248,4 @@ def excel_commit(request, domain):
 
     request.session.pop(EXCEL_SESSION_ID, None)
 
-    return HttpResponseRedirect(base.ImportCases.get_url(domain))
-
-
-def _spreadsheet_expired(req, domain):
-    messages.error(req, _('Sorry, your session has expired. Please start over and try again.'))
     return HttpResponseRedirect(base.ImportCases.get_url(domain))

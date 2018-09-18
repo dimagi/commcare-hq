@@ -24,3 +24,9 @@ remote_details = RemoteLinkDetails(
 )
 DomainLink.link_domains('linked_domain_name', 'master_domain_name', remote_details)
 ```
+
+### Pulling changes from master
+
+On remote HQ, enable `linked_domains` feature flag and navigate to `project settings > Linked Projects` page which has a UI to pull changes from master domain for custom data fields for Location, User and Product models, user roles and feature flags/previews.
+
+Linked apps can be setup between linked domains by running `link_app_to_remote` command on linked domain.

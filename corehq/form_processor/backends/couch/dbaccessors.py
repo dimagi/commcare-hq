@@ -79,7 +79,7 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def get_with_attachments(form_id):
-        doc = XFormInstance.get_db().get(form_id, attachments=True)
+        doc = XFormInstance.get_db().get(form_id)
         doc = doc_types()[doc['doc_type']].wrap(doc)
         if doc.external_blobs:
             for name, meta in six.iteritems(doc.external_blobs):
@@ -92,7 +92,7 @@ class FormAccessorCouch(AbstractFormAccessor):
                     )
         else:
             # xforms are expected to at least have the XML attachment
-            raise ResourceNotFound(msg="XForm attachment missing: {}".format(form_id))
+            raise ResourceNotFound("XForm attachment missing: {}".format(form_id))
         return doc
 
     @staticmethod

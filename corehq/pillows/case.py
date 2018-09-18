@@ -47,7 +47,7 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
         doc_prep_fn=transform_case_for_elasticsearch
     )
     kafka_change_feed = KafkaChangeFeed(
-        topics=topics.CASE_TOPICS, group_id='cases-to-es', num_processes=num_processes, process_num=process_num
+        topics=topics.CASE_TOPICS, client_id='cases-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,
@@ -90,17 +90,24 @@ class SqlCaseReindexerFactory(ReindexerFactory):
         ReindexerFactory.elastic_reindexer_args,
         ReindexerFactory.limit_db_args,
         ReindexerFactory.domain_arg,
+        ReindexerFactory.server_modified_on_arg,
     ]
 
     def build(self):
         limit_to_db = self.options.pop('limit_to_db', None)
         domain = self.options.pop('domain', None)
-        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}_{}".format(
-            CASE_INDEX_INFO.index, limit_to_db or 'all', domain or 'all'
+        start_date = self.options.pop('start_date', None)
+        end_date = self.options.pop('end_date', None)
+        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}_{}_from_{}_until_{}".format(
+            CASE_INDEX_INFO.index, limit_to_db or 'all', domain or 'all',
+            start_date or 'beginning', end_date or 'current'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
 
-        reindex_accessor = CaseReindexAccessor(domain=domain, limit_db_aliases=limit_db_aliases)
+        reindex_accessor = CaseReindexAccessor(
+            domain=domain, limit_db_aliases=limit_db_aliases,
+            start_date=start_date, end_date=end_date
+        )
         doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,

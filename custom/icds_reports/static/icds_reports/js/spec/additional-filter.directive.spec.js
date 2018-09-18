@@ -22,6 +22,7 @@ describe('Additional Filter Controller', function () {
             $location = _$location_;
             scope = $rootScope.$new();
             storageService = _storageService_;
+            window.ga = function() {};
 
             controller = $controller(AdditionalFilterController, {
                 $scope: scope,
@@ -69,6 +70,7 @@ describe('Additional Modal Controller', function () {
             {id: '72', name: '60-72 months'},
         ]);
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToFeatures", false);
     }));
 
     var scope, modalInstance, controller, $uibModal, $location;
@@ -141,8 +143,108 @@ describe('Additional Modal Controller', function () {
         assert.equal(controller.selectedAge, expected);
     });
 
-    it('tests get path', function () {
+    it('tests number of options in age filter', function () {
         var expected = 6;
+        assert.equal(controller.ages.length, expected);
+    });
+
+});
+
+describe('Additional Modal Controller feature flag enabled', function () {
+
+    beforeEach(module('icdsApp', function ($provide) {
+        $provide.constant("genders", [
+            {id: '', name: 'All'},
+            {id: 'M', name: 'Male'},
+            {id: 'F', name: 'Female'},
+        ]);
+        $provide.constant('ages', [
+            {id: '', name: 'All'},
+            {id: '6', name: '0-6 months'},
+            {id: '12', name: '6-12 months'},
+            {id: '24', name: '12-24 months'},
+            {id: '36', name: '24-36 months'},
+            {id: '48', name: '36-48 months'},
+            {id: '60', name: '48-60 months'},
+            {id: '72', name: '60-72 months'},
+        ]);
+        $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToFeatures", true);
+    }));
+
+    var scope, modalInstance, controller, $uibModal, $location;
+
+    beforeEach(function () {
+        inject(function ($rootScope, $controller, _$uibModal_, _$location_, genders, ages) {
+            $uibModal = _$uibModal_;
+            $location = _$location_;
+            scope = $rootScope.$new();
+
+            modalInstance = {
+                close: sinon.spy(),
+                dismiss: sinon.spy(),
+                result: {
+                    then: sinon.spy(),
+                },
+            };
+
+            $location.search('gender', 'M');
+            $location.search('age', '0-6 months');
+            $location.path('underweight_children/wasting');
+
+            controller = $controller(AdditionalModalController, {
+                $scope: scope,
+                $uibModalInstance: modalInstance,
+                $location: $location,
+                filters: [],
+                genders: genders,
+                ages: ages,
+            });
+        });
+    });
+
+
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
+
+    it('tests call open modal', function () {
+        chai.expect($uibModal.open).to.have.been.called;
+    });
+
+    it('tests call close modal', function () {
+        controller.apply();
+        chai.expect(modalInstance.close).to.have.been.called;
+    });
+
+    it('tests call dismiss modal', function () {
+        controller.close();
+        chai.expect(modalInstance.dismiss).to.have.been.called;
+    });
+
+    it('tests reset filters', function () {
+        controller.selectedGender = "male";
+        controller.selectedAge = "6";
+        assert.equal(controller.selectedAge, '6');
+        assert.equal(controller.selectedGender, 'male');
+
+        controller.reset();
+        assert.equal(controller.selectedAge, '');
+        assert.equal(controller.selectedGender, '');
+    });
+
+    it('tests select gender', function () {
+        var expected = 'M';
+        assert.equal(controller.selectedGender, expected);
+    });
+
+    it('tests select age', function () {
+        var expected = '0-6 months';
+        assert.equal(controller.selectedAge, expected);
+    });
+
+    it('tests number of options in age filter', function () {
+        var expected = 8;
         assert.equal(controller.ages.length, expected);
     });
 

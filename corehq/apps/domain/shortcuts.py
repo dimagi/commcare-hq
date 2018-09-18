@@ -25,6 +25,9 @@ def create_user(username, password, is_staff=False, is_superuser=False, is_activ
     else:
         user.password = password
 
+    # at this stage in the process there is no couch user so it's pointless
+    # trying to update it.
+    user.DO_NOT_SAVE_COUCH_USER = True
     user.save()
     return user
 

@@ -12,17 +12,21 @@ from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView, RedirectView
 from django.views.generic.edit import DeleteView
 from django.views.generic.list import ListView
-from corehq.apps.commtrack.models import StockState
+from corehq.apps.commtrack.models import CommtrackConfig, StockState
+from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.models import SMS, INCOMING, OUTGOING
-from corehq.apps.hqwebapp.decorators import use_datatables
+from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
-from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq import toggles
+from corehq.apps.domain.decorators import cls_require_superuser_or_contractor, \
+    domain_admin_required, login_and_domain_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport
 from custom.ilsgateway.forms import SupervisionDocumentForm, ILSConfigForm
@@ -36,9 +40,9 @@ from casexml.apps.stock.models import StockTransaction
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, ILSNotes, \
     PendingReportingDataRecalculation, OneOffTaskProgress
 from custom.ilsgateway.tasks import report_run
-from custom.logistics.views import BaseConfigView
 
 
+@location_safe
 class GlobalStats(BaseDomainView):
     section_name = 'Global Stats'
     section_url = ""
@@ -101,6 +105,58 @@ class GlobalStats(BaseDomainView):
         return main_context
 
 
+class BaseConfigView(BaseCommTrackManageView):
+
+    @cls_require_superuser_or_contractor
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseConfigView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        try:
+            runner = ReportRun.objects.filter(domain=self.domain, complete=False).latest('start_run')
+        except ReportRun.DoesNotExist:
+            runner = None
+
+        return {
+            'runner': runner,
+            'settings': self.settings_context,
+            'source': self.source,
+            'sync_url': self.sync_urlname,
+            'sync_stock_url': self.sync_stock_url,
+            'clear_stock_url': self.clear_stock_url,
+            'is_contractor': toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username),
+            'is_commtrack_enabled': CommtrackConfig.for_domain(self.domain)
+        }
+
+    @property
+    def settings_context(self):
+        config = self.config.for_domain(self.domain_object.name)
+        if config:
+            return {
+                "source_config": config._doc,
+            }
+        else:
+            return {
+                "source_config": self.config()._doc
+            }
+
+    def post(self, request, *args, **kwargs):
+        payload = json.loads(request.POST.get('json'))
+        config = self.config.wrap(self.settings_context['source_config'])
+        config.enabled = payload['source_config'].get('enabled', False)
+        config.domain = self.domain_object.name
+        config.url = payload['source_config'].get('url', None)
+        config.username = payload['source_config'].get('username', None)
+        config.password = payload['source_config'].get('password', None)
+        config.steady_sync = payload['source_config'].get('steady_sync', False)
+        config.all_stock_data = payload['source_config'].get('all_stock_data', False)
+        config.save()
+        return self.get(request, *args, **kwargs)
+
+
+@location_safe
 class ILSConfigView(BaseConfigView):
     config = ILSGatewayConfig
     urlname = 'ils_config'
@@ -138,6 +194,7 @@ class ILSConfigView(BaseConfigView):
         return self.get(request, *args, **kwargs)
 
 
+@location_safe
 class SupervisionDocumentListView(BaseDomainView):
     section_name = 'Supervision Documents'
     section_url = ""
@@ -202,6 +259,7 @@ class SupervisionDocumentListView(BaseDomainView):
         return main_context
 
 
+@location_safe
 class SupervisionDocumentView(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
@@ -221,6 +279,7 @@ class SupervisionDocumentView(TemplateView):
         return response
 
 
+@location_safe
 class SupervisionDocumentDeleteView(TemplateView, DomainViewMixin):
 
     @method_decorator(domain_admin_required)
@@ -260,6 +319,7 @@ def end_report_run(request, domain):
 
 
 @require_POST
+@location_safe
 def save_ils_note(request, domain):
     post_data = request.POST
     user = request.couch_user
@@ -286,6 +346,7 @@ def save_ils_note(request, domain):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
+@location_safe
 class ReportRunListView(ListView, DomainViewMixin):
     context_object_name = 'runs'
     template_name = 'ilsgateway/report_run_list.html'
@@ -299,6 +360,7 @@ class ReportRunListView(ListView, DomainViewMixin):
         return ReportRun.objects.filter(domain=self.domain).order_by('pk')
 
 
+@location_safe
 class PendingRecalculationsListView(ListView, DomainViewMixin):
     context_object_name = 'recalculations'
     template_name = 'ilsgateway/pending_recalculations.html'
@@ -313,6 +375,7 @@ class PendingRecalculationsListView(ListView, DomainViewMixin):
         return PendingReportingDataRecalculation.objects.filter(domain=self.domain).order_by('pk')
 
 
+@location_safe
 class ReportRunDeleteView(DeleteView, DomainViewMixin):
     model = ReportRun
     template_name = 'ilsgateway/confirm_delete.html'
@@ -326,6 +389,7 @@ class ReportRunDeleteView(DeleteView, DomainViewMixin):
         return reverse_lazy('report_run_list', args=[self.domain])
 
 
+@location_safe
 class DashboardPageRedirect(RedirectView):
 
     @method_decorator(login_and_domain_required)

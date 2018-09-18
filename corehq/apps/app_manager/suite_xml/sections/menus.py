@@ -14,7 +14,7 @@ from memoized import memoized
 
 class MenuContributor(SuiteContributorByModule):
 
-    def get_module_contributions(self, module):
+    def get_module_contributions(self, module, training_menu):
         def get_commands(excluded_form_ids):
             @memoized
             def module_uses_case():
@@ -140,7 +140,12 @@ class MenuContributor(SuiteContributorByModule):
                         excluded_form_ids = root_module.excluded_form_ids
                     if id_module and isinstance(id_module, ShadowModule):
                         excluded_form_ids = id_module.excluded_form_ids
-                    menu.commands.extend(get_commands(excluded_form_ids))
+
+                    commands = get_commands(excluded_form_ids)
+                    if module.is_training_module and module.put_in_root and training_menu:
+                        training_menu.commands.extend(commands)
+                    else:
+                        menu.commands.extend(commands)
 
                     if len(menu.commands):
                         menus.append(menu)

@@ -1,4 +1,4 @@
-(function() {
+(function () {
     'use strict';
 
     window.ListExportsTestData = {
@@ -19,6 +19,11 @@
                 },
                 groupId: 'uuid-group-exportWithFileData',
                 hasFile: true,
+                taskStatus: {
+                    percentComplete: 0,
+                    inProgress: false,
+                    success: false,
+                },
             },
             name: "Test Export With File Data",
             addedToBulk: false,

@@ -18,11 +18,13 @@ from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 
 # External imports
+from dimagi.utils.django.request import mutable_querydict
 from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
-    determine_authtype_from_request, basicauth, tokenauth,
-    BASIC, DIGEST, API_KEY, TOKEN,
-    get_username_and_password_from_request)
+    determine_authtype_from_request, basicauth,
+    BASIC, DIGEST, API_KEY,
+    get_username_and_password_from_request, FORMPLAYER,
+    formplayer_auth, formplayer_as_user_auth)
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -37,11 +39,14 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
-from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
+from corehq.toggles import IS_CONTRACTOR, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
+
 
 logger = logging.getLogger(__name__)
 
 REDIRECT_FIELD_NAME = 'next'
+
+OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
 
 
 def load_domain(req, domain):
@@ -53,10 +58,9 @@ def load_domain(req, domain):
 ########################################################################################################
 
 
-def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
-    path = urlquote(request.get_full_path())
-    nextURL = '%s?%s=%s' % (login_url, redirect_field_name, path)
-    return HttpResponseRedirect(nextURL)
+def redirect_for_login_or_domain(request, login_url=None):
+    from django.contrib.auth.views import redirect_to_login
+    return redirect_to_login(request.get_full_path(), login_url)
 
 
 def _page_is_whitelist(path, domain):
@@ -66,12 +70,6 @@ def _page_is_whitelist(path, domain):
     ])
 
 
-def domain_specific_login_redirect(request, domain):
-    project = Domain.get_by_name(domain)
-    login_url = reverse('login')
-    return _redirect_for_login_or_domain(request, 'next', login_url)
-
-
 def login_and_domain_required(view_func):
 
     @wraps(view_func)
@@ -79,21 +77,25 @@ def login_and_domain_required(view_func):
         user = req.user
         domain_name, domain = load_domain(req, domain)
         if not domain:
-            msg = _(('The domain "{domain}" was not found.').format(domain=domain_name))
+            msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
 
         if user.is_authenticated and user.is_active:
             if not domain.is_active:
-                msg = _((
+                msg = _(
                     'The domain "{domain}" has not yet been activated. '
                     'Please report an issue if you think this is a mistake.'
-                ).format(domain=domain_name))
+                ).format(domain=domain_name)
                 messages.info(req, msg)
                 return HttpResponseRedirect(reverse("domain_select"))
             couch_user = _ensure_request_couch_user(req)
             if couch_user.is_member_of(domain):
                 # If the two factor toggle is on, require it for all users.
-                if _two_factor_required(view_func, domain, couch_user) and not user.is_verified():
+                if (
+                    _two_factor_required(view_func, domain, couch_user)
+                    and not getattr(req, 'bypass_two_factor', False)
+                    and not user.is_verified()
+                ):
                     return TemplateResponse(
                         request=req,
                         template='two_factor/core/otp_required.html',
@@ -123,8 +125,7 @@ def login_and_domain_required(view_func):
             return view_func(req, domain_name, *args, **kwargs)
         else:
             login_url = reverse('domain_login', kwargs={'domain': domain})
-            return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
-
+            return redirect_for_login_or_domain(req, login_url=login_url)
 
     return _inner
 
@@ -133,23 +134,7 @@ def _ensure_request_couch_user(request):
     couch_user = getattr(request, 'couch_user', None)
     if not couch_user and hasattr(request, 'user'):
         request.couch_user = couch_user = CouchUser.from_django_user(request.user)
-    elif couch_user and couch_user.is_anonymous and hasattr(request, 'user') and not request.user.is_anonymous:
-        # if ANONYMOUS_WEB_APPS_USAGE toggle is enabled then `request.couch_user` get's set to the anonymous
-        # mobile user in middleware which breaks this check if later authentication succeeds e.g. apikey
-        request.couch_user = couch_user = CouchUser.from_django_user(request.user)
     return couch_user
-
-
-def domain_required(view_func):
-    @wraps(view_func)
-    def _inner(req, domain, *args, **kwargs):
-        domain_name, domain = load_domain(req, domain)
-        if domain:
-            return view_func(req, domain_name, *args, **kwargs)
-        else:
-            msg = _('The domain "{domain}" was not found.'.format(domain=domain_name))
-            raise Http404(msg)
-    return _inner
 
 
 class LoginAndDomainMixin(object):
@@ -219,8 +204,11 @@ def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(
+        formplayer_as_user_auth,
+        allow_cc_users=allow_cc_users, allow_sessions=allow_sessions
+    )
 
 
 def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
@@ -232,18 +220,27 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
     )
 
 
-def _get_multi_auth_decorator(default, allow_token=False):
+def _get_multi_auth_decorator(default, allow_formplayer=False):
+    """
+    :param allow_formplayer: If True this will allow one additional auth mechanism which is used
+         by Formplayer:
+
+         - formplayer auth: for SMS forms there is no active user involved in the session and so
+             formplayer can not use the session cookie to auth. To allow formplayer access to the
+             endpoints we validate each formplayer request using a shared key. See the auth
+             function for more details.
+    """
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             authtype = determine_authtype_from_request(request, default=default)
-            if authtype == TOKEN and not allow_token:
+            if authtype == FORMPLAYER and not allow_formplayer:
                 return HttpResponseForbidden()
             function_wrapper = {
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True),
-                TOKEN: login_or_token_ex(allow_cc_users=True),
+                FORMPLAYER: login_or_formplayer_ex(allow_cc_users=True),
             }[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
@@ -270,10 +267,10 @@ def mobile_auth(view_func):
     return _get_multi_auth_decorator(default=BASIC)(two_factor_exempt(view_func))
 
 
-# This decorator is deprecated, it's used only for anonymous web apps
+# This decorator is used only for anonymous web apps and SMS forms
 # Endpoints with this decorator will not enforce two factor authentication
-def mobile_auth_or_token(view_func):
-    return _get_multi_auth_decorator(default=BASIC, allow_token=True)(two_factor_exempt(view_func))
+def mobile_auth_or_formplayer(view_func):
+    return _get_multi_auth_decorator(default=BASIC, allow_formplayer=True)(two_factor_exempt(view_func))
 
 
 # Use this decorator to allow any auth type -
@@ -299,12 +296,21 @@ def two_factor_check(view_func, api_key):
             couch_user = _ensure_request_couch_user(request)
             if not api_key and dom and _two_factor_required(view_func, dom, couch_user):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
+                if not token and 'otp' in request.GET:
+                    with mutable_querydict(request.GET):
+                        # remove the param from the query dict so that we don't interfere with places
+                        # that use the query dict to generate dynamic filters
+                        token = request.GET.pop('otp')[-1]
                 if not token:
-                    return JsonResponse({"error": "must send X-CommcareHQ-OTP header"}, status=401)
-                elif not match_token(request.user, token):
-                    return JsonResponse({"error": "X-CommcareHQ-OTP token is incorrect"}, status=401)
-                else:
-                    return fn(request, domain, *args, **kwargs)
+                    return JsonResponse(OTP_AUTH_FAIL_RESPONSE, status=401)
+                otp_device = match_token(request.user, token)
+                if not otp_device:
+                    return JsonResponse({"error": "OTP token is incorrect"}, status=401)
+
+                # set otp device and is_verified function on user to be consistent with OTP middleware
+                request.user.otp_device = otp_device
+                request.user.is_verified = lambda: True
+                return fn(request, domain, *args, **kwargs)
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
@@ -347,6 +353,9 @@ def cls_to_view(additional_decorator=None):
 def api_domain_view(view):
     """
     Decorate this with any domain view that should be accessed via api only
+
+    Currently only required by for a single view used by 'kawok-vc-desarrollo' domain
+    See http://manage.dimagi.com/default.asp?225116#1137527
     """
     @wraps(view)
     @api_key()
@@ -363,11 +372,9 @@ def api_domain_view(view):
 def login_required(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
-        login_url = reverse('login')
         user = request.user
         if not (user.is_authenticated and user.is_active):
-            return _redirect_for_login_or_domain(request,
-                    REDIRECT_FIELD_NAME, login_url)
+            return redirect_for_login_or_domain(request)
 
         # User's login and domain have been validated - it's safe to call the view function
         return view_func(request, *args, **kwargs)
@@ -423,11 +430,11 @@ def domain_admin_required_ex(redirect_page_name=None):
     return _outer
 
 
-def require_superuser_or_developer(view_func):
+def require_superuser_or_contractor(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        if IS_DEVELOPER.enabled(user.username) or user.is_superuser:
+        if IS_CONTRACTOR.enabled(user.username) or user.is_superuser:
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseRedirect(reverse("no_permissions"))
@@ -444,7 +451,7 @@ cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_requir
 require_superuser = permission_required("is_superuser", login_url='/no_permissions/')
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
-cls_require_superuser_or_developer = cls_to_view(additional_decorator=require_superuser_or_developer)
+cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
 
 
 def require_previewer(view_func):

@@ -17,7 +17,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location
+from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location, location_safe
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser
@@ -35,12 +35,14 @@ from dimagi.utils.web import json_handler, json_response
 from six.moves import map
 
 
+@location_safe
 class EWSGlobalStats(GlobalStats):
     template_name = "ewsghana/global_stats.html"
     show_supply_point_types = True
     root_name = 'Country'
 
 
+@location_safe
 class InputStockView(BaseDomainView):
     section_name = 'Input stock data'
     section_url = ""
@@ -133,6 +135,7 @@ class InputStockView(BaseDomainView):
         return context
 
 
+@location_safe
 class EWSUserExtensionView(BaseCommTrackManageView):
 
     template_name = 'ewsghana/user_extension.html'
@@ -169,6 +172,7 @@ class EWSUserExtensionView(BaseCommTrackManageView):
 
 
 @require_GET
+@location_safe
 def inventory_management(request, domain):
 
     inventory_management_ds = InventoryManagementData(
@@ -186,6 +190,7 @@ def inventory_management(request, domain):
 
 
 @require_GET
+@location_safe
 def stockouts_product(request, domain):
 
     stockout_graph = StockoutsProduct(
@@ -203,6 +208,7 @@ def stockouts_product(request, domain):
 
 
 @require_POST
+@location_safe
 def configure_in_charge(request, domain):
     in_charge_ids = request.POST.getlist('users[]')
     location_id = request.POST.get('location_id')
@@ -218,6 +224,7 @@ def loc_to_payload(loc):
 
 
 @locations_access_required
+@location_safe
 def non_administrative_locations_for_select2(request, domain):
     id = request.GET.get('id')
     query = request.GET.get('name', '').lower()
@@ -250,6 +257,7 @@ def non_administrative_locations_for_select2(request, domain):
     return json_response(list(map(loc_to_payload, locs[:10])))
 
 
+@location_safe
 class DashboardPageView(RedirectView):
 
     def get_redirect_url(self, *args, **kwargs):

@@ -5,9 +5,8 @@ hqDefine("accounting/js/software_plan_version_handler", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler',
     'hqwebapp/js/multiselect_utils',
-    'hqwebapp/js/stay_on_tab',
     'select2-3.5.2-legacy/select2',
-], function(
+], function (
     $,
     ko,
     _,
@@ -15,7 +14,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
     select2Handler,
     multiselectUtils
 ) {
-    $(function() {
+    $(function () {
         var planVersionFormHandler = softwarePlanVersionFormHandler(
             initialPageData.get('role'),
             initialPageData.get('feature_rates'),
@@ -56,13 +55,13 @@ hqDefine("accounting/js/software_plan_version_handler", [
         self.objClass = objClass;
         self.rates = ko.observableArray();
         self.ratesString = ko.computed(function () {
-            return JSON.stringify(_.map(self.rates(), function (obj){
+            return JSON.stringify(_.map(self.rates(), function (obj) {
                 return obj.asJSON();
             }));
         });
 
         self.rateNames = ko.computed(function () {
-            return _.map(self.rates(), function(rate) {
+            return _.map(self.rates(), function (rate) {
                 return rate.name();
             });
         });

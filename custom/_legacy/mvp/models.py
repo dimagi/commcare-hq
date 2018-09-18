@@ -15,6 +15,7 @@ from mvp.indicator_admin.crud import MVPActiveCasesCRUDManager, MVPChildCasesByA
 class MVP(object):
     NAMESPACE = "mvp_indicators"
     DOMAINS = [
+        "jennytraining",
         "mvp-tiby",
         "mvp-potou",
         "mvp-sauri",

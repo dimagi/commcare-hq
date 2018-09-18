@@ -1,6 +1,14 @@
-hqDefine('hqcase/js/explode_cases', function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
-    $(function(){
+hqDefine('hqcase/js/explode_cases', [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'select2/dist/js/select2.full.min',
+], function (
+    $,
+    ko,
+    initialPageData
+) {
+    $(function () {
         $('#explode').koApplyBindings({
             factor: ko.observable(''),
             user_id: ko.observable(''),

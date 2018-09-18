@@ -7,8 +7,10 @@
 
 {% block page_content %}
     {% initial_page_data 'account_form_is_active' basic_form.is_active.value %}
+    {% initial_page_data 'is_customer_billing_account' basic_form.is_customer_billing_account.value %}
+    {% initial_page_data 'enterprise_admin_emails' basic_form.enterprise_admin_emails.value %}
 
-    <ul class="nav nav-tabs" id="user-settings-tabs">
+    <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
         <li><a href="#account" data-toggle="tab">{% trans "Account" %}</a></li>
         <li><a href="#subscriptions" data-toggle="tab">{% trans "Subscriptions" %}</a></li>
         <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>

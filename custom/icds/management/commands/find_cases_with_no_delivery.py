@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import csv
+import csv342 as csv
 import copy
 
 from django.core.management import BaseCommand
@@ -11,6 +11,7 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 from dimagi.utils.chunked import chunked
+from io import open
 
 
 class Command(BaseCommand):
@@ -30,7 +31,7 @@ class Command(BaseCommand):
     def handle(self, csv_file, **options):
         self.domain = 'icds-cas'
         self.case_accessor = CaseAccessors(self.domain)
-        with open(csv_file, "w") as csv_file:
+        with open(csv_file, "w", encoding='utf-8') as csv_file:
             field_names = [
                 'case_id', 'owner_id', 'modified_on', 'server_modified_on',
                 'add', 'edd', 'ccs_phase', 'num_pnc_visits', 'current_schedule_phase'

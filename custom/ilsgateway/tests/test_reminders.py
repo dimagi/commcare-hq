@@ -17,7 +17,7 @@ from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tests.handlers.utils import prepare_domain
-from custom.logistics.tests.utils import bootstrap_user
+from custom.ilsgateway.tests.utils import bootstrap_user
 import six
 
 TEST_DOMAIN = 'randr-reminder'

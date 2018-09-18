@@ -2,7 +2,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
+from corehq.apps.reports.analytics.esaccessors import (
+    get_wrapped_ledger_values,
+    products_with_ledgers,
+)
 from corehq.apps.reports.commtrack.data_sources import (
     StockStatusDataSource, ReportingStatusDataSource,
     SimplifiedInventoryDataSource, SimplifiedInventoryDataSourceNew
@@ -11,7 +14,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
+from corehq.apps.reports.graph_models import PieChart
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.filters.commtrack import SelectReportingType
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -19,8 +22,13 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.locations.models import SQLLocation
 from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, get_product_id_name_mapping, \
-    get_product_ids_for_program, get_consumption_helper_from_ledger_value
+from django.utils.functional import cached_property
+from corehq.apps.reports.commtrack.util import (
+    get_relevant_supply_point_ids,
+    get_product_id_name_mapping,
+    get_product_ids_for_program,
+    get_consumption_helper_from_ledger_value,
+)
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.filters.commtrack import AdvancedColumns
 import six
@@ -89,7 +97,42 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.commtrack.ProgramFilter',
     ]
     exportable = True
+    exportable_all = True
     emailable = True
+    asynchronous = True
+    ajax_pagination = True
+
+    @property
+    def shared_pagination_GET_params(self):
+        return [
+            {'name': 'location_id', 'value': self.request.GET.get('location_id')},
+            {'name': 'program', 'value': self.request.GET.get('program')},
+        ]
+
+    @cached_property
+    def _sp_ids(self):
+        return get_relevant_supply_point_ids(self.domain, self.active_location)
+
+    @cached_property
+    def _program_product_ids(self):
+        if self.program_id:
+            return get_product_ids_for_program(self.domain, self.program_id)
+
+    @cached_property
+    def _product_name_mapping(self):
+        return get_product_id_name_mapping(self.domain, self.program_id)
+
+    @cached_property
+    def _products_with_ledgers(self):
+        return products_with_ledgers(self.domain, self._sp_ids, STOCK_SECTION_TYPE, self._program_product_ids)
+
+    @cached_property
+    def _desc_product_order(self):
+        return self.request.GET.get('sSortDir_0') == 'desc'
+
+    @property
+    def total_records(self):
+        return len(self._products_with_ledgers)
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -99,25 +142,29 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def headers(self):
         columns = [
             DataTablesColumn(_('Product')),
-            DataTablesColumn(_('# Facilities')),
+            DataTablesColumn(_('# Facilities'), sortable=False),
             DataTablesColumn(
                 _('Stocked Out'),
                 help_text=_("A facility is counted as stocked out when its \
-                            current stock is below the emergency level.")),
+                            current stock is below the emergency level."),
+                sortable=False),
             DataTablesColumn(
                 _('Understocked'),
                 help_text=_("A facility is counted as under stocked when its \
                             current stock is above the emergency level but below the \
-                            low stock level.")),
+                            low stock level."),
+                sortable=False),
             DataTablesColumn(
                 _('Adequate Stock'),
                 help_text=_("A facility is counted as adequately stocked when \
                             its current stock is above the low level but below the \
-                            overstock level.")),
+                            overstock level."),
+                sortable=False),
             DataTablesColumn(
                 _('Overstocked'),
                 help_text=_("A facility is counted as overstocked when \
-                            its current stock is above the overstock level.")),
+                            its current stock is above the overstock level."),
+                sortable=False),
             DataTablesColumn(
                 _('Insufficient Data'),
                 help_text=_("A facility is marked as insufficient data when \
@@ -126,30 +173,43 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                             Consumption amount can be unknown if there is \
                             either no default consumption value or the reporting \
                             history does not meet the calculation settings \
-                            for the project."))
+                            for the project."),
+                sortable=False)
         ]
         return DataTablesHeader(*columns)
 
-    @property
-    @memoized
+    @cached_property
     def product_data(self):
         return list(self.get_prod_data())
 
-    def get_prod_data(self):
-        sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
-        product_ids = get_product_ids_for_program(self.domain, self.program_id) if self.program_id else None
+    def filter_by_product_ids(self):
+        """
+        This sorts by name of products that should be shown according to filter and
+        then returns the product ids to be shown according to the pagination
+        """
+        product_name_map = self._product_name_mapping
+        # sort
+        sorted_product_name_map = sorted(six.iteritems(product_name_map),
+                                         key=lambda name_map: name_map[1],
+                                         reverse=self._desc_product_order)
+        # product to filter
+        # -> that have ledgers and
+        # -> fall into requested pagination
+        return [product_id for product_id, product_name in sorted_product_name_map
+                if product_id in self._products_with_ledgers
+                ][self.pagination.start:][:self.pagination.count]
 
+    def get_prod_data(self):
         ledger_values = get_wrapped_ledger_values(
             domain=self.domain,
-            case_ids=sp_ids,
+            case_ids=self._sp_ids,
             section_id=STOCK_SECTION_TYPE,
-            entry_ids=product_ids,
+            entry_ids=self.filter_by_product_ids(),
         )
         product_grouping = {}
+        domain = Domain.get_by_name(self.domain)
         for ledger_value in ledger_values:
-            consumption_helper = get_consumption_helper_from_ledger_value(
-                Domain.get_by_name(self.domain), ledger_value
-            )
+            consumption_helper = get_consumption_helper_from_ledger_value(domain, ledger_value)
             status = consumption_helper.get_stock_category()
             if ledger_value.entry_id in product_grouping:
                 product_grouping[ledger_value.entry_id][status] += 1
@@ -166,8 +226,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                     'facility_count': 1
                 }
                 product_grouping[ledger_value.entry_id][status] = 1
-
-        product_name_map = get_product_id_name_mapping(self.domain)
+        product_name_map = self._product_name_mapping
         rows = [[
             product_name_map.get(product['entry_id'], product['entry_id']),
             product['facility_count'],
@@ -178,38 +237,17 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             100.0 * product['nodata'] / product['facility_count'],
         ] for product in product_grouping.values()]
 
-        return sorted(rows, key=lambda r: r[0].lower())
+        return sorted(rows, key=lambda r: r[0].lower(),
+                      reverse=self._desc_product_order)
 
     @property
     def rows(self):
         return [pd[0:2] + ['%.1f%%' % d for d in pd[2:]] for pd in self.product_data]
 
-    def get_data_for_graph(self):
-        ret = [
-            {"key": "stocked out", "color": "#e00707"},
-            {"key": "under stock", "color": "#ffb100"},
-            {"key": "adequate stock", "color": "#4ac925"},
-            {"key": "overstocked", "color": "#b536da"},
-            {"key": "unknown", "color": "#ABABAB"}
-        ]
-        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'no data']
-
-        for r in ret:
-            r["values"] = []
-
-        for pd in self.product_data:
-            for i, status in enumerate(statuses):
-                ret[i]['values'].append({"x": pd[0], "y": pd[i+2]})
-
-        return ret
-
     @property
-    def charts(self):
-        # only get data if we're loading an actual report - this requires filters
-        if 'location_id' in self.request.GET:
-            chart = MultiBarChart(None, Axis(_('Products')), Axis(_('% of Facilities'), ',.1d'))
-            chart.data = self.get_data_for_graph()
-            return [chart]
+    def get_all_rows(self):
+        self.pagination.count = self.total_records
+        return self.rows
 
 
 class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):

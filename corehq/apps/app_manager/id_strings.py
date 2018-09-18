@@ -43,11 +43,15 @@ def _regex_union(regexes):
 
 
 REGEXES = []
+REGEX_DEFAULT_VALUES = {}
 
 
-def pattern(*patterns):
-    for pattern in patterns:
-        REGEXES.append(_format_to_regex(pattern))
+# Do not use this outside of this module, since it modifies module-level variables
+def pattern(pattern, default=None):
+    REGEXES.append(_format_to_regex(pattern))
+    if default:
+        REGEX_DEFAULT_VALUES[pattern] = default
+
     return lambda fn: fn
 
 
@@ -66,12 +70,22 @@ def current_language():
     return "lang.current"
 
 
+@pattern('cchq.case', default="Case")
+def _case_detail_title_locale():
+    return 'cchq.case'
+
+
+@pattern('cchq.referral', default="Referral")
+def _referral_detail_title_locale():
+    return 'cchq.referral'
+
+
 @pattern('m%d.%s.title')
 def detail_title_locale(detail_type):
     if detail_type.startswith('case') or detail_type.startswith('search'):
-        return "cchq.case"
+        return _case_detail_title_locale()
     elif detail_type.startswith('referral'):
-        return "cchq.referral"
+        return _referral_detail_title_locale()
 
 
 @pattern('m%d.%s.tab.%d.title')
@@ -236,22 +250,22 @@ def report_command(report_id):
     return 'reports.{report_id}'.format(report_id=report_id)
 
 
-@pattern('cchq.report_menu')
+@pattern('cchq.report_menu', default='Reports')
 def report_menu():
     return 'cchq.report_menu'
 
 
-@pattern('cchq.report_name_header')
+@pattern('cchq.report_name_header', default='Report Name')
 def report_name_header():
     return 'cchq.report_name_header'
 
 
-@pattern('cchq.report_description_header')
+@pattern('cchq.report_description_header', default='Report Description')
 def report_description_header():
     return 'cchq.report_description_header'
 
 
-@pattern('cchq.report_data_table')
+@pattern('cchq.report_data_table', default='Data Table')
 def report_data_table():
     return 'cchq.report_data_table'
 
@@ -271,7 +285,7 @@ def report_description(report_id):
     return 'cchq.reports.{report_id}.description'.format(report_id=report_id)
 
 
-@pattern('cchq.report_last_sync')
+@pattern('cchq.report_last_sync', default='Last Sync')
 def report_last_sync():
     return 'cchq.report_last_sync'
 

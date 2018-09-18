@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 
 from django.core.management import BaseCommand
 
@@ -11,6 +11,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from dimagi.utils.chunked import chunked
 import six
+from io import open
 
 
 class Command(BaseCommand):
@@ -26,7 +27,7 @@ class Command(BaseCommand):
     def handle(self, domain, infile, logfile, *args, **options):
         self.domain = domain
         self.case_accessor = CaseAccessors(self.domain)
-        with open(infile, 'r') as f, open(logfile, 'w') as log:
+        with open(infile, 'r', encoding='utf-8') as f, open(logfile, 'w', encoding='utf-8') as log:
             reader = csv.reader(f)
             _, case_prop_name = next(reader)
             log.write('--------Successful Form Ids----------\n')

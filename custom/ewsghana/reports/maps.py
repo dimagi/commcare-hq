@@ -10,7 +10,7 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.data_sources import StockStatusBySupplyPointDataSource
 from corehq.apps.reports.commtrack.maps import StockStatusMapReport
 from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.hqwebapp.decorators import maps_prefer_canvas, use_maps
+from corehq.apps.hqwebapp.decorators import use_maps
 from custom.ewsghana.utils import get_country_id, filter_slugs_by_role
 from memoized import memoized
 import six
@@ -136,7 +136,6 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
         'custom.ewsghana.filters.LocationTypeFilter'
     ]
 
-    @maps_prefer_canvas
     @use_maps
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(StockStatusMapReport, self).decorator_dispatcher(request, *args, **kwargs)

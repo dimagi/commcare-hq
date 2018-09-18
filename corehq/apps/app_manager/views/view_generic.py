@@ -277,7 +277,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
-    context['current_app_version_url'] = reverse('current_app_version', args=[domain, app_id])
 
     if app and app.doc_type == 'Application' and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
@@ -319,6 +318,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         ),
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
+
 
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})

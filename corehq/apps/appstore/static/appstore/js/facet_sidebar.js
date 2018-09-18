@@ -1,32 +1,27 @@
-hqDefine("appstore/js/facet_sidebar", function() {
-    var escapeRegExp = function(str) {
+hqDefine("appstore/js/facet_sidebar", ['jquery'], function ($) {
+    var escapeRegExp = function (str) {
         return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     };
 
-    var replaceAll = function(find, replace, str) {
+    var replaceAll = function (find, replace, str) {
         // http://stackoverflow.com/questions/1144783/replacing-all-occurrences-of-a-string-in-javascript#answer-1144788
         return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
     };
 
-    var chevron_toggle = function(show, $toggling, $chevron, $holds_toggle_state, after_fn) {
-        var chev = "icon-double-angle-",
-            chevB3 = "fa-angle-double-";
+    var chevron_toggle = function (show, $toggling, $chevron, $holds_toggle_state, after_fn) {
+        var chev = "fa-double-angle-";
         if (show) {
             $toggling.hide();
             $chevron
                 .removeClass(chev + "down")
-                .addClass(chev + "right")
-                .removeClass(chevB3 + "down")
-                .addClass(chevB3 + "right");
+                .addClass(chev + "right");
             $holds_toggle_state.data("show", false);
         } else {
             $toggling.show();
             $toggling.removeClass('hide');
             $chevron
                 .removeClass(chev + "right")
-                .addClass(chev + "down")
-                .removeClass(chevB3 + "right")
-                .addClass(chevB3 + "down");
+                .addClass(chev + "down");
             $holds_toggle_state.data("show", true);
         }
         if (after_fn) {
@@ -35,7 +30,7 @@ hqDefine("appstore/js/facet_sidebar", function() {
     };
 
     $(function () {
-        $(".more-sortable-button").click(function() {
+        $(".more-sortable-button").click(function () {
             var $this = $(this);
             var sortable = $this.data('sortable').replace(new RegExp("\\.", "g"), "\\.");
             $('.sortable-' + sortable).removeClass('hide');
@@ -43,7 +38,7 @@ hqDefine("appstore/js/facet_sidebar", function() {
             return false;
         });
 
-        $(".facet-group-btn").click(function(){
+        $(".facet-group-btn").click(function () {
             var $this = $(this);
             var group_name = $this.data('name');
             var $facet_group = $(".facet-group[data-group-name='" + group_name + "']");
@@ -52,11 +47,11 @@ hqDefine("appstore/js/facet_sidebar", function() {
             return false;
         });
 
-        $(".facet-btn").click(function(){
+        $(".facet-btn").click(function () {
             var $this = $(this);
             var sortable = replaceAll(".", "\\.", $this.data('sortable'));
 
-            var fn = function() {
+            var fn = function () {
                 $(".more-sortable-button[data-sortable='" + sortable + "']").hide();
             };
 
@@ -67,7 +62,7 @@ hqDefine("appstore/js/facet_sidebar", function() {
         var $update_btn = $("#update-facets");
         var $facet_search_form = $("#facet-search");
         var $facet_search_bar = $facet_search_form.find('input');
-        $update_btn.click(function() {
+        $update_btn.click(function () {
             var $this = $(this);
             var url = "?";
             if ($this.data('params')) {
@@ -78,9 +73,9 @@ hqDefine("appstore/js/facet_sidebar", function() {
                 prefix += $(this).data('prefix');
             }
 
-            $(".sortable").each(function(){
+            $(".sortable").each(function () {
                 var sortable_name = $(this).data("name");
-                $(this).find('.facet-checkbox').each(function(){
+                $(this).find('.facet-checkbox').each(function () {
                     var $facet = $(this);
                     if ($facet.is(":checked") && $facet.attr("name")) {
                         url += prefix + sortable_name + "=" + $facet.attr("name") + "&";
@@ -95,7 +90,7 @@ hqDefine("appstore/js/facet_sidebar", function() {
             window.location = encodeURI(url);
         });
 
-        $facet_search_form.submit(function(e) {
+        $facet_search_form.submit(function (e) {
             e.preventDefault();
             $update_btn.click();
         });

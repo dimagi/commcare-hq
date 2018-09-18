@@ -3,11 +3,4 @@
         data-title="{{ field.label }}"
         data-content="{{ help_bubble_text }}"
     ></span>
-    <script>
-        $(function () {
-            $('.hq-help-template').each(function () {
-                hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
-            });
-        });
-    </script>
 {% endif %}

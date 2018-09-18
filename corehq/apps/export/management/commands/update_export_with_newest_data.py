@@ -23,6 +23,7 @@ from corehq.apps.export.models import MAIN_TABLE, PathNode
 from corehq.apps.export.multiprocess import MultiprocessExporter, OutputPaginator, run_multiprocess_exporter
 from corehq.util.files import safe_filename
 from dimagi.utils.parsing import string_to_utc_datetime
+from io import open
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +142,6 @@ def download_export(export_instance, download_path=None):
         download_path = os.path.join(settings.SHARED_DRIVE_ROOT, export_archive_path)
     if not os.path.exists(download_path):
         payload = export_instance.get_payload(stream=True)
-        with open(download_path, 'w') as download:
+        with open(download_path, 'wb') as download:
             shutil.copyfileobj(payload, download)
     return download_path

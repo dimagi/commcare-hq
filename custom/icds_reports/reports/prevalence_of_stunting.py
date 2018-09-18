@@ -14,11 +14,12 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations
+    get_child_locations, stunting_moderate_column, stunting_severe_column, stunting_normal_column, \
+    default_age_interval, hfa_recorded_in_month_column
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=False, icds_feature_flag=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -27,16 +28,19 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         ).values(
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            moderate=Sum('stunting_moderate'),
-            severe=Sum('stunting_severe'),
-            normal=Sum('stunting_normal'),
+            moderate=Sum(stunting_moderate_column(icds_feature_flag)),
+            severe=Sum(stunting_severe_column(icds_feature_flag)),
+            normal=Sum(stunting_normal_column(icds_feature_flag)),
             total=Sum('height_eligible'),
-            total_measured=Sum('height_measured_in_month'),
+            total_measured=Sum(hfa_recorded_in_month_column(icds_feature_flag)),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         if 'age_tranche' not in config:
-            queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
+            if icds_feature_flag:
+                queryset = queryset.exclude(age_tranche=72)
+            else:
+                queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
         return queryset
 
     data_for_map = defaultdict(lambda: {
@@ -96,7 +100,10 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
     fills.update({'38%-100%': MapColors.RED})
     fills.update({'defaultFill': MapColors.GREY})
 
-    gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='6 - 60 months')
+    gender_label, age_label, chosen_filters = chosen_filters_to_labels(
+        config,
+        default_interval=default_age_interval(icds_feature_flag)
+    )
 
     return {
         "slug": "severe",
@@ -109,11 +116,11 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
             "average": "%.2f" % ((sum(values_to_calculate_average)) /
                                  float(len(values_to_calculate_average) or 1)),
             "info": _((
-                "Percentage of children ({}) enrolled for Anganwadi Services with height-for-age below "
-                "-2Z standard deviations of the WHO Child Growth Standards median."
+                "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
+                "children between {} who were moderately/severely stunted in the current month. "
                 "<br/><br/>"
-                "Stunting is a sign of chronic undernutrition and has long lasting harmful "
-                "consequences on the growth of a child".format(age_label)
+                "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on "
+                "the growth of a child".format(age_label)
             )),
             "extended_info": [
                 {
@@ -147,8 +154,8 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=False, icds_feature_flag=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -160,18 +167,21 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
     ).values(
         'month', '%s_name' % loc_level
     ).annotate(
-        moderate=Sum('stunting_moderate'),
-        severe=Sum('stunting_severe'),
-        normal=Sum('stunting_normal'),
+        moderate=Sum(stunting_moderate_column(icds_feature_flag)),
+        severe=Sum(stunting_severe_column(icds_feature_flag)),
+        normal=Sum(stunting_normal_column(icds_feature_flag)),
         total=Sum('height_eligible'),
-        measured=Sum('height_measured_in_month'),
+        measured=Sum(hfa_recorded_in_month_column(icds_feature_flag)),
     ).order_by('month')
 
     if not show_test:
         chart_data = apply_exclude(domain, chart_data)
 
     if 'age_tranche' not in config:
-        chart_data = chart_data.exclude(age_tranche__in=[0, 6, 72])
+        if icds_feature_flag:
+            chart_data = chart_data.exclude(age_tranche=72)
+        else:
+            chart_data = chart_data.exclude(age_tranche__in=[0, 6, 72])
 
     data = {
         'red': OrderedDict(),
@@ -215,7 +225,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
 
     top_locations = sorted(
         [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
-        key=lambda x: x['percent']
+        key=lambda x: (x['percent'], x['loc_name'])
     )
 
     return {
@@ -270,8 +280,9 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_id, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_id, show_test=False,
+                                           icds_feature_flag=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -280,17 +291,20 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
     ).values(
         *group_by
     ).annotate(
-        moderate=Sum('stunting_moderate'),
-        severe=Sum('stunting_severe'),
+        moderate=Sum(stunting_moderate_column(icds_feature_flag)),
+        severe=Sum(stunting_severe_column(icds_feature_flag)),
+        normal=Sum(stunting_normal_column(icds_feature_flag)),
         total=Sum('height_eligible'),
-        normal=Sum('stunting_normal'),
-        total_measured=Sum('height_measured_in_month'),
+        total_measured=Sum(hfa_recorded_in_month_column(icds_feature_flag)),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
         data = apply_exclude(domain, data)
     if 'age_tranche' not in config:
-        data = data.exclude(age_tranche__in=[0, 6, 72])
+        if icds_feature_flag:
+            data = data.exclude(age_tranche=72)
+        else:
+            data = data.exclude(age_tranche__in=[0, 6, 72])
 
     chart_data = {
         'blue': [],
@@ -339,16 +353,18 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
-    __, __, chosen_filters = chosen_filters_to_labels(config, default_interval='6 - 60 months')
+    __, __, chosen_filters = chosen_filters_to_labels(
+        config, default_interval=default_age_interval(icds_feature_flag)
+    )
 
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of children{} enrolled for Anganwadi Services with height-for-age below "
-            "-2Z standard deviations of the WHO Child Growth Standards median."
+            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage "
+            "of children between {} who were moderately/severely stunted in the current month. "
             "<br/><br/>"
-            "Stunting is a sign of chronic undernutrition and has long lasting harmful "
-            "consequences on the growth of a child".format(chosen_filters)
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on "
+            "the growth of a child".format(chosen_filters)
         )),
         "chart_data": [
             {

@@ -1,12 +1,12 @@
 /*globals $, hqImport, _, ko, django */
-hqDefine("app_manager/js/modules/module_view", function() {
+hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             moduleBrief = initial_page_data('module_brief'),
             moduleType = moduleBrief.module_type,
             options = initial_page_data('js_options') || {};
 
-        hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Module Settings"));
+        hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
 
         // Set up details
         if (moduleBrief.case_type) {
@@ -56,12 +56,12 @@ hqDefine("app_manager/js/modules/module_view", function() {
         }
 
         // Validation for case type
-        var showCaseTypeError = function(message) {
+        var showCaseTypeError = function (message) {
             var $caseTypeError = $('#case_type_error');
             $caseTypeError.css('display', 'block');
             $caseTypeError.text(message);
         };
-        var hideCaseTypeError = function() {
+        var hideCaseTypeError = function () {
             $('#case_type_error').css('display', 'none');
         };
         $('#case_type').on('textchange', function () {
@@ -115,11 +115,11 @@ hqDefine("app_manager/js/modules/module_view", function() {
                     {value: 'default', label: gettext('Proceed with registered case')},
                 ];
 
-                self.formMissing = ko.computed(function() {
+                self.formMissing = ko.computed(function () {
                     return self.caseListForm() && !formOptions[self.caseListForm()];
                 });
 
-                var showMedia = function(formId) {
+                var showMedia = function (formId) {
                     if (formId) {
                         $("#case_list_media").show();
                     } else {
@@ -138,7 +138,7 @@ hqDefine("app_manager/js/modules/module_view", function() {
             var caseListForm = caseListFormModel(
                 case_list_form_options ? case_list_form_options.form.form_id : null,
                 case_list_form_options ? case_list_form_options.options : [],
-                case_list_form_options ? case_list_form_options.form.post_form_workflow: 'default'
+                case_list_form_options ? case_list_form_options.form.post_form_workflow : 'default'
             );
             $('#case-list-form').koApplyBindings(caseListForm);
 
@@ -182,7 +182,7 @@ hqDefine("app_manager/js/modules/module_view", function() {
         // show display style options only when module configured to show module and then forms
         var $menu_mode = $('#put_in_root');
         var $display_style_container = $('#display_style_container');
-        var update_display_view = function() {
+        var update_display_view = function () {
             if ($menu_mode.val() === 'false') {
                 $display_style_container.show();
             } else {

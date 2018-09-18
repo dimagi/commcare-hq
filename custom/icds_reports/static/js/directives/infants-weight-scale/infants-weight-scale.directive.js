@@ -16,7 +16,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     };
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of AWCs that reported having a weighing scale for infants',
+        info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a weighing scale for infants',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -49,7 +49,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of AWCs that reported having a weighing scale for infants',
+        'captionContent': ' Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a weighing scale for infants',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();

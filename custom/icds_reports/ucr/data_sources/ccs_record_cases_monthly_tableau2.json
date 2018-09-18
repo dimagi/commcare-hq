@@ -1,6 +1,7 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-test",
     "icds-sql",
     "icds-test",
     "icds-cas",
@@ -165,7 +166,7 @@
         },
         "is_nullable": false,
         "is_primary_key": false,
-        "create_index": true,
+        "create_index": false,
         "transform": {},
         "type": "expression"
       },
@@ -292,7 +293,7 @@
       },
       {
         "column_id": "supervisor_id",
-        "create_index": true,
+        "create_index": false,
         "datatype": "string",
         "display_name": null,
         "expression": {
@@ -574,20 +575,69 @@
           "operator": "eq",
           "property_value": "yes",
           "expression": {
-            "type": "icds_get_last_case_property_update",
-            "case_id_expression": {
-              "type": "icds_parent_id"
+            "type": "conditional",
+            "test": {
+              "type": "not",
+              "filter": {
+                "type": "boolean_expression",
+                "operator": "in",
+                "expression": {
+                  "type": "named",
+                  "name": "aadhar_date_from_person_case"
+                },
+                "property_value": ["", null]
+              }
             },
-            "case_property": "has_aadhar",
-            "end_date": {
-              "type": "named",
-              "name": "month_end"
+            "expression_if_true": {
+              "type": "conditional",
+              "test": {
+                "type": "boolean_expression",
+                "operator": "gte",
+                "expression": {
+                  "type": "diff_days",
+                  "from_date_expression": {
+                    "type": "named",
+                    "name": "aadhar_date_from_person_case"
+                  },
+                  "to_date_expression": {
+                    "type": "named",
+                    "name": "month_end"
+                  }
+                },
+                "property_value": 0
+              },
+              "expression_if_true": {
+                "type": "constant",
+                "constant": "yes"
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": "no"
+              }
             },
-            "xmlns": [
-              "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
-              "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
-              "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
-            ]
+            "expression_if_false": {
+              "type": "conditional",
+              "test": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "named",
+                    "name": "aadhar_number_from_forms"
+                  },
+                  "property_value": ["", null]
+                }
+              },
+              "expression_if_true": {
+                "type": "constant",
+                "constant": "yes"
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": "no"
+              }
+            }
           }
         },
         "comment": "Filter history on add household, add member and edit member"
@@ -958,6 +1008,7 @@
         "type": "expression"
       },
       {
+        "comment": "currently unused",
         "column_id": "using_ifa",
         "display_name": null,
         "filter": {
@@ -1002,6 +1053,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently unused",
         "column_id": "ifa_consumed_last_seven_days",
         "display_name": null,
         "filter": {
@@ -1152,6 +1204,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently unused",
         "column_id": "bp_visited_in_month",
         "display_name": null,
         "filter": {
@@ -1165,7 +1218,7 @@
         "display_name": null,
         "filter": {
           "type": "named",
-          "name": "pnc_form_in_month"
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1271,6 +1324,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently_unused",
         "column_id": "counsel_bp_vid",
         "display_name": null,
         "filter": {
@@ -1326,6 +1380,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently_unused",
         "column_id": "counsel_preparation",
         "display_name": null,
         "filter": {
@@ -1381,6 +1436,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently_unused",
         "column_id": "counsel_fp_vid",
         "display_name": null,
         "filter": {
@@ -1435,6 +1491,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently_unused",
         "column_id": "counsel_immediate_conception",
         "display_name": null,
         "filter": {
@@ -1489,6 +1546,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently_unused",
         "column_id": "counsel_accessible_postpartum_fp",
         "display_name": null,
         "filter": {
@@ -1547,59 +1605,8 @@
         "column_id": "counsel_fp_methods",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "expression": {
-                "type": "named",
-                "name": "seeking_services"
-              },
-              "property_value": "yes"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "expression": {
-                "type": "named",
-                "name": "not_migrated"
-              },
-              "property_value": "yes"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "property_value": 0,
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "icds_get_case_forms_by_date",
-                  "xmlns": [
-                    "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
-                    "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
-                  ],
-                  "end_date": {
-                    "type": "named",
-                    "name": "month_end"
-                  },
-                  "form_filter": {
-                    "operator": "eq",
-                    "type": "boolean_expression",
-                    "expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "counsel_methods"
-                      ]
-                    },
-                    "property_value": "yes"
-                  }
-                }
-              }
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -2564,6 +2571,33 @@
           "type": "constant",
           "constant": "no"
         }
+      },
+      "aadhar_number_from_forms": {
+        "type": "icds_get_last_case_property_update",
+        "case_id_expression": {
+          "type": "icds_parent_id"
+        },
+        "case_property": "aadhar_number",
+        "end_date": {
+          "type": "named",
+          "name": "month_end"
+        },
+        "xmlns": [
+          "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
+          "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
+          "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
+        ]
+      },
+      "aadhar_date_from_person_case": {
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "icds_parent_id"
+        },
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "aadhar_date"
+        }
       }
     },
     "named_filters": {
@@ -2982,33 +3016,6 @@
           "count": true
         }
       },
-      "pnc_form_in_month": {
-        "type": "boolean_expression",
-        "operator": "gt",
-        "property_value": 0,
-        "expression": {
-          "type": "icds_get_case_forms_in_date",
-          "case_id_expression": {
-            "expression": {
-              "type": "property_name",
-              "property_name": "_id"
-            },
-            "type": "root_doc"
-          },
-          "xmlns": [
-            "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
-          ],
-          "from_date_expression": {
-            "type": "named",
-            "name": "month_start"
-          },
-          "to_date_expression": {
-            "type": "named",
-            "name": "month_end"
-          },
-          "count": true
-        }
-      },
       "postnatal": {
         "type": "and",
         "filters": [
@@ -3108,6 +3115,15 @@
             "property_value": "yes"
           }
         ]
+      },
+      "false": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "property_value": 0,
+        "expression": {
+          "type": "constant",
+          "constant": 1
+        }
       }
     },
     "asynchronous": true,

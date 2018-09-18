@@ -7,6 +7,7 @@ from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
+from io import open
 
 
 def bootstrap_tropo_gateway(apps):
@@ -24,7 +25,7 @@ def bootstrap_tropo_gateway(apps):
     )
 
     rates_csv = open('corehq/apps/smsbillables/management/'
-                     'pricing_data/tropo_international_rates_2013-12-19.csv', 'r')
+                     'pricing_data/tropo_international_rates_2013-12-19.csv', 'r', encoding='utf-8')
     for line in rates_csv.readlines():
         data = line.split(',')
         if data[1] == 'Fixed Line' and data[4] != '\n':

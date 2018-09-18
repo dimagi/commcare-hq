@@ -14,4 +14,5 @@ class GlobalRequestMiddleware(MiddlewareMixin):
         set_request(request)
 
     def process_response(self, request, response):
+        set_request(None)
         return response

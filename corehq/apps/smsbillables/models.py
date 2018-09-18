@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
-
+from corehq import toggles
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
@@ -335,7 +335,7 @@ class SmsBillable(models.Model):
 
         gateway_charge_info = cls._get_gateway_fee(
             message_log.backend_api, message_log.backend_id, phone_number, direction, log_id,
-            message_log.backend_message_id
+            message_log.backend_message_id, domain
         )
         billable.gateway_fee = gateway_charge_info.gateway_fee
         billable.gateway_fee_conversion_rate = gateway_charge_info.conversion_rate
@@ -364,9 +364,10 @@ class SmsBillable(models.Model):
 
     @classmethod
     def _get_gateway_fee(cls, backend_api_id, backend_instance,
-                         phone_number, direction, couch_id, backend_message_id):
+                         phone_number, direction, couch_id, backend_message_id, domain):
         country_code, national_number = get_country_code_and_national_number(phone_number)
-        is_gateway_billable = backend_instance is None or _sms_backend_is_global(backend_instance)
+        is_gateway_billable = backend_instance is None or _sms_backend_is_global(
+            backend_instance) or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
 
         if is_gateway_billable:
             is_twilio_message = backend_api_id == SQLTwilioBackend.get_api_id()

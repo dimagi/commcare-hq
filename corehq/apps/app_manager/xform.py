@@ -13,7 +13,8 @@ from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE)
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE,
+)
 from lxml import etree as ET
 
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
@@ -165,6 +166,8 @@ class WrappedAttribs(object):
 class WrappedNode(object):
 
     def __init__(self, xml, namespaces=namespaces):
+        if isinstance(xml, bytes):
+            xml = xml.decode('utf-8')
         if isinstance(xml, six.string_types):
             self.xml = parse_xml(xml) if xml else None
         else:
@@ -180,8 +183,7 @@ class WrappedNode(object):
 
     def find(self, xpath, *args, **kwargs):
         if self.xml is not None:
-            return WrappedNode(self.xml.find(
-                xpath.format(**self.namespaces), *args, **kwargs))
+            return WrappedNode(self.xml.find(xpath.format(**self.namespaces), *args, **kwargs))
         else:
             return WrappedNode(None)
 
@@ -281,7 +283,7 @@ class ItextNode(object):
     @property
     @memoized
     def rendered_values(self):
-        return sorted([str.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
+        return sorted([bytes.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
 
     def __repr__(self):
         return self.id
@@ -607,7 +609,11 @@ class XForm(WrappedNode):
         self._scheduler_case_updates_populated = False
 
     def __str__(self):
-        return ET.tostring(self.xml) if self.xml is not None else ''
+        text = ET.tostring(self.xml).decode('utf-8') if self.xml is not None else ''
+        if six.PY3:
+            return text
+        else:
+            return text.encode('utf-8')
 
     @property
     @raise_if_none("Can't find <model>")
@@ -951,14 +957,39 @@ class XForm(WrappedNode):
         :param include_groups: When set will return repeats and group questions
         :param include_translations: When set to True will return all the translations for the question
         """
+        from corehq.apps.app_manager.util import first_elem
+
+        def _add_choices_for_select_questions(question):
+            if cnode.items is not None:
+                options = []
+                for item in cnode.items:
+                    translation = self.get_label_text(item, langs)
+                    try:
+                        value = item.findtext('{f}value').strip()
+                    except AttributeError:
+                        raise XFormException(_("<item> ({}) has no <value>").format(translation))
+                    option = {
+                        'label': translation,
+                        'value': value
+                    }
+                    if include_translations:
+                        option['translations'] = self.get_label_translations(item, langs)
+                    options.append(option)
+                question['options'] = options
+            return question
 
         if not self.exists():
             return []
 
         questions = []
         repeat_contexts = set()
-        excluded_paths = set()
+        group_contexts = set()
+        excluded_paths = set()  # prevent adding the same question twice
 
+        # control_nodes will contain all nodes in question tree (the <h:body> of an xform)
+        # The question tree doesn't contain every question - notably, it's missing hidden values - so
+        # we also need to look at the data tree (the <model> in the xform's <head>). Getting the leaves
+        # of the data tree should be sufficient to fill in what's not available from the question tree.
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
 
@@ -970,6 +1001,10 @@ class XForm(WrappedNode):
             repeat = cnode.repeat
             if repeat is not None:
                 repeat_contexts.add(repeat)
+
+            group = cnode.group
+            if group is not None:
+                group_contexts.add(group)
 
             if not cnode.is_leaf and not include_groups:
                 continue
@@ -987,53 +1022,41 @@ class XForm(WrappedNode):
                 "relevant": cnode.relevant,
                 "required": cnode.required == "true()",
                 "constraint": cnode.constraint,
-                "comment": self._get_comment(leaf_data_nodes, path),
+                "comment": self.get_comment(path),
                 "hashtagValue": self.hashtag_path(path),
                 "setvalue": self.get_setvalue(path),
             }
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
 
-            if cnode.items is not None:
-                options = []
-                for item in cnode.items:
-                    translation = self.get_label_text(item, langs)
-                    try:
-                        value = item.findtext('{f}value').strip()
-                    except AttributeError:
-                        raise XFormException(_("<item> ({}) has no <value>").format(translation))
-                    option = {
-                        'label': translation,
-                        'value': value
-                    }
-                    if include_translations:
-                        option['translations'] = self.get_label_translations(item, langs)
-                    options.append(option)
-                question['options'] = options
+            question = _add_choices_for_select_questions(question)
+
             questions.append(question)
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
+        group_contexts = sorted(group_contexts, reverse=True)
 
         save_to_case_nodes = {}
         for path, data_node in six.iteritems(leaf_data_nodes):
             if path not in excluded_paths:
                 bind = self.get_bind(path)
-                try:
-                    matching_repeat_context = [
-                        rc for rc in repeat_contexts if path.startswith(rc + '/')
-                    ][0]
-                except IndexError:
-                    matching_repeat_context = None
+
+                matching_repeat_context = first_elem([rc for rc in repeat_contexts
+                                                      if path.startswith(rc + '/')])
+                matching_group_context = first_elem([gc for gc in group_contexts
+                                                     if path.startswith(gc + '/')])
+
                 question = {
                     "tag": "hidden",
                     "value": path,
                     "repeat": matching_repeat_context,
-                    "group": matching_repeat_context,
+                    "group": matching_group_context,
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                     "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
                     "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
-                    "comment": self._get_comment(leaf_data_nodes, path),
+                    "comment": self.get_comment(path),
+                    "setvalue": self.get_setvalue(path)
                 }
 
                 # Include meta information about the stock entry
@@ -1187,9 +1210,9 @@ class XForm(WrappedNode):
         for_each_control_node(self.find('{h}body'))
         return control_nodes
 
-    def _get_comment(self, leaf_data_nodes, path):
+    def get_comment(self, path):
         try:
-            return leaf_data_nodes[path].attrib.get('{v}comment')
+            return self.get_flattened_data_nodes()[path].attrib.get('{v}comment')
         except KeyError:
             return None
 
@@ -1220,8 +1243,11 @@ class XForm(WrappedNode):
         return path
 
     def get_leaf_data_nodes(self):
+        return self.get_flattened_data_nodes(leaves_only=True)
+
+    def get_flattened_data_nodes(self, leaves_only=False):
         if not self.exists():
-            return []
+            return {}
 
         data_nodes = {}
 
@@ -1230,7 +1256,7 @@ class XForm(WrappedNode):
             for child in children:
                 path = self.resolve_path(child.tag_name, path_context)
                 for_each_data_node(child, path_context=path)
-            if not children and path_context:
+            if (not leaves_only or not children) and path_context:
                 data_nodes[path_context] = parent
 
         for_each_data_node(self.data_node)
@@ -1298,7 +1324,7 @@ class XForm(WrappedNode):
 
     def add_meta_2(self, form):
         case_parent = self.data_node
-
+        app = form.get_app()
         # Test all of the possibilities so that we don't end up with two "meta" blocks
         for meta in self.already_has_meta():
             case_parent.remove(meta.xml)
@@ -1317,6 +1343,7 @@ class XForm(WrappedNode):
             '{orx}userID',
             '{orx}instanceID',
             '{cc}appVersion',
+            '{orx}drift',
         )
         if form.get_auto_gps_capture():
             tags += ('{cc}location',)
@@ -1356,9 +1383,15 @@ class XForm(WrappedNode):
             ref="meta/appVersion",
             value="instance('commcaresession')/session/context/appversion"
         )
+        self.add_setvalue(
+            ref="meta/drift",
+            event="xforms-revalidate",
+            value="if(count(instance('commcaresession')/session/context/drift) = 1, "
+                  "instance('commcaresession')/session/context/drift, '')",
+        )
 
         # never add pollsensor to a pre-2.14 app
-        if form.get_app().enable_auto_gps:
+        if app.enable_auto_gps:
             if form.get_auto_gps_capture():
                 self.add_pollsensor(ref=self.resolve_path("meta/location"))
             elif self.model_node.findall("{f}bind[@type='geopoint']"):
@@ -1927,137 +1960,129 @@ VELLUM_TYPES = {
     "AndroidIntent": {
         'tag': 'input',
         'type': 'intent',
-        'icon': 'icon-vellum-android-intent',
-        'icon_bs3': 'fcc fcc-fd-android-intent',
+        'icon': 'fcc fcc-fd-android-intent',
+        'editable': True,
     },
     "Audio": {
         'tag': 'upload',
         'media': 'audio/*',
         'type': 'binary',
-        'icon': 'icon-vellum-audio-capture',
-        'icon_bs3': 'fcc fcc-fd-audio-capture',
+        'icon': 'fcc fcc-fd-audio-capture',
     },
     "Barcode": {
         'tag': 'input',
         'type': 'barcode',
-        'icon': 'icon-vellum-android-intent',
-        'icon_bs3': 'fcc fcc-fd-android-intent',
+        'icon': 'fcc fcc-fd-android-intent',
+        'editable': True,
     },
     "DataBindOnly": {
-        'icon': 'icon-vellum-variable',
-        'icon_bs3': 'fcc fcc-fd-variable',
+        'icon': 'fcc fcc-fd-variable',
+        'editable': True,
     },
     "Date": {
         'tag': 'input',
         'type': 'xsd:date',
-        'icon': 'icon-calendar',
-        'icon_bs3': 'fa fa-calendar',
+        'icon': 'fa fa-calendar',
+        'editable': True,
     },
     "DateTime": {
         'tag': 'input',
         'type': 'xsd:dateTime',
-        'icon': 'icon-vellum-datetime',
-        'icon_bs3': 'fcc fcc-fd-datetime',
+        'icon': 'fcc fcc-fd-datetime',
+        'editable': True,
     },
     "Double": {
         'tag': 'input',
         'type': 'xsd:double',
-        'icon': 'icon-vellum-decimal',
-        'icon_bs3': 'fcc fcc-fd-decimal',
+        'icon': 'fcc fcc-fd-decimal',
+        'editable': True,
     },
     "FieldList": {
         'tag': 'group',
         'appearance': 'field-list',
-        'icon': 'icon-reorder',
-        'icon_bs3': 'fa fa-bars',
+        'icon': 'fa fa-bars',
     },
     "Geopoint": {
         'tag': 'input',
         'type': 'geopoint',
-        'icon': 'icon-map-marker',
-        'icon_bs3': 'fa fa-map-marker',
+        'icon': 'fa fa-map-marker',
+        'editable': True,
     },
     "Group": {
         'tag': 'group',
-        'icon': 'icon-folder-open',
-        'icon_bs3': 'fa fa-folder-open',
+        'icon': 'fa fa-folder-open',
     },
     "Image": {
         'tag': 'upload',
         'media': 'image/*',
         'type': 'binary',
-        'icon': 'icon-camera',
-        'icon_bs3': 'fa fa-camera',
+        'icon': 'fa fa-camera',
     },
     "Int": {
         'tag': 'input',
         'type': ('xsd:int', 'xsd:integer'),
-        'icon': 'icon-vellum-numeric',
-        'icon_bs3': 'fcc fcc-fd-numeric',
+        'icon': 'fcc fcc-fd-numeric',
+        'editable': True,
     },
     "Long": {
         'tag': 'input',
         'type': 'xsd:long',
-        'icon': 'icon-vellum-long',
-        'icon_bs3': 'fcc fcc-fd-long',
+        'icon': 'fcc fcc-fd-long',
+        'editable': True,
     },
     "MSelect": {
         'tag': 'select',
-        'icon': 'icon-vellum-multi-select',
-        'icon_bs3': 'fcc fcc-fd-multi-select',
+        'icon': 'fcc fcc-fd-multi-select',
+        'editable': True,
     },
     "PhoneNumber": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'appearance': 'numeric',
-        'icon': 'icon-signal',
-        'icon_bs3': 'fa fa-signal',
+        'icon': 'fa fa-signal',
+        'editable': True,
     },
     "Repeat": {
         'tag': 'repeat',
-        'icon': 'icon-retweet',
-        'icon_bs3': 'fa fa-retweet',
+        'icon': 'fa fa-retweet',
     },
     "SaveToCase": {
         'tag': 'save_to_case',
-        'icon': 'icon-save',
-        'icon_bs3': 'fa fa-save',
+        'icon': 'fa fa-save',
     },
 
     "Secret": {
         'tag': 'secret',
         'type': ('xsd:string', None),
-        'icon': 'icon-key',
-        'icon_bs3': 'fa fa-key',
+        'icon': 'fa fa-key',
+        'editable': True,
     },
     "Select": {
         'tag': 'select1',
-        'icon': 'icon-vellum-single-select',
-        'icon_bs3': 'fcc fcc-fd-single-select',
+        'icon': 'fcc fcc-fd-single-select',
+        'editable': True,
     },
     "Text": {
         'tag': 'input',
         'type': ('xsd:string', None),
-        'icon': "icon-vellum-text",
-        'icon_bs3': 'fcc fcc-fd-text',
+        'icon': 'fcc fcc-fd-text',
+        'editable': True,
     },
     "Time": {
         'tag': 'input',
         'type': 'xsd:time',
-        'icon': 'icon-time',
-        'icon_bs3': 'a fa-clock-o',
+        'icon': 'fa fa-clock-o',
+        'editable': True,
     },
     "Trigger": {
         'tag': 'trigger',
-        'icon': 'icon-tag',
-        'icon_bs3': 'fa fa-tag',
+        'icon': 'fa fa-tag',
     },
     "Video": {
         'tag': 'upload',
         'media': 'video/*',
         'type': 'binary',
-        'icon': 'icon-facetime-video',
-        'icon_bs3': 'fa fa-video-camera',
+        'icon': 'fa fa-video-camera',
     },
 }
 

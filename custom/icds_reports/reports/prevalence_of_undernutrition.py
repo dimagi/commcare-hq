@@ -12,6 +12,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.messages import underweight_children_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
     get_child_locations
@@ -109,13 +110,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         "fills": fills,
         "rightLegend": {
             "average": average,
-            "info": _((
-                "Percentage of children between {} enrolled for Anganwadi Services with weight-for-age "
-                "less than -2 standard deviations of the WHO Child Growth Standards median. "
-                "<br/><br/>"
-                "Children who are moderately or severely underweight have a higher risk of mortality"
-                .format(age_label)
-            )),
+            "info": underweight_children_help_text(age_label=age_label, html=True),
             "extended_info": [
                 {
                     'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
@@ -333,12 +328,7 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
 
     return {
         "tooltips_data": dict(tooltips_data),
-        "info": _((
-            "Percentage of children between 0-5 years enrolled for Anganwadi Services with weight-for-age "
-            "less than -2 standard deviations of the WHO Child Growth Standards median. "
-            "<br/><br/>"
-            "Children who are moderately or severely underweight have a higher risk of mortality"
-        )),
+        "info": underweight_children_help_text(age_label="0-5 years", html=True),
         "chart_data": [
             {
                 "values": chart_data['blue'],

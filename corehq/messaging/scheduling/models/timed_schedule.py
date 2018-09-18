@@ -6,8 +6,10 @@ import hashlib
 import json
 import random
 import re
+from copy import deepcopy
+from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
-from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
+from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast, Content
 from corehq.messaging.scheduling import util
 from corehq.util.timezones.conversions import UserTime
 from datetime import timedelta, datetime, date, time
@@ -46,6 +48,11 @@ class TimedSchedule(Schedule):
     total_iterations = models.IntegerField()
     start_offset = models.IntegerField(default=0)
     start_day_of_week = models.IntegerField(default=ANY_DAY)
+
+    # For the purposes of displaying schedules in the UI, it's expected that
+    # all events related to a given schedule are of the same type which is stored
+    # here. But the framework should handle a schedule with mixed event types or
+    # mixed content types.
     event_type = models.CharField(max_length=50, default=EVENT_SPECIFIC_TIME)
 
     def get_schedule_revision(self, case=None):
@@ -55,13 +62,18 @@ class TimedSchedule(Schedule):
         being sent at each event, is excluded. This is mainly used to determine
         when a TimedScheduleInstance should recalculate its schedule.
         """
-        schedule_info = json.dumps([
+        result = [
             self.repeat_every,
             self.total_iterations,
             self.start_offset,
             self.start_day_of_week,
             [e.get_scheduling_info(case=case) for e in self.memoized_events],
-        ])
+        ]
+
+        if self.use_utc_as_default_timezone:
+            result.append('UTC_DEFAULT')
+
+        schedule_info = json.dumps(result)
         return hashlib.md5(schedule_info).hexdigest()
 
     @property
@@ -94,6 +106,16 @@ class TimedSchedule(Schedule):
         """
         return self.repeat_every < 0
 
+    def get_weekdays(self):
+        """
+        Returns the weekdays (0-6 meaning Monday-Sunday) that this weekly schedule
+        sends on.
+        """
+        if self.ui_type != self.UI_TYPE_WEEKLY:
+            raise ValueError("Expected simple weekly schedule")
+
+        return [(self.start_day_of_week + e.day) % 7 for e in self.memoized_events]
+
     def set_first_event_due_timestamp(self, instance, start_date=None):
         """
         If start_date is None, we set it automatically ensuring that
@@ -103,7 +125,7 @@ class TimedSchedule(Schedule):
         if start_date:
             instance.start_date = start_date
         else:
-            instance.start_date = instance.today_for_recipient
+            instance.start_date = instance.get_today_for_recipient(self)
 
         self.set_next_event_due_timestamp(instance)
 
@@ -221,7 +243,7 @@ class TimedSchedule(Schedule):
             user_timestamp = self.get_local_next_event_due_timestamp(instance)
 
         instance.next_event_due = (
-            UserTime(user_timestamp, instance.timezone)
+            UserTime(user_timestamp, instance.get_timezone(self))
             .server_time()
             .done()
             .replace(tzinfo=None)
@@ -318,6 +340,74 @@ class TimedSchedule(Schedule):
             event.day = 0
             event.content = content
             event.save()
+
+    @classmethod
+    def create_custom_daily_schedule(cls, domain, event_and_content_objects, total_iterations=REPEAT_INDEFINITELY,
+            start_offset=0, start_day_of_week=ANY_DAY, extra_options=None, repeat_every=1):
+        schedule = cls(domain=domain)
+        schedule.set_custom_daily_schedule(event_and_content_objects, total_iterations=total_iterations,
+            start_offset=start_offset, start_day_of_week=start_day_of_week, extra_options=extra_options,
+            repeat_every=repeat_every)
+        return schedule
+
+    def set_custom_daily_schedule(self, event_and_content_objects, total_iterations=REPEAT_INDEFINITELY,
+            start_offset=0, start_day_of_week=ANY_DAY, extra_options=None, repeat_every=1):
+        """
+        :param event_and_content_objects: A list of (event, content) tuples where event is
+        an instance of a subclass of AbstractTimedEvent and content is an instance of a
+        subclass of Content. These tuples should already be in the right order, and the
+        order attribute of each event will be set according to the order in this list.
+        It's also expected that each event is of the same type (i.e., TimedEvent, RandomTimedEvent,
+        or CasePropertyTimedEvent) for the purposes of displaying this schedule in the UI.
+
+        :param total_iterations: the total iterations of the schedule to perform
+
+        :param start_offset: the start offset
+
+        :param start_day_of_week: the start day of the week
+
+        :param extra_options: any extra options that will be passed to set_extra_scheduling_options
+
+        :param repeat_every: this should be the number of days in the schedule and will
+        dictate how often the schedule repeats
+        """
+
+        self.check_positive_repeat_every(repeat_every)
+
+        if len(event_and_content_objects) == 0:
+            raise ValueError("Expected at least one (event, content) tuple")
+
+        if repeat_every <= max([e[0].day for e in event_and_content_objects]):
+            raise ValueError("repeat_every must be large enough to cover all days in the schedule")
+
+        with transaction.atomic():
+            self.delete_related_events()
+
+            self.ui_type = self.UI_TYPE_CUSTOM_DAILY
+            self.event_type = self.get_event_type_from_model_event(event_and_content_objects[0][0])
+            self.start_offset = start_offset
+            self.start_day_of_week = start_day_of_week
+            self.repeat_every = repeat_every
+            self.total_iterations = total_iterations
+            self.set_extra_scheduling_options(extra_options)
+            self.save()
+
+            # passing `start` just controls where order starts counting at, it doesn't
+            # cause elements to be skipped
+            for order, event_and_content in enumerate(event_and_content_objects, start=1):
+                event, content = event_and_content
+
+                if not isinstance(event, AbstractTimedEvent):
+                    raise TypeError("Expected AbstractTimedEvent")
+
+                if not isinstance(content, Content):
+                    raise TypeError("Expected Content")
+
+                content.save()
+                event.schedule = self
+                event.content = content
+                event.order = order
+                event.save()
 
     def validate_day_of_week(self, day):
         if not isinstance(day, int) or day < 0 or day > 6:
@@ -429,6 +519,17 @@ class TimedSchedule(Schedule):
                 event.save()
                 order += 1
 
+    @property
+    def references_parent_case(self):
+        if super(TimedSchedule, self).references_parent_case:
+            return True
+
+        for event in self.memoized_events:
+            if isinstance(event, CasePropertyTimedEvent) and property_references_parent(event.case_property_name):
+                return True
+
+        return False
+
 
 class AbstractTimedEvent(Event):
     class Meta(object):
@@ -457,6 +558,15 @@ class AbstractTimedEvent(Event):
 class TimedEvent(AbstractTimedEvent):
     time = models.TimeField()
 
+    def create_copy(self):
+        """
+        See Event.create_copy() for docstring.
+        """
+        return TimedEvent(
+            day=self.day,
+            time=deepcopy(self.time),
+        )
+
     def get_time(self, case=None):
         return self.time, 0
 
@@ -474,6 +584,16 @@ class RandomTimedEvent(AbstractTimedEvent):
     """
     time = models.TimeField()
     window_length = models.PositiveIntegerField()
+
+    def create_copy(self):
+        """
+        See Event.create_copy() for docstring.
+        """
+        return RandomTimedEvent(
+            day=self.day,
+            time=deepcopy(self.time),
+            window_length=self.window_length,
+        )
 
     def get_time(self, case=None):
         choices = list(range(self.window_length))
@@ -494,6 +614,15 @@ class CasePropertyTimedEvent(AbstractTimedEvent):
     content based on the value in a case property.
     """
     case_property_name = models.CharField(max_length=126)
+
+    def create_copy(self):
+        """
+        See Event.create_copy() for docstring.
+        """
+        return CasePropertyTimedEvent(
+            day=self.day,
+            case_property_name=self.case_property_name,
+        )
 
     def get_time(self, case=None):
         if not case:

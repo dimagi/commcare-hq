@@ -21,3 +21,7 @@ class GlobalRequestTest(SimpleTestCase):
     def test_get_domain_null(self):
         set_request(None)
         self.assertEqual(None, get_request_domain())
+
+    def tearDown(self):
+        set_request(None)
+        super(GlobalRequestTest, self).tearDown()

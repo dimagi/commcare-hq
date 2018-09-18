@@ -5,6 +5,7 @@ from corehq.warehouse.models.dimensions import (
     LocationDim,
     DomainDim,
     UserLocationDim,
+    DomainMembershipDim,
     UserGroupDim,
     ApplicationDim
 )
@@ -17,6 +18,7 @@ from corehq.warehouse.models.meta import (
 from corehq.warehouse.models.facts import (
     ApplicationStatusFact,
     FormFact,
+    SyncLogFact,
 )
 
 from corehq.warehouse.models.staging import (
@@ -26,8 +28,9 @@ from corehq.warehouse.models.staging import (
     FormStagingTable,
     SyncLogStagingTable,
     LocationStagingTable,
-    LocationTypeStagingTable,
-    ApplicationStagingTable
+    ApplicationStagingTable,
+    AppStatusFormStaging,
+    AppStatusSynclogStaging
 )
 
 
@@ -39,7 +42,6 @@ def get_cls_by_slug(slug):
         FormStagingTable.slug: FormStagingTable,
         SyncLogStagingTable.slug: SyncLogStagingTable,
         LocationStagingTable.slug: LocationStagingTable,
-        LocationTypeStagingTable.slug: LocationTypeStagingTable,
         ApplicationStagingTable.slug: ApplicationStagingTable,
 
         UserDim.slug: UserDim,
@@ -47,9 +49,13 @@ def get_cls_by_slug(slug):
         LocationDim.slug: LocationDim,
         DomainDim.slug: DomainDim,
         UserLocationDim.slug: UserLocationDim,
+        DomainMembershipDim.slug: DomainMembershipDim,
         UserGroupDim.slug: UserGroupDim,
         ApplicationDim.slug: ApplicationDim,
 
         ApplicationStatusFact.slug: ApplicationStatusFact,
         FormFact.slug: FormFact,
+        SyncLogFact.slug: SyncLogFact,
+        AppStatusFormStaging.slug: AppStatusFormStaging,
+        AppStatusSynclogStaging.slug: AppStatusSynclogStaging
     }[slug]

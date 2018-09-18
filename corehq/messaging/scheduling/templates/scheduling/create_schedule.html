@@ -5,7 +5,7 @@
 
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'data_interfaces/js/make_read_only.js' %}"></script>
+    {% requirejs_main 'scheduling/js/create_schedule_main' %}
 {% endblock %}
 
 {% block page_content %}{{ block.super }}
@@ -18,9 +18,8 @@
         help page.
         {% endblocktrans %}
     </p>
+    {% include 'scheduling/partial/custom_event_templates.html' %}
     <form class="form form-horizontal main-form" method="POST" action="#">
-        <div id="create-schedule-form">
-            {% crispy schedule_form %}
-        </div>
+        {% include 'scheduling/partial/schedule_form.html' %}
     </form>
 {% endblock %}

@@ -13,6 +13,8 @@ providing generic domain management and form data-collection functionality.
 
 More in depth docs are available on [ReadTheDocs](http://commcare-hq.readthedocs.io/)
 
+If you are interested in managing a production CommCare HQ environment, check out [CommCare Cloud](http://dimagi.github.io/commcare-cloud/), our toolkit for deploying and maintaining CommCare servers.
+
 ### Key Components
 
 + CommCare application builder
@@ -39,8 +41,9 @@ Please note that these instructions are targeted toward UNIX-based systems. For 
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Python 2.7](https://www.python.org/downloads/)
+- [Pip](https://pip.pypa.io/en/stable/installing/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
-- [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
+- [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
 #### Setup virtualenv
 
@@ -105,12 +108,8 @@ You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
 
-Create a superuser for your local environment. (Ignore warnings
-related to Raven for the following three commands.)
-
-    $ ./manage.py make_superuser <email>
-
-To set up elasticsearch indexes run the following:
+To set up elasticsearch indexes run the following (Ignore warnings
+related to Raven for the following two commands.):
 
     $ ./manage.py ptop_preindex
 
@@ -125,7 +124,7 @@ names to the aliases.
 ### Installing Bower
 
 We use bower to manage our javascript dependencies. In order to download the required javascript packages,
-you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
+you'll need to install `bower` and run `bower install`. Follow these steps to install:
 
 1. If you do not already have npm:
 
@@ -210,16 +209,16 @@ For all STATICFILES changes (primarily LESS and JavaScript), run:
     $ manage.py compress
 
 
-#### FormPlayer
+#### Formplayer
 
-To enable FormPlayer, ensure that `TOUCHFORMS_API_USER` and
-`TOUCHFORMS_API_PASSWORD` in `localsettings.py` are the credentials of the
-django admin user you created above (with manage.py bootstrap) and then create
-the file `submodules/touchforms-src/touchforms/backend/localsettings.py` with
-the following contents:
+Formplayer is a Java service that allows us to use applications on the web instead of on a mobile device. 
+
+In `localsettings.py`:
 ```
-URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
+FORMPLAYER_URL = 'http://localhost:8010'
 ```
+
+Then you need to have formplayer running. There are a few options as described below.
 
 ##### Running Formplayer in Docker
 
@@ -275,6 +274,10 @@ Then run the following separately:
     $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
     # Windows
     > manage.py celeryd --settings=settings
+
+Create a superuser for your local environment
+
+    $ ./manage.py make_superuser <email>
 
 If you want to use CloudCare you will also need to run the Touchforms server.
 
@@ -568,9 +571,6 @@ that you have a 32bit version of Python installed.
   + [Pillow][pillow]
   + [psycopg2][psycopg2]
   + [greenlet][greenlet]
-+ Install http-parser by adding MinGW/bin to the path and running `pip install http-parser`. You may also need to alter
-  $PYTHON_HOME/Lib/distutils/cygwincompiler.py to remove all instances of '-mno-cygwin' which is a depreciated compiler
-  option. The http-parser package is required by restkit.
 + Having installed those packages you can comment them out of the requirements/requirements.txt file.
 + Now run
 

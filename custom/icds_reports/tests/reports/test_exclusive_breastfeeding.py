@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import exclusive_breastfeeding_help_text
 from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_map, \
     get_exclusive_breastfeeding_data_chart, get_exclusive_breastfeeding_sector_data
 from django.test import TestCase
@@ -10,7 +11,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestExclusiveBreastfeeding(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_exclusive_breastfeeding_data_map(
@@ -78,13 +78,7 @@ class TestExclusiveBreastfeeding(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Percentage of infants 0-6 months of age who are fed exclusively "
-            "with breast milk. <br/><br/>An infant is exclusively breastfed "
-            "if they recieve only breastmilk with "
-            "no additional food, liquids (even water) "
-            "ensuring optimal nutrition and growth between 0 - 6 months"
-        )
+        expected = exclusive_breastfeeding_help_text(html=True)
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -298,10 +292,7 @@ class TestExclusiveBreastfeeding(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-                        "<br/><br/>An infant is exclusively breastfed if they recieve only breastmilk with"
-                        " no additional food, liquids (even water) ensuring"
-                        " optimal nutrition and growth between 0 - 6 months",
+                "info": exclusive_breastfeeding_help_text(html=True),
                 "tooltips_data": {
                     "s2": {
                         "all": 13,

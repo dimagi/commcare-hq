@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 from django.db import models
-from kafka.common import TopicAndPartition
+from kafka.common import TopicPartition
 
 SEQUENCE_FORMATS = (
     ('text', 'text'),
@@ -16,7 +16,7 @@ def str_to_kafka_seq(seq):
     marshaled_seq = {}
     for key, val in seq.items():
         topic, partition = key.split(',')
-        marshaled_seq[TopicAndPartition(topic, int(partition))] = val
+        marshaled_seq[TopicPartition(topic, int(partition))] = val
     return marshaled_seq
 
 
@@ -73,7 +73,7 @@ class KafkaCheckpoint(models.Model):
     checkpoint_id = models.CharField(max_length=126, db_index=True)
     topic = models.CharField(max_length=126)
     partition = models.IntegerField()
-    offset = models.IntegerField()
+    offset = models.BigIntegerField()
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta(object):
@@ -81,26 +81,28 @@ class KafkaCheckpoint(models.Model):
 
     @classmethod
     def get_or_create_for_checkpoint_id(cls, checkpoint_id, topics):
-        # breaks pillowtop separation from hq
-        from corehq.apps.change_feed.topics import get_multi_topic_first_available_offsets
-
-        all_offsets = get_multi_topic_first_available_offsets(topics)
-
-        already_created = list(
+        num_already_created = (
             cls.objects
             .filter(checkpoint_id=checkpoint_id, topic__in=topics)
             .distinct('topic', 'partition')
-            .values_list('topic', 'partition')
+            .values_list('topic', 'partition').count()
         )
 
-        to_create = []
-
-        for tp, offset in all_offsets.items():
-            if tp not in already_created:
-                to_create.append(
-                    cls(checkpoint_id=checkpoint_id, topic=tp[0], partition=tp[1], offset=0)
-                )
-
-        cls.objects.bulk_create(to_create)
+        if num_already_created == 0:
+            _create_checkpoints_from_kafka(checkpoint_id, topics)
 
         return list(cls.objects.filter(checkpoint_id=checkpoint_id, topic__in=topics))
+
+
+def _create_checkpoints_from_kafka(checkpoint_id, topics):
+    # breaks pillowtop separation from hq
+    from corehq.apps.change_feed.topics import get_multi_topic_first_available_offsets
+
+    all_offsets = get_multi_topic_first_available_offsets(topics)
+
+    for tp, offset in all_offsets.items():
+        KafkaCheckpoint.objects.get_or_create(
+            checkpoint_id=checkpoint_id,
+            topic=tp[0], partition=tp[1],
+            defaults={"offset": 0}
+        )

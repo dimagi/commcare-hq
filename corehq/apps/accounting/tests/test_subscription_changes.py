@@ -1,19 +1,33 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.test import SimpleTestCase
-from mock import patch, Mock
+from django.test import SimpleTestCase, TransactionTestCase
+from mock import patch, Mock, call
 
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
     Subscriber)
-from corehq.apps.accounting.subscription_changes import DomainDowngradeActionHandler
+from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
+from corehq.apps.accounting.subscription_changes import DomainDowngradeActionHandler, _deactivate_schedules
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
+from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import (
     Permissions, UserRole, UserRolePresets, WebUser, CommCareUser,
 )
+from corehq.messaging.scheduling.models import (
+    SMSContent,
+    SMSSurveyContent,
+    ScheduledBroadcast,
+    ImmediateBroadcast,
+    TimedSchedule,
+    TimedEvent,
+    AlertSchedule,
+)
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
+from datetime import date, time
+import uuid
 
 
 class TestSubscriptionEmailLogic(SimpleTestCase):
@@ -204,3 +218,224 @@ class TestSubscriptionChangeResourceConflict(BaseAccountingTest):
             Domain_patch.get_by_name.side_effect = lambda name: get_by_name_func(name)
             handler.get_response()
             Domain_patch.get_by_name.assert_called_with(self.domain_name)
+
+
+class TestSoftwarePlanChanges(BaseAccountingTest):
+
+    def setUp(self):
+        super(TestSoftwarePlanChanges, self).setUp()
+        self.domain = Domain(
+            name="test-plan-changes",
+            is_active=True,
+        )
+        self.domain.save()
+        self.domain2 = Domain(
+            name="other-domain",
+            is_active=True,
+        )
+        self.domain2.save()
+
+        self.admin_username = generator.create_arbitrary_web_user_name()
+        self.account = BillingAccount.get_or_create_account_by_domain(
+            self.domain.name, created_by=self.admin_username)[0]
+        self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        self.advanced_plan.plan.max_domains = 1
+        self.community_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
+
+    def tearDown(self):
+        self.domain.delete()
+        self.domain2.delete()
+        super(TestSoftwarePlanChanges, self).tearDown()
+
+    def test_change_plan_blocks_on_max_domains(self):
+        Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan
+        )
+
+        sub2 = Subscription.new_domain_subscription(
+            self.account, self.domain2.name, self.community_plan
+        )
+        self.assertRaises(SubscriptionAdjustmentError, lambda: sub2.change_plan(self.advanced_plan))
+
+
+class DeactivateScheduleTest(TransactionTestCase):
+
+    def setUp(self):
+        super(DeactivateScheduleTest, self).setUp()
+        self.domain_1 = 'deactivate-schedules-1'
+        self.domain_obj_1 = Domain(name=self.domain_1)
+        self.domain_obj_1.save()
+        self.domain_2 = 'deactivate-schedules-2'
+        self.domain_obj_2 = Domain(name=self.domain_2)
+        self.domain_obj_2.save()
+
+        self.domain_1_sms_schedules = [
+            self.create_scheduled_broadcast(self.domain_1, SMSContent()),
+            self.create_immediate_broadcast(self.domain_1, SMSContent()),
+            self.create_conditional_alert(self.domain_1, SMSContent()),
+        ]
+
+        self.domain_1_survey_schedules = [
+            self.create_scheduled_broadcast(self.domain_1, self.create_survey_content()),
+            self.create_immediate_broadcast(self.domain_1, self.create_survey_content()),
+            self.create_conditional_alert(self.domain_1, self.create_survey_content()),
+        ]
+
+        self.domain_2_sms_schedules = [
+            self.create_scheduled_broadcast(self.domain_2, SMSContent()),
+            self.create_immediate_broadcast(self.domain_2, SMSContent()),
+            self.create_conditional_alert(self.domain_2, SMSContent()),
+        ]
+
+        self.domain_2_survey_schedules = [
+            self.create_scheduled_broadcast(self.domain_2, self.create_survey_content()),
+            self.create_immediate_broadcast(self.domain_2, self.create_survey_content()),
+            self.create_conditional_alert(self.domain_2, self.create_survey_content()),
+        ]
+
+    def create_survey_content(self):
+        return SMSSurveyContent(
+            form_unique_id='123',
+            expire_after=60,
+        )
+
+    def create_scheduled_broadcast(self, domain, content):
+        schedule = TimedSchedule.create_simple_daily_schedule(domain, TimedEvent(time=time(12, 0)), content)
+        return ScheduledBroadcast.objects.create(
+            domain=domain,
+            name='',
+            start_date=date(2018, 1, 1),
+            schedule=schedule,
+            recipients=[['CommCareUser', uuid.uuid4().hex]],
+        )
+
+    def create_immediate_broadcast(self, domain, content):
+        schedule = AlertSchedule.create_simple_alert(domain, content)
+        return ImmediateBroadcast.objects.create(
+            domain=domain,
+            name='',
+            schedule=schedule,
+            recipients=[['CommCareUser', uuid.uuid4().hex]],
+        )
+
+    def create_conditional_alert(self, domain, content):
+        schedule = AlertSchedule.create_simple_alert(domain, content)
+        rule = create_empty_rule(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            alert_schedule_id=schedule.schedule_id,
+            recipients=[['CommCareUser', uuid.uuid4().hex]],
+        )
+        return rule
+
+    def tearDown(self):
+        for domain in (self.domain_1, self.domain_2):
+            for rule in AutomaticUpdateRule.objects.filter(domain=domain):
+                rule.hard_delete()
+
+            for broadcast in ScheduledBroadcast.objects.filter(domain=domain):
+                broadcast.delete()
+
+            for broadcast in ImmediateBroadcast.objects.filter(domain=domain):
+                broadcast.delete()
+
+            for schedule in TimedSchedule.objects.filter(domain=domain):
+                schedule.delete()
+
+            for schedule in AlertSchedule.objects.filter(domain=domain):
+                schedule.delete()
+
+        self.domain_obj_1.delete()
+        self.domain_obj_2.delete()
+
+        super(DeactivateScheduleTest, self).tearDown()
+
+    def assertScheduleActiveFlag(self, obj, active_flag):
+        if isinstance(obj, ScheduledBroadcast):
+            schedule = TimedSchedule.objects.get(schedule_id=obj.schedule_id)
+        elif isinstance(obj, ImmediateBroadcast):
+            schedule = AlertSchedule.objects.get(schedule_id=obj.schedule_id)
+        elif isinstance(obj, AutomaticUpdateRule):
+            schedule = AlertSchedule.objects.get(schedule_id=obj.get_messaging_rule_schedule().schedule_id)
+        else:
+            raise TypeError("Expected ScheduledBroadcast, ImmediateBroadcast, or AutomaticUpdateRule")
+
+        self.assertEqual(schedule.active, active_flag)
+
+    def assertSchedulesActive(self, objects):
+        for obj in objects:
+            self.assertScheduleActiveFlag(obj, True)
+
+    def assertSchedulesInactive(self, objects):
+        for obj in objects:
+            self.assertScheduleActiveFlag(obj, False)
+
+    def test_deactivate_all_schedules(self):
+        self.assertSchedulesActive(self.domain_1_sms_schedules)
+        self.assertSchedulesActive(self.domain_1_survey_schedules)
+        self.assertSchedulesActive(self.domain_2_sms_schedules)
+        self.assertSchedulesActive(self.domain_2_survey_schedules)
+
+        with patch('corehq.apps.accounting.subscription_changes.refresh_timed_schedule_instances.delay') as p1,\
+                patch('corehq.apps.accounting.subscription_changes.refresh_alert_schedule_instances.delay') as p2,\
+                patch('corehq.messaging.tasks.initiate_messaging_rule_run') as p3:
+
+            _deactivate_schedules(self.domain_obj_1)
+
+            self.assertEqual(p1.call_count, 2)
+            p1.assert_has_calls(
+                [
+                    call(broadcast.schedule_id, broadcast.recipients, start_date=broadcast.start_date)
+                    for broadcast in (self.domain_1_sms_schedules[0], self.domain_1_survey_schedules[0])
+                ],
+                any_order=True
+            )
+
+            self.assertEqual(p2.call_count, 2)
+            p2.assert_has_calls(
+                [
+                    call(broadcast.schedule_id, broadcast.recipients)
+                    for broadcast in (self.domain_1_sms_schedules[1], self.domain_1_survey_schedules[1])
+                ],
+                any_order=True
+            )
+
+            self.assertEqual(p3.call_count, 2)
+            p3.assert_has_calls(
+                [
+                    call(rule.domain, rule.pk)
+                    for rule in (self.domain_1_sms_schedules[2], self.domain_1_survey_schedules[2])
+                ],
+                any_order=True
+            )
+
+        self.assertSchedulesInactive(self.domain_1_sms_schedules)
+        self.assertSchedulesInactive(self.domain_1_survey_schedules)
+        self.assertSchedulesActive(self.domain_2_sms_schedules)
+        self.assertSchedulesActive(self.domain_2_survey_schedules)
+
+    def test_deactivate_only_survey_schedules(self):
+        self.assertSchedulesActive(self.domain_1_sms_schedules)
+        self.assertSchedulesActive(self.domain_1_survey_schedules)
+        self.assertSchedulesActive(self.domain_2_sms_schedules)
+        self.assertSchedulesActive(self.domain_2_survey_schedules)
+
+        with patch('corehq.apps.accounting.subscription_changes.refresh_timed_schedule_instances.delay') as p1,\
+                patch('corehq.apps.accounting.subscription_changes.refresh_alert_schedule_instances.delay') as p2,\
+                patch('corehq.messaging.tasks.initiate_messaging_rule_run') as p3:
+
+            _deactivate_schedules(self.domain_obj_1, survey_only=True)
+
+            b = self.domain_1_survey_schedules[0]
+            p1.assert_called_once_with(b.schedule_id, b.recipients, start_date=b.start_date)
+
+            b = self.domain_1_survey_schedules[1]
+            p2.assert_called_once_with(b.schedule_id, b.recipients)
+
+            rule = self.domain_1_survey_schedules[2]
+            p3.assert_called_once_with(rule.domain, rule.pk)
+
+        self.assertSchedulesActive(self.domain_1_sms_schedules)
+        self.assertSchedulesInactive(self.domain_1_survey_schedules)
+        self.assertSchedulesActive(self.domain_2_sms_schedules)
+        self.assertSchedulesActive(self.domain_2_survey_schedules)
