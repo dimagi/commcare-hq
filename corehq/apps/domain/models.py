@@ -141,6 +141,8 @@ class CallCenterProperties(DocumentSchema):
 
     def update_from_app_config(self, config):
         """Update datasources enabled based on app config.
+
+        Follows similar logic to CallCenterIndicators
         :returns: True if changes were made
         """
         pre = (self.form_datasource_enabled, self.case_datasource_enabled, self.case_actions_datasource_enabled)
