@@ -56,7 +56,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
 
     def iter_document_ids(self, last_id=None):
         # todo: support last_id
-        return iter(self.case_accessors.get_case_ids_in_domain(type=self.case_type))
+        return iter(self.case_accessors.iter_case_ids_by_domain_and_type(self.case_type))
 
     def iter_documents(self, ids):
         for wrapped_case in self.case_accessors.iter_cases(ids):
