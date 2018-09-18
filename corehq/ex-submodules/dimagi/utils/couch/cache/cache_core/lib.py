@@ -37,8 +37,8 @@ class HQRedisCache(RedisCache):
 
     def get_many(self, *args, **kwargs):
         self._track_call()
-        super(HQRedisCache, self).get_many(*args, **kwargs)
+        return super(HQRedisCache, self).get_many(*args, **kwargs)
 
     def delete_many(self, *args, **kwargs):
         self._track_call()
-        super(HQRedisCache, self).delete_many(*args, **kwargs)
+        return super(HQRedisCache, self).delete_many(*args, **kwargs)
