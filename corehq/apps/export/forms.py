@@ -56,6 +56,8 @@ from dimagi.utils.dates import DateSpan
 
 from corehq.util import flatten_non_iterable_list
 
+from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
+
 
 class UserTypesField(forms.MultipleChoiceField):
     _USER_MOBILE = 'mobile'
@@ -920,27 +922,37 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         :param date_range: A DatePeriod or DateSpan
         """
         form_filters = []
-        if can_access_all_locations:
-            form_filters += [_f for _f in [
-                self._get_group_filter(group_ids),
-                self._get_user_type_filter(user_types),
-            ] if _f]
 
-        form_filters += [_f for _f in [
-            self._get_users_filter(user_ids),
-            self._get_locations_filter(location_ids)
-        ] if _f]
+        if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain_object.name):
+            if can_access_all_locations and user_types:
+                form_filters += self._get_user_type_filter(user_types)
+
+            form_filters += filter(None, [self._get_users_filter(user_ids)])
+
+        else:
+            if can_access_all_locations:
+                form_filters += filter(None, [self._get_group_filter(group_ids),
+                                              self._get_user_type_filter(user_types)])
+
+            form_filters += filter(None, [self._get_users_filter(user_ids),
+                                          self._get_locations_filter(location_ids)])
 
         form_filters = flatten_non_iterable_list(form_filters)
         if form_filters:
             form_filters = [OR(*form_filters)]
         else:
             form_filters = []
+
+        if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(self.domain_object.name):
+            form_filters += filter(None, [self._get_group_filter(group_ids),
+                                          self._get_locations_filter(location_ids)])
+
         date_filter = self._get_datespan_filter(date_range)
         if date_filter:
             form_filters.append(date_filter)
         if not can_access_all_locations:
             form_filters.append(self._scope_filter(accessible_location_ids))
+
         return form_filters
 
     def _scope_filter(self, accessible_location_ids):
