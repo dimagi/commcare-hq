@@ -208,7 +208,7 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def get_case_ids_in_domain(domain, type=None):
         raise NotImplementedError
 
-    @staticmethod
+    @abstractmethod
     def iter_case_ids_by_domain_and_type(domain, type_=None):
         raise NotImplementedError
 
