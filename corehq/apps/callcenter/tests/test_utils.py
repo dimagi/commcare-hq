@@ -338,7 +338,7 @@ class DomainTimezoneTests(SimpleTestCase):
 
     def _test_midnights(self, utcnow, test_cases):
         for tz, offset, expected in test_cases:
-            dom = DomainLite('', tz, '', True)
+            dom = DomainLite('', tz, '', True, True, True, True)
             self.assertEqual(dom.midnights(utcnow), expected, (tz, offset))
 
     def test_midnight_for_domain_general(self):

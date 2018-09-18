@@ -13,9 +13,9 @@ class TestCallCenterDataSources(SimpleTestCase):
     @patch('corehq.apps.callcenter.data_source.get_call_center_domains')
     def test_call_center_data_source_provider(self, get_call_center_domains):
         get_call_center_domains.return_value = [
-            DomainLite('domain1', None, None, True),
-            DomainLite('domain2', None, None, True),
-            DomainLite('domain3', None, None, False)
+            DomainLite('domain1', None, None, True, True, True, True),
+            DomainLite('domain2', None, None, True, True, True, True),
+            DomainLite('domain3', None, None, False, True, True, True)
         ]
 
         data_source_configs = [config for config, _ in call_center_data_source_configuration_provider()]
