@@ -40,26 +40,6 @@ class KafkaPublishingSQLTest(TestCase):
             processor=self.processor
         )
 
-    def test_duplicate_case_published(self):
-        # this test only runs on sql because it's handling a sql-specific edge case where duplicate
-        # form submissions should cause cases to be resubmitted.
-        # see: http://manage.dimagi.com/default.asp?228463 for context
-        case_id = uuid.uuid4().hex
-        form_xml = get_simple_form_xml(uuid.uuid4().hex, case_id)
-        submit_form_locally(form_xml, domain=self.domain)
-        self.assertEqual(1, len(CaseAccessors(self.domain).get_case_ids_in_domain()))
-
-        with process_pillow_changes(self.case_pillow):
-            with process_pillow_changes('DefaultChangeFeedPillow'):
-                dupe_form = submit_form_locally(form_xml, domain=self.domain).xform
-                self.assertTrue(dupe_form.is_duplicate)
-
-        # check the case was republished
-        self.assertEqual(1, len(self.processor.changes_seen))
-        case_meta = self.processor.changes_seen[0].metadata
-        self.assertEqual(case_id, case_meta.document_id)
-        self.assertEqual(self.domain, case_meta.domain)
-
     def test_duplicate_ledger_published(self):
         # this test also only runs on the sql backend for reasons described in test_duplicate_case_published
         # setup products and case
