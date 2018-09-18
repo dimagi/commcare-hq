@@ -16,6 +16,9 @@ def create_app_structure_repeat_records(sender, application, **kwargs):
 
 
 def update_callcenter_config(sender, application, **kwargs):
+    if not application.copy_of:
+        return
+
     domain = Domain.get_by_name(application.domain)
     cc_config = domain.call_center_config
     if not cc_config or not (cc_config.fixtures_are_active() and cc_config.config_is_valid()):
@@ -30,7 +33,6 @@ def update_callcenter_config(sender, application, **kwargs):
 app_post_save = Signal(providing_args=['application'])
 
 app_post_save.connect(create_app_structure_repeat_records)
+app_post_save.connect(update_callcenter_config)
 
 app_post_release = Signal(providing_args=['application'])
-
-app_post_release.connect(update_callcenter_config)
