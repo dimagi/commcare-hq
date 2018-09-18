@@ -113,7 +113,7 @@ from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports, prepare_excel_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
-    current_month_stunting_column, current_month_wasting_column
+    current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
@@ -594,6 +594,12 @@ class AwcReportsView(BaseReportView):
                 beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'beneficiary':
+            filters = {
+                'awc_id': config['awc_id'],
+            }
+            age = self.request.GET.get('age', None)
+            if age:
+                filters.update(get_age_filter_in_months(age))
             if 'awc_id' in config:
                 start = int(request.GET.get('start', 0))
                 length = int(request.GET.get('length', 10))
@@ -617,7 +623,7 @@ class AwcReportsView(BaseReportView):
                     length,
                     draw,
                     order,
-                    config['awc_id'],
+                    filters,
                     tuple(current_month.timetuple())[:3],
                     tuple(two_before.timetuple())[:3],
                     icds_features_flag
