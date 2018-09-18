@@ -992,7 +992,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def iter_case_ids_by_domain_and_type(domain, type_=None):
         from corehq.sql_db.util import run_query_across_partitioned_databases
-        q_expr = Q(domain=domain) & Q(type=type_)
+        q_expr = Q(domain=domain) & Q(deleted=False)
+        if type_:
+            q_expr &= Q(type=type_)
         for case_id in run_query_across_partitioned_databases(
                 CommCareCaseSQL, q_expr, values=['case_id']):
             yield case_id
