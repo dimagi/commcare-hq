@@ -990,7 +990,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
-    def iter_case_ids_by_domain_and_type(domain, type_):
+    def iter_case_ids_by_domain_and_type(domain, type_=None):
         from corehq.sql_db.util import run_query_across_partitioned_databases
         q_expr = Q(domain=domain) & Q(type=type_)
         for case_id in run_query_across_partitioned_databases(
