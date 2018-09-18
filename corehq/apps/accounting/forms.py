@@ -2006,7 +2006,8 @@ class TriggerCustomerInvoiceForm(forms.Form):
                 return datetime.date(year, 1, 1), datetime.date(year, 12, 31)
             else:
                 raise InvoiceError(
-                    "%s is set to be invoiced yearly. You may only invoice on January 1"
+                    "%s is set to be invoiced yearly, and you may not invoice in this month. "
+                    "You must select December in the year for which you are triggering an annual invoice."
                     % self.cleaned_data['customer_account']
                 )
         if account.invoicing_plan == InvoicingPlan.QUARTERLY:
@@ -2020,8 +2021,8 @@ class TriggerCustomerInvoiceForm(forms.Form):
                 return datetime.date(year, 10, 1), datetime.date(year, 12, 31)  # Quarter 4
             else:
                 raise InvoiceError(
-                    "%s is set to be invoiced quarterly. "
-                    "You may only invoice on April 1, July 1, October 1, or January 1."
+                    "%s is set to be invoiced quarterly, and you may not invoice in this month. "
+                    "You must select the last month of a quarter to trigger a quarterly invoice."
                     % self.cleaned_data['customer_account']
                 )
         else:
