@@ -1,14 +1,19 @@
 hqDefine('app_manager/js/download_index_main',[
     'jquery',
     'underscore',
+    'ace-builds/src-min-noconflict/ace',
     'app_manager/js/download_async_modal',
     'app_manager/js/source_files',
-],function ($, _) {
-
+],function ($, _, ace) {
+    
     $(function () {
-        hqRequire(['ace-builds/src-min-noconflict/ace'],function (ace) {
+        hqRequire([
+            'ace-builds/src-min-noconflict/mode-json',
+            'ace-builds/src-min-noconflict/mode-xml',
+        ],function () {
             var elements = $('.prettyprint');
             _.each(elements, function (elem) {
+
                 var editor = ace.edit(
                     elem,
                     {
@@ -20,8 +25,8 @@ hqDefine('app_manager/js/download_index_main',[
                         useWorker: false, // enable the worker to show syntax errors
                     }
                 );
-                var fileName = $(elem).data('filename');
 
+                var fileName = $(elem).data('filename');
                 if (fileName.endsWith('json')) {
                     editor.session.setMode('ace/mode/json');
                 } else {
@@ -31,5 +36,7 @@ hqDefine('app_manager/js/download_index_main',[
             });
         });
 
-    });
+    }
+    );
+
 });
