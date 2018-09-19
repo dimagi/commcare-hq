@@ -45,7 +45,7 @@
         </div>
         <div class="col-sm-4">
             {% if not show_inactive %}
-                <a class="btn btn-info pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">
+                <a class="btn btn-default pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">
                     {% trans "Show Archived Locations" %}
                 </a>
             {% else %}
@@ -87,6 +87,7 @@
             {% if request.can_access_all_locations %}
             <a class="btn btn-default track-usage-link" href="{% url "location_fields_view" domain %}"
                data-category="Organization Structure" data-action="Edit Location Fields">
+                <i class="fa fa-edit"></i>
                 {% trans "Edit Location Fields" %}
             </a>
             {% endif %}
@@ -134,23 +135,27 @@
                     {% if not show_inactive %}
                         <a class="btn btn-primary"
                            data-bind="attr: { href: loc_edit_url(uuid()) }">
+                            <i class="fa fa-edit"></i>
                             {% trans "Edit" %}
                         </a>
                     {% endif %}
 
                     {% if show_inactive %}
-                        <button class="btn btn-info"
+                        <button class="btn btn-default"
                             data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
+                            <i class="fa fa-archive"></i>
                             {% trans "Unarchive" %}
                         </button>
                     {% else %}
-                        <button class="btn btn-info"
+                        <button class="btn btn-default"
                             data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
+                            <i class="fa fa-archive"></i>
                             {% trans "Archive" %}
                         </button>
                     {% endif %}
                     <button class="btn btn-danger"
                         data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
+                        <i class="fa fa-trash"></i>
                         {% trans "Delete" %}
                     </button>
                 </div>
