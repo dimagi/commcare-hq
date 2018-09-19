@@ -26,7 +26,6 @@ hqDefine('app_manager/js/download_index_main',[
                 'ace-builds/src-min-noconflict/mode-json',
                 'ace-builds/src-min-noconflict/mode-xml',
             ],function () {
-                editor.session.setOption('useWorker',false);
                 if (fileName.endsWith('json')) {
                     editor.session.setMode('ace/mode/json');
                 } else {
