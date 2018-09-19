@@ -489,7 +489,7 @@ def import_app(request, domain):
                 )
             else:
                 if redirect_domain:
-                    messages.error(request, "We can't find a project called %s." % redirect_domain)
+                    messages.error(request, "We can't find a project called \"%s\"." % redirect_domain)
                 else:
                     messages.error(request, "You left the project name blank.")
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER', request.path))
