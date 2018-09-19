@@ -946,7 +946,8 @@ class XForm(WrappedNode):
         return list(self.translations().keys())
 
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False, form=None):
+                      include_groups=False, include_translations=False, form=None,
+                      for_report=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -956,6 +957,7 @@ class XForm(WrappedNode):
         :param include_triggers: When set to True will return label questions as well as regular questions
         :param include_groups: When set will return repeats and group questions
         :param include_translations: When set to True will return all the translations for the question
+        :param for_report: return questions usable for report
         """
         from corehq.apps.app_manager.util import first_elem
 
@@ -1010,6 +1012,10 @@ class XForm(WrappedNode):
                 continue
 
             if node.tag_name == 'trigger' and not include_triggers:
+                continue
+
+            # for reporting purposes, ignore multi select questions with itemset
+            if for_report and cnode.data_type in [u'Select', u'MSelect'] and cnode.node.find('{f}itemset').exists():
                 continue
 
             question = {
