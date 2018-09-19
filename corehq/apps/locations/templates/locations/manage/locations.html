@@ -85,10 +85,6 @@
             </a>
 
             {% if request.can_access_all_locations %}
-            <a class="btn btn-default track-usage-link" href="{% url "location_types" domain %}"
-               data-category="Organization Structure" data-action="Edit Organization Levels">
-                {% trans "Edit Organization Levels" %}
-            </a>
             <a class="btn btn-default track-usage-link" href="{% url "location_fields_view" domain %}"
                data-category="Organization Structure" data-action="Edit Location Fields">
                 {% trans "Edit Location Fields" %}
