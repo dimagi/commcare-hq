@@ -343,8 +343,8 @@ class SnapshotSettingsForm(forms.Form):
         data_cda = self.cleaned_data['cda_confirmed']
         data_publish = self.data.get('publish_on_submit', "no") == "yes"
         if data_publish and data_cda is False:
-            raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your '
-                                        'project.')
+            raise forms.ValidationError(_('You must agree to our Content Distribution Agreement to publish your '
+                                          'project.'))
         return data_cda
 
     def clean_video(self):
@@ -377,8 +377,8 @@ class SnapshotSettingsForm(forms.Form):
 
         v_id = video_id(video)
         if not v_id:
-            raise forms.ValidationError('This is not a correctly formatted YouTube URL. Please use a different '
-                                        'URL.')
+            raise forms.ValidationError(_('This is not a correctly formatted YouTube URL. Please use a different '
+                                          'URL.'))
         return v_id
 
     def clean(self):
@@ -404,10 +404,9 @@ class SnapshotSettingsForm(forms.Form):
                 nonexistent_forms = [f for f in referenced_forms if f not in app_forms]
                 nonexistent_forms = [FormBase.get_form(f) for f in nonexistent_forms]
                 if nonexistent_forms:
-                    msg = """
-                        Your reminders reference forms that are not being published.
-                        Make sure the following forms are being published: %s
-                    """ % str([f.default_name() for f in nonexistent_forms]).strip('[]')
+                    forms_str = str([f.default_name() for f in nonexistent_forms]).strip('[]')
+                    msg = _("Your reminders reference forms that are not being published. Make sure the following "
+                            "forms are being published: %s") % forms_str
                     self._errors["share_reminders"] = self.error_class([msg])
 
         return cleaned_data
