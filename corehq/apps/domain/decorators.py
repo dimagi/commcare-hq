@@ -83,7 +83,7 @@ def login_and_domain_required(view_func):
         if user.is_authenticated and user.is_active:
             if not domain.is_active:
                 msg = _(
-                    'The domain "{domain}" has not yet been activated. '
+                    'The project space "{domain}" has not yet been activated. '
                     'Please report an issue if you think this is a mistake.'
                 ).format(domain=domain_name)
                 messages.info(req, msg)
