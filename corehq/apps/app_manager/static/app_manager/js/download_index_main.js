@@ -6,8 +6,7 @@ hqDefine('app_manager/js/download_index_main',[
     'app_manager/js/download_async_modal',
     'app_manager/js/source_files',
 ],function ($, _, ace) {
-
-    ace.require("ace/edit_session").EditSession.prototype.$startWorker = function () {};
+    
     $(function () {
         var elements = $('.prettyprint');
 
@@ -24,11 +23,18 @@ hqDefine('app_manager/js/download_index_main',[
                 }
             );
             var fileName = $(elem).data('filename');
-            if (fileName.endsWith('json')) {
-                editor.session.setMode('ace/mode/json');
-            } else {
-                editor.session.setMode('ace/mode/xml');
-            }
+            hqRequire([
+                'ace-builds/src-min-noconflict/mode-json',
+                'ace-builds/src-min-noconflict/mode-xml',
+            ],function () {
+
+                if (fileName.endsWith('json')) {
+                    editor.session.setMode('ace/mode/json');
+                } else {
+                    editor.session.setMode('ace/mode/xml');
+                }
+
+            });
             editor.setReadOnly(true);
         });
     });
