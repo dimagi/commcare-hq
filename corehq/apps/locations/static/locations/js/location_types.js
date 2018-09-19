@@ -379,7 +379,7 @@ hqDefine('locations/js/location_types', [
         }
 
         $("form#settings").on("change input", function () {
-            $(this).find(":submit").addClass("btn-success").enable();
+            $(this).find(":submit").addClass("btn-primary").enable();
             window.onbeforeunload = warnBeforeUnload;
         });
 
