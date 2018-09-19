@@ -42,14 +42,14 @@ FAILURE_MESSAGES = {
         "Field names should be strings, not numbers"
     ),
     "invalid_field_syntax": ugettext_noop(
-        "In excel-sheet '{tag}', field '{field}' should be numbered as 'field: {field} integer",
+        "In Excel worksheet '{tag}', field '{field}' should be numbered as 'field: {field} integer",
     ),
     "sheet_has_no_property": ugettext_noop(
-        "Excel-sheet '{tag}' does not contain property "
+        "Excel worksheet '{tag}' does not contain property "
         "'{property}' of the field '{field}' as specified in its 'types' definition"
     ),
     "sheet_has_extra_property": ugettext_noop(
-        "Excel-sheet '{tag}' has an extra property "
+        "Excel worksheet '{tag}' has an extra property "
         "'{property}' for the field '{field}' that's not defined in its 'types' definition. "
         "Re-check the formatting"
     ),

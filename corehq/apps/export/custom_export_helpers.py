@@ -128,7 +128,7 @@ class CustomExportHelper(object):
         if post_data['presave'] and not self.allow_daily_saved:
             raise BadExportConfiguration(_("This user does not have permission to create Daily Saved Exports"))
         if custom_export_json['default_format'] == "html" and not self.allow_excel_dashboard:
-            raise BadExportConfiguration(_("This user does not have permission to create an excel dashboard"))
+            raise BadExportConfiguration(_("This user does not have permission to create an Excel dashboard"))
         if custom_export_json["is_safe"] and not self.allow_deid:
             raise BadExportConfiguration(_("This user does not have permission to create a de-identified export"))
 
