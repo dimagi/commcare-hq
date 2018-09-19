@@ -946,7 +946,7 @@ class XForm(WrappedNode):
         return list(self.translations().keys())
 
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False, form=None,
+                      include_groups=False, include_translations=False,
                       for_report=False):
         """
         parses out the questions from the xform, into the format:
