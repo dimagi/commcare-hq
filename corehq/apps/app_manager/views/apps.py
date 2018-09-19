@@ -60,7 +60,7 @@ from corehq.apps.app_manager.util import (
     get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, update_linked_app, clear_xmlns_app_id_cache
+    validate_langs, update_linked_app, clear_xmlns_app_id_cache, update_linked_app_and_notify
 from corehq.apps.app_manager.xform import (
     XFormException)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -872,14 +872,18 @@ def drop_user_case(request, domain, app_id):
 
 @require_can_edit_apps
 def pull_master_app(request, domain, app_id):
-    app = get_current_app(domain, app_id)
-    try:
-        update_linked_app(app, request.couch_user.get_id)
-    except AppLinkError as e:
-        messages.error(request, str(e))
-        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-    messages.success(request, _('Your linked application was successfully updated to the latest version.'))
+    async_update = request.GET.get('notify') == 'true'
+    if async_update:
+        update_linked_app_and_notify.delay(domain, app_id, request.couch_user.get_id, request.couch_user.email)
+        messages.success(request, _('Your request has been submitted. We will notify you via email once completed.'))
+    else:
+        app = get_current_app(domain, app_id)
+        try:
+            update_linked_app(app, request.couch_user.get_id)
+        except AppLinkError as e:
+            messages.error(request, str(e))
+            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+        messages.success(request, _('Your linked application was successfully updated to the latest version.'))
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
 
