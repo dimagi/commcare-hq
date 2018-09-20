@@ -62,7 +62,6 @@ branches:
   - lwyszomi:lw/report_export_v3  # Jenny Sept 12
   - jls/add-js-to-sentry  # Jenny Sept 18
   - sr-redis-client # Sravan Sept 19
-  - rn_testing_module_loading # Rohit sept 19
 submodules:
   submodules/django-digest-src:
     branches: []
