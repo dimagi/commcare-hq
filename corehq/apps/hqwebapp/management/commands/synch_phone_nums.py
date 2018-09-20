@@ -7,6 +7,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.tasks import sync_user_phone_numbers as sms_sync_user_phone_numbers
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.messaging.tasks import sync_case_for_messaging
+from corehq.util.log import with_progress_bar
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
@@ -28,7 +29,7 @@ class Command(BaseCommand):
                     CommCareUser.ids_by_domain(domain, is_active=True) +
                     CommCareUser.ids_by_domain(domain, is_active=False)
             )
-            for user_id in commcare_user_ids:
+            for user_id in with_progress_bar(commcare_user_ids):
                 sms_sync_user_phone_numbers.delay(user_id)
 
             print("Iterating over databases: %s" % db_aliases)
@@ -39,8 +40,8 @@ class Command(BaseCommand):
                     CommCareCaseSQL
                     .objects
                     .using(db_alias)
-                    .filter(domain=domain, deleted=False)
+                    .filter(domain=domain)
                     .values_list('case_id', flat=True)
                 )
-                for case_id in case_ids:
+                for case_id in with_progress_bar(case_ids):
                     sync_case_for_messaging.delay(domain, case_id)
