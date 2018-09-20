@@ -1,5 +1,9 @@
-/* globals _, ko, casexml, $ */
-hqDefine("data_interfaces/js/case_management", function () {
+hqDefine("data_interfaces/js/case_management",[
+    'jquery',
+    'underscore',
+    'knockout',
+    'case/js/casexml',
+], function ($, _, ko, casexmlModule) {
     var CaseManagement = function (o) {
         'use strict';
         var self = {};
@@ -113,7 +117,7 @@ hqDefine("data_interfaces/js/case_management", function () {
                 for (var i = 0; i < self.selected_cases().length; i++) {
                     var caseId = self.selected_cases()[i],
                         xform;
-                    xform = casexml.CaseDelta.wrap({
+                    xform = casexmlModule.casexml.CaseDelta.wrap({
                         case_id: caseId,
                         properties: {owner_id: newOwner},
                     }).asXFormInstance({

@@ -1,5 +1,4 @@
-var cheapxml = {
-    /* Library for generating xml with a JQuery-like syntax
+/* Library for generating xml with a JQuery-like syntax
         Usage:
 
         var $ = cheapxml.$,
@@ -9,95 +8,106 @@ var cheapxml = {
              );
         console.log(foodXML.serialize());
 
-    */
-    $: (function () {
-        'use strict';
-        var Node = function (xmlTag) {
-            var tag = /^<(\w+)\/>$/.exec(xmlTag)[1],
-                attributes = {},
-                children = [];
+*/
+hqDefine("case/js/cheapxml",[
 
-            this.attr = function (attribs) {
-                var a;
-                if (typeof attribs === 'object') {
-                    for (a in attribs) {
-                        if (attribs.hasOwnProperty(a)) {
-                            attributes[a] = attribs[a];
-                        }
+],function ()
+{
+    var Node = function (xmlTag) {
+        var self = {};
+        var tag = /^<(\w+)\/>$/.exec(xmlTag)[1],
+            attributes = {},
+            children = [];
+
+        self.attr = function (attribs) {
+            var a;
+            if (typeof attribs === 'object') {
+                for (a in attribs) {
+                    if (attribs.hasOwnProperty(a)) {
+                        attributes[a] = attribs[a];
                     }
-                    return this;
-                } else {
-                    a = attribs;
-                    return attributes[a];
-                }
-            };
-            this.append = function () {
-                var i;
-                for (i = 0; i < arguments.length; i += 1) {
-                    children.push(arguments[i]);
                 }
                 return this;
-            };
-            this.appendTo = function (that) {
-                that.append(this);
+            } else {
+                a = attribs;
+                return attributes[a];
+            }
+        };
+        self.append = function () {
+            var i;
+            for (i = 0; i < arguments.length; i += 1) {
+                children.push(arguments[i]);
+            }
+            return this;
+        };
+        self.appendTo = function (that) {
+            that.append(this);
+            return this;
+        };
+        self.text = function (text) {
+            if (text !== undefined) {
+                children = text;
                 return this;
-            };
-            this.text = function (text) {
-                if (text !== undefined) {
-                    children = text;
-                    return this;
-                } else if (typeof children === 'string') {
-                    return children;
+            } else if (typeof children === 'string') {
+                return children;
+            } else {
+                // fail silently?
+                return '';
+            }
+        };
+        self.is = function (selector) {
+            if (selector === ':parent') {
+                return children || children.length;
+            }
+        };
+        self.serialize = function (stream) {
+            var out = stream || [],
+                a,
+                i;
+            out.push('<');
+            out.push(tag);
+            for (a in attributes) {
+                if (attributes.hasOwnProperty(a)) {
+                    out.push(' ');
+                    out.push(a);
+                    out.push('="');
+                    out.push(attributes[a]);
+                    out.push('"');
+                }
+            }
+            if (children === '' || children.length === 0) {
+                out.push('/>');
+            } else {
+                out.push('>');
+                if (typeof children === 'string') {
+                    out.push(children);
                 } else {
-                    // fail silently?
-                    return '';
+                    for (i = 0; i < children.length; i += 1) {
+                        children[i].serialize(out);
+                    }
                 }
-            };
-            this.is = function (selector) {
-                if (selector === ':parent') {
-                    return children || children.length;
-                }
-            };
-            this.serialize = function (stream) {
-                var out = stream || [],
-                    a,
-                    i;
-                out.push('<');
+                out.push('</');
                 out.push(tag);
-                for (a in attributes) {
-                    if (attributes.hasOwnProperty(a)) {
-                        out.push(' ');
-                        out.push(a);
-                        out.push('="');
-                        out.push(attributes[a]);
-                        out.push('"');
-                    }
-                }
-                if (children === '' || children.length === 0) {
-                    out.push('/>');
-                } else {
-                    out.push('>');
-                    if (typeof children === 'string') {
-                        out.push(children);
-                    } else {
-                        for (i = 0; i < children.length; i += 1) {
-                            children[i].serialize(out);
-                        }
-                    }
-                    out.push('</');
-                    out.push(tag);
-                    out.push('>');
-                }
-                if (stream === undefined) {
-                    return out.join('');
-                }
-            };
-            this.toString = function () {
-                return this.serialize();
-            };
+                out.push('>');
+            }
+            if (stream === undefined) {
+                return out.join('');
+            }
         };
-        return function (tag) {
-            return new Node(tag);
+        self.toString = function () {
+            return this.serialize();
         };
-    }()),
-};
+
+        return self;
+    };
+
+    var cheapxml = {
+        $: Node,
+    };
+    return {
+        cheapxml: cheapxml,
+    };
+});
+
+
+
