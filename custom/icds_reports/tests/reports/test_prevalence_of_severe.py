@@ -67,7 +67,7 @@ class TestPrevalenceOfSevere(TestCase):
                 },
                 "st2": {
                     "severe": 0,
-                    "moderate": 5,
+                    "moderate": 4,
                     "normal": 16,
                     'total_height_eligible': 490,
                     "total_measured": 20,
@@ -99,7 +99,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], "1.35")
+        self.assertEqual(data['rightLegend']['average'], "1.21")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_severe_data_map(
@@ -118,7 +118,7 @@ class TestPrevalenceOfSevere(TestCase):
                  'value': '27'},
                 {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '271'},
                 {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
-                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '33.33%'},
+                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '29.63%'},
                 {'indicator': '% Normal (0 - 5 years):', 'value': '70.37%'}
             ]
         )
@@ -238,7 +238,7 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {"loc_name": "st2", "percent": 25.0},
+                {"loc_name": "st2", "percent": 20.0},
                 {"loc_name": "st1", "percent": 57.142857142857146},
             ]
         )
@@ -255,7 +255,7 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {"loc_name": "st2", "percent": 25.0},
+                {"loc_name": "st2", "percent": 20.0},
                 {"loc_name": "st1", "percent": 57.142857142857146},
             ]
         )
@@ -358,7 +358,7 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 964,
                     },
                     {
-                        "y": 0.3333333333333333,
+                        "y": 0.2962962962962963,
                         "x": 1493596800000,
                         "total_weighed": 668,
                         'total_measured': 27,
@@ -430,7 +430,7 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {"loc_name": "st2", "percent": 25.0},
+                {"loc_name": "st2", "percent": 20.0},
                 {"loc_name": "st1", "percent": 57.142857142857146},
             ]
         )
