@@ -1473,7 +1473,7 @@ class SelectedEnterprisePlanView(SelectPlanView):
         if self.is_not_redirect and self.enterprise_contact_form.is_valid():
             self.enterprise_contact_form.send_message()
             messages.success(request, _("Your request was sent to Dimagi. "
-                                        "We will try our best to follow up in a timely manner."))
+                                        "We will follow up shortly."))
             return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
