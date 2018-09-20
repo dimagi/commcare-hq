@@ -7,6 +7,7 @@ hqDefine('app_manager/js/download_index_main',[
 ],function ($, _, ace) {
 
     $(function () {
+        //Use hqRequire to load the ace modes from CDN
         hqRequire([
             'ace-builds/src-min-noconflict/mode-json',
             'ace-builds/src-min-noconflict/mode-xml',
@@ -22,7 +23,7 @@ hqDefine('app_manager/js/download_index_main',[
                         minLines: 3,
                         fontSize: 14,
                         wrap: true,
-                        useWorker: false, // enable the worker to show syntax errors
+                        useWorker: false,
                     }
                 );
 
