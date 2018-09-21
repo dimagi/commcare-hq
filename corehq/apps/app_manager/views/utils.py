@@ -342,6 +342,8 @@ def update_linked_app(app, user_id):
 
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))
 
+    app.reapply_translations()
+
 
 def clear_xmlns_app_id_cache(domain):
     from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
