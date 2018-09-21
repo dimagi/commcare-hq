@@ -6563,7 +6563,10 @@ class LinkedApplication(Application):
     """
     # This is the id of the master application
     master = StringProperty()
-    linked_app_translations = DictProperty()
+
+    # The following properties will overwrite their corresponding values from
+    # the master app everytime the new master is pulled
+    linked_app_translations = DictProperty()  # corresponding property: translations
 
     @property
     @memoized
