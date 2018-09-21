@@ -122,7 +122,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     api_auth,
 )
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.models import CaseExportDataSchema
@@ -1054,6 +1054,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             self.report_notification.save()
             ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user.get_id)
             if self.is_new:
+                DomainAuditRecordEntry.update_calculations(self.domain, 'ReportNotification')
                 messages.success(request, _("Scheduled report added."))
             else:
                 messages.success(request, _("Scheduled report updated."))

@@ -6,7 +6,7 @@ from corehq.apps.api.resources.auth import AdminAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.serializers import XFormInstanceSerializer
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
 from corehq.apps.es.domains import DomainES
@@ -66,10 +66,25 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
                        .size(1)
                        .run()
                        .hits[0])
-            return {
+            base_properties = {
                 prop_name: es_data[prop_name]
                 for prop_name in es_data if prop_name[:3] == 'cp_'
             }
+            try:
+                extra_properties = DomainAuditRecordEntry.objects.get(domain=domain.name)
+            except DomainAuditRecordEntry.DoesNotExist:
+                extra_properties = {
+                    "cp_n_downloads_custom_exports": 0,
+                    "cp_n_viewed_ucr_reports": 0,
+                    "cp_n_viewed_non_ucr_reports": 0,
+                    "cp_n_reports_created": 0,
+                    "cp_n_reports_edited": 0,
+                    "cp_n_saved_scheduled_reports": 0,
+                    "cp_n_click_app_deploy": 0,
+                    "cp_n_saved_app_changes": 0
+                }
+            base_properties.update(extra_properties)
+            return base_properties
         except IndexError:
             logging.exception('Problem getting calculated properties for {}'.format(domain.name))
             return {}
