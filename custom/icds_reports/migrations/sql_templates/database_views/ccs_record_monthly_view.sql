@@ -62,7 +62,8 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."trimester" AS "trimester",
         "ccs_record_monthly"."tt_1" AS "tt_1",
         "ccs_record_monthly"."tt_2" AS "tt_2",
-        "ccs_record_monthly"."using_ifa" AS "using_ifa"
+        "ccs_record_monthly"."using_ifa" AS "using_ifa",
+        "ccs_record_monthly"."lactating" AS "lactating"
     FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."ccs_record_monthly" "ccs_record_monthly" ON (
         ("awc_location_months"."month" = "ccs_record_monthly"."month") AND
