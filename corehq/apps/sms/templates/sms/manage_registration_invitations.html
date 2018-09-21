@@ -28,12 +28,10 @@
 
 {% block page_content %}
 {% if sms_mobile_worker_registration_enabled %}
-{{ block.super }}
-<hr />
 <a href="#invitation-form"
    class="btn btn-success"
    data-toggle="modal">
-    <i class="fa fa-envelope"></i>
+    <i class="fa fa-plus"></i>
     {% trans "Create Registration Invitation" %}
 </a>
 <div class="modal fade" id="invitation-form" tabindex="-1" role="dialog">
@@ -47,6 +45,7 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div>
+{{ block.super }}
 {% else %}
 <div>
     <p>

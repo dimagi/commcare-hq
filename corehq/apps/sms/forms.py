@@ -1328,8 +1328,8 @@ class SubscribeSMSForm(Form):
         super(SubscribeSMSForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.label_class = 'col-sm-3 col-md-3 col-lg-2'
+        self.helper.field_class = 'col-sm-8 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Subscribe settings'),

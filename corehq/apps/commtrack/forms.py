@@ -74,13 +74,7 @@ class CommTrackSettingsForm(forms.Form):
                 'stock_emergency_level',
                 'stock_understock_threshold',
                 'stock_overstock_threshold'
-            ) if not LOCATION_TYPE_STOCK_RATES.enabled(domain) else Fieldset(
-                _('Stock Levels'),
-                ButtonHolder(
-                    HTML('<a href="{}" class="btn btn-primary">{}</a>'.format(
-                        reverse(StockLevelsView.urlname, args=[domain]),
-                        _('Configure Stock Levels')))),
-            ),
+            ) if not LOCATION_TYPE_STOCK_RATES.enabled(domain) else None,
             Fieldset(
                 _('Consumption Settings'),
                 PrependedText('use_auto_consumption', ''),
