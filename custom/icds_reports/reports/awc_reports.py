@@ -972,16 +972,18 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
 
 
 @quickcache([
-    'start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before', 'icds_features_flag'
+    'start', 'length', 'draw', 'order', 'filters', 'month', 'two_before', 'icds_features_flag'
 ], timeout=30 * 60)
-def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before, icds_features_flag):
+def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_before,
+                               icds_features_flag):
 
+    filters['month'] = datetime(*month)
+    filters['open_in_month'] = 1
+    filters['valid_in_month'] = 1
+    if filters.get('age_in_months__in') is None:
+        filters['age_in_months__lte'] = 60
     data = ChildHealthMonthlyView.objects.filter(
-        month=datetime(*month),
-        awc_id=awc_id,
-        open_in_month=1,
-        valid_in_month=1,
-        age_in_months__lte=60
+        **filters
     ).order_by(order)
     data_count = data.count()
     data = data[start:(start + length)]

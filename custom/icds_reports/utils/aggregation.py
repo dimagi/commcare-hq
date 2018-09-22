@@ -1411,15 +1411,12 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
                 "chm.zscore_grading_hfa = 1 THEN 1 ELSE 0 END)"),
             ('wasting_normal_v2',
                 "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 3 THEN 1 "
-                "WHEN chm.muac_grading_recorded_in_month = 1 AND chm.muac_grading = 3 THEN 1 "
                 "ELSE 0 END)"),
             ('wasting_moderate_v2',
                 "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 2 THEN 1 "
-                "WHEN chm.muac_grading_recorded_in_month = 1 AND chm.muac_grading = 2 THEN 1 "
                 "ELSE 0 END)"),
             ('wasting_severe_v2',
                 "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 1 THEN 1 "
-                "WHEN chm.muac_grading_recorded_in_month = 1 AND chm.muac_grading = 1 THEN 1 "
                 "ELSE 0 END)"),
             ('zscore_grading_hfa_recorded_in_month', "SUM(chm.zscore_grading_hfa_recorded_in_month)"),
             ('zscore_grading_wfh_recorded_in_month', "SUM(chm.zscore_grading_wfh_recorded_in_month)"),

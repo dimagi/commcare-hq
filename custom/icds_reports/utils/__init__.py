@@ -285,6 +285,27 @@ def get_age_filter(age_value):
         return {'age_tranche': age_value}
 
 
+def get_age_filter_in_months(age_value):
+    """
+        When age_value = 6 it means first range is chosen 0-6 months.
+        For that range we want to include 0 and 6 in results.
+    """
+    if age_value == '6':
+        return {'age_in_months__in': ['0', '6']}
+    elif age_value == '12':
+        return {'age_in_months__in': ['7', '12']}
+    elif age_value == '24':
+        return {'age_in_months__in': ['13', '24']}
+    elif age_value == '36':
+        return {'age_in_months__in': ['25', '36']}
+    elif age_value == '48':
+        return {'age_in_months__in': ['37', '48']}
+    elif age_value == '60':
+        return {'age_in_months__in': ['49', '60']}
+    elif age_value == '72':
+        return {'age_in_months__in': ['61', '72']}
+
+
 def match_age(age):
     if 0 <= age <= 1:
         return '0-1 month'

@@ -60,8 +60,8 @@ branches:
   - rn_pre_migration_work_for_hqmedia # Rohit Sept 11
   - nh/omrs/atom  # Norman Sept 12
   - lwyszomi:lw/report_export_v3  # Jenny Sept 12
-  - downgrade-modal-required-questions # Gabriella Sept 14
   - jls/add-js-to-sentry  # Jenny Sept 18
+  - sr-redis-client # Sravan Sept 19
 submodules:
   submodules/django-digest-src:
     branches: []

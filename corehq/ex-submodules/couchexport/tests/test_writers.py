@@ -12,7 +12,13 @@ from mock import patch, Mock
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format
-from couchexport.writers import ZippedExportWriter, CsvFileWriter, PythonDictWriter
+from couchexport.writers import (
+    MAX_XLS_COLUMNS,
+    CsvFileWriter,
+    PythonDictWriter,
+    XlsLengthException,
+    ZippedExportWriter,
+)
 
 
 class ZippedExportWriterTests(SimpleTestCase):
@@ -119,6 +125,28 @@ class Excel2007ExportWriterTests(SimpleTestCase):
             [b'row2\xe2\x80\x931', b'row2\xe2\x80\x932', b'row2\xe2\x80\x933'],
         ]
         tables = [[b'table\xe2\x80\x93title', table]]
+        export_from_tables(tables, file_, format_)
+
+
+class Excel2003ExportWriterTests(SimpleTestCase):
+
+    def test_data_length(self):
+        format_ = Format.XLS
+        file_ = io.BytesIO()
+        table = [
+            ['header{}'.format(i) for i in range(MAX_XLS_COLUMNS)],
+            ['row{}'.format(i) for i in range(MAX_XLS_COLUMNS)],
+        ]
+        tables = [['title', table]]
+
+        with self.assertRaises(XlsLengthException):
+            export_from_tables(tables, file_, format_)
+
+        table = [
+            ['header{}'.format(i) for i in range(MAX_XLS_COLUMNS - 1)],
+            ['row{}'.format(i) for i in range(MAX_XLS_COLUMNS - 1)],
+        ]
+        tables = [['title', table]]
         export_from_tables(tables, file_, format_)
 
 
