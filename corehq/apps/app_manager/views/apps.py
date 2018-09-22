@@ -320,11 +320,12 @@ def get_apps_base_context(request, domain, app):
             or getattr(app, 'commtrack_enabled', False)
         )
 
-        try:
-            practice_users = get_practice_mode_mobile_workers(request.domain)
-        except ESError:
-            notify_exception(request, 'Error getting practice mode mobile workers')
-            practice_users = []
+        practice_users = []
+        if app.enable_practice_users:
+            try:
+                practice_users = get_practice_mode_mobile_workers(request.domain)
+            except ESError:
+                notify_exception(request, 'Error getting practice mode mobile workers')
 
         context.update({
             'show_advanced': show_advanced,
