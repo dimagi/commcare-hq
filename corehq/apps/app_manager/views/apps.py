@@ -320,6 +320,7 @@ def get_apps_base_context(request, domain, app):
             or getattr(app, 'commtrack_enabled', False)
         )
 
+        # ideally this should be loaded on demand
         practice_users = []
         if app.enable_practice_users:
             try:
