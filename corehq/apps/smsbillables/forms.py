@@ -40,7 +40,7 @@ class PublicSMSRateCalculatorForm(forms.Form):
 
 class SMSRateCalculatorForm(forms.Form):
     gateway = forms.ChoiceField(label="Connection")
-    country_code = forms.CharField(label="Country Code")
+    country_code = forms.ChoiceField(label="Country Code")
     direction = forms.ChoiceField(label="Direction", choices=(
         (OUTGOING, _("Outgoing")),
         (INCOMING, _("Incoming")),
@@ -75,6 +75,5 @@ class SMSRateCalculatorForm(forms.Form):
                 css_class="input-xxlarge",
                 data_bind="value: select2CountryCode.value, "
                           "event: {change: updateRate}",
-                placeholder=_("Please Select a Country Code"),
             ),
         )
