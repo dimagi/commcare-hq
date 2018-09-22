@@ -63,7 +63,7 @@ class SMSRateCalculatorForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Field(
                 'gateway',
-                data_bind="value: gateway, events: {change: clearSelect2}",
+                data_bind="value: gateway, event: {change: clearSelect2}",
                 css_class="input-xxlarge",
             ),
             crispy.Field(
