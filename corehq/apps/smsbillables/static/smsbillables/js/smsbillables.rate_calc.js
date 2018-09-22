@@ -2,8 +2,8 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/select2_handler',
-    'hqwebapp/js/widgets_v3',  // the public sms page uses a .ko-select2 for country input
+    'hqwebapp/js/select2_handler_v4',
+    'hqwebapp/js/widgets_v4',  // the public sms page uses a .ko-select2 for country input
 ], function (
     $,
     ko,
@@ -151,6 +151,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", [
                 country_code: {
                     fieldName: 'country_code',
                     currentValue: '',
+                    placeholder: gettext('Please Select a Country Code'),
                 },
             });
             $(element).koApplyBindings(smsRateCalculator);
