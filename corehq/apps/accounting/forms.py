@@ -2157,7 +2157,10 @@ class AdjustBalanceForm(forms.Form):
         self.helper.form_class = "form-horizontal"
         self.helper.label_class = 'col-sm-4 col-md-3'
         self.helper.field_class = 'col-sm-8 col-md-9'
-        self.helper.form_action = reverse('invoice_summary', args=[self.invoice.id])
+        if invoice.is_customer_invoice:
+            self.helper.form_action = reverse('customer_invoice_summary', args=[self.invoice.id])
+        else:
+            self.helper.form_action = reverse('invoice_summary', args=[self.invoice.id])
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Field(
@@ -2218,28 +2221,42 @@ class AdjustBalanceForm(forms.Form):
     def adjust_balance(self, web_user=None):
         method = self.cleaned_data['method']
         kwargs = {
-            'account': self.invoice.subscription.account,
+            'account': self.invoice.account if self.invoice.is_customer_invoice
+            else self.invoice.subscription.account,
             'note': self.cleaned_data['note'],
             'reason': method,
-            'subscription': self.invoice.subscription,
+            'subscription': None if self.invoice.is_customer_invoice else self.invoice.subscription,
             'web_user': web_user,
         }
         if method == CreditAdjustmentReason.MANUAL:
-            CreditLine.add_credit(
-                -self.amount,
-                invoice=self.invoice,
-                **kwargs
-            )
+            if self.invoice.is_customer_invoice:
+                CreditLine.add_credit(
+                    -self.amount,
+                    customer_invoice=self.invoice,
+                    **kwargs
+                )
+            else:
+                CreditLine.add_credit(
+                    -self.amount,
+                    invoice=self.invoice,
+                    **kwargs
+                )
             CreditLine.add_credit(
                 self.amount,
                 permit_inactive=True,
                 **kwargs
             )
         elif method == CreditAdjustmentReason.TRANSFER:
-            credit_line_balance = sum(
-                credit_line.balance
-                for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
-            )
+            if self.invoice.is_customer_invoice:
+                credit_line_balance = sum(
+                    credit_line.balance
+                    for credit_line in CreditLine.get_credits_for_customer_invoice(self.invoice)
+                )
+            else:
+                credit_line_balance = sum(
+                    credit_line.balance
+                    for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
+                )
             transfer_balance = (
                 min(self.amount, credit_line_balance)
                 if credit_line_balance > 0 else min(0, self.amount)
