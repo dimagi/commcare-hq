@@ -844,7 +844,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
-    page_title = ugettext_lazy("Add Web User to Project")
+    page_title = ugettext_lazy("Invite Web User to Project")
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
