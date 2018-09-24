@@ -15,11 +15,6 @@ hqDefine('hqadmin/js/raw_couch_main', [
 
 
         baseAce.initAceEditor($element.get(0), 'ace/mode/json', {
-            showPrintMargin: false,
-            maxLines: 40,
-            minLines: 3,
-            fontSize: 14,
-            wrap: true,
             useWorker: false,
             readOnly: true,
         }, ($element.length ? JSON.stringify($element.data('doc'), null, 4) : null));
