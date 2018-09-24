@@ -150,7 +150,7 @@ class BlobMixin(Document):
 
         if isinstance(content, six.text_type):
             content = BytesIO(content.encode("utf-8"))
-        elif isinstance(content, six.binary_type):
+        elif isinstance(content, bytes):
             content = BytesIO(content)
 
         # do we need to worry about BlobDB reading beyond content_length?

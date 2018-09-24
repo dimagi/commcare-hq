@@ -55,7 +55,6 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
-    use_select2_v4,
     use_multiselect,
 )
 from corehq.apps.accounting.exceptions import (
@@ -350,7 +349,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     page_title = ugettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
-    @use_select2_v4
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -1474,7 +1473,7 @@ class SelectedEnterprisePlanView(SelectPlanView):
         if self.is_not_redirect and self.enterprise_contact_form.is_valid():
             self.enterprise_contact_form.send_message()
             messages.success(request, _("Your request was sent to Dimagi. "
-                                        "We will try our best to follow up in a timely manner."))
+                                        "We will follow up shortly."))
             return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
@@ -1687,6 +1686,24 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         return 'company_name' in self.request.POST
 
     @property
+    def downgrade_email_note(self):
+        if self.is_upgrade:
+            return None
+
+        downgrade_reason = self.request.POST.get('downgrade_reason')
+        will_project_restart = self.request.POST.get('will_project_restart')
+        new_tool = self.request.POST.get('new_tool')
+        new_tool_reason = self.request.POST.get('new_tool_reason')
+        feedback = self.request.POST.get('feedback')
+        if not downgrade_reason:
+            return None
+        return 'Why are you downgrading your subscription today?:\n' + downgrade_reason + '\n\n' +\
+               'Is there a chance your project may start again?:\n' + will_project_restart + '\n\n' +\
+               'Could you indicate which new tool you are using?\n' + new_tool + '\n\n' +\
+               'Why are you switching to a new tool?\n' + new_tool_reason + '\n\n' +\
+               'Additional feedback:\n' + feedback
+
+    @property
     @memoized
     def billing_account_info_form(self):
         if self.request.method == 'POST' and self.is_form_post:
@@ -1702,7 +1719,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         return {
             'billing_account_info_form': self.billing_account_info_form,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-            'cards': self.payment_method.all_cards_serialized(self.account)
+            'cards': self.payment_method.all_cards_serialized(self.account),
+            'downgrade_email_note': self.downgrade_email_note
         }
 
     def post(self, request, *args, **kwargs):
@@ -1720,12 +1738,12 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                     ) % (software_plan_name, downgrade_date)
                 )
             else:
+                if not request.user.is_superuser:
+                    self.send_downgrade_email()
                 if self.current_subscription.next_subscription is not None:
                     # New subscription has been scheduled for the future
                     current_subscription = self.current_subscription.plan_version.plan.edition
                     start_date = self.current_subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT)
-                    # You have successfully scheduled your current Advanced Edition Plan
-                    # subscription to downgrade to the Pro Edition Plan on Sep 19, 2018.
                     message = _(
                         "You have successfully scheduled your current %s Edition Plan subscription to "
                         "downgrade to the %s Edition Plan on %s."
@@ -1739,6 +1757,26 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
+
+    def send_downgrade_email(self):
+        message = '\n'.join([
+            '{user} is downgrading the subscription for {domain} from {old_plan} to {new_plan}',
+            '',
+            '{note}',
+        ]).format(
+            user=self.request.couch_user.username,
+            domain=self.request.domain,
+            old_plan=self.request.POST.get('old_plan', 'unknown'),
+            new_plan=self.request.POST.get('new_plan', 'unknown'),
+            note=self.request.POST.get('downgrade_email_note', 'none')
+        )
+
+        send_mail_async.delay(
+            '{}Subscription downgrade for {}'.format(
+                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
+                self.request.domain
+            ), message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
+        )
 
 
 class SubscriptionMixin(object):

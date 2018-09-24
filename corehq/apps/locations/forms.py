@@ -14,7 +14,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 
-from corehq.apps.hqwebapp.widgets import Select2AjaxV3
+from corehq.apps.hqwebapp.widgets import Select2AjaxV4
 from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
 
@@ -54,7 +54,7 @@ class LocationSelectWidget(forms.Widget):
             'v4': 'locations/manage/partials/autocomplete_select_widget_v4.html',
         }
         if select2_version not in versioned_templates:
-            raise ValueError("select2_version must be in {}".format(", ".join(versioned_templates.keys())))
+            raise ValueError("select2_version must be in {}".format(", ".join(list(versioned_templates.keys()))))
         self.template = versioned_templates[select2_version]
 
     def render(self, name, value, attrs=None):
@@ -532,7 +532,7 @@ class UsersAtLocationForm(forms.Form):
     selected_ids = forms.Field(
         label=ugettext_lazy("Workers at Location"),
         required=False,
-        widget=Select2AjaxV3(multiple=True),
+        widget=Select2AjaxV4(multiple=True),
     )
 
     def __init__(self, domain_object, location, *args, **kwargs):
@@ -589,8 +589,12 @@ class UsersAtLocationForm(forms.Form):
         for doc in iter_docs(CommCareUser.get_db(), users):
             CommCareUser.wrap(doc).add_to_assigned_locations(self.location)
 
+    def clean_selected_ids(self):
+        # Django uses get by default, but selected_ids is actually a list
+        return self.data.getlist('users-selected_ids')
+
     def save(self):
-        selected_users = set(self.cleaned_data['selected_ids'].split(','))
+        selected_users = set(self.cleaned_data['selected_ids'])
         previous_users = set([u['id'] for u in self.get_users_at_location()])
         to_remove = previous_users - selected_users
         to_add = selected_users - previous_users

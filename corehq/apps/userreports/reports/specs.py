@@ -356,23 +356,25 @@ class AggregateDateColumn(ReportColumn):
         return [self._year_column_alias(), self._month_column_alias()]
 
 
-class ConditionalAggregationColumn(ReportColumn):
-    """
-    Used for grouping by SQL conditionals
+class _CaseExpressionColumn(ReportColumn):
+    """ Wraps a SQLAlchemy "case" expression:
 
-    Wraps a SQLAlchemy "case" expression:
     http://docs.sqlalchemy.org/en/latest/core/sqlelement.html#sqlalchemy.sql.expression.case
     """
-    type = TypeProperty('conditional_aggregation')
+    type = None
     whens = DictProperty()
     else_ = StringProperty()
     sortable = BooleanProperty(default=False)
 
+    _agg_column_type = None
+
     def get_column_config(self, data_source_config, lang):
+        if not self.type and self._agg_column_type:
+            raise NotImplementedError("subclasses must define a type and column_type")
         return ColumnConfig(columns=[
             DatabaseColumn(
                 header=self.get_header(lang),
-                agg_column=ConditionalAggregation(
+                agg_column=self._agg_column_type(
                     whens=self.get_whens(),
                     else_=self.else_,
                     alias=self.column_id,
@@ -386,34 +388,25 @@ class ConditionalAggregationColumn(ReportColumn):
         )
 
     def get_whens(self):
-        return {
-            k: bindparam(None, v) for k, v in self.whens.items()
-        }
+        return self.whens
 
     def get_query_column_ids(self):
         return [self.column_id]
 
 
-class SumWhenColumn(ConditionalAggregationColumn):
+class ConditionalAggregationColumn(_CaseExpressionColumn):
+    """Used for grouping by SQL conditionals"""
+    type = TypeProperty('conditional_aggregation')
+    _agg_column_type = ConditionalAggregation
+
+    def get_whens(self):
+        return {k: bindparam(None, v) for k, v in self.whens.items()}
+
+
+class SumWhenColumn(_CaseExpressionColumn):
     type = TypeProperty("sum_when")
     else_ = IntegerProperty()
-
-    def get_column_config(self, data_source_config, lang):
-        return ColumnConfig(columns=[
-            DatabaseColumn(
-                header=self.get_header(lang),
-                agg_column=SumWhen(
-                    whens=self.whens,
-                    else_=self.else_,
-                    alias=self.column_id,
-                ),
-                sortable=self.sortable,
-                data_slug=self.column_id,
-                format_fn=self.get_format_fn(),
-                help_text=self.description,
-                visible=self.visible,
-            )],
-        )
+    _agg_column_type = SumWhen
 
 
 class PercentageColumn(ReportColumn):

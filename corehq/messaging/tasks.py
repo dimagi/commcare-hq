@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.reminders import tasks as reminders_tasks
-from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.sms import tasks as sms_tasks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -57,22 +55,11 @@ def _sync_case_for_messaging(domain, case_id):
 
     if case is None or case.is_deleted:
         sms_tasks.delete_phone_numbers_for_owners([case_id])
-        reminders_tasks.delete_reminders_for_cases(domain, [case_id])
         delete_schedule_instances_for_cases(domain, [case_id])
         return
 
     if use_phone_entries():
         sms_tasks._sync_case_phone_number(case)
-
-    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
-        # This runs rules from the old reminders framework. ICDS only uses
-        # the new reminders framework now, so we can spare redis and couch
-        # some hits by not running this at all.
-        # When all environments are on the new framework, we can remove these
-        # lines entirely.
-        handler_ids = CaseReminderHandler.get_handler_ids_for_case_post_save(case.domain, case.type)
-        if handler_ids:
-            reminders_tasks._process_case_changed_for_case(domain, case, handler_ids)
 
     rules = AutomaticUpdateRule.by_domain_cached(case.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)

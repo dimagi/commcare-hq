@@ -157,7 +157,7 @@ FormplayerFrontend.on('startForm', function (data) {
         if (resp.status === "success") {
             var $alert,
                 isAppPreview = user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT;
-            if (resp.submitResponseMessage && (isAppPreview || hqImport("hqwebapp/js/initial_page_data").get("appcues_test"))) {
+            if (resp.submitResponseMessage) {
                 var markdowner = window.markdownit(),
                     reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
                     analyticsLinks = [

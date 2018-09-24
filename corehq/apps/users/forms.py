@@ -792,7 +792,7 @@ class PrimaryLocationWidget(forms.Widget):
             'v4': 'locations/manage/partials/drilldown_location_widget_v4.html',
         }
         if select2_version not in versioned_templates:
-            raise ValueError("select2_version must be in {}".format(", ".join(versioned_templates.keys())))
+            raise ValueError("select2_version must be in {}".format(", ".join(list(versioned_templates.keys()))))
         self.template = versioned_templates[select2_version]
 
     def render(self, name, value, attrs=None):

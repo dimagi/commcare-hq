@@ -18,7 +18,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, InvalidFormatException
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.util import project_is_on_new_reminders
 from corehq.util.quickcache import quickcache
 from django_prbac.utils import has_privilege
 
@@ -115,86 +114,6 @@ def get_recipient_name(recipient, include_desc=True):
         return name
 
 
-def enqueue_reminder_directly(reminder):
-    from corehq.apps.reminders.management.commands.run_reminder_queue import (
-        ReminderEnqueuingOperation)
-    ReminderEnqueuingOperation().enqueue_directly(reminder)
-
-
-def create_immediate_reminder(contact, content_type, reminder_type=None,
-        message=None, form_unique_id=None, case=None, logged_event=None):
-    """
-    contact - the contact to send to
-    content_type - METHOD_SMS or METHOD_SMS_SURVEY (see corehq.apps.reminders.models)
-    reminder_type - either REMINDER_TYPE_DEFAULT, REMINDER_TYPE_ONE_TIME, or REMINDER_TYPE_KEYWORD_INITIATED
-    message - the message to send if content_type == METHOD_SMS
-    form_unique_id - the form_unique_id of the form to send if content_type == METHOD_SMS_SURVEY
-    case - the case that is associated with this reminder (so that you can embed case properties into the message)
-    logged_event - if this reminder is being created as a subevent of a
-        MessagingEvent, this is the MessagingEvent
-    """
-    from corehq.apps.reminders.models import (
-        CaseReminderHandler,
-        CaseReminderEvent,
-        ON_DATETIME,
-        EVENT_AS_OFFSET,
-        REMINDER_TYPE_DEFAULT,
-        REMINDER_TYPE_KEYWORD_INITIATED,
-        METHOD_SMS,
-        METHOD_SMS_SURVEY,
-        RECIPIENT_CASE,
-        RECIPIENT_USER,
-        RECIPIENT_SURVEY_SAMPLE,
-        RECIPIENT_USER_GROUP,
-    )
-    if is_commcarecase(contact):
-        recipient = RECIPIENT_CASE
-    elif isinstance(contact, CommCareCaseGroup):
-        recipient = RECIPIENT_SURVEY_SAMPLE
-    elif isinstance(contact, CommCareUser):
-        recipient = RECIPIENT_USER
-    elif isinstance(contact, Group):
-        recipient = RECIPIENT_USER_GROUP
-    else:
-        raise Exception("Unsupported contact type for %s" % contact._id)
-
-    reminder_type = reminder_type or REMINDER_TYPE_DEFAULT
-    if recipient == RECIPIENT_CASE:
-        case_id = contact.case_id
-    elif case is not None:
-        case_id = case.case_id
-    else:
-        case_id = None
-
-    handler = CaseReminderHandler(
-        domain=contact.domain,
-        reminder_type=reminder_type,
-        nickname="One-time Reminder",
-        default_lang="xx",
-        method=content_type,
-        recipient=recipient,
-        start_condition_type=ON_DATETIME,
-        start_datetime=datetime.utcnow(),
-        start_offset=0,
-        events = [CaseReminderEvent(
-            day_num=0,
-            fire_time=time(0, 0),
-            form_unique_id=form_unique_id if content_type == METHOD_SMS_SURVEY else None,
-            message={'xx': message} if content_type == METHOD_SMS else {},
-            callback_timeout_intervals = [],
-        )],
-        schedule_length=1,
-        event_interpretation=EVENT_AS_OFFSET,
-        max_iteration_count=1,
-        case_id=case_id,
-        user_id=contact.get_id if recipient == RECIPIENT_USER else None,
-        sample_id=contact.get_id if recipient == RECIPIENT_SURVEY_SAMPLE else None,
-        user_group_id=contact.get_id if recipient == RECIPIENT_USER_GROUP else None,
-        messaging_event_id=logged_event.pk if logged_event else None,
-    )
-    handler.save(send_immediately=True)
-
-
 def can_use_survey_reminders(request):
     return has_privilege(request, privileges.INBOUND_SMS)
 
@@ -234,31 +153,3 @@ def get_one_way_number_for_recipient(recipient):
 
 def get_preferred_phone_number_for_recipient(recipient):
     return get_two_way_number_for_recipient(recipient) or get_one_way_number_for_recipient(recipient)
-
-
-@quickcache(['reminder_id'], timeout=60 * 60 * 24 * 7 * 5)
-def get_reminder_domain(reminder_id):
-    """
-    A reminder instance's domain should never change once set, so
-    we can use a very long timeout.
-    """
-    from corehq.apps.reminders.models import CaseReminder
-    return CaseReminder.get(reminder_id).domain
-
-
-def requires_old_reminder_framework():
-    def decorate(fn):
-        @wraps(fn)
-        def wrapped(request, *args, **kwargs):
-            if (
-                hasattr(request, 'couch_user') and
-                toggles.NEW_REMINDERS_MIGRATOR.enabled(request.couch_user.username)
-            ):
-                return fn(request, *args, **kwargs)
-            if not hasattr(request, 'project'):
-                request.project = Domain.get_by_name(request.domain)
-            if not project_is_on_new_reminders(request.project):
-                return fn(request, *args, **kwargs)
-            raise Http404()
-        return wrapped
-    return decorate

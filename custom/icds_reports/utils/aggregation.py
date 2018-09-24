@@ -768,7 +768,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(blurred_vision) OVER w as blurred_vision,
         LAST_VALUE(convulsions) OVER w as convulsions,
         LAST_VALUE(rupture) OVER w as rupture,
-        LAST_VALUE(anemia) OVER w as anemia
+        LAST_VALUE(anemia) OVER w as anemia,
+        LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -798,7 +799,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
           state_id, month, case_id, latest_time_end_processed,
           immediate_breastfeeding, anemia, eating_extra, resting,
           anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
-          bleeding, swelling, blurred_vision, convulsions, rupture
+          bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities
         ) (
           SELECT
             %(state_id)s AS state_id,
@@ -818,7 +819,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
             ucr.swelling as swelling,
             ucr.blurred_vision as blurred_vision,
             ucr.convulsions as convulsions,
-            ucr.rupture as rupture
+            ucr.rupture as rupture,
+            ucr.anc_abnormalities as anc_abnormalities
           FROM ({ucr_table_query}) ucr
           LEFT JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -878,12 +880,12 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, breastfed_at_birth
+          case_id, state_id, month, latest_time_end_processed, breastfed_at_birth
         ) (
           SELECT
+            DISTINCT case_load_ccs_record0 AS case_id,
             %(state_id)s AS state_id,
-            %(month)s AS month,
-            case_load_ccs_record0 AS case_id,
+            %(month)s::DATE AS month,
             LAST_VALUE(timeend) over w AS latest_time_end_processed,
             LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth
           FROM "{ucr_tablename}"
@@ -1009,20 +1011,70 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("counsel_skin_to_skin",
                 "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.skin_to_skin, 0) ELSE 0 END"),
             # GM Indicators
-            ("low_birth_weight_born_in_month", "ucr.low_birth_weight_born_in_month"),
             ("wer_eligible", "ucr.wer_eligible"),
-            ("nutrition_status_last_recorded", "ucr.nutrition_status_last_recorded"),
-            ("current_month_nutrition_status", "ucr.current_month_nutrition_status"),
-            ("nutrition_status_weighed", "ucr.nutrition_status_weighed"),
-            ("recorded_weight", "ucr.weight_recorded_in_month"),
+            ("low_birth_weight_born_in_month", "ucr.low_birth_weight_born_in_month"),
+            ("nutrition_status_last_recorded",
+                "CASE "
+                "WHEN ucr.wer_eligible = 0 THEN NULL "
+                "WHEN gm.zscore_grading_wfa = 1 THEN 'severely_underweight' "
+                "WHEN gm.zscore_grading_wfa = 2 THEN 'moderately_underweight' "
+                "WHEN gm.zscore_grading_wfa IN (2, 3) THEN 'normal' "
+                "ELSE 'unknown' END"),
+            ("current_month_nutrition_status",
+                "CASE "
+                "WHEN ucr.wer_eligible = 0 THEN NULL "
+                "WHEN date_trunc('MONTH', gm.zscore_grading_wfa_last_recorded) != %(start_date)s THEN 'unweighed' "
+                "WHEN gm.zscore_grading_wfa = 1 THEN 'severely_underweight' "
+                "WHEN gm.zscore_grading_wfa = 2 THEN 'moderately_underweight' "
+                "WHEN gm.zscore_grading_wfa IN (3, 4) THEN 'normal' "
+                "ELSE 'unweighed' END"),
+            ("nutrition_status_weighed",
+                "CASE "
+                "WHEN ucr.wer_eligible = 1 AND current_month_nutrition_status != 'unweighed' THEN 1 "
+                "ELSE 0 END"),
+            ("recorded_weight",
+                "CASE "
+                "WHEN wer_eligible = 0 THEN NULL "
+                "WHEN date_trunc('MONTH', gm.weight_child_last_recorded) = %(start_date)s THEN gm.weight_child "
+                "ELSE NULL END"),
             ("recorded_height",
-                "COALESCE(CASE WHEN (date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s) THEN gm.height_child ELSE NULL END, ucr.height_recorded_in_month)"),
+                "CASE "
+                "WHEN date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s THEN gm.height_child "
+                "ELSE NULL END"),
             ("height_measured_in_month",
-                "COALESCE(CASE WHEN (date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s) THEN 1 ELSE NULL END, ucr.height_measured_in_month)"),
-            ("current_month_stunting", "ucr.current_month_stunting"),
-            ("stunting_last_recorded", "ucr.stunting_last_recorded"),
-            ("wasting_last_recorded", "ucr.wasting_last_recorded"),
-            ("current_month_wasting", "ucr.current_month_wasting"),
+                "CASE "
+                "WHEN date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s THEN 1 "
+                "ELSE 0 END"),
+            ("current_month_stunting",
+                "CASE "
+                "WHEN ucr.height_eligible = 0 THEN NULL "
+                "WHEN date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) != %(start_date)s THEN 'unmeasured' "
+                "WHEN gm.zscore_grading_hfa = 1 THEN 'severe' "
+                "WHEN gm.zscore_grading_hfa = 2 THEN 'moderate' "
+                "WHEN gm.zscore_grading_hfa = 3 THEN 'normal' "
+                "ELSE 'unmeasured' END"),
+            ("stunting_last_recorded",
+                "CASE "
+                "WHEN ucr.height_eligible = 0 THEN NULL "
+                "WHEN gm.zscore_grading_hfa = 1 THEN 'severe' "
+                "WHEN gm.zscore_grading_hfa = 2 THEN 'moderate' "
+                "WHEN gm.zscore_grading_hfa = 3 THEN 'normal' "
+                "ELSE 'unknown' END"),
+            ("wasting_last_recorded",
+                "CASE "
+                "WHEN ucr.height_eligible = 0 THEN NULL "
+                "WHEN gm.zscore_grading_wfh = 1 THEN 'severe' "
+                "WHEN gm.zscore_grading_wfh = 2 THEN 'moderate' "
+                "WHEN gm.zscore_grading_wfh = 3 THEN 'normal' "
+                "ELSE 'unknown' END"),
+            ("current_month_wasting",
+                "CASE "
+                "WHEN ucr.height_eligible = 0 THEN NULL "
+                "WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s THEN 'unmeasured' "
+                "WHEN gm.zscore_grading_wfh = 1 THEN 'severe' "
+                "WHEN gm.zscore_grading_wfh = 2 THEN 'moderate' "
+                "WHEN gm.zscore_grading_wfh = 3 THEN 'normal' "
+                "ELSE 'unmeasured' END"),
             ("zscore_grading_hfa", "gm.zscore_grading_hfa"),
             ("zscore_grading_hfa_recorded_in_month",
                 "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) = %(start_date)s) THEN 1 ELSE 0 END"),
@@ -1269,10 +1321,10 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregation_query(self):
         columns = (
-            ('state_id', 'ucr.state_id'),
-            ('district_id', 'ucr.district_id'),
-            ('block_id', 'ucr.block_id'),
-            ('supervisor_id', 'ucr.supervisor_id'),
+            ('state_id', 'awc_loc.state_id'),
+            ('district_id', 'awc_loc.district_id'),
+            ('block_id', 'awc_loc.block_id'),
+            ('supervisor_id', 'awc_loc.supervisor_id'),
             ('awc_id', 'chm.awc_id'),
             ('month', 'chm.month'),
             ('gender', 'chm.sex'),
@@ -1285,14 +1337,11 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('nutrition_status_weighed', "SUM(chm.nutrition_status_weighed)"),
             ('nutrition_status_unweighed', "SUM(chm.wer_eligible) - SUM(chm.nutrition_status_weighed)"),
             ('nutrition_status_normal',
-                "SUM(CASE WHEN ucr.nutrition_status_normal = 1 AND "
-                "chm.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_nutrition_status = 'normal' THEN 1 ELSE 0 END)"),
             ('nutrition_status_moderately_underweight',
-                "SUM(CASE WHEN ucr.nutrition_status_moderately_underweight = 1 "
-                "AND chm.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_nutrition_status = 'moderately_underweight' THEN 1 ELSE 0 END)"),
             ('nutrition_status_severely_underweight',
-                "SUM(CASE WHEN ucr.nutrition_status_severely_underweight = 1 "
-                "AND chm.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_nutrition_status = 'severely_underweight' THEN 1 ELSE 0 END)"),
             ('wer_eligible', "SUM(chm.wer_eligible)"),
             ('thr_eligible', "SUM(chm.thr_eligible)"),
             ('rations_21_plus_distributed',
@@ -1329,30 +1378,24 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
                 "SUM(CASE WHEN chm.age_in_months >= 6 AND chm.age_tranche NOT IN ('72') AND "
                 "chm.valid_in_month = 1 THEN 1 ELSE 0 END)"),
             ('wasting_moderate',
-                "SUM(CASE WHEN ucr.wasting_moderate = 1 AND ucr.nutrition_status_weighed = 1 "
-                "AND ucr.height_measured_in_month = 1 THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_wasting = 'moderate' THEN 1 ELSE 0 END)"),
             ('wasting_severe',
-                "SUM(CASE WHEN ucr.wasting_severe = 1 AND ucr.nutrition_status_weighed = 1 "
-                "AND ucr.height_measured_in_month = 1 THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_wasting = 'severe' THEN 1 ELSE 0 END)"),
             ('stunting_moderate',
-                "SUM(CASE WHEN ucr.stunting_moderate = 1 AND ucr.height_measured_in_month = 1 "
-                "THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_stunting = 'moderate' THEN 1 ELSE 0 END)"),
             ('stunting_severe',
-                "SUM(CASE WHEN ucr.stunting_severe = 1 AND ucr.height_measured_in_month = 1 "
-                "THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_stunting = 'severe' THEN 1 ELSE 0 END)"),
             ('cf_initiation_in_month', "SUM(chm.cf_initiation_in_month)"),
             ('cf_initiation_eligible', "SUM(chm.cf_initiation_eligible)"),
-            ('height_measured_in_month', "SUM(ucr.height_measured_in_month)"),
+            ('height_measured_in_month', "SUM(chm.height_measured_in_month)"),
             ('wasting_normal',
-                "SUM(CASE WHEN ucr.wasting_normal = 1 AND ucr.nutrition_status_weighed = 1 "
-                "AND ucr.height_measured_in_month = 1 THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_wasting = 'normal' THEN 1 ELSE 0 END)"),
             ('stunting_normal',
-                "SUM(CASE WHEN ucr.stunting_normal = 1 AND ucr.height_measured_in_month = 1 "
-                "THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_stunting = 'normal' THEN 1 ELSE 0 END)"),
             ('valid_all_registered_in_month', "SUM(chm.valid_all_registered_in_month)"),
             ('ebf_no_info_recorded', "SUM(chm.ebf_no_info_recorded)"),
             ('weighed_and_height_measured_in_month',
-                "SUM(CASE WHEN chm.nutrition_status_weighed = 1 AND ucr.height_measured_in_month = 1 "
+                "SUM(CASE WHEN chm.nutrition_status_weighed = 1 AND chm.height_measured_in_month = 1 "
                 "THEN 1 ELSE 0 END)"),
             ('weighed_and_born_in_month',
                 "SUM(CASE WHEN (chm.born_in_month = 1 AND (chm.nutrition_status_weighed = 1 "
@@ -1368,15 +1411,12 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
                 "chm.zscore_grading_hfa = 1 THEN 1 ELSE 0 END)"),
             ('wasting_normal_v2',
                 "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 3 THEN 1 "
-                "WHEN chm.muac_grading_recorded_in_month = 1 AND chm.muac_grading = 3 THEN 1 "
                 "ELSE 0 END)"),
             ('wasting_moderate_v2',
                 "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 2 THEN 1 "
-                "WHEN chm.muac_grading_recorded_in_month = 1 AND chm.muac_grading = 2 THEN 1 "
                 "ELSE 0 END)"),
             ('wasting_severe_v2',
                 "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 1 THEN 1 "
-                "WHEN chm.muac_grading_recorded_in_month = 1 AND chm.muac_grading = 1 THEN 1 "
                 "ELSE 0 END)"),
             ('zscore_grading_hfa_recorded_in_month', "SUM(chm.zscore_grading_hfa_recorded_in_month)"),
             ('zscore_grading_wfh_recorded_in_month', "SUM(chm.zscore_grading_wfh_recorded_in_month)"),
@@ -1387,14 +1427,13 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             {columns}
         ) (SELECT
             {calculations}
-            FROM "{ucr_child_monthly_table}" ucr
-            LEFT OUTER JOIN "{child_health_monthly_table}" chm ON ucr.doc_id = chm.case_id AND ucr.month = chm.month AND ucr.awc_id = chm.awc_id
-            WHERE ucr.month = %(start_date)s AND chm.month = %(start_date)s AND
-                  ucr.state_id != '' AND ucr.state_id IS NOT NULL
-            GROUP BY ucr.state_id, ucr.district_id, ucr.block_id, ucr.supervisor_id, chm.awc_id,
+            FROM "{child_health_monthly_table}" chm
+            LEFT OUTER JOIN "awc_location" awc_loc ON awc_loc.doc_id = chm.awc_id
+            WHERE chm.month = %(start_date)s AND awc_loc.state_id != '' AND awc_loc.state_id IS NOT NULL
+            GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id,
                      chm.month, chm.sex, chm.age_tranche, chm.caste,
                      coalesce_disabled, coalesce_minority, coalesce_resident
-            ORDER BY ucr.state_id, ucr.district_id, ucr.block_id, ucr.supervisor_id, chm.awc_id
+            ORDER BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id
         )
         """.format(
             tablename=self.tablename,
@@ -1495,13 +1534,15 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
 
         # in the future these may need to include more columns, but historically
         # caste, resident, minority and disabled have been skipped
-        group_by = ["state_id", "month", "gender", "age_tranche"]
+        group_by = ["state_id"]
         if aggregation_level > 1:
             group_by.append("district_id")
         if aggregation_level > 2:
             group_by.append("block_id")
         if aggregation_level > 3:
             group_by.append("supervisor_id")
+
+        group_by.extend(["month", "gender", "age_tranche"])
 
         return """
         INSERT INTO "{to_tablename}" (
@@ -1660,6 +1701,9 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('mobile_number', 'case_list.mobile_number'),
             ('preg_order', 'case_list.preg_order'),
             ('num_pnc_visits', 'case_list.num_pnc_visits'),
+            ('last_date_thr', 'case_list.last_date_thr'),
+            ('num_anc_complete', 'case_list.num_anc_complete'),
+            ('opened_on', 'case_list.opened_on')
         )
         return """
         INSERT INTO "{tablename}" (

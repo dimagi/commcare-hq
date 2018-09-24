@@ -5,7 +5,6 @@ from django.conf import settings
 from django.test import TestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
-from kafka.common import KafkaUnavailableError
 from mock import MagicMock, patch
 
 from corehq.apps.change_feed import topics
@@ -49,13 +48,13 @@ class CouchPillowRetryProcessingTest(TestCase, TestMixin):
         super(CouchPillowRetryProcessingTest, self).setUp()
         self._fake_couch = FakeCouchDb()
         self._fake_couch.dbname = 'test_commcarehq'
-        with trap_extra_setup(KafkaUnavailableError):
-            self.consumer = KafkaConsumer(
-                topics.CASE,
-                client_id='test-consumer',
-                bootstrap_servers=settings.KAFKA_BROKERS,
-                consumer_timeout_ms=100,
-            )
+        self.consumer = KafkaConsumer(
+            topics.CASE,
+            client_id='test-consumer',
+            bootstrap_servers=settings.KAFKA_BROKERS,
+            consumer_timeout_ms=100,
+            enable_auto_commit=False,
+        )
         try:
             next(self.consumer)
         except StopIteration:
