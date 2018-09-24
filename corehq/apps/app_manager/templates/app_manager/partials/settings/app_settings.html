@@ -166,6 +166,7 @@
     <ul class="nav nav-tabs sticky-tabs">
     {% if app.get_doc_type == 'LinkedApplication' %}
         <li><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
+        <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
         <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
     {% else %}
         <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
@@ -204,11 +205,9 @@
                 </div>
             </div>
         {% endif %}
-        {% if app.get_doc_type != 'LinkedApplication' %}
-            <div class="tab-pane" id="languages">
-                {% include 'app_manager/languages.html' %}
-            </div>
-        {% endif %}
+        <div class="tab-pane" id="languages">
+            {% include 'app_manager/languages.html' %}
+        </div>
         <div class="tab-pane" id="actions">
             {% if app.get_doc_type != 'LinkedApplication' %}
                 {% if copy_app_form %}

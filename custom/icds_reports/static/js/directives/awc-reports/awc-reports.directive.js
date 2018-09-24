@@ -1697,7 +1697,7 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, haveAccessToFeatures) {
     var vm = this;
     vm.data = {};
     vm.label = "AWC Report";
@@ -1726,16 +1726,43 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         .withOption('order', [[4, 'asc']])
         .withDOM('ltipr');
 
-    vm.dtColumns = [
-        DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonName).withClass('big-col'),
-        DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth).withClass('medium-col'),
-        DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge).withClass('medium-col'),
-        DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate).withClass('medium-col'),
-        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status (in Month)').renderWith(renderWeightForAgeStatus).withClass('medium-col'),
-        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
-        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
-        DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
-    ];
+    if (vm.step === 'beneficiary') {
+        vm.dtColumns = [
+            DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonName).withClass('big-col'),
+            DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth).withClass('medium-col'),
+            DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge).withClass('medium-col'),
+            DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate).withClass('medium-col'),
+            DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status (in Month)').renderWith(renderWeightForAgeStatus).withClass('medium-col'),
+            DTColumnBuilder.newColumn('current_month_wasting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
+            DTColumnBuilder.newColumn('current_month_stunting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
+            DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
+        ];
+    } else if (vm.step === 'pregnant') {
+        vm.dtColumns = [
+            DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonNamePregnant).withClass('big-col'),
+            DTColumnBuilder.newColumn('age').withTitle('Age').renderWith(renderAge).withClass('medium-col'),
+            DTColumnBuilder.newColumn('opened_on').withTitle('Pregnancy registration').renderWith(renderOpenedOn).withClass('medium-col'),
+            DTColumnBuilder.newColumn('edd').withTitle('EDD').renderWith(renderEdd).withClass('medium-col'),
+            DTColumnBuilder.newColumn('trimester').withTitle('Trimester').renderWith(renderTrimester).withClass('medium-col'),
+            DTColumnBuilder.newColumn('anemic').withTitle('Anemia during last ANC (Y/N)').renderWith(renderAnemic).withClass('medium-col'),
+            DTColumnBuilder.newColumn('num_anc_complete').withTitle('Number of ANC visits').renderWith(renderNumAncComplete).withClass('medium-col'),
+            DTColumnBuilder.newColumn('beneficiary').withTitle('Beneficiary Status').renderWith(renderBeneficiary).withClass('medium-col'),
+            DTColumnBuilder.newColumn('number_of_thrs_given').withTitle('Number of THRs given to date').renderWith(renderNumberOfThrsGiven).withClass('medium-col'),
+            DTColumnBuilder.newColumn('last_date_thr').withTitle('Date of last THR').renderWith(renderLastDateThr).withClass('medium-col'),
+        ];
+    } else if (vm.step === 'lactating') {
+        vm.dtColumns = [
+            DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonNameLactating).withClass('big-col'),
+            DTColumnBuilder.newColumn('age').withTitle('Age').renderWith(renderAge).withClass('medium-col'),
+            DTColumnBuilder.newColumn('add').withTitle('Date of Delivery').renderWith(renderAdd).withClass('medium-col'),
+            DTColumnBuilder.newColumn('delivery_nature').withTitle('Type of Delivery').renderWith(renderDeliveryNature).withClass('medium-col'),
+            DTColumnBuilder.newColumn('institutional_delivery_in_month').withTitle('Institutional Delivery (Y/N)').renderWith(renderInstitutionalDeliveryInMonth).withClass('medium-col'),
+            DTColumnBuilder.newColumn('num_pnc_visits').withTitle('Number of PNC visits').renderWith(renderNumPncVisits).withClass('medium-col'),
+            DTColumnBuilder.newColumn('breastfed_at_birth').withTitle('Breastfed within hour of birth').renderWith(renderBreastfedAtBirth).withClass('medium-col'),
+            DTColumnBuilder.newColumn('is_ebf').withTitle('Exclusively breastfeeding at last home visit').renderWith(renderIsEbf).withClass('medium-col'),
+            DTColumnBuilder.newColumn('num_rations_distributed').withTitle('Number of THRs given').renderWith(renderNumRationsDistributed).withClass('medium-col'),
+        ];
+    }
 
     function compile(row) {
         $compile(window.angular.element(row).contents())($scope);
@@ -1746,12 +1773,81 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             + full.case_id + '\')">' + full.person_name || 'Data not Entered' + '</span>';
     }
 
+    function renderPersonNamePregnant(data, type, full) {
+        return '<span class="pointer link" ng-click="$ctrl.goToPregnantDetails(\''
+            + full.case_id + '\')">' + full.person_name || 'Data not Entered' + '</span>';
+    }
+
+    function renderPersonNameLactating(data, type, full) {
+        return full.person_name || 'Data not Entered';
+    }
+
     function renderDateOfBirth(data, type, full) {
         return full.dob || 'Data not Entered';
     }
 
     function renderAge(data, type, full) {
         return full.age || 'Data not Entered';
+    }
+
+    function renderOpenedOn(data, type, full) {
+        return full.opened_on || 'Data not Entered';
+    }
+
+    function renderEdd(data, type, full) {
+        return full.edd || 'Data not Entered';
+    }
+
+    function renderTrimester(data, type, full) {
+        return full.trimester || 'Data not Entered';
+    }
+
+    function renderAnemic(data, type, full) {
+        return full.anemic || 'Data not Entered';
+    }
+
+    function renderNumAncComplete(data, type, full) {
+        return full.num_anc_complete || 'Data not Entered';
+    }
+
+    function renderBeneficiary(data, type, full) {
+        return full.beneficiary || 'Data not Entered';
+    }
+
+    function renderNumberOfThrsGiven(data, type, full) {
+        return full.number_of_thrs_given || 'Data not Entered';
+    }
+
+    function renderLastDateThr(data, type, full) {
+        return full.last_date_thr || 'Data not Entered';
+    }
+
+    function renderAdd(data, type, full) {
+        return full.add || 'Data not Entered';
+    }
+
+    function renderBreastfedAtBirth(data, type, full) {
+        return full.breastfed_at_birth || 'Data not Entered';
+    }
+
+    function renderIsEbf(data, type, full) {
+        return full.is_ebf || 'Data not Entered';
+    }
+
+    function renderInstitutionalDeliveryInMonth(data, type, full) {
+        return full.institutional_delivery_in_month || 'Data not Entered';
+    }
+
+    function renderDeliveryNature(data, type, full) {
+        return full.delivery_nature || 'Data not Entered';
+    }
+
+    function renderNumPncVisits(data, type, full) {
+        return full.num_pnc_visits || 'Data not Entered';
+    }
+
+    function renderNumRationsDistributed(data, type, full) {
+        return full.num_rations_distributed || 'Data not Entered';
     }
 
     function renderFullyImmunizedDate(data, type, full) {
@@ -1813,10 +1909,19 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             return;
         } else if (step === 'beneficiary') {
             vm.showBeneficiaryTable();
+        } else if (step === 'pregnant_details') {
+            vm.showPregnantDetails(caseId);
+            vm.data = [];
+            return;
+        } else if (step === 'pregnant') {
+            vm.showPregnantTable();
+        } else if (step === 'lactating') {
+            vm.showLactatingTable();
         }
 
         var get_url = url('awc_reports', step);
-        if (parseInt(vm.selectedLocationLevel) === 4 && step !== 'beneficiary') {
+        if (parseInt(vm.selectedLocationLevel) === 4 && step !== 'beneficiary' && step !== 'pregnant'
+            && step !== 'lactating') {
             vm.myPromise = $http({
                 method: "GET",
                 url: get_url,
@@ -2369,6 +2474,72 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         );
     };
 
+    vm.goToPregnantDetails = function (caseId) {
+        var params = $location.search();
+        params.case_id = caseId;
+        $location.path('/awc_reports/pregnant_details');
+    };
+
+    vm.showPregnantDetails = function () {
+        var params = $location.search();
+        var getUrl = url('awc_reports', 'pregnant_details');
+
+        vm.filters.push('month');
+
+        vm.myPromise = $http({
+            method: "GET",
+            url: getUrl,
+            params: params,
+        }).then(
+            function (response) {
+                vm.pregnantData = response.data['data'];
+                vm.showTable = false;
+                var empty = {
+                    case_id: null,
+                    trimester: null,
+                    person_name: null,
+                    age: null,
+                    mobile_number: null,
+                    edd: null,
+                    opened_on: null,
+                    preg_order: null,
+                    home_visit_date: 'Not entered',
+                    bp: null,
+                    anc_weight: null,
+                    anc_hemoglobin: null,
+                    anc_abnormalities: null,
+                    anemic: null,
+                    symptoms: null,
+                    counseling: null,
+                    using_ifa: null,
+                    ifa_consumed_last_seven_days: null,
+                    tt_taken: null,
+                    tt_date: null,
+                };
+                if (vm.pregnantData[0].length > 0) {
+                    vm.pregnant = vm.pregnantData[0][0];
+                } else if (vm.pregnantData[1].length > 0) {
+                    vm.pregnantData[0].push(empty);
+                    vm.pregnant = vm.pregnantData[1][0];
+                } else {
+                    vm.pregnantData[0].push(empty);
+                    vm.pregnantData[1].push(empty);
+                    vm.pregnant = vm.pregnantData[2][0];
+                }
+                if (vm.pregnantData[0].length === 1) {
+                    vm.pregnantData[0].push(empty);
+                }
+                if (vm.pregnantData[2].length === 0) {
+                    vm.pregnantData[2].push(empty);
+                }
+                vm.showPregnant = true;
+            },
+            function (error) {
+                $log.error(error);
+            }
+        );
+    };
+
     vm.goToBeneficiaryTable = function () {
         $location.path(vm.steps.beneficiary.listRoute);
     };
@@ -2377,6 +2548,25 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         vm.filters.pop();
         vm.beneficiary = null;
         vm.showBeneficiary = false;
+        vm.showTable = true;
+    };
+
+    vm.goToPregnantTable = function () {
+        $location.path(vm.steps.pregnant.listRoute);
+    };
+
+    vm.showPregnantTable = function () {
+        vm.filters.push('month');
+        vm.pregnant = null;
+        vm.pregnantData = null;
+        vm.showPregnant = false;
+        vm.showTable = true;
+    };
+
+    vm.showLactatingTable = function () {
+        vm.filters.push('month');
+        vm.lactating = null;
+        vm.showLactating = false;
         vm.showTable = true;
     };
 
@@ -2389,11 +2579,22 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         beneficiary: {route: "/awc_reports/beneficiary", label: "Child Beneficiaries List"},
     };
 
+    if (haveAccessToFeatures) {
+        vm.steps.pregnant = {route: "/awc_reports/pregnant", label: "Pregnant Women"};
+        vm.steps.lactating = {route: "/awc_reports/lactating", label: "Lactating Women"};
+    }
+
     if (vm.step === 'beneficiary_details') {
         vm.steps.beneficiary = {
             route: '/awc_reports/beneficiary_details',
             label: 'Beneficiary Details',
             listRoute: '/awc_reports/beneficiary',
+        };
+    } else if (vm.step === 'pregnant_details') {
+        vm.steps.pregnant = {
+            route: '/awc_reports/pregnant_details',
+            label: 'Pregnant Details',
+            listRoute: '/awc_reports/pregnant',
         };
     }
 
@@ -2442,7 +2643,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('awcReports', function () {
     return {

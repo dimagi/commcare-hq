@@ -88,6 +88,11 @@
     <form action="{% url 'confirm_billing_account_info' domain %}" method="post" class="form">
         {% csrf_token %}
         <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
+        <input type="hidden" value="" name="downgrade_reason" id="downgrade-reason"/>
+        <input type="hidden" value="" name="will_project_restart" id="will-project-restart"/>
+        <input type="hidden" value="" name="new_tool" id="new-tool"/>
+        <input type="hidden" value="" name="new_tool_reason" id="new-tool-reason"/>
+        <input type="hidden" value="" name="feedback" id="feedback"/>
         <hr />
         <p>
             {% blocktrans %}
@@ -120,14 +125,56 @@
             </div>
             <div class="modal-body">
                 {% blocktrans %}
-                    We'd love to make CommCare work better for you.
-                    Let us know what we can do to improve, or why you're downgrading.
+                    We’d love to make CommCare work better for you.
+                    Please help us, by answering these simple questions.
                 {% endblocktrans %}
+
                 <br><br>
-                <textarea class="form-control"></textarea>
+                {% blocktrans %}
+                    Why are you downgrading your subscription today?
+                {% endblocktrans %}
+                <select multiple="multiple" class="form-control" id="select-downgrade-reason" data-bind="value: downgradeReason, options: downgradeReasonList"></select>
+                <br><br>
+
+                <div data-bind="visible: projectEnded">
+                    {% blocktrans %}
+                        Is there a chance your project may start again?
+                    {% endblocktrans %}
+                    <select class="form-control" id="select-project-restart">
+                        <option value='yes'>{% trans "Yes" %}</option>
+                        <option value='no' selected="selected">{% trans "No" %}</option>
+                    </select>
+                    <br><br>
+                </div>
+
+                <div data-bind="visible: newToolNeeded">
+                    {% blocktrans %}
+                        Could you indicate which new tool you’re using?
+                    {% endblocktrans %}
+                    <textarea class="form-control" id="text-new-tool" data-bind="textInput: newTool"></textarea>
+                    <br><br>
+                    {% blocktrans %}
+                        Why are you switching to a new tool?
+                    {% endblocktrans %}
+                    <select multiple="multiple" class="form-control" id="select-tool-reason" data-bind="options: newToolReasonList, value: newToolReason"></select>
+                    <br><br>
+
+                    <div data-bind="visible: otherSelected">
+                        {% blocktrans %}
+                            Please specify
+                        {% endblocktrans %}
+                        <textarea class="form-control" id="text-tool-reason" data-bind="textInput: otherNewToolReason"></textarea>
+                        <br><br>
+                    </div>
+                </div>
+
+                {% blocktrans %}
+                    Please let us know any other feedback you have
+                {% endblocktrans %}
+                <textarea class="form-control" id="text-feedback"></textarea>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade">{% trans "OK" %}</button>
+                <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade, enable: requiredQuestionsAnswered">{% trans "Continue" %}</button>
             </div>
         </div>
     </div>

@@ -15,11 +15,6 @@ from corehq.apps.sms.handlers.form_session import validate_answer
 from corehq.apps.sms.util import touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
-from corehq.apps.reminders.models import (
-    METHOD_SMS,
-    METHOD_SMS_SURVEY,
-    REMINDER_TYPE_KEYWORD_INITIATED,
-)
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
@@ -28,6 +23,7 @@ from corehq.apps.app_manager.models import Form
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models import SMSContent, SMSSurveyContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
+from corehq import toggles
 from six.moves import filter
 
 
@@ -71,6 +67,10 @@ def handle_global_keywords(v, text, msg, text_words, open_sessions):
     return fcn(v, text, msg, text_words, open_sessions)
 
 
+def can_update_location_via_sms(domain):
+    return toggles.ALLOW_LOCATION_UPDATE_OVER_SMS.enabled(domain)
+
+
 def global_keyword_update(v, text, msg, text_words, open_sessions):
 
     outbound_metadata = MessageMetadata(
@@ -83,7 +83,7 @@ def global_keyword_update(v, text, msg, text_words, open_sessions):
 
     if len(text_words) > 1:
         keyword = text_words[1]
-        if keyword.upper() == LOCATION_KEYWORD:
+        if keyword.upper() == LOCATION_KEYWORD and can_update_location_via_sms(v.domain):
             site_code = text_words[2:]
             if not site_code:
                 send_sms_to_verified_number(v, get_message(MSG_UPDATE_LOCATION_SYNTAX, v),
@@ -681,6 +681,8 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             else:
                 recipients = [contact]
 
+            recipient_is_sender = survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER
+
             if survey_keyword_action.action == KeywordAction.ACTION_SMS:
                 content = SMSContent(message={'*': survey_keyword_action.message_content})
                 content.set_context(case=case)
@@ -689,7 +691,6 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                     form_unique_id=survey_keyword_action.form_unique_id,
                     expire_after=SQLXFormsSession.MAX_SESSION_LENGTH,
                 )
-                recipient_is_sender = survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER
                 content.set_context(
                     case=case,
                     critical_section_already_acquired=recipient_is_sender,
@@ -698,7 +699,8 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                 raise ValueError("Unexpected action %s" % survey_keyword_action.action)
 
             for recipient in recipients:
-                content.send(recipient, logged_event)
+                phone_entry = verified_number if recipient_is_sender else None
+                content.send(recipient, logged_event, phone_entry=phone_entry)
 
         elif survey_keyword_action.action == KeywordAction.ACTION_STRUCTURED_SMS:
             res = handle_structured_sms(survey_keyword, survey_keyword_action,

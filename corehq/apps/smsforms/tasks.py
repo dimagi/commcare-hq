@@ -7,6 +7,11 @@ from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.messaging.scheduling.util import utcnow
 from corehq.util.celery_utils import no_result_task
 from corehq.apps.formplayer_api.smsforms.api import current_question
+from datetime import timedelta
+
+
+def session_is_stale(session):
+    return utcnow() > (session.start_time + timedelta(minutes=SQLXFormsSession.MAX_SESSION_LENGTH * 2))
 
 
 @no_result_task(serializer='pickle', queue='reminder_queue')
@@ -18,6 +23,15 @@ def handle_due_survey_action(domain, contact_id, session_id):
             or not session.session_is_open
             or session.current_action_due > utcnow()
         ):
+            return
+
+        if session_is_stale(session):
+            # If a session is having some unrecoverable errors that aren't benefitting from
+            # being retried, those errors should show up in sentry log and the fix should
+            # be dealt with. In terms of the current session itself, we just close it out
+            # to allow new sessions to start.
+            session.mark_completed(False)
+            session.save()
             return
 
         if session.current_action_is_a_reminder:

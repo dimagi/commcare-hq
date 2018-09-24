@@ -25,7 +25,7 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_select2, use_select2_v4
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_select2_v4
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
@@ -271,7 +271,7 @@ class LocationTypesView(BaseDomainView):
     @method_decorator(can_edit_location_types)
     @use_jquery_ui
     @method_decorator(check_pending_locations_import())
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 
@@ -510,7 +510,7 @@ class NewLocationView(BaseLocationView):
     form_tab = 'basic'
 
     @use_multiselect
-    @use_select2
+    @use_select2_v4
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)
@@ -669,7 +669,7 @@ class EditLocationView(NewLocationView):
     creates_new_location = False
 
     @method_decorator(can_edit_location)
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(EditLocationView, self).dispatch(request, *args, **kwargs)
 

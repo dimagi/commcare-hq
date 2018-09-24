@@ -291,15 +291,6 @@ class SettingsForm(Form):
         min_value=1000,
     )
 
-    uses_new_reminders = ChoiceField(
-        label=ugettext_lazy("New Reminders Framework"),
-        required=False,
-        choices=(
-            ('Y', ugettext_lazy("Enabled")),
-            ('N', ugettext_lazy("Disabled")),
-        ),
-    )
-
     @property
     def section_general(self):
         fields = [
@@ -569,14 +560,6 @@ class SettingsForm(Form):
 
         if self._cchq_is_previewer:
             result.append(self.section_internal)
-
-        if self.new_reminders_migrator:
-            result.append(
-                crispy.Fieldset(
-                    _("New Reminders"),
-                    crispy.Field('uses_new_reminders')
-                )
-            )
 
         result.append(
             hqcrispy.FormActions(
@@ -858,9 +841,6 @@ class SettingsForm(Form):
             raise ValidationError(_("This field is required"))
 
         return value
-
-    def clean_uses_new_reminders(self):
-        return self.cleaned_data.get('uses_new_reminders') == 'Y'
 
 
 class BackendForm(Form):
@@ -1348,8 +1328,8 @@ class SubscribeSMSForm(Form):
         super(SubscribeSMSForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.label_class = 'col-sm-3 col-md-3 col-lg-2'
+        self.helper.field_class = 'col-sm-8 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Subscribe settings'),

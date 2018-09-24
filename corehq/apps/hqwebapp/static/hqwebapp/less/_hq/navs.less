@@ -59,6 +59,13 @@
   margin-bottom: 6px;
 }
 
+// Bootstrap's default is to use a pointer cursor for the whole nav, which causes elements
+// like menu section headers to look clickable. Items that are actually clickable are typically
+// links that already have the pointer cursor.
+.nav {
+  cursor: default;
+}
+
 .nav > li > a {
   color: @cc-brand-low;
 }

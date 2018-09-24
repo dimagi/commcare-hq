@@ -53,7 +53,6 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.views import EditWebUserView
 from corehq.apps.users.views.mobile import EditCommCareUserView, EditGroupMembersView
 from corehq.form_processor.exceptions import CaseNotFound
@@ -61,7 +60,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.filters import ScheduleInstanceFilter
-from corehq.messaging.scheduling.models import ScheduledBroadcast, ImmediateBroadcast
+from corehq.messaging.scheduling.models import ScheduledBroadcast, ImmediateBroadcast, MigratedReminder
 from corehq.messaging.scheduling.views import EditScheduleView, EditConditionalAlertView
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
@@ -69,7 +68,6 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
 )
-from corehq.messaging.util import project_is_on_new_reminders
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from django.core.exceptions import ObjectDoesNotExist
 import six
@@ -594,23 +592,20 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         return display
 
     def get_reminder_display(self, handler_id, content_cache):
-        from corehq.apps.reminders.views import (
-            EditScheduledReminderView
-        )
         if handler_id in content_cache:
             return content_cache[handler_id]
+
+        display = None
+
         try:
-            reminder_definition = CaseReminderHandler.get(handler_id)
-            if reminder_definition.deleted():
-                display = '%s %s' % (reminder_definition.nickname, _('(Deleted Reminder)'))
-            else:
-                urlname = EditScheduledReminderView.urlname
-                display = '<a target="_blank" href="%s">%s</a>' % (
-                    reverse(urlname, args=[reminder_definition.domain, handler_id]),
-                    reminder_definition.nickname,
-                )
-        except ResourceNotFound:
-            display = '-'
+            info = MigratedReminder.objects.get(handler_id=handler_id)
+            if info.rule_id:
+                display = self.get_case_rule_display(info.rule_id, content_cache)
+        except MigratedReminder.DoesNotExist:
+            pass
+
+        if not display:
+            display = _("(Deleted Conditional Alert)")
 
         content_cache[handler_id] = display
         return display
@@ -1639,16 +1634,6 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
             self.get_schedule_instance_display(schedule_instance)
             for schedule_instance in self.get_current_page_records()
         ]
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-            return False
-
-        return (
-            (user and toggles.NEW_REMINDERS_MIGRATOR.enabled(user.username)) or
-            (project and project_is_on_new_reminders(project))
-        )
 
     @property
     def shared_pagination_GET_params(self):

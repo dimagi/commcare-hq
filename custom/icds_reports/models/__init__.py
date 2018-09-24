@@ -28,7 +28,8 @@ from custom.icds_reports.models.views import (
     AggCcsRecordMonthly,
     AggChildHealthMonthly,
     AwcLocationMonths,
-    DishaIndicatorView
+    DishaIndicatorView,
+    CcsRecordMonthlyView
 )
 from custom.icds_reports.models.util import (
     UcrTableNameMapping,

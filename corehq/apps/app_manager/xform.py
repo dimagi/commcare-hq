@@ -166,7 +166,7 @@ class WrappedAttribs(object):
 class WrappedNode(object):
 
     def __init__(self, xml, namespaces=namespaces):
-        if isinstance(xml, six.binary_type):
+        if isinstance(xml, bytes):
             xml = xml.decode('utf-8')
         if isinstance(xml, six.string_types):
             self.xml = parse_xml(xml) if xml else None
@@ -959,14 +959,37 @@ class XForm(WrappedNode):
         """
         from corehq.apps.app_manager.util import first_elem
 
+        def _add_choices_for_select_questions(question):
+            if cnode.items is not None:
+                options = []
+                for item in cnode.items:
+                    translation = self.get_label_text(item, langs)
+                    try:
+                        value = item.findtext('{f}value').strip()
+                    except AttributeError:
+                        raise XFormException(_("<item> ({}) has no <value>").format(translation))
+                    option = {
+                        'label': translation,
+                        'value': value
+                    }
+                    if include_translations:
+                        option['translations'] = self.get_label_translations(item, langs)
+                    options.append(option)
+                question['options'] = options
+            return question
+
         if not self.exists():
             return []
 
         questions = []
         repeat_contexts = set()
         group_contexts = set()
-        excluded_paths = set()
+        excluded_paths = set()  # prevent adding the same question twice
 
+        # control_nodes will contain all nodes in question tree (the <h:body> of an xform)
+        # The question tree doesn't contain every question - notably, it's missing hidden values - so
+        # we also need to look at the data tree (the <model> in the xform's <head>). Getting the leaves
+        # of the data tree should be sufficient to fill in what's not available from the question tree.
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
 
@@ -1006,22 +1029,8 @@ class XForm(WrappedNode):
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
 
-            if cnode.items is not None:
-                options = []
-                for item in cnode.items:
-                    translation = self.get_label_text(item, langs)
-                    try:
-                        value = item.findtext('{f}value').strip()
-                    except AttributeError:
-                        raise XFormException(_("<item> ({}) has no <value>").format(translation))
-                    option = {
-                        'label': translation,
-                        'value': value
-                    }
-                    if include_translations:
-                        option['translations'] = self.get_label_translations(item, langs)
-                    options.append(option)
-                question['options'] = options
+            question = _add_choices_for_select_questions(question)
+
             questions.append(question)
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)

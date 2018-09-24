@@ -23,6 +23,7 @@ hqDefine("locations/js/widgets_main_v4", [
                 multiple: options.multiselect,
                 allowClear: !options.multiselect,
                 placeholder: gettext("Select a Location"),
+                width: '100%',
                 ajax: {
                     url: options.queryUrl,
                     dataType: 'json',
@@ -67,6 +68,7 @@ hqDefine("locations/js/widgets_main_v4", [
             $select.select2({
                 allowClear: true,
                 placeholder: gettext("Choose a primary location"),
+                width: '100%',
             });
 
             // This custom event is fired in autocomplete_select_widget.html

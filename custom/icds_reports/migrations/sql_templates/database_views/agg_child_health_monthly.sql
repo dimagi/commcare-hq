@@ -22,6 +22,7 @@ CREATE VIEW agg_child_health_monthly AS
         "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
         "awc_location_months"."month_display" AS "month_display",
+        "awc_location_months"."contact_phone_number" AS "contact_phone_number",
         "agg_child_health"."gender" AS "gender",
         "agg_child_health"."age_tranche" AS "age_tranche",
         "agg_child_health"."caste" AS "caste",

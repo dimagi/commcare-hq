@@ -104,3 +104,6 @@ REPORTING_DATABASES = {
     'icds-ucr': 'default',
     'icds-test-ucr': 'default',
 }
+
+# See comment under settings.SMS_QUEUE_ENABLED
+SMS_QUEUE_ENABLED = False

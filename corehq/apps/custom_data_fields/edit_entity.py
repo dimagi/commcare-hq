@@ -8,7 +8,6 @@ from django import forms
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Div, HTML, Field
-from corehq.apps.hqwebapp.widgets import Select2MultipleChoiceWidget
 
 from memoized import memoized
 

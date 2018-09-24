@@ -121,8 +121,12 @@ hqDefine('userreports/js/report_config', function () {
                 self.reportPreviewUrl = config["reportPreviewUrl"];  // Fetch the preview data asynchronously.
                 self.previewDatasourceId = config["previewDatasourceId"];
 
-                self.reportTypeListLabel = (config['sourceType'] === "case") ? "Case List" : "Form List";
-                self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
+                self.reportTypeListLabel = (
+                    (config['sourceType'] === "case") ? "Case List" :
+                        (config['sourceType'] === "form") ? "Form List" : "List");
+                self.reportTypeAggLabel = (
+                    (config['sourceType'] === "case") ? "Case Summary" :
+                        (config['sourceType'] === "form") ? "Form Summary" : "Summary");
                 self.reportType = ko.observable(config['existingReportType'] || constants.REPORT_TYPE_LIST);
                 self.reportType.subscribe(function (newValue) {
                     _ga_track_config_change('Change Report Type', newValue);
@@ -331,6 +335,7 @@ hqDefine('userreports/js/report_config', function () {
                     self.saveButton.fire("change");
                 });
                 self.previewError = ko.observable(false);
+                self.previewErrorMessage = ko.observable(null);
                 self._suspendPreviewRefresh = false;
                 self._pendingUpdate = false;
                 self.refreshPreview = function (serializedColumns) {
@@ -368,11 +373,15 @@ hqDefine('userreports/js/report_config', function () {
                                     self.renderReportPreview(data);
                                 }
                             },
-                            error: function () {
+                            error: function (response) {
                                 self._suspendPreviewRefresh = false;
                                 if (self._pendingUpdate) {
                                     self.refreshPreview();
                                 } else {
+                                    if (response.status === 400) {
+                                        var errorMessage = response.responseJSON;
+                                        self.previewErrorMessage(errorMessage.message);
+                                    }
                                     self.previewError(true);
                                 }
                             },
@@ -386,6 +395,7 @@ hqDefine('userreports/js/report_config', function () {
 
                 self.renderReportPreview = function (data) {
                     self.previewError(false);
+                    self.previewErrorMessage(null);
                     self.noChartForConfigWarning(false);
                     self.tooManyChartCategoriesWarning(false);
                     self._renderTablePreview(data['table']);

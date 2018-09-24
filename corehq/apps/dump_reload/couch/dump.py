@@ -24,8 +24,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['MobileAuthKeyRecord']),
     DocTypeIDProvider(['Product']),
     DocTypeIDProvider(['Program']),
-    DocTypeIDProvider(['CaseReminder']),
-    DocTypeIDProvider(['CaseReminderHandler']),
     UserIDProvider(include_mobile_users=False),
     DocTypeIDProvider(['CommCareUser']),
     DocTypeIDProvider(['UserRole']),

@@ -444,7 +444,6 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
 def create_test_case(domain, case_type, case_name, case_properties=None, drop_signals=True,
         case_id=None, owner_id=None, user_id=None):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
-    from corehq.apps.reminders.tasks import delete_reminders_for_cases
     from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
     from corehq.form_processor.utils.general import should_use_sql_backend
     from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_schedule_instances_by_case_id
@@ -456,7 +455,6 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
         yield case
     finally:
         delete_phone_numbers_for_owners([case.case_id])
-        delete_reminders_for_cases(domain, [case.case_id])
         delete_schedule_instances_by_case_id(domain, case.case_id)
         if should_use_sql_backend(domain):
             CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])

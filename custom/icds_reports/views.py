@@ -11,6 +11,7 @@ from datetime import datetime, date
 from memoized import memoized
 from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
@@ -64,9 +65,9 @@ from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scal
 from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_chart,\
     get_awc_daily_status_data_map, get_awc_daily_status_sector_data
 from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
-from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics,\
+from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics, \
     get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details, \
-    get_awc_report_infrastructure
+    get_awc_report_infrastructure, get_awc_report_pregnant, get_pregnant_details, get_awc_report_lactating
 from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data, \
     get_awcs_covered_data_chart
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
@@ -112,7 +113,7 @@ from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports, prepare_excel_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
-    current_month_stunting_column, current_month_wasting_column
+    current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
@@ -593,6 +594,12 @@ class AwcReportsView(BaseReportView):
                 beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'beneficiary':
+            filters = {
+                'awc_id': config['awc_id'],
+            }
+            age = self.request.GET.get('age', None)
+            if age:
+                filters.update(get_age_filter_in_months(age))
             if 'awc_id' in config:
                 start = int(request.GET.get('start', 0))
                 length = int(request.GET.get('length', 10))
@@ -616,7 +623,7 @@ class AwcReportsView(BaseReportView):
                     length,
                     draw,
                     order,
-                    config['awc_id'],
+                    filters,
                     tuple(current_month.timetuple())[:3],
                     tuple(two_before.timetuple())[:3],
                     icds_features_flag
@@ -627,6 +634,37 @@ class AwcReportsView(BaseReportView):
                 config['awc_id'],
                 tuple(current_month.timetuple())[:3]
             )
+        elif step == 'pregnant':
+            if 'awc_id' in config:
+                icds_features_flag = icds_pre_release_features(self.request.couch_user)
+                order_by_number_column = request.GET.get('order[0][column]')
+                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
+                order_dir = request.GET.get('order[0][dir]', 'asc')
+                reversed_order = True if order_dir == 'desc' else False
+
+                data = get_awc_report_pregnant(
+                    order_by_name_column,
+                    reversed_order,
+                    config['awc_id']
+                )
+        elif step == 'pregnant_details':
+            data = get_pregnant_details(
+                self.request.GET.get('case_id'),
+                config['awc_id'],
+            )
+        elif step == 'lactating':
+            if 'awc_id' in config:
+                icds_features_flag = icds_pre_release_features(self.request.couch_user)
+                order_by_number_column = request.GET.get('order[0][column]')
+                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
+                order_dir = request.GET.get('order[0][dir]', 'asc')
+                reversed_order = True if order_dir == 'desc' else False
+
+                data = get_awc_report_lactating(
+                    order_by_name_column,
+                    reversed_order,
+                    config['awc_id']
+                )
         return JsonResponse(data=data)
 
 
@@ -1772,4 +1810,4 @@ class DishaAPIView(View):
     @property
     @quickcache([])
     def valid_state_names(self):
-        return AwcLocationMonths.objects.values_list('state_name', flat=True).distinct()
+        return list(AwcLocationMonths.objects.values_list('state_name', flat=True).distinct())
