@@ -56,13 +56,13 @@ branches:
   - pv/deactivated-users # Preethi Aug 23
   - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
   - sr-batch-ucrpillow # Sravan Sept 4
-#  - rn_migratin_download_index # Rohit Sept 10
+  - rn_migratin_download_index # Rohit Sept 10
   - rn_pre_migration_work_for_hqmedia # Rohit Sept 11
   - nh/omrs/atom  # Norman Sept 12
   - lwyszomi:lw/report_export_v3  # Jenny Sept 12
   - jls/add-js-to-sentry  # Jenny Sept 18
   - sr-redis-client # Sravan Sept 19
-  - rn_testing_central_ace # Rohit Sept24
+#  - rn_testing_central_ace # Rohit Sept24
 submodules:
   submodules/django-digest-src:
     branches: []
