@@ -54,7 +54,6 @@ branches:
 #  - np/celery-4.x-monkeypatch  # Nick P Sept 4
 #  - np/celery-4.x-2  # Nick P Aug 22
   - pv/deactivated-users # Preethi Aug 23
-  - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
   - sr-batch-ucrpillow # Sravan Sept 4
 #  - rn_migratin_download_index # Rohit Sept 10
   - rn_pre_migration_work_for_hqmedia # Rohit Sept 11
