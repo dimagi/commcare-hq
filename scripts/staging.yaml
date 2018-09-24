@@ -63,6 +63,7 @@ branches:
   - jls/add-js-to-sentry  # Jenny Sept 18
   - sr-redis-client # Sravan Sept 19
   - rn_funneling_ace_use # Rohit Sept24
+  - jls/kill-edit-forms  # Jenny Sept 24
 submodules:
   submodules/django-digest-src:
     branches: []
