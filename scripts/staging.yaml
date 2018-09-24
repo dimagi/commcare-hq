@@ -54,15 +54,15 @@ branches:
 #  - np/celery-4.x-monkeypatch  # Nick P Sept 4
 #  - np/celery-4.x-2  # Nick P Aug 22
   - pv/deactivated-users # Preethi Aug 23
-  - rn_migrating_sms_pages # Rohit Aug 29
   - rn_migrating_more_messaging_pages  # Rohit/Jenny Sept 5
   - sr-batch-ucrpillow # Sravan Sept 4
-  - rn_migratin_download_index # Rohit Sept 10
+#  - rn_migratin_download_index # Rohit Sept 10
   - rn_pre_migration_work_for_hqmedia # Rohit Sept 11
   - nh/omrs/atom  # Norman Sept 12
-#  - rn_testing_module_loading # Rohit Sept 12
   - lwyszomi:lw/report_export_v3  # Jenny Sept 12
-  - jls/release-appcues-template-apps  # Jenny Sept 13
+  - jls/add-js-to-sentry  # Jenny Sept 18
+  - sr-redis-client # Sravan Sept 19
+  - rn_testing_central_ace # Rohit Sept24
 submodules:
   submodules/django-digest-src:
     branches: []

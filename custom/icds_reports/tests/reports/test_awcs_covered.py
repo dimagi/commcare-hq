@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_data_chart, \
     get_awcs_covered_sector_data
 from django.test import TestCase
@@ -25,11 +26,9 @@ class TestAWCSCovered(TestCase):
             {
                 "rightLegend": {
                     "info": (
-                        "Total AWCs that have launched ICDS-CAS. "
-                        "AWCs are considered launched after submitting at least "
-                        "one Household Registration form. <br /><br />"
+                        "{}<br /><br />"
                         'Number of AWCs launched: 19 <br />'
-                        'Number of States launched: 2'
+                        'Number of States launched: 2'.format(awcs_launched_help_text())
                     )
                 },
                 "fills": {
@@ -77,11 +76,9 @@ class TestAWCSCovered(TestCase):
             {
                 "rightLegend": {
                     "info": (
-                        "Total AWCs that have launched ICDS-CAS. "
-                        "AWCs are considered launched after submitting at least "
-                        "one Household Registration form. <br /><br />"
+                        "{}<br /><br />"
                         'Number of AWCs launched: 8 <br />'
-                        'Number of Blocks launched: 2'
+                        'Number of Blocks launched: 2'.format(awcs_launched_help_text())
                     )
                 },
                 "fills": {
@@ -196,11 +193,9 @@ class TestAWCSCovered(TestCase):
             ),
             {
                 "info": (
-                    "Total AWCs that have launched ICDS-CAS. "
-                    "AWCs are considered launched after submitting at least "
-                    "one Household Registration form. <br /><br />"
+                    "{}<br /><br />"
                     "Number of AWCs launched: 3 <br />"
-                    "Number of Supervisors launched: 2"
+                    "Number of Supervisors launched: 2".format(awcs_launched_help_text())
                 ),
                 "tooltips_data": {
                     "s2": {

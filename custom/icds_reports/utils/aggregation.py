@@ -768,7 +768,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(blurred_vision) OVER w as blurred_vision,
         LAST_VALUE(convulsions) OVER w as convulsions,
         LAST_VALUE(rupture) OVER w as rupture,
-        LAST_VALUE(anemia) OVER w as anemia
+        LAST_VALUE(anemia) OVER w as anemia,
+        LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -798,7 +799,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
           state_id, month, case_id, latest_time_end_processed,
           immediate_breastfeeding, anemia, eating_extra, resting,
           anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
-          bleeding, swelling, blurred_vision, convulsions, rupture
+          bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities
         ) (
           SELECT
             %(state_id)s AS state_id,
@@ -818,7 +819,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
             ucr.swelling as swelling,
             ucr.blurred_vision as blurred_vision,
             ucr.convulsions as convulsions,
-            ucr.rupture as rupture
+            ucr.rupture as rupture,
+            ucr.anc_abnormalities as anc_abnormalities
           FROM ({ucr_table_query}) ucr
           LEFT JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -878,12 +880,12 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, breastfed_at_birth
+          case_id, state_id, month, latest_time_end_processed, breastfed_at_birth
         ) (
           SELECT
+            DISTINCT case_load_ccs_record0 AS case_id,
             %(state_id)s AS state_id,
-            %(month)s AS month,
-            case_load_ccs_record0 AS case_id,
+            %(month)s::DATE AS month,
             LAST_VALUE(timeend) over w AS latest_time_end_processed,
             LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth
           FROM "{ucr_tablename}"
@@ -1409,15 +1411,12 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
                 "chm.zscore_grading_hfa = 1 THEN 1 ELSE 0 END)"),
             ('wasting_normal_v2',
                 "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 3 THEN 1 "
-                "WHEN chm.muac_grading_recorded_in_month = 1 AND chm.muac_grading = 3 THEN 1 "
                 "ELSE 0 END)"),
             ('wasting_moderate_v2',
                 "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 2 THEN 1 "
-                "WHEN chm.muac_grading_recorded_in_month = 1 AND chm.muac_grading = 2 THEN 1 "
                 "ELSE 0 END)"),
             ('wasting_severe_v2',
                 "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 1 THEN 1 "
-                "WHEN chm.muac_grading_recorded_in_month = 1 AND chm.muac_grading = 1 THEN 1 "
                 "ELSE 0 END)"),
             ('zscore_grading_hfa_recorded_in_month', "SUM(chm.zscore_grading_hfa_recorded_in_month)"),
             ('zscore_grading_wfh_recorded_in_month', "SUM(chm.zscore_grading_wfh_recorded_in_month)"),
@@ -1702,6 +1701,9 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('mobile_number', 'case_list.mobile_number'),
             ('preg_order', 'case_list.preg_order'),
             ('num_pnc_visits', 'case_list.num_pnc_visits'),
+            ('last_date_thr', 'case_list.last_date_thr'),
+            ('num_anc_complete', 'case_list.num_anc_complete'),
+            ('opened_on', 'case_list.opened_on')
         )
         return """
         INSERT INTO "{tablename}" (

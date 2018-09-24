@@ -416,7 +416,7 @@ class KeywordForm(Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Save Keyword"),
+                    _("Save"),
                     css_class='btn-primary',
                     type='submit',
                 ),

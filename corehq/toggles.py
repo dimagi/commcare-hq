@@ -1092,20 +1092,6 @@ COPY_CONDITIONAL_ALERTS = StaticToggle(
     [NAMESPACE_USER],
 )
 
-ABT_REMINDER_RECIPIENT = StaticToggle(
-    'abt_reminder_recipient',
-    "ABT: Custom reminder recipients",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-AUTO_CASE_UPDATE_ENHANCEMENTS = StaticToggle(
-    'auto_case_updates',
-    'Enable enhancements to the Auto Case Update feature.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
@@ -1233,6 +1219,13 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
 EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     'emg_and_rec_sms_handlers',
     'ILS: Enable emergency and receipt sms handlers used in ILSGateway',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+ALLOW_LOCATION_UPDATE_OVER_SMS = StaticToggle(
+    'allow_location_update_over_sms',
+    'Allow users to update their location over SMS.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )

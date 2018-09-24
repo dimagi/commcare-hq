@@ -242,21 +242,6 @@ def load_app_template(slug):
 
 
 @memoized
-def get_template_app_multimedia_paths(slug):
-    paths = []
-    base_path = app_template_dir(slug)
-    for root, subdirs, files in os.walk(base_path):
-        subdir = os.path.relpath(root, base_path)
-        if subdir == '.':
-            continue
-        for file in files:
-            if file.startswith("."):
-                continue
-            paths.append(subdir + os.sep + file)
-    return paths
-
-
-@memoized
 def load_case_reserved_words():
     with open(
         os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json'),

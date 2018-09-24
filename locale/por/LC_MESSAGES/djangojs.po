@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-09-11 19:07+0000\n"
+"POT-Creation-Date: 2018-09-18 17:03+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Claire O'Grady <cogrady@dimagi.com>, 2018\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -17,6 +17,41 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:12
+msgid "My project ended"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:13
+msgid "The funding for my project ended"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:14
+msgid ""
+"I don’t need the features of my paid plan anymore but I plan on continuing "
+"using CommCare"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:15
+msgid "We are switching to a different mobile data collection tool"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:16
+msgid "For budget reasons"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:17
+msgid "I need more limited features"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:18
+msgid "I need additional/custom features"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/confirm_plan.js:19
+#: corehq/apps/reports/static/reports/js/maps_utils.js:1090
+msgid "Other"
+msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/enterprise_dashboard.js:34
 msgid ""
@@ -52,10 +87,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js:183
-#, fuzzy
-#| msgid "Monthly"
 msgid "Billed Monthly"
-msgstr "Mes"
+msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js:185
 msgid "Billed Annually"
@@ -69,7 +102,6 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:76
 #: corehq/apps/locations/static/locations/js/location_types.js:365
-#: corehq/apps/reminders/static/reminders/js/reminders.js:12
 msgid "You have unsaved changes."
 msgstr ""
 
@@ -661,7 +693,6 @@ msgid "Questions"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:69
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:109
 msgid "Copy"
 msgstr "Copiar"
@@ -702,7 +733,6 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:268
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:38
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:40
 msgid "Delete"
 msgstr ""
 
@@ -1529,6 +1559,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/userreports/static/userreports/js/data_source_select.js:11
 msgid "Data Source"
 msgstr ""
 
@@ -1904,7 +1935,7 @@ msgid "A reference to an integer question in this form."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: corehq/apps/userreports/static/userreports/js/data_source_select.js:8
+#: corehq/apps/userreports/static/userreports/js/data_source_select.js:9
 msgid "Case"
 msgstr ""
 
@@ -2033,6 +2064,7 @@ msgid "Case Type"
 msgstr "Típo de Caso"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:67
 msgid "Case ID"
 msgstr ""
 
@@ -2454,6 +2486,46 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:172
 msgid "Search for users or groups"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:23
+msgid "<a href='<%= link %>'>Click here</a> if you are not redirected."
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:63
+msgid "Find Case"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:64
+msgid "IDs can be found in a <a href=\"<%= url %>\">case data export</a>"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:68
+msgid "Case found!"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:69
+msgid "Could not find case"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:73
+msgid "Find Form Submission"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:74
+msgid "IDs can be found in a <a href=\"<%= url %>\">form data export</a>"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:77
+msgid "Could not find form submission"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:78
+msgid "Form Submission ID"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js:79
+msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
@@ -2878,43 +2950,6 @@ msgstr ""
 msgid "Good Job! Your password is strong!"
 msgstr ""
 
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:21
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:22
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:58
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:59
-msgid "There are no broadcasts to display."
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:23
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:60
-msgid "Show _MENU_ broadcasts per page"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:24
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:61
-msgid "Loading Broadcasts..."
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:25
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:62
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:32
-msgid "Showing _START_ to _END_ of _TOTAL_ broadcasts"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:26
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:63
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:33
-msgid "(filtered from _MAX_ total broadcasts)"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:77
-msgid "Are you sure you want to delete this broadcast?"
-msgstr ""
-
-#: corehq/apps/reminders/static/reminders/js/reminders.list.js:96
-msgid "There are no reminders to display."
-msgstr ""
-
 #: corehq/apps/reports/static/reports/js/base.js:32
 #: corehq/apps/userreports/static/userreports/js/configurable_report.js:97
 msgid "You can email a saved version<br />of this report."
@@ -2996,10 +3031,6 @@ msgstr ""
 msgid ""
 "Your requested excel report will be sent to the email address defined in "
 "your account settings."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/maps_utils.js:1090
-msgid "Other"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/maps_utils.js:1091
@@ -3108,11 +3139,11 @@ msgstr ""
 msgid "Satellite"
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/add_gateway.js:9
+#: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/add_gateway.js:23
+#: corehq/apps/sms/static/sms/js/add_gateway.js:25
 msgid "You must have at least one phone number."
 msgstr ""
 
@@ -3188,20 +3219,20 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:360
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
-#: corehq/apps/userreports/static/userreports/js/report_config.js:294
-#: corehq/apps/userreports/static/userreports/js/report_config.js:322
+#: corehq/apps/userreports/static/userreports/js/report_config.js:298
+#: corehq/apps/userreports/static/userreports/js/report_config.js:326
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:361
-#: corehq/apps/userreports/static/userreports/js/report_config.js:295
+#: corehq/apps/userreports/static/userreports/js/report_config.js:299
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:362
-#: corehq/apps/userreports/static/userreports/js/report_config.js:296
+#: corehq/apps/userreports/static/userreports/js/report_config.js:300
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
@@ -3209,7 +3240,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
-#: corehq/apps/userreports/static/userreports/js/report_config.js:323
+#: corehq/apps/userreports/static/userreports/js/report_config.js:327
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
@@ -3217,7 +3248,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
-#: corehq/apps/userreports/static/userreports/js/report_config.js:324
+#: corehq/apps/userreports/static/userreports/js/report_config.js:328
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 
@@ -3230,7 +3261,7 @@ msgstr ""
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/data_source_select.js:8
+#: corehq/apps/userreports/static/userreports/js/data_source_select.js:10
 msgid "Form"
 msgstr "Formulário"
 
@@ -3375,6 +3406,14 @@ msgstr ""
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:31
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:99
 msgid "Show _MENU_ messages per page"
+msgstr ""
+
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:32
+msgid "Showing _START_ to _END_ of _TOTAL_ broadcasts"
+msgstr ""
+
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:33
+msgid "(filtered from _MAX_ total broadcasts)"
 msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:62
