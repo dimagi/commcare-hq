@@ -5671,7 +5671,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     except (ResourceNotFound, FormNotFoundException):
                         form.version = None
                     else:
-                        previous_hash = _hash(previous_source)
+                        previous_hash = _hash(previous_source.encode('utf-8'))
 
                         # hack - temporarily set my version to the previous version
                         # so that that's not treated as the diff
