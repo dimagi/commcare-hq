@@ -62,7 +62,7 @@ branches:
   - lwyszomi:lw/report_export_v3  # Jenny Sept 12
   - jls/add-js-to-sentry  # Jenny Sept 18
   - sr-redis-client # Sravan Sept 19
-#  - rn_testing_central_ace # Rohit Sept24
+  - rn_funneling_ace_use # Rohit Sept24
 submodules:
   submodules/django-digest-src:
     branches: []
