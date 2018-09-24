@@ -946,8 +946,10 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
             group_and_location_metafilter = OR(*filter(None, [group_filter, location_filter]))
 
         if group_and_location_metafilter or user_id_filter or user_type_filters:
-            all_user_filters = OR(*filter(None, [group_and_location_metafilter, user_id_filter]
-                                          + user_type_filters))
+            all_user_filter_list = [group_and_location_metafilter, user_id_filter]
+            if user_type_filters:
+                all_user_filter_list += user_type_filters
+            all_user_filters = OR(*filter(None, all_user_filter_list))
 
         return all_user_filters
 
