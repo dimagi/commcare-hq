@@ -10,7 +10,7 @@ from unidecode import unidecode
 from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
     GroupFormSubmittedByFilter,
-    OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
+    OR, AND, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
     ModifiedOnRangeFilter, FormSubmittedByFilter, NOT, SmsReceivedRangeFilter
 )
 from corehq.apps.locations.models import SQLLocation
