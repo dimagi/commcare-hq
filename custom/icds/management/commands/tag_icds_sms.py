@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.sms.models import SMS
-from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
+from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from datetime import datetime
 from django.core.management.base import BaseCommand
 
@@ -44,7 +44,7 @@ class Command(BaseCommand):
     def handle(self, domain, **options):
         for sms in SMS.objects.filter(
             domain=domain,
-            backend_api=SQLICDSBackend.get_api_id(),
+            backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
             date__lt=datetime(2017, 6, 26),
