@@ -6564,6 +6564,10 @@ class LinkedApplication(Application):
     # This is the id of the master application
     master = StringProperty()
 
+    # The following properties will overwrite their corresponding values from
+    # the master app everytime the new master is pulled
+    linked_app_translations = DictProperty()  # corresponding property: translations
+
     @property
     @memoized
     def domain_link(self):
@@ -6584,6 +6588,10 @@ class LinkedApplication(Application):
             return get_latest_master_app_release(self.domain_link, self.master)
         else:
             raise ActionNotPermitted
+
+    def reapply_translations(self):
+        self.translations.update(self.linked_app_translations)
+        self.save()
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
