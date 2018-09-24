@@ -5,8 +5,9 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
     <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
+    <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
     <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
-    <script src="{% static 'userreports/js/base.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/base_ace.js' %}"></script>
 {% endblock %}
 
 {% block page_navigation %}
