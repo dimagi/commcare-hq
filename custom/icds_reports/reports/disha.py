@@ -24,7 +24,7 @@ class DishaDump(object):
         self.month = month
 
     def _blob_id(self):
-        return 'disha_dump-{}-{}.json'.format(self.state_name, self.month.strftime('%Y-%m-%d'))
+        return 'disha_dump-{}-{}.json'.format(self.state_name.replace(" ", ""), self.month.strftime('%Y-%m-%d'))
 
     def get_data(self):
         dump = IcdsFile.objects.filter(blob_id=self._blob_id()).first()
