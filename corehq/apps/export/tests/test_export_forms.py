@@ -309,7 +309,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
 
 @patch.object(FormExportFilterBuilder, '_get_datespan_filter', lambda self, x: None)
 @patch.object(FormExportFilterBuilder, '_get_group_filter')
-@patch.object(FormExportFilterBuilder, '_get_user_type_filter')
+@patch.object(FormExportFilterBuilder, '_get_user_type_filters')
 @patch.object(FormExportFilterBuilder, '_get_users_filter')
 @patch.object(FormExportFilterBuilder, '_get_locations_filter')
 class TestEmwfFilterFormExportFormFilters(TestCase):
@@ -328,9 +328,10 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         export_filter_form = self.subject(domain, pytz.utc, data=data)
         self.assertTrue(export_filter_form.is_valid())
-        export_filter_form.get_form_filter(group_ids_slug, True, None)
+        filters = export_filter_form.get_form_filter(group_ids_slug, True, None)
         extracted_group_ids = export_filter_form._get_group_ids(group_ids_slug)
 
+        self.assertEqual(len(filters), 1)
         group_patch.assert_called_once_with(extracted_group_ids)
         user_type_patch.assert_called_once_with([])
         users_patch.assert_called_once_with([])
@@ -345,10 +346,13 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
         export_filter_form = self.subject(domain, pytz.utc, data=data)
         self.assertTrue(export_filter_form.is_valid())
         location_ids = ['some location', 'ids']
-        export_filter_form.get_form_filter(group_ids_slug, False, location_ids)
+        filters = export_filter_form.get_form_filter(group_ids_slug, False, location_ids)
+        extracted_group_ids = export_filter_form._get_group_ids(group_ids_slug)
 
-        assert not group_patch.called, 'User Filter Called for restricted location access'
-        assert not user_type_patch.called, 'User Type Filter Called for restricted location access'
+        # There are 2 filters because the scope filter has been applied for the restricted user
+        self.assertEqual(len(filters), 2)
+        group_patch.assert_called_once_with(extracted_group_ids)
+        user_type_patch.assert_called_once_with([])
         users_patch.assert_called_once_with([])
         locations_patch.assert_called_once_with([])
 
