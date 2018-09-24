@@ -224,7 +224,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
     def test_get_user_type_filter_for_mobile_active_and_deactivated(self, fetch_user_ids_patch):
         self.filter_export = self.subject(self.domain, pytz.utc)
         es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
                                                      active=True, deactivated=True)
         self.assertIsInstance(user_filters[0], UserTypeFilter)
@@ -235,7 +235,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
     def test_get_user_type_filter_for_active_mobile(self, fetch_user_ids_patch):
         self.filter_export = self.subject(self.domain, pytz.utc)
         es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
                                                      active=True, deactivated=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
@@ -245,7 +245,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
     def test_get_user_type_filter_for_deactivated_mobile(self, fetch_user_ids_patch):
         self.filter_export = self.subject(self.domain, pytz.utc)
         es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
                                                      active=False, deactivated=True)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
@@ -255,7 +255,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
     def test_get_user_type_filter_for_active_and_deactivated_mobile(self, fetch_user_ids_patch):
         self.filter_export = self.subject(self.domain, pytz.utc)
         es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False,
                                                      active=True, deactivated=True)
         self.assertIsInstance(user_filters[0], UserTypeFilter)
@@ -270,7 +270,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
         fetch_user_ids_patch.return_value = self.user_ids
         es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False,
                                                      active=True, deactivated=True)
 
@@ -287,7 +287,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
         fetch_user_ids_patch.return_value = self.user_ids
         es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False,
                                                      active=False, deactivated=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
@@ -300,7 +300,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
         fetch_user_ids_patch.return_value = self.user_ids
         es_user_types = self.filter_export._get_selected_es_user_types('')
-        user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=True, commtrack=False,
                                                      active=False, deactivated=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)

@@ -884,7 +884,7 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         if group_ids:
             return GroupFormSubmittedByFilter(list(group_ids))
 
-    def _get_user_type_filter(self, user_types):
+    def _get_user_type_filters(self, user_types):
         """
         :return: FormSubmittedByFilter with user_ids for selected user types
         """
