@@ -302,7 +302,8 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
                     "If you see this error repeatedly please report it as issue.")
     else:
         message = _("Your linked application was successfully updated to the latest version.")
-    send_html_email_async.delay("Update Status for app {}".format(app.name), email, message)
+    subject = _("Update Status for linked app %s") % app.name
+    send_html_email_async.delay(, email, message)
 
 
 def update_linked_app(app, user_id):
