@@ -344,6 +344,7 @@ class SetupTab(UITab):
             NewProductView,
             EditProductView,
             ProductFieldsView,
+            UploadProductView,
         )
 
         if self.project.commtrack_enabled:
@@ -363,6 +364,10 @@ class SetupTab(UITab):
                         {
                             'title': _(ProductFieldsView.page_name()),
                             'urlname': ProductFieldsView.urlname,
+                        },
+                        {
+                            'title': _(UploadProductView.page_title),
+                            'urlname': UploadProductView.urlname,
                         },
                     ]
                 },
