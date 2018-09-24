@@ -2376,7 +2376,7 @@ class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
-    command_label = DictProperty(default={'en': 'Search All Cases'})
+    command_label = DictProperty(default=ugettext_lazy('Search All Cases'))
     properties = SchemaListProperty(CaseSearchProperty)
     relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
     search_button_display_condition = StringProperty()
