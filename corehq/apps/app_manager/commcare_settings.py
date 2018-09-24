@@ -70,7 +70,11 @@ def _load_commcare_settings_layout(doc_type):
         section['title'] = ugettext_noop(section['title'])
         for i, key in enumerate(section['settings']):
             setting = settings.pop(key)
-            if doc_type == 'Application' or setting['type'] == 'hq':
+            if doc_type == 'Application':
+                section['settings'][i] = setting
+            elif doc_type != 'LinkedApplication' and setting['type'] == 'hq':
+                section['settings'][i] = setting
+            elif doc_type == 'LinkedApplication' and setting.get('supports_linked_app'):
                 section['settings'][i] = setting
             else:
                 section['settings'][i] = None
@@ -99,9 +103,7 @@ def get_custom_commcare_settings():
 
 @memoized
 def get_commcare_settings_layout(doc_type):
-    if doc_type == "LinkedApplication":
-        return {}
-    if doc_type in ['Application', 'RemoteApp']:
+    if doc_type in ['Application', 'RemoteApp', 'LinkedApplication']:
         return _load_commcare_settings_layout(doc_type)
     raise Exception("Unexpected doc_type received: %s" % doc_type)
 

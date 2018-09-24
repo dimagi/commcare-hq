@@ -84,6 +84,7 @@
   id: "logo_android_home"
   widget: "image_uploader"
   privilege: "commcare_logo_uploader"
+  supports_linked_app: true
   force: true
 
 - name: "Login Logo"
@@ -91,6 +92,7 @@
   id: "logo_android_login"
   widget: "image_uploader"
   privilege: "commcare_logo_uploader"
+  supports_linked_app: true
   force: true
 
 - disabled: true
