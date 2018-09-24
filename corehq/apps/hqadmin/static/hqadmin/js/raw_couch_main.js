@@ -14,10 +14,7 @@ hqDefine('hqadmin/js/raw_couch_main', [
         var $element = $("#couch-document");
 
 
-        baseAce.initAceEditor($element.get(0), 'ace/mode/json', {
-            useWorker: false,
-            readOnly: true,
-        }, ($element.length ? JSON.stringify($element.data('doc'), null, 4) : null));
+        baseAce.initAceEditor($element.get(0), 'ace/mode/json', {}, ($element.length ? JSON.stringify($element.data('doc'), null, 4) : null));
 
 
     });

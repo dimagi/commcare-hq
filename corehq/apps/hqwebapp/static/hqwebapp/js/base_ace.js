@@ -15,7 +15,8 @@ hqDefine('hqwebapp/js/base_ace', [
             minLines: 3,
             fontSize: 14,
             wrap: true,
-            useWorker: true,
+            useWorker: false,
+            readOnly: true,
         };
         options = $.extend(defaultOptions, options);
 
@@ -33,7 +34,10 @@ hqDefine('hqwebapp/js/base_ace', [
     var initJsonWidget = function (element) {
         var $element = $(element),
             editorElement = $element.after('<pre />').next()[0];
-        var editor = initAceEditor(editorElement, 'ace/mode/json', {}, $element.val());
+        var editor = initAceEditor(editorElement, 'ace/mode/json', {
+            useWorker: true,
+            readOnly: false,
+        }, $element.val());
         $element.hide();
 
         editor.getSession().on('change', function () {
