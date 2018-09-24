@@ -293,10 +293,8 @@ class SetupTab(UITab):
         from corehq.apps.programs.views import ProgramListView
         from corehq.apps.products.views import ProductListView
 
-        dropdown_items = []
-
         if self.project.commtrack_enabled:
-            dropdown_items += [(_(view.page_title), view) for view in (
+            dropdown_items = [(_(view.page_title), view) for view in (
                 ProductListView,
                 ProgramListView,
                 SMSSettingsView,
@@ -304,12 +302,17 @@ class SetupTab(UITab):
                 CommTrackSettingsView,
             )]
 
-        return [
-            dropdown_dict(
-                item[0],
-                url=reverse(item[1].urlname, args=[self.domain])
-            ) for item in dropdown_items
-        ]
+            return [
+                dropdown_dict(
+                    item[0],
+                    url=reverse(item[1].urlname, args=[self.domain])
+                ) for item in dropdown_items
+            ] + [
+                dropdown_dict(None, is_divider=True),
+                dropdown_dict(_("View All"), url=ProductListView.urlname),
+            ]
+
+        return []
 
     @property
     def _is_viewable(self):
