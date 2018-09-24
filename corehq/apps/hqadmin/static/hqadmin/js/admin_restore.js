@@ -8,11 +8,7 @@ hqDefine('hqadmin/js/admin_restore',[
         $("#timingTable").treetable();
         var element = document.getElementById("payload");
 
-        baseAce.initAceEditor(element, 'ace/mode/xml', {
-            showPrintMargin: false,
-            useWorker: false,
-            readOnly: true,
-        }, $("#payload").data('payload'));
+        baseAce.initAceEditor(element, 'ace/mode/xml', {}, $("#payload").data('payload'));
 
 
     });
