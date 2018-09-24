@@ -379,38 +379,31 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                                 .get_locations_and_children(location_ids)
                                 .location_ids())
 
-            id_filter = filters.term("_id", user_ids)
             group_id_filter = filters.term("__group_ids", group_ids)
 
-            group_and_location_filter = []
-            if group_ids and location_ids:
-                if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain):
-                    group_and_location_filter = filters.AND(
-                        group_id_filter,
-                        user_es.location(location_ids),
-                    )
-                else:
-                    group_and_location_filter = filters.OR(
-                        group_id_filter,
-                        user_es.location(location_ids),
-                    )
-            if user_type_filters and group_and_location_filter:
+            if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
+                group_and_location_filter = filters.AND(
+                    group_id_filter,
+                    user_es.location(location_ids),
+                )
+            else:
+                group_and_location_filter = filters.OR(
+                    group_id_filter,
+                    user_es.location(location_ids),
+                )
+
+            id_filter = filters.OR(
+                filters.term("_id", user_ids),
+                group_and_location_filter,
+            )
+
+            if user_type_filters:
                 return q.OR(
                     id_filter,
                     group_and_location_filter,
                     filters.OR(*user_type_filters),
                 )
-            elif group_and_location_filter:
-                return q.OR(id_filter,
-                            group_and_location_filter,)
-
-            # Filter everything separately (enters this when a location and group are not both selected)
-            else:
-                return q.filter(filters.OR(
-                    id_filter,
-                    group_id_filter,
-                    user_es.location(location_ids),
-                ))
+            return q.filter(id_filter)
 
 
     @staticmethod
