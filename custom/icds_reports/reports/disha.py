@@ -7,7 +7,8 @@ from io import BytesIO
 import json
 import logging
 
-from custom.icds_reports.models.views import AwcLocationMonths, DishaIndicatorView
+from custom.icds_reports.models.aggregate import AwcLocation
+from custom.icds_reports.models.views import DishaIndicatorView
 from custom.icds_reports.models.helper import IcdsFile
 
 
@@ -53,7 +54,7 @@ class DishaDump(object):
 
 
 def build_dumps_for_month(month):
-    states = AwcLocationMonths.objects.values_list('state_name', flat=True).distinct()
+    states = AwcLocation.objects.values_list('state_name', flat=True).distinct()
 
     for state_name in states:
         logger.info("Calculating for state {}".format(state_name))
