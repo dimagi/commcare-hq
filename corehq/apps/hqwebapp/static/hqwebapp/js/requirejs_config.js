@@ -28,9 +28,7 @@ requirejs.config({
         "nvd3/nv.d3.min": {
             deps: ['d3/d3.min'],
             exports: 'nv',
-        },
-        "ace-builds/src-min-noconflict/mode-json": { deps: ["ace-builds/src-min-noconflict/ace"] },
-        "ace-builds/src-min-noconflict/mode-xml": { deps: ["ace-builds/src-min-noconflict/ace"] },
+        }
     },
     map: {
         "datatables.fixedColumns": {
