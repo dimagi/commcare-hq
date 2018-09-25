@@ -1,14 +1,11 @@
 {
   "domains": [
-    "icds-dashboard-qa",
-    "reach-test",
-    "icds-test",
-    "icds-cas"
+    "icds-cas",
+    "icds-dashboard-qa"
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
-    "icds"
+    "icds-new"
   ],
   "report_id": "static-mobile_mpr_6b_pse_attendance_per_year",
   "data_source_table": "static-child_cases_monthly_v2",

@@ -1,16 +1,11 @@
 {
   "domains": [
-    "icds-dashboard-qa",
-    "reach-test",
-    "icds-test",
-    "icds-sql",
     "icds-cas",
-    "icds-cas-sandbox"
+    "icds-dashboard-qa"
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
-    "icds"
+    "icds-new"
   ],
   "report_id": "static-mobile_mpr_11_awc_visits",
   "data_source_table": "static-visitorbook_forms",
